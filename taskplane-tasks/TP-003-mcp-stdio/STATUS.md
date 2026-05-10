@@ -8,7 +8,7 @@
 
 ## Step 1: SDK spike and plan
 
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 
 - [x] Read official Go MCP SDK docs/examples
 - [x] Record chosen SDK APIs and limitations
@@ -75,3 +75,4 @@
 | 2026-05-10 23:14 | Review R001 | plan Step 1: REVISE |
 | 2026-05-10 23:19 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-10 23:22 | Review R001 | code Step 1: REVISE |
+| 2026-05-10 23:24 | Review R001 | code Step 1: APPROVE |
