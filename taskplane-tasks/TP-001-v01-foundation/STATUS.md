@@ -6,7 +6,7 @@
 **Last Updated:** 2026-05-10
 **State:** ✅ Complete
 
-## Step 1: Capture the foundation plan in STATUS.md
+### Step 1: Capture the foundation plan in STATUS.md
 
 **Status:** ✅ Complete
 
@@ -24,7 +24,7 @@
 - Implement `internal/config` as the central v0.1 config contract: API key, normalized athlete ID, timezone, optional API base URL, optional HTTP timeout, optional config path; load JSON first then environment/.env overrides with tests documenting precedence.
 - Redact secrets in any string/error surfaces and never write API keys to disk; `.env` support is read-only developer convenience and must not print values.
 
-## Step 2: Implement the CLI and version foundation
+### Step 2: Implement the CLI and version foundation
 
 **Status:** ✅ Complete
 
@@ -37,7 +37,7 @@
 - [x] Pass build version to lower layers
 - [x] Return errors from internal packages; handle exit in `main`
 
-## Step 3: Implement minimal manual config loading
+### Step 3: Implement minimal manual config loading
 
 **Status:** ✅ Complete
 
@@ -64,7 +64,7 @@
 - [x] Do not write API keys to disk
 - [x] Never log or echo API keys
 
-## Step 4: Add tests for foundation behavior
+### Step 4: Add tests for foundation behavior
 
 **Status:** ✅ Complete
 
@@ -72,7 +72,7 @@
 - [x] Table-driven tests for config loading/validation/defaults/redaction
 - [x] Tests for short actionable invalid/missing config errors
 
-## Step 5: Verify and document
+### Step 5: Verify and document
 
 **Status:** ✅ Complete
 
