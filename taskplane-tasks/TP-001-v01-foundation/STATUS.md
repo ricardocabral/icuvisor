@@ -25,16 +25,16 @@
 
 ## Step 2: Implement the CLI and version foundation
 
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 
 - [x] R001 plan review: narrow Step 2 plan so default startup does not load/validate config yet
 - [x] R001 plan review: explicitly test internal app `version`, default delegation error, and short unknown-command errors
 - [x] R001 plan review: define `app.Run(ctx, Options{...})` entrypoint shape before coding
 - [x] R001 plan review: make version injection to lower runtime/server config concrete without importing from `main`
-- [ ] Keep `icuvisor version` working
-- [ ] Delegate default startup from thin `main` to internal package
-- [ ] Pass build version to lower layers
-- [ ] Return errors from internal packages; handle exit in `main`
+- [x] Keep `icuvisor version` working
+- [x] Delegate default startup from thin `main` to internal package
+- [x] Pass build version to lower layers
+- [x] Return errors from internal packages; handle exit in `main`
 
 ## Step 3: Implement minimal manual config loading
 
@@ -79,4 +79,6 @@
 | 2026-05-10 | Current foundation inspected | Repo has only `cmd/icuvisor/main.go`, no `internal/` packages/tests yet; Makefile/CI expect `go build ./...`, `go test -race ./...`, optional golangci-lint. |
 | 2026-05-10 | v0.1 CLI shape decided | Keep `icuvisor version`; default invocation starts stdio MCP server path via internal app package; config path may come from flag/env, with env/manual JSON for credentials. |
 | 2026-05-10 | Internal boundaries decided | Use thin `cmd/icuvisor`; `internal/app` for CLI/default startup and version propagation; `internal/config` for typed config, env/JSON/.env loading, ID normalization, validation, redaction; future `internal/intervals`, `internal/mcp`, and `internal/tools` consume config rather than parse env. |
+| 2026-05-10 | Step 2 targeted tests passed | `go test ./cmd/icuvisor ./internal/app` passed after adding app Run tests and thin main delegation. |
 | 2026-05-10 21:33 | Review R001 | plan Step 2: UNKNOWN |
+| 2026-05-10 21:36 | Review R001 | plan Step 2: APPROVE |

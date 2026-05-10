@@ -2,18 +2,24 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+
+	"github.com/ricardocabral/icuvisor/internal/app"
 )
 
 // version is set at build time via -ldflags "-X main.version=...".
 var version = "dev"
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "version" {
-		fmt.Println(version)
-		return
+	if err := app.Run(context.Background(), app.Options{
+		Version: version,
+		Args:    os.Args[1:],
+		Stdout:  os.Stdout,
+		Stderr:  os.Stderr,
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "icuvisor: %v\n", err)
+		os.Exit(1)
 	}
-	fmt.Fprintln(os.Stderr, "icuvisor: not yet implemented")
-	os.Exit(1)
 }
