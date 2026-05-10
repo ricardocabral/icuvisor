@@ -16,7 +16,9 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 
 **Goal:** prove response shaping in real conversations before adding writes. Validate that an LLM, given only icuvisor's reads, produces correct training analysis without scale or unit confusion.
 
-- [ ] All read-only tools from the catalog (PRD §7.2.C): `get_athlete_profile`, `get_fitness`, `get_best_efforts`, `get_power_curves`, `get_activities`, `get_activity_details`, `get_activity_intervals`, `get_activity_streams`, `get_activity_messages`, `get_extended_metrics`, `get_training_summary`, `get_wellness_data`, `get_events`, `get_event_by_id`, `get_training_plan`, `get_workout_library`, `get_workouts_in_folder`, `get_custom_items`, `get_custom_item_by_id`.
+- [ ] All read-only tools from the catalog (PRD §7.2.C): `get_athlete_profile`, `get_fitness`, `get_best_efforts`, `get_power_curves`, `get_activities`, `get_activity_details`, `get_activity_intervals`, `get_activity_streams`, `get_activity_splits`, `get_activity_messages`, `get_extended_metrics`, `get_training_summary`, `get_wellness_data`, `get_events`, `get_event_by_id`, `get_training_plan`, `get_workout_library`, `get_workouts_in_folder`, `get_custom_items`, `get_custom_item_by_id`.
+- [ ] Canonical snake_case stream keys across all activities/devices (forum #118); upstream casing differences absorbed at the response boundary.
+- [ ] `get_extended_metrics` field set per PRD §7.2.C — running dynamics, DFA α1, W' balance, cardiac decoupling, HR drift, aerobic decoupling, zone distributions, IF/VI/polarization, TRIMP/strain/load, L/R balance, RPE/feel/session-RPE, compliance %, device name — gated by upstream availability (PRD §7.4 #4).
 - [ ] Terse-by-default + `include_full` opt-in; auto-added debug metadata (`fetched_at`, `query_type`) stripped by default, behind `ICUVISOR_DEBUG_METADATA=true`.
 - [ ] In-response scale labels on every subjective field (`feel`, `sleepQuality`, `fatigue`, `mood`, etc.) — not just tool descriptions.
 - [ ] Disambiguating field names in responses (`calories_burned` not `calories`; `distance_km` / `distance_mi`).
@@ -36,7 +38,7 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 **Goal:** ship the write path in a way that an LLM cannot be social-engineered (or self-talked) into destroying data. Validate the env-var safety model end-to-end.
 
 - [ ] `ICUVISOR_DELETE_MODE` env var (`safe` default / `full` / `none`) — destructive tools are not *registered* in modes that forbid them. No per-call `confirm: true` arguments anywhere in the catalog.
-- [ ] Write tools: `add_or_update_event` (free-text `description` preserved verbatim, `workout_doc` for structured steps, `tags` supported), `add_activity_message`, `update_wellness` (full writable field set incl. `injury`, blood pressure, blood glucose, lactate, body fat, `locked`).
+- [ ] Write tools: `add_or_update_event` (free-text `description` preserved verbatim, `workout_doc` for structured steps, `tags` supported), `add_activity_message`, `link_activity_to_event` (manual pairing for compliance scoring when auto-pair misses — forum #97), `update_wellness` (full writable field set incl. `injury`, blood pressure, blood glucose, lactate, body fat, `locked`), `update_sport_settings` (FTP, threshold HR/pace, zones; zone-definition overwrites gated by `ICUVISOR_DELETE_MODE` — forum #35).
 - [ ] Workout-library CRUD: `create_workout`, `update_workout`, `delete_workout` (delete gated by `ICUVISOR_DELETE_MODE`).
 - [ ] Event delete (`delete_event`, `delete_events_by_date_range`), activity delete, custom-item delete, sport-settings delete, gear delete — all gated by `ICUVISOR_DELETE_MODE`.
 - [ ] Custom-item create/update.

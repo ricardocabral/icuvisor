@@ -213,6 +213,7 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 
 **Athlete & fitness**
 - `get_athlete_profile` — FTP, zones, sport settings, thresholds.
+- `update_sport_settings` — write FTP, threshold HR, threshold pace, and per-sport zone definitions back to the athlete profile (forum #35 — assistants offered FTP updates that didn't land because there was no write path). Per-sport scoped (`sport: "Ride" | "Run" | …`). Gated by `ICUVISOR_DELETE_MODE` like other destructive writes when used to overwrite zone definitions, since a bad zone overwrite silently miscolours every historical activity.
 - `list_athletes`, `select_athlete` — coach mode.
 - `get_fitness` — CTL/ATL/TSB trends, taper projections.
 - `get_best_efforts` — PRs across sports.
@@ -222,10 +223,12 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 - `get_activities` — date-range list; supports `include_unnamed` (issue #67) and pagination.
 - `get_activity_details` — single-activity metadata, zones, metrics.
 - `get_activity_intervals` — interval splits.
-- `get_activity_streams` — time-series (power, HR, altitude, cadence, etc.).
+- `get_activity_streams` — time-series (power, HR, altitude, cadence, etc.). **Stream keys are canonicalized** to a single naming convention (snake_case) across activities and devices; the upstream API exposes inconsistent casing (camelCase on some activity types, snake_case on others — forum #118) and the LLM must not have to guess.
+- `get_activity_splits` — virtual splits (per-km or per-mile) computed from streams when the activity has no manual laps, so continuous runs/rides are analyzable (forum #25 / #29). Honours `preferred_units`.
 - `get_activity_messages` — fetch comments/notes.
 - `add_activity_message` — post a comment (forum #99).
-- `get_extended_metrics` — running dynamics, core temp, DFA α1, W' balance (icusync parity).
+- `link_activity_to_event` — pair a completed activity with its planned event so compliance/adherence is computed against the right target (forum #97). Where intervals.icu auto-pairs by date+type, this tool is a manual override for the cases auto-pairing misses.
+- `get_extended_metrics` — second-order metrics not exposed on the base activity payload. Target field set (subject to upstream availability per §7.4 #4): running dynamics (GCT, vertical oscillation, stride length, GCT balance), DFA α1, W' balance, core temp, cardiac decoupling (Pw:HR), HR drift %, aerobic decoupling, power-zone distribution, pace-zone time, cadence-by-zone, joules above FTP, intensity factor, variability index, polarization index, TRIMP, strain score, HR/pace/power load, left/right balance, RPE / feel / session-RPE, compliance %, device name (forum #62, #70).
 - `get_training_summary` — aggregated volume/TSS/zones.
 
 **Wellness**
@@ -260,6 +263,7 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 - **Athlete ID normalization** — accept `i12345` or `12345`; emit `i12345` consistently.
 - **Strava-imported activity handling** — intervals.icu blocks Strava-synced activities from its public API per Strava's ToS. Tools must detect the blocked state and return a structured `unavailable: { reason: "strava_tos", workaround: "connect device directly to intervals.icu (Garmin, Wahoo, Coros, Suunto, Polar)" }` rather than empty/`N/A` fields the LLM might hallucinate over.
 - **Per-athlete unit normalization** — read `preferred_units` (miles vs km) from the athlete profile and render distances/paces in that unit, with the unit name embedded in the field key or `_meta` so the LLM can't drift to its default. Same pattern as the timezone rule.
+- **Stream-key canonicalization** — the intervals.icu streams endpoint emits inconsistent key casing across activity types and devices (forum #118: `groundContactTime` on some activities, `ground_contact_time` on others). icuvisor canonicalizes every stream key to snake_case at the response boundary so the LLM (and downstream code) sees one schema. The canonical map lives in code and is covered by tests.
 
 #### E. Toolset tiers (token efficiency by default)
 
@@ -329,7 +333,7 @@ It also ships a curated set of MCP Prompts (training analysis, recovery check, w
 1. **Auto-update via signed releases is acceptable** to athletes and to the macOS/Windows platforms (notarized binaries can self-update inside the user's home directory). *(Validate during release-pipeline build-out.)*
 2. **Token efficiency is achievable** in pure response shaping without an LLM in the middle — KR5 is hit by aggressive default summarization plus opt-in detail. *(Validate by measuring on the 10 most common forum prompts.)*
 3. **The intervals.icu API supports strength training and training plan retrieval.** *(Validate during tool-catalog implementation.)*
-4. **icusync.icu's "extended metrics"** (DFA α1, W' balance, core temp, running dynamics) are exposed by the intervals.icu API rather than computed server-side by icusync. *(Validate during tool-catalog implementation.)*
+4. **The full target field set for `get_extended_metrics`** (running dynamics, DFA α1, W' balance, core temp, cardiac decoupling, HR drift, aerobic decoupling, zone distributions, IF/VI/polarization, TRIMP/strain/load variants, L/R balance, RPE/feel/session-RPE, compliance %, device name — see §7.2.C) is exposed by the intervals.icu API rather than computed server-side by competitors. Fields not exposed upstream are dropped from the catalog, not silently zero-filled. *(Validate during tool-catalog implementation; track per-field availability in `testdata/`.)*
 5. **Coach-mode credential delegation is safe** when the coach-scoped API key is held only by the local binary and never passed as a tool parameter. *(Threat-model review before coach-mode ships.)*
 6. **Demand**: forum thread (~100 posts, multiple monthly active discussants) suggests a real audience, but we have not surveyed it directly. The competitive signal from icusync.icu is also weaker than its post count suggests — most activity is maintainer support, not latent demand for a free local alternative. *(Validate by pre-launch waitlist on icuvisor.dev; pick a target only once the waitlist is live.)*
 7. **MCP tool-schema caching is per-conversation on all target clients.** Implications:
