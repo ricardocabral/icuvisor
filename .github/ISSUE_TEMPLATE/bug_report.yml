@@ -1,0 +1,102 @@
+name: Bug report
+description: Something isn't working as expected.
+title: "bug: "
+labels: ["type: bug", "status: triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please fill in as much as you can — it speeds up triage a lot.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences describing the problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal, ordered steps. Include exact prompts if the bug surfaces through an MCP client.
+      placeholder: |
+        1. Run `icuvisor ...`
+        2. In Claude Desktop, ask "..."
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Paste any error output. Wrap logs in ``` fences.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: icuvisor version
+      description: Output of `icuvisor version`.
+      placeholder: v0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows
+        - Linux
+    validations:
+      required: true
+
+  - type: dropdown
+    id: client
+    attributes:
+      label: MCP client
+      options:
+        - Claude Desktop
+        - Claude Code
+        - Claude Cowork
+        - ChatGPT (Developer Mode)
+        - Pi.dev
+        - Cursor
+        - Continue
+        - Zed
+        - Other / local LLM
+        - Not applicable
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / diagnostics
+      description: Paste from the "Copy diagnostics" tray menu once available, or the rotating log file.
+      render: text
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched existing issues and discussions.
+          required: true
+        - label: I am on the latest release (or `main`).
+          required: true
+        - label: This is not a security vulnerability (those go through the security advisory link).
+          required: true

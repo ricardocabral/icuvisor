@@ -1,0 +1,90 @@
+version: 2
+
+project_name: icuvisor
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: icuvisor
+    main: ./cmd/icuvisor
+    binary: icuvisor
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+
+universal_binaries:
+  - id: icuvisor-darwin
+    ids: [icuvisor]
+    replace: true
+    name_template: icuvisor
+
+archives:
+  - id: default
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-SNAPSHOT-{{ .ShortCommit }}"
+
+changelog:
+  use: github
+  sort: asc
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:.*$"
+      order: 0
+    - title: Bug fixes
+      regexp: "^.*fix[(\\w)]*:.*$"
+      order: 1
+    - title: Performance
+      regexp: "^.*perf[(\\w)]*:.*$"
+      order: 2
+    - title: Others
+      order: 999
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
+
+release:
+  github:
+    owner: ricardocabral
+    name: icuvisor
+  draft: false
+  prerelease: auto
+
+brews:
+  - name: icuvisor
+    repository:
+      owner: ricardocabral
+      name: homebrew-icuvisor
+    homepage: https://icuvisor.dev
+    description: Local MCP server connecting intervals.icu training data to AI assistants.
+    license: MIT
+    test: |
+      system "#{bin}/icuvisor version"
+    install: |
+      bin.install "icuvisor"

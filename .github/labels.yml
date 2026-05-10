@@ -1,0 +1,169 @@
+# Label catalog for icuvisor.
+# Synced by .github/workflows/labels.yml using EndBug/label-sync.
+# Conventions:
+#   - Prefixed groups (type:, status:, priority:, area:, client:) for easy filtering.
+#   - Colors chosen so each group is visually distinct.
+
+# --- Type --------------------------------------------------------------------
+- name: "type: bug"
+  color: "d73a4a"
+  description: Something is not working as documented.
+- name: "type: feature"
+  color: "0e8a16"
+  description: New capability or enhancement.
+- name: "type: docs"
+  color: "0075ca"
+  description: Documentation only.
+- name: "type: refactor"
+  color: "c2e0c6"
+  description: Internal change with no user-visible behaviour difference.
+- name: "type: performance"
+  color: "fbca04"
+  description: Speed, memory, or token-efficiency improvement.
+- name: "type: security"
+  color: "b60205"
+  description: Security-relevant. Coordinate via SECURITY.md before disclosure.
+- name: "type: question"
+  color: "d876e3"
+  description: A question rather than a defect or request.
+- name: "type: discussion"
+  color: "cc317c"
+  description: Open-ended design or scope discussion.
+
+# --- Status ------------------------------------------------------------------
+- name: "status: triage"
+  color: "ededed"
+  description: Awaiting maintainer triage.
+- name: "status: needs-info"
+  color: "fef2c0"
+  description: Waiting on the reporter for more information.
+- name: "status: confirmed"
+  color: "5319e7"
+  description: Reproduced and accepted as in-scope.
+- name: "status: in-progress"
+  color: "1d76db"
+  description: Actively being worked on.
+- name: "status: blocked"
+  color: "e99695"
+  description: Blocked by an upstream or external dependency.
+- name: "status: stale"
+  color: "cccccc"
+  description: No activity for a long time. Will be closed if not refreshed.
+- name: "status: wontfix"
+  color: "ffffff"
+  description: Working as intended, out of scope, or won't be addressed.
+- name: "status: duplicate"
+  color: "cfd3d7"
+  description: Duplicate of another issue.
+- name: "status: invalid"
+  color: "e4e669"
+  description: Not actionable as filed.
+
+# --- Priority ----------------------------------------------------------------
+- name: "priority: critical"
+  color: "b60205"
+  description: Data loss, security, or total breakage. Drop everything.
+- name: "priority: high"
+  color: "d93f0b"
+  description: Important for the next release.
+- name: "priority: medium"
+  color: "fbca04"
+  description: Should be addressed soon.
+- name: "priority: low"
+  color: "0e8a16"
+  description: Nice to have.
+
+# --- Area --------------------------------------------------------------------
+- name: "area: tools"
+  color: "1d76db"
+  description: MCP tool implementations or schemas.
+- name: "area: api-client"
+  color: "1d76db"
+  description: intervals.icu HTTP client.
+- name: "area: transport"
+  color: "1d76db"
+  description: stdio or Streamable HTTP transport.
+- name: "area: config"
+  color: "1d76db"
+  description: Configuration files, env, or keychain storage.
+- name: "area: onboarding"
+  color: "1d76db"
+  description: First-run UI and client auto-config.
+- name: "area: coach-mode"
+  color: "1d76db"
+  description: Multi-athlete / coach features.
+- name: "area: installer"
+  color: "1d76db"
+  description: Packaging, signing, notarization, brew/scoop/winget.
+- name: "area: auto-update"
+  color: "1d76db"
+  description: Release check and self-update flow.
+- name: "area: telemetry"
+  color: "1d76db"
+  description: Opt-in anonymous telemetry.
+- name: "area: docs"
+  color: "1d76db"
+  description: README, guides, troubleshooting, site content.
+- name: "area: build"
+  color: "1d76db"
+  description: Makefile, GoReleaser, or build tooling.
+- name: "area: ci"
+  color: "1d76db"
+  description: GitHub Actions workflows.
+
+# --- MCP client tagging ------------------------------------------------------
+- name: "client: claude-desktop"
+  color: "c5def5"
+  description: Issue or feature specific to Claude Desktop.
+- name: "client: claude-code"
+  color: "c5def5"
+  description: Specific to Claude Code.
+- name: "client: chatgpt"
+  color: "c5def5"
+  description: Specific to ChatGPT Developer Mode.
+- name: "client: cursor"
+  color: "c5def5"
+  description: Specific to Cursor.
+- name: "client: pi"
+  color: "c5def5"
+  description: Specific to Pi.dev.
+- name: "client: continue"
+  color: "c5def5"
+  description: Specific to Continue.
+- name: "client: zed"
+  color: "c5def5"
+  description: Specific to Zed.
+- name: "client: local-llm"
+  color: "c5def5"
+  description: Local LLM clients (ollmcp, Cline, LM Studio, etc.).
+
+# --- Contributor-friendly ----------------------------------------------------
+- name: "good first issue"
+  color: "7057ff"
+  description: Scoped well for a first-time contributor.
+- name: "help wanted"
+  color: "008672"
+  description: Maintainers would welcome a community PR here.
+- name: "hacktoberfest"
+  color: "ff7518"
+  description: Suitable for Hacktoberfest.
+
+# --- Meta --------------------------------------------------------------------
+- name: "dependencies"
+  color: "0366d6"
+  description: Updates a dependency.
+- name: "go"
+  color: "00add8"
+  description: Go-language related.
+- name: "ci"
+  color: "ededed"
+  description: Continuous integration changes.
+- name: "breaking-change"
+  color: "b60205"
+  description: Backwards-incompatible change.
+- name: "needs-design"
+  color: "fef2c0"
+  description: Requires a design proposal before implementation.
+- name: "epic"
+  color: "3e4b9e"
+  description: Tracking issue spanning multiple sub-issues.

@@ -1,0 +1,90 @@
+# icuvisor
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/ricardocabral/icuvisor.svg)](https://pkg.go.dev/github.com/ricardocabral/icuvisor)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ricardocabral/icuvisor)](https://goreportcard.com/report/github.com/ricardocabral/icuvisor)
+[![CI](https://github.com/ricardocabral/icuvisor/actions/workflows/ci.yml/badge.svg)](https://github.com/ricardocabral/icuvisor/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ricardocabral/icuvisor?sort=semver)](https://github.com/ricardocabral/icuvisor/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/ricardocabral/icuvisor)](go.mod)
+[![codecov](https://codecov.io/gh/ricardocabral/icuvisor/branch/main/graph/badge.svg)](https://codecov.io/gh/ricardocabral/icuvisor)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ricardocabral/icuvisor/badge)](https://securityscorecards.dev/viewer/?uri=github.com/ricardocabral/icuvisor)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-blue.svg)](https://www.conventionalcommits.org)
+
+> An open-source, locally-installed [Model Context Protocol](https://modelcontextprotocol.io) server for [intervals.icu](https://intervals.icu), distributed as a single Go binary.
+
+icuvisor lets amateur athletes talk to their training data through Claude, ChatGPT, Pi, Cursor, and other MCP-compatible AI clients — without running Python, without trusting a third-party SaaS, and without paying anything.
+
+## Status
+
+> Pre-alpha. The walking-skeleton (v0.1) is in progress. See [ROADMAP.md](ROADMAP.md).
+
+## Features (planned for v1.0)
+
+- Single signed binary for macOS, Windows, and Linux.
+- ~25 MCP tools covering activities, wellness, fitness, events, and custom items.
+- Terse-by-default responses tuned for LLM context windows.
+- Coach mode for multi-athlete rosters.
+- stdio and Streamable HTTP transports.
+- One-click client configs for Claude Desktop, Claude Code, ChatGPT, Pi, Cursor, Continue, Zed.
+- API key stored in the OS keychain, never on disk in plain text.
+
+See the full [PRD](docs/prd/PRD-icuvisor.md).
+
+## Install
+
+> Installers will land with v1.0. For now, build from source:
+
+```bash
+git clone https://github.com/ricardocabral/icuvisor.git
+cd icuvisor
+make build
+./bin/icuvisor version
+```
+
+## Quickstart
+
+```bash
+# 1. Get an intervals.icu API key from https://intervals.icu/settings
+# 2. (todo) icuvisor configure
+# 3. (todo) point your MCP client at the binary
+```
+
+Detailed client setup will live in [`docs/clients/`](docs/) once v0.5 ships.
+
+## Project layout
+
+```
+cmd/icuvisor/       Binary entrypoint
+internal/intervals/ intervals.icu API client
+internal/mcp/       MCP server + transports
+internal/tools/     Tool implementations
+internal/config/    Config + keychain storage
+docs/               PRD, roadmap, design notes
+```
+
+## Development
+
+Requires Go 1.23+ and (optionally) [`golangci-lint`](https://golangci-lint.run) and [`goreleaser`](https://goreleaser.com).
+
+```bash
+make build       # build ./bin/icuvisor
+make test        # unit tests
+make test-race   # tests with the race detector
+make lint        # golangci-lint
+make snapshot    # local goreleaser snapshot
+make help        # list all targets
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
+
+## Security
+
+Found a vulnerability? Please read [SECURITY.md](SECURITY.md) — do **not** open a public issue.
+
+## Acknowledgements
+
+icuvisor is a clean-room Go implementation that draws inspiration from the wider intervals.icu MCP community, with particular thanks to [Marc Vilanova](https://github.com/mvilanova)'s [`intervals-mcp-server`](https://github.com/mvilanova/intervals-mcp-server) (Python, GPLv3) as the reference that proved the use case. No GPL source is read or copied; the implementation is built from intervals.icu's public API documentation.
+
+## License
+
+[MIT](LICENSE).

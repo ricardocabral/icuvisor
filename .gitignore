@@ -1,0 +1,34 @@
+# Binaries
+/bin/
+/dist/
+/icuvisor
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test / coverage
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# Go workspace
+go.work
+go.work.sum
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Local config / secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Build artifacts
+/build/
+/tmp/

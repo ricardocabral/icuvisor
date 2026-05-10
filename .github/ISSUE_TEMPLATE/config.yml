@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/ricardocabral/icuvisor/discussions
+    about: Ask questions, share workflows, or propose ideas before opening an issue.
+  - name: intervals.icu forum thread
+    url: https://forum.intervals.icu/
+    about: Community context for intervals.icu MCP tooling.
+  - name: Security vulnerability
+    url: https://github.com/ricardocabral/icuvisor/security/advisories/new
+    about: Report a security issue privately. Do not open a public issue.

@@ -1,0 +1,10 @@
+# Default owners for everything in the repo.
+*       @ricardocabral
+
+# Build, release, and CI changes need maintainer review.
+/.github/        @ricardocabral
+/.goreleaser.yaml @ricardocabral
+/Makefile        @ricardocabral
+
+# Docs can be reviewed more loosely once additional maintainers exist.
+/docs/           @ricardocabral

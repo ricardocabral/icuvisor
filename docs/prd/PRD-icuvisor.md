@@ -132,6 +132,9 @@ Markets defined by the job the user is trying to do, not by demographics.
 - Trusting a third-party SaaS with intervals.icu credentials (icusync.icu trust model).
 - Per-athlete SaaS signup for coaches.
 - Timezone drift (issue #49 / forum #49).
+- Silent overwriting of athlete/coach free-text workout descriptions by normalization into structured blocks.
+- Unit-system mismatch — athlete uses miles but assistant replies in km.
+- Confusing "fix didn't land" experiences after server upgrades, caused by MCP clients caching the tool schema per conversation.
 
 ### Where we beat competitors (Value Curve sketch)
 
@@ -174,9 +177,13 @@ User opens Claude Desktop and types *"Analyze my last 10 cycling activities and 
 
 icuvisor checks `releases.icuvisor.dev` once per day. If a new signed release exists, the tray icon shows a dot; clicking "Update now" replaces the binary and restarts. No terminal commands. Opt-out in settings.
 
+After an update that adds or changes tool arguments, the post-update notification explicitly tells the user to **start a new conversation in their AI client** to pick up the new tool schema. MCP clients (Claude in particular) cache the tool catalog at conversation start, so an in-flight chat will keep using the old schema and report "the fix didn't work" — observed repeatedly on the icusync.icu forum thread (posts #4, #10, #17, #19).
+
 **Flow D — Coach mode**
 
 Coach pastes a coach-scoped intervals.icu API key. icuvisor lists athletes via `list_athletes`; the coach selects which subset is exposed to tools. The active athlete is passed as a tool argument (`athlete_id`) on every call, with a configurable default. Mirrors issue #88 and forum posts #18/#21/#60.
+
+The coach also picks, **per athlete**, which tools are exposed — e.g. read-only access for a prospective athlete, full read+write for an active client. Granular per-tool permissions are enforced in the server before any intervals.icu call; the LLM never sees disallowed tools in its catalog. This mirrors what icusync.icu ships ("granular tool permission control") and is icuvisor's local-first equivalent.
 
 Wireframes will be produced separately; this PRD specifies behavior only.
 
@@ -223,7 +230,7 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 
 **Events & workouts**
 - `get_events`, `get_event_by_id` — calendar entries.
-- `add_or_update_event` — structured workout, race, or note. Returns a **terse** confirmation by default (issue #89).
+- `add_or_update_event` — structured workout, race, or note. Returns a **terse** confirmation by default (issue #89). Preserves intervals.icu's distinction between `description` (free text — athlete/coach notes, pacing, nutrition, race countdown) and `workout_doc` (structured steps). On edit, `description` is written through **verbatim** unless the caller explicitly opts into structured normalization; `workout_doc` is the only field that accepts structured-block syntax. Silent normalization of free text is treated as a destructive operation and must not happen by default.
 - `delete_event`, `delete_events_by_date_range` — destructive; require an explicit `confirm: true` argument.
 - `get_training_plan` — fetch plan (forum #70).
 - *Strength training data* — included if the intervals.icu API exposes it (forum #70).
@@ -240,7 +247,8 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 - **Scale metadata in tool descriptions** so the LLM knows `feel` is 1-5, `sleepQuality` is 1-4.
 - **Timezone normalization** — all dates rendered in the athlete's configured TZ; tool docstrings mention the convention.
 - **Athlete ID normalization** — accept `i12345` or `12345`; emit `i12345` consistently.
-- **Strava-imported activity handling** — detect and label these explicitly so the LLM doesn't hallucinate over `N/A` fields (issue #67, forum #46).
+- **Strava-imported activity handling** — intervals.icu blocks Strava-synced activities from its public API per Strava's ToS (icusync.icu forum thread, post #18). Tools must detect the blocked state and return a structured `unavailable: { reason: "strava_tos", workaround: "connect device directly to intervals.icu (Garmin, Wahoo, Coros, Suunto, Polar)" }` rather than empty/`N/A` fields the LLM might hallucinate over.
+- **Per-athlete unit normalization** — read `preferred_units` (miles vs km) from the athlete profile and render distances/paces in that unit, with the unit name embedded in the field key or `_meta` so the LLM can't drift to its default. Same pattern as the timezone rule (icusync.icu forum thread, post #20).
 
 #### E. Configuration
 
@@ -279,52 +287,21 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 3. **The intervals.icu API supports strength training and training plan retrieval.** *(Validate during tool-catalog implementation.)*
 4. **icusync.icu's "extended metrics"** (DFA α1, W' balance, core temp, running dynamics) are exposed by the intervals.icu API rather than computed server-side by icusync. *(Validate during tool-catalog implementation.)*
 5. **Coach-mode credential delegation is safe** when the coach-scoped API key is held only by the local binary and never passed as a tool parameter. *(Threat-model review before coach-mode ships.)*
-6. **Demand**: forum thread (~100 posts, multiple monthly active discussants) suggests a real audience, but we have not surveyed it directly. *(Validate by pre-launch waitlist on icuvisor.dev — target 500 signups before v1.0.)*
+6. **Demand**: forum thread (~100 posts, multiple monthly active discussants) suggests a real audience, but we have not surveyed it directly. *(Validate by pre-launch waitlist on icuvisor.dev — target 500 signups before v1.0.)* Note: the icusync.icu launch thread (20 posts over 4 days) is dominated by the maintainer fixing things in real time and is a stronger signal of icusync momentum than of latent demand for a free local alternative. Recalibrate the 500 figure once the waitlist is live.
+7. **MCP tool-schema caching is per-conversation on all target clients.** Repeatedly observed on the icusync.icu forum thread when the maintainer shipped fixes mid-conversation. Implications:
+   - Auto-update UX must tell the user to start a new chat (see Flow C).
+   - Tool argument changes must be **additive-only** on stable tools — no removals, no renames. Document in `CONTRIBUTING.md`.
+   - Every tool response embeds `_meta.server_version` so the LLM can flag a schema mismatch when it sees stale arguments rejected. *(Validate by sweep across Claude Desktop, Claude Code, ChatGPT Dev Mode, Cursor.)*
+8. **Mobile access is the dominant reason users pay for icusync.icu** (forum thread posts #14, #20). Re-evaluate whether the hosted relay (§8 / vNext) is correctly phased or should move earlier as a paid/donation-supported optional service. *(Validate during pre-launch waitlist — ask about mobile need explicitly.)*
+9. **icusync.icu does not appear to have context-window problems** in the forum thread — zero token/context complaints across 20 posts. KR5's "30% of Python upstream" target may not be a strong differentiator on its own. *(Validate by measuring icusync.icu's response shapes, not just mvilanova's, on the same prompt set.)*
+10. **Strava-blocked-activity detection** depends on a stable upstream marker. *(Validate by black-box testing against an athlete account with mixed direct/Strava-imported activities.)*
+11. **`preferred_units` is exposed on the intervals.icu athlete profile and round-trips through the API.** *(Validate during `get_athlete_profile` implementation.)*
 
 ---
 
 ## 8. Release
 
-icuvisor will not commit to calendar dates pre-launch. Phases are scoped, gated, and shippable independently.
-
-### v0.1 — Walking skeleton
-
-- Single tool (`get_athlete_profile`) working end-to-end via stdio to Claude Desktop on macOS.
-- Manual JSON config; no installer yet.
-- **Goal**: end-to-end pipe from binary → MCP → intervals.icu.
-
-### v0.5 — Internal beta
-
-- All 25 launch tools implemented.
-- Terse/full response modes.
-- Coach mode behind a flag.
-- macOS signed installer + manual Claude Desktop config.
-- Dogfooded by 5–10 athletes (including 1 coach) recruited from the forum thread.
-- **Goal**: validate KR1 (install success) and KR5 (token efficiency) on real users.
-
-### v1.0 — Public launch
-
-- All platforms: macOS (.dmg + brew), Windows (.msi + scoop + winget), Linux (.deb + .rpm + shell installer).
-- Auto-update.
-- Onboarding UI with one-click config for: Claude Desktop, Claude Code, Claude Cowork, ChatGPT Dev Mode (instructions), Pi.dev, Cursor, Continue, Zed.
-- Documented manual config for any MCP client.
-- Keychain-based credential storage.
-- Public website (`icuvisor.dev`) with download, docs, troubleshooting, and a link to the forum thread.
-- Announcement on the intervals.icu forum thread.
-- **Goal**: KR2, KR3, KR4, KR6.
-
-### v1.x — Iterate
-
-- Local-LLM client recipes (ollmcp, Cline, LM Studio).
-- Diagnostics export button.
-- Telemetry-driven response-shape tuning.
-
-### vNext — Future (not in scope of v1)
-
-- **Optional hosted relay** (icuvisor cloud, opt-in, BYO key): for mobile-only athletes who can't run a desktop binary. Same code path; binary runs in our infra and authenticates via a token. Solves the "I only have a phone" gap that neither mvilanova nor icusync handle well.
-- **Strava / TrainingPeaks** companion MCP servers in the same family.
-- **Workout templates** library, AI-generated and athlete-curated.
-- **Conversation memory** export hooks (Claude Projects integration).
+Phasing — scope, gates, and the v0.1 / v0.5 / v1.0 / v1.x / vNext milestones — lives in [`ROADMAP.md`](../../ROADMAP.md) so plan-of-record edits don't drift across two files. This PRD owns the *what* and the *why*; the roadmap owns the *when and in what order*.
 
 ---
 
