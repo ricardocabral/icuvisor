@@ -16,9 +16,10 @@
 - [x] Write plan before changing source files
 
 **Plan:**
-- Keep `cmd/icuvisor/main.go` as a thin entrypoint with build-time `main.version`; it should delegate all command handling to `internal/app` and only decide stderr/exit behavior.
-- Implement `internal/app` with `version` command support and a default startup path representing stdio server mode. For TP-001, default startup should validate/load config and return a clear placeholder error until later MCP wiring lands.
-- Propagate build version through `internal/app` options so future intervals User-Agent and MCP `_meta.server_version` can use one source of truth.
+- Keep `cmd/icuvisor/main.go` as a thin entrypoint with build-time `main.version`; it should call `app.Run(ctx, app.Options{Version: version, Args: os.Args[1:], Stdout: os.Stdout, Stderr: os.Stderr})` (or equivalent) and only decide final stderr/exit behavior.
+- Implement `internal/app` with `version` command support and a default startup path representing stdio server mode. For Step 2, default startup should delegate to an injectable internal starter and return a short placeholder such as `stdio server not implemented yet`; config loading/validation belongs to Step 3.
+- Test Step 2 at the `internal/app` layer with injected args/stdout/starter: `version` writes injected version and returns nil, default invocation delegates and returns starter error, and unknown commands return a short actionable error.
+- Propagate build version through `internal/app.Options.Version` into an app/server startup config (for example `ServerInfo{Version: ...}`) so future intervals User-Agent and MCP `_meta.server_version` use one injected source of truth; do not add `internal/version` unless ldflags are changed.
 - Implement `internal/config` as the central v0.1 config contract: API key, normalized athlete ID, timezone, optional API base URL, optional HTTP timeout, optional config path; load JSON first then environment/.env overrides with tests documenting precedence.
 - Redact secrets in any string/error surfaces and never write API keys to disk; `.env` support is read-only developer convenience and must not print values.
 
@@ -26,10 +27,10 @@
 
 **Status:** 🟡 In Progress
 
-- [ ] R001 plan review: narrow Step 2 plan so default startup does not load/validate config yet
-- [ ] R001 plan review: explicitly test internal app `version`, default delegation error, and short unknown-command errors
-- [ ] R001 plan review: define `app.Run(ctx, Options{...})` entrypoint shape before coding
-- [ ] R001 plan review: make version injection to lower runtime/server config concrete without importing from `main`
+- [x] R001 plan review: narrow Step 2 plan so default startup does not load/validate config yet
+- [x] R001 plan review: explicitly test internal app `version`, default delegation error, and short unknown-command errors
+- [x] R001 plan review: define `app.Run(ctx, Options{...})` entrypoint shape before coding
+- [x] R001 plan review: make version injection to lower runtime/server config concrete without importing from `main`
 - [ ] Keep `icuvisor version` working
 - [ ] Delegate default startup from thin `main` to internal package
 - [ ] Pass build version to lower layers
