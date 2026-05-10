@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — foundation
 **Iteration:** 1
-**Current Step:** Step 3: Implement minimal manual config loading
+**Current Step:** Step 4: Add tests for foundation behavior
 **Last Updated:** 2026-05-10
 **State:** Ready
 
@@ -64,11 +64,11 @@
 
 ## Step 4: Add tests for foundation behavior
 
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 
-- [ ] Table-driven tests for athlete-ID normalization
-- [ ] Table-driven tests for config loading/validation/defaults/redaction
-- [ ] Tests for short actionable invalid/missing config errors
+- [x] Table-driven tests for athlete-ID normalization
+- [x] Table-driven tests for config loading/validation/defaults/redaction
+- [x] Tests for short actionable invalid/missing config errors
 
 ## Step 5: Verify and document
 
@@ -97,7 +97,9 @@
 | 2026-05-10 | Internal boundaries decided | Use thin `cmd/icuvisor`; `internal/app` for CLI/default startup and version propagation; `internal/config` for typed config, env/JSON/.env loading, ID normalization, validation, redaction; future `internal/intervals`, `internal/mcp`, and `internal/tools` consume config rather than parse env. |
 | 2026-05-10 | Step 2 targeted tests passed | `go test ./cmd/icuvisor ./internal/app` passed after adding app Run tests and thin main delegation. |
 | 2026-05-10 | Step 3 targeted tests passed | `go test ./internal/app ./internal/config ./cmd/icuvisor` passed after adding config loader, app config path parsing, redaction, and normalization. |
+| 2026-05-10 | Step 4 targeted tests passed | `go test ./internal/config ./internal/app` passed; coverage includes athlete ID normalization, config precedence/defaults/redaction, app version/config-free behavior, and actionable config errors. |
 | 2026-05-10 21:33 | Review R001 | plan Step 2: UNKNOWN |
 | 2026-05-10 21:36 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-10 21:40 | Review R001 | plan Step 3: REVISE |
 | 2026-05-10 21:43 | Review R001 | plan Step 3: APPROVE |
+| 2026-05-10 21:50 | Review R001 | plan Step 4: APPROVE |
