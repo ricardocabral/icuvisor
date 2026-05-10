@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "generatedAt": "2026-05-10T00:00:00.000Z",
+  "source": "docs/prd/PRD-icuvisor.md + ROADMAP.md v0.1",
+  "tasks": {
+    "TP-001": [],
+    "TP-002": [
+      "TP-001"
+    ],
+    "TP-003": [
+      "TP-001"
+    ],
+    "TP-004": [
+      "TP-002",
+      "TP-003"
+    ],
+    "TP-005": [
+      "TP-004"
+    ],
+    "TP-006": [
+      "TP-004"
+    ]
+  }
+}

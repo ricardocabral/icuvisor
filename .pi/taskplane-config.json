@@ -1,0 +1,27 @@
+{
+  "configVersion": 1,
+  "taskRunner": {
+    "project": {
+      "name": "icuvisor",
+      "description": "Local-first MCP server for intervals.icu training data"
+    },
+    "paths": {
+      "tasks": "taskplane-tasks"
+    },
+    "testing": {
+      "commands": {
+        "unit": "make test",
+        "race": "make test-race",
+        "lint": "make lint",
+        "build": "make build"
+      }
+    },
+    "taskAreas": {
+      "general": {
+        "path": "taskplane-tasks",
+        "prefix": "TP",
+        "context": "taskplane-tasks/CONTEXT.md"
+      }
+    }
+  }
+}
