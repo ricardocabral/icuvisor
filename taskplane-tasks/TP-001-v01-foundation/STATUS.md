@@ -1,7 +1,7 @@
 # TP-001 — Status
 
 **Issue:** v0.1 — foundation
-**Iteration:** 1
+**Iteration:** 2
 **Current Step:** Step 5: Verify and document
 **Last Updated:** 2026-05-10
 **State:** ✅ Complete
@@ -112,3 +112,8 @@
 
 | 2026-05-10 21:56 | Exit intercept reprompt | Supervisor provided instructions (411 chars) — reprompting worker |
 | 2026-05-10 | Completion marker conflict noted | User requested worker-created `.DONE`, but active worker instructions explicitly forbid creating/touching `.DONE`; task remains complete in STATUS and source/test/doc changes are committed. |
+
+| 2026-05-10 21:57 | Exit intercept close | Supervisor directed session close: "let it fail" |
+| 2026-05-10 21:57 | Worker iter 1 | done in 1736s, tools: 167 |
+| 2026-05-10 21:57 | No progress | Iteration 1: 0 new checkboxes (1/3 stall limit) |
+| 2026-05-10 21:57 | Step 1 started | Capture the foundation plan in STATUS.md |
