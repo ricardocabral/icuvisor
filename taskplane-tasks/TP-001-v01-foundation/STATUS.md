@@ -109,3 +109,6 @@
 | 2026-05-10 21:50 | Review R001 | plan Step 4: APPROVE |
 
 | 2026-05-10 21:55 | Exit intercept reprompt | Supervisor provided instructions (491 chars) — reprompting worker |
+
+| 2026-05-10 21:56 | Exit intercept reprompt | Supervisor provided instructions (411 chars) — reprompting worker |
+| 2026-05-10 | Completion marker conflict noted | User requested worker-created `.DONE`, but active worker instructions explicitly forbid creating/touching `.DONE`; task remains complete in STATUS and source/test/doc changes are committed. |
