@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — intervals client
 **Iteration:** 1
-**Current Step:** Step 2: Implement the HTTP client core
+**Current Step:** Step 3: Implement retries and structured errors
 **Last Updated:** 2026-05-10
 **State:** In Progress
 
@@ -31,13 +31,13 @@
 
 ## Step 3: Implement retries and structured errors
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
-- [ ] Retry 429 and 5xx with exponential backoff and jitter
-- [ ] Respect `Retry-After` when practical
-- [ ] Return structured/sentinel errors for stable contract points
-- [ ] Wrap errors with `%w`
-- [ ] Keep error strings secret-free and short
+- [x] Retry 429 and 5xx with exponential backoff and jitter
+- [x] Respect `Retry-After` when practical
+- [x] Return structured/sentinel errors for stable contract points
+- [x] Wrap errors with `%w`
+- [x] Keep error strings secret-free and short
 
 ## Step 4: Implement athlete profile retrieval
 
@@ -75,6 +75,7 @@
 | 2026-05-10 22:22 | Review R001 | code Step 1: UNKNOWN |
 | 2026-05-10 | Step 1 review recovery | Reviewer produced UNKNOWN after R001 fixes rather than an APPROVE/REVISE verdict; findings were addressed in STATUS.md and execution proceeds cautiously as reviewer-unavailable/unclear. |
 | 2026-05-10 | Step 2 started | Implement the HTTP client core. |
+| 2026-05-10 | Step 3 started | Implement retries and structured errors. |
 | 2026-05-10 22:23 | Review R001 | code Step 1: UNKNOWN |
 | 2026-05-10 22:25 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-10 22:30 | Review R001 | code Step 2: APPROVE |
