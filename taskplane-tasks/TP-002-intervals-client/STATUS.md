@@ -38,7 +38,7 @@
 - [x] Return structured/sentinel errors for stable contract points
 - [x] Wrap errors with `%w`
 - [x] Keep error strings secret-free and short
-- [ ] R001: Add focused coverage or caller so retry/error helpers are lint-clean
+- [x] R001: Add focused coverage or caller so retry/error helpers are lint-clean
 
 ## Step 4: Implement athlete profile retrieval
 
