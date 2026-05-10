@@ -16,6 +16,7 @@
 - [x] Write plan before changing source files
 
 **Plan:**
+
 - Keep `cmd/icuvisor/main.go` as a thin entrypoint with build-time `main.version`; it should call `app.Run(ctx, app.Options{Version: version, Args: os.Args[1:], Stdout: os.Stdout, Stderr: os.Stderr})` (or equivalent) and only decide final stderr/exit behavior.
 - Implement `internal/app` with `version` command support and a default startup path representing stdio server mode. For Step 2, default startup should delegate to an injectable internal starter and return a short placeholder such as `stdio server not implemented yet`; config loading/validation belongs to Step 3.
 - Test Step 2 at the `internal/app` layer with injected args/stdout/starter: `version` writes injected version and returns nil, default invocation delegates and returns starter error, and unknown commands return a short actionable error.
@@ -49,6 +50,7 @@
 - [x] Define typed v0.1 config inputs
 
 **Step 3 config plan:**
+
 - Public contract: `internal/config.Config` with JSON fields `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout`; env vars `INTERVALS_ICU_API_KEY`, `INTERVALS_ICU_ATHLETE_ID`, `ICUVISOR_TIMEZONE`, `ICUVISOR_API_BASE_URL`, `ICUVISOR_HTTP_TIMEOUT`, and `ICUVISOR_CONFIG` for the file path.
 - CLI support in v0.1 is limited to `--config <path>` / `--config=<path>` for default startup. There is no automatic platform config path yet; if no path/env is provided, loading uses defaults plus env/`.env`.
 - Precedence: built-in defaults < JSON file selected by `ICUVISOR_CONFIG` or `--config` < local `.env` values applied only for keys still absent < process environment < CLI flags. `.env` never overrides explicit MCP-client/process env.
@@ -99,8 +101,11 @@
 | 2026-05-10 | Step 3 targeted tests passed | `go test ./internal/app ./internal/config ./cmd/icuvisor` passed after adding config loader, app config path parsing, redaction, and normalization. |
 | 2026-05-10 | Step 4 targeted tests passed | `go test ./internal/config ./internal/app` passed; coverage includes athlete ID normalization, config precedence/defaults/redaction, app version/config-free behavior, and actionable config errors. |
 | 2026-05-10 | Step 5 verification passed | `go fmt ./...`, `make test`, `make build`, and `make lint` passed; README and CHANGELOG updated for v0.1 foundation behavior. |
+| 2026-05-10 | Completion contract rechecked | All step statuses/checklists are complete; `.DONE` is absent as expected because Taskplane runtime owns it; `git status` only showed post-completion STATUS/CHANGELOG formatting/log updates before this final checkpoint. |
 | 2026-05-10 21:33 | Review R001 | plan Step 2: UNKNOWN |
 | 2026-05-10 21:36 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-10 21:40 | Review R001 | plan Step 3: REVISE |
 | 2026-05-10 21:43 | Review R001 | plan Step 3: APPROVE |
 | 2026-05-10 21:50 | Review R001 | plan Step 4: APPROVE |
+
+| 2026-05-10 21:55 | Exit intercept reprompt | Supervisor provided instructions (491 chars) — reprompting worker |
