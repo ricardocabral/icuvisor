@@ -177,13 +177,13 @@ User opens Claude Desktop and types *"Analyze my last 10 cycling activities and 
 
 icuvisor checks `releases.icuvisor.dev` once per day. If a new signed release exists, the tray icon shows a dot; clicking "Update now" replaces the binary and restarts. No terminal commands. Opt-out in settings.
 
-After an update that adds or changes tool arguments, the post-update notification explicitly tells the user to **start a new conversation in their AI client** to pick up the new tool schema. MCP clients (Claude in particular) cache the tool catalog at conversation start, so an in-flight chat will keep using the old schema and report "the fix didn't work" — observed repeatedly on the icusync.icu forum thread (posts #4, #10, #17, #19).
+After an update that adds or changes tool arguments, the post-update notification explicitly tells the user to **start a new conversation in their AI client** to pick up the new tool schema. MCP clients (Claude in particular) cache the tool catalog at conversation start, so an in-flight chat will keep using the old schema and report "the fix didn't work."
 
 **Flow D — Coach mode**
 
 Coach pastes a coach-scoped intervals.icu API key. icuvisor lists athletes via `list_athletes`; the coach selects which subset is exposed to tools. The active athlete is passed as a tool argument (`athlete_id`) on every call, with a configurable default. Mirrors issue #88 and forum posts #18/#21/#60.
 
-The coach also picks, **per athlete**, which tools are exposed — e.g. read-only access for a prospective athlete, full read+write for an active client. Granular per-tool permissions are enforced in the server before any intervals.icu call; the LLM never sees disallowed tools in its catalog. This mirrors what icusync.icu ships ("granular tool permission control") and is icuvisor's local-first equivalent.
+The coach also picks, **per athlete**, which tools are exposed — e.g. read-only access for a prospective athlete, full read+write for an active client. Granular per-tool permissions are enforced in the server before any intervals.icu call; the LLM never sees disallowed tools in its catalog.
 
 Wireframes will be produced separately; this PRD specifies behavior only.
 
@@ -247,8 +247,8 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 - **Scale metadata in tool descriptions** so the LLM knows `feel` is 1-5, `sleepQuality` is 1-4.
 - **Timezone normalization** — all dates rendered in the athlete's configured TZ; tool docstrings mention the convention.
 - **Athlete ID normalization** — accept `i12345` or `12345`; emit `i12345` consistently.
-- **Strava-imported activity handling** — intervals.icu blocks Strava-synced activities from its public API per Strava's ToS (icusync.icu forum thread, post #18). Tools must detect the blocked state and return a structured `unavailable: { reason: "strava_tos", workaround: "connect device directly to intervals.icu (Garmin, Wahoo, Coros, Suunto, Polar)" }` rather than empty/`N/A` fields the LLM might hallucinate over.
-- **Per-athlete unit normalization** — read `preferred_units` (miles vs km) from the athlete profile and render distances/paces in that unit, with the unit name embedded in the field key or `_meta` so the LLM can't drift to its default. Same pattern as the timezone rule (icusync.icu forum thread, post #20).
+- **Strava-imported activity handling** — intervals.icu blocks Strava-synced activities from its public API per Strava's ToS. Tools must detect the blocked state and return a structured `unavailable: { reason: "strava_tos", workaround: "connect device directly to intervals.icu (Garmin, Wahoo, Coros, Suunto, Polar)" }` rather than empty/`N/A` fields the LLM might hallucinate over.
+- **Per-athlete unit normalization** — read `preferred_units` (miles vs km) from the athlete profile and render distances/paces in that unit, with the unit name embedded in the field key or `_meta` so the LLM can't drift to its default. Same pattern as the timezone rule.
 
 #### E. Configuration
 
@@ -287,13 +287,13 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 3. **The intervals.icu API supports strength training and training plan retrieval.** *(Validate during tool-catalog implementation.)*
 4. **icusync.icu's "extended metrics"** (DFA α1, W' balance, core temp, running dynamics) are exposed by the intervals.icu API rather than computed server-side by icusync. *(Validate during tool-catalog implementation.)*
 5. **Coach-mode credential delegation is safe** when the coach-scoped API key is held only by the local binary and never passed as a tool parameter. *(Threat-model review before coach-mode ships.)*
-6. **Demand**: forum thread (~100 posts, multiple monthly active discussants) suggests a real audience, but we have not surveyed it directly. *(Validate by pre-launch waitlist on icuvisor.dev — target 500 signups before v1.0.)* Note: the icusync.icu launch thread (20 posts over 4 days) is dominated by the maintainer fixing things in real time and is a stronger signal of icusync momentum than of latent demand for a free local alternative. Recalibrate the 500 figure once the waitlist is live.
-7. **MCP tool-schema caching is per-conversation on all target clients.** Repeatedly observed on the icusync.icu forum thread when the maintainer shipped fixes mid-conversation. Implications:
+6. **Demand**: forum thread (~100 posts, multiple monthly active discussants) suggests a real audience, but we have not surveyed it directly. The competitive signal from icusync.icu is also weaker than its post count suggests — most activity is maintainer support, not latent demand for a free local alternative. *(Validate by pre-launch waitlist on icuvisor.dev; pick a target only once the waitlist is live.)*
+7. **MCP tool-schema caching is per-conversation on all target clients.** Implications:
    - Auto-update UX must tell the user to start a new chat (see Flow C).
    - Tool argument changes must be **additive-only** on stable tools — no removals, no renames. Document in `CONTRIBUTING.md`.
    - Every tool response embeds `_meta.server_version` so the LLM can flag a schema mismatch when it sees stale arguments rejected. *(Validate by sweep across Claude Desktop, Claude Code, ChatGPT Dev Mode, Cursor.)*
-8. **Mobile access is the dominant reason users pay for icusync.icu** (forum thread posts #14, #20). Re-evaluate whether the hosted relay (§8 / vNext) is correctly phased or should move earlier as a paid/donation-supported optional service. *(Validate during pre-launch waitlist — ask about mobile need explicitly.)*
-9. **icusync.icu does not appear to have context-window problems** in the forum thread — zero token/context complaints across 20 posts. KR5's "30% of Python upstream" target may not be a strong differentiator on its own. *(Validate by measuring icusync.icu's response shapes, not just mvilanova's, on the same prompt set.)*
+8. **Mobile access is a dominant reason athletes will pay for a hosted competitor.** Re-evaluate whether the hosted relay (§8 / vNext) is correctly phased or should move earlier as an opt-in optional service. *(Validate during pre-launch waitlist — ask about mobile need explicitly.)*
+9. **Token efficiency may not be a strong standalone differentiator.** Competing hosted servers do not appear to suffer obvious context-window problems, so KR5's "30% of Python upstream" target wins on the mvilanova comparison but not the icusync comparison. *(Validate by measuring icusync.icu's response shapes alongside mvilanova's on the same prompt set.)*
 10. **Strava-blocked-activity detection** depends on a stable upstream marker. *(Validate by black-box testing against an athlete account with mixed direct/Strava-imported activities.)*
 11. **`preferred_units` is exposed on the intervals.icu athlete profile and round-trips through the API.** *(Validate during `get_athlete_profile` implementation.)*
 

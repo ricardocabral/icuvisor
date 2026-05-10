@@ -19,12 +19,12 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 - [ ] All ~25 launch tools implemented (see PRD §7.2.C).
 - [ ] Terse-by-default and `include_full` response modes.
 - [ ] Server-side pagination for `get_activities`.
-- [ ] Strava-blocked-activity detection: tools return a structured `unavailable: { reason: "strava_tos", workaround: ... }` rather than empty fields (PRD §7.2.D).
-- [ ] Per-athlete unit normalization (miles vs km) read from `preferred_units`, embedded in field names / `_meta` (PRD §7.2.D).
-- [ ] `add_or_update_event` preserves free-text `description` verbatim; `workout_doc` is the only field that accepts structured-block normalization (PRD §7.2.C).
-- [ ] Tool-schema stability rules enforced in CI: tool argument changes are additive-only on stable tools; renames/removals require a new tool name (PRD §7.4 #7).
+- [ ] Strava-blocked-activity detection: tools return a structured `unavailable: { reason: "strava_tos", workaround: ... }` rather than empty fields.
+- [ ] Per-athlete unit normalization (miles vs km) read from `preferred_units`, embedded in field names / `_meta`.
+- [ ] `add_or_update_event` preserves free-text `description` verbatim; `workout_doc` is the only field that accepts structured-block normalization.
+- [ ] Tool-schema stability rules enforced in CI: tool argument changes are additive-only on stable tools; renames/removals require a new tool name.
 - [ ] `_meta.server_version` embedded in every tool response.
-- [ ] Coach mode behind a feature flag, with per-athlete granular tool permissions (PRD §7.1 Flow D).
+- [ ] Coach mode behind a feature flag, with per-athlete granular tool permissions.
 - [ ] OS keychain credential storage (macOS Keychain, Windows Credential Manager, libsecret).
 - [ ] Streamable HTTP transport (localhost-bound by default).
 - [ ] macOS signed installer; manual Claude Desktop config documentation.
@@ -38,7 +38,7 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
   - macOS: `.dmg` + Homebrew tap.
   - Windows: `.msi` + Scoop bucket + Winget manifest.
   - Linux: `.deb` + `.rpm` + shell installer.
-- [ ] Auto-update via signed releases (opt-out). Post-update notification instructs the user to start a new conversation in their AI client when tool schemas changed, since MCP clients cache the catalog per conversation (PRD §7.1 Flow C, §7.4 #7).
+- [ ] Auto-update via signed releases (opt-out). Post-update notification instructs the user to start a new conversation in their AI client when tool schemas changed, since MCP clients cache the catalog per conversation.
 - [ ] DXT bundle for Claude Desktop where supported.
 - [ ] Onboarding UI with one-click client config for: Claude Desktop, Claude Code, Claude Cowork, ChatGPT Developer Mode (instructions), Pi.dev, Cursor, Continue, Zed.
 - [ ] Documented manual config for any MCP client.
@@ -56,7 +56,7 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 
 ## vNext — Future (out of scope for v1)
 
-- **Optional hosted relay** (icuvisor cloud, opt-in, BYO key): for mobile-only athletes who can't run a desktop binary. Same code path; the binary runs in our infra and authenticates via a token. Forum evidence (icusync.icu thread posts #14, #20) suggests mobile access is the dominant reason users pay icusync — re-evaluate phasing based on PRD §7.4 #8 validation; this may pull forward into v1.x.
+- **Optional hosted relay** (icuvisor cloud, opt-in, BYO key): for mobile-only athletes who can't run a desktop binary. Same code path; the binary runs in our infra and authenticates via a token. Mobile access is a dominant reason athletes pay competing hosted servers, so this may pull forward into v1.x pending PRD §7.4 #8 validation.
 - **Strava / TrainingPeaks** companion MCP servers in the same family.
 - **Workout templates** library, AI-generated and athlete-curated.
 - **Conversation memory** export hooks (Claude Projects integration).
