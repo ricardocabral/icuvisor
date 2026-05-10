@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	EnvAPIKey      = "INTERVALS_ICU_API_KEY"
+	EnvAPIKey      = "INTERVALS_ICU_API_KEY" // #nosec G101 -- environment variable name, not a credential.
 	EnvAthleteID   = "INTERVALS_ICU_ATHLETE_ID"
 	EnvConfigPath  = "ICUVISOR_CONFIG"
 	EnvTimezone    = "ICUVISOR_TIMEZONE"

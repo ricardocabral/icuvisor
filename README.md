@@ -45,9 +45,13 @@ make build
 
 ```bash
 # 1. Get an intervals.icu API key from https://intervals.icu/settings
-# 2. (todo) icuvisor configure
-# 3. (todo) point your MCP client at the binary
+# 2. Provide v0.1 manual config via env or JSON
+export INTERVALS_ICU_API_KEY="..."
+export INTERVALS_ICU_ATHLETE_ID="i12345"
+./bin/icuvisor version
 ```
+
+For local development, `icuvisor` can read a local untracked `.env` file containing `INTERVALS_ICU_API_KEY` and `INTERVALS_ICU_ATHLETE_ID`. Do not commit real API keys. For MCP client config, use process env vars or pass a JSON file with `--config /path/to/icuvisor.json` using fields `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout`.
 
 Detailed client setup will live in [`docs/clients/`](docs/) once v0.5 ships.
 
@@ -55,10 +59,11 @@ Detailed client setup will live in [`docs/clients/`](docs/) once v0.5 ships.
 
 ```
 cmd/icuvisor/       Binary entrypoint
+internal/app/       CLI/default startup wiring
+internal/config/    Manual v0.1 config loading and athlete-ID normalization
 internal/intervals/ intervals.icu API client
 internal/mcp/       MCP server + transports
 internal/tools/     Tool implementations
-internal/config/    Config + keychain storage
 docs/               PRD, roadmap, design notes
 ```
 

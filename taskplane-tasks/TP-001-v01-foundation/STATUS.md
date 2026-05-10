@@ -2,9 +2,9 @@
 
 **Issue:** v0.1 — foundation
 **Iteration:** 1
-**Current Step:** Step 4: Add tests for foundation behavior
+**Current Step:** Step 5: Verify and document
 **Last Updated:** 2026-05-10
-**State:** Ready
+**State:** ✅ Complete
 
 ## Step 1: Capture the foundation plan in STATUS.md
 
@@ -72,13 +72,13 @@
 
 ## Step 5: Verify and document
 
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 
-- [ ] Run `go fmt ./...`
-- [ ] Run `make test`
-- [ ] Run `make build`
-- [ ] Run `make lint` if available
-- [ ] Update `CHANGELOG.md`
+- [x] Run `go fmt ./...`
+- [x] Run `make test`
+- [x] Run `make build`
+- [x] Run `make lint` if available
+- [x] Update `CHANGELOG.md`
 
 ## Notes
 
@@ -98,6 +98,7 @@
 | 2026-05-10 | Step 2 targeted tests passed | `go test ./cmd/icuvisor ./internal/app` passed after adding app Run tests and thin main delegation. |
 | 2026-05-10 | Step 3 targeted tests passed | `go test ./internal/app ./internal/config ./cmd/icuvisor` passed after adding config loader, app config path parsing, redaction, and normalization. |
 | 2026-05-10 | Step 4 targeted tests passed | `go test ./internal/config ./internal/app` passed; coverage includes athlete ID normalization, config precedence/defaults/redaction, app version/config-free behavior, and actionable config errors. |
+| 2026-05-10 | Step 5 verification passed | `go fmt ./...`, `make test`, `make build`, and `make lint` passed; README and CHANGELOG updated for v0.1 foundation behavior. |
 | 2026-05-10 21:33 | Review R001 | plan Step 2: UNKNOWN |
 | 2026-05-10 21:36 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-10 21:40 | Review R001 | plan Step 3: REVISE |
