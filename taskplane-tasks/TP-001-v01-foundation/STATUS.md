@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — foundation
 **Iteration:** 1
-**Current Step:** Step 1: Capture the foundation plan in STATUS.md
+**Current Step:** Step 2: Implement the CLI and version foundation
 **Last Updated:** 2026-05-10
 **State:** Ready
 
@@ -24,8 +24,12 @@
 
 ## Step 2: Implement the CLI and version foundation
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
+- [ ] R001 plan review: narrow Step 2 plan so default startup does not load/validate config yet
+- [ ] R001 plan review: explicitly test internal app `version`, default delegation error, and short unknown-command errors
+- [ ] R001 plan review: define `app.Run(ctx, Options{...})` entrypoint shape before coding
+- [ ] R001 plan review: make version injection to lower runtime/server config concrete without importing from `main`
 - [ ] Keep `icuvisor version` working
 - [ ] Delegate default startup from thin `main` to internal package
 - [ ] Pass build version to lower layers
@@ -60,6 +64,10 @@
 - [ ] Run `make lint` if available
 - [ ] Update `CHANGELOG.md`
 
+## Notes
+
+- R001 plan review requested narrowing Step 2 away from config loading, explicit app-level tests, a concrete `app.Run(ctx, Options{...})` shape, and injected version propagation.
+
 ## Discoveries
 
 | Date | Finding | Impact |
@@ -70,3 +78,4 @@
 | 2026-05-10 | Current foundation inspected | Repo has only `cmd/icuvisor/main.go`, no `internal/` packages/tests yet; Makefile/CI expect `go build ./...`, `go test -race ./...`, optional golangci-lint. |
 | 2026-05-10 | v0.1 CLI shape decided | Keep `icuvisor version`; default invocation starts stdio MCP server path via internal app package; config path may come from flag/env, with env/manual JSON for credentials. |
 | 2026-05-10 | Internal boundaries decided | Use thin `cmd/icuvisor`; `internal/app` for CLI/default startup and version propagation; `internal/config` for typed config, env/JSON/.env loading, ID normalization, validation, redaction; future `internal/intervals`, `internal/mcp`, and `internal/tools` consume config rather than parse env. |
+| 2026-05-10 21:33 | Review R001 | plan Step 2: UNKNOWN |
