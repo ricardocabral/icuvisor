@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — intervals client
 **Iteration:** 1
-**Current Step:** Step 3: Implement retries and structured errors
+**Current Step:** Step 4: Implement athlete profile retrieval
 **Last Updated:** 2026-05-10
 **State:** In Progress
 
@@ -42,12 +42,12 @@
 
 ## Step 4: Implement athlete profile retrieval
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
-- [ ] Add profile retrieval method using configured athlete ID
-- [ ] Capture v0.1 profile fields
-- [ ] Expose timezone/unit fields to later response shaping when available
-- [ ] Avoid heavy/raw payloads by default
+- [x] Add profile retrieval method using configured athlete ID
+- [x] Capture v0.1 profile fields
+- [x] Expose timezone/unit fields to later response shaping when available
+- [x] Avoid heavy/raw payloads by default
 
 ## Step 5: Test and verify
 
@@ -77,8 +77,10 @@
 | 2026-05-10 | Step 1 review recovery | Reviewer produced UNKNOWN after R001 fixes rather than an APPROVE/REVISE verdict; findings were addressed in STATUS.md and execution proceeds cautiously as reviewer-unavailable/unclear. |
 | 2026-05-10 | Step 2 started | Implement the HTTP client core. |
 | 2026-05-10 | Step 3 started | Implement retries and structured errors. |
+| 2026-05-10 | Step 4 started | Implement athlete profile retrieval. |
 | 2026-05-10 22:23 | Review R001 | code Step 1: UNKNOWN |
 | 2026-05-10 22:25 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-10 22:30 | Review R001 | code Step 2: APPROVE |
 | 2026-05-10 22:55 | Review R001 | code Step 3: REVISE |
 | 2026-05-10 22:58 | Review R001 | code Step 3: APPROVE |
+| 2026-05-10 23:00 | Review R001 | plan Step 4: APPROVE |

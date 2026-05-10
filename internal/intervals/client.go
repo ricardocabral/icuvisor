@@ -92,6 +92,15 @@ func NewClient(opts Options) (*Client, error) {
 	}, nil
 }
 
+// GetAthleteProfile retrieves the configured athlete profile with sport settings.
+func (c *Client) GetAthleteProfile(ctx context.Context) (AthleteWithSportSettings, error) {
+	var profile AthleteWithSportSettings
+	if err := c.doJSON(ctx, http.MethodGet, &profile, "athlete", c.athleteID); err != nil {
+		return AthleteWithSportSettings{}, fmt.Errorf("getting athlete profile: %w", err)
+	}
+	return profile, nil
+}
+
 func (c *Client) newRequest(ctx context.Context, method string, pathParts ...string) (*http.Request, error) {
 	requestURL := c.baseURL.JoinPath(pathParts...)
 	req, err := http.NewRequestWithContext(ctx, method, requestURL.String(), nil)
