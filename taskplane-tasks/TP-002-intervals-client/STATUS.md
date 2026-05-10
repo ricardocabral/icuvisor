@@ -20,7 +20,7 @@
 
 ## Step 2: Implement the HTTP client core
 
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 
 - [x] Create typed client from config/version/shared http client
 - [x] Use Basic Auth without leaking API key
@@ -77,3 +77,4 @@
 | 2026-05-10 | Step 2 started | Implement the HTTP client core. |
 | 2026-05-10 22:23 | Review R001 | code Step 1: UNKNOWN |
 | 2026-05-10 22:25 | Review R001 | plan Step 2: APPROVE |
+| 2026-05-10 22:30 | Review R001 | code Step 2: APPROVE |
