@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ .Site.Title }}</title>
+  <meta name="description" content="{{ .Site.Params.description }}" />
+  <link rel="icon" href="{{ "favicon.svg" | relURL }}" type="image/svg+xml" />
+  <meta property="og:title" content="{{ .Site.Title }}" />
+  <meta property="og:description" content="{{ .Site.Params.description }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="{{ .Site.BaseURL }}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ "css/style.css" | relURL }}" />
+</head>
+<body>
+  <div class="container">
+
+    <header class="site-header">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">i</span>
+        <span>icuvisor</span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#install">Install</a>
+        <a href="#tools">Tools</a>
+        <a class="btn btn-ghost" href="{{ .Site.Params.github }}" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="bento" role="main">
+
+      <section class="card hero col-12" aria-labelledby="hero-title">
+        <span class="status">Pre-alpha · v0.1 in progress</span>
+        <h1 id="hero-title">Talk to your <span style="background:linear-gradient(120deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;color:transparent;">intervals.icu</span> data.</h1>
+        <p class="lead">icuvisor is an open-source <a href="https://modelcontextprotocol.io" rel="noopener">MCP</a> server for <a href="{{ .Site.Params.intervals }}" rel="noopener">intervals.icu</a>, shipped as a single signed Go binary. Connect Claude, ChatGPT, Cursor, Pi, or Zed to your training data — locally, privately, free.</p>
+        <div class="actions">
+          <a class="btn" href="#install">Get started</a>
+          <a class="btn btn-ghost" href="{{ .Site.Params.github }}" rel="noopener">View on GitHub →</a>
+        </div>
+      </section>
+
+      <section class="card col-8" id="features" aria-labelledby="why-title">
+        <span class="tag">Why icuvisor</span>
+        <h2 id="why-title">Your training data, in any AI assistant.</h2>
+        <p>Ask follow-up questions about last week's threshold workout. Get a plain-English summary of your form trend. Plan an event from your calendar. icuvisor exposes intervals.icu through a clean MCP catalog so the assistant you already use can read and reason over your data.</p>
+        <ul class="feature-list">
+          <li><strong>Single signed binary</strong> for macOS, Windows, and Linux — no Python, no Docker.</li>
+          <li><strong>Terse-by-default responses</strong> tuned for LLM context windows. Heavy payloads are opt-in.</li>
+          <li><strong>~25 MCP tools</strong> covering activities, wellness, fitness, events, and custom items.</li>
+          <li><strong>Coach mode</strong> for working across a roster of athletes from one install.</li>
+          <li><strong>stdio &amp; Streamable HTTP</strong> transports for every major MCP client.</li>
+        </ul>
+      </section>
+
+      <section class="card col-4" aria-labelledby="privacy-title">
+        <span class="tag">Privacy</span>
+        <h3 id="privacy-title">Local-first by design.</h3>
+        <p>Your API key lives in the OS keychain — never on disk in plain text, never in a tool argument, never on someone else's server. The HTTP transport binds to <span class="mono">127.0.0.1</span> by default.</p>
+      </section>
+
+      <section class="card col-4" aria-labelledby="oss-title">
+        <span class="tag">Open source &amp; free</span>
+        <h3 id="oss-title">No subscription. No lock-in.</h3>
+        <p>Free forever, with no account to create and nothing to upgrade. The code is open so you can see exactly what runs on your machine — and the community can keep it alive long after any single maintainer.</p>
+      </section>
+
+      <section class="card col-8" id="install" aria-labelledby="install-title">
+        <span class="tag">Install</span>
+        <h3 id="install-title">Build from source today.</h3>
+        <p>Signed installers land with v1.0. Until then, building locally takes about 30 seconds.</p>
+<pre class="code"><span class="c"># 1. Clone &amp; build (Go 1.23+)</span>
+git clone https://github.com/ricardocabral/icuvisor.git
+cd icuvisor
+make build
+
+<span class="c"># 2. Grab an API key from intervals.icu/settings,</span>
+<span class="c">#    then point your MCP client at ./bin/icuvisor</span>
+./bin/icuvisor version</pre>
+        <p style="margin-top:var(--s-3)"><a href="https://github.com/ricardocabral/icuvisor#quickstart" rel="noopener">Read the full quickstart →</a></p>
+      </section>
+
+      <section class="card col-12" id="tools" aria-labelledby="tools-title">
+        <span class="tag">Tool catalog</span>
+        <h2 id="tools-title">~25 MCP tools, ready for v1.0.</h2>
+        <p>One file per tool, terse responses, athlete-id normalization, and pagination tuned to fit comfortably inside a free-tier Claude context window.</p>
+        <div class="tools" aria-label="Planned tool catalog">
+          <span class="tool">list_activities</span>
+          <span class="tool">get_activity</span>
+          <span class="tool">activity_streams</span>
+          <span class="tool">activity_intervals</span>
+          <span class="tool">list_wellness</span>
+          <span class="tool">get_wellness</span>
+          <span class="tool">upsert_wellness</span>
+          <span class="tool">fitness_summary</span>
+          <span class="tool">list_events</span>
+          <span class="tool">get_event</span>
+          <span class="tool">create_event</span>
+          <span class="tool">update_event</span>
+          <span class="tool">delete_event</span>
+          <span class="tool">list_custom_items</span>
+          <span class="tool">athlete_profile</span>
+          <span class="tool">power_curve</span>
+          <span class="tool">hr_zones</span>
+          <span class="tool">pace_zones</span>
+        </div>
+        <p style="font-size:var(--t-12);color:var(--text-muted);margin-top:var(--s-2)">Names indicative. Final catalog tracked in the <a href="https://github.com/ricardocabral/icuvisor/blob/main/docs/prd/PRD-icuvisor.md" rel="noopener">PRD</a>.</p>
+      </section>
+
+      <section class="card col-6" aria-labelledby="clients-title">
+        <span class="tag">Compatible clients</span>
+        <h3 id="clients-title">Works where you already work.</h3>
+        <ul class="feature-list">
+          <li>Claude Desktop &amp; Claude Code</li>
+          <li>ChatGPT (custom MCP)</li>
+          <li>Cursor, Continue, Zed</li>
+          <li>Pi, and any other MCP-compatible client</li>
+        </ul>
+      </section>
+
+      <section class="card col-6" aria-labelledby="status-title">
+        <span class="tag tag-muted">Roadmap</span>
+        <h3 id="status-title">Where we are.</h3>
+        <p>icuvisor is pre-alpha. The walking-skeleton (v0.1) is in progress. v1.0 ships installers, the full tool catalog, and one-click client configs.</p>
+        <p><a href="https://github.com/ricardocabral/icuvisor/blob/main/ROADMAP.md" rel="noopener">Read the roadmap →</a></p>
+      </section>
+
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <strong>icuvisor</strong> · MIT-licensed · not affiliated with intervals.icu
+      </div>
+      <div>
+        <a href="{{ .Site.Params.github }}" rel="noopener">GitHub</a> ·
+        <a href="https://github.com/ricardocabral/icuvisor/blob/main/SECURITY.md" rel="noopener">Security</a> ·
+        <a href="https://github.com/ricardocabral/icuvisor/blob/main/CONTRIBUTING.md" rel="noopener">Contribute</a>
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>

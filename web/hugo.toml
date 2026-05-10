@@ -1,0 +1,21 @@
+baseURL = "https://icuvisor.app/"
+locale = "en-us"
+title = "icuvisor — Talk to your intervals.icu data"
+enableRobotsTXT = true
+disableKinds = ["taxonomy", "term", "RSS", "sitemap"]
+
+[params]
+  description = "Open-source MCP server that connects intervals.icu training data to Claude, ChatGPT, Cursor, and other AI assistants. One signed Go binary. No SaaS."
+  github = "https://github.com/ricardocabral/icuvisor"
+  intervals = "https://intervals.icu"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
+[outputs]
+  home = ["HTML"]
+
+[minify]
+  disableHTML = false

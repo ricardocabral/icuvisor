@@ -32,3 +32,8 @@ go.work.sum
 # Build artifacts
 /build/
 /tmp/
+
+# Hugo
+/web/public/
+/web/resources/
+/web/.hugo_build.lock
