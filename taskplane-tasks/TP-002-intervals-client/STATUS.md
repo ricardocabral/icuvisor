@@ -38,6 +38,7 @@
 - [x] Return structured/sentinel errors for stable contract points
 - [x] Wrap errors with `%w`
 - [x] Keep error strings secret-free and short
+- [ ] R001: Add focused coverage or caller so retry/error helpers are lint-clean
 
 ## Step 4: Implement athlete profile retrieval
 
@@ -79,3 +80,4 @@
 | 2026-05-10 22:23 | Review R001 | code Step 1: UNKNOWN |
 | 2026-05-10 22:25 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-10 22:30 | Review R001 | code Step 2: APPROVE |
+| 2026-05-10 22:55 | Review R001 | code Step 3: REVISE |
