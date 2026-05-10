@@ -17,6 +17,7 @@
 - [x] R001: Record registry contract and SDK boundary decision
 - [x] R001: Record panic-to-error safe registrar strategy
 - [x] R001: Record dependency transitive license scan result
+- [ ] R001-code: Include all modules from a full SDK dependency graph license scan
 
 ## Step 2: Add the MCP SDK and stdio server skeleton
 
@@ -73,3 +74,4 @@
 | 2026-05-10 | Transitive dependency license scan for SDK v1.3.1: SDK MIT; `golang-jwt/jwt/v5` MIT; `google/go-cmp` BSD-3-Clause; `google/jsonschema-go` MIT; `segmentio/encoding` MIT; `yosida95/uritemplate/v3` BSD-3-Clause; `golang.org/x/oauth2`, `x/tools`, `x/sys` BSD-3-Clause; `segmentio/asm` MIT. | No GPL/copyleft modules found among the newly introduced SDK dependency tree. |
 | 2026-05-10 23:14 | Review R001 | plan Step 1: REVISE |
 | 2026-05-10 23:19 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-10 23:22 | Review R001 | code Step 1: REVISE |
