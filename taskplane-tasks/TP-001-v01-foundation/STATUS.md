@@ -117,3 +117,7 @@
 | 2026-05-10 21:57 | Worker iter 1 | done in 1736s, tools: 167 |
 | 2026-05-10 21:57 | No progress | Iteration 1: 0 new checkboxes (1/3 stall limit) |
 | 2026-05-10 21:57 | Step 1 started | Capture the foundation plan in STATUS.md |
+
+| 2026-05-10 21:58 | ⚠️ Steering | Root cause found: the lane-runner parser recognizes step headings formatted as `### Step N: ...`, but STATUS.md currently uses `## Step N: ...`, so it thinks Step 1 is still incomplete even though all |
+| 2026-05-10 21:58 | Worker iter 2 | done in 98s, tools: 11 |
+| 2026-05-10 21:58 | Task complete | .DONE created |
