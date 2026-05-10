@@ -40,13 +40,22 @@
 
 **Status:** 🟡 In Progress
 
-- [ ] R001 plan review: name JSON fields, env vars, and config path support
-- [ ] R001 plan review: document precedence defaults < JSON < `.env` absent-only < process env < CLI flags
-- [ ] R001 plan review: document validation/default behavior and short errors
-- [ ] R001 plan review: clarify default startup loads config while `version` remains config-free
-- [ ] R001 plan review: specify secret redaction for strings/errors/loggable structs
-- [ ] R001 plan review: scope read-only `.env` parsing to recognized keys
+- [x] R001 plan review: name JSON fields, env vars, and config path support
+- [x] R001 plan review: document precedence defaults < JSON < `.env` absent-only < process env < CLI flags
+- [x] R001 plan review: document validation/default behavior and short errors
+- [x] R001 plan review: clarify default startup loads config while `version` remains config-free
+- [x] R001 plan review: specify secret redaction for strings/errors/loggable structs
+- [x] R001 plan review: scope read-only `.env` parsing to recognized keys
 - [ ] Define typed v0.1 config inputs
+
+**Step 3 config plan:**
+- Public contract: `internal/config.Config` with JSON fields `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout`; env vars `INTERVALS_ICU_API_KEY`, `INTERVALS_ICU_ATHLETE_ID`, `ICUVISOR_TIMEZONE`, `ICUVISOR_API_BASE_URL`, `ICUVISOR_HTTP_TIMEOUT`, and `ICUVISOR_CONFIG` for the file path.
+- CLI support in v0.1 is limited to `--config <path>` / `--config=<path>` for default startup. There is no automatic platform config path yet; if no path/env is provided, loading uses defaults plus env/`.env`.
+- Precedence: built-in defaults < JSON file selected by `ICUVISOR_CONFIG` or `--config` < local `.env` values applied only for keys still absent < process environment < CLI flags. `.env` never overrides explicit MCP-client/process env.
+- Defaults/validation: `api_base_url` defaults to `https://intervals.icu/api/v1` and must be absolute `http`/`https`; `http_timeout` defaults to `30s`, is parsed as a Go duration string, and must be positive; `timezone` defaults to `UTC` and must load with `time.LoadLocation`; `api_key` and `athlete_id` are required. Errors stay short/actionable: set API key, set athlete ID, invalid timezone, invalid timeout, invalid API base URL.
+- App integration: after Step 3, default startup parses `--config`, calls `config.Load(ctx, Options{Path: ...})`, and passes the typed config on `ServerInfo`; `icuvisor version` must return without touching config.
+- Redaction: `Config.String()`/loggable summaries show `api_key=<redacted>` or empty status only; raw API keys are never included in errors, and the loader only reads user-provided JSON/env/`.env` without creating or writing credential files.
+- `.env` scope: parse a local `.env` read-only with stdlib code, accept only recognized `INTERVALS_ICU_*` and `ICUVISOR_*` keys, ignore comments/unknowns, and never print loaded values.
 - [ ] Load config from manual JSON and/or env with tested precedence
 - [ ] Support/document safe local `.env` loading for `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY` without printing secrets
 - [ ] Normalize athlete IDs centrally
