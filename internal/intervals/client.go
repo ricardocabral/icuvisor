@@ -95,7 +95,7 @@ func NewClient(opts Options) (*Client, error) {
 // GetAthleteProfile retrieves the configured athlete profile with sport settings.
 func (c *Client) GetAthleteProfile(ctx context.Context) (AthleteWithSportSettings, error) {
 	var profile AthleteWithSportSettings
-	if err := c.doJSON(ctx, http.MethodGet, &profile, "athlete", c.athleteID); err != nil {
+	if err := c.doJSON(ctx, &profile, "athlete", c.athleteID); err != nil {
 		return AthleteWithSportSettings{}, fmt.Errorf("getting athlete profile: %w", err)
 	}
 	return profile, nil
@@ -112,16 +112,16 @@ func (c *Client) newRequest(ctx context.Context, method string, pathParts ...str
 	return req, nil
 }
 
-func (c *Client) doJSON(ctx context.Context, method string, out any, pathParts ...string) error {
+func (c *Client) doJSON(ctx context.Context, out any, pathParts ...string) error {
 	for attempt := 1; ; attempt++ {
-		req, err := c.newRequest(ctx, method, pathParts...)
+		req, err := c.newRequest(ctx, http.MethodGet, pathParts...)
 		if err != nil {
 			return err
 		}
 
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
-			if c.shouldRetryTransport(ctx, method, attempt) {
+			if c.shouldRetryTransport(ctx, attempt) {
 				if sleepErr := c.sleepBeforeRetry(ctx, attempt, 0); sleepErr != nil {
 					return sleepErr
 				}
@@ -135,7 +135,7 @@ func (c *Client) doJSON(ctx context.Context, method string, out any, pathParts .
 			apiErr := errorForStatus(resp.StatusCode, retryAfter)
 			_, _ = io.Copy(io.Discard, resp.Body)
 			closeErr := resp.Body.Close()
-			if c.shouldRetryStatus(method, resp.StatusCode, attempt) {
+			if c.shouldRetryStatus(resp.StatusCode, attempt) {
 				if sleepErr := c.sleepBeforeRetry(ctx, attempt, retryAfter); sleepErr != nil {
 					return sleepErr
 				}
@@ -175,12 +175,12 @@ func normalizeRetryConfig(cfg RetryConfig) RetryConfig {
 	return cfg
 }
 
-func (c *Client) shouldRetryTransport(ctx context.Context, method string, attempt int) bool {
-	return ctx.Err() == nil && method == http.MethodGet && attempt < c.retry.MaxAttempts
+func (c *Client) shouldRetryTransport(ctx context.Context, attempt int) bool {
+	return ctx.Err() == nil && attempt < c.retry.MaxAttempts
 }
 
-func (c *Client) shouldRetryStatus(method string, statusCode int, attempt int) bool {
-	if method != http.MethodGet || attempt >= c.retry.MaxAttempts {
+func (c *Client) shouldRetryStatus(statusCode int, attempt int) bool {
+	if attempt >= c.retry.MaxAttempts {
 		return false
 	}
 	return statusCode == http.StatusTooManyRequests || statusCode >= http.StatusInternalServerError

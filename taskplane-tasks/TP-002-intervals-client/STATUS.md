@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — intervals client
 **Iteration:** 1
-**Current Step:** Step 4: Implement athlete profile retrieval
+**Current Step:** Step 5: Test and verify
 **Last Updated:** 2026-05-10
 **State:** In Progress
 
@@ -51,16 +51,16 @@
 
 ## Step 5: Test and verify
 
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 
-- [ ] Use `httptest.Server`; no network tests
-- [ ] Test auth, User-Agent, URL construction, cancellation, body closing where practical
-- [ ] Test retry/no-retry behavior
-- [ ] Test structured error classification and secret redaction
-- [ ] Test profile decoding from fixtures
-- [ ] Run `go fmt ./...`, `make test`, `make build`, and `make lint` if available
-- [ ] If local `.env` has `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY`, run optional end-to-end profile fetch without printing secrets
-- [ ] Update `CHANGELOG.md`
+- [x] Use `httptest.Server`; no network tests
+- [x] Test auth, User-Agent, URL construction, cancellation, body closing where practical
+- [x] Test retry/no-retry behavior
+- [x] Test structured error classification and secret redaction
+- [x] Test profile decoding from fixtures
+- [x] Run `go fmt ./...`, `make test`, `make build`, and `make lint` if available
+- [x] If local `.env` has `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY`, run optional end-to-end profile fetch without printing secrets
+- [x] Update `CHANGELOG.md`
 
 ## Discoveries
 
@@ -78,6 +78,8 @@
 | 2026-05-10 | Step 2 started | Implement the HTTP client core. |
 | 2026-05-10 | Step 3 started | Implement retries and structured errors. |
 | 2026-05-10 | Step 4 started | Implement athlete profile retrieval. |
+| 2026-05-10 | Step 5 started | Test and verify. |
+| 2026-05-10 | Optional e2e skipped | Local `.env` did not contain both `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY`; no live intervals.icu request was made. |
 | 2026-05-10 22:23 | Review R001 | code Step 1: UNKNOWN |
 | 2026-05-10 22:25 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-10 22:30 | Review R001 | code Step 2: APPROVE |

@@ -1,0 +1,32 @@
+{
+  "id": "i12345",
+  "name": "Example Athlete",
+  "firstname": "Example",
+  "lastname": "Athlete",
+  "measurement_preference": "METRIC",
+  "weight_pref_lb": false,
+  "fahrenheit": false,
+  "timezone": "America/Sao_Paulo",
+  "locale": "en_US",
+  "sportSettings": [
+    {
+      "id": 7,
+      "athlete_id": "i12345",
+      "types": ["Ride", "VirtualRide"],
+      "ftp": 250,
+      "indoor_ftp": 240,
+      "w_prime": 18000,
+      "p_max": 900,
+      "power_zones": [125, 188, 225, 263, 300],
+      "power_zone_names": ["Z1", "Z2", "Z3", "Z4", "Z5"],
+      "lthr": 172,
+      "max_hr": 190,
+      "hr_zones": [120, 140, 155, 170],
+      "hr_zone_names": ["Easy", "Endurance", "Tempo", "Threshold"],
+      "threshold_pace": 255.5,
+      "pace_units": "MINS_KM",
+      "pace_zones": [360, 330, 300],
+      "pace_zone_names": ["Easy", "Moderate", "Fast"]
+    }
+  ]
+}
