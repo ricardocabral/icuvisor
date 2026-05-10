@@ -33,14 +33,14 @@
 
 **Status:** 🟡 In Progress
 
-- [ ] Define tool registration contract
-- [ ] R001: Define sanitized tool error contract
-- [ ] R001: Document fake tool as test-only scaffolding
-- [ ] R001: Record registrar invariants including duplicate-name rejection
-- [ ] R001: Record v0.1 response content shape
-- [ ] Add fake/noop tool sufficient for protocol tests
-- [ ] Ensure tool names are snake_case and stable
-- [ ] Ensure user-facing errors are short
+- [x] Define tool registration contract
+- [x] R001: Define sanitized tool error contract
+- [x] R001: Document fake tool as test-only scaffolding
+- [x] R001: Record registrar invariants including duplicate-name rejection
+- [x] R001: Record v0.1 response content shape
+- [x] Add fake/noop tool sufficient for protocol tests
+- [x] Ensure tool names are snake_case and stable
+- [x] Ensure user-facing errors are short
 
 ## Step 4: Test protocol behavior without Claude
 
@@ -76,6 +76,11 @@
 | 2026-05-10 | Registry/MCP boundary plan: `internal/mcp` constructor will take config, version, logger, `tools.Registry`, and an injectable SDK transport; production uses `mcp.StdioTransport`, tests use in-memory/IO transports. | Preserves thin `main`, avoids Claude Desktop in tests, and keeps future real tools under `internal/tools`. |
 | 2026-05-10 | Safe registrar strategy: all tool registration goes through an `internal/mcp` adapter that validates snake_case names and required schemas before calling SDK registration, wraps SDK `AddTool`/`Server.AddTool` in a `defer recover` boundary, and returns startup errors instead of allowing SDK panics to escape. | Satisfies no-panic-outside-main rule while still using SDK schema validation and typed handler behavior. |
 | 2026-05-10 | Full dependency graph license scan for a temp module importing `github.com/modelcontextprotocol/go-sdk/mcp@v1.3.1` (`go list -m all`): SDK MIT; `cloud.google.com/go/compute/metadata` Apache-2.0; `golang-jwt/jwt/v5` MIT; `google/go-cmp` BSD-3-Clause; `google/jsonschema-go` MIT; `segmentio/encoding` MIT; `yosida95/uritemplate/v3` BSD-3-Clause; `golang.org/x/oauth2`, `x/tools`, `x/sys` BSD-3-Clause; `segmentio/asm` MIT. | No GPL/copyleft modules found among the full newly introduced SDK dependency graph. |
+| 2026-05-10 | Tool registration contract: registries call `Registrar.AddTool(Tool)` with snake_case `Name`, non-empty `Description`, object `InputSchema`, optional object `OutputSchema`, and non-nil `Handler`; handlers receive raw JSON arguments and return text/structured content or a sanitized user error. | Provides deterministic contract for Step 3 implementation and Step 4 protocol tests without importing SDK types in `internal/tools`. |
+| 2026-05-10 | Tool error contract: `internal/tools` will expose a `UserError` carrying a short public message and wrapped internal cause; the MCP adapter logs detailed handler errors and returns unknown errors as a generic, actionable `tool failed; try again or check icuvisor logs` text result with `isError=true`. | Prevents upstream/config/internal details from leaking to the LLM while allowing deliberate short user-facing messages. |
+| 2026-05-10 | Fake/noop tool boundary: Step 3 will keep `test_echo` or equivalent fake registries in `_test.go` files only; production default registry remains empty until the real `get_athlete_profile` task lands. | Avoids exposing unstable placeholder tools in the v0.1 catalog. |
+| 2026-05-10 | Registrar invariants: reject invalid snake_case names, empty descriptions, nil/non-object schemas, nil handlers, unsupported content types, and duplicate names before invoking the SDK. | Normal validation failures become deterministic startup errors, not SDK panics. |
+| 2026-05-10 | Response content shape: v0.1 scaffolding supports text content plus optional structured JSON object passthrough; unsupported content types are rejected at registration/handler conversion time rather than silently dropped. | Step 4 can assert predictable `tools/call` responses and short error payloads. |
 | 2026-05-10 23:14 | Review R001 | plan Step 1: REVISE |
 | 2026-05-10 23:19 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-10 23:22 | Review R001 | code Step 1: REVISE |
@@ -83,3 +88,4 @@
 | 2026-05-10 23:27 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-10 23:35 | Review R001 | code Step 2: APPROVE |
 | 2026-05-10 23:37 | Review R001 | plan Step 3: REVISE |
+| 2026-05-10 23:41 | Review R001 | plan Step 3: APPROVE |

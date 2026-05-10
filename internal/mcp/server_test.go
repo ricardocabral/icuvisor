@@ -3,6 +3,7 @@ package mcp
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -15,6 +16,31 @@ func (f registryFunc) Register(ctx context.Context, registrar tools.Registrar) e
 	return f(ctx, registrar)
 }
 
+type testEchoRegistry struct{}
+
+func (testEchoRegistry) Register(ctx context.Context, registrar tools.Registrar) error {
+	return registrar.AddTool(tools.Tool{
+		Name:        "test_echo",
+		Description: "Echoes raw test input for MCP protocol tests.",
+		InputSchema: map[string]any{
+			"type":                 "object",
+			"additionalProperties": true,
+		},
+		OutputSchema: map[string]any{"type": "object"},
+		Handler: func(ctx context.Context, req tools.Request) (tools.Result, error) {
+			if err := ctx.Err(); err != nil {
+				return tools.Result{}, err
+			}
+			return tools.Result{
+				Content: []tools.Content{{Type: tools.ContentTypeText, Text: string(req.Arguments)}},
+				StructuredContent: map[string]any{
+					"tool": req.Name,
+				},
+			}, nil
+		},
+	})
+}
+
 func TestNewServerHonorsCanceledContext(t *testing.T) {
 	t.Parallel()
 
@@ -24,6 +50,14 @@ func TestNewServerHonorsCanceledContext(t *testing.T) {
 	_, err := NewServer(ctx, Options{})
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("NewServer() error = %v, want context.Canceled", err)
+	}
+}
+
+func TestNewServerAcceptsTestEchoRegistry(t *testing.T) {
+	t.Parallel()
+
+	if _, err := NewServer(context.Background(), Options{Registry: testEchoRegistry{}}); err != nil {
+		t.Fatalf("NewServer() error = %v", err)
 	}
 }
 
@@ -47,6 +81,44 @@ func TestNewServerReturnsToolRegistrationErrors(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "invalid tool name") {
 		t.Fatalf("NewServer() error = %q, want invalid tool name", err.Error())
+	}
+}
+
+func TestNewServerRejectsDuplicateToolNames(t *testing.T) {
+	t.Parallel()
+
+	duplicate := tools.Tool{
+		Name:        "test_duplicate",
+		Description: "duplicate test tool",
+		InputSchema: map[string]any{"type": "object"},
+		Handler: func(context.Context, tools.Request) (tools.Result, error) {
+			return tools.Result{}, nil
+		},
+	}
+	_, err := NewServer(context.Background(), Options{
+		Registry: registryFunc(func(_ context.Context, registrar tools.Registrar) error {
+			if err := registrar.AddTool(duplicate); err != nil {
+				return err
+			}
+			return registrar.AddTool(duplicate)
+		}),
+	})
+	if err == nil {
+		t.Fatal("NewServer() error = nil, want duplicate tool error")
+	}
+	if !strings.Contains(err.Error(), "duplicate tool name") {
+		t.Fatalf("NewServer() error = %q, want duplicate tool name", err.Error())
+	}
+}
+
+func TestPublicToolErrorMessageSanitizesUnknownErrors(t *testing.T) {
+	t.Parallel()
+
+	if got := publicToolErrorMessage(fmt.Errorf("upstream secret detail")); got != genericToolErrorMessage {
+		t.Fatalf("publicToolErrorMessage() = %q, want %q", got, genericToolErrorMessage)
+	}
+	if got := publicToolErrorMessage(tools.NewUserError("try a valid test input", fmt.Errorf("secret cause"))); got != "try a valid test input" {
+		t.Fatalf("publicToolErrorMessage() = %q, want public message", got)
 	}
 }
 
