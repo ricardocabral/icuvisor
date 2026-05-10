@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — intervals client
 **Iteration:** 1
-**Current Step:** Step 1: Plan from public API docs and current config
+**Current Step:** Step 2: Implement the HTTP client core
 **Last Updated:** 2026-05-10
 **State:** In Progress
 
@@ -20,14 +20,14 @@
 
 ## Step 2: Implement the HTTP client core
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
-- [ ] Create typed client from config/version/shared http client
-- [ ] Use Basic Auth without leaking API key
-- [ ] Set `User-Agent: icuvisor/<version>`
-- [ ] Use context-aware requests
-- [ ] Always close response bodies
-- [ ] Decode JSON into typed structs
+- [x] Create typed client from config/version/shared http client
+- [x] Use Basic Auth without leaking API key
+- [x] Set `User-Agent: icuvisor/<version>`
+- [x] Use context-aware requests
+- [x] Always close response bodies
+- [x] Decode JSON into typed structs
 
 ## Step 3: Implement retries and structured errors
 
@@ -74,4 +74,6 @@
 | 2026-05-10 22:05 | Review R001 | code Step 1: UNKNOWN |
 | 2026-05-10 22:22 | Review R001 | code Step 1: UNKNOWN |
 | 2026-05-10 | Step 1 review recovery | Reviewer produced UNKNOWN after R001 fixes rather than an APPROVE/REVISE verdict; findings were addressed in STATUS.md and execution proceeds cautiously as reviewer-unavailable/unclear. |
+| 2026-05-10 | Step 2 started | Implement the HTTP client core. |
 | 2026-05-10 22:23 | Review R001 | code Step 1: UNKNOWN |
+| 2026-05-10 22:25 | Review R001 | plan Step 2: APPROVE |
