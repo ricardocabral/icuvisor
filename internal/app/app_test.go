@@ -6,6 +6,9 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/ricardocabral/icuvisor/internal/config"
 )
 
 func TestRunVersionWritesInjectedVersion(t *testing.T) {
@@ -16,6 +19,10 @@ func TestRunVersionWritesInjectedVersion(t *testing.T) {
 		Version: "v1.2.3-test",
 		Args:    []string{"version"},
 		Stdout:  &stdout,
+		LoadConfig: func(context.Context, config.Options) (config.Config, error) {
+			t.Fatal("version command must not load config")
+			return config.Config{}, nil
+		},
 	})
 	if err != nil {
 		t.Fatalf("Run() error = %v", err)
@@ -25,13 +32,26 @@ func TestRunVersionWritesInjectedVersion(t *testing.T) {
 	}
 }
 
-func TestRunDefaultDelegatesToStarterWithVersion(t *testing.T) {
+func TestRunDefaultDelegatesToStarterWithVersionAndConfig(t *testing.T) {
 	t.Parallel()
 
 	wantErr := errors.New("starter failed")
+	wantConfig := config.Config{
+		APIKey:      "secret",
+		AthleteID:   "i12345",
+		Timezone:    "UTC",
+		APIBaseURL:  config.DefaultAPIBaseURL,
+		HTTPTimeout: 30 * time.Second,
+	}
 	var gotInfo ServerInfo
 	err := Run(context.Background(), Options{
 		Version: "v9.8.7",
+		LoadConfig: func(_ context.Context, opts config.Options) (config.Config, error) {
+			if opts.Path != "" {
+				t.Fatalf("config path = %q, want empty", opts.Path)
+			}
+			return wantConfig, nil
+		},
 		StartServer: func(_ context.Context, info ServerInfo) error {
 			gotInfo = info
 			return wantErr
@@ -42,6 +62,28 @@ func TestRunDefaultDelegatesToStarterWithVersion(t *testing.T) {
 	}
 	if gotInfo.Version != "v9.8.7" {
 		t.Fatalf("server version = %q, want %q", gotInfo.Version, "v9.8.7")
+	}
+	if gotInfo.Config.AthleteID != wantConfig.AthleteID {
+		t.Fatalf("server athlete ID = %q, want %q", gotInfo.Config.AthleteID, wantConfig.AthleteID)
+	}
+}
+
+func TestRunDefaultPassesConfigPath(t *testing.T) {
+	t.Parallel()
+
+	var gotPath string
+	err := Run(context.Background(), Options{
+		Args: []string{"--config=/tmp/icuvisor.json"},
+		LoadConfig: func(_ context.Context, opts config.Options) (config.Config, error) {
+			gotPath = opts.Path
+			return config.Config{}, errors.New("stop")
+		},
+	})
+	if err == nil {
+		t.Fatal("Run() error = nil, want loader error")
+	}
+	if gotPath != "/tmp/icuvisor.json" {
+		t.Fatalf("config path = %q, want /tmp/icuvisor.json", gotPath)
 	}
 }
 

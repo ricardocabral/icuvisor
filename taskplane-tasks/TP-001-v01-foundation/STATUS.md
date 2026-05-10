@@ -38,7 +38,7 @@
 
 ## Step 3: Implement minimal manual config loading
 
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 
 - [x] R001 plan review: name JSON fields, env vars, and config path support
 - [x] R001 plan review: document precedence defaults < JSON < `.env` absent-only < process env < CLI flags
@@ -46,7 +46,7 @@
 - [x] R001 plan review: clarify default startup loads config while `version` remains config-free
 - [x] R001 plan review: specify secret redaction for strings/errors/loggable structs
 - [x] R001 plan review: scope read-only `.env` parsing to recognized keys
-- [ ] Define typed v0.1 config inputs
+- [x] Define typed v0.1 config inputs
 
 **Step 3 config plan:**
 - Public contract: `internal/config.Config` with JSON fields `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout`; env vars `INTERVALS_ICU_API_KEY`, `INTERVALS_ICU_ATHLETE_ID`, `ICUVISOR_TIMEZONE`, `ICUVISOR_API_BASE_URL`, `ICUVISOR_HTTP_TIMEOUT`, and `ICUVISOR_CONFIG` for the file path.
@@ -56,11 +56,11 @@
 - App integration: after Step 3, default startup parses `--config`, calls `config.Load(ctx, Options{Path: ...})`, and passes the typed config on `ServerInfo`; `icuvisor version` must return without touching config.
 - Redaction: `Config.String()`/loggable summaries show `api_key=<redacted>` or empty status only; raw API keys are never included in errors, and the loader only reads user-provided JSON/env/`.env` without creating or writing credential files.
 - `.env` scope: parse a local `.env` read-only with stdlib code, accept only recognized `INTERVALS_ICU_*` and `ICUVISOR_*` keys, ignore comments/unknowns, and never print loaded values.
-- [ ] Load config from manual JSON and/or env with tested precedence
-- [ ] Support/document safe local `.env` loading for `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY` without printing secrets
-- [ ] Normalize athlete IDs centrally
-- [ ] Do not write API keys to disk
-- [ ] Never log or echo API keys
+- [x] Load config from manual JSON and/or env with tested precedence
+- [x] Support/document safe local `.env` loading for `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY` without printing secrets
+- [x] Normalize athlete IDs centrally
+- [x] Do not write API keys to disk
+- [x] Never log or echo API keys
 
 ## Step 4: Add tests for foundation behavior
 
@@ -96,6 +96,8 @@
 | 2026-05-10 | v0.1 CLI shape decided | Keep `icuvisor version`; default invocation starts stdio MCP server path via internal app package; config path may come from flag/env, with env/manual JSON for credentials. |
 | 2026-05-10 | Internal boundaries decided | Use thin `cmd/icuvisor`; `internal/app` for CLI/default startup and version propagation; `internal/config` for typed config, env/JSON/.env loading, ID normalization, validation, redaction; future `internal/intervals`, `internal/mcp`, and `internal/tools` consume config rather than parse env. |
 | 2026-05-10 | Step 2 targeted tests passed | `go test ./cmd/icuvisor ./internal/app` passed after adding app Run tests and thin main delegation. |
+| 2026-05-10 | Step 3 targeted tests passed | `go test ./internal/app ./internal/config ./cmd/icuvisor` passed after adding config loader, app config path parsing, redaction, and normalization. |
 | 2026-05-10 21:33 | Review R001 | plan Step 2: UNKNOWN |
 | 2026-05-10 21:36 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-10 21:40 | Review R001 | plan Step 3: REVISE |
+| 2026-05-10 21:43 | Review R001 | plan Step 3: APPROVE |
