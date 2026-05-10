@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — MCP stdio
 **Iteration:** 1
-**Current Step:** Step 2: Add the MCP SDK and stdio server skeleton
+**Current Step:** Step 3: Add registry/test tool scaffolding
 **Last Updated:** 2026-05-10
 **State:** Ready
 
@@ -31,9 +31,13 @@
 
 ## Step 3: Add registry/test tool scaffolding
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
 - [ ] Define tool registration contract
+- [ ] R001: Define sanitized tool error contract
+- [ ] R001: Document fake tool as test-only scaffolding
+- [ ] R001: Record registrar invariants including duplicate-name rejection
+- [ ] R001: Record v0.1 response content shape
 - [ ] Add fake/noop tool sufficient for protocol tests
 - [ ] Ensure tool names are snake_case and stable
 - [ ] Ensure user-facing errors are short
@@ -78,3 +82,4 @@
 | 2026-05-10 23:24 | Review R001 | code Step 1: APPROVE |
 | 2026-05-10 23:27 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-10 23:35 | Review R001 | code Step 2: APPROVE |
+| 2026-05-10 23:37 | Review R001 | plan Step 3: REVISE |
