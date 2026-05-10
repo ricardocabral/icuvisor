@@ -5,13 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/config"
+	mcpserver "github.com/ricardocabral/icuvisor/internal/mcp"
 )
-
-// ErrServerNotImplemented is returned until stdio MCP wiring lands.
-var ErrServerNotImplemented = errors.New("stdio server not implemented yet")
 
 // Options contains process-level dependencies for the icuvisor CLI.
 type Options struct {
@@ -97,9 +96,14 @@ func startServer(ctx context.Context, loader func(context.Context, config.Option
 	return nil
 }
 
-func defaultStartServer(ctx context.Context, _ ServerInfo) error {
-	if err := ctx.Err(); err != nil {
+func defaultStartServer(ctx context.Context, info ServerInfo) error {
+	server, err := mcpserver.NewServer(ctx, mcpserver.Options{
+		Config:  info.Config,
+		Version: info.Version,
+		Logger:  slog.Default(),
+	})
+	if err != nil {
 		return err
 	}
-	return ErrServerNotImplemented
+	return server.Run(ctx)
 }

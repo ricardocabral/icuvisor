@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — MCP stdio
 **Iteration:** 1
-**Current Step:** Step 1: SDK spike and plan
+**Current Step:** Step 2: Add the MCP SDK and stdio server skeleton
 **Last Updated:** 2026-05-10
 **State:** Ready
 
@@ -21,13 +21,13 @@
 
 ## Step 2: Add the MCP SDK and stdio server skeleton
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
-- [ ] Add official Go MCP SDK dependency
-- [ ] Create internal MCP server constructor
-- [ ] Wire stdio as default v0.1 behavior
-- [ ] Keep `main` thin
-- [ ] Honor context cancellation and return errors instead of panicking
+- [x] Add official Go MCP SDK dependency
+- [x] Create internal MCP server constructor
+- [x] Wire stdio as default v0.1 behavior
+- [x] Keep `main` thin
+- [x] Honor context cancellation and return errors instead of panicking
 
 ## Step 3: Add registry/test tool scaffolding
 
@@ -76,3 +76,4 @@
 | 2026-05-10 23:19 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-10 23:22 | Review R001 | code Step 1: REVISE |
 | 2026-05-10 23:24 | Review R001 | code Step 1: APPROVE |
+| 2026-05-10 23:27 | Review R001 | plan Step 2: APPROVE |
