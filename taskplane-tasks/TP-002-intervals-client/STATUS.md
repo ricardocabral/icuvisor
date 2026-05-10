@@ -4,7 +4,7 @@
 **Iteration:** 1
 **Current Step:** Step 1: Plan from public API docs and current config
 **Last Updated:** 2026-05-10
-**State:** Ready
+**State:** In Progress
 
 ## Step 1: Plan from public API docs and current config
 
@@ -14,9 +14,9 @@
 - [x] Record source/uncertainty in STATUS.md
 - [x] Define minimal typed request/response structs
 - [x] Decide retry policy/backoff/cancellation behavior
-- [ ] R001: Align planned profile struct names with `/athlete/{id}` and `/profile` schemas
-- [ ] R001: Make task/step state internally consistent before Step 2
-- [ ] R001: Fix Discoveries table formatting
+- [x] R001: Align planned profile struct names with `/athlete/{id}` and `/profile` schemas
+- [x] R001: Make task/step state internally consistent before Step 2
+- [x] R001: Fix Discoveries table formatting
 
 ## Step 2: Implement the HTTP client core
 
@@ -65,11 +65,10 @@
 
 | Date | Finding | Impact |
 | ---- | ------- | ------ |
-
 | 2026-05-10 21:59 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-10 21:59 | Step 1 started | Plan from public API docs and current config |
 | 2026-05-10 | Public API docs identify profile endpoints | Public OpenAPI spec at `https://intervals.icu/api/v1/docs` (linked from `https://intervals.icu/api-docs.html`) exposes `GET /api/v1/athlete/{id}/profile` -> `AthleteProfile`, `GET /api/v1/athlete/{id}` -> `WithSportSettings`, and `GET /api/v1/athlete/{athleteId}/sport-settings` / `{id}` -> `SportSettings`; forum API guide confirms Basic Auth username `API_KEY` and password API key, and says athlete id `0` selects the key owner. |
 | 2026-05-10 | Step 1 endpoint uncertainty recorded | `AthleteProfile` includes public-ish identity fields but not FTP/zones/units; `WithSportSettings` includes `measurement_preference`, `weight_pref_lb`, `fahrenheit`, `timezone`, and embedded `sportSettings`; `SportSettings` includes `ftp`, `indoor_ftp`, `w_prime`, `p_max`, power/HR/pace zones and threshold fields. v0.1 should prefer `GET /athlete/{id}` for profile-with-sport-settings, with `/profile` as lighter identity-only reference if needed. |
-| 2026-05-10 | Minimal v0.1 response shapes defined | Use typed `AthleteProfile`/`SportSettings` structs with stable fields only: athlete `id`, `name`, `firstname`, `lastname`, `measurement_preference`, `weight_pref_lb`, `fahrenheit`, `timezone`, `locale`; sport settings `id`, `athlete_id`, `types`, `ftp`, `indoor_ftp`, `w_prime`, `p_max`, `power_zones`, `power_zone_names`, `lthr`, `max_hr`, `hr_zones`, `hr_zone_names`, `threshold_pace`, `pace_units`, `pace_zones`, `pace_zone_names`. No generic raw payload in default return. |
+| 2026-05-10 | Minimal v0.1 response shapes defined | Use typed `AthleteWithSportSettings` (matching `GET /api/v1/athlete/{id}` / OpenAPI `WithSportSettings`) as the main v0.1 response: athlete `id`, `name`, `firstname`, `lastname`, `measurement_preference`, `weight_pref_lb`, `fahrenheit`, `timezone`, `locale`, and embedded `sportSettings`. Define `SportSettings` with stable fields only: `id`, `athlete_id`, `types`, `ftp`, `indoor_ftp`, `w_prime`, `p_max`, `power_zones`, `power_zone_names`, `lthr`, `max_hr`, `hr_zones`, `hr_zone_names`, `threshold_pace`, `pace_units`, `pace_zones`, `pace_zone_names`. Do not define or call the lighter `/profile` `AthleteProfile` wrapper in v0.1 unless later black-box validation shows `/athlete/{id}` is unavailable. No generic raw payload in default return. |
 | 2026-05-10 | Retry policy selected | Implement stdlib-only retry for idempotent GETs: max 3 attempts, retry HTTP 429 and 5xx plus transient transport errors, exponential backoff starting near 200ms with jitter and cap near 2s, respect `Retry-After` seconds/date when present within cap, and abort sleeps/requests immediately on context cancellation. Do not retry 401/403/404 or malformed JSON. |
 | 2026-05-10 22:05 | Review R001 | code Step 1: UNKNOWN |
