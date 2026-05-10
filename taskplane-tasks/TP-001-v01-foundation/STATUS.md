@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — foundation
 **Iteration:** 1
-**Current Step:** Step 2: Implement the CLI and version foundation
+**Current Step:** Step 3: Implement minimal manual config loading
 **Last Updated:** 2026-05-10
 **State:** Ready
 
@@ -38,8 +38,14 @@
 
 ## Step 3: Implement minimal manual config loading
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
+- [ ] R001 plan review: name JSON fields, env vars, and config path support
+- [ ] R001 plan review: document precedence defaults < JSON < `.env` absent-only < process env < CLI flags
+- [ ] R001 plan review: document validation/default behavior and short errors
+- [ ] R001 plan review: clarify default startup loads config while `version` remains config-free
+- [ ] R001 plan review: specify secret redaction for strings/errors/loggable structs
+- [ ] R001 plan review: scope read-only `.env` parsing to recognized keys
 - [ ] Define typed v0.1 config inputs
 - [ ] Load config from manual JSON and/or env with tested precedence
 - [ ] Support/document safe local `.env` loading for `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY` without printing secrets
@@ -68,6 +74,7 @@
 ## Notes
 
 - R001 plan review requested narrowing Step 2 away from config loading, explicit app-level tests, a concrete `app.Run(ctx, Options{...})` shape, and injected version propagation.
+- R001 plan review for Step 3 requested a concrete config contract, precedence, defaults/validation, app integration, redaction, and narrow `.env` scope before coding.
 
 ## Discoveries
 
@@ -82,3 +89,4 @@
 | 2026-05-10 | Step 2 targeted tests passed | `go test ./cmd/icuvisor ./internal/app` passed after adding app Run tests and thin main delegation. |
 | 2026-05-10 21:33 | Review R001 | plan Step 2: UNKNOWN |
 | 2026-05-10 21:36 | Review R001 | plan Step 2: APPROVE |
+| 2026-05-10 21:40 | Review R001 | plan Step 3: REVISE |
