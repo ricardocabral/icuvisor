@@ -17,7 +17,7 @@
 - [x] R001: Record registry contract and SDK boundary decision
 - [x] R001: Record panic-to-error safe registrar strategy
 - [x] R001: Record dependency transitive license scan result
-- [ ] R001-code: Include all modules from a full SDK dependency graph license scan
+- [x] R001-code: Include all modules from a full SDK dependency graph license scan
 
 ## Step 2: Add the MCP SDK and stdio server skeleton
 
@@ -71,7 +71,7 @@
 | 2026-05-10 | Tiny registry interface decision: `internal/tools` will own SDK-free contracts (`Registry.Register(context.Context, Registrar) error`, `Registrar.AddTool(Tool) error`, `Tool{Name, Description, InputSchema, Handler}`); `internal/mcp` will adapt those definitions to SDK `mcp.Tool`/handlers. | Keeps tool packages testable and avoids leaking official SDK types outside the MCP adapter boundary. |
 | 2026-05-10 | Registry/MCP boundary plan: `internal/mcp` constructor will take config, version, logger, `tools.Registry`, and an injectable SDK transport; production uses `mcp.StdioTransport`, tests use in-memory/IO transports. | Preserves thin `main`, avoids Claude Desktop in tests, and keeps future real tools under `internal/tools`. |
 | 2026-05-10 | Safe registrar strategy: all tool registration goes through an `internal/mcp` adapter that validates snake_case names and required schemas before calling SDK registration, wraps SDK `AddTool`/`Server.AddTool` in a `defer recover` boundary, and returns startup errors instead of allowing SDK panics to escape. | Satisfies no-panic-outside-main rule while still using SDK schema validation and typed handler behavior. |
-| 2026-05-10 | Transitive dependency license scan for SDK v1.3.1: SDK MIT; `golang-jwt/jwt/v5` MIT; `google/go-cmp` BSD-3-Clause; `google/jsonschema-go` MIT; `segmentio/encoding` MIT; `yosida95/uritemplate/v3` BSD-3-Clause; `golang.org/x/oauth2`, `x/tools`, `x/sys` BSD-3-Clause; `segmentio/asm` MIT. | No GPL/copyleft modules found among the newly introduced SDK dependency tree. |
+| 2026-05-10 | Full dependency graph license scan for a temp module importing `github.com/modelcontextprotocol/go-sdk/mcp@v1.3.1` (`go list -m all`): SDK MIT; `cloud.google.com/go/compute/metadata` Apache-2.0; `golang-jwt/jwt/v5` MIT; `google/go-cmp` BSD-3-Clause; `google/jsonschema-go` MIT; `segmentio/encoding` MIT; `yosida95/uritemplate/v3` BSD-3-Clause; `golang.org/x/oauth2`, `x/tools`, `x/sys` BSD-3-Clause; `segmentio/asm` MIT. | No GPL/copyleft modules found among the full newly introduced SDK dependency graph. |
 | 2026-05-10 23:14 | Review R001 | plan Step 1: REVISE |
 | 2026-05-10 23:19 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-10 23:22 | Review R001 | code Step 1: REVISE |
