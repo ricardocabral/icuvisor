@@ -1,32 +1,23 @@
 # Plan Review — TP-003 Step 1: SDK spike and plan
 
-Verdict: **changes requested before moving to Step 2**.
+Verdict: **approved to proceed to Step 2**.
 
-## What looks good
+This review supersedes the earlier Step 1 revision request. The current `STATUS.md` now records the SDK choice, version limitation, license check, registry boundary, panic-to-error strategy, and transitive license scan that were missing before.
 
-- The SDK version choice is sound. I verified `github.com/modelcontextprotocol/go-sdk@v1.3.1` declares `go 1.23.0`, while later stable releases move to Go 1.24/1.25, so pinning v1.3.1 preserves the repository's current `go 1.23` baseline.
-- The recorded production/test transport split is correct: `mcp.StdioTransport` uses `os.Stdin`/`os.Stdout`, and `mcp.IOTransport` / `mcp.NewInMemoryTransports` are the right paths for tests that must not require Claude Desktop.
-- The SDK license note is accurate for the pinned version: v1.3.1 is MIT.
+## What I verified
 
-## Blocking findings
+- `github.com/modelcontextprotocol/go-sdk@v1.3.1` declares `go 1.23.0`, matching the repository's current `go 1.23` baseline. The latest checked `v1.6.0` declares `go 1.25.0`, so pinning v1.3.1 is the right compatibility decision unless this task intentionally raises the project Go version.
+- The selected SDK APIs exist in v1.3.1: `mcp.NewServer`, `mcp.AddTool`, `(*mcp.Server).Run`, `mcp.StdioTransport`, `mcp.IOTransport`, `mcp.NewInMemoryTransports`, `mcp.NewClient`, `ClientSession.ListTools`, and `ClientSession.CallTool`.
+- The recorded transport limitation is accurate: `mcp.StdioTransport` is tied to process stdio; `IOTransport` or `NewInMemoryTransports` are the appropriate test seams.
+- The SDK license for v1.3.1 is MIT, and the recorded transitive dependency licenses are permissive. No GPL/copyleft dependency is planned.
+- The revised registry decision is aligned with the project layout: `internal/tools` owns SDK-free tool contracts, and `internal/mcp` owns adaptation to SDK types.
+- The revised panic strategy addresses a real SDK hazard: `mcp.AddTool` and `(*mcp.Server).AddTool` can panic for invalid schemas, so routing all registration through a validating/recovering adapter is necessary to satisfy the repository's no-panic-outside-`main` rule.
 
-1. **The registry interface is still undefined.**
-   Step 1's explicit deliverable is to define the tiny internal registry interface, but `STATUS.md` still has that item unchecked and does not record the proposed shape. Before implementation starts, record the contract that `internal/mcp` will consume and `internal/tools` will implement. At minimum, the plan should say whether the registry exposes a `Register(...) error` callback, returns a slice of tool definitions, and whether SDK types are allowed to leak into `internal/tools`.
+## Non-blocking guidance for Step 2/3
 
-2. **The chosen `mcp.AddTool` path needs a panic/error strategy.**
-   In v1.3.1, `mcp.AddTool` panics on schema inference/validation errors, and `(*mcp.Server).AddTool` can also panic on invalid/missing schemas. The project has a hard rule of no panics outside `main`, and TP-003 requires startup to return errors instead of panicking. The plan should explicitly require a small adapter/registrar that either prevalidates and/or recovers those SDK panics and converts them to startup errors before Step 2/3 use `AddTool` directly.
+- Keep stdout protocol-only. Any SDK/app logging used while stdio is running should go to stderr or a discard/test logger, never stdout.
+- Make the registry contract concrete when implemented: define the `InputSchema` representation and handler/result shape explicitly enough that `internal/tools` does not need to import the MCP SDK.
+- Apply the same panic-to-error discipline around SDK construction options as around tool registration, even if the constructor currently uses only trusted constants.
+- Do not add Streamable HTTP/SSE, real intervals.icu calls, or `get_athlete_profile` behavior in this task; keep TP-003 to the stdio server and registry scaffolding.
 
-3. **License review should include transitive modules before adding the dependency.**
-   The task calls out the SDK license, but the repository hard rule is to check the license of every new module. Adding the SDK will pull in transitive modules (`github.com/google/jsonschema-go`, `github.com/segmentio/encoding`, `github.com/golang-jwt/jwt/v5`, `golang.org/x/*`, etc.). Record a license scan/result in `STATUS.md` before or during Step 2 so the no-GPL-dependencies rule is satisfied.
-
-## Suggested plan adjustment
-
-Update `STATUS.md` with a concrete Step 1 decision such as:
-
-- Pin `github.com/modelcontextprotocol/go-sdk` to `v1.3.1` for Go 1.23 compatibility.
-- `internal/mcp` owns all SDK adaptation and exposes a constructor/run path that accepts a registry dependency plus an injectable transport for tests.
-- `internal/tools` defines only a minimal registry contract; real tool logic remains out of scope for TP-003.
-- Tool registration goes through a safe registrar that returns errors for invalid names/schemas and prevents SDK panics from escaping.
-- Dependency license review includes the SDK and all newly added transitive modules.
-
-Once those are recorded, the plan is ready to proceed to Step 2.
+No blocking issues remain in the Step 1 plan.
