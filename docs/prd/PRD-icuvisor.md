@@ -30,15 +30,16 @@ Amateur endurance athletes increasingly want to use general-purpose LLMs as a pe
 
 Two paths exist today to bridge intervals.icu and AI:
 
-1. **`mvilanova/intervals-mcp-server`** (Python, GPLv3, ~17 tools, ~100 forum posts). Free and capable, but installation requires `git`, Python 3.12, `uv`, and hand-edited JSON config with platform-specific absolute paths. The forum thread is dominated by install failures: `spawn uv ENOENT`, hatchling wheel build errors, `.env` confusion, Python version mismatches.
-2. **icusync.icu** — closed-source, hosted, account-required, opaque pricing. Solves the install problem by hosting everything, but requires trusting a third party with a token to your training data and offers no transparent free tier.
+1. **`mvilanova/intervals-mcp-server`** (Python, GPLv3, ~17 tools). Free and capable, but installation requires `git`, Python 3.12, `uv`, and hand-edited JSON config with platform-specific absolute paths. The forum thread is dominated by install failures: `spawn uv ENOENT`, hatchling wheel build errors, `.env` confusion, Python version mismatches.
+2. **`hhopke/intervals-icu-mcp`** (Python, MIT, ~58 tools — independent continuation of the eddmann fork). Larger tool surface and actively maintained; install path is `uvx intervals-icu-mcp` plus JSON config, which is materially easier than mvilanova's `uv sync` flow but still requires the user to install `uv` and hand-edit a JSON file. Open issues prioritize token efficiency (toolset tiers, description trimming, debug-metadata stripping) and a non-model-controlled delete safety gate — both of which icuvisor adopts directly.
+3. **icusync.icu** — closed-source, hosted, account-required, opaque pricing. Solves the install problem by hosting everything, but requires trusting a third party with a token to your training data and offers no transparent free tier.
 
-Neither serves the "I just want this to work" athlete who doesn't want to learn `uv` *or* hand their data to another SaaS.
+None of these serves the "I just want this to work" athlete who doesn't want to learn `uv` *or* hand their data to another SaaS.
 
 ### Why now
 
 - **MCP momentum**: stable spec, Claude Desktop/Code/Cowork, ChatGPT Developer Mode, Cursor, Pi, Le Chat, and local LLM clients all support MCP servers.
-- **Upstream is slowing**: maintainer Marc commented in Nov 2025 that he is *"directing efforts elsewhere presently"* — issue/PR throughput is dropping.
+- **Existing Python options have known limits**: `mvilanova/intervals-mcp-server` (GPLv3) ships ~17 tools with a difficult `uv` install path and its maintainer commented in Nov 2025 that he is *"directing efforts elsewhere presently"*. `hhopke/intervals-icu-mcp` (MIT, ~58 tools) is more actively maintained and easier to install via `uvx`, but its own open-issue backlog targets exactly the problems icuvisor is best positioned to solve from day one: model-uncontrollable delete safety, tiered toolsets to cut per-session token cost, in-response scale labels, debug-metadata stripping, and tool-name disambiguation.
 - **Distribution gap is now solvable**: Go's single-binary cross-compilation + Homebrew/Scoop/Winget/DXT bundles let us deliver `brew install icuvisor` to a triathlete who has never opened a terminal.
 - **Recent intervals.icu API additions** (custom wellness fields, activity messages, structured workout endpoints) make a richer feature set possible than what the original README documents.
 
@@ -66,9 +67,9 @@ Vision: *training data should belong to athletes and run on athletes' machines, 
 
 - **KR1 — Install success**: ≥95% of new users complete install + first successful tool call within 10 minutes, measured by opt-in anonymous telemetry on the welcome page.
 - **KR2 — Adoption**: 2,000 weekly-active installs by month 12 (measured by opt-in update-check pings).
-- **KR3 — Coverage**: feature parity with both reference servers — implement 100% of icusync.icu's 15 advertised tools and 100% of `mvilanova/intervals-mcp-server`'s 17 tools, deduplicated.
+- **KR3 — Coverage**: feature parity with the leading reference servers — at least 90% of the deduplicated union of `hhopke/intervals-icu-mcp`'s ~58 tools, `mvilanova/intervals-mcp-server`'s ~17 tools, and icusync.icu's ~15 advertised tools. Gaps must be deliberate (e.g. dropped on safety grounds), not accidental.
 - **KR4 — Reliability**: <1% of tool calls return uncaught errors; p95 latency <2s for read tools (excluding upstream API time).
-- **KR5 — Token efficiency**: median tool response uses ≤30% of the tokens of the Python upstream for the same query (target the issue #89 / forum context-window complaints directly).
+- **KR5 — Token efficiency**: ≥60% reduction in per-session tool-description tokens vs. `hhopke/intervals-icu-mcp`'s default 58-tool surface (achieved via toolset tiers, description trimming, and MCP Resources for long-form schemas); ≥40% reduction in median per-tool-call response bytes vs. both Python references on the same prompts.
 - **KR6 — Client compatibility**: validated working configs for Claude Desktop, Claude Code, Claude Cowork, ChatGPT (Dev Mode), Pi.dev, Cursor, Continue, Zed, and one local-LLM client (ollmcp or Cline).
 
 ---
@@ -138,18 +139,20 @@ Markets defined by the job the user is trying to do, not by demographics.
 
 ### Where we beat competitors (Value Curve sketch)
 
-| Attribute | mvilanova python | icusync.icu | **icuvisor** |
-|---|---|---|---|
-| Install effort | High (uv, Python, JSON) | Very low (paste URL) | **Very low (installer + token paste)** |
-| Cost | Free | Opaque / paid | **Free** |
-| Local-only (privacy) | Yes | No (hosted) | **Yes** |
-| Source available | Yes | No | **Yes (MIT or Apache 2.0)** |
-| Tool count | 17 | 15 | **25+ (union + new)** |
-| Write operations | Yes (verbose) | Yes | **Yes (terse + structured)** |
-| Coach mode | No | Yes | **Yes** |
-| Token-efficient responses | Weak | Unknown | **First-class design goal** |
-| Multi-client tested | Claude-only | Claude + ChatGPT | **Claude + ChatGPT + Pi + Cursor + local LLM** |
-| Automatic updates | No | N/A (hosted) | **Yes (signed, opt-out)** |
+| Attribute | mvilanova python | hhopke python | icusync.icu | **icuvisor** |
+|---|---|---|---|---|
+| Install effort | High (uv, Python, JSON) | Medium (uvx + JSON) | Very low (paste URL) | **Very low (installer + token paste)** |
+| Cost | Free | Free | Opaque / paid | **Free** |
+| Local-only (privacy) | Yes | Yes | No (hosted) | **Yes** |
+| Source available | Yes (GPLv3) | Yes (MIT) | No | **Yes (MIT)** |
+| Tool count | 17 | 58 | 15 | **~30 (curated, tiered)** |
+| Write operations | Yes (verbose) | Yes | Yes | **Yes (terse + structured + library CRUD)** |
+| Coach mode | No | No | Yes | **Yes (with per-tool permissions)** |
+| Delete safety | confirm flag | env-var gate (planned) | Unknown | **Env-var gate (model-uncontrollable)** |
+| Token efficiency by default | Weak | Improving (open issues) | Unknown | **Tiered toolset + Resources + trimmed payloads** |
+| MCP Resources / Prompts | No | Yes (2 + 7) | Unknown | **Yes** |
+| Multi-client tested | Claude-only | Claude + Cursor + ChatGPT | Claude + ChatGPT | **Claude + ChatGPT + Pi + Cursor + local LLM** |
+| Automatic updates | No | No | N/A (hosted) | **Yes (signed, opt-out)** |
 
 ---
 
@@ -226,37 +229,78 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 - `get_training_summary` — aggregated volume/TSS/zones.
 
 **Wellness**
-- `get_wellness_data` — daily rows. **Includes custom fields** (issue #64, forum #92) and correct scale metadata embedded in the tool description and response (`feel` is 1-5, `sleepQuality` is 1-4 — addresses issues #45/#48 and forum #54/#57).
+- `get_wellness_data` — daily rows. **Includes custom fields** (issue #64, forum #92) and correct scale metadata embedded in the tool description **and the response itself** (`feel` is 1-5, `sleepQuality` is 1-4 — addresses issues #45/#48 and forum #54/#57). In-response labels are required because some MCP clients do not pass tool descriptions back to the LLM at inference time.
+- `update_wellness` — write back the full set of API-accepted fields: subjective scales (`feel`, `fatigue`, `soreness`, `stress`, `mood`, `motivation`, `sleepQuality`, `injury`), body metrics (`weight`, `bodyFat`, `abdomen`), cardiovascular (`restingHR`, `hrv`, `systolic`, `diastolic`), blood/lab (`bloodGlucose`, `lactate`, `spO2`, `vo2max`), respiration, menstrual phase, and the `locked` flag that prevents device sync from silently overwriting manual entries.
 
 **Events & workouts**
 - `get_events`, `get_event_by_id` — calendar entries.
-- `add_or_update_event` — structured workout, race, or note. Returns a **terse** confirmation by default (issue #89). Preserves intervals.icu's distinction between `description` (free text — athlete/coach notes, pacing, nutrition, race countdown) and `workout_doc` (structured steps). On edit, `description` is written through **verbatim** unless the caller explicitly opts into structured normalization; `workout_doc` is the only field that accepts structured-block syntax. Silent normalization of free text is treated as a destructive operation and must not happen by default.
-- `delete_event`, `delete_events_by_date_range` — destructive; require an explicit `confirm: true` argument.
+- `add_or_update_event` — structured workout, race, or note. Returns a **terse** confirmation by default (issue #89). Preserves intervals.icu's distinction between `description` (free text — athlete/coach notes, pacing, nutrition, race countdown) and `workout_doc` (structured steps). On edit, `description` is written through **verbatim** unless the caller explicitly opts into structured normalization; `workout_doc` is the only field that accepts structured-block syntax. Silent normalization of free text is treated as a destructive operation and must not happen by default. Accepts a `tags` array (e.g. `["sweet-spot", "indoor"]`) which round-trips through reads.
+- `delete_event`, `delete_events_by_date_range` — destructive. **Gated by `ICUVISOR_DELETE_MODE` env var, not a tool argument** (see §7.2.D — model-controlled `confirm: true` flags are not a credible safety guard).
 - `get_training_plan` — fetch plan (forum #70).
+- `apply_training_plan` — instantiate a workout-library folder onto the calendar from a start date.
 - *Strength training data* — included if the intervals.icu API exposes it (forum #70).
 
-**Custom items**
-- `get_custom_items`, `get_custom_item_by_id`, `create_custom_item`, `update_custom_item`, `delete_custom_item` — for custom charts/fields/zones.
+**Workout library (templates, distinct from calendar events)**
+- `get_workout_library`, `get_workouts_in_folder` — read templates by folder.
+- `create_workout`, `update_workout`, `delete_workout` — author/edit templates via MCP so a coach can ask the LLM to build a reusable training block without leaving the chat. `delete_workout` is destructive and gated by `ICUVISOR_DELETE_MODE` like event deletion.
 
-**Total: ~25 tools** at v1.0.
+**Custom items**
+- `get_custom_items`, `get_custom_item_by_id`, `create_custom_item`, `update_custom_item`, `delete_custom_item` — for custom charts/fields/zones. Long-form schema documentation for the inner `content` shape (which varies per `item_type`) lives in an MCP Resource (`icuvisor://custom-item-schemas`), not inline in the tool description (see §7.2.G).
+
+**Total: ~30 tools** at v1.0 — the `core` toolset (see §7.2.D) exposes a curated ~17-tool subset by default; the full surface ships behind an opt-in env var.
 
 #### D. Response shaping (the second differentiator)
 
 - **Terse-by-default**: every read tool returns the smallest useful payload. Heavy fields (streams, raw samples) require explicit opt-in.
-- **Server-side pagination** for `get_activities` over long date ranges, with a recommended page size that fits inside Claude free-tier context (addresses forum #28, #65, #66).
-- **Scale metadata in tool descriptions** so the LLM knows `feel` is 1-5, `sleepQuality` is 1-4.
+- **No debug cruft**: auto-added fields like `fetched_at` and `query_type` are not in responses by default. They re-appear behind `ICUVISOR_DEBUG_METADATA=true` for troubleshooting. The LLM does not reason over timestamps of when *we* fetched the data.
+- **Server-side pagination** for `get_activities` over long date ranges, with a recommended page size that fits inside Claude free-tier context.
+- **Scale metadata in tool descriptions AND in the response itself** so the LLM knows `feel` is 1-5, `sleepQuality` is 1-4. The response-level label is mandatory because some MCP clients pass only the response (not the tool description) back to the model at inference time.
+- **Disambiguating field names** — emit `calories_burned` rather than `calories`, `distance_km` / `distance_mi` rather than `distance`, etc. Don't make the LLM guess units or direction.
 - **Timezone normalization** — all dates rendered in the athlete's configured TZ; tool docstrings mention the convention.
 - **Athlete ID normalization** — accept `i12345` or `12345`; emit `i12345` consistently.
 - **Strava-imported activity handling** — intervals.icu blocks Strava-synced activities from its public API per Strava's ToS. Tools must detect the blocked state and return a structured `unavailable: { reason: "strava_tos", workaround: "connect device directly to intervals.icu (Garmin, Wahoo, Coros, Suunto, Polar)" }` rather than empty/`N/A` fields the LLM might hallucinate over.
 - **Per-athlete unit normalization** — read `preferred_units` (miles vs km) from the athlete profile and render distances/paces in that unit, with the unit name embedded in the field key or `_meta` so the LLM can't drift to its default. Same pattern as the timezone rule.
 
-#### E. Configuration
+#### E. Toolset tiers (token efficiency by default)
+
+The full ~30-tool surface costs meaningful tokens to load into a conversation — every conversation, every model, every client load. icuvisor defaults to exposing a curated **`core`** subset (~17 tools) covering the daily-use path (read activities, fitness, wellness, events; write events, wellness, messages). Power users and coaches opt in to the **`full`** surface via `ICUVISOR_TOOLSET=full` in their MCP client config.
+
+A small `icuvisor_list_advanced_capabilities` tool lives in `core` so the LLM can discover what's hidden and tell the user how to enable it when a prompt requires an advanced tool. This addresses the "tool selection accuracy" failure mode that grows with surface size — smaller models pick the wrong tool less often when the catalog is smaller.
+
+Tool names within a cluster (e.g. `get_activity_details` / `get_activity_intervals` / `get_activity_streams`) must have **distinguishing first sentences in their descriptions**, since name alone won't tell the LLM which access pattern it needs. Confusability is audited at every catalog change.
+
+Complex tools (those whose argument shape isn't obvious from prose — `add_or_update_event`, `create_workout`, `create_custom_item`, `apply_training_plan`) ship with `input_examples` covering the canonical case and one tricky edge. Anthropic reports a 72% → 90% accuracy gain from this single addition.
+
+#### F. Destructive operation safety (env-var gate, not tool args)
+
+Every operation that can permanently destroy data — event delete, activity delete, workout-library delete, gear delete, sport-settings delete, custom-item delete — is gated by an `ICUVISOR_DELETE_MODE` env var read once at startup:
+
+| Mode | Events | Activities | Workouts (library) | Gear | Sport settings | Custom items |
+|---|---|---|---|---|---|---|
+| `safe` (default) | future-dated only | ✗ | future-only or unused | ✓ | ✗ | ✗ |
+| `full` | any date | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `none` | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+Tools that the active mode forbids are **not registered** with the MCP server at all — the LLM cannot see them in its tool catalog, cannot invent a flag to enable them, and cannot be talked into them. A per-call `confirm: true` argument is **not a credible safety guard** because the model controls the argument; if an error message says "set confirm=true to override," the model will. This gate sits outside the model's reach by design. Invalid `ICUVISOR_DELETE_MODE` values fail loudly at startup.
+
+#### G. MCP Resources and Prompts (first-class primitives)
+
+icuvisor ships MCP Resources for long-form, slow-changing content the LLM only occasionally needs, keeping it out of the per-session tool-description budget:
+
+- `icuvisor://workout-syntax` — the intervals.icu structured-workout DSL.
+- `icuvisor://event-categories` — the full enum of event categories with descriptions.
+- `icuvisor://custom-item-schemas` — the per-`item_type` schema for the `content` field on custom items.
+- `icuvisor://athlete-profile` — current athlete profile (auto-refreshing).
+
+It also ships a curated set of MCP Prompts (training analysis, recovery check, weekly planning, race-week taper, coach roster triage) so users on clients that surface prompts get a "what can this thing do?" entrypoint without having to learn the tool catalog.
+
+#### H. Configuration
 
 - All state in a single platform-conventional config dir (`~/Library/Application Support/icuvisor/`, `%APPDATA%\icuvisor\`, `~/.config/icuvisor/`).
 - API key stored in OS keychain (macOS Keychain, Windows Credential Manager, libsecret) — not in plain text — fixing a recurring concern that `.env` files leak to backups/repos (forum #35 + Marc's security concern in #61).
 - Headless config via CLI flags / env for power users.
 
-#### F. Observability
+#### I. Observability
 
 - Local rotating log file with a "Copy diagnostics" button in the tray menu (eliminates the back-and-forth on forum install threads).
 - Opt-in anonymous telemetry: install success/failure, tool call counts (no payloads). Used to measure KR1, KR2, KR4.
@@ -296,6 +340,10 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 9. **Token efficiency may not be a strong standalone differentiator.** Competing hosted servers do not appear to suffer obvious context-window problems, so KR5's "30% of Python upstream" target wins on the mvilanova comparison but not the icusync comparison. *(Validate by measuring icusync.icu's response shapes alongside mvilanova's on the same prompt set.)*
 10. **Strava-blocked-activity detection** depends on a stable upstream marker. *(Validate by black-box testing against an athlete account with mixed direct/Strava-imported activities.)*
 11. **`preferred_units` is exposed on the intervals.icu athlete profile and round-trips through the API.** *(Validate during `get_athlete_profile` implementation.)*
+12. **A `core` toolset of ~17 tools covers ≥90% of real prompts** based on the curated lists open competitors have arrived at independently. The remaining ~13 tools (bulk ops, gear, sport settings, curves, histograms, custom items, workout-library writes) are correctly placed behind `ICUVISOR_TOOLSET=full`. *(Validate via opt-in telemetry on tool-call distribution after v0.5 dogfooding.)*
+13. **MCP Resources are honored by all target clients.** Verbose schema documentation (workout DSL, custom-item content shapes, event categories) belongs in Resources rather than inline tool descriptions. *(Validate during KR6 client-compatibility sweep — note any client that ignores `resources/list` and fall back to inline docs only for those.)*
+14. **`input_examples` is honored by the official Go MCP SDK and surfaces to LLMs.** Anthropic reports 72→90% accuracy on complex argument shapes when examples are present. *(Validate during MCP SDK integration; if not supported, file upstream or use the lower-level SDK API.)*
+15. **The `locked` flag on wellness records actually prevents device sync overwrites** as documented, so manual entries via MCP survive the next Garmin/Apple Health/Oura push. *(Validate by writing a wellness record with `locked: true` and triggering a device sync.)*
 
 ---
 

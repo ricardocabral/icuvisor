@@ -16,12 +16,20 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 
 **Goal:** validate KR1 (install success) and KR5 (token efficiency) on real users.
 
-- [ ] All ~25 launch tools implemented (see PRD §7.2.C).
-- [ ] Terse-by-default and `include_full` response modes.
+- [ ] All ~30 launch tools implemented (see PRD §7.2.C), including workout-library CRUD and the expanded `update_wellness` field set with `locked` flag support.
+- [ ] Terse-by-default and `include_full` response modes; auto-added debug metadata (`fetched_at`, `query_type`) stripped by default, behind `ICUVISOR_DEBUG_METADATA=true` for troubleshooting.
+- [ ] `ICUVISOR_TOOLSET` env var with `core` (default, ~17 tools) and `full` tiers; `icuvisor_list_advanced_capabilities` lives in `core` for discoverability.
+- [ ] `ICUVISOR_DELETE_MODE` env var (`safe` default / `full` / `none`) — destructive tools are not *registered* in modes that forbid them, so the LLM cannot see or invoke them. No per-call `confirm: true` arguments.
+- [ ] MCP Resources for long-form schema docs: `icuvisor://workout-syntax`, `icuvisor://event-categories`, `icuvisor://custom-item-schemas`, `icuvisor://athlete-profile`.
+- [ ] MCP Prompts: training analysis, recovery check, weekly planning, race-week taper, coach roster triage.
+- [ ] `input_examples` on complex tools (`add_or_update_event`, `create_workout`, `create_custom_item`, `apply_training_plan`).
+- [ ] Tool-name disambiguation audit: every confusable cluster has distinguishing first sentences; CI guard against new clusters without one.
+- [ ] In-response scale labels on every subjective field (`feel`, `sleepQuality`, `fatigue`, etc.) — not just tool descriptions, since some clients don't pass descriptions to the LLM.
+- [ ] Disambiguating field names in responses (`calories_burned` not `calories`; `distance_km` / `distance_mi`).
 - [ ] Server-side pagination for `get_activities`.
 - [ ] Strava-blocked-activity detection: tools return a structured `unavailable: { reason: "strava_tos", workaround: ... }` rather than empty fields.
 - [ ] Per-athlete unit normalization (miles vs km) read from `preferred_units`, embedded in field names / `_meta`.
-- [ ] `add_or_update_event` preserves free-text `description` verbatim; `workout_doc` is the only field that accepts structured-block normalization.
+- [ ] `add_or_update_event` preserves free-text `description` verbatim; `workout_doc` is the only field that accepts structured-block normalization. Supports `tags`.
 - [ ] Tool-schema stability rules enforced in CI: tool argument changes are additive-only on stable tools; renames/removals require a new tool name.
 - [ ] `_meta.server_version` embedded in every tool response.
 - [ ] Coach mode behind a feature flag, with per-athlete granular tool permissions.
