@@ -31,7 +31,7 @@
 
 ## Step 3: Implement retries and structured errors
 
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 
 - [x] Retry 429 and 5xx with exponential backoff and jitter
 - [x] Respect `Retry-After` when practical
@@ -81,3 +81,4 @@
 | 2026-05-10 22:25 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-10 22:30 | Review R001 | code Step 2: APPROVE |
 | 2026-05-10 22:55 | Review R001 | code Step 3: REVISE |
+| 2026-05-10 22:58 | Review R001 | code Step 3: APPROVE |
