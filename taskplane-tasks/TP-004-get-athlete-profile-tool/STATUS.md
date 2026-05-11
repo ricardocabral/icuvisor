@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — get_athlete_profile tool
 **Iteration:** 1
-**Current Step:** Step 3: Shape the response for v0.1
+**Current Step:** Step 4: Add tests
 **Last Updated:** 2026-05-11
 **State:** Ready
 
@@ -145,13 +145,29 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 
 ## Step 4: Add tests
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
 - [ ] Test registration metadata and no secret args
 - [ ] Test successful handler with fake intervals client
 - [ ] Test include-full/default behavior if implemented
 - [ ] Test upstream error mapping
 - [ ] Test `_meta.server_version` and normalized athlete ID
+- [ ] Test timezone fallback precedence and default timezone fallback
+- [ ] Test unit normalization and pace key selection for km/mile settings
+- [ ] Test strict runtime argument validation rejects unknown fields, null, non-objects, and trailing JSON
+- [ ] Test cancellation is not mapped to credential/athlete-ID user errors
+- [ ] Test default/full response omits debug, raw, URL, header, credential, and timestamp fields
+
+### Step 4 design
+
+- Add `internal/tools/get_athlete_profile_test.go` in package `tools` and call the registered handler directly through a fake registrar.
+- Use a fake `ProfileClient` with call count, context capture, configurable profile, and configurable error. Tests must not hit the network.
+- Registration metadata assertions: exactly one `get_athlete_profile` tool; first sentence targets athlete profile/thresholds/zones; input schema is an object with `additionalProperties: false`; only `include_full` is present with boolean type/default false; no property names contain `api_key`, `password`, `token`, `credential`, or `athlete_id`.
+- Success assertions decode both `StructuredContent` and text JSON into `GetAthleteProfileResponse` and verify normalized `athlete_id`, `_meta.server_version`, timezone, units, sport thresholds/zones, and pace fields.
+- Default/full assertions: default omits `measurement_preference_source`, `sport_setting_id`, and `sport_setting_athlete_id`; `include_full: true` includes only those additional typed fields when present and normalizes `sport_setting_athlete_id`.
+- Argument validation assertions are table-driven and verify invalid args return `invalid get_athlete_profile arguments; only include_full is supported` without calling the fake client.
+- Error assertions distinguish upstream failures, which map to `could not fetch athlete profile; check intervals.icu credentials and athlete ID`, from context cancellation/deadline errors, which propagate as cancellation errors.
+- Negative output assertions marshal the response and check forbidden/debug substrings are absent: fetched timestamps, raw upstream payloads, URLs, headers, credentials, API keys, tokens, and Basic Auth details.
 
 ## Step 5: End-to-end local verification
 
@@ -184,3 +200,4 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 | 2026-05-11 01:12 | Review R001 | code Step 3: UNKNOWN |
 | 2026-05-11 01:16 | Review R001 | code Step 3: UNKNOWN |
 | 2026-05-11 01:19 | Review R001 | code Step 3: APPROVE |
+| 2026-05-11 01:21 | Review R001 | plan Step 4: UNKNOWN |
