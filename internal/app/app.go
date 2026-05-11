@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/config"
+	"github.com/ricardocabral/icuvisor/internal/intervals"
 	mcpserver "github.com/ricardocabral/icuvisor/internal/mcp"
+	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
 // Options contains process-level dependencies for the icuvisor CLI.
@@ -97,10 +99,15 @@ func startServer(ctx context.Context, loader func(context.Context, config.Option
 }
 
 func defaultStartServer(ctx context.Context, info ServerInfo) error {
+	client, err := intervals.NewClient(intervals.Options{Config: info.Config, Version: info.Version})
+	if err != nil {
+		return err
+	}
 	server, err := mcpserver.NewServer(ctx, mcpserver.Options{
-		Config:  info.Config,
-		Version: info.Version,
-		Logger:  slog.Default(),
+		Config:   info.Config,
+		Version:  info.Version,
+		Logger:   slog.Default(),
+		Registry: tools.NewRegistry(client, info.Version, info.Config.Timezone),
 	})
 	if err != nil {
 		return err

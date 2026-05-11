@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — get_athlete_profile tool
 **Iteration:** 1
-**Current Step:** Step 4: Add tests
+**Current Step:** Step 5: End-to-end local verification
 **Last Updated:** 2026-05-11
 **State:** Ready
 
@@ -173,15 +173,15 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 
 ## Step 5: End-to-end local verification
 
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 
-- [ ] Exercise MCP stdio tool dispatch to `get_athlete_profile` with fake client/server
-- [ ] If local `.env` has `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY`, run optional end-to-end MCP validation and record only non-sensitive result shape
-- [ ] Run `go fmt ./...`
-- [ ] Run `make test`
-- [ ] Run `make build`
-- [ ] Run `make lint` if available
-- [ ] Update `CHANGELOG.md`
+- [x] Exercise MCP stdio tool dispatch to `get_athlete_profile` with fake client/server
+- [x] If local `.env` has `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY`, run optional end-to-end MCP validation and record only non-sensitive result shape
+- [x] Run `go fmt ./...`
+- [x] Run `make test`
+- [x] Run `make build`
+- [x] Run `make lint` if available
+- [x] Update `CHANGELOG.md`
 
 ## Discoveries
 
@@ -190,6 +190,7 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 | 2026-05-11 00:38 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-11 00:38 | Step 1 started | Define the tool contract in STATUS.md |
 | 2026-05-11 00:45 | MIT Python reference not consulted for Step 1 | Contract derived from PRD, roadmap, existing config/client/MCP scaffolding, and task prompt |
+| 2026-05-11 01:20 | Optional live MCP validation skipped | Local `.env` does not contain both `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY`; no secrets read or printed |
 | 2026-05-11 00:41 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-05-11 00:45 | Review R001 | code Step 1: UNKNOWN |
 | 2026-05-11 00:48 | Review R001 | code Step 1: APPROVE |

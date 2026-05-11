@@ -11,8 +11,17 @@ import (
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
+
+type testProfileClient struct {
+	profile intervals.AthleteWithSportSettings
+}
+
+func (c testProfileClient) GetAthleteProfile(context.Context) (intervals.AthleteWithSportSettings, error) {
+	return c.profile, nil
+}
 
 func TestProtocolInitialize(t *testing.T) {
 	t.Parallel()
@@ -82,6 +91,48 @@ func TestProtocolCallToolDispatch(t *testing.T) {
 	}
 	if !strings.Contains(text.Text, "hello") {
 		t.Fatalf("text content = %q, want echoed argument", text.Text)
+	}
+}
+
+func TestProtocolGetAthleteProfileDispatch(t *testing.T) {
+	t.Parallel()
+
+	registry := tools.NewRegistry(testProfileClient{profile: intervals.AthleteWithSportSettings{
+		ID:                    "12345",
+		Name:                  "Example Athlete",
+		MeasurementPreference: "METRIC",
+		Timezone:              "America/Sao_Paulo",
+		SportSettings: []intervals.SportSettings{{
+			Types: []string{"Ride"},
+			FTP:   250,
+		}},
+	}}, "v0.1-test", "UTC")
+	ctx, session, cleanup := connectTestClient(t, registry)
+	defer cleanup()
+
+	toolsResult, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools() error = %v", err)
+	}
+	if len(toolsResult.Tools) != 1 || toolsResult.Tools[0].Name != "get_athlete_profile" {
+		t.Fatalf("tools/list = %#v, want get_athlete_profile", toolsResult.Tools)
+	}
+
+	result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: "get_athlete_profile", Arguments: map[string]any{}})
+	if err != nil {
+		t.Fatalf("CallTool(get_athlete_profile) error = %v", err)
+	}
+	if result.IsError {
+		t.Fatalf("CallTool(get_athlete_profile) IsError = true, content = %#v", result.Content)
+	}
+	text, ok := result.Content[0].(*sdkmcp.TextContent)
+	if !ok {
+		t.Fatalf("content type = %T, want TextContent", result.Content[0])
+	}
+	for _, want := range []string{"\"athlete_id\":\"i12345\"", "\"server_version\":\"v0.1-test\"", "\"ftp_watts\":250"} {
+		if !strings.Contains(text.Text, want) {
+			t.Fatalf("get_athlete_profile text = %s, missing %s", text.Text, want)
+		}
 	}
 }
 
