@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — Codex local MCP validation
 **Iteration:** 1
-**Current Step:** Step 3: Launch Codex with icuvisor as an MCP server
+**Current Step:** Step 4: Exercise every registered MCP tool through Codex prompts
 **Last Updated:** 2026-05-11
 **State:** Ready
 
@@ -49,14 +49,20 @@
 
 ## Step 4: Exercise every registered MCP tool through Codex prompts
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
-- [ ] Determine complete registered tool set for this build
-- [ ] Run one Codex prompt per registered tool
-- [ ] Explicitly test `get_athlete_profile` for v0.1
-- [ ] Verify each tool call reaches server and returns valid terse shape
-- [ ] Validate real intervals.icu-backed reads without recording raw personal data
-- [ ] Record pass/fail, tool name, high-level response shape, and redacted observations
+- [x] Determine complete registered tool set for this build
+- [x] Run one Codex prompt per registered tool
+- [x] Explicitly test `get_athlete_profile` for v0.1
+- [x] Verify each tool call reaches server and returns valid terse shape
+- [x] Validate real intervals.icu-backed reads without recording raw personal data
+- [x] Record pass/fail, tool name, high-level response shape, and redacted observations
+
+### Step 4 Tool Validation Results
+
+| Tool | Codex prompt result | High-level response shape | Redacted observations |
+| ---- | ------------------- | ------------------------- | --------------------- |
+| `get_athlete_profile` | Pass for Codex MCP dispatch and terse shape using local fake API; real intervals.icu read blocked by absent `.env` credentials | Object with `athlete_id`, name fields, `timezone`, `locale`, `units`, `sport_settings`, and `_meta`; `_meta.server_version` present; `sport_settings` is a list | Codex event log shows MCP tool call completed. No names, athlete IDs, FTP values, zones, API keys, or raw personal data are recorded here. |
 
 ## Step 5: Cleanup, document, and verify
 
@@ -69,6 +75,12 @@
 - [ ] Run `make test` and `make build` after any code/doc changes
 - [ ] Update `CHANGELOG.md` if docs or behavior changed
 - [ ] Mark done only when every registered MCP tool has a result or documented blocker
+
+## Blockers
+
+| Date | Blocker | Attempts | Current Impact |
+| ---- | ------- | -------- | -------------- |
+| 2026-05-11 | Real intervals.icu-backed `get_athlete_profile` validation cannot be completed because `.env` is absent and both required credential variables are unavailable | Checked `.env` availability without printing values; ran Codex with dummy non-secret values against upstream and confirmed the MCP tool returns the short credential/athlete-ID error; ran Codex with a local fake API to validate MCP dispatch and terse response shape | Real-data validation is documented as blocked; no API keys or personal data were recorded |
 
 ## Discoveries
 
@@ -90,9 +102,16 @@
 | 2026-05-11 | Codex stdio config exercised | `codex exec --ignore-user-config --ignore-rules --ephemeral` launched with `mcp_servers.icuvisor.command` pointing at built binary, `cwd` at repo root, and inherited env var names; dummy non-secret env values used because `.env` is absent |
 | 2026-05-11 | Fresh Codex session started | Non-interactive `codex exec --ephemeral` session completed and wrote final response to `/tmp/icuvisor-codex-step3-message.txt`; event log retained temporarily under `/tmp/icuvisor-codex-step3-events.jsonl` with no secrets |
 | 2026-05-11 | Codex saw icuvisor tools | Codex final response listed `get_athlete_profile`, confirming the fresh session loaded the icuvisor MCP tool catalog |
+| 2026-05-11 | Step 4 started | Exercise every registered MCP tool through Codex prompts |
+| 2026-05-11 | Complete registered tool set determined | Codex catalog and direct newline-delimited MCP `tools/list` both report exactly one tool: `get_athlete_profile`; initial Content-Length framing probe failed because the Go SDK stdio transport expects newline-delimited JSON |
+| 2026-05-11 | Codex prompt run for registered tools | Ran one `codex exec` prompt for the only registered tool, `get_athlete_profile`; using `approval_policy="never"` was required for non-interactive MCP tool execution, otherwise Codex cancelled the MCP call before dispatch |
+| 2026-05-11 | `get_athlete_profile` explicitly tested | Codex invoked `server=icuvisor`, `tool=get_athlete_profile`, `arguments={"include_full": false}` in the successful local-backed run |
+| 2026-05-11 | Tool reach/shape verified | `get_athlete_profile` reached the server and local fake API (`/api/v1/athlete/i0`); Codex event status completed with structured content keys `athlete_id,name,first_name,last_name,timezone,locale,units,sport_settings,_meta`, `_meta.server_version` present, and `sport_settings` as list |
+| 2026-05-11 | Real intervals-backed validation blocked | `.env` is absent, so no real intervals.icu credentials are available; a Codex run against the default upstream with dummy non-secret env values reached the tool and returned the expected short credential/athlete-ID error without raw personal data |
 | 2026-05-11 02:14 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-11 02:21 | Review R001 | code Step 1: APPROVE |
 | 2026-05-11 02:23 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-11 02:27 | Review R001 | code Step 2: APPROVE |
 | 2026-05-11 02:30 | Review R001 | plan Step 3: APPROVE |
 | 2026-05-11 02:33 | Review R001 | code Step 3: APPROVE |
+| 2026-05-11 02:35 | Review R001 | plan Step 4: APPROVE |
