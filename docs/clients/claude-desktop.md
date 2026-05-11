@@ -45,19 +45,19 @@ icuvisor v0.1 can read configuration from a JSON file, a local untracked `.env` 
 
 Required inputs:
 
-| Purpose | Environment variable | JSON field | Example placeholder |
-| --- | --- | --- | --- |
-| intervals.icu API key | `INTERVALS_ICU_API_KEY` | `api_key` | `YOUR_INTERVALS_ICU_API_KEY` |
-| intervals.icu athlete ID | `INTERVALS_ICU_ATHLETE_ID` | `athlete_id` | `i12345` |
+| Purpose                  | Environment variable       | JSON field   | Example placeholder          |
+| ------------------------ | -------------------------- | ------------ | ---------------------------- |
+| intervals.icu API key    | `INTERVALS_ICU_API_KEY`    | `api_key`    | `YOUR_INTERVALS_ICU_API_KEY` |
+| intervals.icu athlete ID | `INTERVALS_ICU_ATHLETE_ID` | `athlete_id` | `i12345`                     |
 
 Optional inputs:
 
-| Purpose | Environment variable | JSON field | Default | Example placeholder |
-| --- | --- | --- | --- | --- |
-| Athlete timezone | `ICUVISOR_TIMEZONE` | `timezone` | `UTC` | `America/Sao_Paulo` |
-| API base URL | `ICUVISOR_API_BASE_URL` | `api_base_url` | `https://intervals.icu/api/v1` | `https://intervals.icu/api/v1` |
-| HTTP timeout | `ICUVISOR_HTTP_TIMEOUT` | `http_timeout` | `30s` | `30s` |
-| Config path | `ICUVISOR_CONFIG` | n/a | unset | `/Users/YOU/.config/icuvisor/icuvisor.json` |
+| Purpose          | Environment variable    | JSON field     | Default                        | Example placeholder                         |
+| ---------------- | ----------------------- | -------------- | ------------------------------ | ------------------------------------------- |
+| Athlete timezone | `ICUVISOR_TIMEZONE`     | `timezone`     | `UTC`                          | `America/Sao_Paulo`                         |
+| API base URL     | `ICUVISOR_API_BASE_URL` | `api_base_url` | `https://intervals.icu/api/v1` | `https://intervals.icu/api/v1`              |
+| HTTP timeout     | `ICUVISOR_HTTP_TIMEOUT` | `http_timeout` | `30s`                          | `30s`                                       |
+| Config path      | `ICUVISOR_CONFIG`       | n/a            | unset                          | `/Users/YOU/.config/icuvisor/icuvisor.json` |
 
 Athlete IDs may be written as `12345` or `i12345`; icuvisor normalizes them to the `i12345` form in responses. Timezones must be IANA timezone names such as `UTC`, `America/Sao_Paulo`, or `Europe/London`.
 
@@ -139,10 +139,7 @@ Create the file if it does not exist. The top-level shape is an `mcpServers` obj
   "mcpServers": {
     "icuvisor": {
       "command": "/absolute/path/to/icuvisor",
-      "args": [
-        "--config",
-        "/Users/YOU/.config/icuvisor/icuvisor.json"
-      ]
+      "args": ["--config", "/Users/YOU/.config/icuvisor/icuvisor.json"]
     }
   }
 }
