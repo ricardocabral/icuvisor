@@ -14,6 +14,8 @@
 - [x] Do not accept API key as a tool parameter
 - [x] Decide whether v0.1 needs `include_full`
 - [x] Include units/timezone/athlete-ID conventions where available
+- [ ] Clarify pace field units/normalization for default and imperial athletes
+- [ ] Pin exact `include_full: true` response delta fields
 
 ### Contract
 
@@ -127,8 +129,8 @@
 
 | Date | Finding | Impact |
 | ---- | ------- | ------ |
-
 | 2026-05-11 00:38 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-11 00:38 | Step 1 started | Define the tool contract in STATUS.md |
 | 2026-05-11 00:45 | MIT Python reference not consulted for Step 1 | Contract derived from PRD, roadmap, existing config/client/MCP scaffolding, and task prompt |
 | 2026-05-11 00:41 | Review R001 | plan Step 1: UNKNOWN |
+| 2026-05-11 00:45 | Review R001 | code Step 1: UNKNOWN |
