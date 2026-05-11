@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- MCP stdio server skeleton using the official Go MCP SDK, with SDK-free tool registry scaffolding and protocol tests for initialize, tool listing, tool calls, malformed requests, and sanitized handler errors.
 - intervals.icu HTTP client core with Basic Auth, `User-Agent` propagation, retry/backoff handling, structured errors, and athlete profile retrieval.
 - v0.1 foundation CLI with thin `main`, internal app startup wiring, build-version propagation, and `icuvisor version` support.
 - Manual v0.1 config loader for JSON/env/`.env` inputs with centralized athlete-ID normalization and secret redaction.

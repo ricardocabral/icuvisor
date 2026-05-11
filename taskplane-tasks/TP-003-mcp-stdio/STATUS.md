@@ -2,9 +2,9 @@
 
 **Issue:** v0.1 — MCP stdio
 **Iteration:** 1
-**Current Step:** Step 4: Test protocol behavior without Claude
+**Current Step:** Step 5: Verify and document
 **Last Updated:** 2026-05-10
-**State:** Ready
+**State:** ✅ Complete
 
 ## Step 1: SDK spike and plan
 
@@ -55,14 +55,14 @@
 
 ## Step 5: Verify and document
 
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 
-- [ ] Run `go fmt ./...`
-- [ ] Run `go mod tidy`
-- [ ] Run `make test`
-- [ ] Run `make build`
-- [ ] Run `make lint` if available
-- [ ] Update `CHANGELOG.md`
+- [x] Run `go fmt ./...`
+- [x] Run `go mod tidy`
+- [x] Run `make test`
+- [x] Run `make build`
+- [x] Run `make lint` if available
+- [x] Update `CHANGELOG.md`
 
 ## Discoveries
 
@@ -83,6 +83,7 @@
 | 2026-05-10 | Fake/noop tool boundary: Step 3 will keep `test_echo` or equivalent fake registries in `_test.go` files only; production default registry remains empty until the real `get_athlete_profile` task lands. | Avoids exposing unstable placeholder tools in the v0.1 catalog. |
 | 2026-05-10 | Registrar invariants: reject invalid snake_case names, empty descriptions, nil/non-object schemas, nil handlers, unsupported content types, and duplicate names before invoking the SDK. | Normal validation failures become deterministic startup errors, not SDK panics. |
 | 2026-05-10 | Response content shape: v0.1 scaffolding supports text content plus optional structured JSON object passthrough; unsupported content types are rejected at registration/handler conversion time rather than silently dropped. | Step 4 can assert predictable `tools/call` responses and short error payloads. |
+| 2026-05-10 | Final verification passed: `go fmt ./...`, `go mod tidy`, `make test`, `make build`, and `make lint`. | Ready for TP-003 delivery. |
 | 2026-05-10 23:14 | Review R001 | plan Step 1: REVISE |
 | 2026-05-10 23:19 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-10 23:22 | Review R001 | code Step 1: REVISE |
