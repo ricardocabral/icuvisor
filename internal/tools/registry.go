@@ -57,6 +57,24 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	if err := registrar.AddTool(newGetAthleteProfileTool(r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 		return err
 	}
+	if fitnessClient, ok := r.profileClient.(FitnessClient); ok {
+		if err := registrar.AddTool(newGetFitnessTool(fitnessClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+		if err := registrar.AddTool(newGetTrainingSummaryTool(fitnessClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if bestEffortsClient, ok := r.profileClient.(BestEffortsClient); ok {
+		if err := registrar.AddTool(newGetBestEffortsTool(bestEffortsClient, r.version, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if powerCurvesClient, ok := r.profileClient.(PowerCurvesClient); ok {
+		if err := registrar.AddTool(newGetPowerCurvesTool(powerCurvesClient, r.version, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if activityClient, ok := r.profileClient.(ActivitiesClient); ok {
 		if err := registrar.AddTool(newGetActivitiesTool(activityClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
@@ -88,6 +106,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	if messagesClient, ok := r.profileClient.(ActivityMessagesClient); ok {
 		detailsClient, _ := r.profileClient.(ActivityDetailsClient)
 		if err := registrar.AddTool(newGetActivityMessagesTool(messagesClient, r.profileClient, detailsClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if extendedClient, ok := r.profileClient.(ExtendedMetricsClient); ok {
+		if err := registrar.AddTool(newGetExtendedMetricsTool(extendedClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
 		}
 	}

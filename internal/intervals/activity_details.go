@@ -40,8 +40,19 @@ func (d *IntervalsDTO) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
+	decodeRaw := make(map[string]any, len(raw))
+	for key, value := range raw {
+		decodeRaw[key] = value
+	}
+	if _, ok := decodeRaw["analyzed"].(bool); !ok {
+		delete(decodeRaw, "analyzed")
+	}
+	normalized, err := json.Marshal(decodeRaw)
+	if err != nil {
+		return err
+	}
 	var decoded dtoAlias
-	if err := json.Unmarshal(data, &decoded); err != nil {
+	if err := json.Unmarshal(normalized, &decoded); err != nil {
 		return err
 	}
 	*d = IntervalsDTO(decoded)
@@ -53,7 +64,7 @@ func (d *IntervalsDTO) UnmarshalJSON(data []byte) error {
 type ActivityInterval struct {
 	Raw map[string]any `json:"-"`
 
-	ID            string   `json:"id"`
+	ID            any      `json:"id"`
 	Name          *string  `json:"name"`
 	Type          *string  `json:"type"`
 	Unit          *string  `json:"unit"`

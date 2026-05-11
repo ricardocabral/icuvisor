@@ -224,12 +224,26 @@ func addScaleMeta(row map[string]any) {
 
 func scalesForRow(row map[string]any) map[string]string {
 	scales := map[string]string{}
-	for field, label := range defaultScaleLabels {
-		if _, ok := row[field]; ok {
-			scales[field] = label
+	collectScaleLabels(row, scales)
+	return scales
+}
+
+func collectScaleLabels(value any, scales map[string]string) {
+	switch typed := value.(type) {
+	case map[string]any:
+		for key, item := range typed {
+			if label, ok := defaultScaleLabels[key]; ok && item != nil {
+				scales[key] = label
+			}
+			if key != "_meta" {
+				collectScaleLabels(item, scales)
+			}
+		}
+	case []any:
+		for _, item := range typed {
+			collectScaleLabels(item, scales)
 		}
 	}
-	return scales
 }
 
 func addCommonMeta(row map[string]any, opts Options) {

@@ -672,6 +672,13 @@ func stringValue(value *string) string {
 	return *value
 }
 
+func anyString(value any) string {
+	if value == nil {
+		return ""
+	}
+	return strings.TrimSpace(fmt.Sprint(value))
+}
+
 func round(value float64, places int) float64 {
 	factor := math.Pow(10, float64(places))
 	return math.Round(value*factor) / factor

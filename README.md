@@ -41,6 +41,11 @@ Currently implemented tools:
 - `get_activity_streams` — retrieves canonical snake_case stream channels; sample arrays require `include_full:true` or explicit `keys`.
 - `get_activity_splits` — returns manual or virtual per-km/per-mile splits from intervals/streams while honoring preferred units.
 - `get_activity_messages` — lists comments/notes for one activity with athlete-timezone timestamp rendering.
+- `get_fitness` — returns CTL/ATL/TSB trends over a local date range.
+- `get_best_efforts` — returns upstream best efforts grouped by sport and power/heart-rate/pace buckets.
+- `get_power_curves` — returns upstream mean-maximal power curve buckets with raw arrays behind `include_full`.
+- `get_training_summary` — aggregates volume, neutral training load, sRPE, and upstream zone-order totals over a date range.
+- `get_extended_metrics` — returns only upstream-exposed extended activity metrics, dropping unavailable fields instead of zero-filling.
 
 ## Install
 

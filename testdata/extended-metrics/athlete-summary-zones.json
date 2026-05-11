@@ -1,0 +1,15 @@
+[
+  {
+    "date": "2026-05-10",
+    "training_load": 94,
+    "srpe": 560,
+    "fitness": 71.2,
+    "fatigue": 82.4,
+    "form": -11.2,
+    "timeInZones": [300, 900, 1200, 600, 120, 0, 0],
+    "timeInZonesTot": 3120,
+    "byCategory": [
+      {"category": "Ride", "time": 3600, "training_load": 94, "srpe": 560}
+    ]
+  }
+]

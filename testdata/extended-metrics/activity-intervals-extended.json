@@ -1,0 +1,20 @@
+{
+  "id": "activity-redacted",
+  "analyzed": "2026-05-10T09:00:00Z",
+  "icu_intervals": [
+    {
+      "id": 1,
+      "type": "WORK",
+      "label": "Threshold 1",
+      "average_dfa_a1": 0.78,
+      "wbal_start": 20100,
+      "wbal_end": 12600,
+      "joules_above_ftp": 18,
+      "decoupling": 3.2,
+      "avg_lr_balance": 50.4,
+      "average_stride": 1.21,
+      "strain_score": 21.8,
+      "training_load": 24.1
+    }
+  ]
+}

@@ -246,7 +246,7 @@ func shapeActivityInterval(interval intervals.ActivityInterval, includeFull bool
 	if rawUnit := stringValue(interval.Unit); rawUnit != "" {
 		unit, unknown = units.ParseUnit(rawUnit)
 	}
-	row := activityIntervalRow{IntervalID: interval.ID, Name: stringValue(interval.Name), Type: stringValue(interval.Type), Unit: unit, UnknownUnit: unknown, StartIndex: intValue(interval.StartIndex), EndIndex: intValue(interval.EndIndex), StartTime: stringValue(interval.StartTime), EndTime: stringValue(interval.EndTime), StartDistance: interval.StartDistance, EndDistance: interval.EndDistance, Distance: interval.Distance, Duration: interval.Duration, AveragePower: interval.AveragePower, AverageHR: interval.AverageHR, Pace: interval.Pace}
+	row := activityIntervalRow{IntervalID: anyString(interval.ID), Name: stringValue(interval.Name), Type: stringValue(interval.Type), Unit: unit, UnknownUnit: unknown, StartIndex: intValue(interval.StartIndex), EndIndex: intValue(interval.EndIndex), StartTime: stringValue(interval.StartTime), EndTime: stringValue(interval.EndTime), StartDistance: interval.StartDistance, EndDistance: interval.EndDistance, Distance: interval.Distance, Duration: interval.Duration, AveragePower: interval.AveragePower, AverageHR: interval.AverageHR, Pace: interval.Pace}
 	if includeFull {
 		row.Full = interval.Raw
 	}

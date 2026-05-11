@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1001,
+    "type": "Ride",
+    "start_date_local": "2026-05-10T07:00:00",
+    "load_target": 100,
+    "icu_training_load": 96,
+    "joules_above_ftp": 40,
+    "icu_intensity": 0.85,
+    "strain_score": 80.1,
+    "plan_applied": "2026-05-01"
+  }
+]
