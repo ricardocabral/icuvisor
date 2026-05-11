@@ -46,14 +46,14 @@ make build
 ```bash
 # 1. Get an intervals.icu API key from https://intervals.icu/settings
 # 2. Provide v0.1 manual config via env or JSON
-export INTERVALS_ICU_API_KEY="..."
+export INTERVALS_ICU_API_KEY="YOUR_INTERVALS_ICU_API_KEY"
 export INTERVALS_ICU_ATHLETE_ID="i12345"
 ./bin/icuvisor version
 ```
 
 For local development, `icuvisor` can read a local untracked `.env` file containing `INTERVALS_ICU_API_KEY` and `INTERVALS_ICU_ATHLETE_ID`. Do not commit real API keys. For MCP client config, use process env vars or pass a JSON file with `--config /path/to/icuvisor.json` using fields `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout`.
 
-Detailed client setup will live in [`docs/clients/`](docs/) once v0.5 ships.
+For the v0.1 macOS Claude Desktop manual JSON setup and smoke checklist, see [`docs/clients/claude-desktop.md`](docs/clients/claude-desktop.md).
 
 ## Project layout
 

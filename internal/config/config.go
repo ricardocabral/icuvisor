@@ -138,7 +138,10 @@ func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return rawConfig{}, fmt.Errorf("read config file: %w", err)
+		if errors.Is(err, os.ErrNotExist) {
+			return rawConfig{}, fmt.Errorf("config file %q not found; check --config path or ICUVISOR_CONFIG", path)
+		}
+		return rawConfig{}, fmt.Errorf("read config file %q: %w", path, err)
 	}
 	if err := ctx.Err(); err != nil {
 		return rawConfig{}, err
@@ -148,7 +151,7 @@ func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
 	decoder := json.NewDecoder(strings.NewReader(string(data)))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&file); err != nil {
-		return rawConfig{}, fmt.Errorf("invalid config JSON: %w", err)
+		return rawConfig{}, fmt.Errorf("invalid config JSON in %q; expected fields api_key, athlete_id, timezone, api_base_url, http_timeout: %w", path, err)
 	}
 
 	return rawConfig{

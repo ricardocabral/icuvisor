@@ -148,6 +148,59 @@ func TestLoadUsesConfigPathFromEnv(t *testing.T) {
 	}
 }
 
+func TestLoadConfigFileErrorsAreActionableAndRedacted(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	testCredential := strings.Repeat("x", 12)
+
+	t.Run("missing file", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Load(context.Background(), Options{
+			Path:       dir + "/missing.json",
+			DotEnvPath: dir + "/missing.env",
+			Env: map[string]string{
+				EnvAPIKey:    testCredential,
+				EnvAthleteID: "123",
+			},
+		})
+		if err == nil {
+			t.Fatal("Load() error = nil, want error")
+		}
+		msg := err.Error()
+		for _, want := range []string{"config file", "not found", "--config", EnvConfigPath} {
+			if !strings.Contains(msg, want) {
+				t.Fatalf("error %q does not contain %q", msg, want)
+			}
+		}
+		if strings.Contains(msg, testCredential) {
+			t.Fatalf("error leaked API key: %q", msg)
+		}
+	})
+
+	t.Run("invalid JSON", func(t *testing.T) {
+		t.Parallel()
+
+		path := dir + "/invalid.json"
+		writeFile(t, path, `{"api_key":"`+testCredential+`","athlete_id":"123","extra":true}`)
+
+		_, err := Load(context.Background(), Options{Path: path, DotEnvPath: dir + "/missing.env", Env: map[string]string{}})
+		if err == nil {
+			t.Fatal("Load() error = nil, want error")
+		}
+		msg := err.Error()
+		for _, want := range []string{"invalid config JSON", "expected fields", "api_key", "athlete_id"} {
+			if !strings.Contains(msg, want) {
+				t.Fatalf("error %q does not contain %q", msg, want)
+			}
+		}
+		if strings.Contains(msg, testCredential) {
+			t.Fatalf("error leaked API key: %q", msg)
+		}
+	})
+}
+
 func TestLoadValidationErrorsAreActionableAndRedacted(t *testing.T) {
 	t.Parallel()
 

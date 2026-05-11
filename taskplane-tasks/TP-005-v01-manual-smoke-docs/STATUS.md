@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — manual smoke docs
 **Iteration:** 1
-**Current Step:** Step 3: Add a repeatable local smoke checklist
+**Current Step:** Step 4: Align code UX with docs if necessary
 **Last Updated:** 2026-05-11
 **State:** Ready
 
@@ -48,12 +48,12 @@
 
 ## Step 4: Align code UX with docs if necessary
 
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 
-- [ ] Tighten confusing user-facing errors without leaking secrets
-- [ ] Ensure invalid config failures are short/actionable
-- [ ] Point README quickstart to detailed client guide
-- [ ] Update `CHANGELOG.md`
+- [x] Tighten confusing user-facing errors without leaking secrets
+- [x] Ensure invalid config failures are short/actionable
+- [x] Point README quickstart to detailed client guide
+- [x] Update `CHANGELOG.md`
 
 ## Step 5: Verify v0.1 gate
 
@@ -77,3 +77,4 @@
 | 2026-05-11 | Claude Desktop macOS config shape identified | File: `~/Library/Application Support/Claude/claude_desktop_config.json`. Shape: top-level `mcpServers` object; `icuvisor` entry with `command` set to the absolute binary path, optional `args` such as `--config /absolute/path/icuvisor.json`, and/or `env` entries for v0.1 config. |
 | 2026-05-11 | Placeholder policy set | Documentation examples will use placeholders such as `/absolute/path/to/icuvisor`, `/Users/YOU/.config/icuvisor/icuvisor.json`, `YOUR_INTERVALS_ICU_API_KEY`, `i12345`, and `America/Sao_Paulo`; no real keys, athlete IDs, or machine-specific worker paths. |
 | 2026-05-11 02:03 | Review R001 | plan Step 3: APPROVE |
+| 2026-05-11 02:06 | Review R001 | plan Step 4: APPROVE |
