@@ -8,7 +8,7 @@
 
 ## Step 1: Discover current server and Codex CLI behavior
 
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 
 - [x] Build current binary with `make build`
 - [x] Confirm absolute binary path for MCP launch
@@ -77,3 +77,4 @@
 | 2026-05-11 | Codex help inspected | CLI supports `mcp` management, `-c key=value` config overrides, `--profile`, `exec --ephemeral`, and `exec --ignore-user-config`; `mcp add` supports stdio command plus `--env KEY=VALUE` |
 | 2026-05-11 | Codex MCP config mechanism identified | Stdio MCP servers live under `mcp_servers.<name>` TOML config with `command`, `args`, and optional `env`; repeated `-c 'mcp_servers.icuvisor.*=...'` overrides work without writing `config.toml` when paired with a temporary `CODEX_HOME` |
 | 2026-05-11 02:14 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-11 02:21 | Review R001 | code Step 1: APPROVE |
