@@ -283,6 +283,13 @@ func normalizedMeasurementPreference(value string, weightPrefLB bool) string {
 	return "metric"
 }
 
+func normalizeTimezoneFallback(values ...string) string {
+	if fallback := firstNonEmpty(values...); fallback != "" {
+		return fallback
+	}
+	return config.DefaultTimezone
+}
+
 func firstNonEmpty(values ...string) string {
 	for _, value := range values {
 		if trimmed := strings.TrimSpace(value); trimmed != "" {

@@ -17,7 +17,7 @@ func NewRegistry(profileClient ProfileClient, version string, timezoneFallback .
 	return &defaultRegistry{
 		profileClient:    profileClient,
 		version:          normalizeVersion(version),
-		timezoneFallback: firstNonEmpty(timezoneFallback...),
+		timezoneFallback: normalizeTimezoneFallback(timezoneFallback...),
 	}
 }
 
