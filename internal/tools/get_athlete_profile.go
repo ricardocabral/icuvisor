@@ -84,17 +84,17 @@ type GetAthleteProfileMeta struct {
 	IncludeFull        bool   `json:"include_full"`
 }
 
-func newGetAthleteProfileTool(client ProfileClient, version string) Tool {
+func newGetAthleteProfileTool(client ProfileClient, version string, timezoneFallback string) Tool {
 	return Tool{
 		Name:         getAthleteProfileName,
 		Description:  getAthleteProfileDescription,
 		InputSchema:  getAthleteProfileInputSchema(),
 		OutputSchema: getAthleteProfileOutputSchema(),
-		Handler:      getAthleteProfileHandler(client, version),
+		Handler:      getAthleteProfileHandler(client, version, timezoneFallback),
 	}
 }
 
-func getAthleteProfileHandler(client ProfileClient, version string) Handler {
+func getAthleteProfileHandler(client ProfileClient, version string, timezoneFallback string) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		if err := ctx.Err(); err != nil {
 			return Result{}, err
@@ -116,7 +116,7 @@ func getAthleteProfileHandler(client ProfileClient, version string) Handler {
 			}
 			return Result{}, NewUserError(fetchAthleteProfileMessage, err)
 		}
-		response := newGetAthleteProfileResponse(profile, version, args.IncludeFull)
+		response := newGetAthleteProfileResponse(profile, version, timezoneFallback, args.IncludeFull)
 		text, err := json.Marshal(response)
 		if err != nil {
 			return Result{}, fmt.Errorf("encoding get_athlete_profile response: %w", err)
@@ -148,7 +148,7 @@ func decodeGetAthleteProfileRequest(raw json.RawMessage) (GetAthleteProfileReque
 	return args, nil
 }
 
-func newGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, version string, includeFull bool) GetAthleteProfileResponse {
+func newGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, version string, timezoneFallback string, includeFull bool) GetAthleteProfileResponse {
 	athleteID := normalizeProfileAthleteID(profile.ID)
 	units := profileUnits(profile)
 	response := GetAthleteProfileResponse{
@@ -156,7 +156,7 @@ func newGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, ve
 		Name:          strings.TrimSpace(profile.Name),
 		FirstName:     strings.TrimSpace(profile.FirstName),
 		LastName:      strings.TrimSpace(profile.LastName),
-		Timezone:      strings.TrimSpace(profile.Timezone),
+		Timezone:      profileTimezone(profile.Timezone, timezoneFallback),
 		Locale:        strings.TrimSpace(profile.Locale),
 		Units:         units,
 		SportSettings: make([]GetAthleteProfileSport, 0, len(profile.SportSettings)),
@@ -178,17 +178,10 @@ func newGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, ve
 }
 
 func profileUnits(profile intervals.AthleteWithSportSettings) GetAthleteProfileUnits {
-	measurement := strings.ToLower(strings.TrimSpace(profile.MeasurementPreference))
-	measurement = strings.ReplaceAll(measurement, "_", "-")
+	measurement := normalizedMeasurementPreference(profile.MeasurementPreference, profile.WeightPrefLB)
 	weight := "kg"
 	if profile.WeightPrefLB {
 		weight = "lb"
-		if measurement == "" {
-			measurement = "imperial"
-		}
-	}
-	if measurement == "" {
-		measurement = "metric"
 	}
 	temperature := "celsius"
 	if profile.Fahrenheit {
@@ -266,6 +259,30 @@ func getAthleteProfileOutputSchema() map[string]any {
 		"additionalProperties": true,
 		"description":          "Terse athlete profile with normalized athlete_id, units, timezone, sport thresholds/zones, and _meta.server_version.",
 	}
+}
+
+func profileTimezone(profileTimezone string, fallback string) string {
+	if timezone := strings.TrimSpace(profileTimezone); timezone != "" {
+		return timezone
+	}
+	return strings.TrimSpace(fallback)
+}
+
+func normalizedMeasurementPreference(value string, weightPrefLB bool) string {
+	upper := strings.ToUpper(strings.TrimSpace(value))
+	if strings.Contains(upper, "IMPERIAL") || weightPrefLB {
+		return "imperial"
+	}
+	return "metric"
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if trimmed := strings.TrimSpace(value); trimmed != "" {
+			return trimmed
+		}
+	}
+	return ""
 }
 
 func normalizeProfileAthleteID(value string) string {

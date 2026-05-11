@@ -123,13 +123,13 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 
 **Status:** 🟡 In Progress
 
-- [ ] Return terse useful profile fields
-- [ ] Use disambiguating field names/metadata where applicable
-- [ ] Include `_meta.server_version`
-- [ ] Exclude fetched timestamps/debug cruft by default
-- [ ] Exclude secrets/raw upstream payloads by default
-- [ ] Add non-secret configured timezone fallback to registry/tool construction
-- [ ] Normalize public unit values to stable LLM-friendly strings
+- [x] Return terse useful profile fields
+- [x] Use disambiguating field names/metadata where applicable
+- [x] Include `_meta.server_version`
+- [x] Exclude fetched timestamps/debug cruft by default
+- [x] Exclude secrets/raw upstream payloads by default
+- [x] Add non-secret configured timezone fallback to registry/tool construction
+- [x] Normalize public unit values to stable LLM-friendly strings
 
 ### Step 3 design
 
@@ -178,3 +178,4 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 | 2026-05-11 00:59 | Review R001 | code Step 2: UNKNOWN |
 | 2026-05-11 01:03 | Review R001 | code Step 2: APPROVE |
 | 2026-05-11 01:06 | Review R001 | plan Step 3: UNKNOWN |
+| 2026-05-11 01:08 | Review R001 | plan Step 3: APPROVE |

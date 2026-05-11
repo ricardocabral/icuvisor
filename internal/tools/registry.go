@@ -13,13 +13,18 @@ type Registry interface {
 }
 
 // NewRegistry creates the default v0.1 tool registry.
-func NewRegistry(profileClient ProfileClient, version string) Registry {
-	return &defaultRegistry{profileClient: profileClient, version: normalizeVersion(version)}
+func NewRegistry(profileClient ProfileClient, version string, timezoneFallback ...string) Registry {
+	return &defaultRegistry{
+		profileClient:    profileClient,
+		version:          normalizeVersion(version),
+		timezoneFallback: firstNonEmpty(timezoneFallback...),
+	}
 }
 
 type defaultRegistry struct {
-	profileClient ProfileClient
-	version       string
+	profileClient    ProfileClient
+	version          string
+	timezoneFallback string
 }
 
 func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) error {
@@ -32,7 +37,7 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	if registrar == nil {
 		return fmt.Errorf("registering %s: missing registrar", getAthleteProfileName)
 	}
-	return registrar.AddTool(newGetAthleteProfileTool(r.profileClient, r.version))
+	return registrar.AddTool(newGetAthleteProfileTool(r.profileClient, r.version, r.timezoneFallback))
 }
 
 // Registrar accepts tool definitions from a Registry.
