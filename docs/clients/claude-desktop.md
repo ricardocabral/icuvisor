@@ -191,3 +191,77 @@ Fully quit and reopen Claude Desktop, then start a new chat. The previous conver
 ### JSON config is rejected
 
 Check for trailing commas, comments, misspelled fields, or unknown fields. v0.1 accepts `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout` in JSON config.
+
+## Local smoke checklist
+
+Use this checklist before declaring the v0.1 Claude Desktop path ready.
+
+### 1. Confirm the binary reports a version
+
+Run:
+
+```bash
+./bin/icuvisor version
+```
+
+Expected: a short version string such as `dev`, a commit-derived version, or a release tag. Any startup/config error here indicates the `version` command path is broken and should be fixed before MCP testing.
+
+### 2. Build from source
+
+Run:
+
+```bash
+make build
+```
+
+Expected: `bin/icuvisor` is created or replaced without errors. If the command fails, fix the build before editing Claude Desktop config.
+
+### 3. Confirm Claude Desktop sees the tool
+
+1. Edit `~/Library/Application Support/Claude/claude_desktop_config.json` with one of the placeholder-backed examples above, replacing placeholders only on your local machine.
+2. Fully quit and reopen Claude Desktop.
+3. Start a new chat.
+4. Ask Claude: `What icuvisor tools are available?`
+5. Confirm `get_athlete_profile` is listed.
+6. Ask Claude to call `get_athlete_profile`.
+
+Expected: Claude can call the tool through MCP stdio. If the tool is not listed, restart Claude Desktop and re-check the config file path, JSON syntax, and absolute binary path.
+
+### 4. Verify the successful response shape
+
+A successful `get_athlete_profile` call should return structured profile data shaped like this anonymized example:
+
+```json
+{
+  "athlete_id": "i12345",
+  "name": "Example Athlete",
+  "timezone": "America/Sao_Paulo",
+  "locale": "en_US",
+  "units": {
+    "measurement_preference": "metric",
+    "weight": "kg",
+    "temperature": "celsius"
+  },
+  "sport_settings": [
+    {
+      "types": ["Ride"],
+      "ftp_watts": 250,
+      "lthr_bpm": 170,
+      "power_zones_watts": [125, 188, 225, 263, 300],
+      "power_zone_names": ["Z1", "Z2", "Z3", "Z4", "Z5"]
+    }
+  ],
+  "_meta": {
+    "server_version": "dev",
+    "athlete_id_format": "i-prefixed intervals.icu athlete ID",
+    "timezone_convention": "IANA timezone from athlete profile when available; config timezone fallback otherwise",
+    "include_full": false
+  }
+}
+```
+
+Actual values will differ. The response must not include the intervals.icu API key.
+
+### 5. Record whether manual network smoke was possible
+
+Unit tests in this repository do not hit the network; they use local fakes and fixtures. The Claude Desktop smoke path requires a real intervals.icu account, a real API key, and the matching athlete ID. If credentials are unavailable, record the remaining human verification instead of claiming an end-to-end intervals.icu result.

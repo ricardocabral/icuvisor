@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — manual smoke docs
 **Iteration:** 1
-**Current Step:** Step 2: Write manual setup documentation
+**Current Step:** Step 3: Add a repeatable local smoke checklist
 **Last Updated:** 2026-05-11
 **State:** Ready
 
@@ -38,13 +38,13 @@
 
 ## Step 3: Add a repeatable local smoke checklist
 
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 
-- [ ] Checklist for `icuvisor version`
-- [ ] Checklist for `make build`
-- [ ] Checklist for Claude Desktop tool listing/callability
-- [ ] Expected anonymized `get_athlete_profile` response shape
-- [ ] Note manual smoke requires a real intervals.icu account/API key
+- [x] Checklist for `icuvisor version`
+- [x] Checklist for `make build`
+- [x] Checklist for Claude Desktop tool listing/callability
+- [x] Expected anonymized `get_athlete_profile` response shape
+- [x] Note manual smoke requires a real intervals.icu account/API key
 
 ## Step 4: Align code UX with docs if necessary
 
@@ -76,3 +76,4 @@
 | 2026-05-11 | Local `.env` availability checked | `.env` is absent in this worktree, so no local `INTERVALS_ICU_ATHLETE_ID` or `INTERVALS_ICU_API_KEY` is available for automated maintainer smoke; no secret values were printed or recorded. |
 | 2026-05-11 | Claude Desktop macOS config shape identified | File: `~/Library/Application Support/Claude/claude_desktop_config.json`. Shape: top-level `mcpServers` object; `icuvisor` entry with `command` set to the absolute binary path, optional `args` such as `--config /absolute/path/icuvisor.json`, and/or `env` entries for v0.1 config. |
 | 2026-05-11 | Placeholder policy set | Documentation examples will use placeholders such as `/absolute/path/to/icuvisor`, `/Users/YOU/.config/icuvisor/icuvisor.json`, `YOUR_INTERVALS_ICU_API_KEY`, `i12345`, and `America/Sao_Paulo`; no real keys, athlete IDs, or machine-specific worker paths. |
+| 2026-05-11 02:03 | Review R001 | plan Step 3: APPROVE |
