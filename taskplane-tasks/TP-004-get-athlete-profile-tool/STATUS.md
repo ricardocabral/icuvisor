@@ -130,7 +130,7 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 - [x] Exclude secrets/raw upstream payloads by default
 - [x] Add non-secret configured timezone fallback to registry/tool construction
 - [x] Normalize public unit values to stable LLM-friendly strings
-- [ ] Keep explicit measurement preference independent from weight unit preference
+- [x] Keep explicit measurement preference independent from weight unit preference
 
 ### Step 3 design
 

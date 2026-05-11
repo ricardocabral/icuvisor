@@ -269,8 +269,15 @@ func profileTimezone(profileTimezone string, fallback string) string {
 }
 
 func normalizedMeasurementPreference(value string, weightPrefLB bool) string {
-	upper := strings.ToUpper(strings.TrimSpace(value))
-	if strings.Contains(upper, "IMPERIAL") || weightPrefLB {
+	trimmed := strings.TrimSpace(value)
+	upper := strings.ToUpper(trimmed)
+	if strings.Contains(upper, "IMPERIAL") {
+		return "imperial"
+	}
+	if strings.Contains(upper, "METRIC") {
+		return "metric"
+	}
+	if trimmed == "" && weightPrefLB {
 		return "imperial"
 	}
 	return "metric"
