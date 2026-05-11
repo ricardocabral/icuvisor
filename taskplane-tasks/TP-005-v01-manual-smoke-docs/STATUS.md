@@ -26,15 +26,15 @@
 
 ## Step 2: Write manual setup documentation
 
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 
-- [ ] Document local build/install for v0.1
-- [ ] Document intervals.icu API key acquisition
-- [ ] Document config/env inputs
-- [ ] Document safe untracked `.env` flow without committing/displaying secrets
-- [ ] Provide Claude Desktop macOS JSON config example with placeholders
-- [ ] Explain MCP schema caching/new chat requirement
-- [ ] Include troubleshooting for common startup/auth/config errors
+- [x] Document local build/install for v0.1
+- [x] Document intervals.icu API key acquisition
+- [x] Document config/env inputs
+- [x] Document safe untracked `.env` flow without committing/displaying secrets
+- [x] Provide Claude Desktop macOS JSON config example with placeholders
+- [x] Explain MCP schema caching/new chat requirement
+- [x] Include troubleshooting for common startup/auth/config errors
 
 ## Step 3: Add a repeatable local smoke checklist
 
