@@ -1,8 +1,10 @@
 package mcp
 
 import (
+	"bufio"
 	"context"
 	"errors"
+	"net"
 	"strings"
 	"testing"
 	"time"
@@ -123,35 +125,94 @@ func TestProtocolMalformedRequestsAndHandlerErrors(t *testing.T) {
 	}
 }
 
+func TestProtocolMalformedRawRequest(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	serverConn, clientConn := net.Pipe()
+	defer clientConn.Close()
+
+	server, err := NewServer(ctx, Options{
+		Version: "test",
+		Transport: &sdkmcp.IOTransport{
+			Reader: serverConn,
+			Writer: serverConn,
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewServer() error = %v", err)
+	}
+
+	runDone := make(chan error, 1)
+	go func() {
+		runDone <- server.Run(ctx)
+	}()
+
+	if _, err := clientConn.Write([]byte(`{"jsonrpc":"2.0","id":1,"method":"initialize"}` + "\n")); err != nil {
+		t.Fatalf("write malformed request: %v", err)
+	}
+	if err := clientConn.SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
+		t.Fatalf("set read deadline: %v", err)
+	}
+	line, err := bufio.NewReader(clientConn).ReadString('\n')
+	if err != nil {
+		t.Fatalf("read malformed response: %v", err)
+	}
+	if !strings.Contains(line, "error") {
+		t.Fatalf("malformed response = %q, want JSON-RPC error", line)
+	}
+	if strings.Contains(strings.ToLower(line), "panic") || strings.Contains(line, "secret") {
+		t.Fatalf("malformed response leaked internal detail: %q", line)
+	}
+
+	cancel()
+	clientConn.Close()
+	waitForServerRun(t, runDone)
+}
+
 func connectTestClient(t *testing.T, registry tools.Registry) (context.Context, *sdkmcp.ClientSession, func()) {
 	t.Helper()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	server, err := NewServer(ctx, Options{Version: "test", Registry: registry})
+	serverTransport, clientTransport := sdkmcp.NewInMemoryTransports()
+	server, err := NewServer(ctx, Options{Version: "test", Registry: registry, Transport: serverTransport})
 	if err != nil {
 		cancel()
 		t.Fatalf("NewServer() error = %v", err)
 	}
 
-	serverTransport, clientTransport := sdkmcp.NewInMemoryTransports()
-	serverSession, err := server.server.Connect(ctx, serverTransport, nil)
-	if err != nil {
-		cancel()
-		t.Fatalf("server Connect() error = %v", err)
-	}
+	runDone := make(chan error, 1)
+	go func() {
+		runDone <- server.Run(ctx)
+	}()
 
 	client := sdkmcp.NewClient(&sdkmcp.Implementation{Name: "icuvisor-test-client", Version: "test"}, nil)
 	clientSession, err := client.Connect(ctx, clientTransport, nil)
 	if err != nil {
-		serverSession.Close()
 		cancel()
+		waitForServerRun(t, runDone)
 		t.Fatalf("client Connect() error = %v", err)
 	}
 
 	cleanup := func() {
 		clientSession.Close()
-		serverSession.Close()
 		cancel()
+		waitForServerRun(t, runDone)
 	}
 	return ctx, clientSession, cleanup
+}
+
+func waitForServerRun(t *testing.T, runDone <-chan error) {
+	t.Helper()
+
+	select {
+	case err := <-runDone:
+		if err != nil && !errors.Is(err, context.Canceled) && !strings.Contains(err.Error(), "closed") {
+			t.Fatalf("server Run() error = %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("server Run() did not stop")
+	}
 }
