@@ -20,6 +20,10 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 - [ ] Canonical snake_case stream keys across all activities/devices (forum #118); upstream casing differences absorbed at the response boundary.
 - [ ] `get_extended_metrics` field set per PRD §7.2.C — running dynamics, DFA α1, W' balance, cardiac decoupling, HR drift, aerobic decoupling, zone distributions, IF/VI/polarization, TRIMP/strain/load, L/R balance, RPE/feel/session-RPE, compliance %, device name — gated by upstream availability (PRD §7.4 #4).
 - [ ] Terse-by-default + `include_full` opt-in; auto-added debug metadata (`fetched_at`, `query_type`) stripped by default, behind `ICUVISOR_DEBUG_METADATA=true`.
+- [ ] Null-value keys stripped from responses before serialization (wellness in particular — N/A fields are dropped, not emitted as `null`).
+- [ ] Exhaustive pace-unit enum coverage (`MINS_KM`, `MINS_MILE`, `SECS_100M`, `SECS_500M`, …); unknown units degrade to `_meta.unknown_unit: true` rather than failing the call.
+- [ ] Distinct sleep fields surfaced separately: manual `sleepQuality` (1–4) and device-imported `sleepScore` (0–100), each with its own in-response scale label.
+- [ ] `get_event_by_id` upstream-inconsistency handling: structured `unavailable: { reason: "upstream_inconsistency" }` when the detail endpoint 404s on an ID `get_events` just listed.
 - [ ] In-response scale labels on every subjective field (`feel`, `sleepQuality`, `fatigue`, `mood`, etc.) — not just tool descriptions.
 - [ ] Disambiguating field names in responses (`calories_burned` not `calories`; `distance_km` / `distance_mi`).
 - [ ] Server-side pagination for `get_activities`.
@@ -38,6 +42,7 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 **Goal:** ship the write path in a way that an LLM cannot be social-engineered (or self-talked) into destroying data. Validate the env-var safety model end-to-end.
 
 - [ ] `ICUVISOR_DELETE_MODE` env var (`safe` default / `full` / `none`) — destructive tools are not *registered* in modes that forbid them. No per-call `confirm: true` arguments anywhere in the catalog.
+- [ ] `workout_doc` write-path serializer: structured steps round-trip back to the description-string DSL on upload (intervals.icu rejects structured `workout_doc` on writes — mvilanova #56). Read → modify → write → read fidelity locked by golden-file tests.
 - [ ] Write tools: `add_or_update_event` (free-text `description` preserved verbatim, `workout_doc` for structured steps, `tags` supported), `add_activity_message`, `link_activity_to_event` (manual pairing for compliance scoring when auto-pair misses — forum #97), `update_wellness` (full writable field set incl. `injury`, blood pressure, blood glucose, lactate, body fat, `locked`), `update_sport_settings` (FTP, threshold HR/pace, zones; zone-definition overwrites gated by `ICUVISOR_DELETE_MODE` — forum #35).
 - [ ] Workout-library CRUD: `create_workout`, `update_workout`, `delete_workout` (delete gated by `ICUVISOR_DELETE_MODE`).
 - [ ] Event delete (`delete_event`, `delete_events_by_date_range`), activity delete, custom-item delete, sport-settings delete, gear delete — all gated by `ICUVISOR_DELETE_MODE`.
