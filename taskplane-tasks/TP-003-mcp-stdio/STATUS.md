@@ -6,7 +6,7 @@
 **Last Updated:** 2026-05-10
 **State:** ✅ Complete
 
-## Step 1: SDK spike and plan
+### Step 1: SDK spike and plan
 
 **Status:** ✅ Complete
 
@@ -19,7 +19,7 @@
 - [x] R001: Record dependency transitive license scan result
 - [x] R001-code: Include all modules from a full SDK dependency graph license scan
 
-## Step 2: Add the MCP SDK and stdio server skeleton
+### Step 2: Add the MCP SDK and stdio server skeleton
 
 **Status:** ✅ Complete
 
@@ -29,7 +29,7 @@
 - [x] Keep `main` thin
 - [x] Honor context cancellation and return errors instead of panicking
 
-## Step 3: Add registry/test tool scaffolding
+### Step 3: Add registry/test tool scaffolding
 
 **Status:** ✅ Complete
 
@@ -42,7 +42,7 @@
 - [x] Ensure tool names are snake_case and stable
 - [x] Ensure user-facing errors are short
 
-## Step 4: Test protocol behavior without Claude
+### Step 4: Test protocol behavior without Claude
 
 **Status:** ✅ Complete
 
@@ -53,7 +53,7 @@
 - [x] R001-code: Exercise protocol tests through `Server.Run` with injected transport
 - [x] R001-code: Add actual malformed raw MCP/JSON-RPC request coverage
 
-## Step 5: Verify and document
+### Step 5: Verify and document
 
 **Status:** ✅ Complete
 
@@ -96,3 +96,5 @@
 | 2026-05-11 00:24 | Exit intercept reprompt | Supervisor provided instructions (618 chars) — reprompting worker |
 | 2026-05-11 00:29 | Review R001 | code Step 4: REVISE |
 | 2026-05-11 00:33 | Review R001 | code Step 4: APPROVE |
+
+| 2026-05-11 00:37 | Exit intercept reprompt | Supervisor provided instructions (439 chars) — reprompting worker |
