@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — get_athlete_profile tool
 **Iteration:** 1
-**Current Step:** Step 1: Define the tool contract in STATUS.md
+**Current Step:** Step 2: Implement the typed tool
 **Last Updated:** 2026-05-11
 **State:** Ready
 
@@ -93,7 +93,7 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 
 ## Step 2: Implement the typed tool
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
 - [ ] Add typed request/response structs
 - [ ] Register exactly `get_athlete_profile`
@@ -101,6 +101,20 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 - [ ] Include useful JSON Schema descriptions
 - [ ] Call intervals client with request context
 - [ ] Return short actionable LLM-facing errors
+- [ ] Add concrete registry constructor and fakeable profile-client interface
+- [ ] Pass normalized server version into tool responses
+- [ ] Enforce strict runtime argument validation with unknown-field rejection
+- [ ] Preserve Step 2/Step 3 boundary while leaving response-mapping hooks
+
+### Step 2 design
+
+- Add `internal/tools/get_athlete_profile.go` for the typed tool request, response structs, schemas, constructor, and handler.
+- Extend `internal/tools/registry.go` with a concrete registry and constructor, tentatively `NewRegistry(profileClient ProfileClient, version string) Registry`. The constructor normalizes empty version to `dev`.
+- Define a fakeable profile-client interface in `internal/tools`: `GetAthleteProfile(ctx context.Context) (intervals.AthleteWithSportSettings, error)`. The real `*intervals.Client` already satisfies it; tests can use stubs.
+- Register exactly one tool, `get_athlete_profile`, from the concrete registry. App-level wiring to instantiate the intervals client and pass this registry may be completed in Step 5, but Step 2 must leave a usable constructor hook.
+- Input schema is `type: object` with optional `include_full` boolean, default `false`, a clear description, and `additionalProperties: false`. Runtime decoding uses `json.Decoder.DisallowUnknownFields()` and returns `tools.NewUserError("invalid get_athlete_profile arguments; only include_full is supported", err)` for bad JSON or forbidden/unknown fields.
+- Upstream/profile-client failures return `tools.NewUserError("could not fetch athlete profile; check intervals.icu credentials and athlete ID", err)`. The handler does not log directly and never includes upstream bodies, request URLs, secrets, config values, or raw athlete identifiers in public errors.
+- Step 2 creates the typed response envelope and handler flow, including the version metadata hook. Step 3 owns final response shaping details: units, pace key selection, normalized IDs, terse/full field omission, and `_meta.server_version` assertions.
 
 ## Step 3: Shape the response for v0.1
 
@@ -144,3 +158,4 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 | 2026-05-11 00:41 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-05-11 00:45 | Review R001 | code Step 1: UNKNOWN |
 | 2026-05-11 00:48 | Review R001 | code Step 1: APPROVE |
+| 2026-05-11 00:50 | Review R001 | plan Step 2: UNKNOWN |
