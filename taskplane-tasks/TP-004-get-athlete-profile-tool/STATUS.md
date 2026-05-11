@@ -185,25 +185,28 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 
 ## Discoveries
 
-| Date | Finding | Impact |
-| ---- | ------- | ------ |
-| 2026-05-11 00:38 | Task started | Runtime V2 lane-runner execution |
-| 2026-05-11 00:38 | Step 1 started | Define the tool contract in STATUS.md |
-| 2026-05-11 00:45 | MIT Python reference not consulted for Step 1 | Contract derived from PRD, roadmap, existing config/client/MCP scaffolding, and task prompt |
-| 2026-05-11 01:20 | Optional live MCP validation skipped | Local `.env` does not contain both `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY`; no secrets read or printed |
-| 2026-05-11 00:41 | Review R001 | plan Step 1: UNKNOWN |
-| 2026-05-11 00:45 | Review R001 | code Step 1: UNKNOWN |
-| 2026-05-11 00:48 | Review R001 | code Step 1: APPROVE |
-| 2026-05-11 00:50 | Review R001 | plan Step 2: UNKNOWN |
-| 2026-05-11 00:52 | Review R001 | plan Step 2: APPROVE |
-| 2026-05-11 00:59 | Review R001 | code Step 2: UNKNOWN |
-| 2026-05-11 01:03 | Review R001 | code Step 2: APPROVE |
-| 2026-05-11 01:06 | Review R001 | plan Step 3: UNKNOWN |
-| 2026-05-11 01:08 | Review R001 | plan Step 3: APPROVE |
-| 2026-05-11 01:12 | Review R001 | code Step 3: UNKNOWN |
-| 2026-05-11 01:16 | Review R001 | code Step 3: UNKNOWN |
-| 2026-05-11 01:19 | Review R001 | code Step 3: APPROVE |
-| 2026-05-11 01:21 | Review R001 | plan Step 4: UNKNOWN |
-| 2026-05-11 01:22 | Review R001 | plan Step 4: APPROVE |
-| 2026-05-11 01:29 | Review R001 | code Step 4: UNKNOWN |
-| 2026-05-11 01:33 | Review R001 | code Step 4: APPROVE |
+| Date             | Finding                                       | Impact                                                                                                                |
+| ---------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-11 00:38 | Task started                                  | Runtime V2 lane-runner execution                                                                                      |
+| 2026-05-11 00:38 | Step 1 started                                | Define the tool contract in STATUS.md                                                                                 |
+| 2026-05-11 00:45 | MIT Python reference not consulted for Step 1 | Contract derived from PRD, roadmap, existing config/client/MCP scaffolding, and task prompt                           |
+| 2026-05-11 01:20 | Optional live MCP validation skipped          | Local `.env` does not contain both `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY`; no secrets read or printed |
+| 2026-05-11 00:41 | Review R001                                   | plan Step 1: UNKNOWN                                                                                                  |
+| 2026-05-11 00:45 | Review R001                                   | code Step 1: UNKNOWN                                                                                                  |
+| 2026-05-11 00:48 | Review R001                                   | code Step 1: APPROVE                                                                                                  |
+| 2026-05-11 00:50 | Review R001                                   | plan Step 2: UNKNOWN                                                                                                  |
+| 2026-05-11 00:52 | Review R001                                   | plan Step 2: APPROVE                                                                                                  |
+| 2026-05-11 00:59 | Review R001                                   | code Step 2: UNKNOWN                                                                                                  |
+| 2026-05-11 01:03 | Review R001                                   | code Step 2: APPROVE                                                                                                  |
+| 2026-05-11 01:06 | Review R001                                   | plan Step 3: UNKNOWN                                                                                                  |
+| 2026-05-11 01:08 | Review R001                                   | plan Step 3: APPROVE                                                                                                  |
+| 2026-05-11 01:12 | Review R001                                   | code Step 3: UNKNOWN                                                                                                  |
+| 2026-05-11 01:16 | Review R001                                   | code Step 3: UNKNOWN                                                                                                  |
+| 2026-05-11 01:19 | Review R001                                   | code Step 3: APPROVE                                                                                                  |
+| 2026-05-11 01:21 | Review R001                                   | plan Step 4: UNKNOWN                                                                                                  |
+| 2026-05-11 01:22 | Review R001                                   | plan Step 4: APPROVE                                                                                                  |
+| 2026-05-11 01:29 | Review R001                                   | code Step 4: UNKNOWN                                                                                                  |
+| 2026-05-11 01:33 | Review R001                                   | code Step 4: APPROVE                                                                                                  |
+
+| 2026-05-11 01:39 | Worker iter 1 | done in 3648s, tools: 241 |
+| 2026-05-11 01:39 | Task complete | .DONE created |
