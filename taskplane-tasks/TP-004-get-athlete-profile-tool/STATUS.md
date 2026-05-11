@@ -14,8 +14,8 @@
 - [x] Do not accept API key as a tool parameter
 - [x] Decide whether v0.1 needs `include_full`
 - [x] Include units/timezone/athlete-ID conventions where available
-- [ ] Clarify pace field units/normalization for default and imperial athletes
-- [ ] Pin exact `include_full: true` response delta fields
+- [x] Clarify pace field units/normalization for default and imperial athletes
+- [x] Pin exact `include_full: true` response delta fields
 
 ### Contract
 
@@ -62,9 +62,10 @@
       "power_zone_names": ["Z1", "Z2", "Z3"],
       "hr_zones_bpm": [120, 140, 160],
       "hr_zone_names": ["Z1", "Z2", "Z3"],
-      "threshold_pace": 4.2,
-      "pace_units": "min/km",
-      "pace_zones": [5.5, 5.0, 4.5],
+      "threshold_pace_seconds_per_km": 255.5,
+      "pace_zones_seconds_per_km": [330, 300, 270],
+      "pace_units_source": "MINS_KM",
+      "pace_distance_unit": "km",
       "pace_zone_names": ["Z1", "Z2", "Z3"]
     }
   ],
@@ -72,13 +73,21 @@
     "server_version": "dev",
     "athlete_id_format": "i-prefixed intervals.icu athlete ID",
     "timezone_convention": "IANA timezone from athlete profile when available; config timezone fallback otherwise",
-    "pace_convention": "threshold_pace and pace_zones use the intervals.icu pace value plus pace_units",
+    "pace_convention": "paces are seconds per athlete pace distance unit; metric athletes receive threshold_pace_seconds_per_km/pace_zones_seconds_per_km, imperial athletes receive threshold_pace_seconds_per_mile/pace_zones_seconds_per_mile, and pace_units_source preserves the upstream enum such as MINS_KM or MINS_MILE",
     "include_full": false
   }
 }
 ```
 
-**`include_full: true` additions:** include typed, non-secret identifiers that are useful for debugging sport-setting mapping, such as sport-setting `id` and normalized `athlete_id` per sport setting. Do not return API keys, raw upstream JSON, HTTP headers, or fetched timestamps.
+**Pace fields:** intervals.icu typed client currently exposes `threshold_pace`, `pace_units`, and `pace_zones`. v0.1 will not return decimal minutes. It will return the upstream numeric pace values as seconds per configured pace distance unit with unit-specific keys. If `pace_units` indicates miles (`MINS_MILE`), emit `threshold_pace_seconds_per_mile` and `pace_zones_seconds_per_mile` with `pace_distance_unit: "mile"`; otherwise emit `threshold_pace_seconds_per_km` and `pace_zones_seconds_per_km` with `pace_distance_unit: "km"`. Always include `pace_units_source` with the upstream enum/string when available.
+
+**`include_full: true` exact response delta:** keep every terse-default field and additionally include only these typed fields when they are present:
+
+- Top-level `measurement_preference_source` with the raw `measurement_preference` string from the typed intervals profile when it differs from the normalized `units.measurement_preference` value.
+- Per sport setting `sport_setting_id` from typed `SportSettings.ID`.
+- Per sport setting `sport_setting_athlete_id` normalized to `i12345` from typed `SportSettings.AthleteID`.
+
+Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Auth usernames, fetched timestamps, or any untyped passthrough fields in either default or full mode.
 
 **Error behavior:** return short LLM-facing messages such as `could not fetch athlete profile; check intervals.icu credentials and athlete ID` while wrapping/logging the detailed client error through existing MCP error handling.
 
