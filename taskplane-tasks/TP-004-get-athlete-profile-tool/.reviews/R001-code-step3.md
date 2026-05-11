@@ -2,26 +2,18 @@
 
 ## Verdict
 
-**Request changes.** The response shaping is mostly aligned with the Step 1 contract, including stable unit labels, include-full boundaries, and profile-timezone precedence. One constructor/API issue still lets the tool emit metadata claiming a config timezone fallback when no fallback was actually wired.
+**Approve.** The Step 3 response-shaping changes now align with the documented v0.1 contract: the registry/tool path carries a non-secret timezone fallback, missing fallbacks default to `config.DefaultTimezone`, public unit labels are stable, and the default vs `include_full` boundary remains terse and credential-safe.
 
 ## Findings
 
-### Blocking: timezone fallback is optional while `_meta` always claims it exists
-
-- **File:** `internal/tools/registry.go:16`
-- **File:** `internal/tools/get_athlete_profile.go:263` and `internal/tools/get_athlete_profile.go:166`
-
-`NewRegistry` accepts `timezoneFallback ...string`, so existing/future callers can still build the registry as `tools.NewRegistry(profileClient, version)` with no configured timezone. In that case, if intervals.icu returns an empty profile timezone, `profileTimezone` returns an empty string and the `timezone` field is omitted, but `_meta.timezone_convention` still says: `IANA timezone from athlete profile when available; config timezone fallback otherwise`.
-
-That leaves the Step 1/Step 3 response contract unenforced: config loading always produces a timezone fallback (`config.Config.Timezone`, defaulting to UTC), but the registry API does not require it and does not default it.
-
-Suggested fix: make the fallback explicit/non-optional in the registry constructor, or default the registry fallback to `config.DefaultTimezone` when no non-empty fallback is provided. When Step 5 wires the real server, pass only `config.Config.Timezone` into `tools.NewRegistry` rather than passing the full config.
+No blocking findings.
 
 ## Notes
 
-- `profileTimezone` correctly prefers the athlete profile timezone over the supplied fallback.
-- The normalized measurement preference now preserves the explicit metric/imperial upstream preference independently from `weight_pref_lb`; pounds only affect `units.weight` unless no measurement preference is present.
-- The default vs `include_full` response boundary stays within the agreed fields; no raw upstream payloads, request/debug fields, timestamps, or credentials were added.
+- `profileTimezone` prefers the upstream athlete timezone and falls back to the configured/default timezone, so `_meta.timezone_convention` is now accurate when callers use `NewRegistry`.
+- `normalizedMeasurementPreference` keeps explicit metric/imperial upstream preference independent from `weight_pref_lb`; `weight_pref_lb` only controls `units.weight` unless no measurement preference is available.
+- The `include_full: true` delta remains limited to the agreed typed fields: `measurement_preference_source`, `sport_setting_id`, and normalized `sport_setting_athlete_id`.
+- Step 4 should add tests for timezone fallback/defaulting, measurement preference normalization, default-vs-full omissions, `_meta.server_version`, and normalized athlete IDs.
 
 ## Checks run
 
