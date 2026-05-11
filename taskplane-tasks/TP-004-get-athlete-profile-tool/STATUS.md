@@ -147,16 +147,16 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 
 **Status:** 🟡 In Progress
 
-- [ ] Test registration metadata and no secret args
-- [ ] Test successful handler with fake intervals client
-- [ ] Test include-full/default behavior if implemented
-- [ ] Test upstream error mapping
-- [ ] Test `_meta.server_version` and normalized athlete ID
-- [ ] Test timezone fallback precedence and default timezone fallback
-- [ ] Test unit normalization and pace key selection for km/mile settings
-- [ ] Test strict runtime argument validation rejects unknown fields, null, non-objects, and trailing JSON
-- [ ] Test cancellation is not mapped to credential/athlete-ID user errors
-- [ ] Test default/full response omits debug, raw, URL, header, credential, and timestamp fields
+- [x] Test registration metadata and no secret args
+- [x] Test successful handler with fake intervals client
+- [x] Test include-full/default behavior if implemented
+- [x] Test upstream error mapping
+- [x] Test `_meta.server_version` and normalized athlete ID
+- [x] Test timezone fallback precedence and default timezone fallback
+- [x] Test unit normalization and pace key selection for km/mile settings
+- [x] Test strict runtime argument validation rejects unknown fields, null, non-objects, and trailing JSON
+- [x] Test cancellation is not mapped to credential/athlete-ID user errors
+- [x] Test default/full response omits debug, raw, URL, header, credential, and timestamp fields
 
 ### Step 4 design
 
@@ -201,3 +201,4 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 | 2026-05-11 01:16 | Review R001 | code Step 3: UNKNOWN |
 | 2026-05-11 01:19 | Review R001 | code Step 3: APPROVE |
 | 2026-05-11 01:21 | Review R001 | plan Step 4: UNKNOWN |
+| 2026-05-11 01:22 | Review R001 | plan Step 4: APPROVE |

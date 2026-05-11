@@ -15,7 +15,7 @@ import (
 
 const (
 	getAthleteProfileName                    = "get_athlete_profile"
-	getAthleteProfileDescription             = "Get the configured intervals.icu athlete profile, FTP/thresholds, zones, and sport settings. Use this for athlete identity, units, timezone, FTP, heart-rate thresholds, pace thresholds, and zone configuration; do not use it for activities, wellness, fitness trends, events, or workouts."
+	getAthleteProfileDescription             = "Get the configured athlete profile, FTP/thresholds, zones, and sport settings from intervals.icu. Use this for athlete identity, units, timezone, FTP, heart-rate thresholds, pace thresholds, and zone configuration; do not use it for activities, wellness, fitness trends, events, or workouts."
 	invalidGetAthleteProfileArgumentsMessage = "invalid get_athlete_profile arguments; only include_full is supported"
 	fetchAthleteProfileMessage               = "could not fetch athlete profile; check intervals.icu credentials and athlete ID"
 )
