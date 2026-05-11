@@ -6,7 +6,7 @@
 **Last Updated:** 2026-05-11
 **State:** ✅ Complete
 
-## Step 1: Plan the manual config and smoke test
+### Step 1: Plan the manual config and smoke test
 
 **Status:** ✅ Complete
 
@@ -16,7 +16,7 @@
 - [x] Use placeholders only for secrets/IDs
 - [x] Write smoke-test plan in STATUS.md
 
-### Smoke-test plan
+#### Smoke-test plan
 
 1. Build or verify the binary with `make build`, then run `./bin/icuvisor version`.
 2. Configure Claude Desktop on macOS by editing `~/Library/Application Support/Claude/claude_desktop_config.json` with an `mcpServers.icuvisor` entry that points to the local binary and supplies v0.1 config via placeholders-backed env vars or `--config` JSON.
@@ -24,7 +24,7 @@
 4. Confirm Claude lists `get_athlete_profile`, ask it to call the tool, and verify the response shape contains anonymized profile fields plus `_meta.server_version` without exposing credentials.
 5. If local credentials are unavailable, document the remaining human maintainer verification instead of fabricating a network result.
 
-## Step 2: Write manual setup documentation
+### Step 2: Write manual setup documentation
 
 **Status:** ✅ Complete
 
@@ -36,7 +36,7 @@
 - [x] Explain MCP schema caching/new chat requirement
 - [x] Include troubleshooting for common startup/auth/config errors
 
-## Step 3: Add a repeatable local smoke checklist
+### Step 3: Add a repeatable local smoke checklist
 
 **Status:** ✅ Complete
 
@@ -46,7 +46,7 @@
 - [x] Expected anonymized `get_athlete_profile` response shape
 - [x] Note manual smoke requires a real intervals.icu account/API key
 
-## Step 4: Align code UX with docs if necessary
+### Step 4: Align code UX with docs if necessary
 
 **Status:** ✅ Complete
 
@@ -55,7 +55,7 @@
 - [x] Point README quickstart to detailed client guide
 - [x] Update `CHANGELOG.md`
 
-## Step 5: Verify v0.1 gate
+### Step 5: Verify v0.1 gate
 
 **Status:** ✅ Complete
 
@@ -81,3 +81,5 @@
 | 2026-05-11 | v0.1 roadmap representation confirmed | Roadmap items are represented by completed task work: TP-001 covers Go module/project layout and manual config foundation, TP-002 covers intervals.icu Basic Auth client, TP-003 covers MCP stdio transport, TP-004 covers `get_athlete_profile`, and TP-005 covers Claude Desktop manual JSON docs/smoke checklist. |
 | 2026-05-11 02:03 | Review R001 | plan Step 3: APPROVE |
 | 2026-05-11 02:06 | Review R001 | plan Step 4: APPROVE |
+
+| 2026-05-11 02:11 | Exit intercept reprompt | Supervisor provided instructions (558 chars) — reprompting worker |
