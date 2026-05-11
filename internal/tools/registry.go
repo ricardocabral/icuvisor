@@ -29,6 +29,9 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	if r.profileClient == nil {
 		return fmt.Errorf("registering %s: missing profile client", getAthleteProfileName)
 	}
+	if registrar == nil {
+		return fmt.Errorf("registering %s: missing registrar", getAthleteProfileName)
+	}
 	return registrar.AddTool(newGetAthleteProfileTool(r.profileClient, r.version))
 }
 

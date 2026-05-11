@@ -108,6 +108,12 @@ func getAthleteProfileHandler(client ProfileClient, version string) Handler {
 		}
 		profile, err := client.GetAthleteProfile(ctx)
 		if err != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return Result{}, ctxErr
+			}
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return Result{}, err
+			}
 			return Result{}, NewUserError(fetchAthleteProfileMessage, err)
 		}
 		response := newGetAthleteProfileResponse(profile, version, args.IncludeFull)
@@ -123,10 +129,14 @@ func getAthleteProfileHandler(client ProfileClient, version string) Handler {
 }
 
 func decodeGetAthleteProfileRequest(raw json.RawMessage) (GetAthleteProfileRequest, error) {
-	if len(bytes.TrimSpace(raw)) == 0 {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 {
 		return GetAthleteProfileRequest{}, nil
 	}
-	decoder := json.NewDecoder(bytes.NewReader(raw))
+	if trimmed[0] != '{' {
+		return GetAthleteProfileRequest{}, errors.New("arguments must be a JSON object")
+	}
+	decoder := json.NewDecoder(bytes.NewReader(trimmed))
 	decoder.DisallowUnknownFields()
 	var args GetAthleteProfileRequest
 	if err := decoder.Decode(&args); err != nil {
