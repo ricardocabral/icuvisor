@@ -4,11 +4,32 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 // Registry registers the MCP tools exposed by icuvisor.
 type Registry interface {
 	Register(context.Context, Registrar) error
+}
+
+// NewRegistry creates the default v0.1 tool registry.
+func NewRegistry(profileClient ProfileClient, version string) Registry {
+	return &defaultRegistry{profileClient: profileClient, version: normalizeVersion(version)}
+}
+
+type defaultRegistry struct {
+	profileClient ProfileClient
+	version       string
+}
+
+func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if r.profileClient == nil {
+		return fmt.Errorf("registering %s: missing profile client", getAthleteProfileName)
+	}
+	return registrar.AddTool(newGetAthleteProfileTool(r.profileClient, r.version))
 }
 
 // Registrar accepts tool definitions from a Registry.

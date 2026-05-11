@@ -95,16 +95,16 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 
 **Status:** 🟡 In Progress
 
-- [ ] Add typed request/response structs
-- [ ] Register exactly `get_athlete_profile`
-- [ ] Use a distinguishing first sentence
-- [ ] Include useful JSON Schema descriptions
-- [ ] Call intervals client with request context
-- [ ] Return short actionable LLM-facing errors
-- [ ] Add concrete registry constructor and fakeable profile-client interface
-- [ ] Pass normalized server version into tool responses
-- [ ] Enforce strict runtime argument validation with unknown-field rejection
-- [ ] Preserve Step 2/Step 3 boundary while leaving response-mapping hooks
+- [x] Add typed request/response structs
+- [x] Register exactly `get_athlete_profile`
+- [x] Use a distinguishing first sentence
+- [x] Include useful JSON Schema descriptions
+- [x] Call intervals client with request context
+- [x] Return short actionable LLM-facing errors
+- [x] Add concrete registry constructor and fakeable profile-client interface
+- [x] Pass normalized server version into tool responses
+- [x] Enforce strict runtime argument validation with unknown-field rejection
+- [x] Preserve Step 2/Step 3 boundary while leaving response-mapping hooks
 
 ### Step 2 design
 
@@ -159,3 +159,4 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 | 2026-05-11 00:45 | Review R001 | code Step 1: UNKNOWN |
 | 2026-05-11 00:48 | Review R001 | code Step 1: APPROVE |
 | 2026-05-11 00:50 | Review R001 | plan Step 2: UNKNOWN |
+| 2026-05-11 00:52 | Review R001 | plan Step 2: APPROVE |
