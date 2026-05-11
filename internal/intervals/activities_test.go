@@ -1,0 +1,75 @@
+package intervals
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
+
+func TestListActivitiesSendsQueryAndPreservesRawNulls(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got, want := r.URL.Path, "/athlete/i12345/activities"; got != want {
+			t.Fatalf("path = %q, want %q", got, want)
+		}
+		query := r.URL.Query()
+		checks := map[string]string{
+			"oldest":   "2026-01-01",
+			"newest":   "2026-01-31",
+			"route_id": "99",
+			"limit":    "51",
+			"fields":   "id,name,start_date_local,source,_note",
+		}
+		for key, want := range checks {
+			if got := query.Get(key); got != want {
+				t.Fatalf("query %s = %q, want %q", key, got, want)
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[
+			{"id":"a1","name":null,"type":"Run","start_date_local":"2026-01-30T07:00:00","distance":5000,"icu_training_load":42,"stream_types":["time","distance"]},
+			{"id":"a2","source":"strava","_note":"Strava activity hidden"}
+		]`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	activities, err := client.ListActivities(context.Background(), ListActivitiesParams{
+		Oldest:  "2026-01-01",
+		Newest:  "2026-01-31",
+		RouteID: 99,
+		Limit:   51,
+		Fields:  []string{"id", "name", "start_date_local", "source", "_note"},
+	})
+	if err != nil {
+		t.Fatalf("ListActivities() error = %v", err)
+	}
+	if len(activities) != 2 {
+		t.Fatalf("activity count = %d, want 2", len(activities))
+	}
+	if activities[0].Name != nil {
+		t.Fatalf("Name = %q, want nil pointer for upstream null", *activities[0].Name)
+	}
+	if rawName, ok := activities[0].Raw["name"]; !ok || rawName != nil {
+		rawJSON, _ := json.Marshal(activities[0].Raw)
+		t.Fatalf("raw name = %#v (present %v), raw = %s; want present nil", rawName, ok, rawJSON)
+	}
+	if got, want := activities[0].StreamTypes, []string{"time", "distance"}; len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("StreamTypes = %#v, want %#v", got, want)
+	}
+	if activities[1].Source == nil || *activities[1].Source != "strava" {
+		t.Fatalf("Source = %#v, want strava", activities[1].Source)
+	}
+}
+
+func TestListActivitiesRequiresOldest(t *testing.T) {
+	t.Parallel()
+
+	client := newTestClient(t, "https://example.invalid", http.DefaultClient, RetryConfig{})
+	if _, err := client.ListActivities(context.Background(), ListActivitiesParams{}); err == nil {
+		t.Fatal("ListActivities() error = nil, want required oldest error")
+	}
+}

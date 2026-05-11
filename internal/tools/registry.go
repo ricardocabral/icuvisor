@@ -54,7 +54,44 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	if registrar == nil {
 		return fmt.Errorf("registering %s: missing registrar", getAthleteProfileName)
 	}
-	return registrar.AddTool(newGetAthleteProfileTool(r.profileClient, r.version, r.timezoneFallback, r.debugMetadata))
+	if err := registrar.AddTool(newGetAthleteProfileTool(r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+		return err
+	}
+	if activityClient, ok := r.profileClient.(ActivitiesClient); ok {
+		if err := registrar.AddTool(newGetActivitiesTool(activityClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if detailsClient, ok := r.profileClient.(ActivityDetailsClient); ok {
+		if err := registrar.AddTool(newGetActivityDetailsTool(detailsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	var intervalsClient ActivityIntervalsClient
+	if client, ok := r.profileClient.(ActivityIntervalsClient); ok {
+		intervalsClient = client
+		detailsClient, _ := r.profileClient.(ActivityDetailsClient)
+		if err := registrar.AddTool(newGetActivityIntervalsTool(intervalsClient, detailsClient, r.version, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if streamsClient, ok := r.profileClient.(ActivityStreamsClient); ok {
+		if err := registrar.AddTool(newGetActivityStreamsTool(streamsClient, r.version, r.debugMetadata)); err != nil {
+			return err
+		}
+		if intervalsClient != nil {
+			if err := registrar.AddTool(newGetActivitySplitsTool(streamsClient, intervalsClient, r.profileClient, r.version, r.debugMetadata)); err != nil {
+				return err
+			}
+		}
+	}
+	if messagesClient, ok := r.profileClient.(ActivityMessagesClient); ok {
+		detailsClient, _ := r.profileClient.(ActivityDetailsClient)
+		if err := registrar.AddTool(newGetActivityMessagesTool(messagesClient, r.profileClient, detailsClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Registrar accepts tool definitions from a Registry.

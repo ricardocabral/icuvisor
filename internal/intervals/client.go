@@ -113,8 +113,15 @@ func (c *Client) newRequest(ctx context.Context, method string, pathParts ...str
 }
 
 func (c *Client) doJSON(ctx context.Context, out any, pathParts ...string) error {
+	return c.doJSONQuery(ctx, out, nil, pathParts...)
+}
+
+func (c *Client) doJSONQuery(ctx context.Context, out any, query url.Values, pathParts ...string) error {
 	for attempt := 1; ; attempt++ {
 		req, err := c.newRequest(ctx, http.MethodGet, pathParts...)
+		if err == nil && len(query) > 0 {
+			req.URL.RawQuery = query.Encode()
+		}
 		if err != nil {
 			return err
 		}

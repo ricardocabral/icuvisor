@@ -30,6 +30,18 @@ icuvisor lets amateur athletes talk to their training data through Claude, ChatG
 
 See the full [PRD](docs/prd/PRD-icuvisor.md).
 
+## MCP tool catalog
+
+Currently implemented tools:
+
+- `get_athlete_profile` — retrieves athlete identity, units, timezone, FTP/thresholds, zones, and sport settings.
+- `get_activities` — lists activities for a date range with `include_unnamed`, server-side pagination via opaque `next_page_token`, terse unit-disambiguated rows by default, `include_full` raw payload opt-in, and structured Strava-unavailable markers.
+- `get_activity_details` — retrieves one activity's terse metadata/metrics with `include_full` raw payload opt-in and structured Strava-unavailable markers.
+- `get_activity_intervals` — retrieves analyzed intervals/groups for one activity with canonical intervals.icu unit enum values and raw payload opt-in.
+- `get_activity_streams` — retrieves canonical snake_case stream channels; sample arrays require `include_full:true` or explicit `keys`.
+- `get_activity_splits` — returns manual or virtual per-km/per-mile splits from intervals/streams while honoring preferred units.
+- `get_activity_messages` — lists comments/notes for one activity with athlete-timezone timestamp rendering.
+
 ## Install
 
 > Installers will land with v1.0. For now, build from source:

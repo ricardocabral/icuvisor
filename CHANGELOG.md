@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `get_activity_messages` MCP tool with terse activity comments/notes and athlete-timezone timestamp rendering.
+- `get_activity_streams` and `get_activity_splits` MCP tools with canonical stream keys, heavy stream sample opt-in, and preferred-unit virtual splits.
+- `get_activity_details` and `get_activity_intervals` MCP tools with terse/default responses, `include_full` raw payload opt-in, canonical interval units, and Strava-unavailable handling for blocked activity details.
+- `get_activities` MCP tool with date-range listing, bounded pagination tokens, `include_unnamed` filtering, terse unit-disambiguated rows, `include_full` raw payload opt-in, and structured Strava-unavailable markers.
 - Response-boundary intervals.icu unit enum parsing and athlete-preferred distance, pace, and speed conversion with unknown-unit metadata preservation.
 - Shared response-shaping primitives for terse/null-stripped MCP responses, response-owned `_meta.server_version`/`_meta.units`, scale labels, debug metadata gating, timezone rendering, athlete-ID normalization, and `get_athlete_profile` integration.
 - Codex CLI local MCP validation guide with ephemeral stdio configuration, non-interactive tool-call settings, cleanup guidance, and README pointer.
