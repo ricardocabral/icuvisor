@@ -1,6 +1,6 @@
 module github.com/ricardocabral/icuvisor
 
-go 1.25.0
+go 1.25.10
 
 require github.com/modelcontextprotocol/go-sdk v1.4.1
 

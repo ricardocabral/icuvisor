@@ -35,8 +35,12 @@ jobs:
           git diff --exit-code -- go.mod go.sum
       - name: Build
         run: go build -trimpath ./...
-      - name: Test
+      - name: Test with coverage
+        if: matrix.os == 'ubuntu-latest'
         run: go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...
+      - name: Test
+        if: matrix.os != 'ubuntu-latest'
+        run: go test -race -count=1 ./...
       - name: Upload coverage
         if: matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v4
@@ -54,7 +58,7 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
         with:
           version: latest
           args: --timeout=5m
