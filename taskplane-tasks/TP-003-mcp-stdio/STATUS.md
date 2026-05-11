@@ -49,7 +49,9 @@
 - [x] Test MCP initialize
 - [x] Test tool listing
 - [x] Test tool call dispatch
-- [x] Test malformed requests and handler errors
+- [ ] Test malformed requests and handler errors
+- [ ] R001-code: Exercise protocol tests through `Server.Run` with injected transport
+- [ ] R001-code: Add actual malformed raw MCP/JSON-RPC request coverage
 
 ## Step 5: Verify and document
 
@@ -91,3 +93,4 @@
 | 2026-05-10 23:41 | Review R001 | plan Step 3: APPROVE |
 
 | 2026-05-11 00:24 | Exit intercept reprompt | Supervisor provided instructions (618 chars) — reprompting worker |
+| 2026-05-11 00:29 | Review R001 | code Step 4: REVISE |
