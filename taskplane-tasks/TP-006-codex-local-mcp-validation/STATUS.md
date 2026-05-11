@@ -6,7 +6,7 @@
 **Last Updated:** 2026-05-11
 **State:** ✅ Complete
 
-## Step 1: Discover current server and Codex CLI behavior
+### Step 1: Discover current server and Codex CLI behavior
 
 **Status:** ✅ Complete
 
@@ -16,7 +16,7 @@
 - [x] Identify Codex MCP configuration mechanism and temporary profile/config option
 - [x] Write validation plan before changing config
 
-### Step 1 Validation Plan
+#### Step 1 Validation Plan
 
 - Use the freshly built absolute binary path `/Users/jusbrasil/prj/icuvisor/.worktrees/jusbrasil-20260510T182803/lane-1/bin/icuvisor`; icuvisor starts its stdio MCP server when launched with no arguments.
 - Do not run `codex mcp add` against the default user config. Prefer `codex exec --ignore-user-config --ephemeral` with `-c mcp_servers.icuvisor.command=...`, `-c mcp_servers.icuvisor.cwd=...`, and `-c mcp_servers.icuvisor.env_vars=["INTERVALS_ICU_ATHLETE_ID","INTERVALS_ICU_API_KEY"]` so Codex uses temporary in-memory MCP configuration while preserving normal Codex auth.
@@ -24,7 +24,7 @@
 - Validate the tool catalog first, then run one Codex prompt per registered icuvisor tool. Record only tool names, pass/fail, high-level response shape, and redacted observations.
 - If `exec --ignore-user-config` cannot load MCP config, fall back to a temporary `CODEX_HOME` or a temporary config file only if Codex auth still works; touch persistent Codex config only as a last resort with backup and restoration.
 
-## Step 2: Prepare safe credentials and isolated Codex config
+### Step 2: Prepare safe credentials and isolated Codex config
 
 **Status:** ✅ Complete
 
@@ -34,7 +34,7 @@
 - [x] Ensure secrets are not written to tracked files, logs, docs, fixtures, or STATUS
 - [x] Confirm `.env` remains untracked and unchanged
 
-## Step 3: Launch Codex with icuvisor as an MCP server
+### Step 3: Launch Codex with icuvisor as an MCP server
 
 **Status:** ✅ Complete
 
@@ -43,11 +43,11 @@
 - [x] Confirm Codex can see icuvisor MCP server and list tools
 - [x] Record non-sensitive tool list
 
-### Step 3 Codex-visible Tool List
+#### Step 3 Codex-visible Tool List
 
 - `get_athlete_profile`
 
-## Step 4: Exercise every registered MCP tool through Codex prompts
+### Step 4: Exercise every registered MCP tool through Codex prompts
 
 **Status:** ✅ Complete
 
@@ -58,13 +58,13 @@
 - [x] Validate real intervals.icu-backed reads without recording raw personal data
 - [x] Record pass/fail, tool name, high-level response shape, and redacted observations
 
-### Step 4 Tool Validation Results
+#### Step 4 Tool Validation Results
 
-| Tool | Codex prompt result | High-level response shape | Redacted observations |
-| ---- | ------------------- | ------------------------- | --------------------- |
+| Tool                  | Codex prompt result                                                                                                            | High-level response shape                                                                                                                                       | Redacted observations                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `get_athlete_profile` | Pass for Codex MCP dispatch and terse shape using local fake API; real intervals.icu read blocked by absent `.env` credentials | Object with `athlete_id`, name fields, `timezone`, `locale`, `units`, `sport_settings`, and `_meta`; `_meta.server_version` present; `sport_settings` is a list | Codex event log shows MCP tool call completed. No names, athlete IDs, FTP values, zones, API keys, or raw personal data are recorded here. |
 
-## Step 5: Cleanup, document, and verify
+### Step 5: Cleanup, document, and verify
 
 **Status:** ✅ Complete
 
@@ -78,8 +78,8 @@
 
 ## Blockers
 
-| Date | Blocker | Attempts | Current Impact |
-| ---- | ------- | -------- | -------------- |
+| Date       | Blocker                                                                                                                                                        | Attempts                                                                                                                                                                                                                                                                 | Current Impact                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
 | 2026-05-11 | Real intervals.icu-backed `get_athlete_profile` validation cannot be completed because `.env` is absent and both required credential variables are unavailable | Checked `.env` availability without printing values; ran Codex with dummy non-secret values against upstream and confirmed the MCP tool returns the short credential/athlete-ID error; ran Codex with a local fake API to validate MCP dispatch and terse response shape | Real-data validation is documented as blocked; no API keys or personal data were recorded |
 
 ## Discoveries
@@ -125,3 +125,5 @@
 | 2026-05-11 02:33 | Review R001 | code Step 3: APPROVE |
 | 2026-05-11 02:35 | Review R001 | plan Step 4: APPROVE |
 | 2026-05-11 02:43 | Review R001 | code Step 4: APPROVE |
+
+| 2026-05-11 02:49 | Exit intercept reprompt | Supervisor provided instructions (649 chars) — reprompting worker |
