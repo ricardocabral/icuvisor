@@ -105,6 +105,9 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 - [x] Pass normalized server version into tool responses
 - [x] Enforce strict runtime argument validation with unknown-field rejection
 - [x] Preserve Step 2/Step 3 boundary while leaving response-mapping hooks
+- [ ] Reject JSON `null` and other non-object arguments at runtime
+- [ ] Preserve mid-call context cancellation instead of mapping it to credential errors
+- [ ] Return an error instead of panicking for nil registrars
 
 ### Step 2 design
 
@@ -160,3 +163,4 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 | 2026-05-11 00:48 | Review R001 | code Step 1: APPROVE |
 | 2026-05-11 00:50 | Review R001 | plan Step 2: UNKNOWN |
 | 2026-05-11 00:52 | Review R001 | plan Step 2: APPROVE |
+| 2026-05-11 00:59 | Review R001 | code Step 2: UNKNOWN |
