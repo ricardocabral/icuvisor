@@ -131,6 +131,7 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 - [x] Add non-secret configured timezone fallback to registry/tool construction
 - [x] Normalize public unit values to stable LLM-friendly strings
 - [x] Keep explicit measurement preference independent from weight unit preference
+- [ ] Default missing registry timezone fallback to `config.DefaultTimezone`
 
 ### Step 3 design
 
@@ -181,3 +182,4 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 | 2026-05-11 01:06 | Review R001 | plan Step 3: UNKNOWN |
 | 2026-05-11 01:08 | Review R001 | plan Step 3: APPROVE |
 | 2026-05-11 01:12 | Review R001 | code Step 3: UNKNOWN |
+| 2026-05-11 01:16 | Review R001 | code Step 3: UNKNOWN |

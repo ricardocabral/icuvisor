@@ -2,33 +2,26 @@
 
 ## Verdict
 
-**Request changes.** The timezone fallback wiring and terse/full response boundaries are generally in place, and the package still builds, but unit normalization now conflates the independent weight preference with the profile measurement preference.
+**Request changes.** The response shaping is mostly aligned with the Step 1 contract, including stable unit labels, include-full boundaries, and profile-timezone precedence. One constructor/API issue still lets the tool emit metadata claiming a config timezone fallback when no fallback was actually wired.
 
 ## Findings
 
-### Blocking: `weight_pref_lb` overrides an explicit metric measurement preference
+### Blocking: timezone fallback is optional while `_meta` always claims it exists
 
-- **File:** `internal/tools/get_athlete_profile.go:180` and `internal/tools/get_athlete_profile.go:271`
+- **File:** `internal/tools/registry.go:16`
+- **File:** `internal/tools/get_athlete_profile.go:263` and `internal/tools/get_athlete_profile.go:166`
 
-`profileUnits` now calls `normalizedMeasurementPreference(profile.MeasurementPreference, profile.WeightPrefLB)`, and `normalizedMeasurementPreference` returns `"imperial"` whenever `WeightPrefLB` is true. That means a profile with an explicit metric measurement preference and pounds as the weight unit is reported as:
+`NewRegistry` accepts `timezoneFallback ...string`, so existing/future callers can still build the registry as `tools.NewRegistry(profileClient, version)` with no configured timezone. In that case, if intervals.icu returns an empty profile timezone, `profileTimezone` returns an empty string and the `timezone` field is omitted, but `_meta.timezone_convention` still says: `IANA timezone from athlete profile when available; config timezone fallback otherwise`.
 
-```json
-{
-  "units": {
-    "measurement_preference": "imperial",
-    "weight": "lb"
-  }
-}
-```
+That leaves the Step 1/Step 3 response contract unenforced: config loading always produces a timezone fallback (`config.Config.Timezone`, defaulting to UTC), but the registry API does not require it and does not default it.
 
-The Step 1/Step 3 contract keeps these as separate public fields: `measurement_preference` should be the normalized upstream measurement preference, while `weight` should reflect `weight_pref_lb`. `weight_pref_lb` is a valid fallback signal only when the upstream measurement preference is absent; it should not override an explicit `METRIC`/`metric` value.
-
-Suggested fix: normalize the explicit measurement preference first, and only infer from `weightPrefLB` when the trimmed preference is empty. For example, map values containing `IMPERIAL` to `imperial`, values containing `METRIC` to `metric`, and use `weightPrefLB` only in the empty/unknown fallback branch. Add a Step 4 test for `MeasurementPreference: "METRIC", WeightPrefLB: true` to lock this down.
+Suggested fix: make the fallback explicit/non-optional in the registry constructor, or default the registry fallback to `config.DefaultTimezone` when no non-empty fallback is provided. When Step 5 wires the real server, pass only `config.Config.Timezone` into `tools.NewRegistry` rather than passing the full config.
 
 ## Notes
 
-- `profileTimezone` correctly prefers the athlete profile timezone and falls back to the non-secret configured timezone passed through the registry/tool constructor.
-- The `include_full` delta remains limited to the agreed fields; no raw upstream payloads, request/debug fields, timestamps, or credentials were added.
+- `profileTimezone` correctly prefers the athlete profile timezone over the supplied fallback.
+- The normalized measurement preference now preserves the explicit metric/imperial upstream preference independently from `weight_pref_lb`; pounds only affect `units.weight` unless no measurement preference is present.
+- The default vs `include_full` response boundary stays within the agreed fields; no raw upstream payloads, request/debug fields, timestamps, or credentials were added.
 
 ## Checks run
 
