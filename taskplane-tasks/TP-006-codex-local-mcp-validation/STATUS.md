@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — Codex local MCP validation
 **Iteration:** 1
-**Current Step:** Step 2: Prepare safe credentials and isolated Codex config
+**Current Step:** Step 3: Launch Codex with icuvisor as an MCP server
 **Last Updated:** 2026-05-11
 **State:** Ready
 
@@ -36,12 +36,16 @@
 
 ## Step 3: Launch Codex with icuvisor as an MCP server
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
-- [ ] Configure Codex to launch icuvisor over stdio
-- [ ] Start a fresh Codex session
-- [ ] Confirm Codex can see icuvisor MCP server and list tools
-- [ ] Record non-sensitive tool list
+- [x] Configure Codex to launch icuvisor over stdio
+- [x] Start a fresh Codex session
+- [x] Confirm Codex can see icuvisor MCP server and list tools
+- [x] Record non-sensitive tool list
+
+### Step 3 Codex-visible Tool List
+
+- `get_athlete_profile`
 
 ## Step 4: Exercise every registered MCP tool through Codex prompts
 
@@ -82,7 +86,12 @@
 | 2026-05-11 | Persistent Codex config handling | Default Codex config path exists, but TP-006 did not edit it; backup/restore not required unless the temporary config approach fails later |
 | 2026-05-11 | Secret handling checked | `.env` absent; pending STATUS diff contains no `INTERVALS_ICU_*=` credential assignments; no local secret values were printed, logged, or written to tracked files |
 | 2026-05-11 | `.env` tracking checked | `.env` is untracked, absent in this worktree, and has no git worktree status; one shell probe initially used read-only variable name `status` and was rerun successfully with `env_status` |
+| 2026-05-11 | Step 3 started | Launch Codex with icuvisor as an MCP server |
+| 2026-05-11 | Codex stdio config exercised | `codex exec --ignore-user-config --ignore-rules --ephemeral` launched with `mcp_servers.icuvisor.command` pointing at built binary, `cwd` at repo root, and inherited env var names; dummy non-secret env values used because `.env` is absent |
+| 2026-05-11 | Fresh Codex session started | Non-interactive `codex exec --ephemeral` session completed and wrote final response to `/tmp/icuvisor-codex-step3-message.txt`; event log retained temporarily under `/tmp/icuvisor-codex-step3-events.jsonl` with no secrets |
+| 2026-05-11 | Codex saw icuvisor tools | Codex final response listed `get_athlete_profile`, confirming the fresh session loaded the icuvisor MCP tool catalog |
 | 2026-05-11 02:14 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-11 02:21 | Review R001 | code Step 1: APPROVE |
 | 2026-05-11 02:23 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-11 02:27 | Review R001 | code Step 2: APPROVE |
+| 2026-05-11 02:30 | Review R001 | plan Step 3: APPROVE |
