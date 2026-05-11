@@ -6,7 +6,7 @@
 **Last Updated:** 2026-05-11
 **State:** ✅ Complete
 
-## Step 1: Define the tool contract in STATUS.md
+### Step 1: Define the tool contract in STATUS.md
 
 **Status:** ✅ Complete
 
@@ -17,7 +17,7 @@
 - [x] Clarify pace field units/normalization for default and imperial athletes
 - [x] Pin exact `include_full: true` response delta fields
 
-### Contract
+#### Contract
 
 **Tool name:** `get_athlete_profile`
 
@@ -91,7 +91,7 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 
 **Error behavior:** return short LLM-facing messages such as `could not fetch athlete profile; check intervals.icu credentials and athlete ID` while wrapping/logging the detailed client error through existing MCP error handling.
 
-## Step 2: Implement the typed tool
+### Step 2: Implement the typed tool
 
 **Status:** ✅ Complete
 
@@ -109,7 +109,7 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 - [x] Preserve mid-call context cancellation instead of mapping it to credential errors
 - [x] Return an error instead of panicking for nil registrars
 
-### Step 2 design
+#### Step 2 design
 
 - Add `internal/tools/get_athlete_profile.go` for the typed tool request, response structs, schemas, constructor, and handler.
 - Extend `internal/tools/registry.go` with a concrete registry and constructor, tentatively `NewRegistry(profileClient ProfileClient, version string) Registry`. The constructor normalizes empty version to `dev`.
@@ -119,7 +119,7 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 - Upstream/profile-client failures return `tools.NewUserError("could not fetch athlete profile; check intervals.icu credentials and athlete ID", err)`. The handler does not log directly and never includes upstream bodies, request URLs, secrets, config values, or raw athlete identifiers in public errors.
 - Step 2 creates the typed response envelope and handler flow, including the version metadata hook. Step 3 owns final response shaping details: units, pace key selection, normalized IDs, terse/full field omission, and `_meta.server_version` assertions.
 
-## Step 3: Shape the response for v0.1
+### Step 3: Shape the response for v0.1
 
 **Status:** ✅ Complete
 
@@ -133,7 +133,7 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 - [x] Keep explicit measurement preference independent from weight unit preference
 - [x] Default missing registry timezone fallback to `config.DefaultTimezone`
 
-### Step 3 design
+#### Step 3 design
 
 - Use the Step 1 contract as the response source of truth. Keep default output to normalized athlete identity, display/name fields, timezone, locale, unit preferences, sport thresholds/zones, pace fields, and `_meta`.
 - Extend registry/tool construction with a non-secret configured timezone fallback from `config.Config.Timezone`. The response `timezone` uses `profile.Timezone` when present, otherwise the configured fallback; `_meta.timezone_convention` may claim config fallback only after this is implemented.
@@ -143,7 +143,7 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 - Always include `_meta.server_version`; normalize empty version to `dev`.
 - Never return fetched timestamps, raw upstream JSON, request URLs, headers, credentials, or debug cruft. Only add `sport_setting_id`, `sport_setting_athlete_id`, and `measurement_preference_source` in `include_full: true` mode.
 
-## Step 4: Add tests
+### Step 4: Add tests
 
 **Status:** ✅ Complete
 
@@ -160,7 +160,7 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 - [x] Assert full-mode forbidden/debug field omission with full-only fields present
 - [x] Assert handler passes the original request context to the profile client
 
-### Step 4 design
+#### Step 4 design
 
 - Add `internal/tools/get_athlete_profile_test.go` in package `tools` and call the registered handler directly through a fake registrar.
 - Use a fake `ProfileClient` with call count, context capture, configurable profile, and configurable error. Tests must not hit the network.
@@ -171,7 +171,7 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 - Error assertions distinguish upstream failures, which map to `could not fetch athlete profile; check intervals.icu credentials and athlete ID`, from context cancellation/deadline errors, which propagate as cancellation errors.
 - Negative output assertions marshal the response and check forbidden/debug substrings are absent: fetched timestamps, raw upstream payloads, URLs, headers, credentials, API keys, tokens, and Basic Auth details.
 
-## Step 5: End-to-end local verification
+### Step 5: End-to-end local verification
 
 **Status:** ✅ Complete
 
