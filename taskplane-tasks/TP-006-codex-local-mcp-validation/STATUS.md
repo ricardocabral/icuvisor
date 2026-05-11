@@ -2,9 +2,9 @@
 
 **Issue:** v0.1 — Codex local MCP validation
 **Iteration:** 1
-**Current Step:** Step 4: Exercise every registered MCP tool through Codex prompts
+**Current Step:** Step 5: Cleanup, document, and verify
 **Last Updated:** 2026-05-11
-**State:** Ready
+**State:** ✅ Complete
 
 ## Step 1: Discover current server and Codex CLI behavior
 
@@ -66,15 +66,15 @@
 
 ## Step 5: Cleanup, document, and verify
 
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 
-- [ ] Stop Codex/icuvisor processes started for validation
-- [ ] Restore persistent Codex config from backup if modified
-- [ ] Remove temporary files containing secrets
-- [ ] Add `docs/clients/codex-local.md` if useful
-- [ ] Run `make test` and `make build` after any code/doc changes
-- [ ] Update `CHANGELOG.md` if docs or behavior changed
-- [ ] Mark done only when every registered MCP tool has a result or documented blocker
+- [x] Stop Codex/icuvisor processes started for validation
+- [x] Restore persistent Codex config from backup if modified
+- [x] Remove temporary files containing secrets
+- [x] Add `docs/clients/codex-local.md` if useful
+- [x] Run `make test` and `make build` after any code/doc changes
+- [x] Update `CHANGELOG.md` if docs or behavior changed
+- [x] Mark done only when every registered MCP tool has a result or documented blocker
 
 ## Blockers
 
@@ -108,6 +108,15 @@
 | 2026-05-11 | `get_athlete_profile` explicitly tested | Codex invoked `server=icuvisor`, `tool=get_athlete_profile`, `arguments={"include_full": false}` in the successful local-backed run |
 | 2026-05-11 | Tool reach/shape verified | `get_athlete_profile` reached the server and local fake API (`/api/v1/athlete/i0`); Codex event status completed with structured content keys `athlete_id,name,first_name,last_name,timezone,locale,units,sport_settings,_meta`, `_meta.server_version` present, and `sport_settings` as list |
 | 2026-05-11 | Real intervals-backed validation blocked | `.env` is absent, so no real intervals.icu credentials are available; a Codex run against the default upstream with dummy non-secret env values reached the tool and returned the expected short credential/athlete-ID error without raw personal data |
+| 2026-05-11 | Step 5 started | Cleanup, document, and verify |
+| 2026-05-11 | Process cleanup checked | No TP-006 `codex exec`, `bin/icuvisor`, or temporary validation processes were found running after validation |
+| 2026-05-11 | Persistent Codex config restored | Despite `--ignore-user-config`, Codex added a project trust block for this repo to `~/.codex/config.toml`; removed that block and restored the file size observed before validation (1205 bytes); no MCP server config or secrets were written |
+| 2026-05-11 | Temporary validation files removed | Removed `/tmp/icuvisor-codex*` logs/messages; follow-up `find` confirmed no matching temp files remain (a first shell glob check failed on zsh `nomatch`, then was rerun safely) |
+| 2026-05-11 | Codex guide added | Added `docs/clients/codex-local.md` with ephemeral Codex MCP config, non-interactive approval settings, tool-catalog validation, `get_athlete_profile` prompt, cleanup, and troubleshooting notes |
+| 2026-05-11 | Verification commands passed | `make test` passed for all Go packages; `make build` produced `bin/icuvisor` with version `27e5589-dirty` |
+| 2026-05-11 | Changelog updated | Added an Unreleased entry for the Codex CLI local MCP validation guide and README pointer |
+| 2026-05-11 | Verification rerun after changelog | `make test` and `make build` passed again after the changelog edit |
+| 2026-05-11 | Registered tool coverage complete | The only registered tool, `get_athlete_profile`, has a Codex validation result; real intervals.icu data validation is documented as blocked by absent credentials |
 | 2026-05-11 02:14 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-11 02:21 | Review R001 | code Step 1: APPROVE |
 | 2026-05-11 02:23 | Review R001 | plan Step 2: APPROVE |
