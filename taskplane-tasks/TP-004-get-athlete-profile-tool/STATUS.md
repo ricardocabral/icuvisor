@@ -157,8 +157,8 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 - [x] Test strict runtime argument validation rejects unknown fields, null, non-objects, and trailing JSON
 - [x] Test cancellation is not mapped to credential/athlete-ID user errors
 - [x] Test default/full response omits debug, raw, URL, header, credential, and timestamp fields
-- [ ] Assert full-mode forbidden/debug field omission with full-only fields present
-- [ ] Assert handler passes the original request context to the profile client
+- [x] Assert full-mode forbidden/debug field omission with full-only fields present
+- [x] Assert handler passes the original request context to the profile client
 
 ### Step 4 design
 

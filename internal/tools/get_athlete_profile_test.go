@@ -27,6 +27,8 @@ type fakeProfileClient struct {
 	ctx     context.Context
 }
 
+type profileContextKey struct{}
+
 func (f *fakeProfileClient) GetAthleteProfile(ctx context.Context) (intervals.AthleteWithSportSettings, error) {
 	f.calls++
 	f.ctx = ctx
@@ -126,7 +128,8 @@ func TestGetAthleteProfileHandlerSuccess(t *testing.T) {
 		}},
 	})
 
-	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	ctx := context.WithValue(context.Background(), profileContextKey{}, "sentinel")
+	result, err := tool.Handler(ctx, Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
@@ -135,6 +138,9 @@ func TestGetAthleteProfileHandlerSuccess(t *testing.T) {
 	}
 	if client.ctx == nil {
 		t.Fatal("client context was not captured")
+	}
+	if got := client.ctx.Value(profileContextKey{}); got != "sentinel" {
+		t.Fatalf("client context value = %v, want sentinel", got)
 	}
 	response := decodeProfileResult(t, result)
 	if response.AthleteID != "i12345" || response.Meta.ServerVersion != "v1.2.3" {
@@ -330,15 +336,28 @@ func TestGetAthleteProfileCancellationIsNotMappedToCredentialError(t *testing.T)
 func TestGetAthleteProfileOmitsForbiddenDebugAndSecretFields(t *testing.T) {
 	t.Parallel()
 
-	tool, _ := newTestProfileTool(t, "test", "UTC", intervals.AthleteWithSportSettings{ID: "12345", Name: "Safe Athlete"})
-	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
-	if err != nil {
-		t.Fatalf("Handler() error = %v", err)
-	}
-	lower := strings.ToLower(resultText(t, result))
-	for _, forbidden := range []string{"fetched_at", "query_type", "raw_payload", "raw_upstream", "http://", "https://", "authorization", "header", "credential", "api_key", "token", "basic"} {
-		if strings.Contains(lower, forbidden) {
-			t.Fatalf("response contains forbidden %q: %s", forbidden, lower)
+	tool, _ := newTestProfileTool(t, "test", "UTC", intervals.AthleteWithSportSettings{
+		ID:                    "12345",
+		Name:                  "Safe Athlete",
+		MeasurementPreference: "IMPERIAL",
+		SportSettings: []intervals.SportSettings{{
+			ID:        7,
+			AthleteID: "12345",
+		}},
+	})
+	for _, args := range []string{`{}`, `{"include_full":true}`} {
+		result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(args)})
+		if err != nil {
+			t.Fatalf("Handler(%s) error = %v", args, err)
+		}
+		lower := strings.ToLower(resultText(t, result))
+		if args != `{}` && !strings.Contains(lower, "sport_setting_id") {
+			t.Fatalf("full response did not include full-only fields: %s", lower)
+		}
+		for _, forbidden := range []string{"fetched_at", "query_type", "raw_payload", "raw_upstream", "http://", "https://", "authorization", "header", "credential", "api_key", "token", "basic"} {
+			if strings.Contains(lower, forbidden) {
+				t.Fatalf("response contains forbidden %q: %s", forbidden, lower)
+			}
 		}
 	}
 }
