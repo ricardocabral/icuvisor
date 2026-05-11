@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — MCP stdio
 **Iteration:** 1
-**Current Step:** Step 3: Add registry/test tool scaffolding
+**Current Step:** Step 4: Test protocol behavior without Claude
 **Last Updated:** 2026-05-10
 **State:** Ready
 
@@ -44,12 +44,12 @@
 
 ## Step 4: Test protocol behavior without Claude
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
-- [ ] Test MCP initialize
-- [ ] Test tool listing
-- [ ] Test tool call dispatch
-- [ ] Test malformed requests and handler errors
+- [x] Test MCP initialize
+- [x] Test tool listing
+- [x] Test tool call dispatch
+- [x] Test malformed requests and handler errors
 
 ## Step 5: Verify and document
 
@@ -89,3 +89,5 @@
 | 2026-05-10 23:35 | Review R001 | code Step 2: APPROVE |
 | 2026-05-10 23:37 | Review R001 | plan Step 3: REVISE |
 | 2026-05-10 23:41 | Review R001 | plan Step 3: APPROVE |
+
+| 2026-05-11 00:24 | Exit intercept reprompt | Supervisor provided instructions (618 chars) — reprompting worker |
