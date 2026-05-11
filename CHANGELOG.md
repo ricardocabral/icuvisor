@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Response-boundary intervals.icu unit enum parsing and athlete-preferred distance, pace, and speed conversion with unknown-unit metadata preservation.
+- Shared response-shaping primitives for terse/null-stripped MCP responses, response-owned `_meta.server_version`/`_meta.units`, scale labels, debug metadata gating, timezone rendering, athlete-ID normalization, and `get_athlete_profile` integration.
 - Codex CLI local MCP validation guide with ephemeral stdio configuration, non-interactive tool-call settings, cleanup guidance, and README pointer.
 - Manual macOS Claude Desktop v0.1 setup guide and repeatable local smoke checklist for the binary → MCP stdio → intervals.icu → `get_athlete_profile` path.
 - `get_athlete_profile` MCP tool with typed intervals.icu client wiring, terse/default and `include_full` responses, normalized athlete IDs, unit/timezone metadata, sanitized errors, and protocol/tool tests.

@@ -2,6 +2,7 @@ package intervals
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -40,6 +41,21 @@ func TestDoJSONSetsAuthUserAgentPathAndDecodes(t *testing.T) {
 	}
 	if got.ID != "i12345" || got.Name != "Example Athlete" || len(got.SportSettings) != 1 || got.SportSettings[0].FTP != 250 {
 		t.Fatalf("decoded athlete = %+v", got)
+	}
+}
+
+func TestSportSettingsDecodesPaceUnitsVerbatim(t *testing.T) {
+	t.Parallel()
+
+	var got AthleteWithSportSettings
+	if err := json.Unmarshal([]byte(`{"sportSettings":[{"pace_units":"SECS_100M"},{"pace_units":"mins_km"}]}`), &got); err != nil {
+		t.Fatalf("unmarshal profile: %v", err)
+	}
+	if len(got.SportSettings) != 2 {
+		t.Fatalf("sport settings = %d, want 2", len(got.SportSettings))
+	}
+	if got.SportSettings[0].PaceUnits != "SECS_100M" || got.SportSettings[1].PaceUnits != "mins_km" {
+		t.Fatalf("pace units decoded = %#v, want verbatim upstream strings", got.SportSettings)
 	}
 }
 

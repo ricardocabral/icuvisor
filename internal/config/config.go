@@ -120,6 +120,15 @@ func NormalizeAthleteID(value string) (string, error) {
 	return "i" + trimmed, nil
 }
 
+// NormalizeAthleteIDForDisplay returns the canonical public athlete ID when possible.
+func NormalizeAthleteIDForDisplay(value string) string {
+	normalized, err := NormalizeAthleteID(value)
+	if err != nil {
+		return strings.TrimSpace(value)
+	}
+	return normalized
+}
+
 func (c Config) String() string {
 	apiKey := "<unset>"
 	if c.APIKey != "" {

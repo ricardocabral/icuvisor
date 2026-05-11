@@ -11,6 +11,7 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	mcpserver "github.com/ricardocabral/icuvisor/internal/mcp"
+	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
@@ -27,8 +28,9 @@ type Options struct {
 
 // ServerInfo carries process metadata needed by lower layers.
 type ServerInfo struct {
-	Version string
-	Config  config.Config
+	Version       string
+	Config        config.Config
+	DebugMetadata bool
 }
 
 // Run executes the icuvisor CLI.
@@ -57,7 +59,7 @@ func Run(ctx context.Context, opts Options) error {
 		return err
 	}
 
-	return startServer(ctx, opts.LoadConfig, opts.StartServer, ServerInfo{Version: version}, configPath)
+	return startServer(ctx, opts.LoadConfig, opts.StartServer, ServerInfo{Version: version, DebugMetadata: response.DebugMetadataFromEnv()}, configPath)
 }
 
 func parseDefaultArgs(args []string) (string, error) {
@@ -104,10 +106,14 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 		return err
 	}
 	server, err := mcpserver.NewServer(ctx, mcpserver.Options{
-		Config:   info.Config,
-		Version:  info.Version,
-		Logger:   slog.Default(),
-		Registry: tools.NewRegistry(client, info.Version, info.Config.Timezone),
+		Config:  info.Config,
+		Version: info.Version,
+		Logger:  slog.Default(),
+		Registry: tools.NewRegistryWithOptions(client, tools.RegistryOptions{
+			Version:          info.Version,
+			TimezoneFallback: info.Config.Timezone,
+			DebugMetadata:    info.DebugMetadata,
+		}),
 	})
 	if err != nil {
 		return err

@@ -250,6 +250,10 @@ A successful `get_athlete_profile` call should return structured profile data sh
   ],
   "_meta": {
     "server_version": "dev",
+    "units": {
+      "system": "metric",
+      "distance": "km"
+    },
     "athlete_id_format": "i-prefixed intervals.icu athlete ID",
     "timezone_convention": "IANA timezone from athlete profile when available; config timezone fallback otherwise",
     "include_full": false

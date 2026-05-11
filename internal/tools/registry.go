@@ -12,12 +12,28 @@ type Registry interface {
 	Register(context.Context, Registrar) error
 }
 
+// RegistryOptions configures the default tool registry.
+type RegistryOptions struct {
+	Version          string
+	TimezoneFallback string
+	DebugMetadata    bool
+}
+
 // NewRegistry creates the default v0.1 tool registry.
 func NewRegistry(profileClient ProfileClient, version string, timezoneFallback ...string) Registry {
+	return NewRegistryWithOptions(profileClient, RegistryOptions{
+		Version:          version,
+		TimezoneFallback: firstNonEmpty(timezoneFallback...),
+	})
+}
+
+// NewRegistryWithOptions creates the default registry with explicit response-shaping options.
+func NewRegistryWithOptions(profileClient ProfileClient, opts RegistryOptions) Registry {
 	return &defaultRegistry{
 		profileClient:    profileClient,
-		version:          normalizeVersion(version),
-		timezoneFallback: normalizeTimezoneFallback(timezoneFallback...),
+		version:          normalizeVersion(opts.Version),
+		timezoneFallback: normalizeTimezoneFallback(opts.TimezoneFallback),
+		debugMetadata:    opts.DebugMetadata,
 	}
 }
 
@@ -25,6 +41,7 @@ type defaultRegistry struct {
 	profileClient    ProfileClient
 	version          string
 	timezoneFallback string
+	debugMetadata    bool
 }
 
 func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) error {
@@ -37,7 +54,7 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	if registrar == nil {
 		return fmt.Errorf("registering %s: missing registrar", getAthleteProfileName)
 	}
-	return registrar.AddTool(newGetAthleteProfileTool(r.profileClient, r.version, r.timezoneFallback))
+	return registrar.AddTool(newGetAthleteProfileTool(r.profileClient, r.version, r.timezoneFallback, r.debugMetadata))
 }
 
 // Registrar accepts tool definitions from a Registry.

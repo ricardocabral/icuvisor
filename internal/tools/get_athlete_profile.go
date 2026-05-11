@@ -11,6 +11,8 @@ import (
 
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
+	"github.com/ricardocabral/icuvisor/internal/units"
 )
 
 const (
@@ -53,26 +55,33 @@ type GetAthleteProfileUnits struct {
 
 // GetAthleteProfileSport contains thresholds and zones for one sport setting.
 type GetAthleteProfileSport struct {
-	Types                       []string  `json:"types,omitempty"`
-	FTPWatts                    int       `json:"ftp_watts,omitempty"`
-	IndoorFTPWatts              int       `json:"indoor_ftp_watts,omitempty"`
-	WPrimeJoules                int       `json:"w_prime_joules,omitempty"`
-	PMaxWatts                   int       `json:"p_max_watts,omitempty"`
-	LTHRBPM                     int       `json:"lthr_bpm,omitempty"`
-	MaxHRBPM                    int       `json:"max_hr_bpm,omitempty"`
-	PowerZonesWatts             []int     `json:"power_zones_watts,omitempty"`
-	PowerZoneNames              []string  `json:"power_zone_names,omitempty"`
-	HRZonesBPM                  []int     `json:"hr_zones_bpm,omitempty"`
-	HRZoneNames                 []string  `json:"hr_zone_names,omitempty"`
-	ThresholdPaceSecondsPerKM   *float64  `json:"threshold_pace_seconds_per_km,omitempty"`
-	PaceZonesSecondsPerKM       []float64 `json:"pace_zones_seconds_per_km,omitempty"`
-	ThresholdPaceSecondsPerMile *float64  `json:"threshold_pace_seconds_per_mile,omitempty"`
-	PaceZonesSecondsPerMile     []float64 `json:"pace_zones_seconds_per_mile,omitempty"`
-	PaceUnitsSource             string    `json:"pace_units_source,omitempty"`
-	PaceDistanceUnit            string    `json:"pace_distance_unit,omitempty"`
-	PaceZoneNames               []string  `json:"pace_zone_names,omitempty"`
-	SportSettingID              int       `json:"sport_setting_id,omitempty"`
-	SportSettingAthleteID       string    `json:"sport_setting_athlete_id,omitempty"`
+	Types                       []string       `json:"types,omitempty"`
+	FTPWatts                    int            `json:"ftp_watts,omitempty"`
+	IndoorFTPWatts              int            `json:"indoor_ftp_watts,omitempty"`
+	WPrimeJoules                int            `json:"w_prime_joules,omitempty"`
+	PMaxWatts                   int            `json:"p_max_watts,omitempty"`
+	LTHRBPM                     int            `json:"lthr_bpm,omitempty"`
+	MaxHRBPM                    int            `json:"max_hr_bpm,omitempty"`
+	PowerZonesWatts             []int          `json:"power_zones_watts,omitempty"`
+	PowerZoneNames              []string       `json:"power_zone_names,omitempty"`
+	HRZonesBPM                  []int          `json:"hr_zones_bpm,omitempty"`
+	HRZoneNames                 []string       `json:"hr_zone_names,omitempty"`
+	ThresholdPaceSecondsPerKM   *float64       `json:"threshold_pace_seconds_per_km,omitempty"`
+	PaceZonesSecondsPerKM       []float64      `json:"pace_zones_seconds_per_km,omitempty"`
+	ThresholdPaceSecondsPerMile *float64       `json:"threshold_pace_seconds_per_mile,omitempty"`
+	PaceZonesSecondsPerMile     []float64      `json:"pace_zones_seconds_per_mile,omitempty"`
+	ThresholdPaceSecondsPer100M *float64       `json:"threshold_pace_seconds_per_100m,omitempty"`
+	PaceZonesSecondsPer100M     []float64      `json:"pace_zones_seconds_per_100m,omitempty"`
+	ThresholdPaceSecondsPer500M *float64       `json:"threshold_pace_seconds_per_500m,omitempty"`
+	PaceZonesSecondsPer500M     []float64      `json:"pace_zones_seconds_per_500m,omitempty"`
+	ThresholdPaceValue          *float64       `json:"threshold_pace_value,omitempty"`
+	PaceZonesValues             []float64      `json:"pace_zones_values,omitempty"`
+	PaceUnitsSource             string         `json:"pace_units_source,omitempty"`
+	PaceDistanceUnit            string         `json:"pace_distance_unit,omitempty"`
+	PaceZoneNames               []string       `json:"pace_zone_names,omitempty"`
+	SportSettingID              int            `json:"sport_setting_id,omitempty"`
+	SportSettingAthleteID       string         `json:"sport_setting_athlete_id,omitempty"`
+	Meta                        map[string]any `json:"_meta,omitempty"`
 }
 
 // GetAthleteProfileMeta contains response-shaping metadata.
@@ -84,17 +93,17 @@ type GetAthleteProfileMeta struct {
 	IncludeFull        bool   `json:"include_full"`
 }
 
-func newGetAthleteProfileTool(client ProfileClient, version string, timezoneFallback string) Tool {
+func newGetAthleteProfileTool(client ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
 	return Tool{
 		Name:         getAthleteProfileName,
 		Description:  getAthleteProfileDescription,
 		InputSchema:  getAthleteProfileInputSchema(),
 		OutputSchema: getAthleteProfileOutputSchema(),
-		Handler:      getAthleteProfileHandler(client, version, timezoneFallback),
+		Handler:      getAthleteProfileHandler(client, version, timezoneFallback, debugMetadata),
 	}
 }
 
-func getAthleteProfileHandler(client ProfileClient, version string, timezoneFallback string) Handler {
+func getAthleteProfileHandler(client ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		if err := ctx.Err(); err != nil {
 			return Result{}, err
@@ -116,14 +125,17 @@ func getAthleteProfileHandler(client ProfileClient, version string, timezoneFall
 			}
 			return Result{}, NewUserError(fetchAthleteProfileMessage, err)
 		}
-		response := newGetAthleteProfileResponse(profile, version, timezoneFallback, args.IncludeFull)
-		text, err := json.Marshal(response)
+		shaped, err := shapeGetAthleteProfileResponse(profile, version, timezoneFallback, args.IncludeFull, debugMetadata)
+		if err != nil {
+			return Result{}, fmt.Errorf("shaping get_athlete_profile response: %w", err)
+		}
+		text, err := json.Marshal(shaped)
 		if err != nil {
 			return Result{}, fmt.Errorf("encoding get_athlete_profile response: %w", err)
 		}
 		return Result{
 			Content:           []Content{{Type: ContentTypeText, Text: string(text)}},
-			StructuredContent: response,
+			StructuredContent: shaped,
 		}, nil
 	}
 }
@@ -148,8 +160,19 @@ func decodeGetAthleteProfileRequest(raw json.RawMessage) (GetAthleteProfileReque
 	return args, nil
 }
 
+func shapeGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, version string, timezoneFallback string, includeFull bool, debugMetadata bool) (any, error) {
+	profileResponse := newGetAthleteProfileResponse(profile, version, timezoneFallback, includeFull)
+	return response.Shape(profileResponse, response.Options{
+		IncludeFull:   includeFull,
+		ServerVersion: version,
+		DebugMetadata: debugMetadata,
+		QueryType:     getAthleteProfileName,
+		UnitSystem:    profileUnitSystem(profile),
+	})
+}
+
 func newGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, version string, timezoneFallback string, includeFull bool) GetAthleteProfileResponse {
-	athleteID := normalizeProfileAthleteID(profile.ID)
+	athleteID := config.NormalizeAthleteIDForDisplay(profile.ID)
 	units := profileUnits(profile)
 	response := GetAthleteProfileResponse{
 		AthleteID:     athleteID,
@@ -171,14 +194,15 @@ func newGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, ve
 	if includeFull && profile.MeasurementPreference != "" && profile.MeasurementPreference != units.MeasurementPreference {
 		response.MeasurementPreferenceSource = profile.MeasurementPreference
 	}
+	unitSystem := profileUnitSystem(profile)
 	for _, setting := range profile.SportSettings {
-		response.SportSettings = append(response.SportSettings, profileSport(setting, includeFull))
+		response.SportSettings = append(response.SportSettings, profileSport(setting, includeFull, unitSystem))
 	}
 	return response
 }
 
 func profileUnits(profile intervals.AthleteWithSportSettings) GetAthleteProfileUnits {
-	measurement := normalizedMeasurementPreference(profile.MeasurementPreference, profile.WeightPrefLB)
+	measurement := string(profileUnitSystem(profile))
 	weight := "kg"
 	if profile.WeightPrefLB {
 		weight = "lb"
@@ -194,7 +218,14 @@ func profileUnits(profile intervals.AthleteWithSportSettings) GetAthleteProfileU
 	}
 }
 
-func profileSport(setting intervals.SportSettings, includeFull bool) GetAthleteProfileSport {
+func profileUnitSystem(profile intervals.AthleteWithSportSettings) response.UnitSystem {
+	if unitSystem, ok := response.UnitSystemFromProfile(profile.PreferredUnits, profile.MeasurementPreference, profile.WeightPrefLB); ok {
+		return unitSystem
+	}
+	return response.UnitSystemMetric
+}
+
+func profileSport(setting intervals.SportSettings, includeFull bool, unitSystem response.UnitSystem) GetAthleteProfileSport {
 	sport := GetAthleteProfileSport{
 		Types:           setting.Types,
 		FTPWatts:        setting.FTP,
@@ -210,31 +241,10 @@ func profileSport(setting intervals.SportSettings, includeFull bool) GetAthleteP
 		PaceUnitsSource: strings.TrimSpace(setting.PaceUnits),
 		PaceZoneNames:   setting.PaceZoneNames,
 	}
-	pace := setting.ThresholdPace
-	if pace > 0 {
-		if isMilePace(setting.PaceUnits) {
-			sport.ThresholdPaceSecondsPerMile = &pace
-		} else {
-			sport.ThresholdPaceSecondsPerKM = &pace
-		}
-	}
-	if len(setting.PaceZones) > 0 {
-		if isMilePace(setting.PaceUnits) {
-			sport.PaceZonesSecondsPerMile = setting.PaceZones
-		} else {
-			sport.PaceZonesSecondsPerKM = setting.PaceZones
-		}
-	}
-	if setting.PaceUnits != "" || pace > 0 || len(setting.PaceZones) > 0 {
-		if isMilePace(setting.PaceUnits) {
-			sport.PaceDistanceUnit = "mile"
-		} else {
-			sport.PaceDistanceUnit = "km"
-		}
-	}
+	applyProfilePace(&sport, setting, unitSystem)
 	if includeFull {
 		sport.SportSettingID = setting.ID
-		sport.SportSettingAthleteID = normalizeProfileAthleteID(setting.AthleteID)
+		sport.SportSettingAthleteID = config.NormalizeAthleteIDForDisplay(setting.AthleteID)
 	}
 	return sport
 }
@@ -268,21 +278,6 @@ func profileTimezone(profileTimezone string, fallback string) string {
 	return strings.TrimSpace(fallback)
 }
 
-func normalizedMeasurementPreference(value string, weightPrefLB bool) string {
-	trimmed := strings.TrimSpace(value)
-	upper := strings.ToUpper(trimmed)
-	if strings.Contains(upper, "IMPERIAL") {
-		return "imperial"
-	}
-	if strings.Contains(upper, "METRIC") {
-		return "metric"
-	}
-	if trimmed == "" && weightPrefLB {
-		return "imperial"
-	}
-	return "metric"
-}
-
 func normalizeTimezoneFallback(values ...string) string {
 	if fallback := firstNonEmpty(values...); fallback != "" {
 		return fallback
@@ -299,14 +294,6 @@ func firstNonEmpty(values ...string) string {
 	return ""
 }
 
-func normalizeProfileAthleteID(value string) string {
-	normalized, err := config.NormalizeAthleteID(value)
-	if err != nil {
-		return strings.TrimSpace(value)
-	}
-	return normalized
-}
-
 func normalizeVersion(version string) string {
 	version = strings.TrimSpace(version)
 	if version == "" {
@@ -315,6 +302,76 @@ func normalizeVersion(version string) string {
 	return version
 }
 
-func isMilePace(paceUnits string) bool {
-	return strings.Contains(strings.ToUpper(paceUnits), "MILE")
+func applyProfilePace(sport *GetAthleteProfileSport, setting intervals.SportSettings, unitSystem response.UnitSystem) {
+	pace := setting.ThresholdPace
+	if strings.TrimSpace(setting.PaceUnits) == "" && pace <= 0 && len(setting.PaceZones) == 0 {
+		return
+	}
+	parsedUnit, rawUnit := units.ParseUnit(setting.PaceUnits)
+	if parsedUnit == units.UnitUnknown {
+		sport.Meta = map[string]any{"unknown_unit": rawUnit}
+	}
+	if pace > 0 {
+		converted := response.ToPreferredWithRaw(pace, parsedUnit, rawUnit, unitSystem)
+		assignProfileThresholdPace(sport, converted)
+	}
+	if len(setting.PaceZones) > 0 {
+		convertedZones := make([]float64, 0, len(setting.PaceZones))
+		var converted response.PreferredUnitValue
+		for _, zone := range setting.PaceZones {
+			converted = response.ToPreferredWithRaw(zone, parsedUnit, rawUnit, unitSystem)
+			convertedZones = append(convertedZones, converted.Value)
+		}
+		assignProfilePaceZones(sport, converted, convertedZones)
+	}
+	if setting.PaceUnits != "" || pace > 0 || len(setting.PaceZones) > 0 {
+		converted := response.ToPreferredWithRaw(pace, parsedUnit, rawUnit, unitSystem)
+		sport.PaceDistanceUnit = profilePaceDistanceUnit(converted)
+	}
+}
+
+func assignProfileThresholdPace(sport *GetAthleteProfileSport, converted response.PreferredUnitValue) {
+	value := converted.Value
+	switch converted.Unit {
+	case units.UnitMinsKM:
+		sport.ThresholdPaceSecondsPerKM = &value
+	case units.UnitMinsMile:
+		sport.ThresholdPaceSecondsPerMile = &value
+	case units.UnitSecs100M:
+		sport.ThresholdPaceSecondsPer100M = &value
+	case units.UnitSecs500M:
+		sport.ThresholdPaceSecondsPer500M = &value
+	default:
+		sport.ThresholdPaceValue = &value
+	}
+}
+
+func assignProfilePaceZones(sport *GetAthleteProfileSport, converted response.PreferredUnitValue, values []float64) {
+	switch converted.Unit {
+	case units.UnitMinsKM:
+		sport.PaceZonesSecondsPerKM = values
+	case units.UnitMinsMile:
+		sport.PaceZonesSecondsPerMile = values
+	case units.UnitSecs100M:
+		sport.PaceZonesSecondsPer100M = values
+	case units.UnitSecs500M:
+		sport.PaceZonesSecondsPer500M = values
+	default:
+		sport.PaceZonesValues = values
+	}
+}
+
+func profilePaceDistanceUnit(converted response.PreferredUnitValue) string {
+	switch converted.Unit {
+	case units.UnitMinsKM:
+		return "km"
+	case units.UnitMinsMile:
+		return "mile"
+	case units.UnitSecs100M:
+		return "100m"
+	case units.UnitSecs500M:
+		return "500m"
+	default:
+		return converted.UnitLabel
+	}
 }

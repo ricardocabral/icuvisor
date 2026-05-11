@@ -1,0 +1,21 @@
+[
+  {
+    "time": [0, 1],
+    "Watts": [250, 260],
+    "heartRate": [150, 152],
+    "groundContactTime": [245, 240],
+    "vertical_oscillation": [8.1, 8.0],
+    "strideLength": [1.2, 1.21],
+    "CustomMetricValue": [42]
+  },
+  {
+    "Time": [0, 1],
+    "power": [240, 245],
+    "heartrate": [148, 151],
+    "GroundContactTime": [250, 248],
+    "VerticalOscillation": [8.4, 8.2],
+    "leftRightBalance": [49.8, 50.1],
+    "wPrimeBalance": [12000, 11800],
+    "custom-metric-value": [43]
+  }
+]

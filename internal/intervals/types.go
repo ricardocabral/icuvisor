@@ -7,6 +7,7 @@ type AthleteWithSportSettings struct {
 	FirstName             string          `json:"firstname"`
 	LastName              string          `json:"lastname"`
 	MeasurementPreference string          `json:"measurement_preference"`
+	PreferredUnits        string          `json:"preferred_units"`
 	WeightPrefLB          bool            `json:"weight_pref_lb"`
 	Fahrenheit            bool            `json:"fahrenheit"`
 	Timezone              string          `json:"timezone"`

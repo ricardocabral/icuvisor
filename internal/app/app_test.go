@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/config"
+	"github.com/ricardocabral/icuvisor/internal/response"
 )
 
 func TestRunVersionWritesInjectedVersion(t *testing.T) {
@@ -65,6 +66,35 @@ func TestRunDefaultDelegatesToStarterWithVersionAndConfig(t *testing.T) {
 	}
 	if gotInfo.Config.AthleteID != wantConfig.AthleteID {
 		t.Fatalf("server athlete ID = %q, want %q", gotInfo.Config.AthleteID, wantConfig.AthleteID)
+	}
+}
+
+func TestRunCapturesDebugMetadataOnceForServerInfo(t *testing.T) {
+	t.Setenv(response.EnvDebugMetadata, "true")
+	wantConfig := config.Config{
+		APIKey:      "secret",
+		AthleteID:   "i12345",
+		Timezone:    "UTC",
+		APIBaseURL:  config.DefaultAPIBaseURL,
+		HTTPTimeout: 30 * time.Second,
+	}
+	var gotInfo ServerInfo
+	wantErr := errors.New("stop")
+	err := Run(context.Background(), Options{
+		LoadConfig: func(context.Context, config.Options) (config.Config, error) {
+			t.Setenv(response.EnvDebugMetadata, "false")
+			return wantConfig, nil
+		},
+		StartServer: func(_ context.Context, info ServerInfo) error {
+			gotInfo = info
+			return wantErr
+		},
+	})
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("Run() error = %v, want %v", err, wantErr)
+	}
+	if !gotInfo.DebugMetadata {
+		t.Fatal("DebugMetadata = false, want startup-captured true")
 	}
 }
 

@@ -8,6 +8,28 @@ import (
 	"time"
 )
 
+func TestNormalizeAthleteIDForDisplay(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{name: "numeric", input: "12345", want: "i12345"},
+		{name: "prefixed", input: "i12345", want: "i12345"},
+		{name: "invalid", input: " athlete ", want: "athlete"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := NormalizeAthleteIDForDisplay(tc.input); got != tc.want {
+				t.Fatalf("NormalizeAthleteIDForDisplay(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestNormalizeAthleteID(t *testing.T) {
 	t.Parallel()
 

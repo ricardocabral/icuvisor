@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"log/slog"
+	"math"
 	"strings"
 	"testing"
 
@@ -195,6 +198,14 @@ func TestGetAthleteProfileIncludeFullDelta(t *testing.T) {
 		}
 	}
 
+	explicitFalseResult, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"include_full":false}`)})
+	if err != nil {
+		t.Fatalf("explicit false Handler() error = %v", err)
+	}
+	if explicitFalseText := resultText(t, explicitFalseResult); explicitFalseText != defaultText {
+		t.Fatalf("include_full=false changed default response\ndefault: %s\nfalse:   %s", defaultText, explicitFalseText)
+	}
+
 	fullResult, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"include_full":true}`)})
 	if err != nil {
 		t.Fatalf("full Handler() error = %v", err)
@@ -270,6 +281,41 @@ func TestGetAthleteProfileResponseShapingVariants(t *testing.T) {
 	}
 }
 
+func TestGetAthleteProfilePaceConversionPolicies(t *testing.T) {
+	previous := slog.Default()
+	t.Cleanup(func() { slog.SetDefault(previous) })
+	slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
+
+	profile := intervals.AthleteWithSportSettings{
+		ID:             "12345",
+		PreferredUnits: "miles",
+		SportSettings: []intervals.SportSettings{
+			{Types: []string{"Run"}, ThresholdPace: 5, PaceUnits: "MINS_KM", PaceZones: []float64{4, 5}},
+			{Types: []string{"Swim"}, ThresholdPace: 82, PaceUnits: "SECS_100M", PaceZones: []float64{80, 85}},
+			{Types: []string{"Other"}, ThresholdPace: 7, PaceUnits: "FEET", PaceZones: []float64{6, 7}},
+		},
+	}
+	response := newGetAthleteProfileResponse(profile, "test", "UTC", false)
+	if len(response.SportSettings) != 3 {
+		t.Fatalf("sport settings = %d, want 3", len(response.SportSettings))
+	}
+	run := response.SportSettings[0]
+	if run.ThresholdPaceSecondsPerMile == nil || math.Abs(*run.ThresholdPaceSecondsPerMile-8.04672) > 0.000001 || len(run.PaceZonesSecondsPerMile) != 2 || run.PaceDistanceUnit != "mile" {
+		t.Fatalf("run pace conversion = %+v", run)
+	}
+	if run.ThresholdPaceSecondsPerKM != nil || len(run.PaceZonesSecondsPerKM) != 0 {
+		t.Fatalf("run km fields should be omitted after imperial conversion: %+v", run)
+	}
+	swim := response.SportSettings[1]
+	if swim.ThresholdPaceSecondsPer100M == nil || *swim.ThresholdPaceSecondsPer100M != 82 || len(swim.PaceZonesSecondsPer100M) != 2 || swim.PaceDistanceUnit != "100m" {
+		t.Fatalf("swim pace pass-through = %+v", swim)
+	}
+	unknown := response.SportSettings[2]
+	if unknown.ThresholdPaceValue == nil || *unknown.ThresholdPaceValue != 7 || len(unknown.PaceZonesValues) != 2 || unknown.Meta["unknown_unit"] != "FEET" || unknown.PaceDistanceUnit != "FEET" {
+		t.Fatalf("unknown pace pass-through = %+v", unknown)
+	}
+}
+
 func TestGetAthleteProfileArgumentValidation(t *testing.T) {
 	t.Parallel()
 
@@ -333,6 +379,66 @@ func TestGetAthleteProfileCancellationIsNotMappedToCredentialError(t *testing.T)
 	}
 }
 
+func TestGetAthleteProfileMetaUnitsFromPreferredUnits(t *testing.T) {
+	t.Parallel()
+
+	tool, _ := newTestProfileTool(t, "test", "UTC", intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "miles"})
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	text := resultText(t, result)
+	for _, want := range []string{"\"measurement_preference\":\"imperial\"", "\"units\":{\"distance\":\"mi\"", "\"system\":\"imperial\""} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("response missing unit metadata %s: %s", want, text)
+		}
+	}
+	meta := result.StructuredContent.(map[string]any)["_meta"].(map[string]any)
+	if meta["server_version"] != "test" {
+		t.Fatalf("server_version = %v, want test", meta["server_version"])
+	}
+	units := meta["units"].(map[string]string)
+	if units["system"] != "imperial" || units["distance"] != "mi" {
+		t.Fatalf("meta units = %+v, want imperial/mi", units)
+	}
+}
+
+func TestGetAthleteProfileDefaultsEmptyUnitsConsistentlyToMetric(t *testing.T) {
+	t.Parallel()
+
+	tool, _ := newTestProfileTool(t, "test", "UTC", intervals.AthleteWithSportSettings{ID: "12345"})
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	text := resultText(t, result)
+	for _, want := range []string{"\"measurement_preference\":\"metric\"", "\"units\":{\"distance\":\"km\"", "\"system\":\"metric\""} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("response missing default metric unit marker %s: %s", want, text)
+		}
+	}
+}
+
+func TestGetAthleteProfileDebugMetadataOptIn(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345"}}
+	registrar := &collectingRegistrar{}
+	if err := NewRegistryWithOptions(client, RegistryOptions{Version: "test", TimezoneFallback: "UTC", DebugMetadata: true}).Register(context.Background(), registrar); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+	result, err := registrar.tools[0].Handler(context.Background(), Request{Name: getAthleteProfileName, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	text := resultText(t, result)
+	for _, want := range []string{"\"query_type\":\"get_athlete_profile\"", "\"fetched_at\":"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("debug response missing %s: %s", want, text)
+		}
+	}
+}
+
 func TestGetAthleteProfileOmitsForbiddenDebugAndSecretFields(t *testing.T) {
 	t.Parallel()
 
@@ -387,9 +493,13 @@ func newTestProfileToolWithError(t *testing.T, err error) (Tool, *fakeProfileCli
 
 func decodeProfileResult(t *testing.T, result Result) GetAthleteProfileResponse {
 	t.Helper()
-	structured, ok := result.StructuredContent.(GetAthleteProfileResponse)
-	if !ok {
-		t.Fatalf("StructuredContent type = %T, want GetAthleteProfileResponse", result.StructuredContent)
+	structuredJSON, err := json.Marshal(result.StructuredContent)
+	if err != nil {
+		t.Fatalf("marshal structured content: %v", err)
+	}
+	var structured GetAthleteProfileResponse
+	if err := json.Unmarshal(structuredJSON, &structured); err != nil {
+		t.Fatalf("decode structured response: %v", err)
 	}
 	var textResponse GetAthleteProfileResponse
 	if err := json.Unmarshal([]byte(resultText(t, result)), &textResponse); err != nil {
