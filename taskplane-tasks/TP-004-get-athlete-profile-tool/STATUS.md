@@ -2,7 +2,7 @@
 
 **Issue:** v0.1 — get_athlete_profile tool
 **Iteration:** 1
-**Current Step:** Step 2: Implement the typed tool
+**Current Step:** Step 3: Shape the response for v0.1
 **Last Updated:** 2026-05-11
 **State:** Ready
 
@@ -121,13 +121,25 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 
 ## Step 3: Shape the response for v0.1
 
-**Status:** ⬜ Not started
+**Status:** 🟡 In Progress
 
 - [ ] Return terse useful profile fields
 - [ ] Use disambiguating field names/metadata where applicable
 - [ ] Include `_meta.server_version`
 - [ ] Exclude fetched timestamps/debug cruft by default
 - [ ] Exclude secrets/raw upstream payloads by default
+- [ ] Add non-secret configured timezone fallback to registry/tool construction
+- [ ] Normalize public unit values to stable LLM-friendly strings
+
+### Step 3 design
+
+- Use the Step 1 contract as the response source of truth. Keep default output to normalized athlete identity, display/name fields, timezone, locale, unit preferences, sport thresholds/zones, pace fields, and `_meta`.
+- Extend registry/tool construction with a non-secret configured timezone fallback from `config.Config.Timezone`. The response `timezone` uses `profile.Timezone` when present, otherwise the configured fallback; `_meta.timezone_convention` may claim config fallback only after this is implemented.
+- Normalize top-level `athlete_id` and full-mode `sport_setting_athlete_id` through `config.NormalizeAthleteID` when possible.
+- Normalize public unit strings to stable LLM-friendly values: `metric`/`imperial`, `kg`/`lb`, and `celsius`/`fahrenheit`. Preserve raw measurement preference only in `measurement_preference_source` when `include_full: true` and it differs from the normalized value.
+- Use metric pace keys (`threshold_pace_seconds_per_km`, `pace_zones_seconds_per_km`) unless upstream `pace_units` indicates miles, then use mile keys (`threshold_pace_seconds_per_mile`, `pace_zones_seconds_per_mile`) and `pace_distance_unit: "mile"`. Always include `pace_units_source` when present.
+- Always include `_meta.server_version`; normalize empty version to `dev`.
+- Never return fetched timestamps, raw upstream JSON, request URLs, headers, credentials, or debug cruft. Only add `sport_setting_id`, `sport_setting_athlete_id`, and `measurement_preference_source` in `include_full: true` mode.
 
 ## Step 4: Add tests
 
@@ -165,3 +177,4 @@ Do not return API keys, raw upstream JSON, HTTP headers, request URLs, Basic Aut
 | 2026-05-11 00:52 | Review R001 | plan Step 2: APPROVE |
 | 2026-05-11 00:59 | Review R001 | code Step 2: UNKNOWN |
 | 2026-05-11 01:03 | Review R001 | code Step 2: APPROVE |
+| 2026-05-11 01:06 | Review R001 | plan Step 3: UNKNOWN |
