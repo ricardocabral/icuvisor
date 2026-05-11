@@ -10,6 +10,8 @@ GOIMPORTS  ?= goimports
 HUGO       ?= hugo
 HUGO_PORT  ?= 1313
 
+.DEFAULT_GOAL := help
+
 .PHONY: all build install run test test-race cover bench lint fmt fmt-check vet tidy \
         download verify generate goimports check clean snapshot release \
         web-serve web-build web-clean help
