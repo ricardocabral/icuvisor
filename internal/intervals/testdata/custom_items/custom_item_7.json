@@ -1,0 +1,12 @@
+{
+  "id": 7,
+  "type": "FITNESS_CHART",
+  "name": "CTL Chart",
+  "visibility": "PRIVATE",
+  "usage_count": 4,
+  "index": 1,
+  "content": {
+    "series": [{ "field": "ctl", "color": "blue" }],
+    "layout": { "height": 240 }
+  }
+}

@@ -1,0 +1,39 @@
+[
+  {
+    "id": 7,
+    "type": "FITNESS_CHART",
+    "name": "CTL Chart",
+    "visibility": "PRIVATE",
+    "usage_count": 4,
+    "index": 1,
+    "content": {
+      "series": [{ "field": "ctl", "color": "blue" }],
+      "layout": { "height": 240 }
+    }
+  },
+  {
+    "id": 8,
+    "type": "INPUT_FIELD",
+    "name": "Shoe",
+    "visibility": "PRIVATE",
+    "index": 2,
+    "content": {
+      "field": "shoe",
+      "value_type": "string"
+    }
+  },
+  {
+    "id": 9,
+    "type": "ZONES",
+    "name": "Run HR Zones",
+    "visibility": "PUBLIC",
+    "index": 3,
+    "content": {
+      "metric": "heart_rate",
+      "zones": [
+        { "name": "Z1", "from": 100, "to": 130 },
+        { "name": "Z2", "from": 131, "to": 150 }
+      ]
+    }
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "id": 10,
+    "type": "PLAN",
+    "name": "Base plan",
+    "visibility": "PRIVATE",
+    "children": [
+      {
+        "id": 101,
+        "name": "Endurance 60",
+        "type": "Ride",
+        "folder_id": 10,
+        "workout_doc": {
+          "steps": [
+            { "duration": 600, "power": { "value": 60, "units": "PERCENT_FTP" } },
+            { "duration": 2400, "power": { "value": 70, "units": "PERCENT_FTP" } }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "type": "FOLDER",
+    "name": "Threshold",
+    "visibility": "PUBLIC",
+    "num_workouts": 2,
+    "children": [
+      {
+        "id": 201,
+        "name": "Sweet Spot 3x10",
+        "type": "Ride",
+        "folder_id": 20,
+        "workout_doc": {
+          "steps": [
+            { "duration": 600 },
+            { "reps": 3, "steps": [{ "duration": 600 }, { "duration": 300 }] }
+          ]
+        }
+      },
+      {
+        "id": 202,
+        "name": "Tempo Run",
+        "type": "Run",
+        "folder_id": 20,
+        "workout_doc": {
+          "steps": [{ "duration": 1800, "pace": { "value": 95, "units": "PERCENT_THRESHOLD" } }]
+        }
+      }
+    ]
+  }
+]

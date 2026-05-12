@@ -19,7 +19,7 @@ type RegistryOptions struct {
 	DebugMetadata    bool
 }
 
-// NewRegistry creates the default v0.1 tool registry.
+// NewRegistry creates the default tool registry.
 func NewRegistry(profileClient ProfileClient, version string, timezoneFallback ...string) Registry {
 	return NewRegistryWithOptions(profileClient, RegistryOptions{
 		Version:          version,
@@ -97,6 +97,22 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	}
 	if trainingPlanClient, ok := r.profileClient.(TrainingPlanClient); ok {
 		if err := registrar.AddTool(newGetTrainingPlanTool(trainingPlanClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if workoutLibraryClient, ok := r.profileClient.(WorkoutLibraryClient); ok {
+		if err := registrar.AddTool(newGetWorkoutLibraryTool(workoutLibraryClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+		if err := registrar.AddTool(newGetWorkoutsInFolderTool(workoutLibraryClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if customItemsClient, ok := r.profileClient.(CustomItemsClient); ok {
+		if err := registrar.AddTool(newGetCustomItemsTool(customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+		if err := registrar.AddTool(newGetCustomItemByIDTool(customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
 		}
 	}

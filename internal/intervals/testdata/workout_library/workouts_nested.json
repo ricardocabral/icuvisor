@@ -1,0 +1,43 @@
+[
+  {
+    "id": 101,
+    "name": "Endurance 60",
+    "type": "Ride",
+    "folder_id": 10,
+    "icu_training_load": 45,
+    "moving_time": 3600,
+    "target": "POWER",
+    "tags": ["endurance"],
+    "workout_doc": {
+      "steps": [
+        { "duration": 600, "power": { "value": 60, "units": "PERCENT_FTP" } },
+        { "duration": 2400, "power": { "value": 70, "units": "PERCENT_FTP" } }
+      ]
+    }
+  },
+  {
+    "id": 201,
+    "name": "Sweet Spot 3x10",
+    "type": "Ride",
+    "folder_id": 20,
+    "icu_training_load": 70,
+    "moving_time": 3600,
+    "target": "POWER",
+    "tags": ["sweet-spot", "threshold"],
+    "workout_doc": {
+      "steps": [
+        { "duration": 600 },
+        { "reps": 3, "steps": [{ "duration": 600 }, { "duration": 300 }] }
+      ]
+    }
+  },
+  {
+    "id": 301,
+    "name": "Top-level Mobility",
+    "type": "Workout",
+    "moving_time": 900,
+    "workout_doc": {
+      "steps": [{ "duration": 900 }]
+    }
+  }
+]

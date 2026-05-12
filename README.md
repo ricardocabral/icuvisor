@@ -50,6 +50,10 @@ Currently implemented tools:
 - `get_events` — lists bounded athlete-local date-range calendar events with upstream category enum values, terse rows by default, truncation metadata, and `include_full` raw payload opt-in.
 - `get_event_by_id` — fetches one calendar event by ID, with one bounded list-scan recovery for upstream detail 404 inconsistencies and structured non-error `upstream_inconsistency` misses.
 - `get_training_plan` — fetches the active upstream training-plan assignment with lightweight plan summary by default, structured no-active-plan responses, and raw nested plan/workout payloads behind `include_full`.
+- `get_workout_library` — lists workout-library folders/plans with terse counts and optional top-level workout templates.
+- `get_workouts_in_folder` — lists workout-library templates in one folder with structured-step summaries by default and raw `workout_doc` only with `include_full`.
+- `get_custom_items` — lists custom charts, fields, streams, panels, histograms, maps, and zones with terse `id`/`name`/`item_type` rows.
+- `get_custom_item_by_id` — fetches one custom item with its full per-`item_type` `content` payload preserved.
 
 ## Install
 
