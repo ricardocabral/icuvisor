@@ -13,13 +13,17 @@ import (
 const EnvDebugMetadata = "ICUVISOR_DEBUG_METADATA"
 
 var defaultScaleLabels = map[string]string{
-	"feel":         "1-5 (athlete-reported)",
+	"feel":         "1-5 (athlete-reported feel)",
 	"fatigue":      "1-5 (athlete-reported fatigue)",
+	"injury":       "1-5 (athlete-reported injury/limitation)",
 	"mood":         "1-5 (athlete-reported mood)",
+	"motivation":   "1-5 (athlete-reported motivation)",
 	"rpe":          "1-10 (rating of perceived exertion)",
 	"session_rpe":  "1-10 (session rating of perceived exertion)",
 	"sleepQuality": "1-4 (athlete-entered, 1=poor 4=great)",
 	"sleepScore":   "0-100 (device-imported nightly score)",
+	"soreness":     "1-5 (athlete-reported soreness)",
+	"stress":       "1-5 (athlete-reported stress)",
 }
 
 // Options controls response shaping at the MCP response boundary.
@@ -134,7 +138,7 @@ func shapeWrapperRow(row map[string]any, opts Options) map[string]any {
 	if opts.DebugMetadata {
 		addDebugMetadata(out, opts)
 	} else {
-		dropDebugMetadata(out)
+		dropDebugMetadata(out, "")
 		missing = filterDebugMissing(missing)
 	}
 	if !opts.IncludeFull && len(missing) > 0 {
@@ -164,7 +168,7 @@ func shapeRow(row map[string]any, opts Options, includeCommonMeta bool) map[stri
 			addDebugMetadata(shaped, opts)
 		}
 	} else {
-		dropDebugMetadata(shaped)
+		dropDebugMetadata(shaped, "")
 		missing = filterDebugMissing(missing)
 	}
 	if !opts.IncludeFull && len(missing) > 0 {
@@ -311,6 +315,9 @@ func filterDebugMissing(missing []string) []string {
 }
 
 func isDebugPath(path string) bool {
+	if isProvenanceFetchedAtPath(path) {
+		return false
+	}
 	for _, part := range strings.Split(path, ".") {
 		if part == "fetched_at" || part == "query_type" || strings.HasPrefix(part, "fetched_at[") || strings.HasPrefix(part, "query_type[") {
 			return true
@@ -319,19 +326,33 @@ func isDebugPath(path string) bool {
 	return false
 }
 
-func dropDebugMetadata(value any) {
+func dropDebugMetadata(value any, path string) {
 	switch typed := value.(type) {
 	case map[string]any:
-		delete(typed, "fetched_at")
-		delete(typed, "query_type")
-		for _, item := range typed {
-			dropDebugMetadata(item)
+		if !isProvenancePath(path) {
+			delete(typed, "fetched_at")
+			delete(typed, "query_type")
+		}
+		for key, item := range typed {
+			dropDebugMetadata(item, joinPath(path, key))
 		}
 	case []any:
-		for _, item := range typed {
-			dropDebugMetadata(item)
+		for i, item := range typed {
+			itemPath := fmt.Sprintf("%s[%d]", path, i)
+			if path == "" {
+				itemPath = fmt.Sprintf("[%d]", i)
+			}
+			dropDebugMetadata(item, itemPath)
 		}
 	}
+}
+
+func isProvenancePath(path string) bool {
+	return path == "_meta.provenance" || strings.HasPrefix(path, "_meta.provenance.") || strings.Contains(path, "._meta.provenance")
+}
+
+func isProvenanceFetchedAtPath(path string) bool {
+	return strings.Contains(path, "_meta.provenance.") && strings.HasSuffix(path, ".fetched_at")
 }
 
 func cloneMap(row map[string]any) map[string]any {

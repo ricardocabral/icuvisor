@@ -1,0 +1,15 @@
+{
+  "id": "2026-05-11",
+  "readiness": 5,
+  "sleepScore": 92,
+  "sleepQuality": 4,
+  "sleepSecs": 28800,
+  "feel": 5,
+  "provider": "Polar AccessLink",
+  "bridge_fetched_at": "2026-05-10T00:00:00Z",
+  "polar": {
+    "ans_charge": 6.5,
+    "nightly_recharge_status": 5,
+    "sleep_score": 92
+  }
+}

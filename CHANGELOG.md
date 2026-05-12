@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `get_wellness_data` MCP tool with distinct `sleepQuality`/`sleepScore`/`sleepSecs`, custom-field preservation, provenance/staleness metadata, native Polar/Garmin/Oura sub-fields, scale labels, null stripping, and `include_full` raw payload opt-in.
 - Fitness and metrics read cluster: `get_fitness`, `get_best_efforts`, `get_power_curves`, `get_training_summary`, and `get_extended_metrics`, including upstream availability evidence for extended metrics and no zero-filling of unavailable fields.
 - `get_activity_messages` MCP tool with terse activity comments/notes and athlete-timezone timestamp rendering.
 - `get_activity_streams` and `get_activity_splits` MCP tools with canonical stream keys, heavy stream sample opt-in, and preferred-unit virtual splits.

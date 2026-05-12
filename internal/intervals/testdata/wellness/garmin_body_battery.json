@@ -1,0 +1,13 @@
+{
+  "id": "2026-05-12",
+  "readiness": 74,
+  "sleepSecs": 27000,
+  "restingHR": 48,
+  "hrv": 58.2,
+  "provider": "Garmin Connect",
+  "bridge_fetched_at": "2026-05-12T00:00:00Z",
+  "garmin": {
+    "body_battery_min": 32,
+    "body_battery_max": 85
+  }
+}

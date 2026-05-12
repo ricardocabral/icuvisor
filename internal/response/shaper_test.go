@@ -202,11 +202,11 @@ func TestShapeRequiresObjectWrapper(t *testing.T) {
 
 func TestRegisteredScaleLabelsReturnsRegistryCopy(t *testing.T) {
 	labels := RegisteredScaleLabels()
-	if labels["feel"] != "1-5 (athlete-reported)" || labels["sleepQuality"] != "1-4 (athlete-entered, 1=poor 4=great)" {
+	if labels["feel"] != "1-5 (athlete-reported feel)" || labels["sleepQuality"] != "1-4 (athlete-entered, 1=poor 4=great)" || labels["injury"] == "" {
 		t.Fatalf("registered scale labels = %+v", labels)
 	}
 	labels["feel"] = "mutated"
-	if RegisteredScaleLabels()["feel"] != "1-5 (athlete-reported)" {
+	if RegisteredScaleLabels()["feel"] != "1-5 (athlete-reported feel)" {
 		t.Fatal("RegisteredScaleLabels returned mutable registry state")
 	}
 }
@@ -223,20 +223,32 @@ func TestShapeDoesNotAddScalesForUnregisteredFields(t *testing.T) {
 }
 
 func TestShapeAddsScalesForRegisteredFields(t *testing.T) {
-	got, err := Shape(map[string]any{"feel": 4, "name": "athlete", "sleepQuality": 3, "sleepScore": 87}, Options{})
+	got, err := Shape(map[string]any{"fatigue": 2, "feel": 4, "injury": 1, "mood": 5, "motivation": 4, "name": "athlete", "sleepQuality": 3, "sleepScore": 87, "soreness": 2, "stress": 3}, Options{})
 	if err != nil {
 		t.Fatalf("Shape() error = %v", err)
 	}
 	assertJSONEqual(t, got, map[string]any{
+		"fatigue":      float64(2),
 		"feel":         float64(4),
+		"injury":       float64(1),
+		"mood":         float64(5),
+		"motivation":   float64(4),
 		"name":         "athlete",
 		"sleepQuality": float64(3),
 		"sleepScore":   float64(87),
+		"soreness":     float64(2),
+		"stress":       float64(3),
 		"_meta": map[string]any{
 			"scales": map[string]any{
-				"feel":         "1-5 (athlete-reported)",
+				"fatigue":      "1-5 (athlete-reported fatigue)",
+				"feel":         "1-5 (athlete-reported feel)",
+				"injury":       "1-5 (athlete-reported injury/limitation)",
+				"mood":         "1-5 (athlete-reported mood)",
+				"motivation":   "1-5 (athlete-reported motivation)",
 				"sleepQuality": "1-4 (athlete-entered, 1=poor 4=great)",
 				"sleepScore":   "0-100 (device-imported nightly score)",
+				"soreness":     "1-5 (athlete-reported soreness)",
+				"stress":       "1-5 (athlete-reported stress)",
 			},
 			"server_version": "dev",
 		},

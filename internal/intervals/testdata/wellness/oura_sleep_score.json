@@ -1,0 +1,11 @@
+{
+  "id": "2026-05-13",
+  "sleepScore": 83,
+  "sleepSecs": 25200,
+  "avgSleepingHR": 51.5,
+  "provider": "Oura",
+  "bridge_fetched_at": "2026-05-13T00:00:00Z",
+  "oura": {
+    "sleep_score": 83
+  }
+}
