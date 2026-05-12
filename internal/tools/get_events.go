@@ -15,7 +15,7 @@ import (
 
 const (
 	getEventsName                    = "get_events"
-	getEventsDescription             = "List intervals.icu calendar events for a bounded athlete-local YYYY-MM-DD date range. Returns terse rows by default, raw upstream event payloads only with include_full:true, and preserves upstream category enum values."
+	getEventsDescription             = "List calendar events across a bounded athlete-local YYYY-MM-DD date range. Returns terse rows by default, raw upstream event payloads only with include_full:true, and preserves upstream category enum values."
 	invalidGetEventsArgumentsMessage = "invalid get_events arguments; provide oldest/newest as YYYY-MM-DD with an optional capped limit"
 	fetchEventsMessage               = "could not fetch events; check intervals.icu credentials, athlete ID, and date range"
 	defaultEventsLimit               = 100

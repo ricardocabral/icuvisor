@@ -1,0 +1,30 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "activity_id": {
+      "description": "intervals.icu activity ID whose messages/comments should be listed.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "Include raw upstream message fields and preserve nulls.",
+      "type": "boolean"
+    },
+    "limit": {
+      "default": 100,
+      "description": "Maximum messages to return; defaults to 100 and is capped at 200.",
+      "maximum": 200,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "since_id": {
+      "description": "Return messages after this upstream message ID; zero means no cursor.",
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "activity_id"
+  ],
+  "type": "object"
+}

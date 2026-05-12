@@ -48,6 +48,41 @@ jobs:
           files: ./coverage.txt
           fail_ci_if_error: false
 
+  tool-catalog-guards:
+    name: Tool catalog guards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Prepare baseline schema snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+          fi
+          if ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            BASE_SHA="HEAD^"
+          fi
+          mkdir -p /tmp/icuvisor-schema-baseline
+          if git ls-tree -r --name-only "$BASE_SHA" internal/tools/schema_snapshot | grep -q '\.json$'; then
+            git archive "$BASE_SHA" internal/tools/schema_snapshot | tar -x -C /tmp/icuvisor-schema-baseline
+          else
+            mkdir -p /tmp/icuvisor-schema-baseline/internal/tools
+            cp -R internal/tools/schema_snapshot /tmp/icuvisor-schema-baseline/internal/tools/schema_snapshot
+          fi
+      - name: Check schema stability
+        run: go run ./scripts/check_schema_stability.go -baseline-dir /tmp/icuvisor-schema-baseline/internal/tools/schema_snapshot -require-baseline
+      - name: Check confusable tool names
+        run: go run ./scripts/check_confusable_names.go
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

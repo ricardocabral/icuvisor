@@ -12,7 +12,7 @@ import (
 
 const (
 	getTrainingPlanName                    = "get_training_plan"
-	getTrainingPlanDescription             = "Fetch the active intervals.icu training-plan assignment exposed by the public API. Returns assignment and lightweight plan summary fields by default; raw nested plan/workout payloads require include_full:true."
+	getTrainingPlanDescription             = "Fetch the athlete's active training-plan assignment, not calendar events or workout-library templates. Returns assignment and lightweight plan summary fields by default; raw nested plan/workout payloads require include_full:true."
 	invalidGetTrainingPlanArgumentsMessage = "invalid get_training_plan arguments; only include_full is supported"
 	fetchTrainingPlanMessage               = "could not fetch training plan; check intervals.icu credentials and athlete ID"
 	trainingPlanEndpoint                   = "/athlete/{id}/training-plan"

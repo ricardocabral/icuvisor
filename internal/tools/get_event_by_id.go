@@ -13,7 +13,7 @@ import (
 
 const (
 	getEventByIDName                    = "get_event_by_id"
-	getEventByIDDescription             = "Fetch one intervals.icu calendar event by ID. If the detail endpoint 404s, performs one bounded list scan and returns a structured unavailable result instead of exposing the raw 404."
+	getEventByIDDescription             = "Fetch a single calendar event detail by event_id. If the detail endpoint 404s, performs one bounded list scan and returns a structured unavailable result instead of exposing the raw 404."
 	invalidGetEventByIDArgumentsMessage = "invalid get_event_by_id arguments; provide event_id and optional YYYY-MM-DD date hints"
 	fetchEventByIDMessage               = "could not fetch event; check intervals.icu credentials, athlete ID, event ID, and date hints"
 	defaultEventByIDScanRadiusDays      = 30

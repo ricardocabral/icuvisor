@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- CI guards for tool-schema snapshot stability and confusable tool-name first sentences, plus canonical per-tool argument schema snapshots for the v0.2 read catalog.
+- Disambiguated first-sentence descriptions for activity, event/calendar, workout-library, and custom-item read-tool clusters.
 - `get_custom_items` and `get_custom_item_by_id` MCP tools for custom chart/field/stream/panel/zones reads, with terse list rows and per-`item_type` `content` preservation on detail reads.
 - `get_workout_library` and `get_workouts_in_folder` MCP tools for workout-library folder/plan and template reads, with terse defaults and raw `workout_doc` preservation behind `include_full`.
 - `get_events`, `get_event_by_id`, and `get_training_plan` MCP tools for bounded calendar event reads, detail reads with one bounded list-scan recovery for upstream 404 inconsistencies, and active training-plan assignment reads, with terse defaults, upstream category preservation, structured unavailable handling, and `include_full` raw payload opt-in.

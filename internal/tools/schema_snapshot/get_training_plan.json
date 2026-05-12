@@ -1,0 +1,11 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "include_full": {
+      "default": false,
+      "description": "When true, include the raw upstream training-plan assignment and nested plan/workout payload. Default mode returns assignment fields and lightweight plan summary only.",
+      "type": "boolean"
+    }
+  },
+  "type": "object"
+}

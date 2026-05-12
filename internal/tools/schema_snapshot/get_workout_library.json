@@ -1,0 +1,11 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "include_top_level_workouts": {
+      "default": false,
+      "description": "When true, also fetch all library workouts and include only those without a folder_id as top-level workout templates.",
+      "type": "boolean"
+    }
+  },
+  "type": "object"
+}

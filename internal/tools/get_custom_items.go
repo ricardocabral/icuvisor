@@ -12,7 +12,7 @@ import (
 
 const (
 	getCustomItemsName                    = "get_custom_items"
-	getCustomItemsDescription             = "List intervals.icu custom items such as charts, fields, streams, panels, histograms, maps, and zones. Returns terse rows with id, name, and item_type; use get_custom_item_by_id for the full content payload."
+	getCustomItemsDescription             = "List custom item definitions such as charts, fields, streams, panels, histograms, maps, and zones. Returns terse rows with id, name, and item_type; use get_custom_item_by_id for the full content payload."
 	invalidGetCustomItemsArgumentsMessage = "invalid get_custom_items arguments; only item_type is supported"
 	fetchCustomItemsMessage               = "could not fetch custom items; check intervals.icu credentials and athlete ID"
 	customItemsEndpoint                   = "/athlete/{id}/custom-item"

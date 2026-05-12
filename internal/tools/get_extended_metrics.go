@@ -12,7 +12,7 @@ import (
 
 const (
 	getExtendedMetricsName                 = "get_extended_metrics"
-	getExtendedMetricsDescription          = "Get upstream-exposed extended activity metrics only. Terse mode drops unavailable fields and never computes or zero-fills missing metrics; include_full returns raw upstream payloads."
+	getExtendedMetricsDescription          = "Get one activity's upstream-exposed extended metrics by activity_id. Terse mode drops unavailable fields and never computes or zero-fills missing metrics; include_full returns raw upstream payloads."
 	invalidExtendedMetricsArgumentsMessage = "invalid get_extended_metrics arguments; provide activity_id and optional include_full"
 	fetchExtendedMetricsMessage            = "could not fetch extended metrics; check activity_id and intervals.icu credentials"
 )

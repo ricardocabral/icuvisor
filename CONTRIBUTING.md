@@ -73,6 +73,20 @@ Each new tool must:
 - Render dates in the athlete's configured timezone and normalize athlete IDs to `i12345`.
 - Have a terse default response under ~500 tokens and an `include_full: bool` opt-in.
 
+### Tool schema snapshots
+
+Stable MCP tools follow an additive-only argument schema rule because clients may cache schemas for an entire conversation. Snapshot files live in `internal/tools/schema_snapshot/<tool_name>.json` and are generated from the live registry:
+
+```bash
+go run ./scripts/snapshot_tool_schemas.go
+```
+
+Snapshots use canonical JSON: two-space indentation, sorted object keys from Go's JSON encoder, and one trailing newline. When a PR adds a new optional argument to an existing stable tool, regenerate and commit the updated snapshot. Do not remove or rename an existing stable-tool argument in place; ship a new tool name instead so cached clients do not call a mismatched schema. New tools add new snapshot files and may evolve until they are declared stable.
+
+### Tool-name confusability
+
+Tool descriptions in the same prefix/domain cluster must have distinguishing first sentences. CI compares normalized first sentences within each cluster using token Jaccard similarity and fails pairs at or above `0.58`. If the check fails, rewrite one first sentence to make the access pattern and payload shape obvious to an LLM reading only that sentence; do not rename the tool.
+
 ## Security issues
 
 Do **not** open a public issue for vulnerabilities. See [SECURITY.md](SECURITY.md).

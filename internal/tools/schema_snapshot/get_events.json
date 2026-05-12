@@ -1,0 +1,42 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "calendar_id": {
+      "description": "Optional upstream calendar ID filter.",
+      "type": "string"
+    },
+    "category": {
+      "description": "Optional upstream event category enum filter. Returned categories preserve upstream enum values.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include each raw upstream event payload under full; default rows are terse and null-stripped.",
+      "type": "boolean"
+    },
+    "limit": {
+      "default": 100,
+      "description": "Maximum event rows to request; defaults to 100 and values above 500 are capped.",
+      "maximum": 500,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "newest": {
+      "description": "Required athlete-local end date YYYY-MM-DD; date range is capped at 366 days.",
+      "type": "string"
+    },
+    "oldest": {
+      "description": "Required athlete-local start date YYYY-MM-DD.",
+      "type": "string"
+    },
+    "resolve": {
+      "description": "Optional upstream resolve flag for recurring/derived events when supported by intervals.icu.",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "oldest",
+    "newest"
+  ],
+  "type": "object"
+}

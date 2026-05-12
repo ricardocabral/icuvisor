@@ -12,7 +12,7 @@ import (
 
 const (
 	getWorkoutsInFolderName                    = "get_workouts_in_folder"
-	getWorkoutsInFolderDescription             = "List workout-library templates inside one intervals.icu folder or plan by folder ID. Returns terse workout rows with structured-step summaries by default; raw workout_doc is returned only with include_full:true."
+	getWorkoutsInFolderDescription             = "List workout-library templates inside one folder or plan by folder_id. Returns terse workout rows with structured-step summaries by default; raw workout_doc is returned only with include_full:true."
 	invalidGetWorkoutsInFolderArgumentsMessage = "invalid get_workouts_in_folder arguments; provide folder_id and optional include_full"
 	fetchWorkoutsInFolderMessage               = "could not fetch workouts in folder; check intervals.icu credentials, athlete ID, and folder ID"
 )

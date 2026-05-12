@@ -281,8 +281,16 @@ func newSplitRow(index int, meters float64, duration float64, splitUnit string) 
 }
 
 func activityStreamsInputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"activity_id"}, "properties": map[string]any{"activity_id": map[string]any{"type": "string"}, "keys": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}, "include_full": map[string]any{"type": "boolean"}}}
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"activity_id"}, "properties": map[string]any{
+		"activity_id":  map[string]any{"type": "string", "description": "Required intervals.icu activity ID whose stream channels should be listed."},
+		"keys":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional stream keys to include as samples. Values are canonicalized to snake_case when known; unknown keys are reported in _meta. Supplying keys includes samples even when include_full is false."},
+		"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, include raw upstream stream payloads and samples for available stream channels; default returns metadata only unless keys is supplied."},
+	}}
 }
 func activitySplitsInputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"activity_id"}, "properties": map[string]any{"activity_id": map[string]any{"type": "string"}, "split_unit": map[string]any{"type": "string", "enum": []string{"km", "mi"}}, "include_full": map[string]any{"type": "boolean"}}}
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"activity_id"}, "properties": map[string]any{
+		"activity_id":  map[string]any{"type": "string", "description": "Required intervals.icu activity ID whose manual or virtual splits should be returned."},
+		"split_unit":   map[string]any{"type": "string", "enum": []string{"km", "mi"}, "description": "Optional split distance unit. Defaults to the athlete's preferred_units when omitted, falling back to km."},
+		"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, preserve full response metadata during shaping; split rows remain terse and unit-disambiguated by default."},
+	}}
 }

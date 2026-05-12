@@ -12,7 +12,7 @@ import (
 
 const (
 	getWorkoutLibraryName                    = "get_workout_library"
-	getWorkoutLibraryDescription             = "List intervals.icu workout-library folders and plans. Returns terse folder rows by default; set include_top_level_workouts:true to also include uncategorized top-level workout templates."
+	getWorkoutLibraryDescription             = "List workout-library folders and plans, not calendar events or the active training-plan assignment. Returns terse folder rows by default; set include_top_level_workouts:true to also include uncategorized top-level workout templates."
 	invalidGetWorkoutLibraryArgumentsMessage = "invalid get_workout_library arguments; only include_top_level_workouts is supported"
 	fetchWorkoutLibraryMessage               = "could not fetch workout library; check intervals.icu credentials and athlete ID"
 	workoutLibraryFoldersEndpoint            = "/athlete/{id}/folders"

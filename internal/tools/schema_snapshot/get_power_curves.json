@@ -1,0 +1,36 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "duration_seconds": {
+      "description": "Power curve buckets to return. Defaults to 5,15,30,60,300,1200,3600 seconds.",
+      "items": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw upstream curve arrays and activity maps.",
+      "type": "boolean"
+    },
+    "newest": {
+      "description": "Local end date YYYY-MM-DD.",
+      "type": "string"
+    },
+    "oldest": {
+      "description": "Local start date YYYY-MM-DD.",
+      "type": "string"
+    },
+    "sport": {
+      "default": "Ride",
+      "description": "Intervals.icu sport/type for the required upstream type parameter; defaults to Ride.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "oldest",
+    "newest"
+  ],
+  "type": "object"
+}
