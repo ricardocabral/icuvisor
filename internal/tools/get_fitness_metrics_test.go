@@ -46,8 +46,8 @@ func (f *fakeFitnessMetricsClient) GetActivityPowerVsHR(context.Context, string)
 	return f.powerVsHR, nil
 }
 
-func TestFitnessMetricsToolShapes(t *testing.T) {
-	t.Parallel()
+func newFakeFitnessMetricsClient(t *testing.T) *fakeFitnessMetricsClient {
+	t.Helper()
 
 	profile := intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}
 	client := &fakeFitnessMetricsClient{fakeProfileClient: fakeProfileClient{profile: profile}}
@@ -64,15 +64,23 @@ func TestFitnessMetricsToolShapes(t *testing.T) {
 		"Run:pace":   distanceCurveSet(t, []float64{1000}, []float64{230}),
 	}
 
+	return client
+}
+
+func TestFitnessMetricsToolShapes(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name   string
-		tool   Tool
+		tool   func(*fakeFitnessMetricsClient) Tool
 		args   string
 		assert func(t *testing.T, got map[string]any)
 	}{
 		{
 			name: "fitness rows sorted with timezone meta",
-			tool: newGetFitnessTool(client, client, "test", "UTC", false),
+			tool: func(client *fakeFitnessMetricsClient) Tool {
+				return newGetFitnessTool(client, client, "test", "UTC", false)
+			},
 			args: `{"start_date":"2026-05-01","end_date":"2026-05-02"}`,
 			assert: func(t *testing.T, got map[string]any) {
 				rows := got["fitness"].([]any)
@@ -87,7 +95,9 @@ func TestFitnessMetricsToolShapes(t *testing.T) {
 		},
 		{
 			name: "best efforts grouped by sport and bucket",
-			tool: newGetBestEffortsTool(client, "test", false),
+			tool: func(client *fakeFitnessMetricsClient) Tool {
+				return newGetBestEffortsTool(client, "test", false)
+			},
 			args: `{"sports":["Ride","Run"],"duration_seconds":[60],"distance_meters":[1000]}`,
 			assert: func(t *testing.T, got map[string]any) {
 				sports := got["sports"].([]any)
@@ -102,7 +112,9 @@ func TestFitnessMetricsToolShapes(t *testing.T) {
 		},
 		{
 			name: "power curve terse buckets omit full arrays",
-			tool: newGetPowerCurvesTool(client, "test", false),
+			tool: func(client *fakeFitnessMetricsClient) Tool {
+				return newGetPowerCurvesTool(client, "test", false)
+			},
 			args: `{"oldest":"2026-05-01","newest":"2026-05-07","duration_seconds":[60,300]}`,
 			assert: func(t *testing.T, got map[string]any) {
 				points := got["points"].([]any)
@@ -116,7 +128,9 @@ func TestFitnessMetricsToolShapes(t *testing.T) {
 		},
 		{
 			name: "training summary aggregates without TSS relabel",
-			tool: newGetTrainingSummaryTool(client, client, "test", "UTC", false),
+			tool: func(client *fakeFitnessMetricsClient) Tool {
+				return newGetTrainingSummaryTool(client, client, "test", "UTC", false)
+			},
 			args: `{"start_date":"2026-05-01","end_date":"2026-05-02"}`,
 			assert: func(t *testing.T, got map[string]any) {
 				summary := got["summary"].(map[string]any)
@@ -133,7 +147,9 @@ func TestFitnessMetricsToolShapes(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			result, err := tc.tool.Handler(context.Background(), Request{Name: tc.tool.Name, Arguments: json.RawMessage(tc.args)})
+
+			tool := tc.tool(newFakeFitnessMetricsClient(t))
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.args)})
 			if err != nil {
 				t.Fatalf("Handler() error = %v", err)
 			}
