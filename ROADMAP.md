@@ -24,6 +24,9 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 - [ ] Null-value keys stripped from responses before serialization (wellness in particular — N/A fields are dropped, not emitted as `null`).
 - [ ] Exhaustive pace-unit enum coverage (`MINS_KM`, `MINS_MILE`, `SECS_100M`, `SECS_500M`, …); unknown units degrade to `_meta.unknown_unit: true` rather than failing the call.
 - [ ] Distinct sleep fields surfaced separately: manual `sleepQuality` (1–4) and device-imported `sleepScore` (0–100), each with its own in-response scale label.
+- [ ] Wellness `_meta.provenance` (per bridged field: `source`, `native_scale`, `fetched_at`) + `_meta.stale: true` when the upstream bridge has not refreshed within 24h of the wellness date; raw native sub-fields exposed under `_native.<source>.<field>` (Polar `ans_charge`, `nightly_recharge_status`; Garmin body-battery min/max; Oura raw `sleep_score`).
+- [ ] `_meta.missing_fields` callout on every read tool that strips nulls — explicit list of which keys were absent for the row, so the LLM declines to infer rather than treating absence as zero.
+- [ ] Periodization parameters via `get_planning_parameters` (and write counterpart) if exposed upstream (PRD §7.4 #18) — ramp-rate %, recovery-week cadence, taper % drop, intensity distribution. Gap documented and an intervals.icu API feature request filed if absent.
 - [ ] `get_event_by_id` upstream-inconsistency handling: structured `unavailable: { reason: "upstream_inconsistency" }` when the detail endpoint 404s on an ID `get_events` just listed.
 - [ ] In-response scale labels on every subjective field (`feel`, `sleepQuality`, `fatigue`, `mood`, etc.) — not just tool descriptions.
 - [ ] Disambiguating field names in responses (`calories_burned` not `calories`; `distance_km` / `distance_mi`).
@@ -98,6 +101,7 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 - [ ] Diagnostics export button in tray menu.
 - [ ] Telemetry-driven response-shape tuning.
 - [ ] Strength training and training plan endpoints (depends on PRD assumptions §7.4.3 / §7.4.4).
+- [ ] `get_fitness_projection` — forward CTL/ATL/TSB simulation given a hypothetical load ramp (% per week), recovery-week cadence, and date horizon. Returns the projected curve plus the modeled assumptions in `_meta` so the LLM can explain the result rather than restate the chart (forum thread 123739 post #49).
 
 ## vNext — Future (out of scope for v1)
 
@@ -105,6 +109,7 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 - **Strava / TrainingPeaks** companion MCP servers in the same family.
 - **Workout templates** library, AI-generated and athlete-curated.
 - **Conversation memory** export hooks (Claude Projects integration).
+- **`fill_calendar_from_library`** ("Plan Filler", forum thread 123739 post #24): given a date range, target weekly load (TSS or hours), available hours per weekday, and a workout-library folder filter, assign existing library workouts to days to hit the target. Returns the proposed schedule for review; commit is a separate explicit call. Depends on workout-library CRUD (v0.3) and `apply_training_plan`.
 
 ## Out of scope
 
