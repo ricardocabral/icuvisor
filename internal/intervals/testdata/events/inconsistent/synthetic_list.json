@@ -1,0 +1,12 @@
+[
+  {
+    "id": "synthetic-recurring-instance-1",
+    "name": "Synthetic workout",
+    "category": "WORKOUT",
+    "type": "Ride",
+    "start_date_local": "2026-03-15",
+    "end_date_local": "2026-03-15",
+    "calendar_id": "synthetic-calendar",
+    "description": "scrubbed"
+  }
+]

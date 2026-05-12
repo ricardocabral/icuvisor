@@ -85,6 +85,21 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if eventsClient, ok := r.profileClient.(EventsClient); ok {
+		if err := registrar.AddTool(newGetEventsTool(eventsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if eventByIDClient, ok := r.profileClient.(EventByIDClient); ok {
+		if err := registrar.AddTool(newGetEventByIDTool(eventByIDClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if trainingPlanClient, ok := r.profileClient.(TrainingPlanClient); ok {
+		if err := registrar.AddTool(newGetTrainingPlanTool(trainingPlanClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if detailsClient, ok := r.profileClient.(ActivityDetailsClient); ok {
 		if err := registrar.AddTool(newGetActivityDetailsTool(detailsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err

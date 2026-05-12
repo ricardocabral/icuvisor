@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `get_events`, `get_event_by_id`, and `get_training_plan` MCP tools for bounded calendar event reads, detail reads with one bounded list-scan recovery for upstream 404 inconsistencies, and active training-plan assignment reads, with terse defaults, upstream category preservation, structured unavailable handling, and `include_full` raw payload opt-in.
 - `get_wellness_data` MCP tool with distinct `sleepQuality`/`sleepScore`/`sleepSecs`, custom-field preservation, provenance/staleness metadata, native Polar/Garmin/Oura sub-fields, scale labels, null stripping, and `include_full` raw payload opt-in.
 - Fitness and metrics read cluster: `get_fitness`, `get_best_efforts`, `get_power_curves`, `get_training_summary`, and `get_extended_metrics`, including upstream availability evidence for extended metrics and no zero-filling of unavailable fields.
 - `get_activity_messages` MCP tool with terse activity comments/notes and athlete-timezone timestamp rendering.

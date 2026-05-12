@@ -1,0 +1,8 @@
+Synthetic mismatch for TP-012:
+
+List request: GET /athlete/{athlete_id}/events?oldest=2026-03-01&newest=2026-03-31&resolve=true
+Listed event_id: synthetic-recurring-instance-1
+Detail request: GET /athlete/{athlete_id}/events/synthetic-recurring-instance-1
+Detail outcome: 404 Not Found
+
+All identifiers and notes are synthetic.

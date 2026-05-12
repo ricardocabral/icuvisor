@@ -1,0 +1,233 @@
+package tools
+
+import (
+	"context"
+	"encoding/json"
+	"strings"
+	"testing"
+
+	"github.com/ricardocabral/icuvisor/internal/intervals"
+)
+
+type fakeEventsTrainingPlanClient struct {
+	fakeProfileClient
+	events          []intervals.Event
+	listCalls       []intervals.ListEventsParams
+	eventDetail     intervals.Event
+	eventDetailErr  error
+	detailCalls     []string
+	trainingPlan    intervals.TrainingPlan
+	trainingPlanErr error
+}
+
+func (f *fakeEventsTrainingPlanClient) ListEvents(ctx context.Context, params intervals.ListEventsParams) ([]intervals.Event, error) {
+	f.listCalls = append(f.listCalls, params)
+	return append([]intervals.Event(nil), f.events...), nil
+}
+
+func (f *fakeEventsTrainingPlanClient) GetEvent(ctx context.Context, eventID string) (intervals.Event, error) {
+	f.detailCalls = append(f.detailCalls, eventID)
+	return f.eventDetail, f.eventDetailErr
+}
+
+func (f *fakeEventsTrainingPlanClient) GetTrainingPlan(ctx context.Context) (intervals.TrainingPlan, error) {
+	return f.trainingPlan, f.trainingPlanErr
+}
+
+func TestEventsAndTrainingPlanRegistrationMetadata(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "UTC"}}}
+	registrar := &collectingRegistrar{}
+	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+	if len(registrar.tools) != 4 {
+		t.Fatalf("registered tool count = %d, want profile + events + event_by_id + training_plan", len(registrar.tools))
+	}
+	eventsTool := findTool(t, registrar.tools, getEventsName)
+	if !strings.Contains(eventsTool.Description, "calendar events") {
+		t.Fatalf("events description = %q, want calendar events", eventsTool.Description)
+	}
+	eventsProps := eventsTool.InputSchema.(map[string]any)["properties"].(map[string]any)
+	for _, name := range []string{"oldest", "newest", "category", "calendar_id", "limit", "resolve", "include_full"} {
+		if _, ok := eventsProps[name]; !ok {
+			t.Fatalf("get_events schema missing %s", name)
+		}
+	}
+	eventByIDTool := findTool(t, registrar.tools, getEventByIDName)
+	if !strings.Contains(eventByIDTool.Description, "structured unavailable") {
+		t.Fatalf("event by ID description = %q, want structured unavailable language", eventByIDTool.Description)
+	}
+	eventByIDProps := eventByIDTool.InputSchema.(map[string]any)["properties"].(map[string]any)
+	for _, name := range []string{"event_id", "date", "oldest", "newest", "resolve", "include_full"} {
+		if _, ok := eventByIDProps[name]; !ok {
+			t.Fatalf("get_event_by_id schema missing %s", name)
+		}
+	}
+	planTool := findTool(t, registrar.tools, getTrainingPlanName)
+	if !strings.Contains(planTool.Description, "training-plan assignment") {
+		t.Fatalf("training plan description = %q, want assignment language", planTool.Description)
+	}
+}
+
+func TestGetEventsTerseRowsTimezoneAndCategory(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		events:            decodeToolEvents(t, `{"id":123,"name":"Tempo","category":"WORKOUT","type":"Ride","start_date_local":"2026-01-03","end_date_local":"2026-01-03","description":"3x tempo","updated":"2026-01-03T12:00:00Z","plan_applied":"2026-01-02T12:00:00Z","calendar_id":"cal-1","training_plan_id":456,"icu_training_load":75,"distance":30000,"moving_time":3600,"workout_doc":{"steps":[{"duration":600}]}}`),
+	}
+	tool := newGetEventsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","newest":"2026-01-31","category":"WORKOUT","limit":10,"resolve":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.listCalls) != 1 {
+		t.Fatalf("list calls = %d, want 1", len(client.listCalls))
+	}
+	call := client.listCalls[0]
+	if call.Oldest != "2026-01-01" || call.Newest != "2026-01-31" || call.Category != "WORKOUT" || call.Limit != 10 || call.Resolve == nil || !*call.Resolve {
+		t.Fatalf("ListEvents params = %#v, want decoded request params", call)
+	}
+	out := resultMap(t, result)
+	rows := out["events"].([]any)
+	row := rows[0].(map[string]any)
+	if row["event_id"] != "123" || row["category"] != "WORKOUT" {
+		t.Fatalf("row id/category = %#v/%#v, want string id and raw category", row["event_id"], row["category"])
+	}
+	if row["updated_local"] != "2026-01-03T09:00:00-03:00" {
+		t.Fatalf("updated_local = %#v, want Sao Paulo rendering", row["updated_local"])
+	}
+	if _, ok := row["full"]; ok {
+		t.Fatalf("full present in terse row: %#v", row["full"])
+	}
+	summary := row["workout_doc_summary"].(map[string]any)
+	if summary["step_count"] != float64(1) {
+		t.Fatalf("workout_doc_summary = %#v, want step_count 1", summary)
+	}
+	meta := out["_meta"].(map[string]any)
+	if meta["timezone"] != "America/Sao_Paulo" || meta["count"] != float64(1) || meta["truncated"] != false {
+		t.Fatalf("meta = %#v, want timezone/count/truncated", meta)
+	}
+}
+
+func TestGetEventsCapsRowsAndReportsTruncation(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		events: decodeToolEvents(t,
+			`{"id":3,"name":"Suppressed","category":"WORKOUT","start_date_local":"2026-01-03"}`,
+			`{"id":1,"name":"First","category":"WORKOUT","start_date_local":"2026-01-01"}`,
+			`{"id":2,"name":"Second","category":"WORKOUT","start_date_local":"2026-01-02"}`,
+		),
+	}
+	tool := newGetEventsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","newest":"2026-01-31","limit":2}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	rows := out["events"].([]any)
+	if len(rows) != 2 {
+		t.Fatalf("row count = %d, want cap of 2", len(rows))
+	}
+	meta := out["_meta"].(map[string]any)
+	if meta["limit"] != float64(2) || meta["count"] != float64(2) || meta["truncated"] != true {
+		t.Fatalf("meta = %#v, want capped count and truncated=true", meta)
+	}
+	if rows[0].(map[string]any)["event_id"] != "1" || rows[1].(map[string]any)["event_id"] != "3" {
+		t.Fatalf("rows = %#v, want first two upstream rows sorted at response boundary", rows)
+	}
+}
+
+func TestGetEventsRejectsDateTimesAndTooLargeRange(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "UTC"}}}
+	tool := newGetEventsTool(client, client, "test", "UTC", false)
+	cases := []string{
+		`{"oldest":"2026-01-01T00:00:00","newest":"2026-01-31"}`,
+		`{"oldest":"2026-01-01","newest":"2027-01-02"}`,
+	}
+	for _, raw := range cases {
+		if _, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(raw)}); err == nil {
+			t.Fatalf("Handler(%s) error = nil, want validation error", raw)
+		}
+	}
+}
+
+func TestGetTrainingPlanSummarizesNestedPlan(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		trainingPlan:      decodeToolTrainingPlan(t, `{"training_plan_id":456,"training_plan_start_date":"2026-02-01","alias":"Base alias","training_plan":{"id":456,"name":"Base plan","children":[{"workout_doc":{"steps":[1]}}],"workout_doc":{"steps":[2]}}}`),
+	}
+	tool := newGetTrainingPlanTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	row := out["training_plan"].(map[string]any)
+	if row["training_plan_id"] != "456" || row["alias"] != "Base alias" {
+		t.Fatalf("training_plan row = %#v, want assignment IDs/alias", row)
+	}
+	if _, ok := row["full"]; ok {
+		t.Fatalf("full present in default training plan row")
+	}
+	summary := row["plan_summary"].(map[string]any)
+	if summary["child_count"] != float64(1) || summary["name"] != "Base plan" {
+		t.Fatalf("plan_summary = %#v, want lightweight child count/name", summary)
+	}
+	if _, ok := summary["workout_doc"]; ok {
+		t.Fatalf("plan_summary includes workout_doc: %#v", summary)
+	}
+}
+
+func TestGetTrainingPlanNoActivePlanShape(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "UTC"}}}
+	tool := newGetTrainingPlanTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	unavailable := out["unavailable"].(map[string]any)
+	if unavailable["reason"] != "no_active_training_plan" {
+		t.Fatalf("unavailable = %#v, want no_active_training_plan", unavailable)
+	}
+	if _, ok := out["training_plan"]; ok {
+		t.Fatalf("training_plan present for no active plan: %#v", out["training_plan"])
+	}
+}
+
+func decodeToolEvents(t *testing.T, raws ...string) []intervals.Event {
+	t.Helper()
+	events := make([]intervals.Event, 0, len(raws))
+	for _, raw := range raws {
+		var event intervals.Event
+		if err := json.Unmarshal([]byte(raw), &event); err != nil {
+			t.Fatalf("decode event: %v", err)
+		}
+		events = append(events, event)
+	}
+	return events
+}
+
+func decodeToolTrainingPlan(t *testing.T, raw string) intervals.TrainingPlan {
+	t.Helper()
+	var plan intervals.TrainingPlan
+	if err := json.Unmarshal([]byte(raw), &plan); err != nil {
+		t.Fatalf("decode training plan: %v", err)
+	}
+	return plan
+}
