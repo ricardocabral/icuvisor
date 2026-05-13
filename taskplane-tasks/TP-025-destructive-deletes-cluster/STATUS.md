@@ -1,6 +1,6 @@
 # TP-025-destructive-deletes-cluster: TP-025-destructive-deletes-cluster — Status
 
-**Current Step:** Step 3: Tests
+**Current Step:** Step 4: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -39,8 +39,9 @@
 ---
 
 ### Step 4: Verify
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
+- [ ] Update `README.md` catalog and `CHANGELOG.md` for the destructive delete tools
 - [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
 - [ ] Manual smoke against the test athlete in `full` mode; never in production
 
