@@ -56,7 +56,8 @@
 ### Step 5: Verify
 **Status:** 🟨 In Progress
 
-- [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
+- [x] `make test`, `make build`, `make lint`, `go test -race ./...`
+- [ ] Fix live event create smoke failure by sending upstream-required workout `type` and using the bulk create endpoint.
 - [ ] Manual smoke against the maintainer's test athlete account: create, update, link, message
 
 ---
@@ -80,6 +81,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | Plan review tool returned APPROVE but the generated R001 plan artifact listed changes requested. | Treated the artifact feedback as design guidance before Step 1 commit: structured `workout_doc` is mutually exclusive with free-text `description`, serializes to upstream `description`, no structured `workout_doc` is uploaded, and POST writes are not retried. | `.reviews/R001-plan-step1.md`; `internal/tools/add_or_update_event.go`; `internal/intervals/events.go` |
+| Live Step 5 create-event smoke against `/Users/jusbrasil/prj/icuvisor/.env-dev` failed with upstream HTTP 422 because WORKOUT events require `type`, and frontend evidence uses `/events/bulk` for creates. | Added Step 5 fix checkbox before continuing manual smoke. | `internal/intervals/events.go`; intervals.icu frontend JS evidence |
 
 ---
 
