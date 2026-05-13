@@ -95,6 +95,10 @@
 | 2026-05-13       | Steering received      | Full-mode destructive sport-settings smoke is not approved; proceed with safe-only verification using only `/Users/jusbrasil/prj/icuvisor/.env-dev`, restore FTP/threshold values, and leave full-mode zone overwrite blocked. |
 | 2026-05-13       | Safe-only smoke        | PASS: using only `/Users/jusbrasil/prj/icuvisor/.env-dev` with command-local `ICUVISOR_DELETE_MODE=safe`, Ride FTP bump succeeded, restore succeeded, and safe-mode `zones` overwrite was rejected with the delete-mode gate. Full-mode zone overwrite not attempted. |
 | 2026-05-13       | Apply method fixed     | Live smoke initially failed after the FTP update because apply used POST and upstream returned HTTP 405; restored FTP, changed apply to PUT, reran targeted tests, then reran safe-only smoke successfully. |
+| 2026-05-13 18:32 | Agent reply | Acknowledged. I will run safe-only manual verification using only /Users/jusbrasil/prj/icuvisor/.env-dev, set ICUVISOR_DELETE_MODE=safe only in the command environment if needed, restore original FTP/ |
+| 2026-05-13 18:32 | Worker iter 4 | done in 570s, tools: 43 |
+| 2026-05-13 18:32 | No progress | Iteration 4: 0 new checkboxes (3/3 stall limit) |
+| 2026-05-13 18:32 | Task blocked | No progress after 3 iterations |
 
 ---
 
