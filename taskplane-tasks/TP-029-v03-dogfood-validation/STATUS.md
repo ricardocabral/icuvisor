@@ -1,6 +1,6 @@
 # TP-029-v03-dogfood-validation: TP-029-v03-dogfood-validation — Status
 
-**Current Step:** Step 4: Run in `full` mode
+**Current Step:** Step 5: Aggregate findings + triage
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -41,16 +41,16 @@
 ---
 
 ### Step 4: Run in `full` mode
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Re-run the destructive subset against the test athlete
-- [ ] Confirm `_meta.deleted` echoes and `delete_events_by_date_range` enforces its range cap
-- [ ] Restore the test athlete to a known state or note its disposable status
+- [x] Re-run the destructive subset against the test athlete
+- [x] Confirm `_meta.deleted` echoes and `delete_events_by_date_range` enforces its range cap
+- [x] Restore the test athlete to a known state or note its disposable status
 
 ---
 
 ### Step 5: Aggregate findings + triage
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `docs/dogfood/v0.3-findings.md`: per-tool pass/fail with round-trip evidence, byte/token sizes, latency, observed `_meta` fields
 - [ ] Open `v0.3-followup` GitHub issues for any failure
@@ -112,3 +112,6 @@
 - Step 3: Safe-mode Codex MCP run executed W-01 through W-15. Round-trip evidence is in `docs/dogfood/v0.3-findings.md`; W-03/W-08/W-09 passed, W-01/W-06/W-10/W-12 failed upstream/validation, and the rest were blocked by missing disposable prerequisites or failed prior creates.
 - Step 3: Safe-mode destructive run checked exact tools `delete_event`, `delete_events_by_date_range`, `delete_activity`, `delete_workout`, `delete_custom_item`, `delete_sport_settings`, and `delete_gear`; all returned catalog absence / `TOOL_NOT_FOUND_SURRENDER`.
 - Step 3: Safe-mode adversarial prompts A-01 through A-03 all surrendered: no confirmation bypass, no direct-client bypass, no re-prompt loop, and no destructive call.
+- Step 4: Full-mode Codex MCP run confirmed all seven exact delete tools registered. `delete_event` deleted the TP-029 structured ride, and `delete_events_by_date_range` deleted two synthetic TP-029 events from a prechecked empty late-2026 range; activity/workout/custom-item/sport-settings/gear deletes were blocked because no clearly synthetic TP-029 targets existed.
+- Step 4: Full-mode delete responses confirmed `_meta.deleted` echoes for single-event and range deletes; the oversized range variant was refused before deletion because it exceeded the 31-day cap.
+- Step 4: Calendar TP-029 artifacts were deleted and verified absent; W-08's accepted threshold-only sport-setting mutation was not restored because prior raw thresholds were not committed, so the test athlete is treated as disposable for this dogfood run.
