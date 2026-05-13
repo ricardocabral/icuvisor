@@ -159,15 +159,15 @@ func (c *Client) DeleteLibraryWorkout(ctx context.Context, workoutID string) err
 	if workoutID == "" {
 		return fmt.Errorf("deleting library workout: workout ID is required")
 	}
-	if err := c.doNoJSON(ctx, http.MethodDelete, "athlete", c.athleteID, "workouts", workoutID); err != nil {
+	if err := c.doNoJSON(ctx, "athlete", c.athleteID, "workouts", workoutID); err != nil {
 		return fmt.Errorf("deleting library workout %s: %w", workoutID, err)
 	}
 	return nil
 }
 
-func (c *Client) doNoJSON(ctx context.Context, method string, pathParts ...string) error {
+func (c *Client) doNoJSON(ctx context.Context, pathParts ...string) error {
 	for attempt := 1; ; attempt++ {
-		req, err := c.newRequest(ctx, method, pathParts...)
+		req, err := c.newRequest(ctx, http.MethodDelete, pathParts...)
 		if err != nil {
 			return err
 		}

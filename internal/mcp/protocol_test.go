@@ -131,13 +131,20 @@ func TestProtocolFiltersToolsByCapability(t *testing.T) {
 	}
 }
 
-type deleteWorkoutRegistry struct{}
+type deleteToolsRegistry struct{}
 
-func (deleteWorkoutRegistry) Register(ctx context.Context, registrar tools.Registrar) error {
-	return registrar.AddTool(capabilityTestTool("delete_workout", tools.RequirementDelete))
+var deleteToolNames = []string{"delete_event", "delete_events_by_date_range", "delete_activity", "delete_custom_item", "delete_sport_settings", "delete_gear", "delete_workout"}
+
+func (deleteToolsRegistry) Register(ctx context.Context, registrar tools.Registrar) error {
+	for _, name := range deleteToolNames {
+		if err := registrar.AddTool(capabilityTestTool(name, tools.RequirementDelete)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func TestProtocolFiltersDeleteWorkoutByCapability(t *testing.T) {
+func TestProtocolFiltersDeleteToolsByCapability(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -145,7 +152,7 @@ func TestProtocolFiltersDeleteWorkoutByCapability(t *testing.T) {
 		mode      safety.Mode
 		wantNames []string
 	}{
-		{name: "full", mode: safety.ModeFull, wantNames: []string{"delete_workout"}},
+		{name: "full", mode: safety.ModeFull, wantNames: deleteToolNames},
 		{name: "safe", mode: safety.ModeSafe, wantNames: nil},
 		{name: "none", mode: safety.ModeNone, wantNames: nil},
 	}
@@ -153,7 +160,7 @@ func TestProtocolFiltersDeleteWorkoutByCapability(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx, session, cleanup := connectTestClientWithOptions(t, Options{Registry: deleteWorkoutRegistry{}, Capability: safety.NewCapability(tc.mode)})
+			ctx, session, cleanup := connectTestClientWithOptions(t, Options{Registry: deleteToolsRegistry{}, Capability: safety.NewCapability(tc.mode)})
 			defer cleanup()
 
 			result, err := session.ListTools(ctx, nil)
@@ -164,8 +171,11 @@ func TestProtocolFiltersDeleteWorkoutByCapability(t *testing.T) {
 			for _, tool := range result.Tools {
 				got = append(got, tool.Name)
 			}
-			if strings.Join(got, ",") != strings.Join(tc.wantNames, ",") {
-				t.Fatalf("tools/list = %v, want %v", got, tc.wantNames)
+			want := append([]string(nil), tc.wantNames...)
+			slices.Sort(got)
+			slices.Sort(want)
+			if strings.Join(got, ",") != strings.Join(want, ",") {
+				t.Fatalf("tools/list = %v, want %v", got, want)
 			}
 		})
 	}

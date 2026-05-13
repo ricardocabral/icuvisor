@@ -122,6 +122,21 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if applyTrainingPlanClient, ok := r.profileClient.(ApplyTrainingPlanClient); ok {
+		if err := registrar.AddTool(newApplyTrainingPlanTool(applyTrainingPlanClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata, r.capability)); err != nil {
+			return err
+		}
+	}
+	if eventDeleterClient, ok := r.profileClient.(EventDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteEventTool(eventDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if eventsByDateRangeDeleterClient, ok := r.profileClient.(EventsByDateRangeDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteEventsByDateRangeTool(eventsByDateRangeDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if linkClient, ok := r.profileClient.(ActivityEventLinkClient); ok {
 		activityClient, _ := r.profileClient.(ActivityDetailsClient)
 		eventClient, _ := r.profileClient.(EventByIDClient)
@@ -157,6 +172,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if sportSettingsDeleterClient, ok := r.profileClient.(SportSettingsDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteSportSettingsTool(sportSettingsDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	var customItemsClient CustomItemsClient
 	if client, ok := r.profileClient.(CustomItemsClient); ok {
 		customItemsClient = client
@@ -177,8 +197,18 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if customItemDeleterClient, ok := r.profileClient.(CustomItemDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteCustomItemTool(customItemDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if detailsClient, ok := r.profileClient.(ActivityDetailsClient); ok {
 		if err := registrar.AddTool(newGetActivityDetailsTool(detailsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if activityDeleterClient, ok := r.profileClient.(ActivityDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteActivityTool(activityDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
 		}
 	}
@@ -213,6 +243,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	}
 	if extendedClient, ok := r.profileClient.(ExtendedMetricsClient); ok {
 		if err := registrar.AddTool(newGetExtendedMetricsTool(extendedClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if gearDeleterClient, ok := r.profileClient.(GearDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteGearTool(gearDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
 		}
 	}

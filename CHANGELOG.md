@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Destructive delete MCP tools gated by `ICUVISOR_DELETE_MODE=full`: `delete_event`, `delete_events_by_date_range` with a 31-day inclusive range cap, `delete_activity`, `delete_custom_item`, `delete_sport_settings`, and `delete_gear`, each returning deleted IDs and terse before-shape deletion metadata.
 - `create_custom_item` and `update_custom_item` MCP tools for write-enabled modes to create custom chart/field/stream/panel/zones items, validate schema-driven `content` before upload using readable custom-item schema samples, and echo the full read shape.
 - `create_workout`, `update_workout`, and gated `delete_workout` MCP tools for workout-library template CRUD, including TP-019 structured `workout_doc` serialization to the upstream description DSL and delete registration only in `ICUVISOR_DELETE_MODE=full`.
 - `update_sport_settings` MCP tool for write-enabled modes to update sport-scoped FTP, threshold heart rate, threshold pace, and gated zone-definition overwrites with recompute/delete-mode/unit metadata.
 - `update_wellness` MCP tool for write-enabled modes to sparsely update manual wellness fields, enforce subjective scales, convert preferred-unit weight to upstream kilograms, reject device-owned `sleepScore`/`_native` fields, and echo the updated read shape.
 - `add_or_update_event` MCP tool for non-destructive calendar event creates/updates in write-enabled modes, with verbatim free-text descriptions, structured `workout_doc` serialization to the upstream description DSL, tag preservation, and planned target fields.
+- `apply_training_plan` MCP tool for write-enabled modes to fetch workout-library plan content server-side, default to dry-run previews with conflict markers, partially apply conflict-free days, and gate replacement deletes to `ICUVISOR_DELETE_MODE=full`.
 - `link_activity_to_event` MCP tool for write-enabled modes to manually pair completed activities with planned events when auto-pairing misses, including date-mismatch warnings.
 - `add_activity_message` MCP tool for write-enabled modes to append free-text activity comments/messages without overwriting prior messages, including terse append confirmations and normalized athlete-ID metadata.
 - `internal/workoutdoc` public package API with `WorkoutDoc`, `Parse`, and `Serialize` for deterministic Intervals.icu workout-description DSL round-trips, including golden fixtures for repeats, ramps, freeride, cadence, power, heart-rate, pace, and RPE targets.
