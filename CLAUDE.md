@@ -51,7 +51,7 @@ Add new tools as `internal/tools/<tool_name>.go` with a matching `_test.go`. Reg
 - **Concurrency:** `errgroup.Group` for fan-out; `context` for cancellation; mutexes only as a last resort. Run `go test -race` locally before pushing.
 - **Tests:** table-driven. Use `t.Run(tc.name, ...)`. Use `testdata/` fixtures for API responses. Never hit the network from tests — wrap intervals.icu calls behind an interface and stub it.
 - **Generics:** fine when they remove duplication; not for cleverness.
-- **Comments:** only when the *why* is non-obvious. Don't restate the code. Exported identifiers need a doc comment starting with the identifier name.
+- **Comments:** only when the _why_ is non-obvious. Don't restate the code. Exported identifiers need a doc comment starting with the identifier name.
 
 ## MCP-server conventions
 
@@ -66,7 +66,7 @@ icuvisor uses `github.com/modelcontextprotocol/go-sdk`. Read its docs before cha
 - **Errors back to the LLM** must be short, actionable, and free of internal stack traces. Log the detail; return the summary.
 - **Athlete ID normalization:** accept `i12345` or `12345`; emit `i12345`. Centralize in `internal/config`.
 - **Strava-imported activities:** detect via the upstream marker and label them in responses so the LLM doesn't hallucinate over `N/A` fields.
-- **Coach mode:** the coach-scoped API key never leaves the server. The `athlete_id` argument selects which athlete the call targets — it is *not* a credential.
+- **Coach mode:** the coach-scoped API key never leaves the server. The `athlete_id` argument selects which athlete the call targets — it is _not_ a credential.
 
 ## Adding a tool — checklist
 
@@ -96,7 +96,7 @@ icuvisor uses `github.com/modelcontextprotocol/go-sdk`. Read its docs before cha
 - **Ask before doing wide refactors.** A focused PR beats a sweeping one every time.
 - **If you change the PRD or the roadmap, update both this file's pointers and `CHANGELOG.md` if user-visible.**
 
-## What is *not* in scope
+## What is _not_ in scope
 
 - A multi-tenant SaaS.
 - Replacing intervals.icu's own UI.
