@@ -1,10 +1,10 @@
 # TP-020-event-write-cluster: TP-020-event-write-cluster — Status
 
-**Current Step:** Step 1: `add_or_update_event`
+**Current Step:** Step 2: `link_activity_to_event`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
-**Review Counter:** 5
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 
@@ -24,7 +24,7 @@
 ---
 
 ### Step 2: `link_activity_to_event`
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 - [x] Inputs: `activity_id`, `event_id`; both normalized via existing helpers
 - [x] Documents that this is the manual escape hatch when auto-pair misses (forum #97); include this in the tool description
@@ -70,6 +70,8 @@
 | R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
 | R004 | plan | 2 | REVISE | `.reviews/R004-plan-step2.md` |
 | R005 | plan | 2 | APPROVE | `.reviews/R005-plan-step2.md` |
+| R006 | code | 2 | UNAVAILABLE | n/a |
+| R007 | code | 2 | UNAVAILABLE | n/a |
 
 ---
 
@@ -105,5 +107,4 @@
 - 2026-05-13 15:34 — Review R003 code Step 1 returned APPROVE.
 - 2026-05-13 15:40 — Review R004 plan Step 2 returned REVISE; concrete plan checkboxes added under Step 2.
 - 2026-05-13 15:44 — Review R005 plan Step 2 returned APPROVE.
-| 2026-05-13 15:39 | Review R004 | plan Step 2: REVISE |
-| 2026-05-13 15:47 | Review R005 | plan Step 2: APPROVE |
+- 2026-05-13 15:48 — Review R006/R007 code Step 2 returned UNAVAILABLE twice; proceeded with targeted tests passing.
