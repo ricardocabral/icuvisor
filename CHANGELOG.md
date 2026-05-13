@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `add_or_update_event` MCP tool for non-destructive calendar event creates/updates in write-enabled modes, with verbatim free-text descriptions, structured `workout_doc` serialization to the upstream description DSL, tag preservation, and planned target fields.
+- `link_activity_to_event` MCP tool for write-enabled modes to manually pair completed activities with planned events when auto-pairing misses, including date-mismatch warnings.
 - `internal/workoutdoc` public package API with `WorkoutDoc`, `Parse`, and `Serialize` for deterministic Intervals.icu workout-description DSL round-trips, including golden fixtures for repeats, ramps, freeride, cadence, power, heart-rate, pace, and RPE targets.
 - `ICUVISOR_DELETE_MODE` safety gate with `safe`/`full`/`none` modes, registration-time write/delete tool filtering, and `_meta.delete_mode` response metadata.
 - CI guards for tool-schema snapshot stability and confusable tool-name first sentences, plus canonical per-tool argument schema snapshots for the v0.2 read catalog.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -16,6 +17,16 @@ type ListActivitiesParams struct {
 	RouteID int64
 	Limit   int
 	Fields  []string
+}
+
+// LinkActivityToEventParams contains the IDs needed to pair an activity with a planned event.
+type LinkActivityToEventParams struct {
+	ActivityID string
+	EventID    string
+}
+
+type linkActivityToEventPayload struct {
+	PairedEventID int `json:"paired_event_id"`
 }
 
 // Activity contains stable activity fields used by read tools and preserves raw upstream fields.
@@ -95,6 +106,36 @@ func (c *Client) ListActivities(ctx context.Context, params ListActivitiesParams
 		return nil, fmt.Errorf("listing activities: %w", err)
 	}
 	return activities, nil
+}
+
+// LinkActivityToEvent sets an activity's paired_event_id to a planned event ID.
+func (c *Client) LinkActivityToEvent(ctx context.Context, params LinkActivityToEventParams) (Activity, error) {
+	activityID := strings.TrimSpace(params.ActivityID)
+	if activityID == "" {
+		return Activity{}, fmt.Errorf("linking activity to event: activity ID is required")
+	}
+	eventID, err := ParseEventID(params.EventID)
+	if err != nil {
+		return Activity{}, fmt.Errorf("linking activity %s to event: %w", activityID, err)
+	}
+	var activity Activity
+	if err := c.doJSONBody(ctx, http.MethodPut, linkActivityToEventPayload{PairedEventID: eventID}, &activity, "activity", activityID); err != nil {
+		return Activity{}, fmt.Errorf("linking activity %s to event %s: %w", activityID, params.EventID, err)
+	}
+	return activity, nil
+}
+
+// ParseEventID parses an upstream numeric event ID used by activity paired_event_id.
+func ParseEventID(value string) (int, error) {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return 0, fmt.Errorf("event ID is required")
+	}
+	parsed, err := strconv.Atoi(trimmed)
+	if err != nil || parsed <= 0 {
+		return 0, fmt.Errorf("event ID must be a positive integer")
+	}
+	return parsed, nil
 }
 
 func compactStrings(values []string) []string {

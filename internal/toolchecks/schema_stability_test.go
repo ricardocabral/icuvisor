@@ -12,8 +12,10 @@ func TestGenerateSchemaSnapshotsIncludesWriteTools(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GenerateSchemaSnapshots() error = %v", err)
 	}
-	if _, ok := generated["add_or_update_event"]; !ok {
-		t.Fatalf("generated snapshots missing add_or_update_event; write tools must be represented in schema catalog")
+	for _, name := range []string{"add_or_update_event", "link_activity_to_event"} {
+		if _, ok := generated[name]; !ok {
+			t.Fatalf("generated snapshots missing %s; write tools must be represented in schema catalog", name)
+		}
 	}
 }
 

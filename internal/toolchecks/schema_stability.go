@@ -284,6 +284,7 @@ var (
 	_ tools.EventsClient            = schemaCatalogClient{}
 	_ tools.EventByIDClient         = schemaCatalogClient{}
 	_ tools.EventWriterClient       = schemaCatalogClient{}
+	_ tools.ActivityEventLinkClient = schemaCatalogClient{}
 	_ tools.TrainingPlanClient      = schemaCatalogClient{}
 	_ tools.WorkoutLibraryClient    = schemaCatalogClient{}
 	_ tools.CustomItemsClient       = schemaCatalogClient{}
@@ -332,6 +333,10 @@ func (schemaCatalogClient) GetEvent(context.Context, string) (intervals.Event, e
 
 func (schemaCatalogClient) AddOrUpdateEvent(context.Context, intervals.WriteEventParams) (intervals.Event, error) {
 	return intervals.Event{}, nil
+}
+
+func (schemaCatalogClient) LinkActivityToEvent(context.Context, intervals.LinkActivityToEventParams) (intervals.Activity, error) {
+	return intervals.Activity{}, nil
 }
 
 func (schemaCatalogClient) GetTrainingPlan(context.Context) (intervals.TrainingPlan, error) {

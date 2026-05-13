@@ -112,6 +112,13 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if linkClient, ok := r.profileClient.(ActivityEventLinkClient); ok {
+		activityClient, _ := r.profileClient.(ActivityDetailsClient)
+		eventClient, _ := r.profileClient.(EventByIDClient)
+		if err := registrar.AddTool(newLinkActivityToEventTool(linkClient, activityClient, eventClient, r.version, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if trainingPlanClient, ok := r.profileClient.(TrainingPlanClient); ok {
 		if err := registrar.AddTool(newGetTrainingPlanTool(trainingPlanClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
