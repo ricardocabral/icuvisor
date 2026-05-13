@@ -157,11 +157,18 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
-	if customItemsClient, ok := r.profileClient.(CustomItemsClient); ok {
+	var customItemsClient CustomItemsClient
+	if client, ok := r.profileClient.(CustomItemsClient); ok {
+		customItemsClient = client
 		if err := registrar.AddTool(newGetCustomItemsTool(customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
 		}
 		if err := registrar.AddTool(newGetCustomItemByIDTool(customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if customItemCreatorClient, ok := r.profileClient.(CustomItemCreatorClient); ok {
+		if err := registrar.AddTool(newCreateCustomItemTool(customItemCreatorClient, customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
 		}
 	}
