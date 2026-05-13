@@ -1,6 +1,6 @@
 # TP-018-delete-mode-safety-gate: TP-018-delete-mode-safety-gate — Status
 
-**Current Step:** Step 4: `_meta` surfacing
+**Current Step:** Step 5: Docs + CLAUDE.md update
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -46,11 +46,11 @@
 ---
 
 ### Step 5: Docs + CLAUDE.md update
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] README: a short section documenting `ICUVISOR_DELETE_MODE` with the three modes and the default
-- [ ] CLAUDE.md: replace the per-call `confirm: true` rule with the registration-time gate rule; cross-link to `internal/safety`
-- [ ] CHANGELOG `[Unreleased]` entry
+- [x] README: a short section documenting `ICUVISOR_DELETE_MODE` with the three modes and the default
+- [x] CLAUDE.md: replace the per-call `confirm: true` rule with the registration-time gate rule; cross-link to `internal/safety`
+- [x] CHANGELOG `[Unreleased]` entry
 
 ---
 

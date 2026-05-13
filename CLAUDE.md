@@ -61,7 +61,7 @@ icuvisor uses `github.com/modelcontextprotocol/go-sdk`. Read its docs before cha
 - **Schemas matter.** Every argument needs a JSON Schema description an LLM can read. Include units and scale ranges (`"feel: athlete-reported feel, scale 1-5"`, `"sleepQuality: 1-4"`). The LLM uses these descriptions to decide what to send.
 - **Return shapes are part of the API.** Document them. Add a `_meta` field for things like `total_count`, `next_page`, and scale legends — clients can use it, LLMs can ignore it.
 - **Pagination:** server-side. Default page size must fit comfortably inside a free-tier Claude context window. Expose a `next_page_token` (opaque string).
-- **Destructive ops require explicit confirmation.** `delete_event`, `delete_events_by_date_range`, etc. must require `confirm: true` and fail loudly otherwise.
+- **Destructive ops are registration-time gated.** `delete_event`, `delete_events_by_date_range`, and other write/delete tools declare their required capability and are registered only when `internal/safety` allows it for `ICUVISOR_DELETE_MODE`; never add a model-controlled `confirm: true` override.
 - **Idempotency:** writes that can be safely retried should be idempotent. Document the ones that can't.
 - **Errors back to the LLM** must be short, actionable, and free of internal stack traces. Log the detail; return the summary.
 - **Athlete ID normalization:** accept `i12345` or `12345`; emit `i12345`. Centralize in `internal/config`.
