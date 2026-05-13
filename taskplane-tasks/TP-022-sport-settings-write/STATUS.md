@@ -1,6 +1,6 @@
 # TP-022-sport-settings-write: TP-022-sport-settings-write — Status
 
-**Current Step:** Step 1: Schema design
+**Current Step:** Step 2: Threshold-only path (ungated)
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -20,11 +20,11 @@
 ---
 
 ### Step 2: Threshold-only path (ungated)
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Update FTP / threshold HR / threshold pace, sport-scoped, dated
-- [ ] Response echoes the new settings + a `_meta.recompute_pending: true` hint if the upstream recompute is async
-- [ ] Tests: per-field updates, unit conversion for pace
+- [x] Update FTP / threshold HR / threshold pace, sport-scoped, dated
+- [x] Response echoes the new settings + a `_meta.recompute_pending: true` hint if the upstream recompute is async
+- [x] Tests: per-field updates, unit conversion for pace
 
 ---
 

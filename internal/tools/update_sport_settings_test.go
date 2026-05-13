@@ -85,27 +85,51 @@ func TestUpdateSportSettingsOmittedZonesDoesNotWriteZones(t *testing.T) {
 func TestUpdateSportSettingsThresholdFieldsAndPaceConversion(t *testing.T) {
 	t.Parallel()
 
-	client := newFakeSportSettingsClient(intervals.SportSettings{ID: 8, Types: []string{"Run"}, PaceUnits: "MINS_MILE"})
-	client.setting = intervals.SportSettings{ID: 8, Type: "Run", FTHR: 171, PaceUnits: "MINS_MILE"}
-	tool := newUpdateSportSettingsTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
+	tests := []struct {
+		name       string
+		args       string
+		wantFTP    *int
+		wantHR     *int
+		wantPace   bool
+		wantFields []string
+	}{
+		{name: "ftp only", args: `{"sport":"Run","effective_date":"2026-05-01","ftp":290}`, wantFTP: intPtr(290), wantFields: []string{"ftp"}},
+		{name: "threshold hr only", args: `{"sport":"Run","effective_date":"2026-05-01","threshold_hr":171}`, wantHR: intPtr(171), wantFields: []string{"threshold_hr"}},
+		{name: "threshold pace converts", args: `{"sport":"Run","effective_date":"2026-05-01","threshold_pace":{"value":300,"unit":"seconds_per_km"}}`, wantPace: true, wantFields: []string{"threshold_pace"}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := newFakeSportSettingsClient(intervals.SportSettings{ID: 8, Types: []string{"Run"}, PaceUnits: "MINS_MILE"})
+			client.setting = intervals.SportSettings{ID: 8, Type: "Run", FTP: valueOrZero(tc.wantFTP), FTHR: valueOrZero(tc.wantHR), PaceUnits: "MINS_MILE"}
+			tool := newUpdateSportSettingsTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
 
-	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"sport":"Run","effective_date":"2026-05-01","threshold_hr":171,"threshold_pace":{"value":300,"unit":"seconds_per_km"}}`)})
-	if err != nil {
-		t.Fatalf("Handler() error = %v", err)
-	}
-	if len(client.calls) != 1 {
-		t.Fatalf("write calls = %d, want 1", len(client.calls))
-	}
-	call := client.calls[0]
-	if call.ThresholdHR == nil || *call.ThresholdHR != 171 {
-		t.Fatalf("threshold HR call = %+v, want 171 bpm", call)
-	}
-	if call.ThresholdPace == nil || call.ThresholdPace.Unit != "MINS_MILE" || math.Abs(call.ThresholdPace.Value-482.8032) > 0.0001 {
-		t.Fatalf("threshold pace call = %+v, want 300 sec/km converted to sec/mile", call.ThresholdPace)
-	}
-	meta := resultMap(t, result)["_meta"].(map[string]any)
-	if meta["pace_input_unit"] != "seconds_per_km" || meta["pace_upstream_unit"] != "MINS_MILE" || meta["recompute_pending"] != true {
-		t.Fatalf("meta = %#v, want pace conversion and recompute_pending", meta)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.args)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			if len(client.calls) != 1 {
+				t.Fatalf("write calls = %d, want 1", len(client.calls))
+			}
+			call := client.calls[0]
+			if !sameIntPtr(call.FTP, tc.wantFTP) || !sameIntPtr(call.ThresholdHR, tc.wantHR) {
+				t.Fatalf("write call = %+v, want ftp=%v threshold_hr=%v", call, tc.wantFTP, tc.wantHR)
+			}
+			if tc.wantPace {
+				if call.ThresholdPace == nil || call.ThresholdPace.Unit != "MINS_MILE" || math.Abs(call.ThresholdPace.Value-482.8032) > 0.0001 {
+					t.Fatalf("threshold pace call = %+v, want 300 sec/km converted to sec/mile", call.ThresholdPace)
+				}
+			} else if call.ThresholdPace != nil {
+				t.Fatalf("threshold pace call = %+v, want nil", call.ThresholdPace)
+			}
+			meta := resultMap(t, result)["_meta"].(map[string]any)
+			fields := meta["fields_updated"].([]any)
+			if len(fields) != len(tc.wantFields) || fields[0] != tc.wantFields[0] || meta["recompute_pending"] != true {
+				t.Fatalf("meta = %#v, want fields %v and recompute_pending", meta, tc.wantFields)
+			}
+			if tc.wantPace && (meta["pace_input_unit"] != "seconds_per_km" || meta["pace_upstream_unit"] != "MINS_MILE") {
+				t.Fatalf("meta = %#v, want pace conversion metadata", meta)
+			}
+		})
 	}
 }
 
@@ -181,4 +205,22 @@ func containsString(values []string, want string) bool {
 		}
 	}
 	return false
+}
+
+func intPtr(value int) *int {
+	return &value
+}
+
+func valueOrZero(value *int) int {
+	if value == nil {
+		return 0
+	}
+	return *value
+}
+
+func sameIntPtr(got *int, want *int) bool {
+	if got == nil || want == nil {
+		return got == nil && want == nil
+	}
+	return *got == *want
 }
