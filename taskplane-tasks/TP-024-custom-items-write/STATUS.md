@@ -31,7 +31,7 @@
 ### Step 3: Verify
 **Status:** 🟨 In Progress
 
-- [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
+- [x] `make test`, `make build`, `make lint`, `go test -race ./...`
 - [ ] Manual smoke against the test athlete with at least one custom-item schema
 
 ---
@@ -62,10 +62,11 @@
 
 ## Blockers
 
-*None*
+- 2026-05-13: Live manual smoke for `create_custom_item`/`update_custom_item` is blocked because neither `INTERVALS_ICU_API_KEY`/`INTERVALS_ICU_ATHLETE_ID` environment variables nor a local `.env` file are present. Verified this with `test -n` checks that did not print secrets. As a non-live substitute, ran targeted tool-handler smoke `go test ./internal/tools -run 'Test(CreateCustomItemCreatesPerReadableSchema|UpdateCustomItemMergesContentPatchAndRejectsSchemaViolation|UpdateCustomItemUpdatesSingleSparseField)' -count=1` against the fake test athlete/schema fixtures; it passed, but the required live test-athlete write was not executed.
 
 ---
 
 ## Notes
 
-*Reserved for execution notes*
+- 2026-05-13: Verification commands passed: `make test`, `make build`, `make lint`, and `go test -race ./...`.
+- 2026-05-13: Targeted non-live custom-item smoke passed against schema fixtures; live test-athlete smoke remains blocked pending credentials.
