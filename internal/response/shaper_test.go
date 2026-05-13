@@ -275,6 +275,20 @@ func TestShapeRemovesStaleCallerSuppliedScales(t *testing.T) {
 	})
 }
 
+func TestShapeAddsDeleteModeMetadata(t *testing.T) {
+	SetDeleteMode("full")
+	t.Cleanup(func() { SetDeleteMode("safe") })
+
+	got, err := Shape(map[string]any{"name": "athlete"}, Options{})
+	if err != nil {
+		t.Fatalf("Shape() error = %v", err)
+	}
+	meta := got.(map[string]any)["_meta"].(map[string]any)
+	if meta["delete_mode"] != "full" {
+		t.Fatalf("delete_mode = %v, want full", meta["delete_mode"])
+	}
+}
+
 func TestShapeDebugMetadataGate(t *testing.T) {
 	input := map[string]any{
 		"name":       "athlete",
@@ -394,6 +408,7 @@ func TestShapeIncludeFullNullConvention(t *testing.T) {
 
 func assertJSONEqual(t *testing.T, got any, want any) {
 	t.Helper()
+	want = withDefaultDeleteMode(want)
 	gotJSON, err := json.Marshal(got)
 	if err != nil {
 		t.Fatalf("marshal got: %v", err)
@@ -405,4 +420,55 @@ func assertJSONEqual(t *testing.T, got any, want any) {
 	if string(gotJSON) != string(wantJSON) {
 		t.Fatalf("JSON mismatch\ngot:  %s\nwant: %s", gotJSON, wantJSON)
 	}
+}
+
+func withDefaultDeleteMode(value any) any {
+	root, ok := value.(map[string]any)
+	if !ok {
+		return value
+	}
+	out := cloneExpectedMap(root)
+	addDefaultDeleteModeToExpected(out)
+	return out
+}
+
+func addDefaultDeleteModeToExpected(value any) {
+	switch typed := value.(type) {
+	case map[string]any:
+		if meta, ok := typed["_meta"].(map[string]any); ok {
+			if _, hasServerVersion := meta["server_version"]; hasServerVersion {
+				meta["delete_mode"] = "safe"
+			}
+		}
+		for _, item := range typed {
+			addDefaultDeleteModeToExpected(item)
+		}
+	case []any:
+		for _, item := range typed {
+			addDefaultDeleteModeToExpected(item)
+		}
+	}
+}
+
+func cloneExpectedMap(in map[string]any) map[string]any {
+	out := make(map[string]any, len(in))
+	for key, value := range in {
+		switch typed := value.(type) {
+		case map[string]any:
+			out[key] = cloneExpectedMap(typed)
+		case []any:
+			items := make([]any, len(typed))
+			for i, item := range typed {
+				if itemMap, ok := item.(map[string]any); ok {
+					items[i] = cloneExpectedMap(itemMap)
+				} else {
+					items[i] = item
+				}
+			}
+			out[key] = items
+		default:
+			out[key] = value
+		}
+	}
+	return out
 }

@@ -111,6 +111,7 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 		capability = safety.NewCapability(info.DeleteMode)
 	}
 	deleteMode := safety.ParseMode(capability.Mode())
+	response.SetDeleteMode(deleteMode.String())
 	safety.LogResolvedMode(slog.Default(), deleteMode)
 	client, err := intervals.NewClient(intervals.Options{Config: info.Config, Version: info.Version})
 	if err != nil {

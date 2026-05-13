@@ -1,6 +1,6 @@
 # TP-018-delete-mode-safety-gate: TP-018-delete-mode-safety-gate — Status
 
-**Current Step:** Step 3: Registry filtering
+**Current Step:** Step 4: `_meta` surfacing
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -38,10 +38,10 @@
 ---
 
 ### Step 4: `_meta` surfacing
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Add `_meta.delete_mode` to every response from a single chokepoint in `internal/response`
-- [ ] No per-call override; mode is process-global
+- [x] Add `_meta.delete_mode` to every response from a single chokepoint in `internal/response`
+- [x] No per-call override; mode is process-global
 
 ---
 
