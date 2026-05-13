@@ -184,7 +184,8 @@ func updateCustomItemFieldsUpdated(args updateCustomItemRequest) []string {
 }
 
 func updateCustomItemInputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"item_id"}, "properties": map[string]any{
+	examples := updateCustomItemInputExamples()
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"item_id"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
 		"item_id":     map[string]any{"type": "string", "description": "Required intervals.icu custom item ID to update. Surrounding whitespace is trimmed."},
 		"name":        map[string]any{"type": "string", "description": "Optional replacement custom item name. Omit to leave unchanged."},
 		"visibility":  map[string]any{"type": "string", "description": "Optional replacement upstream visibility value. Omit to leave unchanged."},
@@ -194,6 +195,31 @@ func updateCustomItemInputSchema() map[string]any {
 		"hide_script": map[string]any{"type": "boolean", "description": "Optional replacement upstream hide_script flag. Omit to leave unchanged."},
 		"content":     map[string]any{"type": "object", "description": "Optional sparse content patch. The server fetches the existing item, validates this patch against its readable item_type schema, merges it with existing content, and uploads the merged content so omitted content keys are left untouched."},
 	}}
+}
+
+func updateCustomItemInputExamples() []map[string]any {
+	return []map[string]any{
+		{
+			"item_id": "custom-item-example-3",
+			"name":    "Training load trend - coach view",
+		},
+		{
+			"item_id":     "custom-item-example-4",
+			"visibility":  "PRIVATE",
+			"description": "Updated description for the coach dashboard.",
+			"content": map[string]any{
+				"layout": map[string]any{"height": 300},
+			},
+		},
+		{
+			"item_id":     "custom-item-example-5",
+			"index":       30,
+			"hide_script": true,
+			"content": map[string]any{
+				"series": []any{map[string]any{"field": "atl", "color": "orange"}},
+			},
+		},
+	}
 }
 
 func updateCustomItemOutputSchema() map[string]any {

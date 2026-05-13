@@ -320,7 +320,8 @@ func shapeUpdateWellnessResponse(row intervals.Wellness, meta updateWellnessMeta
 
 func updateWellnessInputSchema() map[string]any {
 	scales := response.RegisteredScaleLabels()
-	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"date"}, "properties": map[string]any{
+	examples := updateWellnessInputExamples()
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"date"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
 		"date":         map[string]any{"type": "string", "description": "Required athlete-local wellness date as YYYY-MM-DD."},
 		"feel":         scaleSchema(scales, "feel", 5),
 		"fatigue":      scaleSchema(scales, "fatigue", 5),
@@ -341,6 +342,38 @@ func updateWellnessInputSchema() map[string]any {
 		"locked":       map[string]any{"type": "boolean", "description": "When true, ask upstream to lock the wellness row against device-sync overwrites."},
 		"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, include the raw upstream wellness row under wellness.full and keep null fields."},
 	}}
+}
+
+func updateWellnessInputExamples() []map[string]any {
+	return []map[string]any{
+		{
+			"date": "2026-06-15",
+			"feel": 4,
+		},
+		{
+			"date":         "2026-06-16",
+			"fatigue":      2,
+			"soreness":     2,
+			"stress":       3,
+			"mood":         4,
+			"motivation":   4,
+			"sleepQuality": 3,
+			"restingHR":    48,
+			"hrv":          62.5,
+			"locked":       true,
+		},
+		{
+			"date":         "2026-06-17",
+			"weight":       68.4,
+			"bodyFat":      14.5,
+			"systolic":     118,
+			"diastolic":    72,
+			"bloodGlucose": 88,
+			"lactate":      1.2,
+			"injury":       "Mild calf tightness after hills; keep run easy.",
+			"include_full": true,
+		},
+	}
 }
 
 func scaleSchema(scales map[string]string, field string, max int) map[string]any {

@@ -476,7 +476,8 @@ func isSupportedPaceInputUnit(value string) bool {
 }
 
 func updateSportSettingsInputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"sport", "effective_date"}, "properties": map[string]any{
+	examples := updateSportSettingsInputExamples()
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"sport", "effective_date"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
 		"sport":          map[string]any{"type": "string", "enum": supportedSportSettingsSports, "description": "Sport setting to update, matching intervals.icu sport type (for example Ride, Run, Swim)."},
 		"effective_date": map[string]any{"type": "string", "description": "Required athlete-local effective date as YYYY-MM-DD; used as the oldest date for upstream sport-setting recompute."},
 		"ftp":            map[string]any{"type": "integer", "minimum": 1, "description": "Functional Threshold Power in watts for the selected sport."},
@@ -491,6 +492,31 @@ func updateSportSettingsInputSchema() map[string]any {
 			"names":      map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional zone names; when supplied, length must match boundaries."},
 		}}},
 	}}
+}
+
+func updateSportSettingsInputExamples() []map[string]any {
+	return []map[string]any{
+		{
+			"sport":          "Ride",
+			"effective_date": "2026-06-01",
+			"ftp":            285,
+		},
+		{
+			"sport":          "Run",
+			"effective_date": "2026-06-01",
+			"threshold_hr":   172,
+			"threshold_pace": map[string]any{"value": 255, "unit": "seconds_per_km"},
+		},
+		{
+			"sport":          "Ride",
+			"effective_date": "2026-07-01",
+			"ftp":            290,
+			"threshold_hr":   168,
+			"zones": []any{
+				map[string]any{"kind": "power", "boundaries": []any{150, 200, 250, 300}, "names": []any{"Endurance", "Tempo", "Threshold", "VO2"}},
+			},
+		},
+	}
 }
 
 func updateSportSettingsOutputSchema() map[string]any {
