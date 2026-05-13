@@ -75,11 +75,11 @@ Selected targets:
 
 **Status:** 🟨 In Progress
 
-- [ ] Coverage gate passes: `go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...`
-- [ ] Total statement coverage is >= 80.0%
-- [ ] `make lint` passes
-- [ ] `make build` passes
-- [ ] Local coverage artifacts removed or intentionally left untracked/ignored
+- [x] Coverage gate passes: `go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...`
+- [x] Total statement coverage is >= 80.0%
+- [x] `make lint` passes
+- [x] `make build` passes
+- [x] Local coverage artifacts removed or intentionally left untracked/ignored
 
 ---
 
