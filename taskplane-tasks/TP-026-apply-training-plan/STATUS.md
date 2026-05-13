@@ -1,6 +1,6 @@
 # TP-026-apply-training-plan: TP-026-apply-training-plan — Status
 
-**Current Step:** Step 2: Dry-run path
+**Current Step:** Step 3: Apply path
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -20,15 +20,15 @@
 ---
 
 ### Step 2: Dry-run path
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Returns the proposed event list with conflict markers; no upstream writes
-- [ ] Per-day shape: `{date, workout_id, conflicts: [{event_id, reason}]}`
+- [x] Returns the proposed event list with conflict markers; no upstream writes
+- [x] Per-day shape: `{date, workout_id, conflicts: [{event_id, reason}]}`
 
 ---
 
 ### Step 3: Apply path
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `dry_run: false` + `conflict_policy: skip_existing` → create events only on conflict-free days; skipped days listed in `_meta.skipped`
 - [ ] `dry_run: false` + `conflict_policy: replace_existing` → registered only when `CanDelete()` (this argument is rejected at the validation layer otherwise); deletes the conflicting event then creates the new one

@@ -167,6 +167,9 @@ func applyTrainingPlan(ctx context.Context, client ApplyTrainingPlanClient, args
 	for _, plannedWorkout := range planned {
 		workout := plannedWorkout.Workout
 		conflicts := conflictsByDate[plannedWorkout.Date]
+		if conflicts == nil {
+			conflicts = []applyTrainingPlanConflict{}
+		}
 		row := applyTrainingPlanProposedEvent{Date: plannedWorkout.Date, WorkoutID: workout.ID, Name: stringValue(workout.Name), Sport: stringValue(workout.Type), Conflicts: conflicts}
 		payload.ProposedEvents = append(payload.ProposedEvents, row)
 		if dryRun {
