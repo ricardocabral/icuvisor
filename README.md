@@ -57,6 +57,9 @@ Currently implemented tools:
 - `get_training_plan` — fetches the active upstream training-plan assignment with lightweight plan summary by default, structured no-active-plan responses, and raw nested plan/workout payloads behind `include_full`.
 - `get_workout_library` — lists workout-library folders/plans with terse counts and optional top-level workout templates.
 - `get_workouts_in_folder` — lists workout-library templates in one folder with structured-step summaries by default and raw `workout_doc` only with `include_full`.
+- `create_workout` — creates a reusable workout-library template in write-enabled modes (`safe`/`full`), preserving free-text descriptions or serializing structured `workout_doc` steps to the upstream description DSL.
+- `update_workout` — sparsely updates one workout-library template in write-enabled modes (`safe`/`full`), leaving omitted fields untouched and serializing replacement `workout_doc` steps to the upstream description DSL.
+- `delete_workout` — deletes one workout-library template only when `ICUVISOR_DELETE_MODE=full`; it has no model-controlled `confirm` argument.
 - `get_custom_items` — lists custom charts, fields, streams, panels, histograms, maps, and zones with terse `id`/`name`/`item_type` rows.
 - `get_custom_item_by_id` — fetches one custom item with its full per-`item_type` `content` payload preserved.
 

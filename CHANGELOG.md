@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `create_workout`, `update_workout`, and gated `delete_workout` MCP tools for workout-library template CRUD, including TP-019 structured `workout_doc` serialization to the upstream description DSL and delete registration only in `ICUVISOR_DELETE_MODE=full`.
 - `update_sport_settings` MCP tool for write-enabled modes to update sport-scoped FTP, threshold heart rate, threshold pace, and gated zone-definition overwrites with recompute/delete-mode/unit metadata.
 - `update_wellness` MCP tool for write-enabled modes to sparsely update manual wellness fields, enforce subjective scales, convert preferred-unit weight to upstream kilograms, reject device-owned `sleepScore`/`_native` fields, and echo the updated read shape.
 - `add_or_update_event` MCP tool for non-destructive calendar event creates/updates in write-enabled modes, with verbatim free-text descriptions, structured `workout_doc` serialization to the upstream description DSL, tag preservation, and planned target fields.
