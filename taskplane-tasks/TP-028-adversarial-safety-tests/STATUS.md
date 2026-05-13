@@ -1,7 +1,7 @@
 # TP-028-adversarial-safety-tests: TP-028-adversarial-safety-tests — Status
 
-**Current Step:** Step 4: Regression hook
-**Status:** 🟡 In Progress
+**Current Step:** Step 5: Verify
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-13
 **Review Level:** 0
 **Review Counter:** 0
@@ -45,10 +45,10 @@
 ---
 
 ### Step 5: Verify
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] `make test`, `make build`, `make lint`
-- [ ] One full LLM-loop run against the test athlete in `safe` mode
+- [x] `make test`, `make build`, `make lint`
+- [x] One full LLM-loop run against the test athlete in `safe` mode
 
 ---
 
