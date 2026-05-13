@@ -12,6 +12,7 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	mcpserver "github.com/ricardocabral/icuvisor/internal/mcp"
 	"github.com/ricardocabral/icuvisor/internal/response"
+	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
@@ -31,6 +32,7 @@ type ServerInfo struct {
 	Version       string
 	Config        config.Config
 	DebugMetadata bool
+	DeleteMode    safety.Mode
 }
 
 // Run executes the icuvisor CLI.
@@ -90,6 +92,7 @@ func startServer(ctx context.Context, loader func(context.Context, config.Option
 		return err
 	}
 	info.Config = cfg
+	info.DeleteMode = cfg.DeleteMode
 
 	if starter == nil {
 		starter = defaultStartServer
@@ -101,6 +104,11 @@ func startServer(ctx context.Context, loader func(context.Context, config.Option
 }
 
 func defaultStartServer(ctx context.Context, info ServerInfo) error {
+	deleteMode := info.DeleteMode
+	if deleteMode == "" {
+		deleteMode = safety.ModeSafe
+	}
+	safety.LogResolvedMode(slog.Default(), deleteMode)
 	client, err := intervals.NewClient(intervals.Options{Config: info.Config, Version: info.Version})
 	if err != nil {
 		return err
