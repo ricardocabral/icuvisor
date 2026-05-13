@@ -1,6 +1,6 @@
 # TP-017: Raise Go test coverage to 80% — Status
 
-**Current Step:** Step 2: Add focused intervals-package tests
+**Current Step:** Step 3: Add focused tool/toolcheck tests until the target is met
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 1
@@ -47,7 +47,7 @@ Selected targets:
 
 ### Step 2: Add focused intervals-package tests
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 > ⚠️ Hydrate: Expand with specific activity-stream and wellness scenarios after reading existing intervals test helpers.
 
@@ -60,7 +60,7 @@ Selected targets:
 
 ### Step 3: Add focused tool/toolcheck tests until the target is met
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 > ⚠️ Hydrate: Expand based on remaining coverage gap after Step 2.
 
