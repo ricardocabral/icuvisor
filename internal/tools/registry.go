@@ -127,6 +127,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if eventsByDateRangeDeleterClient, ok := r.profileClient.(EventsByDateRangeDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteEventsByDateRangeTool(eventsByDateRangeDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if linkClient, ok := r.profileClient.(ActivityEventLinkClient); ok {
 		activityClient, _ := r.profileClient.(ActivityDetailsClient)
 		eventClient, _ := r.profileClient.(EventByIDClient)

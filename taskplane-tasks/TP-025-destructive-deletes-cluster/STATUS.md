@@ -1,6 +1,6 @@
 # TP-025-destructive-deletes-cluster: TP-025-destructive-deletes-cluster — Status
 
-**Current Step:** Step 1: Per-ID deletes
+**Current Step:** Step 2: `delete_events_by_date_range`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -20,12 +20,12 @@
 ---
 
 ### Step 2: `delete_events_by_date_range`
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Inputs: `start_date`, `end_date` (athlete-TZ; both required; same-day allowed), optional `category` filter
-- [ ] Hard validation: range size capped (document the cap in the schema description and in `STATUS.md`); reject open-ended ranges
-- [ ] Response includes `_meta.deleted_count` and the ID list
-- [ ] Registered only in `full`
+- [x] Inputs: `start_date`, `end_date` (athlete-TZ; both required; same-day allowed), optional `category` filter
+- [x] Hard validation: range size capped (document the cap in the schema description and in `STATUS.md`); reject open-ended ranges
+- [x] Response includes `_meta.deleted_count` and the ID list
+- [x] Registered only in `full`
 
 ---
 
@@ -78,4 +78,4 @@
 
 ## Notes
 
-*Reserved for execution notes*
+- `delete_events_by_date_range` uses a hard inclusive range cap of 31 athlete-local days.
