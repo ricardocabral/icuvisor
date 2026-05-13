@@ -1,11 +1,11 @@
 # TP-020-event-write-cluster: TP-020-event-write-cluster — Status
 
-**Current Step:** Step 2: `link_activity_to_event`
+**Current Step:** Step 4: Schema descriptions
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
-**Review Counter:** 7
-**Iteration:** 1
+**Review Counter:** 8
+**Iteration:** 2
 **Size:** M
 
 ---
@@ -37,16 +37,16 @@
 ---
 
 ### Step 3: `add_activity_message`
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Inputs: `activity_id`, `message` (free text), optional `private` flag if upstream supports it
-- [ ] Append-only; never overwrites prior messages
-- [ ] Tests: success, empty-message rejection, athlete-ID normalization
+- [x] Inputs: `activity_id`, `message` (free text), optional `private` flag if upstream supports it
+- [x] Append-only; never overwrites prior messages
+- [x] Tests: success, empty-message rejection, athlete-ID normalization
 
 ---
 
 ### Step 4: Schema descriptions
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Every arg has an LLM-readable description with units / scale where relevant
 - [ ] Tool descriptions explicitly state non-destructive intent so the LLM does not seek a `confirm` arg (there is none — TP-018)
@@ -91,6 +91,9 @@
 | 2026-05-13 14:53 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-13 14:53 | Step 1 started | `add_or_update_event` |
 | 2026-05-13 15:12 | ⚠️ Steering | Manual smoke must use only `/Users/jusbrasil/prj/icuvisor/.env-dev` by absolute path and maintainer test activity `i147866949`; do not print/copy/commit env contents; record only pass/fail and non-secret trace IDs. |
+| 2026-05-13 16:53 | Agent reply | Acknowledged. I will use only /Users/jusbrasil/prj/icuvisor/.env-dev by absolute path for TP-020 manual smoke, avoid printing/copying/committing env contents or secrets, limit live smoke to the config |
+| 2026-05-13 16:53 | Worker iter 1 | killed (wall-clock timeout) in 7200s, tools: 177 |
+| 2026-05-13 16:53 | Step 3 started | `add_activity_message` |
 
 ---
 

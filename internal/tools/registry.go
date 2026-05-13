@@ -169,6 +169,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if messageWriterClient, ok := r.profileClient.(ActivityMessageWriterClient); ok {
+		if err := registrar.AddTool(newAddActivityMessageTool(messageWriterClient, r.profileClient, r.version, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if extendedClient, ok := r.profileClient.(ExtendedMetricsClient); ok {
 		if err := registrar.AddTool(newGetExtendedMetricsTool(extendedClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
