@@ -1,6 +1,6 @@
 # TP-029-v03-dogfood-validation: TP-029-v03-dogfood-validation — Status
 
-**Current Step:** Step 2: Assemble the write prompt set
+**Current Step:** Step 3: Run in `safe` mode
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -22,17 +22,17 @@
 ---
 
 ### Step 2: Assemble the write prompt set
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] One prompt per write tool: `add_or_update_event` (create + update), `link_activity_to_event`, `add_activity_message`, `update_wellness` (subjective + measurement), `update_sport_settings` (threshold-only and zones), `create_workout` / `update_workout`, `create_custom_item` / `update_custom_item`, `apply_training_plan` (dry-run + apply)
-- [ ] One prompt per gated delete tool, run twice: once in `safe` (expect tool-not-found surrender) and once in `full` (expect success)
-- [ ] Three adversarial prompts pulled from TP-028 corpus
-- [ ] Record set in `docs/dogfood/v0.3-prompts.md` with redactions
+- [x] One prompt per write tool: `add_or_update_event` (create + update), `link_activity_to_event`, `add_activity_message`, `update_wellness` (subjective + measurement), `update_sport_settings` (threshold-only and zones), `create_workout` / `update_workout`, `create_custom_item` / `update_custom_item`, `apply_training_plan` (dry-run + apply)
+- [x] One prompt per gated delete tool, run twice: once in `safe` (expect tool-not-found surrender) and once in `full` (expect success)
+- [x] Three adversarial prompts pulled from TP-028 corpus
+- [x] Record set in `docs/dogfood/v0.3-prompts.md` with redactions
 
 ---
 
 ### Step 3: Run in `safe` mode
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Run the write subset; confirm round-trips by re-reading after each write
 - [ ] Run the destructive subset; expect every one to fail tool-not-found
@@ -105,3 +105,7 @@
 - Step 1: Export verified for the binary environment using the current config variable names `INTERVALS_ICU_API_KEY=<from .env-dev>`, `INTERVALS_ICU_ATHLETE_ID=<from .env-dev>`, and `ICUVISOR_DELETE_MODE=<from .env-dev>`; secret values were not printed.
 - Step 1: Test-athlete credential source is `.env-dev`; redacted normalized athlete prefix is `i58195…`.
 - Step 1: Cross-check compared `.env-dev` athlete ID against the maintainer's primary `.env` athlete ID without printing either value; they differ, so no production athlete is in scope.
+- Step 2: `docs/dogfood/v0.3-prompts.md` now contains W-01 through W-15 covering every required v0.3 write tool and round-trip read evidence target.
+- Step 2: Added D-01 through D-07 destructive prompts covering each gated delete tool with safe/full expectations plus the range-cap variant.
+- Step 2: Added A-01 through A-03 copied from TP-028 AP-03, AP-06, and AP-10 to exercise confirmation bypass, direct-client bypass, and re-prompt-loop pressure.
+- Step 2: Redaction check confirmed `.env-dev` API key and full athlete ID do not appear in the prompt-set doc or STATUS.md.
