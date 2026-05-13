@@ -1,11 +1,11 @@
 # TP-022-sport-settings-write: TP-022-sport-settings-write — Status
 
 **Current Step:** Step 5: Verify
-**Status:** 🚧 Blocked
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-13
 **Review Level:** 0
 **Review Counter:** 0
-**Iteration:** 4
+**Iteration:** 2
 **Size:** M
 
 ---
@@ -50,10 +50,10 @@
 
 ### Step 5: Verify
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] `make test`, `make build`, `make lint`, `go test -race ./...`
-- [ ] Manual smoke against the test athlete: FTP bump in `safe` mode (succeeds), zone overwrite in `safe` mode (rejected), zone overwrite in `full` mode (succeeds)
+- [x] Manual smoke against the test athlete: FTP bump in `safe` mode (succeeds), zone overwrite in `safe` mode (rejected), zone overwrite in `full` mode (succeeds)
 
 ---
 
@@ -94,11 +94,17 @@
 | 2026-05-13 18:23 | No progress | Iteration 3: 0 new checkboxes (2/3 stall limit) |
 | 2026-05-13       | Steering received      | Full-mode destructive sport-settings smoke is not approved; proceed with safe-only verification using only `/Users/jusbrasil/prj/icuvisor/.env-dev`, restore FTP/threshold values, and leave full-mode zone overwrite blocked. |
 | 2026-05-13       | Safe-only smoke        | PASS: using only `/Users/jusbrasil/prj/icuvisor/.env-dev` with command-local `ICUVISOR_DELETE_MODE=safe`, Ride FTP bump succeeded, restore succeeded, and safe-mode `zones` overwrite was rejected with the delete-mode gate. Full-mode zone overwrite not attempted. |
+| 2026-05-13       | Full-mode smoke        | PASS: using only `/Users/jusbrasil/prj/icuvisor/.env-dev`, performed a no-op Ride zone overwrite with the current baseline zones in full mode, then restored/reapplied baseline settings; no secrets printed or committed. |
 | 2026-05-13       | Apply method fixed     | Live smoke initially failed after the FTP update because apply used POST and upstream returned HTTP 405; restored FTP, changed apply to PUT, reran targeted tests, then reran safe-only smoke successfully. |
 | 2026-05-13 18:32 | Agent reply | Acknowledged. I will run safe-only manual verification using only /Users/jusbrasil/prj/icuvisor/.env-dev, set ICUVISOR_DELETE_MODE=safe only in the command environment if needed, restore original FTP/ |
 | 2026-05-13 18:32 | Worker iter 4 | done in 570s, tools: 43 |
 | 2026-05-13 18:32 | No progress | Iteration 4: 0 new checkboxes (3/3 stall limit) |
 | 2026-05-13 18:32 | Task blocked | No progress after 3 iterations |
+| 2026-05-13 18:47 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-13 18:52 | Agent reply | Acknowledged. I will use only /Users/jusbrasil/prj/icuvisor/.env-dev by absolute path, avoid printing/copying/committing secrets, perform the smallest full-mode zone-overwrite smoke for the referenced |
+| 2026-05-13 18:52 | ⚠️ Steering | Operator explicitly approved full-mode TP-022 retry. Use only `/Users/jusbrasil/prj/icuvisor/.env-dev` by absolute path; it now includes `ICUVISOR_DELETE_MODE=full`. Use the intervals.icu athlete refe |
+| 2026-05-13 18:52 | Worker iter 1 | done in 281s, tools: 16 |
+| 2026-05-13 18:52 | No progress | Iteration 1: 0 new checkboxes (1/3 stall limit) |
 
 ---
 
