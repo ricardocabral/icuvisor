@@ -56,19 +56,19 @@ type updateSportSettingsResponse struct {
 }
 
 type updateSportSettingsEcho struct {
-	Sport                         string                                `json:"sport"`
-	SportSettingID                int                                   `json:"sport_setting_id,omitempty"`
-	FTPWatts                      *int                                  `json:"ftp_watts,omitempty"`
-	ThresholdHRBPM                *int                                  `json:"threshold_hr_bpm,omitempty"`
-	ThresholdPaceSecondsPerKM     *float64                              `json:"threshold_pace_seconds_per_km,omitempty"`
-	ThresholdPaceSecondsPerMile   *float64                              `json:"threshold_pace_seconds_per_mile,omitempty"`
-	ThresholdPaceSecondsPer100M   *float64                              `json:"threshold_pace_seconds_per_100m,omitempty"`
-	ThresholdPaceSecondsPer500M   *float64                              `json:"threshold_pace_seconds_per_500m,omitempty"`
-	ThresholdPaceValue            *float64                              `json:"threshold_pace_value,omitempty"`
-	PaceUnitsSource               string                                `json:"pace_units_source,omitempty"`
-	Zones                         []updateSportSettingsZoneEcho         `json:"zones,omitempty"`
-	ZoneDefinitionsOverwritten    bool                                  `json:"zone_definitions_overwritten,omitempty"`
-	Upstream                      map[string]any                        `json:"upstream,omitempty"`
+	Sport                       string                        `json:"sport"`
+	SportSettingID              int                           `json:"sport_setting_id,omitempty"`
+	FTPWatts                    *int                          `json:"ftp_watts,omitempty"`
+	ThresholdHRBPM              *int                          `json:"threshold_hr_bpm,omitempty"`
+	ThresholdPaceSecondsPerKM   *float64                      `json:"threshold_pace_seconds_per_km,omitempty"`
+	ThresholdPaceSecondsPerMile *float64                      `json:"threshold_pace_seconds_per_mile,omitempty"`
+	ThresholdPaceSecondsPer100M *float64                      `json:"threshold_pace_seconds_per_100m,omitempty"`
+	ThresholdPaceSecondsPer500M *float64                      `json:"threshold_pace_seconds_per_500m,omitempty"`
+	ThresholdPaceValue          *float64                      `json:"threshold_pace_value,omitempty"`
+	PaceUnitsSource             string                        `json:"pace_units_source,omitempty"`
+	Zones                       []updateSportSettingsZoneEcho `json:"zones,omitempty"`
+	ZoneDefinitionsOverwritten  bool                          `json:"zone_definitions_overwritten,omitempty"`
+	Upstream                    map[string]any                `json:"upstream,omitempty"`
 }
 
 type updateSportSettingsZoneEcho struct {
@@ -78,16 +78,16 @@ type updateSportSettingsZoneEcho struct {
 }
 
 type updateSportSettingsMeta struct {
-	ServerVersion       string            `json:"server_version"`
-	DeleteMode          string            `json:"delete_mode"`
-	EffectiveDate       string            `json:"effective_date"`
-	Timezone            string            `json:"timezone,omitempty"`
-	FieldsUpdated       []string          `json:"fields_updated"`
-	RecomputePending    bool              `json:"recompute_pending"`
-	ZonesProvided       bool              `json:"zones_provided"`
-	PaceInputUnit       string            `json:"pace_input_unit,omitempty"`
-	PaceUpstreamUnit    string            `json:"pace_upstream_unit,omitempty"`
-	Units               map[string]string `json:"units,omitempty"`
+	ServerVersion    string            `json:"server_version"`
+	DeleteMode       string            `json:"delete_mode"`
+	EffectiveDate    string            `json:"effective_date"`
+	Timezone         string            `json:"timezone,omitempty"`
+	FieldsUpdated    []string          `json:"fields_updated"`
+	RecomputePending bool              `json:"recompute_pending"`
+	ZonesProvided    bool              `json:"zones_provided"`
+	PaceInputUnit    string            `json:"pace_input_unit,omitempty"`
+	PaceUpstreamUnit string            `json:"pace_upstream_unit,omitempty"`
+	Units            map[string]string `json:"units,omitempty"`
 }
 
 func newUpdateSportSettingsTool(client SportSettingsWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability) Tool {
@@ -477,10 +477,10 @@ func isSupportedPaceInputUnit(value string) bool {
 
 func updateSportSettingsInputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"sport", "effective_date"}, "properties": map[string]any{
-		"sport": map[string]any{"type": "string", "enum": supportedSportSettingsSports, "description": "Sport setting to update, matching intervals.icu sport type (for example Ride, Run, Swim)."},
+		"sport":          map[string]any{"type": "string", "enum": supportedSportSettingsSports, "description": "Sport setting to update, matching intervals.icu sport type (for example Ride, Run, Swim)."},
 		"effective_date": map[string]any{"type": "string", "description": "Required athlete-local effective date as YYYY-MM-DD; used as the oldest date for upstream sport-setting recompute."},
-		"ftp": map[string]any{"type": "integer", "minimum": 1, "description": "Functional Threshold Power in watts for the selected sport."},
-		"threshold_hr": map[string]any{"type": "integer", "minimum": 1, "description": "Threshold heart rate in bpm for the selected sport."},
+		"ftp":            map[string]any{"type": "integer", "minimum": 1, "description": "Functional Threshold Power in watts for the selected sport."},
+		"threshold_hr":   map[string]any{"type": "integer", "minimum": 1, "description": "Threshold heart rate in bpm for the selected sport."},
 		"threshold_pace": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"value", "unit"}, "description": "Threshold pace with an explicit unit; seconds_per_km is 4:15/km as 255.", "properties": map[string]any{
 			"value": map[string]any{"type": "number", "exclusiveMinimum": 0, "description": "Threshold pace numeric value in the provided unit."},
 			"unit":  map[string]any{"type": "string", "enum": []string{"seconds_per_km", "seconds_per_mile", "seconds_per_100m", "seconds_per_500m", "minutes_per_km", "minutes_per_mile"}, "description": "Unit for threshold_pace value."},

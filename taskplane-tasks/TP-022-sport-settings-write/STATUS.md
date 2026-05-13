@@ -1,6 +1,6 @@
 # TP-022-sport-settings-write: TP-022-sport-settings-write — Status
 
-**Current Step:** Step 4: Response shape
+**Current Step:** Step 5: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -45,9 +45,9 @@
 ---
 
 ### Step 5: Verify
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
+- [x] `make test`, `make build`, `make lint`, `go test -race ./...`
 - [ ] Manual smoke against the test athlete: FTP bump in `safe` mode (succeeds), zone overwrite in `safe` mode (rejected), zone overwrite in `full` mode (succeeds)
 
 ---
@@ -79,7 +79,9 @@
 
 ## Blockers
 
-*None*
+| Date | Blocker | Attempts |
+|------|---------|----------|
+| 2026-05-13 | Manual smoke requires test-athlete intervals.icu credentials, but this worktree has no `INTERVALS_ICU_API_KEY`/`INTERVALS_ICU_ATHLETE_ID`, no `.env`, and no local icuvisor JSON config. | Automated verification passed with `make test`, `make build`, `make lint`, and `go test -race ./...`; checked env/config presence without printing secrets. |
 
 ---
 
