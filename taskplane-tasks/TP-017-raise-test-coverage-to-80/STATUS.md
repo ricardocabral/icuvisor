@@ -36,12 +36,12 @@
 
 Selected targets:
 
-| File | Functions | Rationale |
-| ---- | --------- | --------- |
-| `internal/intervals/activity_streams.go` | `ActivityStream.UnmarshalJSON`, `Client.GetActivityStreams` | 0% coverage; small API client surface with raw-field preservation, required input validation, query parameters, and HTTP error wrapping. |
-| `internal/intervals/wellness.go` | `Wellness.UnmarshalJSON`, `ListWellness`, `extractWellnessNative`, `nativeSleepScoreSource`, `dedupeStrings` | 0% coverage; behavior-rich parsing/provenance logic with duplicate claimed-key handling and request construction. |
+| File                                     | Functions                                                                                                                                                                 | Rationale                                                                                                                                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `internal/intervals/activity_streams.go` | `ActivityStream.UnmarshalJSON`, `Client.GetActivityStreams`                                                                                                               | 0% coverage; small API client surface with raw-field preservation, required input validation, query parameters, and HTTP error wrapping.                                                  |
+| `internal/intervals/wellness.go`         | `Wellness.UnmarshalJSON`, `ListWellness`, `extractWellnessNative`, `nativeSleepScoreSource`, `dedupeStrings`                                                              | 0% coverage; behavior-rich parsing/provenance logic with duplicate claimed-key handling and request construction.                                                                         |
 | `internal/tools/get_extended_metrics.go` | `getExtendedMetricsHandler`, `optionalIntervals`, `optionalPowerVsHR`, `stravaUnavailableExtendedMetricsResponse`, `shapeExtendedMetrics`, helper numeric/string branches | Low/0% branch coverage; tests can cover Strava-blocked responses, include_full raw payloads, optional not-found/unauthorized sources, and non-optional errors without production changes. |
-| `internal/toolchecks/*.go` | catalog/snapshot guards | Fallback only if Step 2 + extended-metrics tests leave total coverage below 80%; deterministic and cheap but lower priority than product behavior. |
+| `internal/toolchecks/*.go`               | catalog/snapshot guards                                                                                                                                                   | Fallback only if Step 2 + extended-metrics tests leave total coverage below 80%; deterministic and cheap but lower priority than product behavior.                                        |
 
 ---
 
@@ -98,26 +98,28 @@ Selected targets:
 
 | #   | Type | Step | Verdict | File |
 | --- | ---- | ---- | ------- | ---- |
-| 1 | plan | 1 | APPROVE | |
+| 1   | plan | 1    | APPROVE |      |
 
 ---
 
 ## Discoveries
 
-| Discovery | Disposition | Location |
-| --------- | ----------- | -------- |
+| Discovery                                                                                                                        | Disposition                                                             | Location                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | Step 2 intervals tests alone raised full-suite coverage to 79.7%; only a small extended-metrics increment was needed after that. | Added focused extended-metrics branch tests; skipped toolcheck changes. | `internal/intervals/*_test.go`, `internal/tools/get_extended_metrics_test.go` |
-| No production-code behavior changes were required, so `CHANGELOG.md` and `CONTRIBUTING.md` did not need edits. | Documented in delivery status only. | Step 5 |
+| No production-code behavior changes were required, so `CHANGELOG.md` and `CONTRIBUTING.md` did not need edits.                   | Documented in delivery status only.                                     | Step 5                                                                        |
 
 ---
 
 ## Execution Log
 
-| Timestamp  | Action      | Outcome                         |
-| ---------- | ----------- | ------------------------------- |
-| 2026-05-13 | Task staged | PROMPT.md and STATUS.md created |
-| 2026-05-13 12:21 | Task started | Runtime V2 lane-runner execution |
-| 2026-05-13 12:21 | Step 0 started | Preflight |
+| Timestamp        | Action         | Outcome                          |
+| ---------------- | -------------- | -------------------------------- |
+| 2026-05-13       | Task staged    | PROMPT.md and STATUS.md created  |
+| 2026-05-13 12:21 | Task started   | Runtime V2 lane-runner execution |
+| 2026-05-13 12:21 | Step 0 started | Preflight                        |
+| 2026-05-13 12:41 | Worker iter 1 | done in 1178s, tools: 103 |
+| 2026-05-13 12:41 | Task complete | .DONE created |
 
 ---
 
