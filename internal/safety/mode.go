@@ -34,6 +34,42 @@ func ParseMode(value string) Mode {
 	}
 }
 
+// Capability reports the process-global write/delete permissions used when registering tools.
+type Capability interface {
+	CanDelete() bool
+	CanWrite() bool
+	Mode() string
+}
+
+type staticCapability struct {
+	mode Mode
+}
+
+// NewCapability returns an immutable, concurrent-read-safe capability value for mode.
+func NewCapability(mode Mode) Capability {
+	return staticCapability{mode: ParseMode(mode.String())}
+}
+
+// NewCapabilityFromEnv resolves ICUVISOR_DELETE_MODE once and returns the resulting capability.
+func NewCapabilityFromEnv(getenv func(string) string) Capability {
+	if getenv == nil {
+		return NewCapability(ModeSafe)
+	}
+	return NewCapability(ParseMode(getenv(EnvDeleteMode)))
+}
+
+func (c staticCapability) CanDelete() bool {
+	return c.mode == ModeFull
+}
+
+func (c staticCapability) CanWrite() bool {
+	return c.mode == ModeSafe || c.mode == ModeFull
+}
+
+func (c staticCapability) Mode() string {
+	return c.mode.String()
+}
+
 // LogResolvedMode emits the single startup log entry for the process delete mode.
 func LogResolvedMode(logger *slog.Logger, mode Mode) {
 	if logger == nil {

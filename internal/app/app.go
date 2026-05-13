@@ -33,6 +33,7 @@ type ServerInfo struct {
 	Config        config.Config
 	DebugMetadata bool
 	DeleteMode    safety.Mode
+	Capability    safety.Capability
 }
 
 // Run executes the icuvisor CLI.
@@ -93,6 +94,7 @@ func startServer(ctx context.Context, loader func(context.Context, config.Option
 	}
 	info.Config = cfg
 	info.DeleteMode = cfg.DeleteMode
+	info.Capability = safety.NewCapability(cfg.DeleteMode)
 
 	if starter == nil {
 		starter = defaultStartServer
@@ -104,10 +106,11 @@ func startServer(ctx context.Context, loader func(context.Context, config.Option
 }
 
 func defaultStartServer(ctx context.Context, info ServerInfo) error {
-	deleteMode := info.DeleteMode
-	if deleteMode == "" {
-		deleteMode = safety.ModeSafe
+	capability := info.Capability
+	if capability == nil {
+		capability = safety.NewCapability(info.DeleteMode)
 	}
+	deleteMode := safety.ParseMode(capability.Mode())
 	safety.LogResolvedMode(slog.Default(), deleteMode)
 	client, err := intervals.NewClient(intervals.Options{Config: info.Config, Version: info.Version})
 	if err != nil {

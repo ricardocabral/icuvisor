@@ -1,6 +1,6 @@
 # TP-018-delete-mode-safety-gate: TP-018-delete-mode-safety-gate — Status
 
-**Current Step:** Step 1: Define the mode enum and parsing
+**Current Step:** Step 2: Capability API
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -20,11 +20,11 @@
 ---
 
 ### Step 2: Capability API
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] `safety.Capability` with `CanDelete() bool`, `CanWrite() bool`, `Mode() string`
-- [ ] Single source of truth read once at startup; safe for concurrent reads
-- [ ] Test matrix: every (mode × capability) pair
+- [x] `safety.Capability` with `CanDelete() bool`, `CanWrite() bool`, `Mode() string`
+- [x] Single source of truth read once at startup; safe for concurrent reads
+- [x] Test matrix: every (mode × capability) pair
 
 ---
 
