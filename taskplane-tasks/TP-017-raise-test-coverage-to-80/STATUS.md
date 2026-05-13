@@ -87,10 +87,10 @@ Selected targets:
 
 **Status:** 🟨 In Progress
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Final coverage percentage recorded
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Final coverage percentage recorded
 
 ---
 
@@ -106,6 +106,8 @@ Selected targets:
 
 | Discovery | Disposition | Location |
 | --------- | ----------- | -------- |
+| Step 2 intervals tests alone raised full-suite coverage to 79.7%; only a small extended-metrics increment was needed after that. | Added focused extended-metrics branch tests; skipped toolcheck changes. | `internal/intervals/*_test.go`, `internal/tools/get_extended_metrics_test.go` |
+| No production-code behavior changes were required, so `CHANGELOG.md` and `CONTRIBUTING.md` did not need edits. | Documented in delivery status only. | Step 5 |
 
 ---
 
@@ -132,4 +134,6 @@ Current observed baseline before staging this task: 76.9% total statement covera
 Step 1 per-function report (2026-05-13): overall baseline remains 76.9%. Highest-value behavior targets are the 0%-covered `internal/intervals/activity_streams.go` (`ActivityStream.UnmarshalJSON`, `Client.GetActivityStreams`) and `internal/intervals/wellness.go` (`Wellness.UnmarshalJSON`, `ListWellness`, native-provider helpers), followed by uncovered/low-covered `internal/tools/get_extended_metrics.go` optional-source and Strava-unavailable branches. `internal/toolchecks` remains a fallback if those tests do not reach 80%.
 
 Step 3 coverage gap after intervals tests: full-suite coverage is 79.7%, so a small number of extended-metrics branch tests should reach the target. Remaining under-covered extended-metrics functions are `stravaUnavailableExtendedMetricsResponse` (0%), optional source helpers (37.5%), handler source-error branches (60.7%), and raw number/string helper edge cases.
+
+Final verification coverage (2026-05-13): `go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...` plus `go tool cover -func=coverage.txt | tail -1` reported total statement coverage of 80.8%.
 | 2026-05-13 12:27 | Review R001 | plan Step 1: APPROVE |
