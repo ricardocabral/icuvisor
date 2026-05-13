@@ -64,3 +64,4 @@ go.work.sum
 
 # Pi project-local packages (if using pi install -l)
 .pi/npm/
+.env-dev
