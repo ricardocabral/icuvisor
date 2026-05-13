@@ -64,10 +64,10 @@ Selected targets:
 
 > ⚠️ Hydrate: Expand based on remaining coverage gap after Step 2.
 
-- [ ] Add extended-metrics tests for uncovered behavior-rich branches
-- [ ] Re-run coverage after extended-metrics tests and skip toolcheck tests if total coverage is already >= 80.0%
-- [ ] Add or extend toolcheck tests only if additional coverage is needed
-- [ ] Targeted tests for touched packages pass
+- [x] Add extended-metrics tests for uncovered behavior-rich branches
+- [x] Re-run coverage after extended-metrics tests and skip toolcheck tests if total coverage is already >= 80.0%
+- [x] Add or extend toolcheck tests only if additional coverage is needed
+- [x] Targeted tests for touched packages pass
 
 ---
 
