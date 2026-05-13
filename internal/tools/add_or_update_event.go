@@ -163,7 +163,8 @@ func shapeAddOrUpdateEventResponse(event intervals.Event, args addOrUpdateEventR
 }
 
 func addOrUpdateEventInputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"date", "category"}, "properties": map[string]any{
+	examples := addOrUpdateEventInputExamples()
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"date", "category"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
 		"date":                 map[string]any{"type": "string", "description": "Required athlete-local event date as YYYY-MM-DD; interpreted in the configured athlete timezone."},
 		"event_id":             map[string]any{"type": "string", "description": "Optional upstream event ID to update. Omit to create a new event; this tool never deletes events."},
 		"category":             map[string]any{"type": "string", "description": "Required upstream event category enum such as WORKOUT, RACE, NOTE, or the athlete account's configured category value."},
@@ -178,6 +179,47 @@ func addOrUpdateEventInputSchema() map[string]any {
 		"elapsed_time_seconds": map[string]any{"type": "integer", "minimum": 0, "description": "Optional planned elapsed duration in seconds when supported upstream."},
 		"include_full":         map[string]any{"type": "boolean", "default": false, "description": "When true, include the raw upstream event payload under event.full; default response matches get_event_by_id's terse event shape."},
 	}}
+}
+
+func addOrUpdateEventInputExamples() []map[string]any {
+	return []map[string]any{
+		{
+			"date":        "2026-06-15",
+			"category":    "NOTE",
+			"name":        "Travel day",
+			"description": "Keep the day flexible; optional mobility only.",
+		},
+		{
+			"date":     "2026-06-16",
+			"category": "WORKOUT",
+			"type":     "Ride",
+			"name":     "Sweet spot repeats",
+			"workout_doc": map[string]any{
+				"steps": []any{
+					map[string]any{"description": "Warm up", "duration": 600, "power": map[string]any{"value": 60, "units": "PERCENT_FTP"}},
+					map[string]any{"description": "Main set", "reps": 3, "steps": []any{
+						map[string]any{"duration": 480, "power": map[string]any{"value": 88, "units": "PERCENT_FTP"}},
+						map[string]any{"duration": 240, "power": map[string]any{"value": 55, "units": "PERCENT_FTP"}},
+					}},
+				},
+			},
+			"tags":                []any{"sweet-spot", "indoor"},
+			"target_load":         72,
+			"moving_time_seconds": 4200,
+		},
+		{
+			"event_id":             "evt-example-42",
+			"date":                 "2026-06-21",
+			"category":             "RACE",
+			"type":                 "Run",
+			"name":                 "10K tune-up race",
+			"description":          "B race. Practice breakfast, warm-up, and even pacing.",
+			"tags":                 []any{"race", "tune-up"},
+			"distance_meters":      10000,
+			"elapsed_time_seconds": 3300,
+			"include_full":         true,
+		},
+	}
 }
 
 func addOrUpdateEventOutputSchema() map[string]any {

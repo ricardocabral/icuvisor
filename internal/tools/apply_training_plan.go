@@ -370,12 +370,34 @@ func applyTrainingPlanInputSchema(capability safety.Capability) map[string]any {
 	if capabilityOrSafe(capability).CanDelete() {
 		conflictEnum = append(conflictEnum, applyTrainingPlanConflictReplace)
 	}
-	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"plan_id", "start_date"}, "properties": map[string]any{
+	examples := applyTrainingPlanInputExamples()
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"plan_id", "start_date"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
 		"plan_id":         map[string]any{"type": "string", "description": "Required workout-library folder/plan ID to fetch server-side. Do not pass plan contents in tool arguments."},
 		"start_date":      map[string]any{"type": "string", "description": "Required athlete-local YYYY-MM-DD anchor date; workout day 1 is applied to this date and later plan days are relative to it."},
 		"dry_run":         map[string]any{"type": "boolean", "default": true, "description": "Safety default is true, even in safe mode. Set dry_run:false explicitly to create or replace calendar events."},
 		"conflict_policy": map[string]any{"type": "string", "default": applyTrainingPlanConflictSkip, "enum": conflictEnum, "description": "skip_existing leaves days with calendar conflicts untouched. replace_existing deletes conflicting events before creating plan workouts and is accepted only when ICUVISOR_DELETE_MODE=full."},
 	}}
+}
+
+func applyTrainingPlanInputExamples() []map[string]any {
+	return []map[string]any{
+		{
+			"plan_id":    "plan-base-8",
+			"start_date": "2026-07-06",
+		},
+		{
+			"plan_id":         "plan-build-12",
+			"start_date":      "2026-08-03",
+			"dry_run":         true,
+			"conflict_policy": applyTrainingPlanConflictSkip,
+		},
+		{
+			"plan_id":         "plan-race-4",
+			"start_date":      "2026-09-14",
+			"dry_run":         false,
+			"conflict_policy": applyTrainingPlanConflictSkip,
+		},
+	}
 }
 
 func applyTrainingPlanOutputSchema() map[string]any {

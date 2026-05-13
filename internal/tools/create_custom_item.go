@@ -141,7 +141,8 @@ func trimOptionalString(value *string) {
 }
 
 func createCustomItemInputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"item_type", "name", "content"}, "properties": map[string]any{
+	examples := createCustomItemInputExamples()
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"item_type", "name", "content"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
 		"item_type":   map[string]any{"type": "string", "description": "Required upstream custom-item type. The value must match an existing readable schema sample, for example FITNESS_CHART, INPUT_FIELD, ACTIVITY_FIELD, ACTIVITY_STREAM, ACTIVITY_PANEL, ACTIVITY_HISTOGRAM, ACTIVITY_MAP, ACTIVITY_HEATMAP, TRACE_CHART, FITNESS_TABLE, or ZONES."},
 		"name":        map[string]any{"type": "string", "description": "Required custom item name. Surrounding whitespace is trimmed."},
 		"visibility":  map[string]any{"type": "string", "description": "Optional upstream visibility value. Omit to use intervals.icu defaults."},
@@ -151,6 +152,30 @@ func createCustomItemInputSchema() map[string]any {
 		"hide_script": map[string]any{"type": "boolean", "description": "Optional upstream hide_script flag for script/formula based custom items."},
 		"content":     map[string]any{"type": "object", "description": "Required item_type-specific content object. It is validated against existing readable custom items of the same item_type before upload; long-form schema guidance lives in get_custom_item_by_id and later icuvisor://custom-item-schemas."},
 	}}
+}
+
+func createCustomItemInputExamples() []map[string]any {
+	return []map[string]any{
+		{
+			"item_type": "FITNESS_CHART",
+			"name":      "Training load trend",
+			"content": map[string]any{
+				"series": []any{map[string]any{"field": "ctl", "color": "blue"}},
+				"layout": map[string]any{"height": 240},
+			},
+		},
+		{
+			"item_type":   "INPUT_FIELD",
+			"name":        "Travel fatigue note",
+			"visibility":  "PRIVATE",
+			"description": "Short coach-facing note captured on travel weeks.",
+			"index":       20,
+			"hide_script": false,
+			"content": map[string]any{
+				"field": map[string]any{"key": "travel_fatigue", "type": "text", "label": "Travel fatigue"},
+			},
+		},
+	}
 }
 
 func createCustomItemOutputSchema() map[string]any {

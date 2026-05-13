@@ -186,7 +186,8 @@ func updateWorkoutFieldsUpdated(args updateWorkoutRequest) []string {
 }
 
 func updateWorkoutInputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"workout_id"}, "properties": map[string]any{
+	examples := updateWorkoutInputExamples()
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"workout_id"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
 		"workout_id":  map[string]any{"type": "string", "description": "Required upstream workout-library template ID to update. Surrounding whitespace is trimmed."},
 		"name":        map[string]any{"type": "string", "description": "Optional replacement workout-library template name/title. Omit to leave unchanged."},
 		"folder_id":   map[string]any{"type": "string", "description": "Optional replacement intervals.icu workout-library folder or plan ID. Omit to leave unchanged; an explicit empty string moves the workout to the top level when upstream supports it."},
@@ -195,6 +196,31 @@ func updateWorkoutInputSchema() map[string]any {
 		"tags":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional replacement workout-library tags. Omit to leave unchanged; provide the full desired tag list when appending a tag."},
 		"sport":       map[string]any{"type": "string", "description": "Optional replacement upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Omit to leave unchanged."},
 	}}
+}
+
+func updateWorkoutInputExamples() []map[string]any {
+	return []map[string]any{
+		{
+			"workout_id": "workout-example-7",
+			"name":       "Endurance aerobic ride - revised",
+		},
+		{
+			"workout_id": "workout-example-8",
+			"workout_doc": map[string]any{
+				"steps": []any{
+					map[string]any{"description": "Warm up", "duration": 600, "power": map[string]any{"value": 55, "units": "PERCENT_FTP"}},
+					map[string]any{"description": "Tempo", "duration": 1800, "power": map[string]any{"min": 80, "max": 85, "units": "PERCENT_FTP"}},
+				},
+			},
+		},
+		{
+			"workout_id":  "workout-example-9",
+			"folder_id":   "folder-race-prep",
+			"sport":       "Ride",
+			"tags":        []any{"race-prep", "indoor"},
+			"description": "Sharpening workout with short openers. Keep recoveries honest.",
+		},
+	}
 }
 
 func updateWorkoutOutputSchema() map[string]any {

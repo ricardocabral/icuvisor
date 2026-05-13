@@ -118,7 +118,8 @@ func shapeCreateWorkoutResponse(workout intervals.Workout, args createWorkoutReq
 }
 
 func createWorkoutInputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"name", "sport"}, "properties": map[string]any{
+	examples := createWorkoutInputExamples()
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"name", "sport"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
 		"name":        map[string]any{"type": "string", "description": "Required workout-library template name/title. Surrounding whitespace is trimmed."},
 		"folder_id":   map[string]any{"type": "string", "description": "Optional intervals.icu workout-library folder or plan ID to place the new template in. Omit to create a top-level library workout."},
 		"description": map[string]any{"type": "string", "description": "Optional free-text workout description. Preserved verbatim when workout_doc is omitted; mutually exclusive with workout_doc because intervals.icu accepts one description DSL string on writes."},
@@ -126,6 +127,42 @@ func createWorkoutInputSchema() map[string]any {
 		"tags":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional workout-library tags to preserve on the upstream template, in caller-provided order."},
 		"sport":       map[string]any{"type": "string", "description": "Required upstream sport/activity type for the workout template, such as Ride, Run, Swim, VirtualRide, or the athlete account's configured activity type."},
 	}}
+}
+
+func createWorkoutInputExamples() []map[string]any {
+	return []map[string]any{
+		{
+			"name":        "Endurance aerobic ride",
+			"sport":       "Ride",
+			"description": "60m easy aerobic endurance. Keep it conversational.",
+		},
+		{
+			"name":      "Threshold builder",
+			"sport":     "Ride",
+			"folder_id": "folder-build-1",
+			"workout_doc": map[string]any{
+				"steps": []any{
+					map[string]any{"description": "Warm up", "duration": 900, "power": map[string]any{"value": 60, "units": "PERCENT_FTP"}},
+					map[string]any{"description": "Threshold", "duration": 1200, "power": map[string]any{"min": 95, "max": 100, "units": "PERCENT_FTP"}},
+					map[string]any{"description": "Cool down", "duration": 600, "power": map[string]any{"value": 50, "units": "PERCENT_FTP"}},
+				},
+			},
+			"tags": []any{"threshold", "build"},
+		},
+		{
+			"name":      "Progressive run",
+			"sport":     "Run",
+			"folder_id": "folder-run-1",
+			"workout_doc": map[string]any{
+				"steps": []any{
+					map[string]any{"duration": 900, "pace": map[string]any{"text": "easy"}},
+					map[string]any{"duration": 1200, "pace": map[string]any{"text": "steady"}, "rpe": map[string]any{"value": 6}},
+					map[string]any{"duration": 600, "pace": map[string]any{"text": "easy"}},
+				},
+			},
+			"tags": []any{"run", "progression"},
+		},
+	}
 }
 
 func createWorkoutOutputSchema() map[string]any {
