@@ -157,52 +157,52 @@ func parsePrimaryTarget(step *Step, tokens []string) error {
 		if len(tokens) != 1 {
 			return fmt.Errorf("power watts target has extra tokens: %q", strings.Join(tokens, " "))
 		}
-		step.Power = targetFromRegex(match, "WATTS")
+		step.Power = targetForStep(step, targetFromRegex(match, "WATTS"))
 		return nil
 	}
 	if match := bpmTokenRE.FindStringSubmatch(tokens[0]); match != nil {
 		if len(tokens) != 1 {
 			return fmt.Errorf("heart-rate bpm target has extra tokens: %q", strings.Join(tokens, " "))
 		}
-		step.HR = targetFromRegex(match, "BPM")
+		step.HR = targetForStep(step, targetFromRegex(match, "BPM"))
 		return nil
 	}
 	if match := percentTokenRE.FindStringSubmatch(tokens[0]); match != nil {
 		target := targetFromRegex(match, "PERCENT_FTP")
 		if len(tokens) == 1 {
-			step.Power = target
+			step.Power = targetForStep(step, target)
 			return nil
 		}
 		if len(tokens) == 2 && strings.EqualFold(tokens[1], "HR") {
 			target.Units = "PERCENT_HR"
-			step.HR = target
+			step.HR = targetForStep(step, target)
 			return nil
 		}
 		if len(tokens) == 2 && strings.EqualFold(tokens[1], "LTHR") {
 			target.Units = "PERCENT_LTHR"
-			step.HR = target
+			step.HR = targetForStep(step, target)
 			return nil
 		}
 		if len(tokens) == 2 && strings.EqualFold(tokens[1], "Pace") {
 			target.Units = "PERCENT_THRESHOLD"
-			step.Pace = target
+			step.Pace = targetForStep(step, target)
 			return nil
 		}
 	}
 	if match := zoneTokenRE.FindStringSubmatch(tokens[0]); match != nil {
 		target := targetFromRegex(match, "ZONE")
 		if len(tokens) == 1 {
-			step.Power = target
+			step.Power = targetForStep(step, target)
 			return nil
 		}
 		if len(tokens) == 2 && strings.EqualFold(tokens[1], "HR") {
 			target.Units = "HR_ZONE"
-			step.HR = target
+			step.HR = targetForStep(step, target)
 			return nil
 		}
 		if len(tokens) == 2 && strings.EqualFold(tokens[1], "Pace") {
 			target.Units = "PACE_ZONE"
-			step.Pace = target
+			step.Pace = targetForStep(step, target)
 			return nil
 		}
 	}
@@ -258,6 +258,13 @@ func parseNumberTarget(token string, units string) (*Target, error) {
 		return nil, fmt.Errorf("invalid numeric target %q", token)
 	}
 	return &Target{Value: &value, Units: units}, nil
+}
+
+func targetForStep(step *Step, target *Target) *Target {
+	if !step.Ramp || target == nil || target.Min == nil || target.Max == nil {
+		return target
+	}
+	return &Target{Start: target.Min, End: target.Max, Units: target.Units, Text: target.Text}
 }
 
 func targetFromRegex(match []string, units string) *Target {

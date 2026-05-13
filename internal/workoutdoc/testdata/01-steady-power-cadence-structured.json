@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {
+      "description": "Warmup",
+      "duration": 600,
+      "power": { "value": 60, "units": "PERCENT_FTP" },
+      "cadence": { "value": 90, "units": "RPM" }
+    },
+    {
+      "duration": 1200,
+      "power": { "min": 75, "max": 85, "units": "PERCENT_FTP" }
+    }
+  ]
+}

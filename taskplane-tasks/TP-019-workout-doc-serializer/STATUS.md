@@ -1,6 +1,6 @@
 # TP-019-workout-doc-serializer: TP-019-workout-doc-serializer — Status
 
-**Current Step:** Step 4: Golden-file round-trip tests
+**Current Step:** Step 5: Hook points (no consumers yet)
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -37,17 +37,17 @@
 ---
 
 ### Step 4: Golden-file round-trip tests
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `testdata/` contains pairs: `XX-structured.json` + `XX-dsl.txt`
-- [ ] Test 1: parse DSL → struct → re-serialize → byte-equal to original DSL (or documented canonicalization)
-- [ ] Test 2: load structured JSON → serialize → parse → deep-equal to original struct
-- [ ] Cover every step type from Step 1; one golden per type at minimum
+- [x] `testdata/` contains pairs: `XX-structured.json` + `XX-dsl.txt`
+- [x] Test 1: parse DSL → struct → re-serialize → byte-equal to original DSL (or documented canonicalization)
+- [x] Test 2: load structured JSON → serialize → parse → deep-equal to original struct
+- [x] Cover every step type from Step 1; one golden per type at minimum
 
 ---
 
 ### Step 5: Hook points (no consumers yet)
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Public API: `workoutdoc.Serialize`, `workoutdoc.Parse`, the `WorkoutDoc` type
 - [ ] Wire nothing into MCP tools here; downstream tasks consume

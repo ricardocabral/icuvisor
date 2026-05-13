@@ -1,0 +1,12 @@
+{
+  "steps": [
+    {
+      "description": "Main Set",
+      "reps": 3,
+      "steps": [
+        { "duration": 300, "power": { "value": 110, "units": "PERCENT_FTP" } },
+        { "description": "Recovery", "duration": 180, "power": { "value": 50, "units": "PERCENT_FTP" } }
+      ]
+    }
+  ]
+}

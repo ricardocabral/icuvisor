@@ -1,0 +1,6 @@
+{
+  "steps": [
+    { "duration": 600, "hr": { "min": 90, "max": 95, "units": "PERCENT_LTHR" } },
+    { "duration": 300, "hr": { "min": 150, "max": 160, "units": "BPM" } }
+  ]
+}
