@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 // Registry registers the MCP tools exposed by icuvisor.
@@ -17,6 +19,7 @@ type RegistryOptions struct {
 	Version          string
 	TimezoneFallback string
 	DebugMetadata    bool
+	Capability       safety.Capability
 }
 
 // NewRegistry creates the default tool registry.
@@ -34,6 +37,7 @@ func NewRegistryWithOptions(profileClient ProfileClient, opts RegistryOptions) R
 		version:          normalizeVersion(opts.Version),
 		timezoneFallback: normalizeTimezoneFallback(opts.TimezoneFallback),
 		debugMetadata:    opts.DebugMetadata,
+		capability:       capabilityOrSafe(opts.Capability),
 	}
 }
 
@@ -42,6 +46,14 @@ type defaultRegistry struct {
 	version          string
 	timezoneFallback string
 	debugMetadata    bool
+	capability       safety.Capability
+}
+
+func capabilityOrSafe(capability safety.Capability) safety.Capability {
+	if capability != nil {
+		return capability
+	}
+	return safety.NewCapability(safety.ModeSafe)
 }
 
 func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) error {
@@ -161,13 +173,36 @@ type Registrar interface {
 // Handler handles a tool call using raw JSON arguments.
 type Handler func(context.Context, Request) (Result, error)
 
+// Requirement describes the registration-time capability needed by a tool.
+type Requirement string
+
+const (
+	// RequirementRead registers the tool in every mode.
+	RequirementRead Requirement = "read"
+	// RequirementWrite registers the tool only when write tools are allowed.
+	RequirementWrite Requirement = "write"
+	// RequirementDelete registers the tool only when delete tools are allowed.
+	RequirementDelete Requirement = "delete"
+)
+
 // Tool describes one MCP tool without exposing SDK-specific types.
 type Tool struct {
 	Name         string
 	Description  string
 	InputSchema  any
 	OutputSchema any
+	Requirement  Requirement
 	Handler      Handler
+}
+
+// RequiresWrite reports whether the tool needs write capability to be registered.
+func (t Tool) RequiresWrite() bool {
+	return t.Requirement == RequirementWrite || t.Requirement == RequirementDelete
+}
+
+// RequiresDelete reports whether the tool needs delete capability to be registered.
+func (t Tool) RequiresDelete() bool {
+	return t.Requirement == RequirementDelete
 }
 
 // Request carries an MCP tool call to a Handler.

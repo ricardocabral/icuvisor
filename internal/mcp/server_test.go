@@ -1,12 +1,15 @@
 package mcp
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"testing"
 
+	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
@@ -81,6 +84,32 @@ func TestNewServerReturnsToolRegistrationErrors(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "invalid tool name") {
 		t.Fatalf("NewServer() error = %q, want invalid tool name", err.Error())
+	}
+}
+
+func TestNewServerLogsRegistrationCountsOnly(t *testing.T) {
+	t.Parallel()
+
+	var log bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&log, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	_, err := NewServer(context.Background(), Options{
+		Registry:   capabilityRegistry{},
+		Capability: safety.NewCapability(safety.ModeSafe),
+		Logger:     logger,
+	})
+	if err != nil {
+		t.Fatalf("NewServer() error = %v", err)
+	}
+	out := log.String()
+	for _, want := range []string{"tool registration complete", "registered_count=2", "skipped_count=1"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("log %q missing %q", out, want)
+		}
+	}
+	for _, unwanted := range []string{"test_read", "test_write", "test_delete"} {
+		if strings.Contains(out, unwanted) {
+			t.Fatalf("startup registration log leaked tool name %q in %q", unwanted, out)
+		}
 	}
 }
 

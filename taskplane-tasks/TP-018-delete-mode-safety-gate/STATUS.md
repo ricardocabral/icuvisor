@@ -1,6 +1,6 @@
 # TP-018-delete-mode-safety-gate: TP-018-delete-mode-safety-gate — Status
 
-**Current Step:** Step 2: Capability API
+**Current Step:** Step 3: Registry filtering
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -29,11 +29,11 @@
 ---
 
 ### Step 3: Registry filtering
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Tool registration takes a `safety.Capability`; destructive tools self-declare `RequiresDelete()` / `RequiresWrite()`
-- [ ] Tools whose requirement the mode forbids are **not** registered (not registered-and-erroring — absent from the catalog entirely)
-- [ ] Log a single INFO line at startup listing registered/skipped tool counts; never log tool names that could leak roadmap state — counts only
+- [x] Tool registration takes a `safety.Capability`; destructive tools self-declare `RequiresDelete()` / `RequiresWrite()`
+- [x] Tools whose requirement the mode forbids are **not** registered (not registered-and-erroring — absent from the catalog entirely)
+- [x] Log a single INFO line at startup listing registered/skipped tool counts; never log tool names that could leak roadmap state — counts only
 
 ---
 

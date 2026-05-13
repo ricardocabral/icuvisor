@@ -117,13 +117,15 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 		return err
 	}
 	server, err := mcpserver.NewServer(ctx, mcpserver.Options{
-		Config:  info.Config,
-		Version: info.Version,
-		Logger:  slog.Default(),
+		Config:     info.Config,
+		Version:    info.Version,
+		Logger:     slog.Default(),
+		Capability: capability,
 		Registry: tools.NewRegistryWithOptions(client, tools.RegistryOptions{
 			Version:          info.Version,
 			TimezoneFallback: info.Config.Timezone,
 			DebugMetadata:    info.DebugMetadata,
+			Capability:       capability,
 		}),
 	})
 	if err != nil {
