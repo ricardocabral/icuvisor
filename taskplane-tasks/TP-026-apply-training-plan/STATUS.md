@@ -5,7 +5,7 @@
 **Last Updated:** 2026-05-13
 **Review Level:** 0
 **Review Counter:** 0
-**Iteration:** 2
+**Iteration:** 3
 **Size:** M
 
 ---
@@ -79,10 +79,14 @@
 | 2026-05-13 21:24 | Step 1 started         | Schema                                                                                                                                                                                                                                                                                                     |
 | 2026-05-13       | Automated verification | PASS: `make test`, `make build`, `make lint`, and `go test -race ./...` all completed successfully.                                                                                                                                                                                                        |
 | 2026-05-13       | Manual smoke blocked   | `/Users/jusbrasil/prj/icuvisor/.env-dev` exists and exposes key names for API key, athlete ID, and `ICUVISOR_DELETE_MODE`, but it was explicitly approved only for TP-022 smoke; no TP-026 plan fixture ID or approval to perform full-mode event replacement was found. No live writes/deletes attempted. |
-| 2026-05-13 21:47 | Agent escalate | TP-026 Step 5 manual smoke is blocked. Automated verification passed (`make test`, `make build`, `make lint`, `go test -race ./...`) and README/CHANGELOG/schema snapshot are updated. The remaining che |
-| 2026-05-13 21:47 | Worker iter 1 | done in 1388s, tools: 127 |
-| 2026-05-13       | Steering received      | Operator directed that TP-026 live manual smoke must not run yet: do not source credentials, do not use `.env-dev`, and do not perform live writes/deletes until TP-026 scope is explicitly approved with a disposable `plan_id` fixture. |
-| 2026-05-13       | Manual smoke plan      | Ready-to-run plan documented in Notes; manual-smoke checkbox intentionally remains unchecked pending operator approval/scope. |
+| 2026-05-13 21:47 | Agent escalate         | TP-026 Step 5 manual smoke is blocked. Automated verification passed (`make test`, `make build`, `make lint`, `go test -race ./...`) and README/CHANGELOG/schema snapshot are updated. The remaining che                                                                                                   |
+| 2026-05-13 21:47 | Worker iter 1          | done in 1388s, tools: 127                                                                                                                                                                                                                                                                                  |
+| 2026-05-13       | Steering received      | Operator directed that TP-026 live manual smoke must not run yet: do not source credentials, do not use `.env-dev`, and do not perform live writes/deletes until TP-026 scope is explicitly approved with a disposable `plan_id` fixture.                                                                  |
+| 2026-05-13       | Manual smoke plan      | Ready-to-run plan documented in Notes; manual-smoke checkbox intentionally remains unchecked pending operator approval/scope.                                                                                                                                                                              |
+| 2026-05-13 21:49 | ⚠️ Steering | Do not run TP-026 live manual smoke yet. Prior full-mode approval was scoped to earlier smoke tests, not bulk training-plan application with replace-existing calendar deletes. Do not source credential |
+| 2026-05-13 21:49 | Worker iter 2 | done in 163s, tools: 9 |
+| 2026-05-13 21:49 | No progress | Iteration 2: 0 new checkboxes (1/3 stall limit) |
+| 2026-05-13       | Agent escalate         | Reconfirmed Step 5 manual smoke remains blocked by explicit operator steering forbidding credentials/live writes or deletes until TP-026 receives an approved disposable `plan_id` fixture; requested approval, fixture, or waiver to substitute offline coverage. |
 
 ---
 
