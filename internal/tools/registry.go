@@ -122,6 +122,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if applyTrainingPlanClient, ok := r.profileClient.(ApplyTrainingPlanClient); ok {
+		if err := registrar.AddTool(newApplyTrainingPlanTool(applyTrainingPlanClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata, r.capability)); err != nil {
+			return err
+		}
+	}
 	if eventDeleterClient, ok := r.profileClient.(EventDeleterClient); ok {
 		if err := registrar.AddTool(newDeleteEventTool(eventDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
