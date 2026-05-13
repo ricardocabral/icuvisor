@@ -1,6 +1,6 @@
 # TP-027-input-examples-on-write-tools: TP-027-input-examples-on-write-tools — Status
 
-**Current Step:** Step 1: Curate examples
+**Current Step:** Step 2: Wire into schema
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -20,11 +20,11 @@
 ---
 
 ### Step 2: Wire into schema
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Where the MCP SDK supports `examples` (JSON Schema 2020-12 `examples` keyword), use it directly
-- [ ] If the SDK surfaces a separate `input_examples` field, mirror the examples there
-- [ ] Document the chosen convention in `STATUS.md`
+- [x] Where the MCP SDK supports `examples` (JSON Schema 2020-12 `examples` keyword), use it directly
+- [x] If the SDK surfaces a separate `input_examples` field, mirror the examples there
+- [x] Document the chosen convention in `STATUS.md`
 
 ---
 
@@ -75,4 +75,4 @@
 
 ## Notes
 
-*Reserved for execution notes*
+- Step 2 convention: tool input schemas expose examples twice: standard JSON Schema 2020-12 `examples` and mirrored `input_examples`. The Go MCP SDK accepts the schema as an arbitrary map via `Tool.InputSchema`, so both keys are passed through to clients while retaining compatibility with clients that inspect either convention.
