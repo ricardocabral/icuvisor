@@ -41,8 +41,8 @@
 ### Step 4: Verify
 **Status:** 🟨 In Progress
 
-- [ ] Update `README.md` catalog and `CHANGELOG.md` for the destructive delete tools
-- [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
+- [x] Update `README.md` catalog and `CHANGELOG.md` for the destructive delete tools
+- [x] `make test`, `make build`, `make lint`, `go test -race ./...`
 - [ ] Manual smoke against the test athlete in `full` mode; never in production
 
 ---
@@ -73,7 +73,7 @@
 
 ## Blockers
 
-*None*
+- Manual smoke is blocked: checked `INTERVALS_ICU_API_KEY`, `INTERVALS_ICU_ATHLETE_ID`, `.env`, and `icuvisor.json`; no test-athlete credentials/config are available in this worktree, so no full-mode destructive-tool smoke was run and no production account was touched.
 
 ---
 

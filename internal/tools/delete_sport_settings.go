@@ -27,11 +27,11 @@ type deleteSportSettingsRequest struct {
 	SportSettingsID string `json:"sport_settings_id"`
 }
 
-func newDeleteSportSettingsTool(client SportSettingsDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: deleteSportSettingsName, Description: deleteSportSettingsDescription, InputSchema: deleteSportSettingsInputSchema(), OutputSchema: deleteSportSettingsOutputSchema(), Requirement: RequirementDelete, Handler: deleteSportSettingsHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+func newDeleteSportSettingsTool(client SportSettingsDeleterClient, profileClient ProfileClient, version string, _ string, debugMetadata bool) Tool {
+	return Tool{Name: deleteSportSettingsName, Description: deleteSportSettingsDescription, InputSchema: deleteSportSettingsInputSchema(), OutputSchema: deleteSportSettingsOutputSchema(), Requirement: RequirementDelete, Handler: deleteSportSettingsHandler(client, profileClient, version, debugMetadata)}
 }
 
-func deleteSportSettingsHandler(client SportSettingsDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func deleteSportSettingsHandler(client SportSettingsDeleterClient, profileClient ProfileClient, version string, debugMetadata bool) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeDeleteSportSettingsRequest(req.Arguments)
 		if err != nil {

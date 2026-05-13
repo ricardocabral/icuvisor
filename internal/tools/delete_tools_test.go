@@ -13,19 +13,19 @@ import (
 
 type fakeDeleteToolsClient struct {
 	fakeProfileClient
-	event        intervals.Event
-	activity     intervals.Activity
-	customItem   intervals.CustomItem
-	gear         intervals.Gear
-	events       []intervals.Event
-	listParams   intervals.ListEventsParams
-	deletedEventIDs []string
-	deletedActivityIDs []string
-	deletedCustomItemIDs []string
+	event                   intervals.Event
+	activity                intervals.Activity
+	customItem              intervals.CustomItem
+	gear                    intervals.Gear
+	events                  []intervals.Event
+	listParams              intervals.ListEventsParams
+	deletedEventIDs         []string
+	deletedActivityIDs      []string
+	deletedCustomItemIDs    []string
 	deletedSportSettingsIDs []string
-	deletedGearIDs []string
-	deleteErr    error
-	getErr       error
+	deletedGearIDs          []string
+	deleteErr               error
+	getErr                  error
 }
 
 func (f *fakeDeleteToolsClient) GetEvent(ctx context.Context, eventID string) (intervals.Event, error) {
@@ -154,7 +154,7 @@ func TestDeletePerIDToolsRejectConfirmArgument(t *testing.T) {
 			t.Parallel()
 			if _, err := tc.tool.Handler(context.Background(), Request{Name: tc.tool.Name, Arguments: json.RawMessage(tc.arguments)}); err == nil {
 				t.Fatal("Handler() error = nil, want strict argument rejection")
-		}
+			}
 		})
 	}
 }

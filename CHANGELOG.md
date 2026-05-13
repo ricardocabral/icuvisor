@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Destructive delete MCP tools gated by `ICUVISOR_DELETE_MODE=full`: `delete_event`, `delete_events_by_date_range` with a 31-day inclusive range cap, `delete_activity`, `delete_custom_item`, `delete_sport_settings`, and `delete_gear`, each returning deleted IDs and terse before-shape deletion metadata.
 - `create_custom_item` and `update_custom_item` MCP tools for write-enabled modes to create custom chart/field/stream/panel/zones items, validate schema-driven `content` before upload using readable custom-item schema samples, and echo the full read shape.
 - `create_workout`, `update_workout`, and gated `delete_workout` MCP tools for workout-library template CRUD, including TP-019 structured `workout_doc` serialization to the upstream description DSL and delete registration only in `ICUVISOR_DELETE_MODE=full`.
 - `update_sport_settings` MCP tool for write-enabled modes to update sport-scoped FTP, threshold heart rate, threshold pace, and gated zone-definition overwrites with recompute/delete-mode/unit metadata.

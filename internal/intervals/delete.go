@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 )
 
@@ -44,7 +43,7 @@ func (c *Client) DeleteEvent(ctx context.Context, eventID string) error {
 	if eventID == "" {
 		return fmt.Errorf("deleting event: event ID is required")
 	}
-	if err := c.doNoJSON(ctx, http.MethodDelete, "athlete", c.athleteID, "events", eventID); err != nil {
+	if err := c.doNoJSON(ctx, "athlete", c.athleteID, "events", eventID); err != nil {
 		return fmt.Errorf("deleting event %s: %w", eventID, err)
 	}
 	return nil
@@ -56,7 +55,7 @@ func (c *Client) DeleteActivity(ctx context.Context, activityID string) error {
 	if activityID == "" {
 		return fmt.Errorf("deleting activity: activity ID is required")
 	}
-	if err := c.doNoJSON(ctx, http.MethodDelete, "activity", activityID); err != nil {
+	if err := c.doNoJSON(ctx, "activity", activityID); err != nil {
 		return fmt.Errorf("deleting activity %s: %w", activityID, err)
 	}
 	return nil
@@ -68,7 +67,7 @@ func (c *Client) DeleteCustomItem(ctx context.Context, itemID string) error {
 	if itemID == "" {
 		return fmt.Errorf("deleting custom item: item ID is required")
 	}
-	if err := c.doNoJSON(ctx, http.MethodDelete, "athlete", c.athleteID, "custom-item", itemID); err != nil {
+	if err := c.doNoJSON(ctx, "athlete", c.athleteID, "custom-item", itemID); err != nil {
 		return fmt.Errorf("deleting custom item %s: %w", itemID, err)
 	}
 	return nil
@@ -80,7 +79,7 @@ func (c *Client) DeleteSportSettings(ctx context.Context, sportSettingsID string
 	if sportSettingsID == "" {
 		return fmt.Errorf("deleting sport settings: sport-settings ID is required")
 	}
-	if err := c.doNoJSON(ctx, http.MethodDelete, "athlete", c.athleteID, "sport-settings", sportSettingsID); err != nil {
+	if err := c.doNoJSON(ctx, "athlete", c.athleteID, "sport-settings", sportSettingsID); err != nil {
 		return fmt.Errorf("deleting sport settings %s: %w", sportSettingsID, err)
 	}
 	return nil
@@ -105,7 +104,7 @@ func (c *Client) DeleteGear(ctx context.Context, gearID string) error {
 	if gearID == "" {
 		return fmt.Errorf("deleting gear: gear ID is required")
 	}
-	if err := c.doNoJSON(ctx, http.MethodDelete, "athlete", c.athleteID, "gear", gearID); err != nil {
+	if err := c.doNoJSON(ctx, "athlete", c.athleteID, "gear", gearID); err != nil {
 		return fmt.Errorf("deleting gear %s: %w", gearID, err)
 	}
 	return nil

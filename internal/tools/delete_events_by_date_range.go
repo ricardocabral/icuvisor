@@ -35,20 +35,20 @@ type deleteEventsByDateRangeRequest struct {
 }
 
 type deleteEventsByDateRangeResponse struct {
-	DeletedIDs []string                        `json:"deleted_ids"`
-	Status     string                          `json:"status"`
+	DeletedIDs []string                            `json:"deleted_ids"`
+	Status     string                              `json:"status"`
 	Meta       deleteEventsByDateRangeResponseMeta `json:"_meta"`
 }
 
 type deleteEventsByDateRangeResponseMeta struct {
-	Operation      string         `json:"operation"`
-	ResourceType   string         `json:"resource_type"`
-	SourceEndpoint string         `json:"source_endpoint"`
-	DateRange      dateRangeMeta  `json:"date_range"`
-	Timezone       string         `json:"timezone"`
-	Category       string         `json:"category,omitempty"`
-	RangeCapDays   int            `json:"range_cap_days"`
-	DeletedCount   int            `json:"deleted_count"`
+	Operation      string           `json:"operation"`
+	ResourceType   string           `json:"resource_type"`
+	SourceEndpoint string           `json:"source_endpoint"`
+	DateRange      dateRangeMeta    `json:"date_range"`
+	Timezone       string           `json:"timezone"`
+	Category       string           `json:"category,omitempty"`
+	RangeCapDays   int              `json:"range_cap_days"`
+	DeletedCount   int              `json:"deleted_count"`
 	Deleted        []map[string]any `json:"deleted"`
 }
 
