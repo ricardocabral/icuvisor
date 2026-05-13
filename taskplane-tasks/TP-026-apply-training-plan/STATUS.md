@@ -1,6 +1,6 @@
 # TP-026-apply-training-plan: TP-026-apply-training-plan — Status
 
-**Current Step:** Step 3: Apply path
+**Current Step:** Step 4: Response shape
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -28,16 +28,16 @@
 ---
 
 ### Step 3: Apply path
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `dry_run: false` + `conflict_policy: skip_existing` → create events only on conflict-free days; skipped days listed in `_meta.skipped`
-- [ ] `dry_run: false` + `conflict_policy: replace_existing` → registered only when `CanDelete()` (this argument is rejected at the validation layer otherwise); deletes the conflicting event then creates the new one
-- [ ] Use TP-020's `add_or_update_event` internals; do not duplicate event-build logic
+- [x] `dry_run: false` + `conflict_policy: skip_existing` → create events only on conflict-free days; skipped days listed in `_meta.skipped`
+- [x] `dry_run: false` + `conflict_policy: replace_existing` → registered only when `CanDelete()` (this argument is rejected at the validation layer otherwise); deletes the conflicting event then creates the new one
+- [x] Use TP-020's `add_or_update_event` internals; do not duplicate event-build logic
 
 ---
 
 ### Step 4: Response shape
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `_meta.created_count`, `_meta.skipped`, `_meta.replaced` (when applicable), `_meta.delete_mode`
 

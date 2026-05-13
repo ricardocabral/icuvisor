@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -285,10 +286,9 @@ func anyPositiveInt(value any) (int, bool) {
 			return int(parsed), true
 		}
 	case string:
-		parsed, err := time.ParseDuration(strings.TrimSpace(typed) + "h")
-		if err == nil {
-			day := int(parsed.Hours())
-			return day, day > 0
+		parsed, err := strconv.Atoi(strings.TrimSpace(typed))
+		if err == nil && parsed > 0 {
+			return parsed, true
 		}
 	}
 	return 0, false
