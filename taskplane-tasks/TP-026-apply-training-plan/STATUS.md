@@ -1,6 +1,6 @@
 # TP-026-apply-training-plan: TP-026-apply-training-plan — Status
 
-**Current Step:** Step 4: Response shape
+**Current Step:** Step 5: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -37,14 +37,14 @@
 ---
 
 ### Step 4: Response shape
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `_meta.created_count`, `_meta.skipped`, `_meta.replaced` (when applicable), `_meta.delete_mode`
+- [x] `_meta.created_count`, `_meta.skipped`, `_meta.replaced` (when applicable), `_meta.delete_mode`
 
 ---
 
 ### Step 5: Verify
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
 - [ ] Manual smoke against the test athlete: dry-run, skip-existing apply, replace-existing apply (in `full`)
