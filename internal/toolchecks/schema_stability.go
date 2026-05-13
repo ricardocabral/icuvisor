@@ -279,6 +279,7 @@ var (
 	_ tools.FitnessClient               = schemaCatalogClient{}
 	_ tools.WellnessClient              = schemaCatalogClient{}
 	_ tools.WellnessWriterClient        = schemaCatalogClient{}
+	_ tools.SportSettingsWriterClient   = schemaCatalogClient{}
 	_ tools.BestEffortsClient           = schemaCatalogClient{}
 	_ tools.PowerCurvesClient           = schemaCatalogClient{}
 	_ tools.ActivitiesClient            = schemaCatalogClient{}
@@ -311,6 +312,10 @@ func (schemaCatalogClient) ListWellness(context.Context, intervals.WellnessParam
 
 func (schemaCatalogClient) UpdateWellness(context.Context, intervals.WriteWellnessParams) (intervals.Wellness, error) {
 	return intervals.Wellness{}, nil
+}
+
+func (schemaCatalogClient) UpdateSportSettings(context.Context, intervals.WriteSportSettingsParams) (intervals.SportSettings, error) {
+	return intervals.SportSettings{}, nil
 }
 
 func (schemaCatalogClient) ListAthletePowerCurves(context.Context, intervals.CurveParams) (intervals.DataCurveSet, error) {
