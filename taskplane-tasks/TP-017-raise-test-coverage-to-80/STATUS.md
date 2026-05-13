@@ -1,10 +1,10 @@
 # TP-017: Raise Go test coverage to 80% — Status
 
-**Current Step:** Step 1: Pick high-value coverage targets
+**Current Step:** Step 2: Add focused intervals-package tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -26,7 +26,7 @@
 
 ### Step 1: Pick high-value coverage targets
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 > ⚠️ Hydrate: Expand checkboxes when entering this step based on the current per-function coverage report.
 
@@ -47,7 +47,7 @@ Selected targets:
 
 ### Step 2: Add focused intervals-package tests
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 > ⚠️ Hydrate: Expand with specific activity-stream and wellness scenarios after reading existing intervals test helpers.
 
@@ -96,6 +96,7 @@ Selected targets:
 
 | #   | Type | Step | Verdict | File |
 | --- | ---- | ---- | ------- | ---- |
+| 1 | plan | 1 | APPROVE | |
 
 ---
 
@@ -127,3 +128,4 @@ _None_
 Current observed baseline before staging this task: 76.9% total statement coverage from `go test ./... -coverprofile=coverage.out -covermode=atomic`.
 
 Step 1 per-function report (2026-05-13): overall baseline remains 76.9%. Highest-value behavior targets are the 0%-covered `internal/intervals/activity_streams.go` (`ActivityStream.UnmarshalJSON`, `Client.GetActivityStreams`) and `internal/intervals/wellness.go` (`Wellness.UnmarshalJSON`, `ListWellness`, native-provider helpers), followed by uncovered/low-covered `internal/tools/get_extended_metrics.go` optional-source and Strava-unavailable branches. `internal/toolchecks` remains a fallback if those tests do not reach 80%.
+| 2026-05-13 12:27 | Review R001 | plan Step 1: APPROVE |
