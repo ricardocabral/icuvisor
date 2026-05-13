@@ -1,7 +1,7 @@
 # TP-018-delete-mode-safety-gate: TP-018-delete-mode-safety-gate — Status
 
-**Current Step:** Step 5: Docs + CLAUDE.md update
-**Status:** 🟡 In Progress
+**Current Step:** Step 6: Verify
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-13
 **Review Level:** 0
 **Review Counter:** 0
@@ -55,10 +55,10 @@
 ---
 
 ### Step 6: Verify
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
-- [ ] Manual: start the binary in each of `safe`, `full`, `none`; confirm the registered-tool count in logs and via `tools/list` if a smoke harness exists
+- [x] `make test`, `make build`, `make lint`, `go test -race ./...`
+- [x] Manual: start the binary in each of `safe`, `full`, `none`; confirm the registered-tool count in logs and via `tools/list` if a smoke harness exists
 
 ---
 
