@@ -13,8 +13,12 @@ type fakeCustomItemsClient struct {
 	fakeProfileClient
 	items       []intervals.CustomItem
 	detail      intervals.CustomItem
+	createdItem intervals.CustomItem
+	updatedItem intervals.CustomItem
 	listCalls   int
 	detailCalls []string
+	created     []intervals.WriteCustomItemParams
+	updated     []intervals.WriteCustomItemParams
 }
 
 func (f *fakeCustomItemsClient) ListCustomItems(context.Context) ([]intervals.CustomItem, error) {
@@ -35,8 +39,8 @@ func TestCustomItemsRegistrationMetadata(t *testing.T) {
 	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	if len(registrar.tools) != 3 {
-		t.Fatalf("registered tool count = %d, want profile + custom item tools", len(registrar.tools))
+	if len(registrar.tools) != 5 {
+		t.Fatalf("registered tool count = %d, want profile + custom item read/write tools", len(registrar.tools))
 	}
 	listTool := findTool(t, registrar.tools, getCustomItemsName)
 	if !strings.Contains(listTool.Description, "id, name, and item_type") {

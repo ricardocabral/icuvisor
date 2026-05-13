@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 )
@@ -13,6 +14,28 @@ type WellnessParams struct {
 	Oldest string
 	Newest string
 	Fields []string
+}
+
+// WriteWellnessParams contains sparse writable wellness fields for one local date.
+type WriteWellnessParams struct {
+	Date         string
+	Feel         *int
+	Fatigue      *int
+	Mood         *int
+	SleepQuality *int
+	Motivation   *int
+	Soreness     *int
+	Stress       *int
+	Weight       *float64
+	BodyFat      *float64
+	Systolic     *int
+	Diastolic    *int
+	BloodGlucose *float64
+	Lactate      *float64
+	RestingHR    *int
+	HRV          *float64
+	Injury       *string
+	Locked       *bool
 }
 
 // Wellness contains typed intervals.icu wellness fields while preserving raw upstream fields.
@@ -46,7 +69,7 @@ type Wellness struct {
 	Stress                  *int     `json:"stress"`
 	Mood                    *int     `json:"mood"`
 	Motivation              *int     `json:"motivation"`
-	Injury                  *int     `json:"injury"`
+	Injury                  any      `json:"injury"`
 	SpO2                    *float64 `json:"spO2"`
 	Systolic                *int     `json:"systolic"`
 	Diastolic               *int     `json:"diastolic"`
@@ -110,6 +133,54 @@ func (c *Client) ListWellness(ctx context.Context, params WellnessParams) ([]Wel
 		return nil, fmt.Errorf("listing wellness: %w", err)
 	}
 	return rows, nil
+}
+
+// UpdateWellness updates sparse manual wellness fields for one athlete-local date.
+func (c *Client) UpdateWellness(ctx context.Context, params WriteWellnessParams) (Wellness, error) {
+	date := strings.TrimSpace(params.Date)
+	if date == "" {
+		return Wellness{}, fmt.Errorf("updating wellness: date is required")
+	}
+	body, err := writeWellnessBody(params)
+	if err != nil {
+		return Wellness{}, err
+	}
+	var row Wellness
+	if err := c.doJSONBody(ctx, http.MethodPut, body, &row, "athlete", c.athleteID, "wellness", date); err != nil {
+		return Wellness{}, fmt.Errorf("updating wellness %s: %w", date, err)
+	}
+	return row, nil
+}
+
+func writeWellnessBody(params WriteWellnessParams) (map[string]any, error) {
+	body := map[string]any{}
+	setSparse(body, "feel", params.Feel)
+	setSparse(body, "fatigue", params.Fatigue)
+	setSparse(body, "mood", params.Mood)
+	setSparse(body, "sleepQuality", params.SleepQuality)
+	setSparse(body, "motivation", params.Motivation)
+	setSparse(body, "soreness", params.Soreness)
+	setSparse(body, "stress", params.Stress)
+	setSparse(body, "weight", params.Weight)
+	setSparse(body, "bodyFat", params.BodyFat)
+	setSparse(body, "systolic", params.Systolic)
+	setSparse(body, "diastolic", params.Diastolic)
+	setSparse(body, "bloodGlucose", params.BloodGlucose)
+	setSparse(body, "lactate", params.Lactate)
+	setSparse(body, "restingHR", params.RestingHR)
+	setSparse(body, "hrv", params.HRV)
+	setSparse(body, "injury", params.Injury)
+	setSparse(body, "locked", params.Locked)
+	if len(body) == 0 {
+		return nil, fmt.Errorf("updating wellness: at least one field is required")
+	}
+	return body, nil
+}
+
+func setSparse[T any](body map[string]any, key string, value *T) {
+	if value != nil {
+		body[key] = *value
+	}
 }
 
 func extractWellnessNative(raw map[string]any) (map[string]map[string]any, []string) {

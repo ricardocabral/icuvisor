@@ -131,6 +131,46 @@ func TestProtocolFiltersToolsByCapability(t *testing.T) {
 	}
 }
 
+type deleteWorkoutRegistry struct{}
+
+func (deleteWorkoutRegistry) Register(ctx context.Context, registrar tools.Registrar) error {
+	return registrar.AddTool(capabilityTestTool("delete_workout", tools.RequirementDelete))
+}
+
+func TestProtocolFiltersDeleteWorkoutByCapability(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		mode      safety.Mode
+		wantNames []string
+	}{
+		{name: "full", mode: safety.ModeFull, wantNames: []string{"delete_workout"}},
+		{name: "safe", mode: safety.ModeSafe, wantNames: nil},
+		{name: "none", mode: safety.ModeNone, wantNames: nil},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, session, cleanup := connectTestClientWithOptions(t, Options{Registry: deleteWorkoutRegistry{}, Capability: safety.NewCapability(tc.mode)})
+			defer cleanup()
+
+			result, err := session.ListTools(ctx, nil)
+			if err != nil {
+				t.Fatalf("ListTools() error = %v", err)
+			}
+			got := make([]string, 0, len(result.Tools))
+			for _, tool := range result.Tools {
+				got = append(got, tool.Name)
+			}
+			if strings.Join(got, ",") != strings.Join(tc.wantNames, ",") {
+				t.Fatalf("tools/list = %v, want %v", got, tc.wantNames)
+			}
+		})
+	}
+}
+
 func TestProtocolCallToolDispatch(t *testing.T) {
 	t.Parallel()
 

@@ -1,0 +1,40 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "description": {
+      "description": "Optional replacement free-text workout description. Omit to leave unchanged; mutually exclusive with workout_doc. Empty strings are rejected to avoid accidentally clearing structured workout content.",
+      "type": "string"
+    },
+    "folder_id": {
+      "description": "Optional replacement intervals.icu workout-library folder or plan ID. Omit to leave unchanged; an explicit empty string moves the workout to the top level when upstream supports it.",
+      "type": "string"
+    },
+    "name": {
+      "description": "Optional replacement workout-library template name/title. Omit to leave unchanged.",
+      "type": "string"
+    },
+    "sport": {
+      "description": "Optional replacement upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Omit to leave unchanged.",
+      "type": "string"
+    },
+    "tags": {
+      "description": "Optional replacement workout-library tags. Omit to leave unchanged; provide the full desired tag list when appending a tag.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "workout_doc": {
+      "description": "Optional replacement structured WorkoutDoc. The server serializes this to the intervals.icu workout-description DSL string and never sends workout_doc upstream; an explicit empty steps list serializes to an empty DSL to clear structured content intentionally.",
+      "type": "object"
+    },
+    "workout_id": {
+      "description": "Required upstream workout-library template ID to update. Surrounding whitespace is trimmed.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "workout_id"
+  ],
+  "type": "object"
+}

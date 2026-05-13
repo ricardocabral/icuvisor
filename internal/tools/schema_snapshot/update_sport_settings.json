@@ -1,0 +1,108 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "effective_date": {
+      "description": "Required athlete-local effective date as YYYY-MM-DD; used as the oldest date for upstream sport-setting recompute.",
+      "type": "string"
+    },
+    "ftp": {
+      "description": "Functional Threshold Power in watts for the selected sport.",
+      "minimum": 1,
+      "type": "integer"
+    },
+    "sport": {
+      "description": "Sport setting to update, matching intervals.icu sport type (for example Ride, Run, Swim).",
+      "enum": [
+        "Ride",
+        "Run",
+        "Swim",
+        "VirtualRide",
+        "Walk",
+        "Hike",
+        "Rowing",
+        "WeightTraining",
+        "AlpineSki",
+        "NordicSki",
+        "Other"
+      ],
+      "type": "string"
+    },
+    "threshold_hr": {
+      "description": "Threshold heart rate in bpm for the selected sport.",
+      "minimum": 1,
+      "type": "integer"
+    },
+    "threshold_pace": {
+      "additionalProperties": false,
+      "description": "Threshold pace with an explicit unit; seconds_per_km is 4:15/km as 255.",
+      "properties": {
+        "unit": {
+          "description": "Unit for threshold_pace value.",
+          "enum": [
+            "seconds_per_km",
+            "seconds_per_mile",
+            "seconds_per_100m",
+            "seconds_per_500m",
+            "minutes_per_km",
+            "minutes_per_mile"
+          ],
+          "type": "string"
+        },
+        "value": {
+          "description": "Threshold pace numeric value in the provided unit.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ],
+      "type": "object"
+    },
+    "zones": {
+      "description": "Optional destructive replacement zone definitions. Supplying zones overwrites prior power/hr/pace zone definitions for this sport and is rejected unless ICUVISOR_DELETE_MODE=full.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "boundaries": {
+            "description": "Ordered zone boundary values: watts for power, bpm for hr, seconds in the sport pace unit for pace.",
+            "items": {
+              "minimum": 0,
+              "type": "number"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "kind": {
+            "description": "Zone family to overwrite.",
+            "enum": [
+              "power",
+              "hr",
+              "pace"
+            ],
+            "type": "string"
+          },
+          "names": {
+            "description": "Optional zone names; when supplied, length must match boundaries.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "boundaries"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "sport",
+    "effective_date"
+  ],
+  "type": "object"
+}

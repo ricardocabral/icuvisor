@@ -1,0 +1,109 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "bloodGlucose": {
+      "description": "Manual blood glucose in the upstream intervals.icu wellness unit.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "bodyFat": {
+      "description": "Manual body fat percentage, 0-100%.",
+      "maximum": 100,
+      "minimum": 0,
+      "type": "number"
+    },
+    "date": {
+      "description": "Required athlete-local wellness date as YYYY-MM-DD.",
+      "type": "string"
+    },
+    "diastolic": {
+      "description": "Manual diastolic blood pressure in mmHg.",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "fatigue": {
+      "description": "1-5 (athlete-reported fatigue); fatigue scale.",
+      "maximum": 5,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "feel": {
+      "description": "1-5 (athlete-reported feel); feel scale.",
+      "maximum": 5,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "hrv": {
+      "description": "Manual HRV in milliseconds rMSSD.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include the raw upstream wellness row under wellness.full and keep null fields.",
+      "type": "boolean"
+    },
+    "injury": {
+      "description": "Optional free-text injury or limitation note. Preserved verbatim.",
+      "type": "string"
+    },
+    "lactate": {
+      "description": "Manual blood lactate in mmol/L.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "locked": {
+      "description": "When true, ask upstream to lock the wellness row against device-sync overwrites.",
+      "type": "boolean"
+    },
+    "mood": {
+      "description": "1-5 (athlete-reported mood); mood scale.",
+      "maximum": 5,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "motivation": {
+      "description": "1-5 (athlete-reported motivation); motivation scale.",
+      "maximum": 5,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "restingHR": {
+      "description": "Manual resting heart rate in bpm.",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "sleepQuality": {
+      "description": "1-4 (athlete-entered, 1=poor 4=great); sleepQuality scale.",
+      "maximum": 4,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "soreness": {
+      "description": "1-5 (athlete-reported soreness); soreness scale.",
+      "maximum": 5,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "stress": {
+      "description": "1-5 (athlete-reported stress); stress scale.",
+      "maximum": 5,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "systolic": {
+      "description": "Manual systolic blood pressure in mmHg.",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "weight": {
+      "description": "Manual body weight in the athlete's preferred weight unit from get_athlete_profile (_meta.units / units.weight); converted to upstream kg at the API boundary.",
+      "minimum": 0,
+      "type": "number"
+    }
+  },
+  "required": [
+    "date"
+  ],
+  "type": "object"
+}

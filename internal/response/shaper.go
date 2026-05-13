@@ -24,7 +24,6 @@ func init() {
 var defaultScaleLabels = map[string]string{
 	"feel":         "1-5 (athlete-reported feel)",
 	"fatigue":      "1-5 (athlete-reported fatigue)",
-	"injury":       "1-5 (athlete-reported injury/limitation)",
 	"mood":         "1-5 (athlete-reported mood)",
 	"motivation":   "1-5 (athlete-reported motivation)",
 	"rpe":          "1-10 (rating of perceived exertion)",

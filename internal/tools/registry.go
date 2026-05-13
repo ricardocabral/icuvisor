@@ -82,6 +82,16 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if wellnessWriterClient, ok := r.profileClient.(WellnessWriterClient); ok {
+		if err := registrar.AddTool(newUpdateWellnessTool(wellnessWriterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if sportSettingsWriterClient, ok := r.profileClient.(SportSettingsWriterClient); ok {
+		if err := registrar.AddTool(newUpdateSportSettingsTool(sportSettingsWriterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata, r.capability)); err != nil {
+			return err
+		}
+	}
 	if bestEffortsClient, ok := r.profileClient.(BestEffortsClient); ok {
 		if err := registrar.AddTool(newGetBestEffortsTool(bestEffortsClient, r.version, r.debugMetadata)); err != nil {
 			return err
@@ -107,6 +117,18 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if eventWriterClient, ok := r.profileClient.(EventWriterClient); ok {
+		if err := registrar.AddTool(newAddOrUpdateEventTool(eventWriterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if linkClient, ok := r.profileClient.(ActivityEventLinkClient); ok {
+		activityClient, _ := r.profileClient.(ActivityDetailsClient)
+		eventClient, _ := r.profileClient.(EventByIDClient)
+		if err := registrar.AddTool(newLinkActivityToEventTool(linkClient, activityClient, eventClient, r.version, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if trainingPlanClient, ok := r.profileClient.(TrainingPlanClient); ok {
 		if err := registrar.AddTool(newGetTrainingPlanTool(trainingPlanClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
@@ -120,11 +142,38 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
-	if customItemsClient, ok := r.profileClient.(CustomItemsClient); ok {
+	if workoutCreatorClient, ok := r.profileClient.(WorkoutCreatorClient); ok {
+		if err := registrar.AddTool(newCreateWorkoutTool(workoutCreatorClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if workoutUpdaterClient, ok := r.profileClient.(WorkoutUpdaterClient); ok {
+		if err := registrar.AddTool(newUpdateWorkoutTool(workoutUpdaterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if workoutDeleterClient, ok := r.profileClient.(WorkoutDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteWorkoutTool(workoutDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	var customItemsClient CustomItemsClient
+	if client, ok := r.profileClient.(CustomItemsClient); ok {
+		customItemsClient = client
 		if err := registrar.AddTool(newGetCustomItemsTool(customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
 		}
 		if err := registrar.AddTool(newGetCustomItemByIDTool(customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if customItemCreatorClient, ok := r.profileClient.(CustomItemCreatorClient); ok {
+		if err := registrar.AddTool(newCreateCustomItemTool(customItemCreatorClient, customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if customItemUpdaterClient, ok := r.profileClient.(CustomItemUpdaterClient); ok {
+		if err := registrar.AddTool(newUpdateCustomItemTool(customItemUpdaterClient, customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
 		}
 	}
@@ -154,6 +203,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	if messagesClient, ok := r.profileClient.(ActivityMessagesClient); ok {
 		detailsClient, _ := r.profileClient.(ActivityDetailsClient)
 		if err := registrar.AddTool(newGetActivityMessagesTool(messagesClient, r.profileClient, detailsClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if messageWriterClient, ok := r.profileClient.(ActivityMessageWriterClient); ok {
+		if err := registrar.AddTool(newAddActivityMessageTool(messageWriterClient, r.profileClient, r.version, r.debugMetadata)); err != nil {
 			return err
 		}
 	}

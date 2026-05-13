@@ -1,0 +1,13 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "workout_id": {
+      "description": "Required upstream workout-library template ID to delete. This destructive operation has no confirm argument; the tool is registered only when ICUVISOR_DELETE_MODE=full.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "workout_id"
+  ],
+  "type": "object"
+}

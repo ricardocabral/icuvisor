@@ -4,8 +4,29 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 )
+
+// WriteCustomItemParams contains writable custom-item fields.
+type WriteCustomItemParams struct {
+	ItemID         string
+	ItemType       string
+	Name           string
+	NameSet        bool
+	Visibility     *string
+	VisibilitySet  bool
+	Description    *string
+	DescriptionSet bool
+	Image          *string
+	ImageSet       bool
+	Index          *int
+	IndexSet       bool
+	HideScript     *bool
+	HideScriptSet  bool
+	Content        map[string]any
+	ContentSet     bool
+}
 
 // CustomItem contains an intervals.icu custom chart/field/zones item and preserves raw upstream fields.
 type CustomItem struct {
@@ -65,4 +86,109 @@ func (c *Client) GetCustomItem(ctx context.Context, itemID string) (CustomItem, 
 		return CustomItem{}, fmt.Errorf("getting custom item %s: %w", itemID, err)
 	}
 	return item, nil
+}
+
+// CreateCustomItem creates a custom item for the configured athlete.
+func (c *Client) CreateCustomItem(ctx context.Context, params WriteCustomItemParams) (CustomItem, error) {
+	body, err := writeCustomItemBody(params, false)
+	if err != nil {
+		return CustomItem{}, err
+	}
+	var item CustomItem
+	if err := c.doJSONBody(ctx, http.MethodPost, body, &item, "athlete", c.athleteID, "custom-item"); err != nil {
+		return CustomItem{}, fmt.Errorf("creating custom item: %w", err)
+	}
+	return item, nil
+}
+
+// UpdateCustomItem sparsely updates a custom item for the configured athlete.
+func (c *Client) UpdateCustomItem(ctx context.Context, params WriteCustomItemParams) (CustomItem, error) {
+	itemID := strings.TrimSpace(params.ItemID)
+	if itemID == "" {
+		return CustomItem{}, fmt.Errorf("updating custom item: item ID is required")
+	}
+	body, err := writeCustomItemBody(params, true)
+	if err != nil {
+		return CustomItem{}, err
+	}
+	var item CustomItem
+	if err := c.doJSONBody(ctx, http.MethodPut, body, &item, "athlete", c.athleteID, "custom-item", itemID); err != nil {
+		return CustomItem{}, fmt.Errorf("updating custom item %s: %w", itemID, err)
+	}
+	return item, nil
+}
+
+func writeCustomItemBody(params WriteCustomItemParams, allowSparse bool) (map[string]any, error) {
+	body := map[string]any{}
+	itemType := strings.TrimSpace(params.ItemType)
+	name := strings.TrimSpace(params.Name)
+	if !allowSparse {
+		if itemType == "" {
+			return nil, fmt.Errorf("writing custom item: item_type is required")
+		}
+		if name == "" {
+			return nil, fmt.Errorf("writing custom item: name is required")
+		}
+		if params.Content == nil {
+			return nil, fmt.Errorf("writing custom item: content is required")
+		}
+		body["type"] = itemType
+		body["name"] = name
+		body["content"] = cloneWriteCustomItemMap(params.Content)
+	} else {
+		if params.NameSet {
+			if name == "" {
+				return nil, fmt.Errorf("writing custom item: name cannot be empty")
+			}
+			body["name"] = name
+		}
+		if params.ContentSet {
+			if params.Content == nil {
+				return nil, fmt.Errorf("writing custom item: content cannot be null")
+			}
+			body["content"] = cloneWriteCustomItemMap(params.Content)
+		}
+	}
+	if params.VisibilitySet {
+		if params.Visibility == nil {
+			return nil, fmt.Errorf("writing custom item: visibility cannot be null")
+		}
+		body["visibility"] = strings.TrimSpace(*params.Visibility)
+	}
+	if params.DescriptionSet {
+		if params.Description == nil {
+			return nil, fmt.Errorf("writing custom item: description cannot be null")
+		}
+		body["description"] = *params.Description
+	}
+	if params.ImageSet {
+		if params.Image == nil {
+			return nil, fmt.Errorf("writing custom item: image cannot be null")
+		}
+		body["image"] = strings.TrimSpace(*params.Image)
+	}
+	if params.IndexSet {
+		if params.Index == nil {
+			return nil, fmt.Errorf("writing custom item: index cannot be null")
+		}
+		body["index"] = *params.Index
+	}
+	if params.HideScriptSet {
+		if params.HideScript == nil {
+			return nil, fmt.Errorf("writing custom item: hide_script cannot be null")
+		}
+		body["hide_script"] = *params.HideScript
+	}
+	if len(body) == 0 {
+		return nil, fmt.Errorf("writing custom item: at least one field is required")
+	}
+	return body, nil
+}
+
+func cloneWriteCustomItemMap(in map[string]any) map[string]any {
+	out := make(map[string]any, len(in))
+	for key, value := range in {
+		out[key] = value
+	}
+	return out
 }
