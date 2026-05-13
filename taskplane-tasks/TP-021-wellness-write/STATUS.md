@@ -1,6 +1,6 @@
 # TP-021-wellness-write: TP-021-wellness-write — Status
 
-**Current Step:** Step 3: Partial-update semantics
+**Current Step:** Step 4: Response shape
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -40,10 +40,10 @@
 ---
 
 ### Step 4: Response shape
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Echo the updated wellness row through the read shape (TP-011 helpers): scale labels, provenance for any bridged fields the row still carries, `_meta.delete_mode`
-- [ ] Strip nulls; surface `_meta.fields_present` / `missing_fields`
+- [x] Echo the updated wellness row through the read shape (TP-011 helpers): scale labels, provenance for any bridged fields the row still carries, `_meta.delete_mode`
+- [x] Strip nulls; surface `_meta.fields_present` / `missing_fields`
 
 ---
 

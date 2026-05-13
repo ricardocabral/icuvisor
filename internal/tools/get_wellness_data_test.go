@@ -97,7 +97,7 @@ func TestGetWellnessDataFixtures(t *testing.T) {
 					t.Fatalf("manual-only row has provenance: %+v", meta)
 				}
 				scales := meta["scales"].(map[string]any)
-				for _, field := range []string{"feel", "sleepQuality", "fatigue", "soreness", "stress", "mood", "motivation", "injury"} {
+				for _, field := range []string{"feel", "sleepQuality", "fatigue", "soreness", "stress", "mood", "motivation"} {
 					if scales[field] == "" {
 						t.Fatalf("scales missing %s: %+v", field, scales)
 					}

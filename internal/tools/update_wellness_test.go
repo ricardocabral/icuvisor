@@ -128,6 +128,54 @@ func TestUpdateWellnessLockedFollowUpSurfacesLockStateInMeta(t *testing.T) {
 	}
 }
 
+func TestUpdateWellnessResponseUsesWellnessReadShape(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric", Timezone: "UTC"}},
+		row:               decodeWellnessRow(t, `{"id":"2026-05-01","feel":4,"sleepScore":88,"polar_sleep_score":90,"bridge_fetched_at":"2026-05-01T01:00:00Z","injury":"left knee","weight":null,"locked":false}`),
+	}
+	tool := newUpdateWellnessTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-05-01","feel":4,"injury":"left knee"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	row := resultMap(t, result)["wellness"].(map[string]any)
+	if row["injury"] != "left knee" || row["weight"] != nil {
+		t.Fatalf("wellness row = %#v, want injury text and stripped null weight", row)
+	}
+	meta := row["_meta"].(map[string]any)
+	scales := meta["scales"].(map[string]any)
+	if scales["feel"] == "" || scales["sleepScore"] == "" || scales["injury"] != nil {
+		t.Fatalf("scales = %#v, want feel/sleepScore only for these fields", scales)
+	}
+	if meta["delete_mode"] != "safe" {
+		t.Fatalf("row meta = %#v, want delete_mode", meta)
+	}
+	if !containsAny(meta["missing_fields"].([]any), "weight") || !containsAny(meta["fields_present"].([]any), "injury") {
+		t.Fatalf("row meta = %#v, want missing/present field metadata", meta)
+	}
+	prov := meta["provenance"].(map[string]any)["sleepScore"].(map[string]any)
+	if prov["source"] != "polar" || prov["native_scale"] != "1-100 Polar sleep_score" {
+		t.Fatalf("sleepScore provenance = %#v", prov)
+	}
+}
+
+func TestUpdateWellnessRegistrationMetadata(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessWriterClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{Timezone: "UTC"}}}
+	registrar := &collectingRegistrar{}
+	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+	tool := findTool(t, registrar.tools, updateWellnessName)
+	if tool.Requirement != RequirementWrite {
+		t.Fatalf("requirement = %q, want write", tool.Requirement)
+	}
+}
+
 func TestUpdateWellnessConvertsPreferredWeightToUpstreamKilograms(t *testing.T) {
 	t.Parallel()
 

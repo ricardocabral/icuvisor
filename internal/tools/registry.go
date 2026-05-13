@@ -82,6 +82,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if wellnessWriterClient, ok := r.profileClient.(WellnessWriterClient); ok {
+		if err := registrar.AddTool(newUpdateWellnessTool(wellnessWriterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if bestEffortsClient, ok := r.profileClient.(BestEffortsClient); ok {
 		if err := registrar.AddTool(newGetBestEffortsTool(bestEffortsClient, r.version, r.debugMetadata)); err != nil {
 			return err

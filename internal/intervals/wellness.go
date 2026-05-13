@@ -69,7 +69,7 @@ type Wellness struct {
 	Stress                  *int     `json:"stress"`
 	Mood                    *int     `json:"mood"`
 	Motivation              *int     `json:"motivation"`
-	Injury                  *int     `json:"injury"`
+	Injury                  any      `json:"injury"`
 	SpO2                    *float64 `json:"spO2"`
 	Systolic                *int     `json:"systolic"`
 	Diastolic               *int     `json:"diastolic"`
