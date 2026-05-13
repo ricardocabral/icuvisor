@@ -1,7 +1,7 @@
 # TP-029-v03-dogfood-validation: TP-029-v03-dogfood-validation — Status
 
 **Current Step:** Step 6: Sign-off
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-13
 **Review Level:** 0
 **Review Counter:** 0
@@ -59,11 +59,11 @@
 ---
 
 ### Step 6: Sign-off
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Tick the v0.3 dogfood item in `ROADMAP.md`
-- [ ] `make test`, `make build`, `make lint` if any code/doc changed
-- [ ] Confirm no test-athlete API key or raw account data is committed
+- [x] Tick the v0.3 dogfood item in `ROADMAP.md`
+- [x] `make test`, `make build`, `make lint` if any code/doc changed
+- [x] Confirm no test-athlete API key or raw account data is committed
 
 ---
 
@@ -118,3 +118,6 @@
 - Step 5: Findings doc now includes aggregate per-tool pass/fail, round-trip evidence, observed `_meta`, latency, and an explicit byte/token caveat because Codex did not expose raw per-tool response sizes and raw payloads were not persisted.
 - Step 5: Created `v0.3-followup` issues #6 through #10 for the dogfood failures: NOTE create, wellness subjective write, missing `spO2` schema field, workout create, and custom-item create validation.
 - Step 5: Classified #6-#10 as launch-blocking for v0.4 entry; disposable fixture gaps for activity/gear/training-plan paths and the byte-count instrumentation gap are follow-up/seeding requirements rather than safety-launch blockers.
+- Step 6: ROADMAP v0.3 dogfood checkbox ticked after the dedicated test-athlete run and triage were documented.
+- Step 6: Verification passed: `make test`, `make build`, and `make lint`.
+- Step 6: Secret scan passed: `git grep` found no `.env-dev` API key or full raw/normalized athlete ID in tracked files, `.env-dev` remains ignored/untracked in the worktree, and only the redacted prefix appears in STATUS notes.

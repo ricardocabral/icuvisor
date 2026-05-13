@@ -54,7 +54,7 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 - [ ] `apply_training_plan`.
 - [ ] `input_examples` on complex write tools (`add_or_update_event`, `create_workout`, `create_custom_item`, `apply_training_plan`).
 - [ ] Adversarial test suite: prompts that attempt to talk the server into deleting in `safe` mode must fail by tool-not-found, not by user re-prompt loop.
-- [ ] Dogfooded against a dedicated test athlete account; no production athletes yet.
+- [x] Dogfooded against a dedicated test athlete account; no production athletes yet.
 
 ## v0.4 — Token efficiency and MCP primitives
 
