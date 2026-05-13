@@ -45,7 +45,7 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 
 **Goal:** ship the write path in a way that an LLM cannot be social-engineered (or self-talked) into destroying data. Validate the env-var safety model end-to-end.
 
-- [ ] `ICUVISOR_DELETE_MODE` env var (`safe` default / `full` / `none`) — destructive tools are not *registered* in modes that forbid them. No per-call `confirm: true` arguments anywhere in the catalog.
+- [ ] `ICUVISOR_DELETE_MODE` env var (`safe` default / `full` / `none`) — destructive tools are not _registered_ in modes that forbid them. No per-call `confirm: true` arguments anywhere in the catalog.
 - [ ] `workout_doc` write-path serializer: structured steps round-trip back to the description-string DSL on upload (intervals.icu rejects structured `workout_doc` on writes — mvilanova #56). Read → modify → write → read fidelity locked by golden-file tests.
 - [ ] Write tools: `add_or_update_event` (free-text `description` preserved verbatim, `workout_doc` for structured steps, `tags` supported), `add_activity_message`, `link_activity_to_event` (manual pairing for compliance scoring when auto-pair misses — forum #97), `update_wellness` (full writable field set incl. `injury`, blood pressure, blood glucose, lactate, body fat, `locked`), `update_sport_settings` (FTP, threshold HR/pace, zones; zone-definition overwrites gated by `ICUVISOR_DELETE_MODE` — forum #35).
 - [ ] Workout-library CRUD: `create_workout`, `update_workout`, `delete_workout` (delete gated by `ICUVISOR_DELETE_MODE`).
