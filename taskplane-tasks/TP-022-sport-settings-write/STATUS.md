@@ -1,6 +1,6 @@
 # TP-022-sport-settings-write: TP-022-sport-settings-write — Status
 
-**Current Step:** Step 2: Threshold-only path (ungated)
+**Current Step:** Step 3: Zone-definition path (`CanDelete` gated)
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -29,11 +29,11 @@
 ---
 
 ### Step 3: Zone-definition path (`CanDelete` gated)
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] If `zones[]` is present, require `CanDelete()` — otherwise reject with a typed error explaining the gate (the tool is still registered in `safe`, but the destructive *argument* is rejected at the schema/validation layer)
-- [ ] Document in the schema description that supplying `zones` overwrites prior zone definitions and is therefore gated
-- [ ] Tests: `safe` mode rejects `zones`, `full` mode applies them
+- [x] If `zones[]` is present, require `CanDelete()` — otherwise reject with a typed error explaining the gate (the tool is still registered in `safe`, but the destructive *argument* is rejected at the schema/validation layer)
+- [x] Document in the schema description that supplying `zones` overwrites prior zone definitions and is therefore gated
+- [x] Tests: `safe` mode rejects `zones`, `full` mode applies them
 
 ---
 

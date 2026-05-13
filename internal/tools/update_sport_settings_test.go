@@ -143,6 +143,9 @@ func TestUpdateSportSettingsSafeModeRejectsZonesBeforeWrite(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "zones overwrite prior") {
 		t.Fatalf("Handler() error = %v, want zone gate user error", err)
 	}
+	if message, ok := PublicErrorMessage(err); !ok || !strings.Contains(message, "ICUVISOR_DELETE_MODE=full") {
+		t.Fatalf("PublicErrorMessage() = %q, %v; want typed public gate message", message, ok)
+	}
 	if len(client.calls) != 0 {
 		t.Fatalf("write calls = %#v, want none in safe mode", client.calls)
 	}
