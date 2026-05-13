@@ -35,7 +35,7 @@ func TestAddOrUpdateEventCreatePreservesFreeTextTagsAndReadShape(t *testing.T) {
 	}
 	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
 
-	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-06-01","category":"WORKOUT","name":"Tempo","description":"  Coach note\nKeep this verbatim.  ","tags":["tempo","coach"],"target_load":75,"distance_meters":30000,"moving_time_seconds":3600}`)})
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-06-01","category":"WORKOUT","type":"Ride","name":"Tempo","description":"  Coach note\nKeep this verbatim.  ","tags":["tempo","coach"],"target_load":75,"distance_meters":30000,"moving_time_seconds":3600}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
@@ -43,7 +43,7 @@ func TestAddOrUpdateEventCreatePreservesFreeTextTagsAndReadShape(t *testing.T) {
 		t.Fatalf("write calls = %d, want 1", len(client.calls))
 	}
 	call := client.calls[0]
-	if call.EventID != "" || call.Date != "2026-06-01" || call.Category != "WORKOUT" || call.Name != "Tempo" {
+	if call.EventID != "" || call.Date != "2026-06-01" || call.Category != "WORKOUT" || call.Type != "Ride" || call.Name != "Tempo" {
 		t.Fatalf("write params = %#v, want create params", call)
 	}
 	if call.Description == nil || *call.Description != description {
@@ -107,7 +107,7 @@ func TestAddOrUpdateEventSerializesWorkoutDocGoldenFixture(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal structured fixture: %v", err)
 	}
-	rawArgs := json.RawMessage(`{"date":"2026-08-01","category":"WORKOUT","name":"Golden","workout_doc":` + string(rawDoc) + `}`)
+	rawArgs := json.RawMessage(`{"date":"2026-08-01","category":"WORKOUT","type":"Ride","name":"Golden","workout_doc":` + string(rawDoc) + `}`)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: rawArgs})
 	if err != nil {
@@ -135,8 +135,9 @@ func TestAddOrUpdateEventRejectsBadArguments(t *testing.T) {
 	for _, raw := range []string{
 		`{"date":"2026-01-01T00:00:00Z","category":"WORKOUT"}`,
 		`{"date":"2026-01-01","category":""}`,
-		`{"date":"2026-01-01","category":"WORKOUT","moving_time_seconds":-1}`,
-		`{"date":"2026-01-01","category":"WORKOUT","description":"note","workout_doc":{"steps":[{"duration":600}]}}`,
+		`{"date":"2026-01-01","category":"WORKOUT"}`,
+		`{"date":"2026-01-01","category":"WORKOUT","type":"Ride","moving_time_seconds":-1}`,
+		`{"date":"2026-01-01","category":"WORKOUT","type":"Ride","description":"note","workout_doc":{"steps":[{"duration":600}]}}`,
 	} {
 		if _, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(raw)}); err == nil {
 			t.Fatalf("Handler(%s) error = nil, want validation error", raw)
@@ -160,7 +161,7 @@ func TestAddOrUpdateEventRegistrationMetadata(t *testing.T) {
 		t.Fatalf("description = %q, want non-destructive language without confirm", tool.Description)
 	}
 	props := tool.InputSchema.(map[string]any)["properties"].(map[string]any)
-	for _, name := range []string{"date", "event_id", "category", "name", "description", "workout_doc", "tags", "target_load", "distance_meters", "moving_time_seconds", "elapsed_time_seconds"} {
+	for _, name := range []string{"date", "event_id", "category", "type", "name", "description", "workout_doc", "tags", "target_load", "distance_meters", "moving_time_seconds", "elapsed_time_seconds"} {
 		if _, ok := props[name]; !ok {
 			t.Fatalf("schema missing %s", name)
 		}

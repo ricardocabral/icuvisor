@@ -28,6 +28,7 @@ type WriteEventParams struct {
 	EventID            string
 	Date               string
 	Category           string
+	Type               string
 	Name               string
 	Description        *string
 	Tags               []string
@@ -132,25 +133,27 @@ func (c *Client) AddOrUpdateEvent(ctx context.Context, params WriteEventParams) 
 	if err != nil {
 		return Event{}, err
 	}
-	pathParts := []string{"athlete", c.athleteID, "events"}
-	method := http.MethodPost
 	if eventID := strings.TrimSpace(params.EventID); eventID != "" {
-		pathParts = append(pathParts, eventID)
-		method = http.MethodPut
-	}
-	var event Event
-	if err := c.doJSONBody(ctx, method, body, &event, pathParts...); err != nil {
-		if params.EventID != "" {
+		var event Event
+		if err := c.doJSONBody(ctx, http.MethodPut, body, &event, "athlete", c.athleteID, "events", eventID); err != nil {
 			return Event{}, fmt.Errorf("updating event %s: %w", params.EventID, err)
 		}
+		return event, nil
+	}
+	var events []Event
+	if err := c.doJSONBody(ctx, http.MethodPost, []writeEventPayload{body}, &events, "athlete", c.athleteID, "events", "bulk"); err != nil {
 		return Event{}, fmt.Errorf("creating event: %w", err)
 	}
-	return event, nil
+	if len(events) == 0 {
+		return Event{}, fmt.Errorf("creating event: empty upstream response")
+	}
+	return events[0], nil
 }
 
 type writeEventPayload struct {
 	StartDateLocal    string   `json:"start_date_local"`
 	Category          string   `json:"category"`
+	Type              string   `json:"type,omitempty"`
 	Name              string   `json:"name,omitempty"`
 	Description       *string  `json:"description,omitempty"`
 	Tags              []string `json:"tags,omitempty"`
@@ -170,8 +173,9 @@ func writeEventBody(params WriteEventParams) (writeEventPayload, error) {
 		return writeEventPayload{}, fmt.Errorf("writing event: category is required")
 	}
 	return writeEventPayload{
-		StartDateLocal:    date,
+		StartDateLocal:    writeEventStartDateLocal(date, category),
 		Category:          category,
+		Type:              strings.TrimSpace(params.Type),
 		Name:              strings.TrimSpace(params.Name),
 		Description:       params.Description,
 		Tags:              append([]string(nil), params.Tags...),
@@ -180,6 +184,13 @@ func writeEventBody(params WriteEventParams) (writeEventPayload, error) {
 		TimeTarget:        params.MovingTimeSeconds,
 		ElapsedTimeTarget: params.ElapsedTimeSeconds,
 	}, nil
+}
+
+func writeEventStartDateLocal(date string, category string) string {
+	if strings.EqualFold(strings.TrimSpace(category), "WORKOUT") && len(date) == len("2006-01-02") {
+		return date + "T00:00:00"
+	}
+	return date
 }
 
 func (c *Client) doJSONBody(ctx context.Context, method string, body any, out any, pathParts ...string) error {

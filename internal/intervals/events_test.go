@@ -184,28 +184,28 @@ func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
 	requests := make([]struct {
 		method string
 		path   string
-		body   map[string]any
+		body   any
 	}, 0, 2)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Fatalf("read body: %v", err)
 		}
-		var decoded map[string]any
+		var decoded any
 		if err := json.Unmarshal(body, &decoded); err != nil {
 			t.Fatalf("decode body: %v", err)
 		}
 		requests = append(requests, struct {
 			method string
 			path   string
-			body   map[string]any
+			body   any
 		}{method: r.Method, path: r.URL.Path, body: decoded})
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method == http.MethodPut {
 			_, _ = w.Write([]byte(`{"id":"evt-9","category":"WORKOUT","start_date_local":"2026-06-02"}`))
 			return
 		}
-		_, _ = w.Write([]byte(`{"id":"evt-8","category":"WORKOUT","start_date_local":"2026-06-01"}`))
+		_, _ = w.Write([]byte(`[{"id":"evt-8","category":"WORKOUT","type":"Ride","start_date_local":"2026-06-01T00:00:00"}]`))
 	}))
 	defer server.Close()
 
@@ -215,11 +215,11 @@ func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
 	distance := 30000.0
 	moving := 3600
 	elapsed := 3900
-	created, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{Date: "2026-06-01", Category: "WORKOUT", Name: "Tempo", Description: &description, Tags: []string{"tempo", "coach"}, TargetLoad: &targetLoad, DistanceMeters: &distance, MovingTimeSeconds: &moving, ElapsedTimeSeconds: &elapsed})
+	created, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{Date: "2026-06-01", Category: "WORKOUT", Type: "Ride", Name: "Tempo", Description: &description, Tags: []string{"tempo", "coach"}, TargetLoad: &targetLoad, DistanceMeters: &distance, MovingTimeSeconds: &moving, ElapsedTimeSeconds: &elapsed})
 	if err != nil {
 		t.Fatalf("AddOrUpdateEvent(create) error = %v", err)
 	}
-	updated, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: " evt-9 ", Date: "2026-06-02", Category: "WORKOUT"})
+	updated, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: " evt-9 ", Date: "2026-06-02", Category: "WORKOUT", Type: "Ride"})
 	if err != nil {
 		t.Fatalf("AddOrUpdateEvent(update) error = %v", err)
 	}
@@ -229,11 +229,15 @@ func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
 	if len(requests) != 2 {
 		t.Fatalf("request count = %d, want 2", len(requests))
 	}
-	if requests[0].method != http.MethodPost || requests[0].path != "/athlete/i12345/events" {
-		t.Fatalf("create request = %#v, want POST athlete events", requests[0])
+	if requests[0].method != http.MethodPost || requests[0].path != "/athlete/i12345/events/bulk" {
+		t.Fatalf("create request = %#v, want POST athlete events/bulk", requests[0])
 	}
-	body := requests[0].body
-	if body["start_date_local"] != "2026-06-01" || body["category"] != "WORKOUT" || body["name"] != "Tempo" || body["description"] != description {
+	createBatch := requests[0].body.([]any)
+	if len(createBatch) != 1 {
+		t.Fatalf("create body = %#v, want single-event bulk payload", requests[0].body)
+	}
+	body := createBatch[0].(map[string]any)
+	if body["start_date_local"] != "2026-06-01T00:00:00" || body["category"] != "WORKOUT" || body["type"] != "Ride" || body["name"] != "Tempo" || body["description"] != description {
 		t.Fatalf("create body = %#v, want mapped event fields", body)
 	}
 	if _, ok := body["workout_doc"]; ok {

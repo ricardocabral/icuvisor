@@ -53,6 +53,10 @@
       "minimum": 0,
       "type": "number"
     },
+    "type": {
+      "description": "Required for WORKOUT events: upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Surrounding whitespace is trimmed.",
+      "type": "string"
+    },
     "workout_doc": {
       "description": "Optional structured workout steps using icuvisor's WorkoutDoc shape. Mutually exclusive with description; the server serializes this to the intervals.icu workout DSL string in the upstream description field and never sends the structured object upstream.",
       "type": "object"

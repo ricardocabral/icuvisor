@@ -1,7 +1,7 @@
 # TP-020-event-write-cluster: TP-020-event-write-cluster — Status
 
 **Current Step:** Step 5: Verify
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-13
 **Review Level:** 0
 **Review Counter:** 8
@@ -54,12 +54,12 @@
 ---
 
 ### Step 5: Verify
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] `make test`, `make build`, `make lint`, `go test -race ./...`
 - [x] Fix live event create smoke failure by sending upstream-required workout `type` and using the bulk create endpoint.
 - [x] Manual smoke against the maintainer's test athlete account: create, update, link, message
-- [ ] Re-run full verification after the live smoke implementation fix.
+- [x] Re-run full verification after the live smoke implementation fix.
 
 ---
 

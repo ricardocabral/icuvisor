@@ -14,7 +14,7 @@ import (
 const (
 	addOrUpdateEventName                    = "add_or_update_event"
 	addOrUpdateEventDescription             = "Create or update a non-destructive calendar event such as a planned workout, race, or note. Omitting event_id creates a new event; providing event_id updates that event without deleting or replacing unrelated events."
-	invalidAddOrUpdateEventArgumentsMessage = "invalid add_or_update_event arguments; provide date as athlete-local YYYY-MM-DD, category, and optional event_id for updates"
+	invalidAddOrUpdateEventArgumentsMessage = "invalid add_or_update_event arguments; provide date as athlete-local YYYY-MM-DD, category, type for WORKOUT events, and optional event_id for updates"
 	writeEventMessage                       = "could not write event; check intervals.icu credentials, athlete ID, event ID, and writable event fields"
 )
 
@@ -27,6 +27,7 @@ type addOrUpdateEventRequest struct {
 	Date               string                 `json:"date"`
 	EventID            string                 `json:"event_id,omitempty"`
 	Category           string                 `json:"category"`
+	Type               string                 `json:"type,omitempty"`
 	Name               string                 `json:"name,omitempty"`
 	Description        *string                `json:"description,omitempty"`
 	WorkoutDoc         *workoutdoc.WorkoutDoc `json:"workout_doc,omitempty"`
@@ -95,12 +96,16 @@ func decodeAddOrUpdateEventRequest(raw json.RawMessage) (addOrUpdateEventRequest
 	args.Date = strings.TrimSpace(args.Date)
 	args.EventID = strings.TrimSpace(args.EventID)
 	args.Category = strings.TrimSpace(args.Category)
+	args.Type = strings.TrimSpace(args.Type)
 	args.Name = strings.TrimSpace(args.Name)
 	if !validDate(args.Date) {
 		return args, errors.New("date must be athlete-local YYYY-MM-DD")
 	}
 	if args.Category == "" {
 		return args, errors.New("category is required")
+	}
+	if strings.EqualFold(args.Category, "WORKOUT") && args.Type == "" {
+		return args, errors.New("type is required for WORKOUT events")
 	}
 	if args.Description != nil && args.WorkoutDoc != nil {
 		return args, errors.New("provide either free-text description or structured workout_doc, not both")
@@ -125,6 +130,7 @@ func eventWriteParams(args addOrUpdateEventRequest) (intervals.WriteEventParams,
 		EventID:            args.EventID,
 		Date:               args.Date,
 		Category:           args.Category,
+		Type:               args.Type,
 		Name:               args.Name,
 		Description:        args.Description,
 		Tags:               append([]string(nil), args.Tags...),
@@ -161,6 +167,7 @@ func addOrUpdateEventInputSchema() map[string]any {
 		"date":                 map[string]any{"type": "string", "description": "Required athlete-local event date as YYYY-MM-DD; interpreted in the configured athlete timezone."},
 		"event_id":             map[string]any{"type": "string", "description": "Optional upstream event ID to update. Omit to create a new event; this tool never deletes events."},
 		"category":             map[string]any{"type": "string", "description": "Required upstream event category enum such as WORKOUT, RACE, NOTE, or the athlete account's configured category value."},
+		"type":                 map[string]any{"type": "string", "description": "Required for WORKOUT events: upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Surrounding whitespace is trimmed."},
 		"name":                 map[string]any{"type": "string", "description": "Optional event title/name shown on the athlete calendar."},
 		"description":          map[string]any{"type": "string", "description": "Optional free-text athlete or coach notes. Preserved verbatim, including whitespace and line breaks; mutually exclusive with workout_doc."},
 		"workout_doc":          map[string]any{"type": "object", "description": "Optional structured workout steps using icuvisor's WorkoutDoc shape. Mutually exclusive with description; the server serializes this to the intervals.icu workout DSL string in the upstream description field and never sends the structured object upstream."},
