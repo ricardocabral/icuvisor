@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -17,6 +17,9 @@
 - [x] Server emits the DSL string for `workout_doc` on upload; never sends the structured form to intervals.icu
 - [x] Response shape matches the read shape for the same event ID (round-trip parity)
 - [x] Tests: create, update, free-text round-trip, workout_doc round-trip via the TP-019 golden fixtures, tag preservation
+- [ ] R002: Map planned inputs to upstream planned target fields (`load_target`, `distance_target`, `time_target`) and expose planned target values distinctly from completed metrics in read/write response shape.
+- [ ] R002: Add `add_or_update_event` to schema/catalog snapshot generation by extending the schema catalog client and committing the generated snapshot/test coverage.
+- [ ] R002: Update the user-facing README catalog and `[Unreleased]` changelog entry for `add_or_update_event`.
 
 ---
 
@@ -58,6 +61,8 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | plan | 1 | APPROVE (tool output; artifact listed changes requested) | `.reviews/R001-plan-step1.md` |
+| R002 | code | 1 | REVISE | `.reviews/R002-code-step1.md` |
 
 ---
 
@@ -88,5 +93,5 @@
 
 ## Notes
 
-*Reserved for execution notes*
-| 2026-05-13 14:58 | Review R001 | plan Step 1: APPROVE |
+- 2026-05-13 14:58 — Review R001 plan Step 1 returned APPROVE via tool output; see Discoveries for artifact mismatch.
+- 2026-05-13 15:20 — Review R002 code Step 1 returned REVISE; revision checkboxes added under Step 1.
