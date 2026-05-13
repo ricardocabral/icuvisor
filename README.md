@@ -53,6 +53,7 @@ Currently implemented tools:
 - `get_events` — lists bounded athlete-local date-range calendar events with upstream category enum values, terse rows by default, truncation metadata, and `include_full` raw payload opt-in.
 - `get_event_by_id` — fetches one calendar event by ID, with one bounded list-scan recovery for upstream detail 404 inconsistencies and structured non-error `upstream_inconsistency` misses.
 - `add_or_update_event` — creates or updates a non-destructive calendar event when write tools are enabled (`safe`/`full`), preserving free-text descriptions verbatim or serializing structured `workout_doc` steps to the upstream description DSL.
+- `apply_training_plan` — applies a workout-library training plan from a `start_date` anchor with `dry_run:true` by default, per-day conflict markers, skip-existing partial writes, and full-mode-only replacement of conflicting events.
 - `delete_event` — deletes one calendar event only when `ICUVISOR_DELETE_MODE=full`, returning the deleted ID and `_meta.deleted` terse before-shape echo.
 - `delete_events_by_date_range` — deletes calendar events only when `ICUVISOR_DELETE_MODE=full` across a required athlete-local `start_date`/`end_date` range capped at 31 inclusive days, optionally filtered by category.
 - `link_activity_to_event` — manually pairs a completed activity with a planned event when auto-pairing misses, surfacing date-mismatch warnings without requiring a destructive confirmation flag.

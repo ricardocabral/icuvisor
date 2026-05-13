@@ -29,7 +29,6 @@ type ApplyTrainingPlanClient interface {
 	WorkoutLibraryClient
 	EventsClient
 	EventWriterClient
-	EventDeleterClient
 }
 
 type applyTrainingPlanRequest struct {
@@ -181,9 +180,13 @@ func applyTrainingPlan(ctx context.Context, client ApplyTrainingPlanClient, args
 			continue
 		}
 		if len(conflicts) > 0 && args.ConflictPolicy == applyTrainingPlanConflictReplace {
+			deleter, ok := client.(EventDeleterClient)
+			if !ok {
+				return applyTrainingPlanResponse{}, errors.New("replace_existing requires an event delete client")
+			}
 			replaced := applyTrainingPlanReplaced{Date: row.Date, WorkoutID: row.WorkoutID, DeletedEventIDs: make([]string, 0, len(conflicts))}
 			for _, conflict := range conflicts {
-				if err := client.DeleteEvent(ctx, conflict.EventID); err != nil {
+				if err := deleter.DeleteEvent(ctx, conflict.EventID); err != nil {
 					return applyTrainingPlanResponse{}, fmt.Errorf("deleting conflicting event %s: %w", conflict.EventID, err)
 				}
 				replaced.DeletedEventIDs = append(replaced.DeletedEventIDs, conflict.EventID)
