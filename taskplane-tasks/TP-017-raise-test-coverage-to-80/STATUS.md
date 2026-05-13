@@ -1,6 +1,6 @@
 # TP-017: Raise Go test coverage to 80% — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Pick high-value coverage targets
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 1
@@ -16,7 +16,7 @@
 
 ### Step 0: Preflight
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -26,7 +26,7 @@
 
 ### Step 1: Pick high-value coverage targets
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 > ⚠️ Hydrate: Expand checkboxes when entering this step based on the current per-function coverage report.
 
