@@ -1,6 +1,6 @@
 # TP-017: Raise Go test coverage to 80% — Status
 
-**Current Step:** Step 4: Testing & Verification
+**Current Step:** Step 5: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 1
@@ -73,7 +73,7 @@ Selected targets:
 
 ### Step 4: Testing & Verification
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Coverage gate passes: `go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...`
 - [x] Total statement coverage is >= 80.0%
@@ -85,7 +85,7 @@ Selected targets:
 
 ### Step 5: Documentation & Delivery
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] "Must Update" docs modified
 - [ ] "Check If Affected" docs reviewed
