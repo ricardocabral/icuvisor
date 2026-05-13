@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -9,8 +10,64 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ricardocabral/icuvisor/internal/config"
+	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
+
+func TestRegisteredV03WriteToolsExposeInputExamples(t *testing.T) {
+	client, err := intervals.NewClient(intervals.Options{Config: config.Config{APIKey: "example", AthleteID: "12345"}, Version: "test"})
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+
+	registrar := &collectingRegistrar{}
+	if err := NewRegistryWithOptions(client, RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull)}).Register(context.Background(), registrar); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+
+	covered := map[string]bool{
+		addOrUpdateEventName:    false,
+		createWorkoutName:       false,
+		updateWorkoutName:       false,
+		createCustomItemName:    false,
+		updateCustomItemName:    false,
+		applyTrainingPlanName:   false,
+		updateWellnessName:      false,
+		updateSportSettingsName: false,
+	}
+	simpleWritesWithoutExamples := map[string]string{
+		addActivityMessageName:  "simple free-text activity comment writer",
+		linkActivityToEventName: "simple activity/event ID linker",
+	}
+
+	for _, tool := range registrar.tools {
+		if tool.Requirement != RequirementWrite {
+			continue
+		}
+		if reason, ok := simpleWritesWithoutExamples[tool.Name]; ok {
+			t.Logf("%s does not require input_examples: %s", tool.Name, reason)
+			continue
+		}
+		schema, ok := tool.InputSchema.(map[string]any)
+		if !ok {
+			t.Fatalf("%s InputSchema type = %T, want map[string]any", tool.Name, tool.InputSchema)
+		}
+		examples := schemaInputExamples(t, schema)
+		if len(examples) == 0 {
+			t.Fatalf("%s input_examples is empty", tool.Name)
+		}
+		if _, ok := covered[tool.Name]; ok {
+			covered[tool.Name] = true
+		}
+	}
+
+	for name, found := range covered {
+		if !found {
+			t.Fatalf("registered write tool %s was not checked for input_examples", name)
+		}
+	}
+}
 
 func TestComplexWriteToolInputExamplesValidateAgainstSchema(t *testing.T) {
 	targets := []struct {
