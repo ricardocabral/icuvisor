@@ -1,11 +1,11 @@
 # TP-017: Raise Go test coverage to 80% — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
+**Current Step:** Step 0: Preflight
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 1
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code
@@ -16,11 +16,11 @@
 
 ### Step 0: Preflight
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Required files and paths exist
-- [ ] Dependencies satisfied
-- [ ] Confirm baseline with `go test ./... -coverprofile=coverage.out -covermode=atomic` and `go tool cover -func=coverage.out | tail -1`
+- [x] Required files and paths exist
+- [x] Dependencies satisfied
+- [x] Confirm baseline with `go test ./... -coverprofile=coverage.out -covermode=atomic` and `go tool cover -func=coverage.out | tail -1`
 
 ---
 
@@ -102,6 +102,8 @@
 | Timestamp  | Action      | Outcome                         |
 | ---------- | ----------- | ------------------------------- |
 | 2026-05-13 | Task staged | PROMPT.md and STATUS.md created |
+| 2026-05-13 12:21 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-13 12:21 | Step 0 started | Preflight |
 
 ---
 
