@@ -132,7 +132,9 @@ func wellnessRow(row intervals.Wellness, includeFull bool) map[string]any {
 	setWellnessField(out, "stress", row.Stress)
 	setWellnessField(out, "mood", row.Mood)
 	setWellnessField(out, "motivation", row.Motivation)
-	setWellnessField(out, "injury", row.Injury)
+	if row.Injury != nil || hasKey(row.Raw, "injury") {
+		out["injury"] = row.Injury
+	}
 	setWellnessField(out, "spO2", row.SpO2)
 	setWellnessField(out, "systolic", row.Systolic)
 	setWellnessField(out, "diastolic", row.Diastolic)

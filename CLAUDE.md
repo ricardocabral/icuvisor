@@ -51,7 +51,7 @@ Add new tools as `internal/tools/<tool_name>.go` with a matching `_test.go`. Reg
 - **Concurrency:** `errgroup.Group` for fan-out; `context` for cancellation; mutexes only as a last resort. Run `go test -race` locally before pushing.
 - **Tests:** table-driven. Use `t.Run(tc.name, ...)`. Use `testdata/` fixtures for API responses. Never hit the network from tests — wrap intervals.icu calls behind an interface and stub it.
 - **Generics:** fine when they remove duplication; not for cleverness.
-- **Comments:** only when the *why* is non-obvious. Don't restate the code. Exported identifiers need a doc comment starting with the identifier name.
+- **Comments:** only when the _why_ is non-obvious. Don't restate the code. Exported identifiers need a doc comment starting with the identifier name.
 
 ## MCP-server conventions
 
@@ -61,12 +61,12 @@ icuvisor uses `github.com/modelcontextprotocol/go-sdk`. Read its docs before cha
 - **Schemas matter.** Every argument needs a JSON Schema description an LLM can read. Include units and scale ranges (`"feel: athlete-reported feel, scale 1-5"`, `"sleepQuality: 1-4"`). The LLM uses these descriptions to decide what to send.
 - **Return shapes are part of the API.** Document them. Add a `_meta` field for things like `total_count`, `next_page`, and scale legends — clients can use it, LLMs can ignore it.
 - **Pagination:** server-side. Default page size must fit comfortably inside a free-tier Claude context window. Expose a `next_page_token` (opaque string).
-- **Destructive ops require explicit confirmation.** `delete_event`, `delete_events_by_date_range`, etc. must require `confirm: true` and fail loudly otherwise.
+- **Destructive ops are registration-time gated.** `delete_event`, `delete_events_by_date_range`, and other write/delete tools declare their required capability and are registered only when `internal/safety` allows it for `ICUVISOR_DELETE_MODE`; never add a model-controlled `confirm: true` override.
 - **Idempotency:** writes that can be safely retried should be idempotent. Document the ones that can't.
 - **Errors back to the LLM** must be short, actionable, and free of internal stack traces. Log the detail; return the summary.
 - **Athlete ID normalization:** accept `i12345` or `12345`; emit `i12345`. Centralize in `internal/config`.
 - **Strava-imported activities:** detect via the upstream marker and label them in responses so the LLM doesn't hallucinate over `N/A` fields.
-- **Coach mode:** the coach-scoped API key never leaves the server. The `athlete_id` argument selects which athlete the call targets — it is *not* a credential.
+- **Coach mode:** the coach-scoped API key never leaves the server. The `athlete_id` argument selects which athlete the call targets — it is _not_ a credential.
 
 ## Adding a tool — checklist
 
@@ -96,7 +96,7 @@ icuvisor uses `github.com/modelcontextprotocol/go-sdk`. Read its docs before cha
 - **Ask before doing wide refactors.** A focused PR beats a sweeping one every time.
 - **If you change the PRD or the roadmap, update both this file's pointers and `CHANGELOG.md` if user-visible.**
 
-## What is *not* in scope
+## What is _not_ in scope
 
 - A multi-tenant SaaS.
 - Replacing intervals.icu's own UI.

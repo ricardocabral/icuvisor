@@ -3,6 +3,7 @@ package intervals
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -71,5 +72,56 @@ func TestListActivitiesRequiresOldest(t *testing.T) {
 	client := newTestClient(t, "https://example.invalid", http.DefaultClient, RetryConfig{})
 	if _, err := client.ListActivities(context.Background(), ListActivitiesParams{}); err == nil {
 		t.Fatal("ListActivities() error = nil, want required oldest error")
+	}
+}
+
+func TestLinkActivityToEventUsesPutActivityPairedEventID(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got, want := r.Method, http.MethodPut; got != want {
+			t.Fatalf("method = %q, want %q", got, want)
+		}
+		if got, want := r.URL.Path, "/activity/i147866949"; got != want {
+			t.Fatalf("path = %q, want %q", got, want)
+		}
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("read body: %v", err)
+		}
+		var decoded map[string]any
+		if err := json.Unmarshal(body, &decoded); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if decoded["paired_event_id"] != float64(1001) || len(decoded) != 1 {
+			t.Fatalf("body = %#v, want only paired_event_id", decoded)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"i147866949","paired_event_id":1001,"start_date_local":"2026-05-10T07:00:00"}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	activity, err := client.LinkActivityToEvent(context.Background(), LinkActivityToEventParams{ActivityID: " i147866949 ", EventID: " 1001 "})
+	if err != nil {
+		t.Fatalf("LinkActivityToEvent() error = %v", err)
+	}
+	if activity.ID != "i147866949" || activity.Raw["paired_event_id"] != float64(1001) {
+		t.Fatalf("activity = %+v raw=%#v, want linked response", activity, activity.Raw)
+	}
+}
+
+func TestLinkActivityToEventRequiresIDs(t *testing.T) {
+	t.Parallel()
+
+	client := newTestClient(t, "https://example.invalid", http.DefaultClient, RetryConfig{})
+	for _, params := range []LinkActivityToEventParams{
+		{EventID: "1001"},
+		{ActivityID: "a1"},
+		{ActivityID: "a1", EventID: "evt-1"},
+	} {
+		if _, err := client.LinkActivityToEvent(context.Background(), params); err == nil {
+			t.Fatalf("LinkActivityToEvent(%#v) error = nil, want validation error", params)
+		}
 	}
 }

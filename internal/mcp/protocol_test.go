@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
@@ -21,6 +23,33 @@ type testProfileClient struct {
 
 func (c testProfileClient) GetAthleteProfile(context.Context) (intervals.AthleteWithSportSettings, error) {
 	return c.profile, nil
+}
+
+type capabilityRegistry struct{}
+
+func (capabilityRegistry) Register(ctx context.Context, registrar tools.Registrar) error {
+	for _, tool := range []tools.Tool{
+		capabilityTestTool("test_read", tools.RequirementRead),
+		capabilityTestTool("test_write", tools.RequirementWrite),
+		capabilityTestTool("test_delete", tools.RequirementDelete),
+	} {
+		if err := registrar.AddTool(tool); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func capabilityTestTool(name string, requirement tools.Requirement) tools.Tool {
+	return tools.Tool{
+		Name:        name,
+		Description: "Capability filtering test tool.",
+		InputSchema: map[string]any{"type": "object"},
+		Requirement: requirement,
+		Handler: func(context.Context, tools.Request) (tools.Result, error) {
+			return tools.Result{}, nil
+		},
+	}
 }
 
 func TestProtocolInitialize(t *testing.T) {
@@ -63,6 +92,92 @@ func TestProtocolListTools(t *testing.T) {
 	}
 	if tool.Description == "" {
 		t.Fatal("tool description is empty")
+	}
+}
+
+func TestProtocolFiltersToolsByCapability(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		mode safety.Mode
+		want []string
+	}{
+		{name: "safe", mode: safety.ModeSafe, want: []string{"test_read", "test_write"}},
+		{name: "full", mode: safety.ModeFull, want: []string{"test_read", "test_write", "test_delete"}},
+		{name: "none", mode: safety.ModeNone, want: []string{"test_read"}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, session, cleanup := connectTestClientWithOptions(t, Options{Registry: capabilityRegistry{}, Capability: safety.NewCapability(tc.mode)})
+			defer cleanup()
+
+			result, err := session.ListTools(ctx, nil)
+			if err != nil {
+				t.Fatalf("ListTools() error = %v", err)
+			}
+			got := make([]string, 0, len(result.Tools))
+			for _, tool := range result.Tools {
+				got = append(got, tool.Name)
+			}
+			slices.Sort(got)
+			slices.Sort(tc.want)
+			if strings.Join(got, ",") != strings.Join(tc.want, ",") {
+				t.Fatalf("tools/list = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+type deleteToolsRegistry struct{}
+
+var deleteToolNames = []string{"delete_event", "delete_events_by_date_range", "delete_activity", "delete_custom_item", "delete_sport_settings", "delete_gear", "delete_workout"}
+
+func (deleteToolsRegistry) Register(ctx context.Context, registrar tools.Registrar) error {
+	for _, name := range deleteToolNames {
+		if err := registrar.AddTool(capabilityTestTool(name, tools.RequirementDelete)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func TestProtocolFiltersDeleteToolsByCapability(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		mode      safety.Mode
+		wantNames []string
+	}{
+		{name: "full", mode: safety.ModeFull, wantNames: deleteToolNames},
+		{name: "safe", mode: safety.ModeSafe, wantNames: nil},
+		{name: "none", mode: safety.ModeNone, wantNames: nil},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, session, cleanup := connectTestClientWithOptions(t, Options{Registry: deleteToolsRegistry{}, Capability: safety.NewCapability(tc.mode)})
+			defer cleanup()
+
+			result, err := session.ListTools(ctx, nil)
+			if err != nil {
+				t.Fatalf("ListTools() error = %v", err)
+			}
+			got := make([]string, 0, len(result.Tools))
+			for _, tool := range result.Tools {
+				got = append(got, tool.Name)
+			}
+			want := append([]string(nil), tc.wantNames...)
+			slices.Sort(got)
+			slices.Sort(want)
+			if strings.Join(got, ",") != strings.Join(want, ",") {
+				t.Fatalf("tools/list = %v, want %v", got, want)
+			}
+		})
 	}
 }
 
@@ -226,9 +341,17 @@ func TestProtocolMalformedRawRequest(t *testing.T) {
 func connectTestClient(t *testing.T, registry tools.Registry) (context.Context, *sdkmcp.ClientSession, func()) {
 	t.Helper()
 
+	return connectTestClientWithOptions(t, Options{Registry: registry})
+}
+
+func connectTestClientWithOptions(t *testing.T, opts Options) (context.Context, *sdkmcp.ClientSession, func()) {
+	t.Helper()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	serverTransport, clientTransport := sdkmcp.NewInMemoryTransports()
-	server, err := NewServer(ctx, Options{Version: "test", Registry: registry, Transport: serverTransport})
+	opts.Version = "test"
+	opts.Transport = serverTransport
+	server, err := NewServer(ctx, opts)
 	if err != nil {
 		cancel()
 		t.Fatalf("NewServer() error = %v", err)

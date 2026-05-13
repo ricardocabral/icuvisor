@@ -1,0 +1,211 @@
+package tools
+
+import (
+	"context"
+	"encoding/json"
+	"math"
+	"strings"
+	"testing"
+
+	"github.com/ricardocabral/icuvisor/internal/intervals"
+)
+
+type fakeWellnessWriterClient struct {
+	fakeProfileClient
+	row   intervals.Wellness
+	rows  []intervals.Wellness
+	calls []intervals.WriteWellnessParams
+	err   error
+}
+
+func (f *fakeWellnessWriterClient) UpdateWellness(ctx context.Context, params intervals.WriteWellnessParams) (intervals.Wellness, error) {
+	f.calls = append(f.calls, params)
+	if len(f.rows) > 0 {
+		row := f.rows[0]
+		f.rows = f.rows[1:]
+		return row, f.err
+	}
+	return f.row, f.err
+}
+
+func TestUpdateWellnessSchemaDocumentsRangesUnitsAndReadOnlyFields(t *testing.T) {
+	t.Parallel()
+
+	tool := newUpdateWellnessTool(&fakeWellnessWriterClient{}, &fakeProfileClient{}, "test", "UTC", false)
+	props := tool.InputSchema.(map[string]any)["properties"].(map[string]any)
+
+	for _, field := range []string{"feel", "fatigue", "mood", "motivation", "soreness", "stress"} {
+		prop := props[field].(map[string]any)
+		if prop["minimum"] != 1 || prop["maximum"] != 5 || !strings.Contains(prop["description"].(string), "1-5") {
+			t.Fatalf("%s schema = %#v, want 1-5 scale description", field, prop)
+		}
+	}
+	sleep := props["sleepQuality"].(map[string]any)
+	if sleep["minimum"] != 1 || sleep["maximum"] != 4 || !strings.Contains(sleep["description"].(string), "1-4") {
+		t.Fatalf("sleepQuality schema = %#v, want 1-4 scale", sleep)
+	}
+	weight := props["weight"].(map[string]any)
+	if weight["minimum"] != 0 || !strings.Contains(weight["description"].(string), "preferred weight unit") || !strings.Contains(weight["description"].(string), "kg") {
+		t.Fatalf("weight schema = %#v, want preferred-unit to kg boundary docs", weight)
+	}
+	injury := props["injury"].(map[string]any)
+	if injury["type"] != "string" || strings.Contains(injury["description"].(string), "scale") {
+		t.Fatalf("injury schema = %#v, want free-text non-scale field", injury)
+	}
+	for _, readOnly := range []string{"sleepScore", "_native"} {
+		if _, ok := props[readOnly]; ok {
+			t.Fatalf("schema exposes read-only field %s", readOnly)
+		}
+	}
+}
+
+func TestUpdateWellnessRejectsOutOfRangeAndReadOnlyArgumentsBeforeWrite(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessWriterClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{Timezone: "UTC"}}}
+	tool := newUpdateWellnessTool(client, client, "test", "UTC", false)
+	for _, raw := range []string{
+		`{"date":"2026-05-01","feel":6}`,
+		`{"date":"2026-05-01","sleepQuality":5}`,
+		`{"date":"2026-05-01","bodyFat":-1}`,
+		`{"date":"2026-05-01","sleepScore":88}`,
+		`{"date":"2026-05-01","_native":{"polar":{"sleep_score":90}}}`,
+	} {
+		if _, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(raw)}); err == nil {
+			t.Fatalf("Handler(%s) error = nil, want validation error", raw)
+		}
+	}
+	if len(client.calls) != 0 {
+		t.Fatalf("write calls = %#v, want none after validation failures", client.calls)
+	}
+}
+
+func TestUpdateWellnessFeelOnlyDoesNotZeroWeight(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric", Timezone: "UTC"}},
+		row:               decodeWellnessRow(t, `{"id":"2026-05-01","feel":5,"weight":70.5}`),
+	}
+	tool := newUpdateWellnessTool(client, client, "test", "UTC", false)
+
+	if _, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-05-01","feel":5}`)}); err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 {
+		t.Fatalf("write calls = %d, want 1", len(client.calls))
+	}
+	if client.calls[0].Weight != nil {
+		t.Fatalf("weight param = %#v, want nil for omitted weight", client.calls[0].Weight)
+	}
+}
+
+func TestUpdateWellnessLockedFollowUpSurfacesLockStateInMeta(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric", Timezone: "UTC"}},
+		rows: []intervals.Wellness{
+			decodeWellnessRow(t, `{"id":"2026-05-01","locked":true}`),
+			decodeWellnessRow(t, `{"id":"2026-05-01","locked":true,"fatigue":2}`),
+		},
+	}
+	tool := newUpdateWellnessTool(client, client, "test", "UTC", false)
+
+	if _, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-05-01","locked":true}`)}); err != nil {
+		t.Fatalf("locked Handler() error = %v", err)
+	}
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-05-01","fatigue":2}`)})
+	if err != nil {
+		t.Fatalf("follow-up Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["locked"] != true {
+		t.Fatalf("meta = %#v, want locked=true surfaced", meta)
+	}
+	if len(client.calls) != 2 || client.calls[0].Locked == nil || !*client.calls[0].Locked || client.calls[1].Fatigue == nil || *client.calls[1].Fatigue != 2 {
+		t.Fatalf("calls = %#v, want locked then fatigue follow-up", client.calls)
+	}
+}
+
+func TestUpdateWellnessResponseUsesWellnessReadShape(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric", Timezone: "UTC"}},
+		row:               decodeWellnessRow(t, `{"id":"2026-05-01","feel":4,"sleepScore":88,"polar_sleep_score":90,"bridge_fetched_at":"2026-05-01T01:00:00Z","injury":"left knee","weight":null,"locked":false}`),
+	}
+	tool := newUpdateWellnessTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-05-01","feel":4,"injury":"left knee"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	row := resultMap(t, result)["wellness"].(map[string]any)
+	if row["injury"] != "left knee" || row["weight"] != nil {
+		t.Fatalf("wellness row = %#v, want injury text and stripped null weight", row)
+	}
+	meta := row["_meta"].(map[string]any)
+	scales := meta["scales"].(map[string]any)
+	if scales["feel"] == "" || scales["sleepScore"] == "" || scales["injury"] != nil {
+		t.Fatalf("scales = %#v, want feel/sleepScore only for these fields", scales)
+	}
+	if meta["delete_mode"] != "safe" {
+		t.Fatalf("row meta = %#v, want delete_mode", meta)
+	}
+	if !containsAny(meta["missing_fields"].([]any), "weight") || !containsAny(meta["fields_present"].([]any), "injury") {
+		t.Fatalf("row meta = %#v, want missing/present field metadata", meta)
+	}
+	prov := meta["provenance"].(map[string]any)["sleepScore"].(map[string]any)
+	if prov["source"] != "polar" || prov["native_scale"] != "1-100 Polar sleep_score" {
+		t.Fatalf("sleepScore provenance = %#v", prov)
+	}
+}
+
+func TestUpdateWellnessRegistrationMetadata(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessWriterClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{Timezone: "UTC"}}}
+	registrar := &collectingRegistrar{}
+	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+	tool := findTool(t, registrar.tools, updateWellnessName)
+	if tool.Requirement != RequirementWrite {
+		t.Fatalf("requirement = %q, want write", tool.Requirement)
+	}
+}
+
+func TestUpdateWellnessConvertsPreferredWeightToUpstreamKilograms(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "imperial", WeightPrefLB: true, Timezone: "UTC"}},
+		row:               decodeWellnessRow(t, `{"id":"2026-05-01","weight":70,"feel":4}`),
+	}
+	tool := newUpdateWellnessTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-05-01","weight":154.323584,"feel":4}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 || client.calls[0].Weight == nil {
+		t.Fatalf("write calls = %#v, want weight update", client.calls)
+	}
+	if math.Abs(*client.calls[0].Weight-70) > 0.000001 {
+		t.Fatalf("upstream weight kg = %.9f, want 70", *client.calls[0].Weight)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["weight_input_unit"] != "lb" || meta["weight_upstream_unit"] != "kg" {
+		t.Fatalf("meta = %#v, want lb input/kg upstream", meta)
+	}
+}
+
+func decodeWellnessRow(t *testing.T, raw string) intervals.Wellness {
+	t.Helper()
+	var row intervals.Wellness
+	if err := json.Unmarshal([]byte(raw), &row); err != nil {
+		t.Fatalf("decode wellness row: %v", err)
+	}
+	return row
+}

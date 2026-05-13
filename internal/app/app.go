@@ -12,6 +12,7 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	mcpserver "github.com/ricardocabral/icuvisor/internal/mcp"
 	"github.com/ricardocabral/icuvisor/internal/response"
+	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
@@ -31,6 +32,8 @@ type ServerInfo struct {
 	Version       string
 	Config        config.Config
 	DebugMetadata bool
+	DeleteMode    safety.Mode
+	Capability    safety.Capability
 }
 
 // Run executes the icuvisor CLI.
@@ -90,6 +93,8 @@ func startServer(ctx context.Context, loader func(context.Context, config.Option
 		return err
 	}
 	info.Config = cfg
+	info.DeleteMode = cfg.DeleteMode
+	info.Capability = safety.NewCapability(cfg.DeleteMode)
 
 	if starter == nil {
 		starter = defaultStartServer
@@ -101,18 +106,27 @@ func startServer(ctx context.Context, loader func(context.Context, config.Option
 }
 
 func defaultStartServer(ctx context.Context, info ServerInfo) error {
+	capability := info.Capability
+	if capability == nil {
+		capability = safety.NewCapability(info.DeleteMode)
+	}
+	deleteMode := safety.ParseMode(capability.Mode())
+	response.SetDeleteMode(deleteMode.String())
+	safety.LogResolvedMode(slog.Default(), deleteMode)
 	client, err := intervals.NewClient(intervals.Options{Config: info.Config, Version: info.Version})
 	if err != nil {
 		return err
 	}
 	server, err := mcpserver.NewServer(ctx, mcpserver.Options{
-		Config:  info.Config,
-		Version: info.Version,
-		Logger:  slog.Default(),
+		Config:     info.Config,
+		Version:    info.Version,
+		Logger:     slog.Default(),
+		Capability: capability,
 		Registry: tools.NewRegistryWithOptions(client, tools.RegistryOptions{
 			Version:          info.Version,
 			TimezoneFallback: info.Config.Timezone,
 			DebugMetadata:    info.DebugMetadata,
+			Capability:       capability,
 		}),
 	})
 	if err != nil {

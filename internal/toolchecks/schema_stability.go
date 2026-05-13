@@ -275,22 +275,30 @@ func (r *schemaRegistrar) AddTool(tool tools.Tool) error {
 type schemaCatalogClient struct{}
 
 var (
-	_ tools.ProfileClient           = schemaCatalogClient{}
-	_ tools.FitnessClient           = schemaCatalogClient{}
-	_ tools.WellnessClient          = schemaCatalogClient{}
-	_ tools.BestEffortsClient       = schemaCatalogClient{}
-	_ tools.PowerCurvesClient       = schemaCatalogClient{}
-	_ tools.ActivitiesClient        = schemaCatalogClient{}
-	_ tools.EventsClient            = schemaCatalogClient{}
-	_ tools.EventByIDClient         = schemaCatalogClient{}
-	_ tools.TrainingPlanClient      = schemaCatalogClient{}
-	_ tools.WorkoutLibraryClient    = schemaCatalogClient{}
-	_ tools.CustomItemsClient       = schemaCatalogClient{}
-	_ tools.ActivityDetailsClient   = schemaCatalogClient{}
-	_ tools.ActivityIntervalsClient = schemaCatalogClient{}
-	_ tools.ActivityStreamsClient   = schemaCatalogClient{}
-	_ tools.ActivityMessagesClient  = schemaCatalogClient{}
-	_ tools.ExtendedMetricsClient   = schemaCatalogClient{}
+	_ tools.ProfileClient               = schemaCatalogClient{}
+	_ tools.FitnessClient               = schemaCatalogClient{}
+	_ tools.WellnessClient              = schemaCatalogClient{}
+	_ tools.WellnessWriterClient        = schemaCatalogClient{}
+	_ tools.SportSettingsWriterClient   = schemaCatalogClient{}
+	_ tools.BestEffortsClient           = schemaCatalogClient{}
+	_ tools.PowerCurvesClient           = schemaCatalogClient{}
+	_ tools.ActivitiesClient            = schemaCatalogClient{}
+	_ tools.EventsClient                = schemaCatalogClient{}
+	_ tools.EventByIDClient             = schemaCatalogClient{}
+	_ tools.EventWriterClient           = schemaCatalogClient{}
+	_ tools.ActivityEventLinkClient     = schemaCatalogClient{}
+	_ tools.TrainingPlanClient          = schemaCatalogClient{}
+	_ tools.WorkoutLibraryClient        = schemaCatalogClient{}
+	_ tools.WorkoutCreatorClient        = schemaCatalogClient{}
+	_ tools.WorkoutUpdaterClient        = schemaCatalogClient{}
+	_ tools.WorkoutDeleterClient        = schemaCatalogClient{}
+	_ tools.CustomItemsClient           = schemaCatalogClient{}
+	_ tools.ActivityDetailsClient       = schemaCatalogClient{}
+	_ tools.ActivityIntervalsClient     = schemaCatalogClient{}
+	_ tools.ActivityStreamsClient       = schemaCatalogClient{}
+	_ tools.ActivityMessagesClient      = schemaCatalogClient{}
+	_ tools.ActivityMessageWriterClient = schemaCatalogClient{}
+	_ tools.ExtendedMetricsClient       = schemaCatalogClient{}
 )
 
 func (schemaCatalogClient) GetAthleteProfile(context.Context) (intervals.AthleteWithSportSettings, error) {
@@ -303,6 +311,14 @@ func (schemaCatalogClient) ListAthleteSummary(context.Context, intervals.Athlete
 
 func (schemaCatalogClient) ListWellness(context.Context, intervals.WellnessParams) ([]intervals.Wellness, error) {
 	return nil, nil
+}
+
+func (schemaCatalogClient) UpdateWellness(context.Context, intervals.WriteWellnessParams) (intervals.Wellness, error) {
+	return intervals.Wellness{}, nil
+}
+
+func (schemaCatalogClient) UpdateSportSettings(context.Context, intervals.WriteSportSettingsParams) (intervals.SportSettings, error) {
+	return intervals.SportSettings{}, nil
 }
 
 func (schemaCatalogClient) ListAthletePowerCurves(context.Context, intervals.CurveParams) (intervals.DataCurveSet, error) {
@@ -329,6 +345,14 @@ func (schemaCatalogClient) GetEvent(context.Context, string) (intervals.Event, e
 	return intervals.Event{}, nil
 }
 
+func (schemaCatalogClient) AddOrUpdateEvent(context.Context, intervals.WriteEventParams) (intervals.Event, error) {
+	return intervals.Event{}, nil
+}
+
+func (schemaCatalogClient) LinkActivityToEvent(context.Context, intervals.LinkActivityToEventParams) (intervals.Activity, error) {
+	return intervals.Activity{}, nil
+}
+
 func (schemaCatalogClient) GetTrainingPlan(context.Context) (intervals.TrainingPlan, error) {
 	return intervals.TrainingPlan{}, nil
 }
@@ -339,6 +363,18 @@ func (schemaCatalogClient) ListWorkoutFolders(context.Context) ([]intervals.Work
 
 func (schemaCatalogClient) ListLibraryWorkouts(context.Context) ([]intervals.Workout, error) {
 	return nil, nil
+}
+
+func (schemaCatalogClient) CreateLibraryWorkout(context.Context, intervals.WriteWorkoutParams) (intervals.Workout, error) {
+	return intervals.Workout{}, nil
+}
+
+func (schemaCatalogClient) UpdateLibraryWorkout(context.Context, intervals.WriteWorkoutParams) (intervals.Workout, error) {
+	return intervals.Workout{}, nil
+}
+
+func (schemaCatalogClient) DeleteLibraryWorkout(context.Context, string) error {
+	return nil
 }
 
 func (schemaCatalogClient) ListCustomItems(context.Context) ([]intervals.CustomItem, error) {
@@ -363,6 +399,10 @@ func (schemaCatalogClient) GetActivityStreams(context.Context, intervals.Activit
 
 func (schemaCatalogClient) GetActivityMessages(context.Context, intervals.ActivityMessagesParams) ([]intervals.ActivityMessage, error) {
 	return nil, nil
+}
+
+func (schemaCatalogClient) AddActivityMessage(context.Context, intervals.AddActivityMessageParams) (intervals.NewActivityMessage, error) {
+	return intervals.NewActivityMessage{}, nil
 }
 
 func (schemaCatalogClient) GetActivityPowerVsHR(context.Context, string) (intervals.PowerVsHR, error) {

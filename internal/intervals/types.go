@@ -19,6 +19,7 @@ type AthleteWithSportSettings struct {
 type SportSettings struct {
 	ID             int       `json:"id"`
 	AthleteID      string    `json:"athlete_id"`
+	Type           string    `json:"type"`
 	Types          []string  `json:"types"`
 	FTP            int       `json:"ftp"`
 	IndoorFTP      int       `json:"indoor_ftp"`
@@ -26,10 +27,12 @@ type SportSettings struct {
 	PMax           int       `json:"p_max"`
 	PowerZones     []int     `json:"power_zones"`
 	PowerZoneNames []string  `json:"power_zone_names"`
+	FTHR           int       `json:"fthr"`
 	LTHR           int       `json:"lthr"`
 	MaxHR          int       `json:"max_hr"`
 	HRZones        []int     `json:"hr_zones"`
 	HRZoneNames    []string  `json:"hr_zone_names"`
+	PaceThreshold  float64   `json:"pace_threshold"`
 	ThresholdPace  float64   `json:"threshold_pace"`
 	PaceUnits      string    `json:"pace_units"`
 	PaceZones      []float64 `json:"pace_zones"`

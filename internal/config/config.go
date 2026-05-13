@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 const (
@@ -33,6 +35,7 @@ type Config struct {
 	Timezone    string        `json:"timezone"`
 	APIBaseURL  string        `json:"api_base_url"`
 	HTTPTimeout time.Duration `json:"-"`
+	DeleteMode  safety.Mode   `json:"-"`
 }
 
 // Options controls config loading inputs.
@@ -56,6 +59,7 @@ type rawConfig struct {
 	timezone    string
 	apiBaseURL  string
 	httpTimeout string
+	deleteMode  string
 }
 
 // Load reads v0.1 config from JSON, .env, and process environment.
@@ -138,7 +142,7 @@ func (c Config) String() string {
 	if c.AthleteID != "" {
 		athleteID = "<set>"
 	}
-	return fmt.Sprintf("api_key=%s athlete_id=%s timezone=%q api_base_url=%q http_timeout=%s", apiKey, athleteID, c.Timezone, c.APIBaseURL, c.HTTPTimeout)
+	return fmt.Sprintf("api_key=%s athlete_id=%s timezone=%q api_base_url=%q http_timeout=%s delete_mode=%s", apiKey, athleteID, c.Timezone, c.APIBaseURL, c.HTTPTimeout, c.DeleteMode)
 }
 
 func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
@@ -238,6 +242,7 @@ func rawFromEnv(env map[string]string) rawConfig {
 		timezone:    strings.TrimSpace(env[EnvTimezone]),
 		apiBaseURL:  strings.TrimSpace(env[EnvAPIBaseURL]),
 		httpTimeout: strings.TrimSpace(env[EnvHTTPTimeout]),
+		deleteMode:  strings.TrimSpace(env[safety.EnvDeleteMode]),
 	}
 }
 
@@ -256,6 +261,9 @@ func (r *rawConfig) merge(next rawConfig, absentOnly bool) {
 	}
 	if shouldSet(r.httpTimeout, next.httpTimeout, absentOnly) {
 		r.httpTimeout = next.httpTimeout
+	}
+	if shouldSet(r.deleteMode, next.deleteMode, absentOnly) {
+		r.deleteMode = next.deleteMode
 	}
 }
 
@@ -309,12 +317,13 @@ func validate(raw rawConfig) (Config, error) {
 		Timezone:    loc.String(),
 		APIBaseURL:  strings.TrimRight(baseURL, "/"),
 		HTTPTimeout: timeout,
+		DeleteMode:  safety.ParseMode(raw.deleteMode),
 	}, nil
 }
 
 func recognizedEnvKey(key string) bool {
 	switch key {
-	case EnvAPIKey, EnvAthleteID, EnvConfigPath, EnvTimezone, EnvAPIBaseURL, EnvHTTPTimeout:
+	case EnvAPIKey, EnvAthleteID, EnvConfigPath, EnvTimezone, EnvAPIBaseURL, EnvHTTPTimeout, safety.EnvDeleteMode:
 		return true
 	default:
 		return false

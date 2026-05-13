@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
+	"time"
 )
 
 // WorkoutFolder contains a workout-library folder or plan and preserves raw upstream fields.
@@ -35,6 +39,21 @@ func (f *WorkoutFolder) UnmarshalJSON(data []byte) error {
 	f.Raw = raw
 	f.ID = rawIDString(raw["id"])
 	return nil
+}
+
+// WriteWorkoutParams contains writable workout-library template fields.
+type WriteWorkoutParams struct {
+	WorkoutID      string
+	Name           string
+	NameSet        bool
+	FolderID       string
+	FolderIDSet    bool
+	Description    *string
+	DescriptionSet bool
+	Tags           []string
+	TagsSet        bool
+	Sport          string
+	SportSet       bool
 }
 
 // Workout contains a workout-library template and preserves raw upstream fields including workout_doc.
@@ -102,4 +121,140 @@ func (c *Client) ListLibraryWorkouts(ctx context.Context) ([]Workout, error) {
 		return nil, fmt.Errorf("listing library workouts: %w", err)
 	}
 	return workouts, nil
+}
+
+// CreateLibraryWorkout creates a workout-library template for the configured athlete.
+func (c *Client) CreateLibraryWorkout(ctx context.Context, params WriteWorkoutParams) (Workout, error) {
+	body, err := writeWorkoutBody(params, false)
+	if err != nil {
+		return Workout{}, err
+	}
+	var workout Workout
+	if err := c.doJSONBody(ctx, http.MethodPost, body, &workout, "athlete", c.athleteID, "workouts"); err != nil {
+		return Workout{}, fmt.Errorf("creating library workout: %w", err)
+	}
+	return workout, nil
+}
+
+// UpdateLibraryWorkout sparsely updates a workout-library template for the configured athlete.
+func (c *Client) UpdateLibraryWorkout(ctx context.Context, params WriteWorkoutParams) (Workout, error) {
+	workoutID := strings.TrimSpace(params.WorkoutID)
+	if workoutID == "" {
+		return Workout{}, fmt.Errorf("updating library workout: workout ID is required")
+	}
+	body, err := writeWorkoutBody(params, true)
+	if err != nil {
+		return Workout{}, err
+	}
+	var workout Workout
+	if err := c.doJSONBody(ctx, http.MethodPut, body, &workout, "athlete", c.athleteID, "workouts", workoutID); err != nil {
+		return Workout{}, fmt.Errorf("updating library workout %s: %w", workoutID, err)
+	}
+	return workout, nil
+}
+
+// DeleteLibraryWorkout deletes a workout-library template for the configured athlete.
+func (c *Client) DeleteLibraryWorkout(ctx context.Context, workoutID string) error {
+	workoutID = strings.TrimSpace(workoutID)
+	if workoutID == "" {
+		return fmt.Errorf("deleting library workout: workout ID is required")
+	}
+	if err := c.doNoJSON(ctx, "athlete", c.athleteID, "workouts", workoutID); err != nil {
+		return fmt.Errorf("deleting library workout %s: %w", workoutID, err)
+	}
+	return nil
+}
+
+func (c *Client) doNoJSON(ctx context.Context, pathParts ...string) error {
+	for attempt := 1; ; attempt++ {
+		req, err := c.newRequest(ctx, http.MethodDelete, pathParts...)
+		if err != nil {
+			return err
+		}
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			if c.shouldRetryTransport(ctx, attempt) {
+				if sleepErr := c.sleepBeforeRetry(ctx, attempt, 0); sleepErr != nil {
+					return sleepErr
+				}
+				continue
+			}
+			return fmt.Errorf("calling intervals.icu: %w", err)
+		}
+		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+			retryAfter := parseRetryAfter(resp.Header.Get("Retry-After"), time.Now())
+			apiErr := errorForStatus(resp.StatusCode, retryAfter)
+			_, _ = io.Copy(io.Discard, resp.Body)
+			closeErr := resp.Body.Close()
+			if c.shouldRetryStatus(resp.StatusCode, attempt) {
+				if sleepErr := c.sleepBeforeRetry(ctx, attempt, retryAfter); sleepErr != nil {
+					return sleepErr
+				}
+				continue
+			}
+			if closeErr != nil {
+				return fmt.Errorf("closing intervals.icu response: %w", closeErr)
+			}
+			return fmt.Errorf("calling intervals.icu: %w", apiErr)
+		}
+		_, _ = io.Copy(io.Discard, resp.Body)
+		if err := resp.Body.Close(); err != nil {
+			return fmt.Errorf("closing intervals.icu response: %w", err)
+		}
+		return nil
+	}
+}
+
+func writeWorkoutBody(params WriteWorkoutParams, allowSparse bool) (map[string]any, error) {
+	body := map[string]any{}
+	name := strings.TrimSpace(params.Name)
+	sport := strings.TrimSpace(params.Sport)
+	if !allowSparse {
+		if name == "" {
+			return nil, fmt.Errorf("writing workout: name is required")
+		}
+		if sport == "" {
+			return nil, fmt.Errorf("writing workout: sport is required")
+		}
+		body["name"] = name
+		body["type"] = sport
+		if folderID := strings.TrimSpace(params.FolderID); folderID != "" {
+			body["folder_id"] = folderID
+		}
+		if params.Description != nil {
+			body["description"] = *params.Description
+		}
+		if len(params.Tags) > 0 {
+			body["tags"] = append([]string(nil), params.Tags...)
+		}
+		return body, nil
+	}
+	if params.NameSet {
+		if name == "" {
+			return nil, fmt.Errorf("writing workout: name cannot be empty")
+		}
+		body["name"] = name
+	}
+	if params.FolderIDSet {
+		body["folder_id"] = strings.TrimSpace(params.FolderID)
+	}
+	if params.DescriptionSet {
+		if params.Description == nil {
+			return nil, fmt.Errorf("writing workout: description cannot be null")
+		}
+		body["description"] = *params.Description
+	}
+	if params.TagsSet {
+		body["tags"] = append([]string(nil), params.Tags...)
+	}
+	if params.SportSet {
+		if sport == "" {
+			return nil, fmt.Errorf("writing workout: sport cannot be empty")
+		}
+		body["type"] = sport
+	}
+	if len(body) == 0 {
+		return nil, fmt.Errorf("writing workout: at least one field is required")
+	}
+	return body, nil
 }

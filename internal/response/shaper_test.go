@@ -202,8 +202,11 @@ func TestShapeRequiresObjectWrapper(t *testing.T) {
 
 func TestRegisteredScaleLabelsReturnsRegistryCopy(t *testing.T) {
 	labels := RegisteredScaleLabels()
-	if labels["feel"] != "1-5 (athlete-reported feel)" || labels["sleepQuality"] != "1-4 (athlete-entered, 1=poor 4=great)" || labels["injury"] == "" {
+	if labels["feel"] != "1-5 (athlete-reported feel)" || labels["sleepQuality"] != "1-4 (athlete-entered, 1=poor 4=great)" {
 		t.Fatalf("registered scale labels = %+v", labels)
+	}
+	if _, ok := labels["injury"]; ok {
+		t.Fatalf("injury should be free text, not a registered scale: %+v", labels)
 	}
 	labels["feel"] = "mutated"
 	if RegisteredScaleLabels()["feel"] != "1-5 (athlete-reported feel)" {
@@ -223,14 +226,14 @@ func TestShapeDoesNotAddScalesForUnregisteredFields(t *testing.T) {
 }
 
 func TestShapeAddsScalesForRegisteredFields(t *testing.T) {
-	got, err := Shape(map[string]any{"fatigue": 2, "feel": 4, "injury": 1, "mood": 5, "motivation": 4, "name": "athlete", "sleepQuality": 3, "sleepScore": 87, "soreness": 2, "stress": 3}, Options{})
+	got, err := Shape(map[string]any{"fatigue": 2, "feel": 4, "injury": "left knee", "mood": 5, "motivation": 4, "name": "athlete", "sleepQuality": 3, "sleepScore": 87, "soreness": 2, "stress": 3}, Options{})
 	if err != nil {
 		t.Fatalf("Shape() error = %v", err)
 	}
 	assertJSONEqual(t, got, map[string]any{
 		"fatigue":      float64(2),
 		"feel":         float64(4),
-		"injury":       float64(1),
+		"injury":       "left knee",
 		"mood":         float64(5),
 		"motivation":   float64(4),
 		"name":         "athlete",
@@ -242,7 +245,6 @@ func TestShapeAddsScalesForRegisteredFields(t *testing.T) {
 			"scales": map[string]any{
 				"fatigue":      "1-5 (athlete-reported fatigue)",
 				"feel":         "1-5 (athlete-reported feel)",
-				"injury":       "1-5 (athlete-reported injury/limitation)",
 				"mood":         "1-5 (athlete-reported mood)",
 				"motivation":   "1-5 (athlete-reported motivation)",
 				"sleepQuality": "1-4 (athlete-entered, 1=poor 4=great)",
@@ -273,6 +275,20 @@ func TestShapeRemovesStaleCallerSuppliedScales(t *testing.T) {
 			"server_version": "dev",
 		},
 	})
+}
+
+func TestShapeAddsDeleteModeMetadata(t *testing.T) {
+	SetDeleteMode("full")
+	t.Cleanup(func() { SetDeleteMode("safe") })
+
+	got, err := Shape(map[string]any{"name": "athlete"}, Options{})
+	if err != nil {
+		t.Fatalf("Shape() error = %v", err)
+	}
+	meta := got.(map[string]any)["_meta"].(map[string]any)
+	if meta["delete_mode"] != "full" {
+		t.Fatalf("delete_mode = %v, want full", meta["delete_mode"])
+	}
 }
 
 func TestShapeDebugMetadataGate(t *testing.T) {
@@ -394,6 +410,7 @@ func TestShapeIncludeFullNullConvention(t *testing.T) {
 
 func assertJSONEqual(t *testing.T, got any, want any) {
 	t.Helper()
+	want = withDefaultDeleteMode(want)
 	gotJSON, err := json.Marshal(got)
 	if err != nil {
 		t.Fatalf("marshal got: %v", err)
@@ -405,4 +422,55 @@ func assertJSONEqual(t *testing.T, got any, want any) {
 	if string(gotJSON) != string(wantJSON) {
 		t.Fatalf("JSON mismatch\ngot:  %s\nwant: %s", gotJSON, wantJSON)
 	}
+}
+
+func withDefaultDeleteMode(value any) any {
+	root, ok := value.(map[string]any)
+	if !ok {
+		return value
+	}
+	out := cloneExpectedMap(root)
+	addDefaultDeleteModeToExpected(out)
+	return out
+}
+
+func addDefaultDeleteModeToExpected(value any) {
+	switch typed := value.(type) {
+	case map[string]any:
+		if meta, ok := typed["_meta"].(map[string]any); ok {
+			if _, hasServerVersion := meta["server_version"]; hasServerVersion {
+				meta["delete_mode"] = "safe"
+			}
+		}
+		for _, item := range typed {
+			addDefaultDeleteModeToExpected(item)
+		}
+	case []any:
+		for _, item := range typed {
+			addDefaultDeleteModeToExpected(item)
+		}
+	}
+}
+
+func cloneExpectedMap(in map[string]any) map[string]any {
+	out := make(map[string]any, len(in))
+	for key, value := range in {
+		switch typed := value.(type) {
+		case map[string]any:
+			out[key] = cloneExpectedMap(typed)
+		case []any:
+			items := make([]any, len(typed))
+			for i, item := range typed {
+				if itemMap, ok := item.(map[string]any); ok {
+					items[i] = cloneExpectedMap(itemMap)
+				} else {
+					items[i] = item
+				}
+			}
+			out[key] = items
+		default:
+			out[key] = value
+		}
+	}
+	return out
 }

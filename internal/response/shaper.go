@@ -7,15 +7,23 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"time"
+
+	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 const EnvDebugMetadata = "ICUVISOR_DEBUG_METADATA"
 
+var processDeleteMode atomic.Value
+
+func init() {
+	processDeleteMode.Store(safety.ModeSafe.String())
+}
+
 var defaultScaleLabels = map[string]string{
 	"feel":         "1-5 (athlete-reported feel)",
 	"fatigue":      "1-5 (athlete-reported fatigue)",
-	"injury":       "1-5 (athlete-reported injury/limitation)",
 	"mood":         "1-5 (athlete-reported mood)",
 	"motivation":   "1-5 (athlete-reported motivation)",
 	"rpe":          "1-10 (rating of perceived exertion)",
@@ -35,6 +43,20 @@ type Options struct {
 	QueryType      string
 	FetchedAt      time.Time
 	UnitSystem     UnitSystem
+}
+
+// SetDeleteMode stores the process-global delete mode reported in response metadata.
+func SetDeleteMode(mode string) {
+	processDeleteMode.Store(safety.ParseMode(mode).String())
+}
+
+// DeleteMode returns the process-global delete mode reported in response metadata.
+func DeleteMode() string {
+	mode, ok := processDeleteMode.Load().(string)
+	if !ok || strings.TrimSpace(mode) == "" {
+		return safety.ModeSafe.String()
+	}
+	return mode
 }
 
 // DebugMetadataFromEnv reads the debug metadata toggle for startup configuration.
@@ -260,6 +282,7 @@ func addCommonMeta(row map[string]any, opts Options) {
 		}
 	}
 	meta["server_version"] = normalizeVersion(opts.ServerVersion)
+	meta["delete_mode"] = DeleteMode()
 	if opts.UnitSystem != "" {
 		meta["units"] = opts.UnitSystem.Metadata()
 	}

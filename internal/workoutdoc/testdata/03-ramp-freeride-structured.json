@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {
+      "duration": 900,
+      "ramp": true,
+      "power": { "start": 50, "end": 75, "units": "PERCENT_FTP" },
+      "cadence": { "min": 85, "max": 95, "units": "RPM" }
+    },
+    {
+      "duration": 1200,
+      "freeride": true
+    }
+  ]
+}

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 // Registry registers the MCP tools exposed by icuvisor.
@@ -17,6 +19,7 @@ type RegistryOptions struct {
 	Version          string
 	TimezoneFallback string
 	DebugMetadata    bool
+	Capability       safety.Capability
 }
 
 // NewRegistry creates the default tool registry.
@@ -34,6 +37,7 @@ func NewRegistryWithOptions(profileClient ProfileClient, opts RegistryOptions) R
 		version:          normalizeVersion(opts.Version),
 		timezoneFallback: normalizeTimezoneFallback(opts.TimezoneFallback),
 		debugMetadata:    opts.DebugMetadata,
+		capability:       capabilityOrSafe(opts.Capability),
 	}
 }
 
@@ -42,6 +46,14 @@ type defaultRegistry struct {
 	version          string
 	timezoneFallback string
 	debugMetadata    bool
+	capability       safety.Capability
+}
+
+func capabilityOrSafe(capability safety.Capability) safety.Capability {
+	if capability != nil {
+		return capability
+	}
+	return safety.NewCapability(safety.ModeSafe)
 }
 
 func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) error {
@@ -70,6 +82,16 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if wellnessWriterClient, ok := r.profileClient.(WellnessWriterClient); ok {
+		if err := registrar.AddTool(newUpdateWellnessTool(wellnessWriterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if sportSettingsWriterClient, ok := r.profileClient.(SportSettingsWriterClient); ok {
+		if err := registrar.AddTool(newUpdateSportSettingsTool(sportSettingsWriterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata, r.capability)); err != nil {
+			return err
+		}
+	}
 	if bestEffortsClient, ok := r.profileClient.(BestEffortsClient); ok {
 		if err := registrar.AddTool(newGetBestEffortsTool(bestEffortsClient, r.version, r.debugMetadata)); err != nil {
 			return err
@@ -95,6 +117,33 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if eventWriterClient, ok := r.profileClient.(EventWriterClient); ok {
+		if err := registrar.AddTool(newAddOrUpdateEventTool(eventWriterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if applyTrainingPlanClient, ok := r.profileClient.(ApplyTrainingPlanClient); ok {
+		if err := registrar.AddTool(newApplyTrainingPlanTool(applyTrainingPlanClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata, r.capability)); err != nil {
+			return err
+		}
+	}
+	if eventDeleterClient, ok := r.profileClient.(EventDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteEventTool(eventDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if eventsByDateRangeDeleterClient, ok := r.profileClient.(EventsByDateRangeDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteEventsByDateRangeTool(eventsByDateRangeDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if linkClient, ok := r.profileClient.(ActivityEventLinkClient); ok {
+		activityClient, _ := r.profileClient.(ActivityDetailsClient)
+		eventClient, _ := r.profileClient.(EventByIDClient)
+		if err := registrar.AddTool(newLinkActivityToEventTool(linkClient, activityClient, eventClient, r.version, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if trainingPlanClient, ok := r.profileClient.(TrainingPlanClient); ok {
 		if err := registrar.AddTool(newGetTrainingPlanTool(trainingPlanClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
@@ -108,7 +157,29 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
-	if customItemsClient, ok := r.profileClient.(CustomItemsClient); ok {
+	if workoutCreatorClient, ok := r.profileClient.(WorkoutCreatorClient); ok {
+		if err := registrar.AddTool(newCreateWorkoutTool(workoutCreatorClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if workoutUpdaterClient, ok := r.profileClient.(WorkoutUpdaterClient); ok {
+		if err := registrar.AddTool(newUpdateWorkoutTool(workoutUpdaterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if workoutDeleterClient, ok := r.profileClient.(WorkoutDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteWorkoutTool(workoutDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if sportSettingsDeleterClient, ok := r.profileClient.(SportSettingsDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteSportSettingsTool(sportSettingsDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	var customItemsClient CustomItemsClient
+	if client, ok := r.profileClient.(CustomItemsClient); ok {
+		customItemsClient = client
 		if err := registrar.AddTool(newGetCustomItemsTool(customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
 		}
@@ -116,8 +187,28 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if customItemCreatorClient, ok := r.profileClient.(CustomItemCreatorClient); ok {
+		if err := registrar.AddTool(newCreateCustomItemTool(customItemCreatorClient, customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if customItemUpdaterClient, ok := r.profileClient.(CustomItemUpdaterClient); ok {
+		if err := registrar.AddTool(newUpdateCustomItemTool(customItemUpdaterClient, customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if customItemDeleterClient, ok := r.profileClient.(CustomItemDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteCustomItemTool(customItemDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if detailsClient, ok := r.profileClient.(ActivityDetailsClient); ok {
 		if err := registrar.AddTool(newGetActivityDetailsTool(detailsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if activityDeleterClient, ok := r.profileClient.(ActivityDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteActivityTool(activityDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
 		}
 	}
@@ -145,8 +236,18 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if messageWriterClient, ok := r.profileClient.(ActivityMessageWriterClient); ok {
+		if err := registrar.AddTool(newAddActivityMessageTool(messageWriterClient, r.profileClient, r.version, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if extendedClient, ok := r.profileClient.(ExtendedMetricsClient); ok {
 		if err := registrar.AddTool(newGetExtendedMetricsTool(extendedClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
+	if gearDeleterClient, ok := r.profileClient.(GearDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteGearTool(gearDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err
 		}
 	}
@@ -161,13 +262,36 @@ type Registrar interface {
 // Handler handles a tool call using raw JSON arguments.
 type Handler func(context.Context, Request) (Result, error)
 
+// Requirement describes the registration-time capability needed by a tool.
+type Requirement string
+
+const (
+	// RequirementRead registers the tool in every mode.
+	RequirementRead Requirement = "read"
+	// RequirementWrite registers the tool only when write tools are allowed.
+	RequirementWrite Requirement = "write"
+	// RequirementDelete registers the tool only when delete tools are allowed.
+	RequirementDelete Requirement = "delete"
+)
+
 // Tool describes one MCP tool without exposing SDK-specific types.
 type Tool struct {
 	Name         string
 	Description  string
 	InputSchema  any
 	OutputSchema any
+	Requirement  Requirement
 	Handler      Handler
+}
+
+// RequiresWrite reports whether the tool needs write capability to be registered.
+func (t Tool) RequiresWrite() bool {
+	return t.Requirement == RequirementWrite || t.Requirement == RequirementDelete
+}
+
+// RequiresDelete reports whether the tool needs delete capability to be registered.
+func (t Tool) RequiresDelete() bool {
+	return t.Requirement == RequirementDelete
 }
 
 // Request carries an MCP tool call to a Handler.
