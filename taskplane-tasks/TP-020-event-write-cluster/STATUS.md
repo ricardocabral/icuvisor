@@ -57,8 +57,9 @@
 **Status:** 🟨 In Progress
 
 - [x] `make test`, `make build`, `make lint`, `go test -race ./...`
-- [ ] Fix live event create smoke failure by sending upstream-required workout `type` and using the bulk create endpoint.
-- [ ] Manual smoke against the maintainer's test athlete account: create, update, link, message
+- [x] Fix live event create smoke failure by sending upstream-required workout `type` and using the bulk create endpoint.
+- [x] Manual smoke against the maintainer's test athlete account: create, update, link, message
+- [ ] Re-run full verification after the live smoke implementation fix.
 
 ---
 
@@ -113,3 +114,4 @@
 - 2026-05-13 15:40 — Review R004 plan Step 2 returned REVISE; concrete plan checkboxes added under Step 2.
 - 2026-05-13 15:44 — Review R005 plan Step 2 returned APPROVE.
 - 2026-05-13 15:48 — Review R006/R007 code Step 2 returned UNAVAILABLE twice; proceeded with targeted tests passing.
+- 2026-05-13 17:15 — Manual smoke using only `/Users/jusbrasil/prj/icuvisor/.env-dev` passed create/update/link/message with trace `tp020-1778692543`; no secrets recorded.
