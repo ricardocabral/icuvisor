@@ -65,6 +65,7 @@ Selected targets:
 > ⚠️ Hydrate: Expand based on remaining coverage gap after Step 2.
 
 - [ ] Add extended-metrics tests for uncovered behavior-rich branches
+- [ ] Re-run coverage after extended-metrics tests and skip toolcheck tests if total coverage is already >= 80.0%
 - [ ] Add or extend toolcheck tests only if additional coverage is needed
 - [ ] Targeted tests for touched packages pass
 
@@ -129,4 +130,6 @@ _None_
 Current observed baseline before staging this task: 76.9% total statement coverage from `go test ./... -coverprofile=coverage.out -covermode=atomic`.
 
 Step 1 per-function report (2026-05-13): overall baseline remains 76.9%. Highest-value behavior targets are the 0%-covered `internal/intervals/activity_streams.go` (`ActivityStream.UnmarshalJSON`, `Client.GetActivityStreams`) and `internal/intervals/wellness.go` (`Wellness.UnmarshalJSON`, `ListWellness`, native-provider helpers), followed by uncovered/low-covered `internal/tools/get_extended_metrics.go` optional-source and Strava-unavailable branches. `internal/toolchecks` remains a fallback if those tests do not reach 80%.
+
+Step 3 coverage gap after intervals tests: full-suite coverage is 79.7%, so a small number of extended-metrics branch tests should reach the target. Remaining under-covered extended-metrics functions are `stravaUnavailableExtendedMetricsResponse` (0%), optional source helpers (37.5%), handler source-error branches (60.7%), and raw number/string helper edge cases.
 | 2026-05-13 12:27 | Review R001 | plan Step 1: APPROVE |
