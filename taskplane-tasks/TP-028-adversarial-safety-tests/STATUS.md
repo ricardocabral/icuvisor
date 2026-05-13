@@ -1,6 +1,6 @@
 # TP-028-adversarial-safety-tests: TP-028-adversarial-safety-tests — Status
 
-**Current Step:** Step 3: Failure-mode requirements
+**Current Step:** Step 4: Regression hook
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -37,10 +37,10 @@
 ---
 
 ### Step 4: Regression hook
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Wire the static matrix test into `make test` so it runs on every PR
-- [ ] The LLM-loop corpus is documented but optional in CI (it costs tokens); document the manual cadence in `STATUS.md`
+- [x] Wire the static matrix test into `make test` so it runs on every PR
+- [x] The LLM-loop corpus is documented but optional in CI (it costs tokens); document the manual cadence in `STATUS.md`
 
 ---
 
@@ -65,6 +65,7 @@
 |-----------|-------------|----------|
 | AP-01 through AP-10 all returned `TOOL_NOT_FOUND_SURRENDER`; no re-prompt loop observed. | No P0 loop finding required. | `docs/safety/adversarial-prompts.md` |
 | Safe-mode adversarial corpus produced no successful destructive calls. | No launch-blocker escalation required. | `docs/safety/adversarial-prompts.md` |
+| `make test` runs `go test ./...` and includes `internal/safety/adversarial_test.go`. | Static matrix is wired into every PR test run via existing Makefile target. | `Makefile`, `internal/safety/adversarial_test.go` |
 
 ---
 
@@ -86,4 +87,4 @@
 
 ## Notes
 
-*Reserved for execution notes*
+- LLM-loop adversarial corpus is intentionally optional in CI because it spends model tokens. Manual cadence: run `docs/safety/adversarial-prompts.md` before each release candidate that changes tool registration, safety gating, destructive tools, or MCP client wiring; record only redacted PASS/FAIL/BLOCKED outcomes.
