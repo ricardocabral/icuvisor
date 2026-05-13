@@ -1,6 +1,6 @@
 # TP-024-custom-items-write: TP-024-custom-items-write — Status
 
-**Current Step:** Step 2: `update_custom_item`
+**Current Step:** Step 3: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -20,16 +20,16 @@
 ---
 
 ### Step 2: `update_custom_item`
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Inputs: `item_id` + sparse fields against the same schema
-- [ ] Partial-update semantics
-- [ ] Tests: update single field, schema-violation rejection
+- [x] Inputs: `item_id` + sparse fields against the same schema
+- [x] Partial-update semantics
+- [x] Tests: update single field, schema-violation rejection
 
 ---
 
 ### Step 3: Verify
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
 - [ ] Manual smoke against the test athlete with at least one custom-item schema

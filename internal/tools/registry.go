@@ -172,6 +172,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if customItemUpdaterClient, ok := r.profileClient.(CustomItemUpdaterClient); ok {
+		if err := registrar.AddTool(newUpdateCustomItemTool(customItemUpdaterClient, customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if detailsClient, ok := r.profileClient.(ActivityDetailsClient); ok {
 		if err := registrar.AddTool(newGetActivityDetailsTool(detailsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err

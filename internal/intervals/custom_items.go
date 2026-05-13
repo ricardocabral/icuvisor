@@ -101,6 +101,23 @@ func (c *Client) CreateCustomItem(ctx context.Context, params WriteCustomItemPar
 	return item, nil
 }
 
+// UpdateCustomItem sparsely updates a custom item for the configured athlete.
+func (c *Client) UpdateCustomItem(ctx context.Context, params WriteCustomItemParams) (CustomItem, error) {
+	itemID := strings.TrimSpace(params.ItemID)
+	if itemID == "" {
+		return CustomItem{}, fmt.Errorf("updating custom item: item ID is required")
+	}
+	body, err := writeCustomItemBody(params, true)
+	if err != nil {
+		return CustomItem{}, err
+	}
+	var item CustomItem
+	if err := c.doJSONBody(ctx, http.MethodPut, body, &item, "athlete", c.athleteID, "custom-item", itemID); err != nil {
+		return CustomItem{}, fmt.Errorf("updating custom item %s: %w", itemID, err)
+	}
+	return item, nil
+}
+
 func writeCustomItemBody(params WriteCustomItemParams, allowSparse bool) (map[string]any, error) {
 	body := map[string]any{}
 	itemType := strings.TrimSpace(params.ItemType)

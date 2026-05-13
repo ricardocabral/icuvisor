@@ -62,6 +62,8 @@ Currently implemented tools:
 - `delete_workout` — deletes one workout-library template only when `ICUVISOR_DELETE_MODE=full`; it has no model-controlled `confirm` argument.
 - `get_custom_items` — lists custom charts, fields, streams, panels, histograms, maps, and zones with terse `id`/`name`/`item_type` rows.
 - `get_custom_item_by_id` — fetches one custom item with its full per-`item_type` `content` payload preserved.
+- `create_custom_item` — creates custom charts, fields, streams, panels, histograms, maps, or zones in write-enabled modes (`safe`/`full`), validating `content` against readable per-`item_type` schema samples before upload.
+- `update_custom_item` — sparsely updates one custom item in write-enabled modes (`safe`/`full`), validating content patches against the existing item's readable schema and leaving omitted fields untouched.
 
 ## Install
 
