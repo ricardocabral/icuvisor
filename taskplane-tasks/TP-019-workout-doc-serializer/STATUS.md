@@ -1,6 +1,6 @@
 # TP-019-workout-doc-serializer: TP-019-workout-doc-serializer — Status
 
-**Current Step:** Step 2: Serializer
+**Current Step:** Step 3: Parser parity (read-side compat)
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -20,16 +20,16 @@
 ---
 
 ### Step 2: Serializer
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `Serialize(WorkoutDoc) (string, error)` emits a deterministic DSL string (stable ordering of attributes per step)
-- [ ] Reject unsupported step types with a typed error containing the offending step (no silent drops)
-- [ ] Preserve free-text `description` on steps verbatim
+- [x] `Serialize(WorkoutDoc) (string, error)` emits a deterministic DSL string (stable ordering of attributes per step)
+- [x] Reject unsupported step types with a typed error containing the offending step (no silent drops)
+- [x] Preserve free-text `description` on steps verbatim
 
 ---
 
 ### Step 3: Parser parity (read-side compat)
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Confirm the read-side parser produces the same structured shape the serializer round-trips through; if it does not, write a thin adapter
 - [ ] Do not change the public read shape (TP-013 owns that)
