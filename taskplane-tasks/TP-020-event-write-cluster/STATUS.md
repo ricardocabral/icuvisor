@@ -1,6 +1,6 @@
 # TP-020-event-write-cluster: TP-020-event-write-cluster — Status
 
-**Current Step:** Step 4: Schema descriptions
+**Current Step:** Step 5: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -46,15 +46,15 @@
 ---
 
 ### Step 4: Schema descriptions
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Every arg has an LLM-readable description with units / scale where relevant
-- [ ] Tool descriptions explicitly state non-destructive intent so the LLM does not seek a `confirm` arg (there is none — TP-018)
+- [x] Every arg has an LLM-readable description with units / scale where relevant
+- [x] Tool descriptions explicitly state non-destructive intent so the LLM does not seek a `confirm` arg (there is none — TP-018)
 
 ---
 
 ### Step 5: Verify
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
 - [ ] Manual smoke against the maintainer's test athlete account: create, update, link, message
