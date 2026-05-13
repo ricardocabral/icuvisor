@@ -78,6 +78,16 @@ export INTERVALS_ICU_ATHLETE_ID="i12345"
 
 For local development, `icuvisor` can read a local untracked `.env` file containing `INTERVALS_ICU_API_KEY` and `INTERVALS_ICU_ATHLETE_ID`. Do not commit real API keys. For MCP client config, use process env vars or pass a JSON file with `--config /path/to/icuvisor.json` using fields `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout`.
 
+### Delete/write safety mode
+
+`ICUVISOR_DELETE_MODE` is read once at startup and controls which write-capable tools are registered with the MCP server:
+
+- `safe` (default): write tools are registered, delete tools are omitted from the catalog.
+- `full`: write and delete tools are registered.
+- `none`: write and delete tools are omitted, leaving read-only tools only.
+
+Unknown or empty values resolve to `safe`. The active mode is reported in response metadata as `_meta.delete_mode`.
+
 For the v0.1 macOS Claude Desktop manual JSON setup and smoke checklist, see [`docs/clients/claude-desktop.md`](docs/clients/claude-desktop.md). For Codex CLI local MCP validation, see [`docs/clients/codex-local.md`](docs/clients/codex-local.md).
 
 ## Project layout

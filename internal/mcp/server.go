@@ -10,6 +10,7 @@ import (
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/ricardocabral/icuvisor/internal/config"
+	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
@@ -19,11 +20,12 @@ var snakeCaseToolName = regexp.MustCompile(`^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$`)
 
 // Options contains dependencies for constructing the MCP server.
 type Options struct {
-	Config    config.Config
-	Version   string
-	Logger    *slog.Logger
-	Registry  tools.Registry
-	Transport sdkmcp.Transport
+	Config     config.Config
+	Version    string
+	Logger     *slog.Logger
+	Registry   tools.Registry
+	Capability safety.Capability
+	Transport  sdkmcp.Transport
 }
 
 // Server wraps the SDK server and selected transport.
@@ -56,10 +58,11 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 		return nil, err
 	}
 	if opts.Registry != nil {
-		registrar := &safeRegistrar{server: sdkServer, logger: logger, names: make(map[string]struct{})}
+		registrar := &safeRegistrar{server: sdkServer, logger: logger, capability: capabilityOrSafe(opts.Capability), names: make(map[string]struct{})}
 		if err := opts.Registry.Register(ctx, registrar); err != nil {
 			return nil, fmt.Errorf("registering tools: %w", err)
 		}
+		logger.Info("tool registration complete", "registered_count", registrar.registeredCount, "skipped_count", registrar.skippedCount)
 	}
 
 	return &Server{server: sdkServer, transport: transport}, nil
@@ -76,6 +79,13 @@ func (s *Server) Run(ctx context.Context) error {
 	return s.server.Run(ctx, s.transport)
 }
 
+func capabilityOrSafe(capability safety.Capability) safety.Capability {
+	if capability != nil {
+		return capability
+	}
+	return safety.NewCapability(safety.ModeSafe)
+}
+
 func newSDKServer(version string, logger *slog.Logger) (server *sdkmcp.Server, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
@@ -86,14 +96,21 @@ func newSDKServer(version string, logger *slog.Logger) (server *sdkmcp.Server, e
 }
 
 type safeRegistrar struct {
-	server *sdkmcp.Server
-	logger *slog.Logger
-	names  map[string]struct{}
+	server          *sdkmcp.Server
+	logger          *slog.Logger
+	capability      safety.Capability
+	names           map[string]struct{}
+	registeredCount int
+	skippedCount    int
 }
 
 func (r *safeRegistrar) AddTool(tool tools.Tool) (err error) {
 	if err := r.validateTool(tool); err != nil {
 		return err
+	}
+	if r.shouldSkip(tool) {
+		r.skippedCount++
+		return nil
 	}
 	defer func() {
 		if recovered := recover(); recovered != nil {
@@ -123,7 +140,19 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) (err error) {
 		return converted, nil
 	})
 	r.names[tool.Name] = struct{}{}
+	r.registeredCount++
 	return nil
+}
+
+func (r *safeRegistrar) shouldSkip(tool tools.Tool) bool {
+	capability := r.capability
+	if capability == nil {
+		capability = safety.NewCapability(safety.ModeSafe)
+	}
+	if tool.RequiresDelete() && !capability.CanDelete() {
+		return true
+	}
+	return tool.RequiresWrite() && !capability.CanWrite()
 }
 
 func (r *safeRegistrar) validateTool(tool tools.Tool) error {

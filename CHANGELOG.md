@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `internal/workoutdoc` public package API with `WorkoutDoc`, `Parse`, and `Serialize` for deterministic Intervals.icu workout-description DSL round-trips, including golden fixtures for repeats, ramps, freeride, cadence, power, heart-rate, pace, and RPE targets.
+- `ICUVISOR_DELETE_MODE` safety gate with `safe`/`full`/`none` modes, registration-time write/delete tool filtering, and `_meta.delete_mode` response metadata.
 - CI guards for tool-schema snapshot stability and confusable tool-name first sentences, plus canonical per-tool argument schema snapshots for the v0.2 read catalog.
 - Disambiguated first-sentence descriptions for activity, event/calendar, workout-library, and custom-item read-tool clusters.
 - `get_custom_items` and `get_custom_item_by_id` MCP tools for custom chart/field/stream/panel/zones reads, with terse list rows and per-`item_type` `content` preservation on detail reads.
