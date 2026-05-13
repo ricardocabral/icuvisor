@@ -107,6 +107,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if eventWriterClient, ok := r.profileClient.(EventWriterClient); ok {
+		if err := registrar.AddTool(newAddOrUpdateEventTool(eventWriterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if trainingPlanClient, ok := r.profileClient.(TrainingPlanClient); ok {
 		if err := registrar.AddTool(newGetTrainingPlanTool(trainingPlanClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err

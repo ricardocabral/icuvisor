@@ -3,6 +3,7 @@ package intervals
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -174,5 +175,93 @@ func TestGetEventRequiresID(t *testing.T) {
 	client := newTestClient(t, "https://example.invalid", http.DefaultClient, RetryConfig{})
 	if _, err := client.GetEvent(context.Background(), " "); err == nil {
 		t.Fatal("GetEvent() error = nil, want required ID error")
+	}
+}
+
+func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
+	t.Parallel()
+
+	requests := make([]struct {
+		method string
+		path   string
+		body   map[string]any
+	}, 0, 2)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("read body: %v", err)
+		}
+		var decoded map[string]any
+		if err := json.Unmarshal(body, &decoded); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		requests = append(requests, struct {
+			method string
+			path   string
+			body   map[string]any
+		}{method: r.Method, path: r.URL.Path, body: decoded})
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodPut {
+			_, _ = w.Write([]byte(`{"id":"evt-9","category":"WORKOUT","start_date_local":"2026-06-02"}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"id":"evt-8","category":"WORKOUT","start_date_local":"2026-06-01"}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	description := "  preserve\ntext  "
+	targetLoad := 75.0
+	distance := 30000.0
+	moving := 3600
+	elapsed := 3900
+	created, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{Date: "2026-06-01", Category: "WORKOUT", Name: "Tempo", Description: &description, Tags: []string{"tempo", "coach"}, TargetLoad: &targetLoad, DistanceMeters: &distance, MovingTimeSeconds: &moving, ElapsedTimeSeconds: &elapsed})
+	if err != nil {
+		t.Fatalf("AddOrUpdateEvent(create) error = %v", err)
+	}
+	updated, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: " evt-9 ", Date: "2026-06-02", Category: "WORKOUT"})
+	if err != nil {
+		t.Fatalf("AddOrUpdateEvent(update) error = %v", err)
+	}
+	if created.ID != "evt-8" || updated.ID != "evt-9" {
+		t.Fatalf("ids = %q/%q, want decoded create/update IDs", created.ID, updated.ID)
+	}
+	if len(requests) != 2 {
+		t.Fatalf("request count = %d, want 2", len(requests))
+	}
+	if requests[0].method != http.MethodPost || requests[0].path != "/athlete/i12345/events" {
+		t.Fatalf("create request = %#v, want POST athlete events", requests[0])
+	}
+	body := requests[0].body
+	if body["start_date_local"] != "2026-06-01" || body["category"] != "WORKOUT" || body["name"] != "Tempo" || body["description"] != description {
+		t.Fatalf("create body = %#v, want mapped event fields", body)
+	}
+	if _, ok := body["workout_doc"]; ok {
+		t.Fatalf("create body includes workout_doc: %#v", body)
+	}
+	if _, ok := body["event_id"]; ok {
+		t.Fatalf("create body includes event_id: %#v", body)
+	}
+	tags := body["tags"].([]any)
+	if len(tags) != 2 || tags[0] != "tempo" || tags[1] != "coach" {
+		t.Fatalf("tags = %#v, want preserved tags", tags)
+	}
+	if body["icu_training_load"] != float64(75) || body["distance"] != float64(30000) || body["moving_time"] != float64(3600) || body["elapsed_time"] != float64(3900) {
+		t.Fatalf("planned metrics body = %#v", body)
+	}
+	if requests[1].method != http.MethodPut || requests[1].path != "/athlete/i12345/events/evt-9" {
+		t.Fatalf("update request = %#v, want PUT athlete events/{id}", requests[1])
+	}
+}
+
+func TestAddOrUpdateEventRequiresWritableBasics(t *testing.T) {
+	t.Parallel()
+
+	client := newTestClient(t, "https://example.invalid", http.DefaultClient, RetryConfig{})
+	if _, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{Category: "WORKOUT"}); err == nil {
+		t.Fatal("AddOrUpdateEvent() error = nil, want required date error")
+	}
+	if _, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{Date: "2026-01-01"}); err == nil {
+		t.Fatal("AddOrUpdateEvent() error = nil, want required category error")
 	}
 }
