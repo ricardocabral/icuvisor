@@ -6,40 +6,40 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 
 **Goal:** end-to-end pipe from binary → MCP → intervals.icu.
 
-- [ ] Go module + project layout.
-- [ ] intervals.icu API client (Basic Auth, retries, structured errors).
-- [ ] MCP stdio transport wired up via `github.com/modelcontextprotocol/go-sdk`.
-- [ ] One working tool: `get_athlete_profile`, end-to-end via stdio to Claude Desktop on macOS.
-- [ ] Manual JSON config (no installer yet).
+- [x] Go module + project layout.
+- [x] intervals.icu API client (Basic Auth, retries, structured errors).
+- [x] MCP stdio transport wired up via `github.com/modelcontextprotocol/go-sdk`.
+- [x] One working tool: `get_athlete_profile`, end-to-end via stdio to Claude Desktop on macOS.
+- [x] Manual JSON config (no installer yet).
 
 ## v0.2 — Read path
 
 **Goal:** prove response shaping in real conversations before adding writes. Validate that an LLM, given only icuvisor's reads, produces correct training analysis without scale or unit confusion.
 
-- [ ] All read-only tools from the catalog (PRD §7.2.C): `get_athlete_profile`, `get_fitness`, `get_best_efforts`, `get_power_curves`, `get_activities`, `get_activity_details`, `get_activity_intervals`, `get_activity_streams`, `get_activity_splits`, `get_activity_messages`, `get_extended_metrics`, `get_training_summary`, `get_wellness_data`, `get_events`, `get_event_by_id`, `get_training_plan`, `get_workout_library`, `get_workouts_in_folder`, `get_custom_items`, `get_custom_item_by_id`.
-- [ ] Canonical snake_case stream keys across all activities/devices (forum #118); upstream casing differences absorbed at the response boundary.
-- [ ] `get_extended_metrics` field set per PRD §7.2.C — running dynamics, DFA α1, W' balance, cardiac decoupling, HR drift, aerobic decoupling, zone distributions, IF/VI/polarization, TRIMP/strain/load, L/R balance, RPE/feel/session-RPE, compliance %, device name — gated by upstream availability (PRD §7.4 #4).
-- [ ] `get_planning_parameters` is deferred until intervals.icu exposes athlete-level periodization parameters (ramp-rate %, recovery-week cadence, taper % drop, intensity-distribution preference) through the public API; see `docs/upstream-gaps/periodization-parameters.md`.
-- [ ] Terse-by-default + `include_full` opt-in; auto-added debug metadata (`fetched_at`, `query_type`) stripped by default, behind `ICUVISOR_DEBUG_METADATA=true`.
-- [ ] Null-value keys stripped from responses before serialization (wellness in particular — N/A fields are dropped, not emitted as `null`).
-- [ ] Exhaustive pace-unit enum coverage (`MINS_KM`, `MINS_MILE`, `SECS_100M`, `SECS_500M`, …); unknown units degrade to `_meta.unknown_unit: true` rather than failing the call.
-- [ ] Distinct sleep fields surfaced separately: manual `sleepQuality` (1–4) and device-imported `sleepScore` (0–100), each with its own in-response scale label.
-- [ ] Wellness `_meta.provenance` (per bridged field: `source`, `native_scale`, `fetched_at`) + `_meta.stale: true` when the upstream bridge has not refreshed within 24h of the wellness date; raw native sub-fields exposed under `_native.<source>.<field>` (Polar `ans_charge`, `nightly_recharge_status`; Garmin body-battery min/max; Oura raw `sleep_score`).
-- [ ] `_meta.missing_fields` callout on every read tool that strips nulls — explicit list of which keys were absent for the row, so the LLM declines to infer rather than treating absence as zero.
-- [ ] Periodization parameters via `get_planning_parameters` (and write counterpart) if exposed upstream (PRD §7.4 #18) — ramp-rate %, recovery-week cadence, taper % drop, intensity distribution. Gap documented and an intervals.icu API feature request filed if absent.
-- [ ] `get_event_by_id` upstream-inconsistency handling: structured `unavailable: { reason: "upstream_inconsistency" }` when the detail endpoint 404s on an ID `get_events` just listed.
-- [ ] In-response scale labels on every subjective field (`feel`, `sleepQuality`, `fatigue`, `mood`, etc.) — not just tool descriptions.
-- [ ] Disambiguating field names in responses (`calories_burned` not `calories`; `distance_km` / `distance_mi`).
-- [ ] Server-side pagination for `get_activities`.
-- [ ] Strava-blocked-activity detection returns structured `unavailable: { reason, workaround }`.
-- [ ] Per-athlete unit normalization (miles vs km) from `preferred_units`, embedded in field keys / `_meta`.
-- [ ] Athlete-ID normalization (`i12345` / `12345`).
-- [ ] Timezone normalization to the athlete's configured TZ.
-- [ ] `_meta.server_version` in every response.
-- [ ] Tool-name disambiguation pass on read clusters (`get_activity_details` / `_intervals` / `_streams`); CI guard for new confusable clusters.
-- [ ] Tool-schema stability rules enforced in CI: additive-only on stable tools; renames/removals require a new tool name.
-- [ ] Manual JSON config still; stdio only.
-- [ ] Dogfooded solo + 2–3 invited athletes, read-only.
+- [x] All read-only tools from the catalog (PRD §7.2.C): `get_athlete_profile`, `get_fitness`, `get_best_efforts`, `get_power_curves`, `get_activities`, `get_activity_details`, `get_activity_intervals`, `get_activity_streams`, `get_activity_splits`, `get_activity_messages`, `get_extended_metrics`, `get_training_summary`, `get_wellness_data`, `get_events`, `get_event_by_id`, `get_training_plan`, `get_workout_library`, `get_workouts_in_folder`, `get_custom_items`, `get_custom_item_by_id`.
+- [x] Canonical snake_case stream keys across all activities/devices (forum #118); upstream casing differences absorbed at the response boundary.
+- [x] `get_extended_metrics` field set per PRD §7.2.C — running dynamics, DFA α1, W' balance, cardiac decoupling, HR drift, aerobic decoupling, zone distributions, IF/VI/polarization, TRIMP/strain/load, L/R balance, RPE/feel/session-RPE, compliance %, device name — gated by upstream availability (PRD §7.4 #4).
+- [x] `get_planning_parameters` is deferred until intervals.icu exposes athlete-level periodization parameters (ramp-rate %, recovery-week cadence, taper % drop, intensity-distribution preference) through the public API; see `docs/upstream-gaps/periodization-parameters.md`.
+- [x] Terse-by-default + `include_full` opt-in; auto-added debug metadata (`fetched_at`, `query_type`) stripped by default, behind `ICUVISOR_DEBUG_METADATA=true`.
+- [x] Null-value keys stripped from responses before serialization (wellness in particular — N/A fields are dropped, not emitted as `null`).
+- [x] Exhaustive pace-unit enum coverage (`MINS_KM`, `MINS_MILE`, `SECS_100M`, `SECS_500M`, …); unknown units degrade to `_meta.unknown_unit: true` rather than failing the call.
+- [x] Distinct sleep fields surfaced separately: manual `sleepQuality` (1–4) and device-imported `sleepScore` (0–100), each with its own in-response scale label.
+- [x] Wellness `_meta.provenance` (per bridged field: `source`, `native_scale`, `fetched_at`) + `_meta.stale: true` when the upstream bridge has not refreshed within 24h of the wellness date; raw native sub-fields exposed under `_native.<source>.<field>` (Polar `ans_charge`, `nightly_recharge_status`; Garmin body-battery min/max; Oura raw `sleep_score`).
+- [x] `_meta.missing_fields` callout on every read tool that strips nulls — explicit list of which keys were absent for the row, so the LLM declines to infer rather than treating absence as zero.
+- [x] Periodization parameters via `get_planning_parameters` (and write counterpart) if exposed upstream (PRD §7.4 #18) — ramp-rate %, recovery-week cadence, taper % drop, intensity distribution. Gap documented and an intervals.icu API feature request filed if absent.
+- [x] `get_event_by_id` upstream-inconsistency handling: structured `unavailable: { reason: "upstream_inconsistency" }` when the detail endpoint 404s on an ID `get_events` just listed.
+- [x] In-response scale labels on every subjective field (`feel`, `sleepQuality`, `fatigue`, `mood`, etc.) — not just tool descriptions.
+- [x] Disambiguating field names in responses (`calories_burned` not `calories`; `distance_km` / `distance_mi`).
+- [x] Server-side pagination for `get_activities`.
+- [x] Strava-blocked-activity detection returns structured `unavailable: { reason, workaround }`.
+- [x] Per-athlete unit normalization (miles vs km) from `preferred_units`, embedded in field keys / `_meta`.
+- [x] Athlete-ID normalization (`i12345` / `12345`).
+- [x] Timezone normalization to the athlete's configured TZ.
+- [x] `_meta.server_version` in every response.
+- [x] Tool-name disambiguation pass on read clusters (`get_activity_details` / `_intervals` / `_streams`); CI guard for new confusable clusters.
+- [x] Tool-schema stability rules enforced in CI: additive-only on stable tools; renames/removals require a new tool name.
+- [x] Manual JSON config still; stdio only.
+- [x] Dogfooded solo + 2–3 invited athletes, read-only.
 
 ## v0.3 — Writes with safety gate
 
