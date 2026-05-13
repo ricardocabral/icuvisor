@@ -41,12 +41,17 @@ func (f *WorkoutFolder) UnmarshalJSON(data []byte) error {
 
 // WriteWorkoutParams contains writable workout-library template fields.
 type WriteWorkoutParams struct {
-	WorkoutID   string
-	Name        string
-	FolderID    string
-	Description *string
-	Tags        []string
-	Sport       string
+	WorkoutID      string
+	Name           string
+	NameSet        bool
+	FolderID       string
+	FolderIDSet    bool
+	Description    *string
+	DescriptionSet bool
+	Tags           []string
+	TagsSet        bool
+	Sport          string
+	SportSet       bool
 }
 
 // Workout contains a workout-library template and preserves raw upstream fields including workout_doc.
@@ -129,22 +134,73 @@ func (c *Client) CreateLibraryWorkout(ctx context.Context, params WriteWorkoutPa
 	return workout, nil
 }
 
-type writeWorkoutPayload struct {
-	Name        string   `json:"name,omitempty"`
-	FolderID    string   `json:"folder_id,omitempty"`
-	Description *string  `json:"description,omitempty"`
-	Tags        []string `json:"tags,omitempty"`
-	Type        string   `json:"type,omitempty"`
+// UpdateLibraryWorkout sparsely updates a workout-library template for the configured athlete.
+func (c *Client) UpdateLibraryWorkout(ctx context.Context, params WriteWorkoutParams) (Workout, error) {
+	workoutID := strings.TrimSpace(params.WorkoutID)
+	if workoutID == "" {
+		return Workout{}, fmt.Errorf("updating library workout: workout ID is required")
+	}
+	body, err := writeWorkoutBody(params, true)
+	if err != nil {
+		return Workout{}, err
+	}
+	var workout Workout
+	if err := c.doJSONBody(ctx, http.MethodPut, body, &workout, "athlete", c.athleteID, "workouts", workoutID); err != nil {
+		return Workout{}, fmt.Errorf("updating library workout %s: %w", workoutID, err)
+	}
+	return workout, nil
 }
 
-func writeWorkoutBody(params WriteWorkoutParams, allowSparse bool) (writeWorkoutPayload, error) {
+func writeWorkoutBody(params WriteWorkoutParams, allowSparse bool) (map[string]any, error) {
+	body := map[string]any{}
 	name := strings.TrimSpace(params.Name)
 	sport := strings.TrimSpace(params.Sport)
-	if !allowSparse && name == "" {
-		return writeWorkoutPayload{}, fmt.Errorf("writing workout: name is required")
+	if !allowSparse {
+		if name == "" {
+			return nil, fmt.Errorf("writing workout: name is required")
+		}
+		if sport == "" {
+			return nil, fmt.Errorf("writing workout: sport is required")
+		}
+		body["name"] = name
+		body["type"] = sport
+		if folderID := strings.TrimSpace(params.FolderID); folderID != "" {
+			body["folder_id"] = folderID
+		}
+		if params.Description != nil {
+			body["description"] = *params.Description
+		}
+		if len(params.Tags) > 0 {
+			body["tags"] = append([]string(nil), params.Tags...)
+		}
+		return body, nil
 	}
-	if !allowSparse && sport == "" {
-		return writeWorkoutPayload{}, fmt.Errorf("writing workout: sport is required")
+	if params.NameSet {
+		if name == "" {
+			return nil, fmt.Errorf("writing workout: name cannot be empty")
+		}
+		body["name"] = name
 	}
-	return writeWorkoutPayload{Name: name, FolderID: strings.TrimSpace(params.FolderID), Description: params.Description, Tags: append([]string(nil), params.Tags...), Type: sport}, nil
+	if params.FolderIDSet {
+		body["folder_id"] = strings.TrimSpace(params.FolderID)
+	}
+	if params.DescriptionSet {
+		if params.Description == nil {
+			return nil, fmt.Errorf("writing workout: description cannot be null")
+		}
+		body["description"] = *params.Description
+	}
+	if params.TagsSet {
+		body["tags"] = append([]string(nil), params.Tags...)
+	}
+	if params.SportSet {
+		if sport == "" {
+			return nil, fmt.Errorf("writing workout: sport cannot be empty")
+		}
+		body["type"] = sport
+	}
+	if len(body) == 0 {
+		return nil, fmt.Errorf("writing workout: at least one field is required")
+	}
+	return body, nil
 }

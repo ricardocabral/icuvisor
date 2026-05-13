@@ -1,6 +1,6 @@
 # TP-023-workout-library-crud: TP-023-workout-library-crud — Status
 
-**Current Step:** Step 1: `create_workout`
+**Current Step:** Step 2: `update_workout`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -21,11 +21,11 @@
 ---
 
 ### Step 2: `update_workout`
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Inputs: `workout_id` + sparse fields (same set as create)
-- [ ] Partial-update semantics: omitted fields untouched
-- [ ] Tests: rename, swap `workout_doc`, append tag
+- [x] Inputs: `workout_id` + sparse fields (same set as create)
+- [x] Partial-update semantics: omitted fields untouched
+- [x] Tests: rename, swap `workout_doc`, append tag
 
 ---
 
