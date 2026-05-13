@@ -1,6 +1,6 @@
 # TP-029-v03-dogfood-validation: TP-029-v03-dogfood-validation — Status
 
-**Current Step:** Step 5: Aggregate findings + triage
+**Current Step:** Step 6: Sign-off
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -50,16 +50,16 @@
 ---
 
 ### Step 5: Aggregate findings + triage
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `docs/dogfood/v0.3-findings.md`: per-tool pass/fail with round-trip evidence, byte/token sizes, latency, observed `_meta` fields
-- [ ] Open `v0.3-followup` GitHub issues for any failure
-- [ ] Decide which findings are launch-blocking for v0.4 entry vs follow-up
+- [x] `docs/dogfood/v0.3-findings.md`: per-tool pass/fail with round-trip evidence, byte/token sizes, latency, observed `_meta` fields
+- [x] Open `v0.3-followup` GitHub issues for any failure
+- [x] Decide which findings are launch-blocking for v0.4 entry vs follow-up
 
 ---
 
 ### Step 6: Sign-off
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Tick the v0.3 dogfood item in `ROADMAP.md`
 - [ ] `make test`, `make build`, `make lint` if any code/doc changed
@@ -115,3 +115,6 @@
 - Step 4: Full-mode Codex MCP run confirmed all seven exact delete tools registered. `delete_event` deleted the TP-029 structured ride, and `delete_events_by_date_range` deleted two synthetic TP-029 events from a prechecked empty late-2026 range; activity/workout/custom-item/sport-settings/gear deletes were blocked because no clearly synthetic TP-029 targets existed.
 - Step 4: Full-mode delete responses confirmed `_meta.deleted` echoes for single-event and range deletes; the oversized range variant was refused before deletion because it exceeded the 31-day cap.
 - Step 4: Calendar TP-029 artifacts were deleted and verified absent; W-08's accepted threshold-only sport-setting mutation was not restored because prior raw thresholds were not committed, so the test athlete is treated as disposable for this dogfood run.
+- Step 5: Findings doc now includes aggregate per-tool pass/fail, round-trip evidence, observed `_meta`, latency, and an explicit byte/token caveat because Codex did not expose raw per-tool response sizes and raw payloads were not persisted.
+- Step 5: Created `v0.3-followup` issues #6 through #10 for the dogfood failures: NOTE create, wellness subjective write, missing `spO2` schema field, workout create, and custom-item create validation.
+- Step 5: Classified #6-#10 as launch-blocking for v0.4 entry; disposable fixture gaps for activity/gear/training-plan paths and the byte-count instrumentation gap are follow-up/seeding requirements rather than safety-launch blockers.
