@@ -30,9 +30,18 @@
 
 > ⚠️ Hydrate: Expand checkboxes when entering this step based on the current per-function coverage report.
 
-- [ ] Generate per-function coverage report and select high-value targets
-- [ ] Prioritize behavior-rich low-coverage functions over trivial command paths
-- [ ] Record selected target files/functions and rationale here
+- [x] Generate per-function coverage report and select high-value targets
+- [x] Prioritize behavior-rich low-coverage functions over trivial command paths
+- [x] Record selected target files/functions and rationale here
+
+Selected targets:
+
+| File | Functions | Rationale |
+| ---- | --------- | --------- |
+| `internal/intervals/activity_streams.go` | `ActivityStream.UnmarshalJSON`, `Client.GetActivityStreams` | 0% coverage; small API client surface with raw-field preservation, required input validation, query parameters, and HTTP error wrapping. |
+| `internal/intervals/wellness.go` | `Wellness.UnmarshalJSON`, `ListWellness`, `extractWellnessNative`, `nativeSleepScoreSource`, `dedupeStrings` | 0% coverage; behavior-rich parsing/provenance logic with duplicate claimed-key handling and request construction. |
+| `internal/tools/get_extended_metrics.go` | `getExtendedMetricsHandler`, `optionalIntervals`, `optionalPowerVsHR`, `stravaUnavailableExtendedMetricsResponse`, `shapeExtendedMetrics`, helper numeric/string branches | Low/0% branch coverage; tests can cover Strava-blocked responses, include_full raw payloads, optional not-found/unauthorized sources, and non-optional errors without production changes. |
+| `internal/toolchecks/*.go` | catalog/snapshot guards | Fallback only if Step 2 + extended-metrics tests leave total coverage below 80%; deterministic and cheap but lower priority than product behavior. |
 
 ---
 
@@ -116,3 +125,5 @@ _None_
 ## Notes
 
 Current observed baseline before staging this task: 76.9% total statement coverage from `go test ./... -coverprofile=coverage.out -covermode=atomic`.
+
+Step 1 per-function report (2026-05-13): overall baseline remains 76.9%. Highest-value behavior targets are the 0%-covered `internal/intervals/activity_streams.go` (`ActivityStream.UnmarshalJSON`, `Client.GetActivityStreams`) and `internal/intervals/wellness.go` (`Wellness.UnmarshalJSON`, `ListWellness`, native-provider helpers), followed by uncovered/low-covered `internal/tools/get_extended_metrics.go` optional-source and Strava-unavailable branches. `internal/toolchecks` remains a fallback if those tests do not reach 80%.
