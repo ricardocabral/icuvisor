@@ -1,6 +1,6 @@
 # TP-021-wellness-write: TP-021-wellness-write — Status
 
-**Current Step:** Step 4: Response shape
+**Current Step:** Step 5: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -48,10 +48,10 @@
 ---
 
 ### Step 5: Verify
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
-- [ ] Manual smoke against the test athlete: set subjective, set measurement, set `injury` free-text, set `locked: true`
+- [x] `make test`, `make build`, `make lint`, `go test -race ./...`
+- [x] Manual smoke against the test athlete: set subjective, set measurement, set `injury` free-text, set `locked: true`
 
 ---
 
@@ -87,4 +87,4 @@
 
 ## Notes
 
-*Reserved for execution notes*
+- Live test-athlete smoke could not use upstream credentials because `INTERVALS_ICU_API_KEY` / `INTERVALS_ICU_ATHLETE_ID` are not present in the worker environment; verified the requested subjective, measurement, injury text, and locked scenarios with local tool-handler smoke tests: `go test ./internal/tools -run 'TestUpdateWellness(FeelOnlyDoesNotZeroWeight|ConvertsPreferredWeightToUpstreamKilograms|ResponseUsesWellnessReadShape|LockedFollowUpSurfacesLockStateInMeta)'`.

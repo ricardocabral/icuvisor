@@ -83,12 +83,13 @@ type updateWellnessRequest struct {
 }
 
 type updateWellnessResponse struct {
-	Wellness map[string]any       `json:"wellness"`
-	Meta     updateWellnessMeta   `json:"_meta"`
+	Wellness map[string]any     `json:"wellness"`
+	Meta     updateWellnessMeta `json:"_meta"`
 }
 
 type updateWellnessMeta struct {
 	Date               string   `json:"date"`
+	Timezone           string   `json:"timezone,omitempty"`
 	FieldsUpdated      []string `json:"fields_updated"`
 	WeightInputUnit    string   `json:"weight_input_unit,omitempty"`
 	WeightUpstreamUnit string   `json:"weight_upstream_unit,omitempty"`
@@ -113,7 +114,7 @@ func updateWellnessHandler(client WellnessWriterClient, profileClient ProfileCli
 		if client == nil {
 			return Result{}, NewUserError(writeWellnessMessage, errors.New("missing wellness writer client"))
 		}
-		params, meta := wellnessWriteParams(args, profile)
+		params, meta := wellnessWriteParams(args, profile, timezoneFallback)
 		updated, err := client.UpdateWellness(ctx, params)
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
@@ -161,12 +162,15 @@ func rejectReadOnlyWellnessFields(raw json.RawMessage) error {
 	}
 	var fields map[string]json.RawMessage
 	if err := json.Unmarshal(trimmed, &fields); err != nil {
-		return nil
+		return err
 	}
-	if _, ok := fields["sleepScore"]; ok {
-		return errors.New("field_not_writable: sleepScore (device-managed)")
-	}
-	if _, ok := fields["_native"]; ok {
+	for _, field := range updateWellnessReadOnlyFields {
+		if _, ok := fields[field]; !ok {
+			continue
+		}
+		if field == "sleepScore" {
+			return errors.New("field_not_writable: sleepScore (device-managed)")
+		}
 		return errors.New("field_not_writable: _native (bridge-managed)")
 	}
 	return nil
@@ -237,7 +241,7 @@ func validateFloatMin(field string, value *float64, min float64) error {
 	return nil
 }
 
-func wellnessWriteParams(args updateWellnessRequest, profile intervals.AthleteWithSportSettings) (intervals.WriteWellnessParams, updateWellnessMeta) {
+func wellnessWriteParams(args updateWellnessRequest, profile intervals.AthleteWithSportSettings, timezoneFallback string) (intervals.WriteWellnessParams, updateWellnessMeta) {
 	params := intervals.WriteWellnessParams{
 		Date:         args.Date,
 		Feel:         args.Feel,
@@ -257,7 +261,7 @@ func wellnessWriteParams(args updateWellnessRequest, profile intervals.AthleteWi
 		Injury:       args.Injury,
 		Locked:       args.Locked,
 	}
-	meta := updateWellnessMeta{Date: args.Date, FieldsUpdated: updateWellnessFieldsUpdated(args), IncludeFull: args.IncludeFull}
+	meta := updateWellnessMeta{Date: args.Date, Timezone: profileTimezone(profile.Timezone, timezoneFallback), FieldsUpdated: updateWellnessFieldsUpdated(args), IncludeFull: args.IncludeFull}
 	if args.Weight != nil {
 		weight := *args.Weight
 		meta.WeightInputUnit = "kg"
@@ -318,13 +322,13 @@ func updateWellnessInputSchema() map[string]any {
 	scales := response.RegisteredScaleLabels()
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"date"}, "properties": map[string]any{
 		"date":         map[string]any{"type": "string", "description": "Required athlete-local wellness date as YYYY-MM-DD."},
-		"feel":         scaleSchema(scales, "feel", 1, 5),
-		"fatigue":      scaleSchema(scales, "fatigue", 1, 5),
-		"mood":         scaleSchema(scales, "mood", 1, 5),
-		"sleepQuality": scaleSchema(scales, "sleepQuality", 1, 4),
-		"motivation":   scaleSchema(scales, "motivation", 1, 5),
-		"soreness":     scaleSchema(scales, "soreness", 1, 5),
-		"stress":       scaleSchema(scales, "stress", 1, 5),
+		"feel":         scaleSchema(scales, "feel", 5),
+		"fatigue":      scaleSchema(scales, "fatigue", 5),
+		"mood":         scaleSchema(scales, "mood", 5),
+		"sleepQuality": scaleSchema(scales, "sleepQuality", 4),
+		"motivation":   scaleSchema(scales, "motivation", 5),
+		"soreness":     scaleSchema(scales, "soreness", 5),
+		"stress":       scaleSchema(scales, "stress", 5),
 		"weight":       map[string]any{"type": "number", "minimum": 0, "description": "Manual body weight in the athlete's preferred weight unit from get_athlete_profile (_meta.units / units.weight); converted to upstream kg at the API boundary."},
 		"bodyFat":      map[string]any{"type": "number", "minimum": 0, "maximum": 100, "description": "Manual body fat percentage, 0-100%."},
 		"systolic":     map[string]any{"type": "integer", "minimum": 0, "description": "Manual systolic blood pressure in mmHg."},
@@ -339,8 +343,8 @@ func updateWellnessInputSchema() map[string]any {
 	}}
 }
 
-func scaleSchema(scales map[string]string, field string, min int, max int) map[string]any {
-	return map[string]any{"type": "integer", "minimum": min, "maximum": max, "description": fmt.Sprintf("%s; %s scale.", scales[field], field)}
+func scaleSchema(scales map[string]string, field string, max int) map[string]any {
+	return map[string]any{"type": "integer", "minimum": 1, "maximum": max, "description": fmt.Sprintf("%s; %s scale.", scales[field], field)}
 }
 
 func updateWellnessOutputSchema() map[string]any {
