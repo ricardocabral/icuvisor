@@ -1,6 +1,6 @@
 # TP-019-workout-doc-serializer: TP-019-workout-doc-serializer — Status
 
-**Current Step:** Step 5: Hook points (no consumers yet)
+**Current Step:** Step 6: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -47,15 +47,15 @@
 ---
 
 ### Step 5: Hook points (no consumers yet)
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Public API: `workoutdoc.Serialize`, `workoutdoc.Parse`, the `WorkoutDoc` type
-- [ ] Wire nothing into MCP tools here; downstream tasks consume
+- [x] Public API: `workoutdoc.Serialize`, `workoutdoc.Parse`, the `WorkoutDoc` type
+- [x] Wire nothing into MCP tools here; downstream tasks consume
 
 ---
 
 ### Step 6: Verify
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
 
