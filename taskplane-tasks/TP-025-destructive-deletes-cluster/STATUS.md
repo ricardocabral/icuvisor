@@ -1,6 +1,6 @@
 # TP-025-destructive-deletes-cluster: TP-025-destructive-deletes-cluster — Status
 
-**Current Step:** Step 2: `delete_events_by_date_range`
+**Current Step:** Step 3: Tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -30,11 +30,11 @@
 ---
 
 ### Step 3: Tests
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Per tool: success in `full`, absent from catalog in `safe` and `none`
-- [ ] `delete_events_by_date_range`: range-cap rejection, athlete-TZ correctness on boundary dates
-- [ ] Idempotency where upstream supports it (re-delete returns 404 mapped to a typed error, not a 500)
+- [x] Per tool: success in `full`, absent from catalog in `safe` and `none`
+- [x] `delete_events_by_date_range`: range-cap rejection, athlete-TZ correctness on boundary dates
+- [x] Idempotency where upstream supports it (re-delete returns 404 mapped to a typed error, not a 500)
 
 ---
 
