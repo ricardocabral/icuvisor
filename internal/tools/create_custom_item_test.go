@@ -55,6 +55,29 @@ func TestCreateCustomItemCreatesPerReadableSchema(t *testing.T) {
 	}
 }
 
+func TestCreateCustomItemFetchesDetailWhenListOmitsContentSchema(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeCustomItemsClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		items:             decodeToolCustomItems(t, `{"id":1,"type":"FITNESS_CHART","name":"Schema"}`),
+		detail:            decodeToolCustomItem(t, `{"id":1,"type":"FITNESS_CHART","name":"Schema","content":{"series":[{"field":"ctl","color":"blue"}],"layout":{"height":240}}}`),
+		createdItem:       decodeToolCustomItem(t, `{"id":9,"type":"FITNESS_CHART","name":"New CTL","content":{"series":[{"field":"atl","color":"red"}],"layout":{"height":260}}}`),
+	}
+	tool := newCreateCustomItemTool(client, client, client, "test", "UTC", false)
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"item_type":"FITNESS_CHART","name":"New CTL","content":{"series":[{"field":"atl","color":"red"}],"layout":{"height":260}}}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if got := strings.Join(client.detailCalls, ","); got != "1" {
+		t.Fatalf("detailCalls = %q, want schema detail fetch for list row without content", got)
+	}
+	if len(client.created) != 1 {
+		t.Fatalf("created calls = %d, want one", len(client.created))
+	}
+}
+
 func TestCreateCustomItemRejectsSchemaViolationsBeforeUpload(t *testing.T) {
 	t.Parallel()
 

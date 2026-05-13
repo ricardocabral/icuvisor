@@ -97,7 +97,7 @@ func createCustomItemParams(ctx context.Context, readClient CustomItemsClient, a
 	if err != nil {
 		return intervals.WriteCustomItemParams{}, 0, err
 	}
-	items, err := readClient.ListCustomItems(ctx)
+	items, err := customItemSchemaSamples(ctx, readClient, args.ItemType)
 	if err != nil {
 		return intervals.WriteCustomItemParams{}, 0, err
 	}
@@ -106,6 +106,32 @@ func createCustomItemParams(ctx context.Context, readClient CustomItemsClient, a
 		return intervals.WriteCustomItemParams{}, schemaSourceCount, err
 	}
 	return intervals.WriteCustomItemParams{ItemType: args.ItemType, Name: args.Name, NameSet: true, Visibility: args.Visibility, VisibilitySet: args.Visibility != nil, Description: args.Description, DescriptionSet: args.Description != nil, Image: args.Image, ImageSet: args.Image != nil, Index: args.Index, IndexSet: args.Index != nil, HideScript: args.HideScript, HideScriptSet: args.HideScript != nil, Content: content, ContentSet: true}, schemaSourceCount, nil
+}
+
+func customItemSchemaSamples(ctx context.Context, readClient CustomItemsClient, itemType string) ([]intervals.CustomItem, error) {
+	items, err := readClient.ListCustomItems(ctx)
+	if err != nil {
+		return nil, err
+	}
+	samples := make([]intervals.CustomItem, 0, len(items))
+	for _, item := range items {
+		if customItemType(item) != itemType {
+			continue
+		}
+		if _, ok := item.Content.(map[string]any); ok {
+			samples = append(samples, item)
+			continue
+		}
+		if strings.TrimSpace(item.ID) == "" {
+			continue
+		}
+		detail, err := readClient.GetCustomItem(ctx, item.ID)
+		if err != nil {
+			return nil, err
+		}
+		samples = append(samples, detail)
+	}
+	return samples, nil
 }
 
 func trimOptionalString(value *string) {
