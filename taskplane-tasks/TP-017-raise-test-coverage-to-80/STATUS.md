@@ -53,6 +53,7 @@ Selected targets:
 
 - [ ] Add activity-stream tests for JSON decoding, raw preservation, query parameters, required IDs, and errors
 - [ ] Create `internal/intervals/wellness_test.go` with native-provider and `ListWellness` tests
+- [ ] Use `httptest`/existing client helpers only; no network access in intervals tests
 - [ ] Targeted intervals tests pass
 
 ---
