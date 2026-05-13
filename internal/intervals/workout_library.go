@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strings"
 )
 
 // WorkoutFolder contains a workout-library folder or plan and preserves raw upstream fields.
@@ -35,6 +37,16 @@ func (f *WorkoutFolder) UnmarshalJSON(data []byte) error {
 	f.Raw = raw
 	f.ID = rawIDString(raw["id"])
 	return nil
+}
+
+// WriteWorkoutParams contains writable workout-library template fields.
+type WriteWorkoutParams struct {
+	WorkoutID   string
+	Name        string
+	FolderID    string
+	Description *string
+	Tags        []string
+	Sport       string
 }
 
 // Workout contains a workout-library template and preserves raw upstream fields including workout_doc.
@@ -102,4 +114,37 @@ func (c *Client) ListLibraryWorkouts(ctx context.Context) ([]Workout, error) {
 		return nil, fmt.Errorf("listing library workouts: %w", err)
 	}
 	return workouts, nil
+}
+
+// CreateLibraryWorkout creates a workout-library template for the configured athlete.
+func (c *Client) CreateLibraryWorkout(ctx context.Context, params WriteWorkoutParams) (Workout, error) {
+	body, err := writeWorkoutBody(params, false)
+	if err != nil {
+		return Workout{}, err
+	}
+	var workout Workout
+	if err := c.doJSONBody(ctx, http.MethodPost, body, &workout, "athlete", c.athleteID, "workouts"); err != nil {
+		return Workout{}, fmt.Errorf("creating library workout: %w", err)
+	}
+	return workout, nil
+}
+
+type writeWorkoutPayload struct {
+	Name        string   `json:"name,omitempty"`
+	FolderID    string   `json:"folder_id,omitempty"`
+	Description *string  `json:"description,omitempty"`
+	Tags        []string `json:"tags,omitempty"`
+	Type        string   `json:"type,omitempty"`
+}
+
+func writeWorkoutBody(params WriteWorkoutParams, allowSparse bool) (writeWorkoutPayload, error) {
+	name := strings.TrimSpace(params.Name)
+	sport := strings.TrimSpace(params.Sport)
+	if !allowSparse && name == "" {
+		return writeWorkoutPayload{}, fmt.Errorf("writing workout: name is required")
+	}
+	if !allowSparse && sport == "" {
+		return writeWorkoutPayload{}, fmt.Errorf("writing workout: sport is required")
+	}
+	return writeWorkoutPayload{Name: name, FolderID: strings.TrimSpace(params.FolderID), Description: params.Description, Tags: append([]string(nil), params.Tags...), Type: sport}, nil
 }

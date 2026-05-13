@@ -289,6 +289,7 @@ var (
 	_ tools.ActivityEventLinkClient     = schemaCatalogClient{}
 	_ tools.TrainingPlanClient          = schemaCatalogClient{}
 	_ tools.WorkoutLibraryClient        = schemaCatalogClient{}
+	_ tools.WorkoutCreatorClient        = schemaCatalogClient{}
 	_ tools.CustomItemsClient           = schemaCatalogClient{}
 	_ tools.ActivityDetailsClient       = schemaCatalogClient{}
 	_ tools.ActivityIntervalsClient     = schemaCatalogClient{}
@@ -360,6 +361,10 @@ func (schemaCatalogClient) ListWorkoutFolders(context.Context) ([]intervals.Work
 
 func (schemaCatalogClient) ListLibraryWorkouts(context.Context) ([]intervals.Workout, error) {
 	return nil, nil
+}
+
+func (schemaCatalogClient) CreateLibraryWorkout(context.Context, intervals.WriteWorkoutParams) (intervals.Workout, error) {
+	return intervals.Workout{}, nil
 }
 
 func (schemaCatalogClient) ListCustomItems(context.Context) ([]intervals.CustomItem, error) {

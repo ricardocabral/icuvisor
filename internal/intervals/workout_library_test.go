@@ -2,6 +2,8 @@ package intervals
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -41,5 +43,69 @@ func TestWorkoutLibraryClientListsFoldersAndWorkouts(t *testing.T) {
 	doc, ok := workouts[0].WorkoutDoc.(map[string]any)
 	if !ok || doc["name"] != "raw" {
 		t.Fatalf("workout_doc = %#v, want verbatim map", workouts[0].WorkoutDoc)
+	}
+}
+
+func TestCreateLibraryWorkoutSendsWritableFieldsOnly(t *testing.T) {
+	t.Parallel()
+
+	var request struct {
+		method string
+		path   string
+		body   map[string]any
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("read body: %v", err)
+		}
+		var decoded map[string]any
+		if err := json.Unmarshal(body, &decoded); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		request = struct {
+			method string
+			path   string
+			body   map[string]any
+		}{method: r.Method, path: r.URL.Path, body: decoded}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"w-1","name":"Tempo","type":"Ride","folder_id":"f-20","description":"- 10m 65%","workout_doc":{"steps":[{"duration":600}]}}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	description := "- 10m 65%"
+	workout, err := client.CreateLibraryWorkout(context.Background(), WriteWorkoutParams{Name: " Tempo ", FolderID: " f-20 ", Sport: " Ride ", Description: &description, Tags: []string{"tempo", "coach"}})
+	if err != nil {
+		t.Fatalf("CreateLibraryWorkout() error = %v", err)
+	}
+	if workout.ID != "w-1" || workout.WorkoutDoc == nil {
+		t.Fatalf("workout = %+v, want decoded workout with workout_doc", workout)
+	}
+	if request.method != http.MethodPost || request.path != "/athlete/i12345/workouts" {
+		t.Fatalf("request = %#v, want POST athlete workouts", request)
+	}
+	body := request.body
+	if body["name"] != "Tempo" || body["folder_id"] != "f-20" || body["type"] != "Ride" || body["description"] != description {
+		t.Fatalf("body = %#v, want mapped workout fields", body)
+	}
+	if _, ok := body["workout_doc"]; ok {
+		t.Fatalf("body includes workout_doc: %#v", body)
+	}
+	tags := body["tags"].([]any)
+	if len(tags) != 2 || tags[0] != "tempo" || tags[1] != "coach" {
+		t.Fatalf("tags = %#v, want preserved tags", tags)
+	}
+}
+
+func TestCreateLibraryWorkoutRequiresWritableBasics(t *testing.T) {
+	t.Parallel()
+
+	client := newTestClient(t, "https://example.invalid", http.DefaultClient, RetryConfig{})
+	if _, err := client.CreateLibraryWorkout(context.Background(), WriteWorkoutParams{Sport: "Ride"}); err == nil {
+		t.Fatal("CreateLibraryWorkout() error = nil, want required name error")
+	}
+	if _, err := client.CreateLibraryWorkout(context.Background(), WriteWorkoutParams{Name: "Tempo"}); err == nil {
+		t.Fatal("CreateLibraryWorkout() error = nil, want required sport error")
 	}
 }
