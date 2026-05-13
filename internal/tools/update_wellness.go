@@ -92,6 +92,7 @@ type updateWellnessMeta struct {
 	FieldsUpdated      []string `json:"fields_updated"`
 	WeightInputUnit    string   `json:"weight_input_unit,omitempty"`
 	WeightUpstreamUnit string   `json:"weight_upstream_unit,omitempty"`
+	Locked             bool     `json:"locked,omitempty"`
 	IncludeFull        bool     `json:"include_full"`
 }
 
@@ -306,6 +307,9 @@ func shapeUpdateWellnessResponse(row intervals.Wellness, meta updateWellnessMeta
 	wellness, ok := shapedRow.(map[string]any)
 	if !ok {
 		return updateWellnessResponse{}, errors.New("wellness response row did not shape to object")
+	}
+	if row.Locked != nil && *row.Locked {
+		meta.Locked = true
 	}
 	return updateWellnessResponse{Wellness: wellness, Meta: meta}, nil
 }

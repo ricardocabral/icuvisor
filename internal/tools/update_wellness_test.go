@@ -13,12 +13,18 @@ import (
 type fakeWellnessWriterClient struct {
 	fakeProfileClient
 	row   intervals.Wellness
+	rows  []intervals.Wellness
 	calls []intervals.WriteWellnessParams
 	err   error
 }
 
 func (f *fakeWellnessWriterClient) UpdateWellness(ctx context.Context, params intervals.WriteWellnessParams) (intervals.Wellness, error) {
 	f.calls = append(f.calls, params)
+	if len(f.rows) > 0 {
+		row := f.rows[0]
+		f.rows = f.rows[1:]
+		return row, f.err
+	}
 	return f.row, f.err
 }
 
@@ -71,6 +77,54 @@ func TestUpdateWellnessRejectsOutOfRangeAndReadOnlyArgumentsBeforeWrite(t *testi
 	}
 	if len(client.calls) != 0 {
 		t.Fatalf("write calls = %#v, want none after validation failures", client.calls)
+	}
+}
+
+func TestUpdateWellnessFeelOnlyDoesNotZeroWeight(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric", Timezone: "UTC"}},
+		row:               decodeWellnessRow(t, `{"id":"2026-05-01","feel":5,"weight":70.5}`),
+	}
+	tool := newUpdateWellnessTool(client, client, "test", "UTC", false)
+
+	if _, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-05-01","feel":5}`)}); err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 {
+		t.Fatalf("write calls = %d, want 1", len(client.calls))
+	}
+	if client.calls[0].Weight != nil {
+		t.Fatalf("weight param = %#v, want nil for omitted weight", client.calls[0].Weight)
+	}
+}
+
+func TestUpdateWellnessLockedFollowUpSurfacesLockStateInMeta(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric", Timezone: "UTC"}},
+		rows: []intervals.Wellness{
+			decodeWellnessRow(t, `{"id":"2026-05-01","locked":true}`),
+			decodeWellnessRow(t, `{"id":"2026-05-01","locked":true,"fatigue":2}`),
+		},
+	}
+	tool := newUpdateWellnessTool(client, client, "test", "UTC", false)
+
+	if _, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-05-01","locked":true}`)}); err != nil {
+		t.Fatalf("locked Handler() error = %v", err)
+	}
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-05-01","fatigue":2}`)})
+	if err != nil {
+		t.Fatalf("follow-up Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["locked"] != true {
+		t.Fatalf("meta = %#v, want locked=true surfaced", meta)
+	}
+	if len(client.calls) != 2 || client.calls[0].Locked == nil || !*client.calls[0].Locked || client.calls[1].Fatigue == nil || *client.calls[1].Fatigue != 2 {
+		t.Fatalf("calls = %#v, want locked then fatigue follow-up", client.calls)
 	}
 }
 

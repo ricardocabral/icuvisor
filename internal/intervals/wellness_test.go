@@ -108,6 +108,39 @@ func TestListWellnessBuildsQueryAndDecodesNative(t *testing.T) {
 	}
 }
 
+func TestUpdateWellnessSendsSparseBody(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got, want := r.Method, http.MethodPut; got != want {
+			t.Fatalf("method = %q, want %q", got, want)
+		}
+		if got, want := r.URL.Path, "/athlete/i12345/wellness/2026-05-01"; got != want {
+			t.Fatalf("path = %q, want %q", got, want)
+		}
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode request body: %v", err)
+		}
+		if body["feel"] != float64(4) || len(body) != 1 {
+			t.Fatalf("body = %#v, want sparse feel-only update", body)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"2026-05-01","feel":4,"weight":70.5}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+	feel := 4
+	got, err := client.UpdateWellness(context.Background(), WriteWellnessParams{Date: " 2026-05-01 ", Feel: &feel})
+	if err != nil {
+		t.Fatalf("UpdateWellness() error = %v", err)
+	}
+	if got.Feel == nil || *got.Feel != 4 || got.Weight == nil || *got.Weight != 70.5 {
+		t.Fatalf("updated wellness = %#v, want decoded row", got)
+	}
+}
+
 func TestListWellnessRequiresOldest(t *testing.T) {
 	t.Parallel()
 

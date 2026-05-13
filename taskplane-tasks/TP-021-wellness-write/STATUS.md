@@ -1,6 +1,6 @@
 # TP-021-wellness-write: TP-021-wellness-write — Status
 
-**Current Step:** Step 2: Schema + scale enforcement
+**Current Step:** Step 3: Partial-update semantics
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -31,11 +31,11 @@
 ---
 
 ### Step 3: Partial-update semantics
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Inputs are sparse — omitted fields are not touched upstream
-- [ ] Test: setting only `feel` does not zero `weight`
-- [ ] Test: setting `locked: true` then a follow-up update with another field surfaces the upstream lock behavior in `_meta`
+- [x] Inputs are sparse — omitted fields are not touched upstream
+- [x] Test: setting only `feel` does not zero `weight`
+- [x] Test: setting `locked: true` then a follow-up update with another field surfaces the upstream lock behavior in `_meta`
 
 ---
 
