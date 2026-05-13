@@ -78,6 +78,23 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 - [ ] Post-update notification that tells the user to start a new conversation in their AI client when tool schemas changed.
 - [ ] Dogfooded by 5–10 forum-recruited athletes, including at least one coach.
 
+## v0.6 — Analyzers
+
+**Goal:** ship a small, deterministic `analyze_*` / `compute_*` tool family (PRD §7.2.C "Analyzers") that the LLM activates by default instead of writing ad-hoc reduction scripts over `get_*` reads. Validate via benchmark: the same training-analysis prompts must yield correct numbers with ≥40% fewer tokens and zero raw-stream pulls on the trend / distribution / correlation shapes.
+
+- [ ] `analysis_metric` closed enum + rejection-with-hint for unknown metrics. No free-form field arithmetic.
+- [ ] MCP Resource `icuvisor://analysis-formulas` — one paragraph per canonical formula (HR drift, Pw:HR decoupling, polarization index, EF, VI, z-score) with cited source. Responses link via `_meta.formula_ref`.
+- [ ] Analyzer skeleton: every tool emits `_meta.method`, `_meta.source_tools`, `_meta.n`, `_meta.missing_days`, `_meta.missing_action`, `_meta.insufficient_sample`. Golden-file locked.
+- [ ] `analyze_trend`, `analyze_distribution`, `analyze_correlation`, `analyze_efforts_delta`.
+- [ ] `compute_zone_time`, `compute_load_balance`, `compute_baseline`, `compute_compliance_rate`.
+- [ ] `compute_activity_segment_stats` — the only analyzer that touches raw streams; gated behind the existing stream-key canonicalization tests.
+- [ ] `get_fitness_projection` (pulled up from v1.x — forum thread 123739 post #49) ships with the family so projection and analysis land together.
+- [ ] Activation-hint pass on every analyzer description: leads with the user-prompt shape that should trigger the tool plus an explicit "do not pull `get_*` rows and reduce them yourself" line.
+- [ ] Definition-drift guard: golden-file tests pin the canonical formula for decoupling, drift, polarization, EF, VI. Renaming or redefining is a breaking change, not a silent fix.
+- [ ] Toolset placement: family lands in `full` by default; `analyze_trend`, `compute_zone_time`, `compute_baseline` promoted to `core` only after the KR5 benchmark confirms net token savings on the trend / distribution / baseline prompt shapes vs the fetch-and-reduce baseline.
+- [ ] Upstream-coverage audit: measure across v0.2 fixture set how often `compute_zone_time` and `compute_load_balance` can use pre-computed per-activity zone times vs falling back to stream math. If stream-math fallback exceeds an agreed threshold, file an intervals.icu API feature request and document the gap in `docs/upstream-gaps/`.
+- [ ] Benchmark harness extended (from v0.4): same training-analysis prompt set, with-and-without the analyzer family, measuring tokens and stream-pull counts.
+
 ## v1.0 — Public launch
 
 **Goal:** hit KR2 (adoption), KR3 (coverage), KR4 (reliability), and KR6 (client compatibility).
@@ -101,7 +118,6 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 - [ ] Diagnostics export button in tray menu.
 - [ ] Telemetry-driven response-shape tuning.
 - [ ] Strength training and training plan endpoints (depends on PRD assumptions §7.4.3 / §7.4.4).
-- [ ] `get_fitness_projection` — forward CTL/ATL/TSB simulation given a hypothetical load ramp (% per week), recovery-week cadence, and date horizon. Returns the projected curve plus the modeled assumptions in `_meta` so the LLM can explain the result rather than restate the chart (forum thread 123739 post #49).
 
 ## vNext — Future (out of scope for v1)
 

@@ -273,7 +273,51 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 **Custom items**
 - `get_custom_items`, `get_custom_item_by_id`, `create_custom_item`, `update_custom_item`, `delete_custom_item` — for custom charts/fields/zones. Long-form schema documentation for the inner `content` shape (which varies per `item_type`) lives in an MCP Resource (`icuvisor://custom-item-schemas`), not inline in the tool description (see §7.2.G).
 
-**Total: ~30 tools** at v1.0 — the `core` toolset (see §7.2.D) exposes a curated ~17-tool subset by default; the full surface ships behind an opt-in env var.
+**Analyzers (`analyze_*` / `compute_*`)**
+
+A small, deterministic family of derivation tools so the LLM reaches for a documented primitive instead of fetching `get_*` rows and writing an ad-hoc reduction in chat. Every analyzer aggregates from existing reads first and only falls back to stream math when intervals.icu has no windowed view of the field. The split is intentional: `analyze_*` is inferential (baseline, fit, correlation), `compute_*` is deterministic aggregation (sums, counts, time-in-zone).
+
+Design rules that apply to every tool in this family:
+
+- **Closed `analysis_metric` enum.** Inputs accept only known field names (`ctl`, `atl`, `tsb`, `ramp`, `weekly_tss`, `weekly_hours`, `rhr`, `hrv`, `weight`, `sleep_secs`, `sleep_quality`, `feel`, `fatigue`, `pace_at_lt2`, `power_at_lt2`, `if`, `vi`, `np`, `compliance_pct`, …) mirrored from existing read tools. Unknown metric returns a one-line hint pointing at the correct analyzer (e.g. "try `analyze_efforts_delta` for best-effort durations"), never a free-form math input. No ad-hoc field arithmetic — derived metrics enter the enum with a registered formula or they don't ship.
+- **Mandatory `_meta.method`.** Every response carries the exact formula used (`"rolling_mean_7d / baseline_28d"`, `"pearson_r over n=42 daily pairs"`) so the LLM explains the calculation rather than narrating the chart from training data.
+- **Mandatory `_meta.source_tools`.** Lists which `get_*` reads the analyzer ran, so the LLM and a debugging human can trace the result.
+- **Formula registry resource.** Long-form definitions for HR drift, Pw:HR decoupling, polarization index, EF, VI, z-score, etc. live in `icuvisor://analysis-formulas` (one paragraph each, citation to canonical source — Friel / Seiler / Coggan). Responses link via `_meta.formula_ref` rather than restating the math inline. Same pattern as `icuvisor://workout-syntax` in §7.2.G.
+- **No silent imputation.** Missing days are skipped and counted: `_meta.missing_days: 3`, `_meta.missing_action: "skip"`. Never forward-fill without an explicit caller opt-in.
+- **Boundary-safe defaults.** Minimum sample sizes (`n>=14` for correlation, `n>=7` for baseline) with `_meta.insufficient_sample: true` instead of returning a garbage `r` or slope.
+- **Terse by default.** Headline numbers in `summary`; per-bucket `series[]` only when `include_full: true`.
+- **Sport and unit normalization** flow through every analyzer (athlete `preferred_units`, configured timezone — §7.2.D rules apply unchanged).
+- **Definitions are locked.** Two coaches will disagree on the canonical formula for decoupling or polarization; we publish ours and pin it with golden-file tests. Definition drift is a breaking change, not a silent improvement.
+
+Tool catalog:
+
+- `analyze_trend` — rolling mean, slope, Δ%, week-over-week change for a metric over a window vs a baseline window. Use when the user asks whether something is improving, worsening, or flat (CTL ramp, weekly TSS, pace-at-LT2, weight, HRV).
+- `analyze_distribution` — histogram / quantiles / time-in-zone for a numeric field over a window. Use for "how is X spread" / "how polarized was this block".
+- `analyze_correlation` — Pearson r, Spearman ρ, n, slope, intercept for two daily or per-activity fields, with optional `lag_days` for lagged correlation (sleep quality → next-day RPE).
+- `analyze_efforts_delta` — best-effort durations or distances (5-min power, 20-min power, 5k pace) current window vs baseline window, unit-aware, with Δ%.
+- `compute_zone_time` — sum of time per power / HR / pace zone over a window, sport-filtered, with polarization index. Aggregates per-activity zone times from `get_activity_intervals` / `get_extended_metrics` — does not recompute from streams when upstream zone time is present.
+- `compute_load_balance` — share of time in Z1+Z2 / Z3 / Z4+ across a window; classifies the block (`polarized` / `pyramidal` / `threshold`).
+- `compute_baseline` — rolling baseline (mean, std), current-window value, z-score, and "suppressed" / "elevated" flag for wellness metrics (the HRV-deviation primitive used by HRV4Training-style readiness checks).
+- `compute_activity_segment_stats` — within-activity stream math: mean / median / p90 / decoupling / drift / NP / IF over a specified time or distance range inside one activity, pulled from `get_activity_streams`. The only analyzer that touches raw streams by default.
+- `compute_compliance_rate` — scheduled vs completed events across a window, mean delta to target, per sport / event type. Reuses `link_activity_to_event` pairings.
+- `get_fitness_projection` — forward CTL/ATL/TSB simulation given a hypothetical ramp %, recovery-week cadence, and date horizon. Lives in this family (moved up from v1.x — forum thread 123739 post #49). Returns projected curve plus modeled assumptions in `_meta` so the LLM can explain the result.
+
+**Activation hint pattern.** Tool descriptions lead with the user-prompt shape that should trigger the tool and an explicit "do not roll your own" line, e.g.:
+
+> `analyze_trend` — Use this when the user asks whether a metric is improving, getting worse, or unchanged over a window. Returns rolling mean, slope, and % change against a baseline, with the exact formula in `_meta`. **Do not** pull `get_activities` / `get_fitness` rows and reduce them yourself — this tool is the supported path, applies athlete unit/timezone normalization, and reports sample size and missing-days explicitly.
+
+Combined with the v0.4 MCP Prompt set (`training analysis`, `recovery check`, `weekly planning` — §7.2.G), this keeps the LLM out of the "fetch a hundred activities and write a Python sum in chat" loop.
+
+**Non-goals for this family:**
+
+- No silent imputation of missing days (skip-and-report only).
+- No competing physiology models — we aggregate intervals.icu's existing per-activity calculations and do not introduce alternative definitions of TSS, IF, polarization, decoupling, etc.
+- No multi-athlete aggregation in v1; coach mode reuses single-athlete analyzers per athlete.
+- No free-form field arithmetic from the LLM. If a derived field becomes common, it enters the `analysis_metric` enum with a registered `formula_ref`.
+
+Toolset placement: the family lands in `full` by default; `analyze_trend`, `compute_zone_time`, and `compute_baseline` are promoted to `core` after the KR5 benchmark confirms net token savings vs the fetch-and-reduce baseline.
+
+**Total: ~39 tools** at v1.0 once the analyzer family lands — the `core` toolset (see §7.2.D) exposes a curated subset by default; the full surface ships behind an opt-in env var.
 
 #### D. Response shaping (the second differentiator)
 
