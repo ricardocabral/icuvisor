@@ -1,6 +1,6 @@
 # TP-021-wellness-write: TP-021-wellness-write — Status
 
-**Current Step:** Step 1: Define the writable field set
+**Current Step:** Step 2: Schema + scale enforcement
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -22,11 +22,11 @@
 ---
 
 ### Step 2: Schema + scale enforcement
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Per-field JSON Schema includes range / units / scale label, matching the registry from TP-011
-- [ ] Inputs out of range fail at the schema layer, not at the upstream call
-- [ ] Unit conversion: `weight` accepts the athlete's preferred unit and converts to upstream's canonical unit at the boundary
+- [x] Per-field JSON Schema includes range / units / scale label, matching the registry from TP-011
+- [x] Inputs out of range fail at the schema layer, not at the upstream call
+- [x] Unit conversion: `weight` accepts the athlete's preferred unit and converts to upstream's canonical unit at the boundary
 
 ---
 
