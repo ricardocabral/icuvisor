@@ -112,9 +112,7 @@ func parseSimpleLine(body string) (Step, error) {
 	if len(remaining) == 0 {
 		return step, nil
 	}
-	if cadence, ok, err := parseCadenceAtEnd(remaining); err != nil {
-		return Step{}, err
-	} else if ok {
+	if cadence, ok := parseCadenceAtEnd(remaining); ok {
 		step.Cadence = cadence
 		remaining = remaining[:len(remaining)-1]
 	}
@@ -241,15 +239,15 @@ func parseDistanceToken(token string) (Length, bool) {
 	return Length{Value: value, Unit: match[2]}, true
 }
 
-func parseCadenceAtEnd(tokens []string) (*Target, bool, error) {
+func parseCadenceAtEnd(tokens []string) (*Target, bool) {
 	if len(tokens) == 0 {
-		return nil, false, nil
+		return nil, false
 	}
 	match := rpmTokenRE.FindStringSubmatch(tokens[len(tokens)-1])
 	if match == nil {
-		return nil, false, nil
+		return nil, false
 	}
-	return targetFromRegex(match, "RPM"), true, nil
+	return targetFromRegex(match, "RPM"), true
 }
 
 func parseNumberTarget(token string, units string) (*Target, error) {
