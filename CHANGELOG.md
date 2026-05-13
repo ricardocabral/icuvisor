@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `update_sport_settings` MCP tool for write-enabled modes to update sport-scoped FTP, threshold heart rate, threshold pace, and gated zone-definition overwrites with recompute/delete-mode/unit metadata.
 - `update_wellness` MCP tool for write-enabled modes to sparsely update manual wellness fields, enforce subjective scales, convert preferred-unit weight to upstream kilograms, reject device-owned `sleepScore`/`_native` fields, and echo the updated read shape.
 - `add_or_update_event` MCP tool for non-destructive calendar event creates/updates in write-enabled modes, with verbatim free-text descriptions, structured `workout_doc` serialization to the upstream description DSL, tag preservation, and planned target fields.
 - `link_activity_to_event` MCP tool for write-enabled modes to manually pair completed activities with planned events when auto-pairing misses, including date-mismatch warnings.

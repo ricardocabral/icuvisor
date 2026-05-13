@@ -49,6 +49,7 @@ Currently implemented tools:
 - `get_extended_metrics` — returns only upstream-exposed extended activity metrics, dropping unavailable fields instead of zero-filling.
 - `get_wellness_data` — returns daily wellness rows with custom fields, distinct `sleepQuality`/`sleepScore`/`sleepSecs`, provenance/staleness metadata, `_native` provider sub-fields, scale labels, and `include_full` raw payload opt-in.
 - `update_wellness` — sparsely updates writable manual wellness fields in write-enabled modes (`safe`/`full`), including subjective scales, preferred-unit weight conversion, measurements, injury text, and the `locked` flag while rejecting device-owned `sleepScore`/`_native` fields.
+- `update_sport_settings` — updates sport-scoped FTP, threshold heart rate, and threshold pace in write-enabled modes; optional `zones` overwrites prior zone definitions and is rejected unless `ICUVISOR_DELETE_MODE=full`.
 - `get_events` — lists bounded athlete-local date-range calendar events with upstream category enum values, terse rows by default, truncation metadata, and `include_full` raw payload opt-in.
 - `get_event_by_id` — fetches one calendar event by ID, with one bounded list-scan recovery for upstream detail 404 inconsistencies and structured non-error `upstream_inconsistency` misses.
 - `add_or_update_event` — creates or updates a non-destructive calendar event when write tools are enabled (`safe`/`full`), preserving free-text descriptions verbatim or serializing structured `workout_doc` steps to the upstream description DSL.

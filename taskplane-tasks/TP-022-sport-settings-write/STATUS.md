@@ -1,6 +1,6 @@
 # TP-022-sport-settings-write: TP-022-sport-settings-write — Status
 
-**Current Step:** Step 3: Zone-definition path (`CanDelete` gated)
+**Current Step:** Step 4: Response shape
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -38,9 +38,9 @@
 ---
 
 ### Step 4: Response shape
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Echo new settings; include `_meta.delete_mode` and any unit metadata
+- [x] Echo new settings; include `_meta.delete_mode` and any unit metadata
 
 ---
 
