@@ -152,6 +152,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if workoutDeleterClient, ok := r.profileClient.(WorkoutDeleterClient); ok {
+		if err := registrar.AddTool(newDeleteWorkoutTool(workoutDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+			return err
+		}
+	}
 	if customItemsClient, ok := r.profileClient.(CustomItemsClient); ok {
 		if err := registrar.AddTool(newGetCustomItemsTool(customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 			return err

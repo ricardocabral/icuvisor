@@ -199,3 +199,32 @@ func TestUpdateLibraryWorkoutRequiresIDAndField(t *testing.T) {
 		t.Fatal("UpdateLibraryWorkout() error = nil, want required sparse field error")
 	}
 }
+
+func TestDeleteLibraryWorkoutSendsDeletePath(t *testing.T) {
+	t.Parallel()
+
+	var method, path string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		method = r.Method
+		path = r.URL.Path
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	if err := client.DeleteLibraryWorkout(context.Background(), " w-4 "); err != nil {
+		t.Fatalf("DeleteLibraryWorkout() error = %v", err)
+	}
+	if method != http.MethodDelete || path != "/athlete/i12345/workouts/w-4" {
+		t.Fatalf("request = %s %s, want DELETE athlete workouts/{id}", method, path)
+	}
+}
+
+func TestDeleteLibraryWorkoutRequiresID(t *testing.T) {
+	t.Parallel()
+
+	client := newTestClient(t, "https://example.invalid", http.DefaultClient, RetryConfig{})
+	if err := client.DeleteLibraryWorkout(context.Background(), " "); err == nil {
+		t.Fatal("DeleteLibraryWorkout() error = nil, want required workout ID error")
+	}
+}

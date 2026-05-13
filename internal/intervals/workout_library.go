@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // WorkoutFolder contains a workout-library folder or plan and preserves raw upstream fields.
@@ -149,6 +151,58 @@ func (c *Client) UpdateLibraryWorkout(ctx context.Context, params WriteWorkoutPa
 		return Workout{}, fmt.Errorf("updating library workout %s: %w", workoutID, err)
 	}
 	return workout, nil
+}
+
+// DeleteLibraryWorkout deletes a workout-library template for the configured athlete.
+func (c *Client) DeleteLibraryWorkout(ctx context.Context, workoutID string) error {
+	workoutID = strings.TrimSpace(workoutID)
+	if workoutID == "" {
+		return fmt.Errorf("deleting library workout: workout ID is required")
+	}
+	if err := c.doNoJSON(ctx, http.MethodDelete, "athlete", c.athleteID, "workouts", workoutID); err != nil {
+		return fmt.Errorf("deleting library workout %s: %w", workoutID, err)
+	}
+	return nil
+}
+
+func (c *Client) doNoJSON(ctx context.Context, method string, pathParts ...string) error {
+	for attempt := 1; ; attempt++ {
+		req, err := c.newRequest(ctx, method, pathParts...)
+		if err != nil {
+			return err
+		}
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			if c.shouldRetryTransport(ctx, attempt) {
+				if sleepErr := c.sleepBeforeRetry(ctx, attempt, 0); sleepErr != nil {
+					return sleepErr
+				}
+				continue
+			}
+			return fmt.Errorf("calling intervals.icu: %w", err)
+		}
+		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+			retryAfter := parseRetryAfter(resp.Header.Get("Retry-After"), time.Now())
+			apiErr := errorForStatus(resp.StatusCode, retryAfter)
+			_, _ = io.Copy(io.Discard, resp.Body)
+			closeErr := resp.Body.Close()
+			if c.shouldRetryStatus(resp.StatusCode, attempt) {
+				if sleepErr := c.sleepBeforeRetry(ctx, attempt, retryAfter); sleepErr != nil {
+					return sleepErr
+				}
+				continue
+			}
+			if closeErr != nil {
+				return fmt.Errorf("closing intervals.icu response: %w", closeErr)
+			}
+			return fmt.Errorf("calling intervals.icu: %w", apiErr)
+		}
+		_, _ = io.Copy(io.Discard, resp.Body)
+		if err := resp.Body.Close(); err != nil {
+			return fmt.Errorf("closing intervals.icu response: %w", err)
+		}
+		return nil
+	}
 }
 
 func writeWorkoutBody(params WriteWorkoutParams, allowSparse bool) (map[string]any, error) {

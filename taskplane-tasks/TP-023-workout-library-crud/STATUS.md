@@ -1,6 +1,6 @@
 # TP-023-workout-library-crud: TP-023-workout-library-crud — Status
 
-**Current Step:** Step 2: `update_workout`
+**Current Step:** Step 3: `delete_workout` (gated)
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -30,12 +30,12 @@
 ---
 
 ### Step 3: `delete_workout` (gated)
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Registered only in `full` mode (TP-018 `CanDelete`)
-- [ ] Inputs: `workout_id`
-- [ ] No `confirm` argument; the gate is the registration
-- [ ] Tests: success in `full`; absent from catalog in `safe` and `none`
+- [x] Registered only in `full` mode (TP-018 `CanDelete`)
+- [x] Inputs: `workout_id`
+- [x] No `confirm` argument; the gate is the registration
+- [x] Tests: success in `full`; absent from catalog in `safe` and `none`
 
 ---
 
