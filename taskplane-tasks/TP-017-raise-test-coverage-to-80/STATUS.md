@@ -1,6 +1,6 @@
 # TP-017: Raise Go test coverage to 80% — Status
 
-**Current Step:** Step 3: Add focused tool/toolcheck tests until the target is met
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 1
@@ -60,7 +60,7 @@ Selected targets:
 
 ### Step 3: Add focused tool/toolcheck tests until the target is met
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 > ⚠️ Hydrate: Expand based on remaining coverage gap after Step 2.
 
@@ -73,7 +73,7 @@ Selected targets:
 
 ### Step 4: Testing & Verification
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Coverage gate passes: `go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...`
 - [ ] Total statement coverage is >= 80.0%
