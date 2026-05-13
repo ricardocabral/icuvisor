@@ -44,25 +44,29 @@ type getEventsResponse struct {
 }
 
 type getEventsRow struct {
-	EventID            string         `json:"event_id,omitempty"`
-	Category           string         `json:"category,omitempty"`
-	Type               string         `json:"type,omitempty"`
-	Name               string         `json:"name,omitempty"`
-	StartDateLocal     string         `json:"start_date_local,omitempty"`
-	EndDateLocal       string         `json:"end_date_local,omitempty"`
-	Description        string         `json:"description,omitempty"`
-	WorkoutDocSummary  map[string]any `json:"workout_doc_summary,omitempty"`
-	TrainingLoad       *float64       `json:"icu_training_load,omitempty"`
-	DistanceMeters     *float64       `json:"distance_meters,omitempty"`
-	MovingTimeSeconds  int            `json:"moving_time_seconds,omitempty"`
-	ElapsedTimeSeconds int            `json:"elapsed_time_seconds,omitempty"`
-	TrainingPlanID     string         `json:"training_plan_id,omitempty"`
-	CalendarID         string         `json:"calendar_id,omitempty"`
-	PlanApplied        string         `json:"plan_applied,omitempty"`
-	PlanAppliedLocal   string         `json:"plan_applied_local,omitempty"`
-	Updated            string         `json:"updated,omitempty"`
-	UpdatedLocal       string         `json:"updated_local,omitempty"`
-	Full               map[string]any `json:"full,omitempty"`
+	EventID                  string         `json:"event_id,omitempty"`
+	Category                 string         `json:"category,omitempty"`
+	Type                     string         `json:"type,omitempty"`
+	Name                     string         `json:"name,omitempty"`
+	StartDateLocal           string         `json:"start_date_local,omitempty"`
+	EndDateLocal             string         `json:"end_date_local,omitempty"`
+	Description              string         `json:"description,omitempty"`
+	WorkoutDocSummary        map[string]any `json:"workout_doc_summary,omitempty"`
+	TrainingLoad             *float64       `json:"icu_training_load,omitempty"`
+	LoadTarget               *float64       `json:"load_target,omitempty"`
+	DistanceMeters           *float64       `json:"distance_meters,omitempty"`
+	DistanceTargetMeters     *float64       `json:"distance_target_meters,omitempty"`
+	MovingTimeSeconds        int            `json:"moving_time_seconds,omitempty"`
+	TimeTargetSeconds        int            `json:"time_target_seconds,omitempty"`
+	ElapsedTimeSeconds       int            `json:"elapsed_time_seconds,omitempty"`
+	ElapsedTimeTargetSeconds int            `json:"elapsed_time_target_seconds,omitempty"`
+	TrainingPlanID           string         `json:"training_plan_id,omitempty"`
+	CalendarID               string         `json:"calendar_id,omitempty"`
+	PlanApplied              string         `json:"plan_applied,omitempty"`
+	PlanAppliedLocal         string         `json:"plan_applied_local,omitempty"`
+	Updated                  string         `json:"updated,omitempty"`
+	UpdatedLocal             string         `json:"updated_local,omitempty"`
+	Full                     map[string]any `json:"full,omitempty"`
 }
 
 type getEventsMeta struct {
@@ -168,7 +172,7 @@ func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, tim
 }
 
 func eventRow(event intervals.Event, includeFull bool, timezoneName string) (getEventsRow, error) {
-	row := getEventsRow{EventID: event.ID, Category: firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"])), Type: stringValue(event.Type), Name: stringValue(event.Name), StartDateLocal: stringValue(event.StartDateLocal), EndDateLocal: stringValue(event.EndDateLocal), Description: stringValue(event.Description), TrainingLoad: event.TrainingLoad, DistanceMeters: event.Distance, MovingTimeSeconds: intValue(event.MovingTime), ElapsedTimeSeconds: intValue(event.ElapsedTime), TrainingPlanID: anyString(firstRaw(event.Raw, "training_plan_id", "plan_id")), CalendarID: anyString(event.CalendarID), PlanApplied: stringValue(event.PlanApplied), Updated: stringValue(event.Updated)}
+	row := getEventsRow{EventID: event.ID, Category: firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"])), Type: stringValue(event.Type), Name: stringValue(event.Name), StartDateLocal: stringValue(event.StartDateLocal), EndDateLocal: stringValue(event.EndDateLocal), Description: stringValue(event.Description), TrainingLoad: event.TrainingLoad, LoadTarget: event.LoadTarget, DistanceMeters: event.Distance, DistanceTargetMeters: event.DistanceTarget, MovingTimeSeconds: intValue(event.MovingTime), TimeTargetSeconds: intValue(event.TimeTarget), ElapsedTimeSeconds: intValue(event.ElapsedTime), ElapsedTimeTargetSeconds: intValue(event.ElapsedTimeTarget), TrainingPlanID: anyString(firstRaw(event.Raw, "training_plan_id", "plan_id")), CalendarID: anyString(event.CalendarID), PlanApplied: stringValue(event.PlanApplied), Updated: stringValue(event.Updated)}
 	if row.CalendarID == "" {
 		row.CalendarID = anyString(event.Raw["calendar_id"])
 	}

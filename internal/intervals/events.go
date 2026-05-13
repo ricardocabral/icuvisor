@@ -41,22 +41,26 @@ type WriteEventParams struct {
 type Event struct {
 	Raw map[string]any `json:"-"`
 
-	ID             string   `json:"-"`
-	Name           *string  `json:"name"`
-	Type           *string  `json:"type"`
-	Category       *string  `json:"category"`
-	StartDateLocal *string  `json:"start_date_local"`
-	EndDateLocal   *string  `json:"end_date_local"`
-	Updated        *string  `json:"updated"`
-	PlanApplied    *string  `json:"plan_applied"`
-	Description    *string  `json:"description"`
-	TrainingLoad   *float64 `json:"icu_training_load"`
-	Distance       *float64 `json:"distance"`
-	MovingTime     *int     `json:"moving_time"`
-	ElapsedTime    *int     `json:"elapsed_time"`
-	WorkoutDoc     any      `json:"workout_doc"`
-	TrainingPlanID any      `json:"training_plan_id"`
-	CalendarID     any      `json:"calendar_id"`
+	ID                string   `json:"-"`
+	Name              *string  `json:"name"`
+	Type              *string  `json:"type"`
+	Category          *string  `json:"category"`
+	StartDateLocal    *string  `json:"start_date_local"`
+	EndDateLocal      *string  `json:"end_date_local"`
+	Updated           *string  `json:"updated"`
+	PlanApplied       *string  `json:"plan_applied"`
+	Description       *string  `json:"description"`
+	TrainingLoad      *float64 `json:"icu_training_load"`
+	LoadTarget        *float64 `json:"load_target"`
+	Distance          *float64 `json:"distance"`
+	DistanceTarget    *float64 `json:"distance_target"`
+	MovingTime        *int     `json:"moving_time"`
+	TimeTarget        *int     `json:"time_target"`
+	ElapsedTime       *int     `json:"elapsed_time"`
+	ElapsedTimeTarget *int     `json:"elapsed_time_target"`
+	WorkoutDoc        any      `json:"workout_doc"`
+	TrainingPlanID    any      `json:"training_plan_id"`
+	CalendarID        any      `json:"calendar_id"`
 }
 
 // UnmarshalJSON decodes Event while retaining the original object for full responses.
@@ -150,10 +154,10 @@ type writeEventPayload struct {
 	Name              string   `json:"name,omitempty"`
 	Description       *string  `json:"description,omitempty"`
 	Tags              []string `json:"tags,omitempty"`
-	TrainingLoad      *float64 `json:"icu_training_load,omitempty"`
-	Distance          *float64 `json:"distance,omitempty"`
-	MovingTimeSeconds *int     `json:"moving_time,omitempty"`
-	ElapsedSeconds    *int     `json:"elapsed_time,omitempty"`
+	LoadTarget        *float64 `json:"load_target,omitempty"`
+	DistanceTarget    *float64 `json:"distance_target,omitempty"`
+	TimeTarget        *int     `json:"time_target,omitempty"`
+	ElapsedTimeTarget *int     `json:"elapsed_time_target,omitempty"`
 }
 
 func writeEventBody(params WriteEventParams) (writeEventPayload, error) {
@@ -171,10 +175,10 @@ func writeEventBody(params WriteEventParams) (writeEventPayload, error) {
 		Name:              strings.TrimSpace(params.Name),
 		Description:       params.Description,
 		Tags:              append([]string(nil), params.Tags...),
-		TrainingLoad:      params.TargetLoad,
-		Distance:          params.DistanceMeters,
-		MovingTimeSeconds: params.MovingTimeSeconds,
-		ElapsedSeconds:    params.ElapsedTimeSeconds,
+		LoadTarget:        params.TargetLoad,
+		DistanceTarget:    params.DistanceMeters,
+		TimeTarget:        params.MovingTimeSeconds,
+		ElapsedTimeTarget: params.ElapsedTimeSeconds,
 	}, nil
 }
 

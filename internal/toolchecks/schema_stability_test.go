@@ -7,6 +7,16 @@ import (
 	"testing"
 )
 
+func TestGenerateSchemaSnapshotsIncludesWriteTools(t *testing.T) {
+	generated, err := GenerateSchemaSnapshots()
+	if err != nil {
+		t.Fatalf("GenerateSchemaSnapshots() error = %v", err)
+	}
+	if _, ok := generated["add_or_update_event"]; !ok {
+		t.Fatalf("generated snapshots missing add_or_update_event; write tools must be represented in schema catalog")
+	}
+}
+
 func TestCheckSnapshotFreshness(t *testing.T) {
 	currentDir := t.TempDir()
 	generated := map[string]Snapshot{

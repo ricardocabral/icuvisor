@@ -246,8 +246,13 @@ func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
 	if len(tags) != 2 || tags[0] != "tempo" || tags[1] != "coach" {
 		t.Fatalf("tags = %#v, want preserved tags", tags)
 	}
-	if body["icu_training_load"] != float64(75) || body["distance"] != float64(30000) || body["moving_time"] != float64(3600) || body["elapsed_time"] != float64(3900) {
+	if body["load_target"] != float64(75) || body["distance_target"] != float64(30000) || body["time_target"] != float64(3600) || body["elapsed_time_target"] != float64(3900) {
 		t.Fatalf("planned metrics body = %#v", body)
+	}
+	for _, completedKey := range []string{"icu_training_load", "distance", "moving_time", "elapsed_time"} {
+		if _, ok := body[completedKey]; ok {
+			t.Fatalf("planned write body includes completed metric %s: %#v", completedKey, body)
+		}
 	}
 	if requests[1].method != http.MethodPut || requests[1].path != "/athlete/i12345/events/evt-9" {
 		t.Fatalf("update request = %#v, want PUT athlete events/{id}", requests[1])

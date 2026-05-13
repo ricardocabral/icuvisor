@@ -17,9 +17,9 @@
 - [x] Server emits the DSL string for `workout_doc` on upload; never sends the structured form to intervals.icu
 - [x] Response shape matches the read shape for the same event ID (round-trip parity)
 - [x] Tests: create, update, free-text round-trip, workout_doc round-trip via the TP-019 golden fixtures, tag preservation
-- [ ] R002: Map planned inputs to upstream planned target fields (`load_target`, `distance_target`, `time_target`) and expose planned target values distinctly from completed metrics in read/write response shape.
-- [ ] R002: Add `add_or_update_event` to schema/catalog snapshot generation by extending the schema catalog client and committing the generated snapshot/test coverage.
-- [ ] R002: Update the user-facing README catalog and `[Unreleased]` changelog entry for `add_or_update_event`.
+- [x] R002: Map planned inputs to upstream planned target fields (`load_target`, `distance_target`, `time_target`) and expose planned target values distinctly from completed metrics in read/write response shape.
+- [x] R002: Add `add_or_update_event` to schema/catalog snapshot generation by extending the schema catalog client and committing the generated snapshot/test coverage.
+- [x] R002: Update the user-facing README catalog and `[Unreleased]` changelog entry for `add_or_update_event`.
 
 ---
 

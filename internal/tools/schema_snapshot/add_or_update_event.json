@@ -1,0 +1,66 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "category": {
+      "description": "Required upstream event category enum such as WORKOUT, RACE, NOTE, or the athlete account's configured category value.",
+      "type": "string"
+    },
+    "date": {
+      "description": "Required athlete-local event date as YYYY-MM-DD; interpreted in the configured athlete timezone.",
+      "type": "string"
+    },
+    "description": {
+      "description": "Optional free-text athlete or coach notes. Preserved verbatim, including whitespace and line breaks; mutually exclusive with workout_doc.",
+      "type": "string"
+    },
+    "distance_meters": {
+      "description": "Optional planned distance in meters when supported upstream.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "elapsed_time_seconds": {
+      "description": "Optional planned elapsed duration in seconds when supported upstream.",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "event_id": {
+      "description": "Optional upstream event ID to update. Omit to create a new event; this tool never deletes events.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include the raw upstream event payload under event.full; default response matches get_event_by_id's terse event shape.",
+      "type": "boolean"
+    },
+    "moving_time_seconds": {
+      "description": "Optional planned moving duration in seconds when supported upstream.",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "name": {
+      "description": "Optional event title/name shown on the athlete calendar.",
+      "type": "string"
+    },
+    "tags": {
+      "description": "Optional event tags to preserve on the upstream event, in caller-provided order.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "target_load": {
+      "description": "Optional planned training load / TSS equivalent when supported upstream.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "workout_doc": {
+      "description": "Optional structured workout steps using icuvisor's WorkoutDoc shape. Mutually exclusive with description; the server serializes this to the intervals.icu workout DSL string in the upstream description field and never sends the structured object upstream.",
+      "type": "object"
+    }
+  },
+  "required": [
+    "date",
+    "category"
+  ],
+  "type": "object"
+}

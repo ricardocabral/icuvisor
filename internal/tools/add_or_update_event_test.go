@@ -31,7 +31,7 @@ func TestAddOrUpdateEventCreatePreservesFreeTextTagsAndReadShape(t *testing.T) {
 	description := "  Coach note\nKeep this verbatim.  "
 	client := &fakeEventWriterClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
-		event:             decodeToolEvents(t, `{"id":"evt-1","category":"WORKOUT","name":"Tempo","start_date_local":"2026-06-01","description":"  Coach note\nKeep this verbatim.  ","tags":["tempo","coach"],"updated":"2026-06-01T12:00:00Z"}`)[0],
+		event:             decodeToolEvents(t, `{"id":"evt-1","category":"WORKOUT","name":"Tempo","start_date_local":"2026-06-01","description":"  Coach note\nKeep this verbatim.  ","tags":["tempo","coach"],"load_target":75,"distance_target":30000,"time_target":3600,"updated":"2026-06-01T12:00:00Z"}`)[0],
 	}
 	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
 
@@ -60,6 +60,9 @@ func TestAddOrUpdateEventCreatePreservesFreeTextTagsAndReadShape(t *testing.T) {
 	row := out["event"].(map[string]any)
 	if row["event_id"] != "evt-1" || row["name"] != "Tempo" || row["description"] != description || row["updated_local"] != "2026-06-01T09:00:00-03:00" {
 		t.Fatalf("event row = %#v, want get_event_by_id-compatible row", row)
+	}
+	if row["load_target"] != float64(75) || row["distance_target_meters"] != float64(30000) || row["time_target_seconds"] != float64(3600) {
+		t.Fatalf("planned target row fields = %#v, want load/distance/time targets", row)
 	}
 	meta := out["_meta"].(map[string]any)
 	if meta["operation"] != "create" || meta["date"] != "2026-06-01" || meta["timezone"] != "America/Sao_Paulo" {
