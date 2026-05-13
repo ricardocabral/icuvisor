@@ -1,6 +1,6 @@
 # TP-019-workout-doc-serializer: TP-019-workout-doc-serializer — Status
 
-**Current Step:** Step 3: Parser parity (read-side compat)
+**Current Step:** Step 4: Golden-file round-trip tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-13
 **Review Level:** 0
@@ -29,15 +29,15 @@
 ---
 
 ### Step 3: Parser parity (read-side compat)
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Confirm the read-side parser produces the same structured shape the serializer round-trips through; if it does not, write a thin adapter
-- [ ] Do not change the public read shape (TP-013 owns that)
+- [x] Confirm the read-side parser produces the same structured shape the serializer round-trips through; if it does not, write a thin adapter
+- [x] Do not change the public read shape (TP-013 owns that)
 
 ---
 
 ### Step 4: Golden-file round-trip tests
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `testdata/` contains pairs: `XX-structured.json` + `XX-dsl.txt`
 - [ ] Test 1: parse DSL → struct → re-serialize → byte-equal to original DSL (or documented canonicalization)
@@ -74,6 +74,7 @@
 |-----------|-------------|----------|
 | Read-side workout_doc coverage is passthrough, not a typed parser: `intervals.Workout.WorkoutDoc` and `intervals.Event.WorkoutDoc` are `any`; default tools expose only `workout_doc_summary` (`present`, `top_level_keys`, `step_count`, `name`), while `get_workouts_in_folder include_full:true` and event `full` payloads preserve raw upstream JSON. Repo fixtures currently surface `workout_doc.steps`, duration-only steps, duration+power targets, duration+pace targets, and repeat blocks (`reps` + nested `steps`). No repo fixture currently surfaces ramp/freeride/recovery labels, cadence targets, HR targets, absolute watts/bpm/pace, target ranges, or step descriptions. | Use `internal/workoutdoc` typed shape to cover the stable DSL subset and reject unsupported raw shapes rather than silently dropping them. | `internal/intervals/workout_library.go`; `internal/intervals/events.go`; `internal/tools/get_events.go`; `internal/tools/get_workouts_in_folder.go`; `internal/intervals/testdata/workout_library/*.json` |
 | Stable DSL forms identified from upstream docs: line steps with duration or distance plus target, target ranges, cadence suffixes, ramps, `freeride`, repeat blocks (`Nx` header/line plus child step lines), and cue text before the first duration. Stable target families include power (`%FTP` implicit as `75%`, absolute watts, zones), heart rate (`% HR`, `% LTHR`, bpm/ranges), pace (`% Pace`, zone pace, absolute `mm:ss/unit` pace), and cadence `rpm`. Current read-only conveniences/gaps: `workout_doc_summary`, top-level `name`, `target(s)`, `moving_time`, `distance`, and load fields are summaries/metadata, not DSL steps; repo fixtures do not prove separate JSON encodings for ramps, freeride, recoveries, cadence, HR, absolute targets, RPE, or step cue descriptions, so the serializer should support explicit typed forms for them and fail on unknown raw fields. | Canonical serializer subset should document unsupported/lossy fields through typed errors now; downstream write tools can surface warnings later. | Upstream forum topic 123701; PRD §7.2.C; PRD §7.4 #19 |
+| There is no existing read-side workout DSL parser in this worktree; TP-013 currently preserves raw `workout_doc` values. `internal/workoutdoc.WorkoutDoc` uses JSON tags matching the known raw read shape (`steps`, `duration`, `reps`, `power`, `pace`, etc.), and `Parse` now targets the same typed struct that `Serialize` emits. | No adapter into MCP read tools is required for TP-019; consumers can convert preserved raw JSON into `workoutdoc.WorkoutDoc` without changing tool response shape. | `internal/workoutdoc/parse.go`; `internal/workoutdoc/types.go`; `internal/intervals/testdata/workout_library/*.json` |
 
 ---
 
