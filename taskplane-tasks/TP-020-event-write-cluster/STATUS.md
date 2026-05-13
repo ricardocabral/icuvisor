@@ -11,6 +11,7 @@
 ---
 
 ### Step 1: `add_or_update_event`
+
 **Status:** ✅ Complete
 
 - [x] Inputs: `date` (athlete-TZ), optional `event_id` (update vs create), `category`, `name`, `description` (free-text, preserved verbatim), `workout_doc` (structured; serialized via TP-019), `tags[]`, `target_load` / planned metrics where supported upstream
@@ -24,6 +25,7 @@
 ---
 
 ### Step 2: `link_activity_to_event`
+
 **Status:** ✅ Complete
 
 - [x] Inputs: `activity_id`, `event_id`; both normalized via existing helpers
@@ -37,6 +39,7 @@
 ---
 
 ### Step 3: `add_activity_message`
+
 **Status:** ✅ Complete
 
 - [x] Inputs: `activity_id`, `message` (free text), optional `private` flag if upstream supports it
@@ -46,6 +49,7 @@
 ---
 
 ### Step 4: Schema descriptions
+
 **Status:** ✅ Complete
 
 - [x] Every arg has an LLM-readable description with units / scale where relevant
@@ -54,6 +58,7 @@
 ---
 
 ### Step 5: Verify
+
 **Status:** ✅ Complete
 
 - [x] `make test`, `make build`, `make lint`, `go test -race ./...`
@@ -65,44 +70,46 @@
 
 ## Reviews
 
-| # | Type | Step | Verdict | File |
-|---|------|------|---------|------|
-| R001 | plan | 1 | APPROVE (tool output; artifact listed changes requested) | `.reviews/R001-plan-step1.md` |
-| R002 | code | 1 | REVISE | `.reviews/R002-code-step1.md` |
-| R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
-| R004 | plan | 2 | REVISE | `.reviews/R004-plan-step2.md` |
-| R005 | plan | 2 | APPROVE | `.reviews/R005-plan-step2.md` |
-| R006 | code | 2 | UNAVAILABLE | n/a |
-| R007 | code | 2 | UNAVAILABLE | n/a |
+| #    | Type | Step | Verdict                                                  | File                          |
+| ---- | ---- | ---- | -------------------------------------------------------- | ----------------------------- |
+| R001 | plan | 1    | APPROVE (tool output; artifact listed changes requested) | `.reviews/R001-plan-step1.md` |
+| R002 | code | 1    | REVISE                                                   | `.reviews/R002-code-step1.md` |
+| R003 | code | 1    | APPROVE                                                  | `.reviews/R003-code-step1.md` |
+| R004 | plan | 2    | REVISE                                                   | `.reviews/R004-plan-step2.md` |
+| R005 | plan | 2    | APPROVE                                                  | `.reviews/R005-plan-step2.md` |
+| R006 | code | 2    | UNAVAILABLE                                              | n/a                           |
+| R007 | code | 2    | UNAVAILABLE                                              | n/a                           |
 
 ---
 
 ## Discoveries
 
-| Discovery | Disposition | Location |
-|-----------|-------------|----------|
-| Plan review tool returned APPROVE but the generated R001 plan artifact listed changes requested. | Treated the artifact feedback as design guidance before Step 1 commit: structured `workout_doc` is mutually exclusive with free-text `description`, serializes to upstream `description`, no structured `workout_doc` is uploaded, and POST writes are not retried. | `.reviews/R001-plan-step1.md`; `internal/tools/add_or_update_event.go`; `internal/intervals/events.go` |
-| Live Step 5 create-event smoke against `/Users/jusbrasil/prj/icuvisor/.env-dev` failed with upstream HTTP 422 because WORKOUT events require `type`, and frontend evidence uses `/events/bulk` for creates. | Added Step 5 fix checkbox before continuing manual smoke. | `internal/intervals/events.go`; intervals.icu frontend JS evidence |
+| Discovery                                                                                                                                                                                                   | Disposition                                                                                                                                                                                                                                                         | Location                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Plan review tool returned APPROVE but the generated R001 plan artifact listed changes requested.                                                                                                            | Treated the artifact feedback as design guidance before Step 1 commit: structured `workout_doc` is mutually exclusive with free-text `description`, serializes to upstream `description`, no structured `workout_doc` is uploaded, and POST writes are not retried. | `.reviews/R001-plan-step1.md`; `internal/tools/add_or_update_event.go`; `internal/intervals/events.go` |
+| Live Step 5 create-event smoke against `/Users/jusbrasil/prj/icuvisor/.env-dev` failed with upstream HTTP 422 because WORKOUT events require `type`, and frontend evidence uses `/events/bulk` for creates. | Added Step 5 fix checkbox before continuing manual smoke.                                                                                                                                                                                                           | `internal/intervals/events.go`; intervals.icu frontend JS evidence                                     |
 
 ---
 
 ## Execution Log
 
-| Timestamp | Action | Outcome |
-|-----------|--------|---------|
-| 2026-05-13 | Task staged | STATUS.md auto-generated by task-runner |
-| 2026-05-13 14:53 | Task started | Runtime V2 lane-runner execution |
-| 2026-05-13 14:53 | Step 1 started | `add_or_update_event` |
-| 2026-05-13 15:12 | ⚠️ Steering | Manual smoke must use only `/Users/jusbrasil/prj/icuvisor/.env-dev` by absolute path and maintainer test activity `i147866949`; do not print/copy/commit env contents; record only pass/fail and non-secret trace IDs. |
-| 2026-05-13 16:53 | Agent reply | Acknowledged. I will use only /Users/jusbrasil/prj/icuvisor/.env-dev by absolute path for TP-020 manual smoke, avoid printing/copying/committing env contents or secrets, limit live smoke to the config |
-| 2026-05-13 16:53 | Worker iter 1 | killed (wall-clock timeout) in 7200s, tools: 177 |
-| 2026-05-13 16:53 | Step 3 started | `add_activity_message` |
+| Timestamp        | Action         | Outcome                                                                                                                                                                                                                |
+| ---------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-13       | Task staged    | STATUS.md auto-generated by task-runner                                                                                                                                                                                |
+| 2026-05-13 14:53 | Task started   | Runtime V2 lane-runner execution                                                                                                                                                                                       |
+| 2026-05-13 14:53 | Step 1 started | `add_or_update_event`                                                                                                                                                                                                  |
+| 2026-05-13 15:12 | ⚠️ Steering    | Manual smoke must use only `/Users/jusbrasil/prj/icuvisor/.env-dev` by absolute path and maintainer test activity `i147866949`; do not print/copy/commit env contents; record only pass/fail and non-secret trace IDs. |
+| 2026-05-13 16:53 | Agent reply    | Acknowledged. I will use only /Users/jusbrasil/prj/icuvisor/.env-dev by absolute path for TP-020 manual smoke, avoid printing/copying/committing env contents or secrets, limit live smoke to the config               |
+| 2026-05-13 16:53 | Worker iter 1  | killed (wall-clock timeout) in 7200s, tools: 177                                                                                                                                                                       |
+| 2026-05-13 16:53 | Step 3 started | `add_activity_message`                                                                                                                                                                                                 |
+| 2026-05-13 17:18 | Worker iter 2 | done in 1452s, tools: 119 |
+| 2026-05-13 17:18 | Task complete | .DONE created |
 
 ---
 
 ## Blockers
 
-*None*
+_None_
 
 ---
 
