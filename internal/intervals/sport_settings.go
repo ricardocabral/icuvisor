@@ -65,7 +65,7 @@ func (c *Client) ApplySportSettings(ctx context.Context, sportSettingID int, old
 	}
 	var response map[string]any
 	id := strconv.Itoa(sportSettingID)
-	if err := c.doJSONBody(ctx, http.MethodPost, body, &response, "athlete", c.athleteID, "sport-settings", id, "apply"); err != nil {
+	if err := c.doJSONBody(ctx, http.MethodPut, body, &response, "athlete", c.athleteID, "sport-settings", id, "apply"); err != nil {
 		return fmt.Errorf("applying sport settings %s: %w", id, err)
 	}
 	return nil

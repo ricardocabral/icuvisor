@@ -25,8 +25,8 @@ func TestUpdateSportSettingsSendsSparseBodyAndApplyDate(t *testing.T) {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"id":7,"type":"Ride","ftp":275,"lthr":171,"threshold_pace":255,"pace_units":"MINS_KM"}`))
 		case "/athlete/i12345/sport-settings/7/apply":
-			if r.Method != http.MethodPost {
-				t.Fatalf("method = %s, want POST", r.Method)
+			if r.Method != http.MethodPut {
+				t.Fatalf("method = %s, want PUT", r.Method)
 			}
 			if err := json.NewDecoder(r.Body).Decode(&applyBody); err != nil {
 				t.Fatalf("decode apply body: %v", err)
