@@ -1,10 +1,10 @@
 # TP-034-kr5-benchmark-harness: TP-034-kr5-benchmark-harness — Status
 
-**Current Step:** Step 2: Shared prompt set
+**Current Step:** Step 3: icuvisor measurement
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 4
 **Iteration:** 2
 **Size:** M/L
 
@@ -20,14 +20,14 @@
 
 ### Step 2: Shared prompt set
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Extend the TP-016 / TP-029 dogfood prompts into a shared set that exercises the common forum-prompt shapes (the "10 most common forum prompts" from §7.4 #8)
-- [ ] The same prompts must be runnable against all three servers — no icuvisor-specific assumptions in the prompt text
+- [x] Extend the TP-016 / TP-029 dogfood prompts into a shared set that exercises the common forum-prompt shapes (the "10 most common forum prompts" from §7.4 #8)
+- [x] The same prompts must be runnable against all three servers — no icuvisor-specific assumptions in the prompt text
 
 ### Step 3: icuvisor measurement
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Measure `core` and `full` tiers separately; `core` is the headline KR5 number
 - [ ] Capture description tokens from `tools/list` and response bytes per call
@@ -70,6 +70,8 @@
 | --- | ---- | ---- | ------- | ---- |
 | R001 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | plan | 1 | APPROVE | inline |
+| R003 | plan | 2 | REVISE | `.reviews/R003-plan-step2.md` |
+| R004 | plan | 2 | APPROVE | inline |
 
 ---
 
@@ -101,5 +103,9 @@ _None_
 ## Notes
 
 Step 1: Selected `scripts/benchmark/` rather than `internal/benchmark/` because the harness is an operator/release validation utility, not shipped server code. Metrics are canonical `tools/list` catalog-token counts and median canonical MCP `tools/call` result bytes. Tokenizer pinned to `cl100k_base` via `tiktoken==0.12.0`; prompt set pinned as `kr5-forum-prompts-v1`; frozen redacted account snapshot pinned as `kr5-redacted-test-athlete-v1` with manifest at `scripts/benchmark/testdata/snapshot-manifest.json`. Non-determinism is handled by committed redacted fixtures for reproducibility; live reruns are for recalibration only. R001 revisions removed premature results, pinned a real tokenizer, added call-plan guardrails, and defined snapshot manifest/redaction policy.
+
+Step 2: R003 revisions replaced destructive KR5-10 with a non-destructive coach triage prompt and added `source_prompt_ids`/`prd_anchor` provenance to every scenario.
 | 2026-05-14 20:35 | Review R001 | plan Step 1: REVISE |
 | 2026-05-14 20:37 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-14 20:40 | Review R003 | plan Step 2: REVISE |
+| 2026-05-14 20:43 | Review R004 | plan Step 2: APPROVE |
