@@ -53,6 +53,7 @@ var v03ToolCatalog = []catalogToolSpec{
 	{name: "get_wellness_data", requirement: tools.RequirementRead},
 	{name: "get_workout_library", requirement: tools.RequirementRead},
 	{name: "get_workouts_in_folder", requirement: tools.RequirementRead},
+	{name: "icuvisor_list_advanced_capabilities", requirement: tools.RequirementRead},
 	{name: "link_activity_to_event", requirement: tools.RequirementWrite},
 	{name: "update_custom_item", requirement: tools.RequirementWrite},
 	{name: "update_sport_settings", requirement: tools.RequirementWrite},

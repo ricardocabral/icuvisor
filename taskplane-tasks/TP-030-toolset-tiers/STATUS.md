@@ -52,7 +52,7 @@
 - [x] Output is static/derived from the catalog — no upstream calls; terse by default
 - [x] When the tier is already `full`, it still works and says so
 - [x] Add drift/behavior/protocol/schema tests: tier matrix includes the new core tool, handler excludes core/self and includes known full tools, no upstream calls occur, core/full `tools/list` include the discoverability tool, and schema snapshot is committed
-- [ ] R012 fix: add `icuvisor_list_advanced_capabilities` to the adversarial static catalog as a read tool so `go test ./...` passes and no-confirm/delete-mode guardrails include it
+- [x] R012 fix: add `icuvisor_list_advanced_capabilities` to the adversarial static catalog as a read tool so `go test ./...` passes and no-confirm/delete-mode guardrails include it
 
 ### Step 5: `_meta` surfacing + docs
 
