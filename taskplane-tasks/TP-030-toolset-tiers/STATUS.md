@@ -1,6 +1,6 @@
 # TP-030-toolset-tiers: TP-030-toolset-tiers — Status
 
-**Current Step:** Step 2: Per-tool tier membership
+**Current Step:** Step 3: Registry filtering composition
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
@@ -32,7 +32,11 @@
 
 ### Step 3: Registry filtering composition
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] Registration filters on tier **and** delete-mode; a tool appears only when both gates allow it
+- [ ] Tools outside the active tier are **absent** from `tools/list`, not registered-and-erroring
+- [ ] Startup INFO line reports registered/skipped counts per gate
 
 ### Step 4: `icuvisor_list_advanced_capabilities`
 
