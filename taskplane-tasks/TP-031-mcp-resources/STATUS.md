@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 1
 **Size:** M
 
@@ -32,9 +32,9 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Register `icuvisor://event-categories` in the default resource registry
-- [ ] Full event-category enum with one-line descriptions, sourced from the same enum the event tools use
-- [ ] Static content; golden-file locked
+- [x] Register `icuvisor://event-categories` in the default resource registry
+- [x] Full event-category enum with one-line descriptions, sourced from the same enum the event tools use
+- [x] Static content; golden-file locked
 
 ### Step 4: `icuvisor://custom-item-schemas`
 
@@ -66,6 +66,7 @@
 | R006 | Code | 2 | REVISE | .reviews/R006-code-step2.md |
 | R007 | Code | 2 | APPROVE | inline |
 | R008 | Plan | 3 | REVISE | .reviews/R008-plan-step3.md |
+| R009 | Plan | 3 | APPROVE | inline |
 
 ---
 

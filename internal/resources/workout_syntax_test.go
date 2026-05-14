@@ -140,11 +140,17 @@ func TestNewRegistryRegistersWorkoutSyntaxResource(t *testing.T) {
 	if err := NewRegistry().Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	if len(registrar.resources) != 1 {
-		t.Fatalf("registered resources = %d, want 1", len(registrar.resources))
+	var resource Resource
+	for _, candidate := range registrar.resources {
+		if candidate.URI == WorkoutSyntaxURI {
+			resource = candidate
+			break
+		}
 	}
-	resource := registrar.resources[0]
-	if resource.URI != WorkoutSyntaxURI || resource.Name != "workout_syntax" || resource.Title != "Workout syntax" || resource.MIMEType != WorkoutSyntaxMIMEType {
+	if resource.URI == "" {
+		t.Fatalf("registered resources = %#v, missing %s", registrar.resources, WorkoutSyntaxURI)
+	}
+	if resource.Name != "workout_syntax" || resource.Title != "Workout syntax" || resource.MIMEType != WorkoutSyntaxMIMEType {
 		t.Fatalf("resource metadata = %#v, want workout syntax metadata", resource)
 	}
 

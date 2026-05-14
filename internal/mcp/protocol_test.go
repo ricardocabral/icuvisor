@@ -159,7 +159,7 @@ func TestProtocolUnknownResourceReturnsNotFound(t *testing.T) {
 	}
 }
 
-func TestProtocolDefaultResourceRegistryIncludesWorkoutSyntax(t *testing.T) {
+func TestProtocolDefaultResourceRegistryIncludesStaticResources(t *testing.T) {
 	t.Parallel()
 
 	ctx, session, cleanup := connectTestClientWithOptions(t, Options{ResourceRegistry: resources.NewRegistry()})
@@ -169,25 +169,40 @@ func TestProtocolDefaultResourceRegistryIncludesWorkoutSyntax(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListResources() error = %v", err)
 	}
-	var found bool
+	want := map[string]struct {
+		name     string
+		mimeType string
+		heading  string
+	}{
+		resources.WorkoutSyntaxURI:   {name: "workout_syntax", mimeType: resources.WorkoutSyntaxMIMEType, heading: "# Workout syntax"},
+		resources.EventCategoriesURI: {name: "event_categories", mimeType: resources.EventCategoriesMIMEType, heading: "# Event categories"},
+	}
 	for _, resource := range list.Resources {
-		if resource.URI == resources.WorkoutSyntaxURI {
-			found = true
-			if resource.MIMEType != resources.WorkoutSyntaxMIMEType || resource.Name != "workout_syntax" {
-				t.Fatalf("workout resource metadata = %#v", resource)
+		if expected, ok := want[resource.URI]; ok {
+			if resource.MIMEType != expected.mimeType || resource.Name != expected.name {
+				t.Fatalf("resource metadata = %#v, want %#v", resource, expected)
 			}
+			delete(want, resource.URI)
 		}
 	}
-	if !found {
-		t.Fatalf("resources/list = %#v, missing %s", list.Resources, resources.WorkoutSyntaxURI)
+	if len(want) > 0 {
+		t.Fatalf("resources/list = %#v, missing %v", list.Resources, want)
 	}
 
-	read, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: resources.WorkoutSyntaxURI})
-	if err != nil {
-		t.Fatalf("ReadResource(%s) error = %v", resources.WorkoutSyntaxURI, err)
-	}
-	if len(read.Contents) != 1 || read.Contents[0].URI != resources.WorkoutSyntaxURI || read.Contents[0].MIMEType != resources.WorkoutSyntaxMIMEType || !strings.Contains(read.Contents[0].Text, "# Workout syntax") {
-		t.Fatalf("workout resource read = %#v", read.Contents)
+	for uri, expected := range map[string]struct {
+		mimeType string
+		heading  string
+	}{
+		resources.WorkoutSyntaxURI:   {mimeType: resources.WorkoutSyntaxMIMEType, heading: "# Workout syntax"},
+		resources.EventCategoriesURI: {mimeType: resources.EventCategoriesMIMEType, heading: "# Event categories"},
+	} {
+		read, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: uri})
+		if err != nil {
+			t.Fatalf("ReadResource(%s) error = %v", uri, err)
+		}
+		if len(read.Contents) != 1 || read.Contents[0].URI != uri || read.Contents[0].MIMEType != expected.mimeType || !strings.Contains(read.Contents[0].Text, expected.heading) {
+			t.Fatalf("resource %s read = %#v", uri, read.Contents)
+		}
 	}
 }
 
