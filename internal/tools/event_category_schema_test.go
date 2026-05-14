@@ -3,7 +3,30 @@ package tools
 import (
 	"strings"
 	"testing"
+
+	"github.com/ricardocabral/icuvisor/internal/intervals"
 )
+
+func TestAddOrUpdateEventStandardCategoryExamplesUseDocumentedValues(t *testing.T) {
+	t.Parallel()
+
+	documented := make(map[string]struct{})
+	for _, value := range intervals.EventCategoryValues() {
+		documented[value] = struct{}{}
+	}
+	for _, example := range addOrUpdateEventInputExamples() {
+		category, _ := example["category"].(string)
+		if category == "" {
+			t.Fatalf("example missing category: %#v", example)
+		}
+		if strings.HasPrefix(category, "CUSTOM_") {
+			continue
+		}
+		if _, ok := documented[category]; !ok {
+			t.Fatalf("public event example category %q is not documented in intervals.EventCategoryValues()", category)
+		}
+	}
+}
 
 func TestEventCategorySchemaDescriptionsReferenceResourceWithoutValidationEnum(t *testing.T) {
 	t.Parallel()

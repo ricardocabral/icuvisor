@@ -35,7 +35,7 @@
 - [x] Register `icuvisor://event-categories` in the default resource registry
 - [x] Full event-category enum with one-line descriptions, sourced from the same enum the event tools use
 - [x] Static content; golden-file locked
-- [ ] R010: Update public event write schema examples to use documented race categories and add a guard against descriptor/example drift
+- [x] R010: Update public event write schema examples to use documented race categories and add a guard against descriptor/example drift
 
 ### Step 4: `icuvisor://custom-item-schemas`
 

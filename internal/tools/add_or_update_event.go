@@ -210,7 +210,7 @@ func addOrUpdateEventInputExamples() []map[string]any {
 		{
 			"event_id":             "evt-example-42",
 			"date":                 "2026-06-21",
-			"category":             "RACE",
+			"category":             "RACE_B",
 			"type":                 "Run",
 			"name":                 "10K tune-up race",
 			"description":          "B race. Practice breakfast, warm-up, and even pacing.",
