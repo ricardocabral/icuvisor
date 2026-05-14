@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 18
+**Review Counter:** 19
 **Iteration:** 2
 **Size:** M
 
@@ -57,6 +57,7 @@
 - [x] Cover resource list/read, cache refresh, context cancellation, and shape parity with focused tests
 - [x] R017: Make athlete-profile cache refresh waiters context-aware and test canceled reads behind an in-flight refresh
 - [x] R018: Share failed refresh results with concurrent waiters to avoid retry amplification
+- [ ] R019: Remove staticcheck SA4004 unconditional loop from athlete-profile resource reader
 
 ### Step 6: Trim inline tool descriptions
 
@@ -89,6 +90,7 @@
 | R016 | Plan | 5 | APPROVE | .reviews/R016-plan-step5.md |
 | R017 | Code | 5 | REVISE | .reviews/R017-code-step5.md |
 | R018 | Code | 5 | REVISE | .reviews/R018-code-step5.md |
+| R019 | Code | 5 | REVISE | .reviews/R019-code-step5.md |
 
 ---
 
@@ -197,6 +199,11 @@ _None_
 
 - Store the in-flight refresh result/error so waiters that were already queued behind a failed cold/expired refresh return that same failure instead of sequentially starting their own upstream calls.
 - Add a focused test with multiple concurrent waiters behind a blocked failing refresh and assert one upstream call plus failure results for all waiters.
+
+### R019 revision notes
+
+- Simplify `athleteProfileReader.Read` so staticcheck no longer reports SA4004 while preserving context-aware waiting and shared refresh results.
 | 2026-05-14 16:13 | Review R016 | plan Step 5: APPROVE |
 | 2026-05-14 16:26 | Review R017 | code Step 5: REVISE |
 | 2026-05-14 16:33 | Review R018 | code Step 5: REVISE |
+| 2026-05-14 16:40 | Review R019 | code Step 5: REVISE |
