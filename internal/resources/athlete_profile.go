@@ -93,46 +93,44 @@ func newAthleteProfileReader(opts athleteProfileOptions) *athleteProfileReader {
 }
 
 func (r *athleteProfileReader) Read(ctx context.Context, _ Request) (Result, error) {
-	for {
-		if err := ctx.Err(); err != nil {
-			return Result{}, err
-		}
-		now := r.now()
-		r.mu.Lock()
-		if r.hasCached && now.Before(r.expiresAt) {
-			result := r.cached
-			r.mu.Unlock()
-			return result, nil
-		}
-		if r.refresh != nil {
-			refresh := r.refresh
-			r.mu.Unlock()
-			select {
-			case <-ctx.Done():
-				return Result{}, ctx.Err()
-			case <-refresh.done:
-				return refresh.result, refresh.err
-			}
-		}
-		refresh := &athleteProfileRefresh{done: make(chan struct{})}
-		r.refresh = refresh
-		r.mu.Unlock()
-
-		result, err := r.refreshProfile(ctx)
-
-		r.mu.Lock()
-		if err == nil {
-			r.cached = result
-			r.expiresAt = now.Add(r.ttl)
-			r.hasCached = true
-		}
-		refresh.result = result
-		refresh.err = err
-		r.refresh = nil
-		close(refresh.done)
-		r.mu.Unlock()
-		return result, err
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
 	}
+	now := r.now()
+	r.mu.Lock()
+	if r.hasCached && now.Before(r.expiresAt) {
+		result := r.cached
+		r.mu.Unlock()
+		return result, nil
+	}
+	if r.refresh != nil {
+		refresh := r.refresh
+		r.mu.Unlock()
+		select {
+		case <-ctx.Done():
+			return Result{}, ctx.Err()
+		case <-refresh.done:
+			return refresh.result, refresh.err
+		}
+	}
+	refresh := &athleteProfileRefresh{done: make(chan struct{})}
+	r.refresh = refresh
+	r.mu.Unlock()
+
+	result, err := r.refreshProfile(ctx)
+
+	r.mu.Lock()
+	if err == nil {
+		r.cached = result
+		r.expiresAt = now.Add(r.ttl)
+		r.hasCached = true
+	}
+	refresh.result = result
+	refresh.err = err
+	r.refresh = nil
+	close(refresh.done)
+	r.mu.Unlock()
+	return result, err
 }
 
 func (r *athleteProfileReader) refreshProfile(ctx context.Context) (Result, error) {

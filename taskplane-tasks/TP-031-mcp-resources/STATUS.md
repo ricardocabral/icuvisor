@@ -57,7 +57,7 @@
 - [x] Cover resource list/read, cache refresh, context cancellation, and shape parity with focused tests
 - [x] R017: Make athlete-profile cache refresh waiters context-aware and test canceled reads behind an in-flight refresh
 - [x] R018: Share failed refresh results with concurrent waiters to avoid retry amplification
-- [ ] R019: Remove staticcheck SA4004 unconditional loop from athlete-profile resource reader
+- [x] R019: Remove staticcheck SA4004 unconditional loop from athlete-profile resource reader
 
 ### Step 6: Trim inline tool descriptions
 
