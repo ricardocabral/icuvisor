@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 1
 **Size:** M
 
@@ -45,9 +45,13 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Lives in `core`; returns the `full`-only tools with one-line summaries and the exact `ICUVISOR_TOOLSET=full` instruction to enable them
+- [ ] Add a catalog-collecting registrar inside `internal/tools` so `icuvisor_list_advanced_capabilities` derives full-only rows from the same self-declared `Tool` metadata and first description sentences while forwarding registration normally
+- [ ] Register `icuvisor_list_advanced_capabilities` after collecting the existing catalog, mark it `core`, use a no-argument closed input schema, exclude core tools/self, and keep it available in both active tiers
+- [ ] Propagate active toolset into `tools.RegistryOptions` from startup without re-reading env or adding request overrides, so the handler can report core vs full status
+- [ ] Lives in `core`; returns the `full`-only tools with one-line summaries, requirements/delete-mode note, and the exact `ICUVISOR_TOOLSET=full` instruction to enable them
 - [ ] Output is static/derived from the catalog — no upstream calls; terse by default
 - [ ] When the tier is already `full`, it still works and says so
+- [ ] Add drift/behavior/protocol/schema tests: tier matrix includes the new core tool, handler excludes core/self and includes known full tools, no upstream calls occur, core/full `tools/list` include the discoverability tool, and schema snapshot is committed
 
 ### Step 5: `_meta` surfacing + docs
 
@@ -72,6 +76,7 @@
 | R007 | plan | 3 | REVISE | `.reviews/R007-plan-step3.md` |
 | R008 | plan | 3 | APPROVE | `.reviews/R008-plan-step3.md` |
 | R009 | code | 3 | APPROVE | `.reviews/R009-code-step3.md` |
+| R010 | plan | 4 | REVISE | `.reviews/R010-plan-step4.md` |
 
 ---
 
@@ -128,6 +133,19 @@ Composition test matrix: synthetic tools cover core read, core write, full read,
 
 - R008 approved the revised Step 3 plan and suggested adding an explicit zero-value `mcp.Options.Toolset` defaults-to-core assertion, which was folded into the composition matrix.
 - R009 approved the Step 3 implementation.
+- R010 required Step 4 to pin catalog derivation from existing `Tool` metadata, active-toolset propagation to handlers, a concrete response shape/instruction, and drift/protocol/schema tests before implementation.
+
+### Step 4 discoverability plan
+
+Catalog derivation: `defaultRegistry.Register` will use a small collecting/wrapping registrar to record every existing tool as it is added, forward those tools to the real registrar unchanged, then register `icuvisor_list_advanced_capabilities` using rows derived from collected tools whose `EffectiveToolset()==full`. Summaries come from the first sentence of each tool description. No production name→tier or summary map is introduced.
+
+Registration/ordering: the new tool is added after existing catalog collection so it can include all full-only tools and exclude itself/core tools. It is declared with `coreTool(...)`, read requirement, `additionalProperties:false` no-argument input schema, and generic structured output schema. Step 3 semantics make it visible in both active `core` and `full` tiers.
+
+Active toolset propagation: add `Toolset safety.Toolset` to `tools.RegistryOptions`, default empty/invalid to core, pass `toolset` from `app.defaultStartServer` into `tools.NewRegistryWithOptions`, and do not read env or accept request arguments in the handler.
+
+Response shape: structured content includes `current_toolset`, `status`, `enable_instruction`, `advanced_capabilities: [{name, summary, requirement}]`, and `_meta: {count, source, delete_mode_note}`. Text content also contains `ICUVISOR_TOOLSET=full` and tells the user to set it in the MCP client/server environment and restart icuvisor. In full mode, status says the full toolset is already enabled while still returning the same full-only catalog.
+
+Tests: update tier matrix expected core list/count for `icuvisor_list_advanced_capabilities`; add handler tests for core/full output, known full inclusion (`get_power_curves`), core/self exclusion (`get_athlete_profile`, `icuvisor_list_advanced_capabilities`), one-line summaries, enable instruction, and no upstream calls using a panic client; add protocol coverage for default core and full mode visibility; update profile-only registry expectations; add the schema snapshot and ensure description first sentence is distinct.
 | 2026-05-14 12:40 | Review R003 | code Step 1: APPROVE |
 | 2026-05-14 12:45 | Review R004 | plan Step 2: REVISE |
 | 2026-05-14 12:50 | Review R005 | plan Step 2: APPROVE |
@@ -135,3 +153,4 @@ Composition test matrix: synthetic tools cover core read, core write, full read,
 | 2026-05-14 13:04 | Review R007 | plan Step 3: REVISE |
 | 2026-05-14 13:07 | Review R008 | plan Step 3: APPROVE |
 | 2026-05-14 13:16 | Review R009 | code Step 3: APPROVE |
+| 2026-05-14 13:23 | Review R010 | plan Step 4: REVISE |
