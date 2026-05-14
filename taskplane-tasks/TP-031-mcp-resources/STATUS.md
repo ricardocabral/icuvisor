@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 1
 **Size:** M
 
@@ -35,6 +35,7 @@
 - [x] Register `icuvisor://event-categories` in the default resource registry
 - [x] Full event-category enum with one-line descriptions, sourced from the same enum the event tools use
 - [x] Static content; golden-file locked
+- [ ] R010: Update public event write schema examples to use documented race categories and add a guard against descriptor/example drift
 
 ### Step 4: `icuvisor://custom-item-schemas`
 
@@ -67,6 +68,7 @@
 | R007 | Code | 2 | APPROVE | inline |
 | R008 | Plan | 3 | REVISE | .reviews/R008-plan-step3.md |
 | R009 | Plan | 3 | APPROVE | inline |
+| R010 | Code | 3 | REVISE | .reviews/R010-code-step3.md |
 
 ---
 
@@ -134,3 +136,7 @@ _None_
 - Register `EventCategoriesResource()` in `resources.NewRegistry()` alongside `WorkoutSyntaxResource()` so normal server runs expose it in `resources/list` and `resources/read`.
 - Tests: golden-lock generated Markdown; assert every descriptor entry appears exactly once with a non-empty one-line description; assert event tool schemas/descriptions reference the shared descriptor/resource without enum validation; add registry/protocol assertions for list/read URI and MIME type.
 - Step 6 boundary: avoid broad tool-description trimming and README updates here; only minimal wording/schema metadata changes needed to point category docs at the shared descriptor/resource.
+
+### R010 revision notes
+
+- Public `add_or_update_event` input examples should not advertise `RACE`, because the documented upstream enum now points users to priority-specific `RACE_A`/`RACE_B`/`RACE_C` values. Keep runtime pass-through behavior, but make public examples and schema guards align with `intervals.EventCategoryValues()`.
