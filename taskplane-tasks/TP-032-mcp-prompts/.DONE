@@ -1,0 +1,10 @@
+TP-032 complete
+
+Implemented and documented five MCP Prompts: training_analysis, recovery_check, weekly_planning, race_week_taper, and coach_roster_triage.
+
+Verification passed:
+- make test
+- make build
+- make lint
+- go test -race ./...
+- go test ./internal/mcp -run 'TestProtocolSharedTransportSuite/prompts_list_and_get' -count=1
