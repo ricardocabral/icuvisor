@@ -1,6 +1,6 @@
 # TP-030-toolset-tiers: TP-030-toolset-tiers — Status
 
-**Current Step:** Step 1: Tier enum and parsing
+**Current Step:** Step 2: Per-tool tier membership
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
@@ -22,7 +22,11 @@
 
 ### Step 2: Per-tool tier membership
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] Each tool self-declares its tier (`core` or `full`); default for unmarked tools is `full` (opt-in to `core`)
+- [ ] Curate the `core` set to the §7.2.E daily-use path: read activities/fitness/wellness/events, write events/wellness/messages, plus `icuvisor_list_advanced_capabilities`. Target ~17 tools; record the exact list in `STATUS.md`
+- [ ] Test matrix: every tool's tier membership is asserted in a table-driven test so catalog drift is caught
 
 ### Step 3: Registry filtering composition
 
