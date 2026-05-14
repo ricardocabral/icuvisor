@@ -1,6 +1,6 @@
 # TP-033-streamable-http-transport: TP-033-streamable-http-transport — Status
 
-**Current Step:** Step 2: Streamable HTTP transport
+**Current Step:** Step 3: Security posture
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
@@ -29,7 +29,11 @@
 
 ### Step 3: Security posture
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] Default bind is loopback only; confirm with a test that the default config never produces a non-loopback listener.
+- [ ] No API keys or athlete IDs in HTTP logs; reuse the existing redaction conventions.
+- [ ] Document the LAN-bind threat model briefly in README (anyone on the LAN can reach the server with no auth — opt in deliberately).
 
 ### Step 4: Parity tests
 
