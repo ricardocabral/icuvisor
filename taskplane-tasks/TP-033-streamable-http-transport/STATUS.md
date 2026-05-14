@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 2
 **Size:** M
 
@@ -14,9 +14,9 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Config/flag selects `stdio` (default) or `http`, with HTTP bind address defaulting to `127.0.0.1:<port>`.
-- [ ] Non-loopback bind requires an explicit config value and logs a clear WARNING when active.
-- [ ] Invalid transport and bind values fail loudly at startup.
+- [x] Config/flag selects `stdio` (default) or `http`, with HTTP bind address defaulting to `127.0.0.1:<port>`.
+- [x] Non-loopback bind requires an explicit config value and logs a clear WARNING when active.
+- [x] Invalid transport and bind values fail loudly at startup.
 
 ### Step 2: Streamable HTTP transport
 
@@ -79,3 +79,4 @@ _None_
 - Step 1 revised plan after R001: add config JSON fields `transport` and `http_bind`, `.env`/process env keys `ICUVISOR_TRANSPORT` and `ICUVISOR_HTTP_BIND`, and CLI overrides `--transport`/`--http-bind`; precedence is JSON < `.env` for absent values < process env < CLI options. `config.Config` carries strict `TransportStdio`/`TransportHTTP` and `HTTPBindAddress`; `config.Options` carries CLI overrides so `cmd/icuvisor/main.go` remains thin and `internal/app` owns parsing.
 - Step 1 validation plan: default transport is `stdio`; default HTTP bind is `127.0.0.1:8765`; transport parsing is strict and invalid values fail startup; bind parsing requires explicit IP host plus numeric port 1-65535 (IPv4 and bracketed IPv6 accepted), rejects wildcard-by-omission like `:8765`, URL strings, missing port, non-numeric port, and out-of-range port. Non-loopback addresses are accepted only when explicitly configured because the default is loopback; the startup warning is emitted only when `transport=http` and the active bind is non-loopback.
 - Step 1 logging/test plan: keep config validation side-effect free; log the LAN-bind warning from startup using structured `slog.Warn` with transport and bind address only (no API key or athlete ID). Cover defaults, JSON/env/CLI selection, `.env` recognition, invalid transport/bind errors, non-loopback warning, and backward-compatible `version`, `--config path`, and `--config=path` CLI parsing.
+| 2026-05-14 17:16 | Review R002 | plan Step 1: APPROVE |

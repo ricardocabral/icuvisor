@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -59,38 +58,86 @@ func Run(ctx context.Context, opts Options) error {
 		return nil
 	}
 
-	configPath, err := parseDefaultArgs(args)
+	configOpts, err := parseDefaultArgs(args)
 	if err != nil {
 		return err
 	}
 
-	return startServer(ctx, opts.LoadConfig, opts.StartServer, ServerInfo{Version: version, DebugMetadata: response.DebugMetadataFromEnv()}, configPath)
+	return startServer(ctx, opts.LoadConfig, opts.StartServer, ServerInfo{Version: version, DebugMetadata: response.DebugMetadataFromEnv()}, configOpts)
 }
 
-func parseDefaultArgs(args []string) (string, error) {
-	if len(args) == 0 {
-		return "", nil
-	}
-	if args[0] == "--config" {
-		if len(args) != 2 || strings.TrimSpace(args[1]) == "" {
-			return "", errors.New("missing config path; use --config /path/to/icuvisor.json")
+func parseDefaultArgs(args []string) (config.Options, error) {
+	var opts config.Options
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch {
+		case arg == "--config":
+			value, next, err := requireFlagValue(args, i, "--config", "/path/to/icuvisor.json")
+			if err != nil {
+				return config.Options{}, err
+			}
+			opts.Path = value
+			i = next
+		case strings.HasPrefix(arg, "--config="):
+			value, err := requireInlineFlagValue(arg, "--config", "/path/to/icuvisor.json")
+			if err != nil {
+				return config.Options{}, err
+			}
+			opts.Path = value
+		case arg == "--transport":
+			value, next, err := requireFlagValue(args, i, "--transport", "stdio|http")
+			if err != nil {
+				return config.Options{}, err
+			}
+			opts.Transport = value
+			i = next
+		case strings.HasPrefix(arg, "--transport="):
+			value, err := requireInlineFlagValue(arg, "--transport", "stdio|http")
+			if err != nil {
+				return config.Options{}, err
+			}
+			opts.Transport = value
+		case arg == "--http-bind":
+			value, next, err := requireFlagValue(args, i, "--http-bind", "127.0.0.1:8765")
+			if err != nil {
+				return config.Options{}, err
+			}
+			opts.HTTPBindAddress = value
+			i = next
+		case strings.HasPrefix(arg, "--http-bind="):
+			value, err := requireInlineFlagValue(arg, "--http-bind", "127.0.0.1:8765")
+			if err != nil {
+				return config.Options{}, err
+			}
+			opts.HTTPBindAddress = value
+		default:
+			return config.Options{}, fmt.Errorf("unknown command or flag %q (try: icuvisor version, --config, --transport, --http-bind)", arg)
 		}
-		return args[1], nil
 	}
-	if path, ok := strings.CutPrefix(args[0], "--config="); ok {
-		if len(args) != 1 || strings.TrimSpace(path) == "" {
-			return "", errors.New("missing config path; use --config /path/to/icuvisor.json")
-		}
-		return path, nil
-	}
-	return "", fmt.Errorf("unknown command %q (try: icuvisor version)", args[0])
+	return opts, nil
 }
 
-func startServer(ctx context.Context, loader func(context.Context, config.Options) (config.Config, error), starter func(context.Context, ServerInfo) error, info ServerInfo, configPath string) error {
+func requireFlagValue(args []string, index int, name string, example string) (string, int, error) {
+	next := index + 1
+	if next >= len(args) || strings.TrimSpace(args[next]) == "" || strings.HasPrefix(args[next], "--") {
+		return "", index, fmt.Errorf("missing value for %s; use %s %s", name, name, example)
+	}
+	return args[next], next, nil
+}
+
+func requireInlineFlagValue(arg string, name string, example string) (string, error) {
+	value, _ := strings.CutPrefix(arg, name+"=")
+	if strings.TrimSpace(value) == "" {
+		return "", fmt.Errorf("missing value for %s; use %s %s", name, name, example)
+	}
+	return value, nil
+}
+
+func startServer(ctx context.Context, loader func(context.Context, config.Options) (config.Config, error), starter func(context.Context, ServerInfo) error, info ServerInfo, configOpts config.Options) error {
 	if loader == nil {
 		loader = config.Load
 	}
-	cfg, err := loader(ctx, config.Options{Path: configPath})
+	cfg, err := loader(ctx, configOpts)
 	if err != nil {
 		return err
 	}
@@ -116,6 +163,9 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 	}
 	info.Version = version
 	logger.Info("server starting", "version", version)
+	if info.Config.Transport == config.TransportHTTP && !config.HTTPBindAddressIsLoopback(info.Config.HTTPBindAddress) {
+		logger.Warn("http transport non-loopback bind active", "transport", info.Config.Transport, "http_bind", info.Config.HTTPBindAddress, "security", "any host that can reach this address can connect")
+	}
 
 	capability := info.Capability
 	if capability == nil {

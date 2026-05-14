@@ -135,36 +135,108 @@ func TestRunCapturesDebugMetadataOnceForServerInfo(t *testing.T) {
 	}
 }
 
-func TestRunDefaultPassesConfigPath(t *testing.T) {
+func TestRunDefaultPassesConfigFlags(t *testing.T) {
 	t.Parallel()
 
-	var gotPath string
-	err := Run(context.Background(), Options{
-		Args: []string{"--config=/tmp/icuvisor.json"},
-		LoadConfig: func(_ context.Context, opts config.Options) (config.Config, error) {
-			gotPath = opts.Path
-			return config.Config{}, errors.New("stop")
+	tests := []struct {
+		name string
+		args []string
+		want config.Options
+	}{
+		{
+			name: "inline config",
+			args: []string{"--config=/tmp/icuvisor.json"},
+			want: config.Options{Path: "/tmp/icuvisor.json"},
 		},
-	})
-	if err == nil {
-		t.Fatal("Run() error = nil, want loader error")
+		{
+			name: "separate config transport and bind",
+			args: []string{"--config", "/tmp/icuvisor.json", "--transport", "http", "--http-bind", "127.0.0.1:9999"},
+			want: config.Options{Path: "/tmp/icuvisor.json", Transport: "http", HTTPBindAddress: "127.0.0.1:9999"},
+		},
+		{
+			name: "inline transport and bind",
+			args: []string{"--transport=http", "--http-bind=192.168.1.20:8765"},
+			want: config.Options{Transport: "http", HTTPBindAddress: "192.168.1.20:8765"},
+		},
 	}
-	if gotPath != "/tmp/icuvisor.json" {
-		t.Fatalf("config path = %q, want /tmp/icuvisor.json", gotPath)
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var got config.Options
+			err := Run(context.Background(), Options{
+				Args: tc.args,
+				LoadConfig: func(_ context.Context, opts config.Options) (config.Config, error) {
+					got = opts
+					return config.Config{}, errors.New("stop")
+				},
+			})
+			if err == nil {
+				t.Fatal("Run() error = nil, want loader error")
+			}
+			if got.Path != tc.want.Path || got.Transport != tc.want.Transport || got.HTTPBindAddress != tc.want.HTTPBindAddress {
+				t.Fatalf("config options = %#v, want %#v", got, tc.want)
+			}
+		})
 	}
 }
 
-func TestRunUnknownCommandReturnsActionableError(t *testing.T) {
+func TestRunFlagErrorsAreActionable(t *testing.T) {
 	t.Parallel()
 
-	err := Run(context.Background(), Options{Args: []string{"bogus"}})
-	if err == nil {
-		t.Fatal("Run() error = nil, want unknown command error")
+	tests := []struct {
+		name string
+		args []string
+		want []string
+	}{
+		{name: "unknown", args: []string{"bogus"}, want: []string{"unknown command", "bogus", "icuvisor version"}},
+		{name: "missing config", args: []string{"--config"}, want: []string{"missing value", "--config"}},
+		{name: "empty transport", args: []string{"--transport="}, want: []string{"missing value", "--transport"}},
+		{name: "missing bind", args: []string{"--http-bind", "--transport"}, want: []string{"missing value", "--http-bind"}},
 	}
-	msg := err.Error()
-	for _, want := range []string{"unknown command", "bogus", "icuvisor version"} {
-		if !strings.Contains(msg, want) {
-			t.Fatalf("error %q does not contain %q", msg, want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := Run(context.Background(), Options{Args: tc.args})
+			if err == nil {
+				t.Fatal("Run() error = nil, want error")
+			}
+			msg := err.Error()
+			for _, want := range tc.want {
+				if !strings.Contains(msg, want) {
+					t.Fatalf("error %q does not contain %q", msg, want)
+				}
+			}
+		})
+	}
+}
+
+func TestDefaultStartServerWarnsForHTTPNonLoopbackBind(t *testing.T) {
+	var logs bytes.Buffer
+	previous := slog.Default()
+	t.Cleanup(func() { slog.SetDefault(previous) })
+	slog.SetDefault(slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelInfo})))
+
+	_ = defaultStartServer(context.Background(), ServerInfo{Version: "v7.8.9", Config: config.Config{
+		APIKey:          "secret",
+		AthleteID:       "i12345",
+		Timezone:        "UTC",
+		APIBaseURL:      config.DefaultAPIBaseURL,
+		HTTPTimeout:     30 * time.Second,
+		Transport:       config.TransportHTTP,
+		HTTPBindAddress: "0.0.0.0:8765",
+	}})
+	out := logs.String()
+	for _, want := range []string{"level=WARN", "non-loopback bind", "transport=http", "http_bind=0.0.0.0:8765"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("startup log %q missing %q", out, want)
+		}
+	}
+	for _, forbidden := range []string{"secret", "i12345"} {
+		if strings.Contains(out, forbidden) {
+			t.Fatalf("startup log leaked sensitive value %q: %q", forbidden, out)
 		}
 	}
 }
