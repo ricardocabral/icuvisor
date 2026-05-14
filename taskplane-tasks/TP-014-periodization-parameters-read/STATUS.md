@@ -3,9 +3,9 @@
 **Issue:** v0.2 — read path
 **Status:** 🟡 In Progress
 **Review Level:** 1 (Plan Only)
-**Iteration:** 5
+**Iteration:** 1
 **Current Step:** Step 2B: If not exposed — document the gap and file the request
-**Last Updated:** 2026-05-11
+**Last Updated:** 2026-05-14
 **State:** Blocked on maintainer forum session for public feature-request filing
 
 ## Steps
@@ -79,6 +79,7 @@
 | Date       | Blocker                                                                      | Details                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ---------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 2026-05-11 | Cannot file public intervals.icu forum request without authenticated session | Attempted `POST https://forum.intervals.icu/posts.json` with the suggested API request text and no credentials; Discourse rejected it with `403` / `BAD CSRF`. Per maintainer steering, no further anonymous/authenticated POSTs or external account actions should be attempted by workers. A public unauthenticated `search.json` check for the drafted title and key terms found no existing filed request to link. The public request is **not filed**; a maintainer with an authenticated intervals.icu forum session must create it and provide the URL before the Step 2B filing checkbox can be completed. |
+| 2026-05-14 | Filing checkbox still blocked | Resume check confirmed the only incomplete work is Step 2B feature-request filing. Existing supervisor steering says "let it fail" and prior maintainer steering forbids further anonymous/authenticated POSTs or external account actions by workers, so no safe worker action can complete this checkbox. |
 
 ## Execution Log
 
@@ -115,3 +116,5 @@
 | 2026-05-11 16:22 | Worker iter 4 | done in 80s, tools: 5 |
 | 2026-05-11 16:22 | No progress | Iteration 4: 0 new checkboxes (2/3 stall limit) |
 | 2026-05-11       | Iteration 5 blocker confirmed | Step 1 and Step 3 are complete; the only remaining checkbox is Step 2B feature-request filing, which cannot be completed by a worker without an authenticated maintainer forum session. Current Step corrected to Step 2B. |
+| 2026-05-14 12:05 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-14       | Blocker reconfirmed | Current Step corrected to Step 2B. The remaining filing checkbox is intentionally uncompleted pending a maintainer with an authenticated intervals.icu forum session or a supplied public feature-request URL. |
