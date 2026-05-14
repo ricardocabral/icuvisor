@@ -1,0 +1,45 @@
+{
+  "snapshot_id": "kr5-redacted-test-athlete-v1",
+  "prompt_set_version": "kr5-forum-prompts-v1",
+  "captured_at": "2026-05-14",
+  "account": {
+    "type": "dedicated intervals.icu test athlete",
+    "athlete_id": "[ATHLETE]",
+    "timezone": "shifted athlete-local timezone",
+    "notes": "No production athlete data is committed. Raw transcripts are ephemeral."
+  },
+  "windows": {
+    "recent_activities": "shifted last 14 days",
+    "fitness": "shifted last 42 days",
+    "wellness": "shifted last 21 days",
+    "calendar": "shifted next 14 days",
+    "race_week": "shifted [RACE_DATE]-7 through [RACE_DATE]+1"
+  },
+  "entities": [
+    "redacted athlete profile with units/timezone/threshold shape",
+    "representative ride and run activity rows",
+    "one activity detail with intervals, splits, and messages",
+    "wellness rows including distinct sleepQuality and sleepScore fields",
+    "fitness trend and training summary rows",
+    "upcoming events and lightweight training-plan/workout-library rows",
+    "synthetic non-destructive note/message confirmations"
+  ],
+  "redactions": [
+    "athlete IDs replaced with [ATHLETE]",
+    "activity/event/workout IDs replaced with bracketed placeholders",
+    "dates shifted while preserving relative order and day spacing",
+    "private comments and account-specific labels replaced with [REDACTED_TEXT]",
+    "threshold values, body metrics, and wellness measurements replaced with synthetic values",
+    "API keys and credentials never captured"
+  ],
+  "byte_policy": {
+    "fixture_bytes": "computed from committed redacted canonical JSON",
+    "live_recalibration": "raw live median response bytes are measured before redaction; committed redacted median must remain within +/-1% per server",
+    "fixture_tolerance": "0 tokens and 0 bytes",
+    "live_tolerance": "+/-5% median response bytes unless the upstream account snapshot changed"
+  },
+  "reference_boundary": {
+    "hhopke": "MIT reference may be inspected but is not vendored",
+    "mvilanova": "GPL reference measured only as a black box via process execution and JSON-RPC output; no source read, copied, paraphrased, or transliterated"
+  }
+}

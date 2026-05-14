@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 6
 **Iteration:** 2
 **Size:** M/L
 
@@ -72,6 +72,7 @@
 | R002 | plan | 1 | APPROVE | inline |
 | R003 | plan | 2 | REVISE | `.reviews/R003-plan-step2.md` |
 | R004 | plan | 2 | APPROVE | inline |
+| R005 | code | 3 | REVISE | `.reviews/R005-code-step3.md` |
 
 ---
 
@@ -106,8 +107,10 @@ Step 1: Selected `scripts/benchmark/` rather than `internal/benchmark/` because 
 
 Step 2: R003 revisions replaced destructive KR5-10 with a non-destructive coach triage prompt and added `source_prompt_ids`/`prd_anchor` provenance to every scenario.
 
-Step 3: Fixture run measured `icuvisor-core` (17 tools, 2,393 description tokens, 1,200 median response bytes) and `icuvisor-full` (38 tools, 5,340 description tokens, 1,460 median response bytes) in `scripts/benchmark/results/kr5-results.json`.
+Step 3: Fixture run measured `icuvisor-core` (17 tools, 4,396 description tokens, 1,200 median response bytes) and `icuvisor-full` (38 tools, 9,490 description tokens, 1,460 median response bytes) in `scripts/benchmark/results/kr5-results.json`. R005 revisions added the harness/results/fixtures to the diff and replaced synthetic icuvisor catalog fixtures with exact `tools/list` output captured from `./bin/icuvisor` for core and full tiers.
 | 2026-05-14 20:35 | Review R001 | plan Step 1: REVISE |
 | 2026-05-14 20:37 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-14 20:40 | Review R003 | plan Step 2: REVISE |
 | 2026-05-14 20:43 | Review R004 | plan Step 2: APPROVE |
+| 2026-05-14 20:54 | Review R005 | code Step 3: UNKNOWN |
+| 2026-05-14 21:02 | Review R006 | code Step 3: UNKNOWN |

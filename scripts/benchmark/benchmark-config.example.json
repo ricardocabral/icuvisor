@@ -1,0 +1,25 @@
+{
+  "servers": [
+    {
+      "id": "icuvisor-core",
+      "display_name": "icuvisor core",
+      "version": "dev",
+      "command": ["./bin/icuvisor"],
+      "env": {
+        "INTERVALS_ICU_API_KEY": "set-outside-repo",
+        "INTERVALS_ICU_ATHLETE_ID": "i12345",
+        "ICUVISOR_TOOLSET": "core",
+        "ICUVISOR_DELETE_MODE": "safe"
+      },
+      "timeout_seconds": 20,
+      "calls": [
+        {
+          "prompt_id": "KR5-01",
+          "intent": "athlete_profile",
+          "tool": "get_athlete_profile",
+          "arguments": {}
+        }
+      ]
+    }
+  ]
+}
