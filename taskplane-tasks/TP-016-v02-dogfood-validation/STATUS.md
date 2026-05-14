@@ -3,7 +3,7 @@
 **Issue:** v0.2 — read path
 **Review Level:** 1
 **Status:** 🔴 Blocked
-**Iteration:** 2
+**Iteration:** 3
 **Current Step:** Step 3: Invited athletes (2–3) read-only
 **Last Updated:** 2026-05-14
 **State:** Blocked on maintainer-supplied invited-athlete recruitment/results
@@ -136,3 +136,9 @@ Partial solo triage completed before invited-athlete aggregation: issue #11 cove
 | 2026-05-14 | Step 4 partial triage | Opened v0.2 follow-up issue #11 for solo activity detail read fetch failures and issue #12 for `get_workouts_in_folder` default verbosity; invited-athlete evidence is still required before completing Step 4. |
 | 2026-05-14 | Roadmap correction | Left the v0.2 dogfood ROADMAP checkbox unchecked because invited-athlete validation is not complete and sign-off remains blocked. |
 | 2026-05-14 | Blocker escalation | Escalated that remaining Step 3 recruitment/run/collection, Step 4 final triage, and Step 5 sign-off require maintainer-supplied invited-athlete results; no outreach or fabricated data attempted. |
+| 2026-05-14 19:10 | Exit intercept timeout | Supervisor did not respond within 60s — closing session |
+| 2026-05-14 19:10 | Agent escalate | TP-016 remains blocked at Step 3 on maintainer-supplied invited-athlete recruitment/results. I did not attempt external outreach or fabricate participant data. New progress this iteration: hardened th |
+| 2026-05-14 19:10 | Worker iter 2 | done in 505s, tools: 55 |
+| 2026-05-14 19:10 | No progress | Iteration 2: 0 new checkboxes (2/3 stall limit) |
+| 2026-05-14 19:10 | Step 1 started | Assemble the prompt set |
+| 2026-05-14 | Resume correction | Current step reset to Step 3 because Step 1 and Step 2 are complete; invited-athlete recruitment/run/collection remains blocked on external maintainer action and redacted participant results. |
