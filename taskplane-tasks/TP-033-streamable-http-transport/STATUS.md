@@ -1,10 +1,10 @@
 # TP-033-streamable-http-transport: TP-033-streamable-http-transport — Status
 
-**Current Step:** Step 5: Docs
+**Current Step:** Step 6: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 11
 **Iteration:** 1
 **Size:** M
 
@@ -43,14 +43,14 @@
 
 ### Step 5: Docs
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] README: transport selection, default loopback bind, opt-in LAN bind + security note.
-- [ ] CHANGELOG `[Unreleased]` entry.
+- [x] README: transport selection, default loopback bind, opt-in LAN bind + security note.
+- [x] CHANGELOG `[Unreleased]` entry.
 
 ### Step 6: Verify
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] `make test`
 - [ ] `make build`
@@ -73,6 +73,8 @@
 | R007 | code | 3 | APPROVE | `.reviews/R007-code-step3.md` |
 | R008 | plan | 4 | APPROVE | `.reviews/R008-plan-step4.md` |
 | R009 | code | 4 | APPROVE | `.reviews/R009-code-step4.md` |
+| R010 | plan | 5 | APPROVE | `.reviews/R010-plan-step5.md` |
+| R011 | code | 5 | APPROVE | `.reviews/R011-code-step5.md` |
 
 ---
 
@@ -117,6 +119,11 @@
 | 2026-05-14 20:11 | Review R009 | code Step 4: APPROVE |
 | 2026-05-14 20:12 | Step 4 verify | `go test ./internal/mcp -run 'TestProtocol(SharedTransportSuite|TransportParity|MalformedHTTPPost)$' -count=1` passed. |
 | 2026-05-14 20:12 | Step 4 complete | Parity tests audited and approved; Step 5 started. |
+| 2026-05-14 20:12 | Review R010 | plan Step 5: APPROVE |
+| 2026-05-14 20:13 | Step 5 checkpoint | README transport docs audited for selection, loopback default, config fields, invalid startup failure, and LAN warning. |
+| 2026-05-14 20:14 | Step 5 checkpoint | CHANGELOG `[Unreleased]` Streamable HTTP entry audited. |
+| 2026-05-14 20:16 | Review R011 | code Step 5: APPROVE |
+| 2026-05-14 20:17 | Step 5 complete | Docs audited and approved; Step 6 started. |
 
 ---
 
@@ -138,3 +145,4 @@ _None_
 - Step 3 docs plan: README must state the LAN-bind threat model clearly: Streamable HTTP has no auth in this task, so anyone on the LAN who can reach the bind address can invoke registered tools with the configured intervals.icu credentials.
 - Step 4 plan: audit the shared protocol suite in `internal/mcp/protocol_test.go`, where `connectProtocolClient` runs scenarios against in-memory/stdio-equivalent SDK transport and Streamable HTTP. Coverage must include initialize, tools/list, successful tool call, missing tool, sanitized tool errors, resources list/read/not-found/sanitized errors, prompts list/get, and malformed HTTP requests.
 - Step 4 parity plan: confirm `TestProtocolTransportParity` serializes stable SDK results to canonical JSON and byte-compares handler outputs across in-memory and Streamable HTTP transports where practical.
+- Step 5 plan: audit README for transport selection via `ICUVISOR_TRANSPORT=http`/`--transport http`, the default endpoint `http://127.0.0.1:8765/mcp`, config fields `transport`/`http_bind`, invalid config startup failure, and LAN-bind security warning. Audit CHANGELOG `[Unreleased]` for a concise Streamable HTTP entry.
