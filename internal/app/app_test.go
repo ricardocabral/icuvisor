@@ -266,10 +266,10 @@ func TestDefaultStartServerDispatchesHTTPTransport(t *testing.T) {
 }
 
 func TestDefaultStartServerWarnsForHTTPNonLoopbackBind(t *testing.T) {
-	var logs bytes.Buffer
+	logs := &safeAppLogBuffer{}
 	previous := slog.Default()
 	t.Cleanup(func() { slog.SetDefault(previous) })
-	slog.SetDefault(slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelInfo})))
+	slog.SetDefault(slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelInfo})))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)

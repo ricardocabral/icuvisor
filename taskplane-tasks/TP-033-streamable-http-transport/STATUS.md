@@ -35,7 +35,7 @@
 - [x] No API keys or athlete IDs in HTTP logs; reuse the existing redaction conventions.
 - [x] Document the LAN-bind threat model briefly in README (anyone on the LAN can reach the server with no auth — opt in deliberately).
 - [x] Add a race-safe HTTP log redaction test that exercises startup/listen/shutdown and a malformed request without leaking API keys or athlete IDs.
-- [ ] Make the app-level non-loopback warning redaction test race-safe so `go test -race ./internal/mcp ./internal/app` passes.
+- [x] Make the app-level non-loopback warning redaction test race-safe so `go test -race ./internal/mcp ./internal/app` passes.
 
 ### Step 4: Parity tests
 
