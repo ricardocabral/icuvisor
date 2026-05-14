@@ -32,27 +32,53 @@ func TestCustomItemSchemasMarkdownCoversDescriptorsAndInferredPaths(t *testing.T
 	if err != nil {
 		t.Fatalf("CustomItemSchemasMarkdown() error = %v", err)
 	}
-	for _, family := range customitemschemas.Families() {
+	families := customitemschemas.Families()
+	for _, family := range families {
 		for _, want := range []string{"`" + family.Key + "`", family.Title, family.Description} {
 			if !strings.Contains(markdown, want) {
 				t.Fatalf("markdown missing %q for family %s", want, family.Key)
 			}
 		}
-		for _, itemType := range family.ItemTypes {
-			if !strings.Contains(markdown, "`"+itemType+"`") {
-				t.Fatalf("markdown missing item_type %s for family %s", itemType, family.Key)
+		for _, item := range family.Items {
+			if !strings.Contains(markdown, "### `"+item.ItemType+"`") {
+				t.Fatalf("markdown missing item_type subsection %s for family %s", item.ItemType, family.Key)
 			}
-		}
-		schema, err := customitemschemas.InferContentSchema([]map[string]any{family.Sample})
-		if err != nil {
-			t.Fatalf("InferContentSchema(%s) error = %v", family.Key, err)
-		}
-		for _, path := range customitemschemas.SchemaPaths(schema) {
-			if !strings.Contains(markdown, "`"+path.Path+"`: "+path.Kind) {
-				t.Fatalf("markdown missing path %s:%s for family %s", path.Path, path.Kind, family.Key)
+			sample := item.Sample
+			if item.SharesSchemaWith != "" {
+				if !strings.Contains(markdown, "Shares schema with `"+item.SharesSchemaWith+"`") {
+					t.Fatalf("markdown missing alias %s -> %s", item.ItemType, item.SharesSchemaWith)
+				}
+				var found bool
+				sample, found = testSampleForItem(families, item.SharesSchemaWith)
+				if !found {
+					t.Fatalf("alias %s points to unknown %s", item.ItemType, item.SharesSchemaWith)
+				}
+			}
+			if sample == nil {
+				t.Fatalf("item_type %s has no sample or alias", item.ItemType)
+			}
+			schema, err := customitemschemas.InferContentSchema([]map[string]any{sample})
+			if err != nil {
+				t.Fatalf("InferContentSchema(%s) error = %v", item.ItemType, err)
+			}
+			for _, path := range customitemschemas.SchemaPaths(schema) {
+				if !strings.Contains(markdown, "`"+path.Path+"`: "+path.Kind) {
+					t.Fatalf("markdown missing path %s:%s for item %s", path.Path, path.Kind, item.ItemType)
+				}
 			}
 		}
 	}
+}
+
+func testSampleForItem(families []customitemschemas.FamilyDescriptor, itemType string) (map[string]any, bool) {
+	for _, family := range families {
+		for _, item := range family.Items {
+			if item.ItemType == itemType && item.Sample != nil {
+				return item.Sample, true
+			}
+		}
+	}
+	return nil, false
 }
 
 func TestNewRegistryRegistersCustomItemSchemasResource(t *testing.T) {

@@ -29,15 +29,26 @@ func TestFamiliesHaveSamplesAndInferredPaths(t *testing.T) {
 	t.Parallel()
 
 	for _, family := range Families() {
-		if family.Key == "" || family.Title == "" || family.Description == "" || len(family.ItemTypes) == 0 || family.Sample == nil {
+		if family.Key == "" || family.Title == "" || family.Description == "" || len(family.Items) == 0 {
 			t.Fatalf("family is incomplete: %#v", family)
 		}
-		schema, err := InferContentSchema([]map[string]any{family.Sample})
-		if err != nil {
-			t.Fatalf("InferContentSchema(%s) error = %v", family.Key, err)
-		}
-		if len(SchemaPaths(schema)) < 2 {
-			t.Fatalf("SchemaPaths(%s) too short: %#v", family.Key, SchemaPaths(schema))
+		for _, item := range family.Items {
+			if item.ItemType == "" || item.Description == "" {
+				t.Fatalf("item descriptor is incomplete: %#v", item)
+			}
+			if item.Sample == nil && item.SharesSchemaWith == "" {
+				t.Fatalf("item descriptor %s has no sample or alias", item.ItemType)
+			}
+			if item.Sample == nil {
+				continue
+			}
+			schema, err := InferContentSchema([]map[string]any{item.Sample})
+			if err != nil {
+				t.Fatalf("InferContentSchema(%s) error = %v", item.ItemType, err)
+			}
+			if len(SchemaPaths(schema)) < 2 {
+				t.Fatalf("SchemaPaths(%s) too short: %#v", item.ItemType, SchemaPaths(schema))
+			}
 		}
 	}
 }

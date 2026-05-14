@@ -45,8 +45,8 @@
 - [x] Per-`item_type` schema for the `content` field (chart/field/stream/panel/zones)
 - [x] Reuses the schema samples the custom-item reads/writes already validate against — single source of truth
 - [x] Golden-file locked
-- [ ] R014: Remove library panic from static custom-item sample construction
-- [ ] R014: Render and test per-`item_type` schemas via concrete samples or explicit aliases
+- [x] R014: Remove library panic from static custom-item sample construction
+- [x] R014: Render and test per-`item_type` schemas via concrete samples or explicit aliases
 
 ### Step 5: `icuvisor://athlete-profile`
 
