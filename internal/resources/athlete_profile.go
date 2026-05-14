@@ -40,12 +40,17 @@ type athleteProfileReader struct {
 	ttl              time.Duration
 	now              func() time.Time
 
-	mu         sync.Mutex
-	cached     Result
-	expiresAt  time.Time
-	hasCached  bool
-	refreshing bool
-	waitCh     chan struct{}
+	mu        sync.Mutex
+	cached    Result
+	expiresAt time.Time
+	hasCached bool
+	refresh   *athleteProfileRefresh
+}
+
+type athleteProfileRefresh struct {
+	done   chan struct{}
+	result Result
+	err    error
 }
 
 // AthleteProfileResource returns the dynamic cached athlete-profile resource definition.
@@ -99,22 +104,21 @@ func (r *athleteProfileReader) Read(ctx context.Context, _ Request) (Result, err
 			r.mu.Unlock()
 			return result, nil
 		}
-		if r.refreshing {
-			waitCh := r.waitCh
+		if r.refresh != nil {
+			refresh := r.refresh
 			r.mu.Unlock()
 			select {
 			case <-ctx.Done():
 				return Result{}, ctx.Err()
-			case <-waitCh:
-				continue
+			case <-refresh.done:
+				return refresh.result, refresh.err
 			}
 		}
-		r.refreshing = true
-		r.waitCh = make(chan struct{})
-		waitCh := r.waitCh
+		refresh := &athleteProfileRefresh{done: make(chan struct{})}
+		r.refresh = refresh
 		r.mu.Unlock()
 
-		result, err := r.refresh(ctx)
+		result, err := r.refreshProfile(ctx)
 
 		r.mu.Lock()
 		if err == nil {
@@ -122,14 +126,16 @@ func (r *athleteProfileReader) Read(ctx context.Context, _ Request) (Result, err
 			r.expiresAt = now.Add(r.ttl)
 			r.hasCached = true
 		}
-		r.refreshing = false
-		close(waitCh)
+		refresh.result = result
+		refresh.err = err
+		r.refresh = nil
+		close(refresh.done)
 		r.mu.Unlock()
 		return result, err
 	}
 }
 
-func (r *athleteProfileReader) refresh(ctx context.Context) (Result, error) {
+func (r *athleteProfileReader) refreshProfile(ctx context.Context) (Result, error) {
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
 	}

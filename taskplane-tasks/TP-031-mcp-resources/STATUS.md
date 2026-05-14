@@ -56,7 +56,7 @@
 - [x] Register `icuvisor://athlete-profile` as a dynamic cached resource with documented TTL/staleness behavior
 - [x] Cover resource list/read, cache refresh, context cancellation, and shape parity with focused tests
 - [x] R017: Make athlete-profile cache refresh waiters context-aware and test canceled reads behind an in-flight refresh
-- [ ] R018: Share failed refresh results with concurrent waiters to avoid retry amplification
+- [x] R018: Share failed refresh results with concurrent waiters to avoid retry amplification
 
 ### Step 6: Trim inline tool descriptions
 

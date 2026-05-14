@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -134,6 +135,48 @@ func TestAthleteProfileResourceHonorsCanceledContext(t *testing.T) {
 	}
 }
 
+func TestAthleteProfileResourceConcurrentWaitersShareFailedRefresh(t *testing.T) {
+	client := &failingBlockingAthleteProfileClient{
+		started: make(chan struct{}, 1),
+		release: make(chan struct{}),
+		err:     errors.New("upstream unavailable"),
+	}
+	resource := AthleteProfileResource(client, ResourceOptions{Version: "test", TimezoneFallback: "UTC"})
+	const callers = 4
+	done := make(chan error, callers)
+	go func() {
+		_, err := resource.Handler(context.Background(), Request{URI: AthleteProfileURI})
+		done <- err
+	}()
+	select {
+	case <-client.started:
+	case <-time.After(time.Second):
+		t.Fatal("first refresh did not start")
+	}
+	for i := 0; i < callers-1; i++ {
+		go func() {
+			_, err := resource.Handler(context.Background(), Request{URI: AthleteProfileURI})
+			done <- err
+		}()
+	}
+	time.Sleep(10 * time.Millisecond)
+	close(client.release)
+
+	for i := 0; i < callers; i++ {
+		select {
+		case err := <-done:
+			if err == nil || !strings.Contains(err.Error(), "could not fetch athlete profile") {
+				t.Fatalf("read error = %v, want safe athlete profile fetch failure", err)
+			}
+		case <-time.After(time.Second):
+			t.Fatal("read did not finish")
+		}
+	}
+	if got := client.calls.Load(); got != 1 {
+		t.Fatalf("client calls = %d, want one shared failed refresh", got)
+	}
+}
+
 func TestAthleteProfileResourceCanceledReadDoesNotWaitForInFlightRefresh(t *testing.T) {
 	client := &blockingAthleteProfileClient{
 		started: make(chan struct{}),
@@ -200,6 +243,27 @@ func (c *blockingAthleteProfileClient) GetAthleteProfile(ctx context.Context) (i
 		return intervals.AthleteWithSportSettings{}, ctx.Err()
 	case <-c.release:
 		return c.profile, nil
+	}
+}
+
+type failingBlockingAthleteProfileClient struct {
+	started chan struct{}
+	release chan struct{}
+	err     error
+	calls   atomic.Int32
+}
+
+func (c *failingBlockingAthleteProfileClient) GetAthleteProfile(ctx context.Context) (intervals.AthleteWithSportSettings, error) {
+	c.calls.Add(1)
+	select {
+	case c.started <- struct{}{}:
+	default:
+	}
+	select {
+	case <-ctx.Done():
+		return intervals.AthleteWithSportSettings{}, ctx.Err()
+	case <-c.release:
+		return intervals.AthleteWithSportSettings{}, c.err
 	}
 }
 
