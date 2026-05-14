@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -24,9 +24,11 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Each tool self-declares its tier (`core` or `full`); default for unmarked tools is `full` (opt-in to `core`)
+- [ ] Add `tools.Tool.Toolset safety.Toolset` plus an effective-tier helper that defaults empty to `full` and rejects unknown non-empty in-code tier values during validation
+- [ ] Each tool self-declares its tier (`core` or `full`) in its constructor; no production name→tier map is introduced
 - [ ] Curate the `core` set to the §7.2.E daily-use path: read activities/fitness/wellness/events, write events/wellness/messages, plus `icuvisor_list_advanced_capabilities`. Target ~17 tools; record the exact list in `STATUS.md`
-- [ ] Test matrix: every tool's tier membership is asserted in a table-driven test so catalog drift is caught
+- [ ] Test matrix: every registered current tool's tier membership is asserted in a table-driven test that fails on missing expected tools and unexpected newly registered tools
+- [ ] Preserve Step 2 boundaries: no `tools/list` filtering, no startup skip counts, and no implementation of `icuvisor_list_advanced_capabilities` yet
 
 ### Step 3: Registry filtering composition
 
@@ -53,6 +55,7 @@
 | R001 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
+| R004 | plan | 2 | REVISE | `.reviews/R004-plan-step2.md` |
 
 ---
 
@@ -85,4 +88,14 @@ _None_
 - R001 required the Step 1 plan to explicitly include a separate `safety.Toolset` API, config loader plumbing, app startup propagation/logging, and tests before implementation.
 - R002 approved the revised Step 1 plan for implementation.
 - R003 approved the Step 1 implementation; reviewer verified `go test ./...` and diff checks.
+- R004 required Step 2 to pin a `Tool` metadata/helper API, keep membership self-declared, record an exact core/full tier table before coding, define the drift-catching catalog test, and avoid Step 3/4 scope.
+
+### Step 2 tier plan
+
+Current core tools (16 existing + `icuvisor_list_advanced_capabilities` planned in Step 4 = 17): `get_athlete_profile`, `get_activities`, `get_activity_details`, `get_activity_intervals`, `get_activity_splits`, `get_activity_messages`, `get_fitness`, `get_training_summary`, `get_best_efforts`, `get_wellness_data`, `get_events`, `get_event_by_id`, `add_or_update_event`, `update_wellness`, `add_activity_message`, `link_activity_to_event`, `icuvisor_list_advanced_capabilities`.
+
+Current full-only tools: `get_power_curves`, `get_extended_metrics`, `get_activity_streams`, `get_training_plan`, `apply_training_plan`, `get_workout_library`, `get_workouts_in_folder`, `create_workout`, `update_workout`, `delete_workout`, `update_sport_settings`, `delete_sport_settings`, `get_custom_items`, `get_custom_item_by_id`, `create_custom_item`, `update_custom_item`, `delete_custom_item`, `delete_event`, `delete_events_by_date_range`, `delete_activity`, `delete_gear`.
+
+Rationale: core covers profile context plus daily activity/fitness/wellness/event reads and non-destructive event/wellness/message writes; full holds raw/heavy reads, specialist workout-library/training-plan/custom-item/sport-settings surfaces, and all destructive delete tools.
 | 2026-05-14 12:40 | Review R003 | code Step 1: APPROVE |
+| 2026-05-14 12:45 | Review R004 | plan Step 2: REVISE |
