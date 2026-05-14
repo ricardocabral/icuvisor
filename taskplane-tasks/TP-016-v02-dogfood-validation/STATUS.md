@@ -2,11 +2,11 @@
 
 **Issue:** v0.2 — read path
 **Review Level:** 1
-**Status:** 🟡 In Progress
-**Iteration:** 4
-**Current Step:** Step 1: Assemble the prompt set
-**Last Updated:** 2026-05-12
-**State:** Pending
+**Status:** 🔴 Blocked
+**Iteration:** 1
+**Current Step:** Step 3: Invited athletes (2–3) read-only
+**Last Updated:** 2026-05-14
+**State:** Blocked on maintainer-supplied invited-athlete recruitment/results
 
 _Task scaffolded from PROMPT.md; execution hydrated from PROMPT.md Step 1._
 
@@ -101,3 +101,6 @@ _Task scaffolded from PROMPT.md; execution hydrated from PROMPT.md Step 1._
 | 2026-05-12 08:26 | Worker iter 4 | done in 97s, tools: 7 |
 | 2026-05-12 08:26 | No progress | Iteration 4: 0 new checkboxes (3/3 stall limit) |
 | 2026-05-12 08:26 | Task blocked | No progress after 3 iterations |
+| 2026-05-14 18:55 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-14 18:55 | Step 1 started | Assemble the prompt set |
+| 2026-05-14 | Resume check | Step 1 and Step 2 remain complete; Step 3 protocol/template deliverables remain present in `docs/dogfood/v0.2-findings.md`. Remaining invited-athlete recruitment, participant runs, collection, Step 4 triage, and Step 5 sign-off are still blocked on external maintainer action/results. |
