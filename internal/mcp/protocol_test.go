@@ -25,6 +25,14 @@ func (c testProfileClient) GetAthleteProfile(context.Context) (intervals.Athlete
 	return c.profile, nil
 }
 
+type advancedProtocolClient struct {
+	testProfileClient
+}
+
+func (advancedProtocolClient) ListAthletePowerCurves(context.Context, intervals.CurveParams) (intervals.DataCurveSet, error) {
+	return intervals.DataCurveSet{}, nil
+}
+
 type capabilityRegistry struct{}
 
 func (capabilityRegistry) Register(ctx context.Context, registrar tools.Registrar) error {
@@ -209,6 +217,45 @@ func TestProtocolFiltersToolsByToolsetAndCapability(t *testing.T) {
 	}
 }
 
+func TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry(t *testing.T) {
+	t.Parallel()
+
+	registry := tools.NewRegistryWithOptions(advancedProtocolClient{testProfileClient: testProfileClient{}}, tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC"})
+	ctx, session, cleanup := connectTestClient(t, registry)
+	defer cleanup()
+
+	result, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools() error = %v", err)
+	}
+	got := make([]string, 0, len(result.Tools))
+	for _, tool := range result.Tools {
+		got = append(got, tool.Name)
+	}
+	slices.Sort(got)
+	want := []string{"get_athlete_profile", "icuvisor_list_advanced_capabilities"}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Fatalf("core tools/list = %v, want %v", got, want)
+	}
+
+	fullRegistry := tools.NewRegistryWithOptions(advancedProtocolClient{testProfileClient: testProfileClient{}}, tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Toolset: safety.ToolsetFull})
+	fullCtx, fullSession, fullCleanup := connectTestClientWithOptions(t, Options{Registry: fullRegistry, Toolset: safety.ToolsetFull})
+	defer fullCleanup()
+	fullResult, err := fullSession.ListTools(fullCtx, nil)
+	if err != nil {
+		t.Fatalf("full ListTools() error = %v", err)
+	}
+	fullNames := make([]string, 0, len(fullResult.Tools))
+	for _, tool := range fullResult.Tools {
+		fullNames = append(fullNames, tool.Name)
+	}
+	for _, wantName := range []string{"get_power_curves", "icuvisor_list_advanced_capabilities"} {
+		if !slices.Contains(fullNames, wantName) {
+			t.Fatalf("full tools/list = %v, missing %s", fullNames, wantName)
+		}
+	}
+}
+
 func TestProtocolHiddenFullToolIsAbsentAndUnknown(t *testing.T) {
 	t.Parallel()
 
@@ -316,8 +363,14 @@ func TestProtocolGetAthleteProfileDispatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListTools() error = %v", err)
 	}
-	if len(toolsResult.Tools) != 1 || toolsResult.Tools[0].Name != "get_athlete_profile" {
-		t.Fatalf("tools/list = %#v, want get_athlete_profile", toolsResult.Tools)
+	gotNames := make([]string, 0, len(toolsResult.Tools))
+	for _, tool := range toolsResult.Tools {
+		gotNames = append(gotNames, tool.Name)
+	}
+	slices.Sort(gotNames)
+	wantNames := []string{"get_athlete_profile", "icuvisor_list_advanced_capabilities"}
+	if strings.Join(gotNames, ",") != strings.Join(wantNames, ",") {
+		t.Fatalf("tools/list = %v, want %v", gotNames, wantNames)
 	}
 
 	result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: "get_athlete_profile", Arguments: map[string]any{}})

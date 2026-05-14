@@ -140,6 +140,7 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 			TimezoneFallback: info.Config.Timezone,
 			DebugMetadata:    info.DebugMetadata,
 			Capability:       capability,
+			Toolset:          toolset,
 		}),
 	})
 	if err != nil {

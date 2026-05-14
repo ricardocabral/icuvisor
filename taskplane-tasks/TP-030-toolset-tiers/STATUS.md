@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 1
 **Size:** M
 
@@ -45,13 +45,13 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Add a catalog-collecting registrar inside `internal/tools` so `icuvisor_list_advanced_capabilities` derives full-only rows from the same self-declared `Tool` metadata and first description sentences while forwarding registration normally
-- [ ] Register `icuvisor_list_advanced_capabilities` after collecting the existing catalog, mark it `core`, use a no-argument closed input schema, exclude core tools/self, and keep it available in both active tiers
-- [ ] Propagate active toolset into `tools.RegistryOptions` from startup without re-reading env or adding request overrides, so the handler can report core vs full status
-- [ ] Lives in `core`; returns the `full`-only tools with one-line summaries, requirements/delete-mode note, and the exact `ICUVISOR_TOOLSET=full` instruction to enable them
-- [ ] Output is static/derived from the catalog — no upstream calls; terse by default
-- [ ] When the tier is already `full`, it still works and says so
-- [ ] Add drift/behavior/protocol/schema tests: tier matrix includes the new core tool, handler excludes core/self and includes known full tools, no upstream calls occur, core/full `tools/list` include the discoverability tool, and schema snapshot is committed
+- [x] Add a catalog-collecting registrar inside `internal/tools` so `icuvisor_list_advanced_capabilities` derives full-only rows from the same self-declared `Tool` metadata and first description sentences while forwarding registration normally
+- [x] Register `icuvisor_list_advanced_capabilities` after collecting the existing catalog, mark it `core`, use a no-argument closed input schema, exclude core tools/self, and keep it available in both active tiers
+- [x] Propagate active toolset into `tools.RegistryOptions` from startup without re-reading env or adding request overrides, so the handler can report core vs full status
+- [x] Lives in `core`; returns the `full`-only tools with one-line summaries, requirements/delete-mode note, and the exact `ICUVISOR_TOOLSET=full` instruction to enable them
+- [x] Output is static/derived from the catalog — no upstream calls; terse by default
+- [x] When the tier is already `full`, it still works and says so
+- [x] Add drift/behavior/protocol/schema tests: tier matrix includes the new core tool, handler excludes core/self and includes known full tools, no upstream calls occur, core/full `tools/list` include the discoverability tool, and schema snapshot is committed
 
 ### Step 5: `_meta` surfacing + docs
 
@@ -77,6 +77,7 @@
 | R008 | plan | 3 | APPROVE | `.reviews/R008-plan-step3.md` |
 | R009 | code | 3 | APPROVE | `.reviews/R009-code-step3.md` |
 | R010 | plan | 4 | REVISE | `.reviews/R010-plan-step4.md` |
+| R011 | plan | 4 | APPROVE | `.reviews/R011-plan-step4.md` |
 
 ---
 
@@ -134,6 +135,7 @@ Composition test matrix: synthetic tools cover core read, core write, full read,
 - R008 approved the revised Step 3 plan and suggested adding an explicit zero-value `mcp.Options.Toolset` defaults-to-core assertion, which was folded into the composition matrix.
 - R009 approved the Step 3 implementation.
 - R010 required Step 4 to pin catalog derivation from existing `Tool` metadata, active-toolset propagation to handlers, a concrete response shape/instruction, and drift/protocol/schema tests before implementation.
+- R011 approved the revised Step 4 plan for implementation.
 
 ### Step 4 discoverability plan
 
@@ -154,3 +156,4 @@ Tests: update tier matrix expected core list/count for `icuvisor_list_advanced_c
 | 2026-05-14 13:07 | Review R008 | plan Step 3: APPROVE |
 | 2026-05-14 13:16 | Review R009 | code Step 3: APPROVE |
 | 2026-05-14 13:23 | Review R010 | plan Step 4: REVISE |
+| 2026-05-14 13:26 | Review R011 | plan Step 4: APPROVE |

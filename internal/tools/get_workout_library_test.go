@@ -35,8 +35,8 @@ func TestWorkoutLibraryRegistrationMetadata(t *testing.T) {
 	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	if len(registrar.tools) != 3 {
-		t.Fatalf("registered tool count = %d, want profile + workout library tools", len(registrar.tools))
+	if len(registrar.tools) != 4 {
+		t.Fatalf("registered tool count = %d, want profile + workout library tools + advanced capabilities", len(registrar.tools))
 	}
 	libraryTool := findTool(t, registrar.tools, getWorkoutLibraryName)
 	if !strings.Contains(libraryTool.Description, "workout-library folders") {

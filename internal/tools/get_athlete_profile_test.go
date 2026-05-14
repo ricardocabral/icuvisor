@@ -46,13 +46,10 @@ func TestGetAthleteProfileRegistrationMetadata(t *testing.T) {
 	if err := NewRegistry(client, "v0.1-test", "America/Sao_Paulo").Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	if len(registrar.tools) != 1 {
-		t.Fatalf("registered tool count = %d, want 1", len(registrar.tools))
+	if len(registrar.tools) != 2 {
+		t.Fatalf("registered tool count = %d, want profile plus advanced capabilities", len(registrar.tools))
 	}
-	tool := registrar.tools[0]
-	if tool.Name != "get_athlete_profile" {
-		t.Fatalf("tool name = %q, want get_athlete_profile", tool.Name)
-	}
+	tool := findTool(t, registrar.tools, getAthleteProfileName)
 	firstSentence, _, _ := strings.Cut(tool.Description, ".")
 	for _, want := range []string{"athlete profile", "FTP", "thresholds", "zones", "sport settings"} {
 		if !strings.Contains(firstSentence, want) {
@@ -475,10 +472,10 @@ func newTestProfileTool(t *testing.T, version string, timezoneFallback string, p
 	if err := NewRegistry(client, version, timezoneFallback).Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	if len(registrar.tools) != 1 {
-		t.Fatalf("registered tool count = %d, want 1", len(registrar.tools))
+	if len(registrar.tools) != 2 {
+		t.Fatalf("registered tool count = %d, want profile plus advanced capabilities", len(registrar.tools))
 	}
-	return registrar.tools[0], client
+	return findTool(t, registrar.tools, getAthleteProfileName), client
 }
 
 func newTestProfileToolWithError(t *testing.T, err error) (Tool, *fakeProfileClient) {
@@ -488,7 +485,7 @@ func newTestProfileToolWithError(t *testing.T, err error) (Tool, *fakeProfileCli
 	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	return registrar.tools[0], client
+	return findTool(t, registrar.tools, getAthleteProfileName), client
 }
 
 func decodeProfileResult(t *testing.T, result Result) GetAthleteProfileResponse {

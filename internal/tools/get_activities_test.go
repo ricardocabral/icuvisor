@@ -63,8 +63,8 @@ func TestGetActivitiesRegistrationMetadata(t *testing.T) {
 	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	if len(registrar.tools) != 2 {
-		t.Fatalf("registered tool count = %d, want 2", len(registrar.tools))
+	if len(registrar.tools) != 3 {
+		t.Fatalf("registered tool count = %d, want profile + activities + advanced capabilities", len(registrar.tools))
 	}
 	tool := findTool(t, registrar.tools, getActivitiesName)
 	if !strings.Contains(tool.Description, "List activities for a date range") {

@@ -42,8 +42,8 @@ func TestEventsAndTrainingPlanRegistrationMetadata(t *testing.T) {
 	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	if len(registrar.tools) != 4 {
-		t.Fatalf("registered tool count = %d, want profile + events + event_by_id + training_plan", len(registrar.tools))
+	if len(registrar.tools) != 5 {
+		t.Fatalf("registered tool count = %d, want profile + events + event_by_id + training_plan + advanced capabilities", len(registrar.tools))
 	}
 	eventsTool := findTool(t, registrar.tools, getEventsName)
 	if !strings.Contains(eventsTool.Description, "calendar events") {
