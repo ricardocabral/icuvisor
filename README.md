@@ -71,6 +71,7 @@ Currently implemented tools:
 - `create_custom_item` — creates custom charts, fields, streams, panels, histograms, maps, or zones in write-enabled modes (`safe`/`full`), validating `content` against readable per-`item_type` schema samples before upload.
 - `update_custom_item` — sparsely updates one custom item in write-enabled modes (`safe`/`full`), validating content patches against the existing item's readable schema and leaving omitted fields untouched.
 - `delete_custom_item` — deletes one custom item only when `ICUVISOR_DELETE_MODE=full`, returning `_meta.deleted` with a terse before-shape echo.
+- `icuvisor_list_advanced_capabilities` — lists tools hidden from the default core catalog and explains how to enable the full toolset.
 
 ## Install
 
@@ -104,6 +105,17 @@ For local development, `icuvisor` can read a local untracked `.env` file contain
 - `none`: write and delete tools are omitted, leaving read-only tools only.
 
 Unknown or empty values resolve to `safe`. The active mode is reported in response metadata as `_meta.delete_mode`.
+
+### Toolset tiers
+
+`ICUVISOR_TOOLSET` is read once at startup and controls how much of the MCP tool catalog is registered:
+
+- `core` (default): registers the daily-use catalog for activities, fitness, wellness, events, non-destructive writes, and `icuvisor_list_advanced_capabilities`.
+- `full`: registers the core catalog plus advanced/heavier tools such as raw streams, workout-library and custom-item management, sport settings, training-plan application, and delete-capable tools when delete mode also allows them.
+
+Unknown or empty values resolve to `core`. Change the environment variable in your MCP client/server configuration and restart icuvisor for the catalog to change. The active tier is reported in response metadata as `_meta.toolset`.
+
+`icuvisor_list_advanced_capabilities` remains available in `core` so an AI client can discover hidden full-only tools and tell the user to set `ICUVISOR_TOOLSET=full` when a prompt needs them. Toolset tiering is orthogonal to delete/write safety: destructive tools still require `ICUVISOR_DELETE_MODE=full` even when `ICUVISOR_TOOLSET=full` is set.
 
 For the v0.1 macOS Claude Desktop manual JSON setup and smoke checklist, see [`docs/clients/claude-desktop.md`](docs/clients/claude-desktop.md). For Codex CLI local MCP validation, see [`docs/clients/codex-local.md`](docs/clients/codex-local.md).
 

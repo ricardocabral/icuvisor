@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `ICUVISOR_TOOLSET` with default `core` and opt-in `full` tool catalog tiers, including `icuvisor_list_advanced_capabilities` for discovering hidden tools and `_meta.toolset` response metadata.
 - Startup logs now include the server version and a structured "started listening" entry once the MCP transport is ready.
 - Adversarial safe-mode delete prompt corpus with redacted Codex local-binary outcomes, plus static catalog safety matrix coverage for v0.3 write/delete gating.
 - `input_examples` and JSON Schema `examples` for complex v0.3 write-tool input schemas, with catalog-wide regression tests ensuring new complex write tools carry examples.

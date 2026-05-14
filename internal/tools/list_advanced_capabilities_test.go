@@ -7,11 +7,13 @@ import (
 	"testing"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 func TestListAdvancedCapabilitiesOutputFromCatalog(t *testing.T) {
-	t.Parallel()
+	response.SetToolset("core")
+	t.Cleanup(func() { response.SetToolset("core") })
 
 	registrar := &collectingRegistrar{}
 	client := staticCatalogPanicClient{}
@@ -36,6 +38,12 @@ func TestListAdvancedCapabilitiesOutputFromCatalog(t *testing.T) {
 	}
 	if !strings.Contains(payload.EnableInstruction, "restart icuvisor") {
 		t.Fatalf("enable instruction = %q, want restart guidance", payload.EnableInstruction)
+	}
+	if payload.Meta.Toolset != "core" {
+		t.Fatalf("_meta.toolset = %q, want core", payload.Meta.Toolset)
+	}
+	if !strings.Contains(resultText(t, result), `"toolset":"core"`) {
+		t.Fatalf("text JSON missing _meta.toolset core: %s", resultText(t, result))
 	}
 	if payload.Meta.Count != len(payload.AdvancedCapabilities) || payload.Meta.Source == "" || payload.Meta.DeleteModeNote == "" {
 		t.Fatalf("_meta = %#v for %d capabilities", payload.Meta, len(payload.AdvancedCapabilities))
@@ -62,7 +70,8 @@ func TestListAdvancedCapabilitiesOutputFromCatalog(t *testing.T) {
 }
 
 func TestListAdvancedCapabilitiesFullModeStatus(t *testing.T) {
-	t.Parallel()
+	response.SetToolset("full")
+	t.Cleanup(func() { response.SetToolset("core") })
 
 	registrar := &collectingRegistrar{}
 	if err := NewRegistryWithOptions(staticCatalogPanicClient{}, RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull}).Register(context.Background(), registrar); err != nil {
@@ -79,6 +88,12 @@ func TestListAdvancedCapabilitiesFullModeStatus(t *testing.T) {
 	}
 	if !strings.Contains(payload.Status, "already enabled") {
 		t.Fatalf("status = %q, want already enabled", payload.Status)
+	}
+	if payload.Meta.Toolset != "full" {
+		t.Fatalf("_meta.toolset = %q, want full", payload.Meta.Toolset)
+	}
+	if !strings.Contains(resultText(t, result), `"toolset":"full"`) {
+		t.Fatalf("text JSON missing _meta.toolset full: %s", resultText(t, result))
 	}
 	if len(payload.AdvancedCapabilities) == 0 {
 		t.Fatal("advanced capabilities empty in full mode")

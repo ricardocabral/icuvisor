@@ -16,9 +16,11 @@ import (
 const EnvDebugMetadata = "ICUVISOR_DEBUG_METADATA"
 
 var processDeleteMode atomic.Value
+var processToolset atomic.Value
 
 func init() {
 	processDeleteMode.Store(safety.ModeSafe.String())
+	processToolset.Store(safety.ToolsetCore.String())
 }
 
 var defaultScaleLabels = map[string]string{
@@ -57,6 +59,20 @@ func DeleteMode() string {
 		return safety.ModeSafe.String()
 	}
 	return mode
+}
+
+// SetToolset stores the process-global toolset reported in response metadata.
+func SetToolset(toolset string) {
+	processToolset.Store(safety.ParseToolset(toolset).String())
+}
+
+// Toolset returns the process-global toolset reported in response metadata.
+func Toolset() string {
+	toolset, ok := processToolset.Load().(string)
+	if !ok || strings.TrimSpace(toolset) == "" {
+		return safety.ToolsetCore.String()
+	}
+	return safety.ParseToolset(toolset).String()
 }
 
 // DebugMetadataFromEnv reads the debug metadata toggle for startup configuration.
@@ -283,6 +299,7 @@ func addCommonMeta(row map[string]any, opts Options) {
 	}
 	meta["server_version"] = normalizeVersion(opts.ServerVersion)
 	meta["delete_mode"] = DeleteMode()
+	meta["toolset"] = Toolset()
 	if opts.UnitSystem != "" {
 		meta["units"] = opts.UnitSystem.Metadata()
 	}

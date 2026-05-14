@@ -8,6 +8,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
@@ -35,6 +36,7 @@ type advancedCapabilitiesMeta struct {
 	Count          int    `json:"count"`
 	Source         string `json:"source"`
 	DeleteModeNote string `json:"delete_mode_note"`
+	Toolset        string `json:"toolset"`
 }
 
 func newListAdvancedCapabilitiesTool(catalog []Tool, activeToolset safety.Toolset) Tool {
@@ -91,6 +93,7 @@ func listAdvancedCapabilitiesHandler(capabilities []advancedCapabilityRow, activ
 				Count:          len(capabilities),
 				Source:         "registered catalog metadata",
 				DeleteModeNote: "Tools with requirement=delete also require ICUVISOR_DELETE_MODE=full; write tools require delete mode safe or full.",
+				Toolset:        response.Toolset(),
 			},
 		}
 		text, err := json.Marshal(response)

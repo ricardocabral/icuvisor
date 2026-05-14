@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 14
+**Review Counter:** 15
 **Iteration:** 1
 **Size:** M
 
@@ -58,11 +58,11 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Extend `internal/response` with process-level `SetToolset`/`Toolset` state parallel to delete mode, defaulting invalid/empty to `core`, and have `addCommonMeta` overwrite response-owned `_meta.toolset`
-- [ ] Ensure direct-return `icuvisor_list_advanced_capabilities` responses also include `_meta.toolset` in both structured content and serialized text using the same response-owned source
-- [ ] Add targeted tests for response metadata defaults/overwrites, startup setter propagation, and advanced-capabilities `_meta.toolset` in core/full modes
-- [ ] README: short section documenting `ICUVISOR_TOOLSET`, the two tiers, the default, restart requirement, delete-mode orthogonality, and the discoverability tool
-- [ ] CHANGELOG `[Unreleased]` entry
+- [x] Extend `internal/response` with process-level `SetToolset`/`Toolset` state parallel to delete mode, defaulting invalid/empty to `core`, and have `addCommonMeta` overwrite response-owned `_meta.toolset`
+- [x] Ensure direct-return `icuvisor_list_advanced_capabilities` responses also include `_meta.toolset` in both structured content and serialized text using the same response-owned source
+- [x] Add targeted tests for response metadata defaults/overwrites, startup setter propagation, and advanced-capabilities `_meta.toolset` in core/full modes
+- [x] README: short section documenting `ICUVISOR_TOOLSET`, the two tiers, the default, restart requirement, delete-mode orthogonality, and the discoverability tool
+- [x] CHANGELOG `[Unreleased]` entry
 
 ### Step 6: Verify
 
@@ -88,6 +88,7 @@
 | R012 | code | 4 | REVISE | `.reviews/R012-code-step4.md` |
 | R013 | code | 4 | APPROVE | `.reviews/R013-code-step4.md` |
 | R014 | plan | 5 | REVISE | `.reviews/R014-plan-step5.md` |
+| R015 | plan | 5 | APPROVE | `.reviews/R015-plan-step5.md` |
 
 ---
 
@@ -149,6 +150,7 @@ Composition test matrix: synthetic tools cover core read, core write, full read,
 - R012 requested adding the new discoverability tool to `internal/safety/adversarial_test.go`'s static catalog; reviewer found `go test ./...` failing only on that catalog count drift.
 - R013 approved the revised Step 4 implementation.
 - R014 required Step 5 to pin response-owned metadata semantics, direct-return tool handling, targeted tests, and exact README/CHANGELOG scope before implementation.
+- R015 approved the revised Step 5 plan for implementation.
 
 ### Step 5 metadata/docs plan
 
@@ -185,3 +187,4 @@ Tests: update tier matrix expected core list/count for `icuvisor_list_advanced_c
 | 2026-05-14 13:42 | Review R012 | code Step 4: REVISE |
 | 2026-05-14 13:47 | Review R013 | code Step 4: APPROVE |
 | 2026-05-14 13:50 | Review R014 | plan Step 5: REVISE |
+| 2026-05-14 13:53 | Review R015 | plan Step 5: APPROVE |

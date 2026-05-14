@@ -79,14 +79,16 @@ func TestDefaultStartServerLogsStartupVersion(t *testing.T) {
 	var logs bytes.Buffer
 	previous := slog.Default()
 	t.Cleanup(func() { slog.SetDefault(previous) })
+	response.SetToolset("core")
+	t.Cleanup(func() { response.SetToolset("core") })
 	slog.SetDefault(slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelInfo})))
 
-	err := defaultStartServer(context.Background(), ServerInfo{Version: "v7.8.9"})
+	err := defaultStartServer(context.Background(), ServerInfo{Version: "v7.8.9", Toolset: safety.ToolsetFull})
 	if err == nil {
 		t.Fatal("defaultStartServer() error = nil, want config/client error")
 	}
 	out := logs.String()
-	for _, want := range []string{"server starting", "version=v7.8.9", "resolved toolset", "toolset=core"} {
+	for _, want := range []string{"server starting", "version=v7.8.9", "resolved toolset", "toolset=full"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("startup log %q missing %q", out, want)
 		}
@@ -98,6 +100,9 @@ func TestDefaultStartServerLogsStartupVersion(t *testing.T) {
 		if strings.Contains(out, forbidden) {
 			t.Fatalf("startup log leaked tool name %q: %q", forbidden, out)
 		}
+	}
+	if got := response.Toolset(); got != "full" {
+		t.Fatalf("response toolset = %q, want full", got)
 	}
 }
 
