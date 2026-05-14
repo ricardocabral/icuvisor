@@ -1,6 +1,6 @@
 # TP-033-streamable-http-transport: TP-033-streamable-http-transport — Status
 
-**Current Step:** Step 1: Transport selection plumbing
+**Current Step:** Step 2: Streamable HTTP transport
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
@@ -20,7 +20,11 @@
 
 ### Step 2: Streamable HTTP transport
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] Wire the Go SDK Streamable HTTP transport onto the shared server core; the tool/resource/prompt registry is identical across transports.
+- [ ] Single shared server lifecycle (startup/shutdown, context cancellation honored).
+- [ ] Graceful shutdown closes the listener and in-flight requests cleanly.
 
 ### Step 3: Security posture
 
