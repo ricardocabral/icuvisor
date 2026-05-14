@@ -112,6 +112,8 @@
 | 2026-05-14 12:05 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-14 12:05 | Step 1 started | Tier enum and parsing |
 | 2026-05-14 14:05 | Worker iter 1 | killed (wall-clock timeout) in 7200s, tools: 283 |
+| 2026-05-14 14:09 | Worker iter 2 | done in 189s, tools: 25 |
+| 2026-05-14 14:09 | Task complete | .DONE created |
 
 ---
 
