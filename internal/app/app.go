@@ -132,12 +132,16 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 		return err
 	}
 	server, err := mcpserver.NewServer(ctx, mcpserver.Options{
-		Config:           info.Config,
-		Version:          info.Version,
-		Logger:           logger,
-		Capability:       capability,
-		Toolset:          toolset,
-		ResourceRegistry: resources.NewRegistry(),
+		Config:     info.Config,
+		Version:    info.Version,
+		Logger:     logger,
+		Capability: capability,
+		Toolset:    toolset,
+		ResourceRegistry: resources.NewRegistryWithOptions(client, resources.ResourceOptions{
+			Version:          info.Version,
+			TimezoneFallback: info.Config.Timezone,
+			DebugMetadata:    info.DebugMetadata,
+		}),
 		Registry: tools.NewRegistryWithOptions(client, tools.RegistryOptions{
 			Version:          info.Version,
 			TimezoneFallback: info.Config.Timezone,

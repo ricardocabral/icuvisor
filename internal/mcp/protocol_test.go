@@ -159,10 +159,11 @@ func TestProtocolUnknownResourceReturnsNotFound(t *testing.T) {
 	}
 }
 
-func TestProtocolDefaultResourceRegistryIncludesStaticResources(t *testing.T) {
+func TestProtocolDefaultResourceRegistryIncludesAllResources(t *testing.T) {
 	t.Parallel()
 
-	ctx, session, cleanup := connectTestClientWithOptions(t, Options{ResourceRegistry: resources.NewRegistry()})
+	profileClient := testProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", Name: "Example Athlete", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Types: []string{"Ride"}, FTP: 250}}}}
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{ResourceRegistry: resources.NewRegistryWithOptions(profileClient, resources.ResourceOptions{Version: "v0.1-test", TimezoneFallback: "UTC"})})
 	defer cleanup()
 
 	list, err := session.ListResources(ctx, nil)
@@ -172,11 +173,11 @@ func TestProtocolDefaultResourceRegistryIncludesStaticResources(t *testing.T) {
 	want := map[string]struct {
 		name     string
 		mimeType string
-		heading  string
 	}{
-		resources.WorkoutSyntaxURI:     {name: "workout_syntax", mimeType: resources.WorkoutSyntaxMIMEType, heading: "# Workout syntax"},
-		resources.EventCategoriesURI:   {name: "event_categories", mimeType: resources.EventCategoriesMIMEType, heading: "# Event categories"},
-		resources.CustomItemSchemasURI: {name: "custom_item_schemas", mimeType: resources.CustomItemSchemasMIMEType, heading: "# Custom item content schemas"},
+		resources.WorkoutSyntaxURI:     {name: "workout_syntax", mimeType: resources.WorkoutSyntaxMIMEType},
+		resources.EventCategoriesURI:   {name: "event_categories", mimeType: resources.EventCategoriesMIMEType},
+		resources.CustomItemSchemasURI: {name: "custom_item_schemas", mimeType: resources.CustomItemSchemasMIMEType},
+		resources.AthleteProfileURI:    {name: "athlete_profile", mimeType: resources.AthleteProfileMIMEType},
 	}
 	for _, resource := range list.Resources {
 		if expected, ok := want[resource.URI]; ok {
@@ -192,17 +193,18 @@ func TestProtocolDefaultResourceRegistryIncludesStaticResources(t *testing.T) {
 
 	for uri, expected := range map[string]struct {
 		mimeType string
-		heading  string
+		contains string
 	}{
-		resources.WorkoutSyntaxURI:     {mimeType: resources.WorkoutSyntaxMIMEType, heading: "# Workout syntax"},
-		resources.EventCategoriesURI:   {mimeType: resources.EventCategoriesMIMEType, heading: "# Event categories"},
-		resources.CustomItemSchemasURI: {mimeType: resources.CustomItemSchemasMIMEType, heading: "# Custom item content schemas"},
+		resources.WorkoutSyntaxURI:     {mimeType: resources.WorkoutSyntaxMIMEType, contains: "# Workout syntax"},
+		resources.EventCategoriesURI:   {mimeType: resources.EventCategoriesMIMEType, contains: "# Event categories"},
+		resources.CustomItemSchemasURI: {mimeType: resources.CustomItemSchemasMIMEType, contains: "# Custom item content schemas"},
+		resources.AthleteProfileURI:    {mimeType: resources.AthleteProfileMIMEType, contains: "\"athlete_id\":\"i12345\""},
 	} {
 		read, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: uri})
 		if err != nil {
 			t.Fatalf("ReadResource(%s) error = %v", uri, err)
 		}
-		if len(read.Contents) != 1 || read.Contents[0].URI != uri || read.Contents[0].MIMEType != expected.mimeType || !strings.Contains(read.Contents[0].Text, expected.heading) {
+		if len(read.Contents) != 1 || read.Contents[0].URI != uri || read.Contents[0].MIMEType != expected.mimeType || !strings.Contains(read.Contents[0].Text, expected.contains) {
 			t.Fatalf("resource %s read = %#v", uri, read.Contents)
 		}
 	}

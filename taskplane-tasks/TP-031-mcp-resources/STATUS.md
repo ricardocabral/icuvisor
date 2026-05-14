@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 15
+**Review Counter:** 16
 **Iteration:** 2
 **Size:** M
 
@@ -52,9 +52,9 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Add a shared athlete-profile shaper used by both `get_athlete_profile` and the resource
-- [ ] Register `icuvisor://athlete-profile` as a dynamic cached resource with documented TTL/staleness behavior
-- [ ] Cover resource list/read, cache refresh, context cancellation, and shape parity with focused tests
+- [x] Add a shared athlete-profile shaper used by both `get_athlete_profile` and the resource
+- [x] Register `icuvisor://athlete-profile` as a dynamic cached resource with documented TTL/staleness behavior
+- [x] Cover resource list/read, cache refresh, context cancellation, and shape parity with focused tests
 
 ### Step 6: Trim inline tool descriptions
 
@@ -182,3 +182,4 @@ _None_
 - Context cancellation is honored before acquiring/refreshing the cache and while calling the upstream client. No unbounded upstream calls: each `resources/read` causes at most one `GetAthleteProfile` call, and cached reads cause zero calls.
 - Wire `resources.NewRegistryWithOptions(client, ResourceOptions{Version, TimezoneFallback, DebugMetadata})` from `internal/app`; keep `resources.NewRegistry()` for static test/default use by accepting nil client only when callers intentionally want static resources.
 - Tests: shared shaper parity with current tool outputs, dynamic resource cache hit/expiry behavior, canceled context behavior, registry/protocol list/read coverage for all four resources.
+| 2026-05-14 16:13 | Review R016 | plan Step 5: APPROVE |
