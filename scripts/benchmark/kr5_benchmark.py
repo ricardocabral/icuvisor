@@ -77,7 +77,12 @@ class ServerMeasurement:
 
 
 class MCPClient:
-    def __init__(self, command: list[str], env: dict[str, str] | None = None, timeout: float = 20.0) -> None:
+    def __init__(
+        self,
+        command: list[str],
+        env: dict[str, str] | None = None,
+        timeout: float = 20.0,
+    ) -> None:
         self.command = command
         merged_env = os.environ.copy()
         if env:
@@ -109,7 +114,9 @@ class MCPClient:
             if stderr.strip():
                 print(stderr, file=sys.stderr)
 
-    def request(self, method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    def request(
+        self, method: str, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         req_id = self._next_id
         self._next_id += 1
         message: dict[str, Any] = {"jsonrpc": "2.0", "id": req_id, "method": method}
@@ -127,7 +134,9 @@ class MCPClient:
                 raise BenchmarkError(f"MCP {method} failed: {response['error']}")
             result = response.get("result")
             if not isinstance(result, dict):
-                raise BenchmarkError(f"MCP {method} returned non-object result: {response}")
+                raise BenchmarkError(
+                    f"MCP {method} returned non-object result: {response}"
+                )
             return result
         raise BenchmarkError(f"timed out waiting for MCP response to {method}")
 
@@ -155,7 +164,9 @@ class MCPClient:
             stderr = ""
             if self.proc.stderr:
                 stderr = self.proc.stderr.read()
-            raise BenchmarkError(f"MCP process exited while reading stdout; stderr={stderr!r}")
+            raise BenchmarkError(
+                f"MCP process exited while reading stdout; stderr={stderr!r}"
+            )
         return json.loads(line)
 
 
@@ -206,7 +217,11 @@ def load_live_measurements(config_path: Path) -> list[ServerMeasurement]:
         command = server.get("command")
         if not isinstance(command, list) or not command:
             raise BenchmarkError(f"server {server.get('id')} missing command array")
-        client = MCPClient(command, env=server.get("env", {}), timeout=float(server.get("timeout_seconds", 20)))
+        client = MCPClient(
+            command,
+            env=server.get("env", {}),
+            timeout=float(server.get("timeout_seconds", 20)),
+        )
         try:
             client.request(
                 "initialize",
@@ -260,18 +275,78 @@ def catalog_payload(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(rows, key=lambda row: row["name"])
 
 
-def validate_measurement(prompt_set: dict[str, Any], measurement: ServerMeasurement) -> None:
+def validate_measurement(
+    prompt_set: dict[str, Any], measurement: ServerMeasurement
+) -> None:
     prompt_intents: dict[tuple[str, str], int] = {}
     for prompt in prompt_set["prompts"]:
         for intent in prompt.get("required_intents", []):
             prompt_intents[(prompt["id"], intent)] = 0
+    tool_names = {tool.get("name", "") for tool in measurement.tools}
     for call in measurement.calls:
         key = (call.prompt_id, call.intent)
         if key in prompt_intents:
             prompt_intents[key] += 1
-    missing = [f"{prompt_id}:{intent}" for (prompt_id, intent), count in prompt_intents.items() if count == 0]
+        if call.tool.startswith("unavailable:"):
+            if not call.result or call.result.get("isError") is not True:
+                raise BenchmarkError(
+                    f"{measurement.server_id} unavailable call "
+                    f"{call.prompt_id}:{call.intent} must set isError=true"
+                )
+            continue
+        if call.tool not in tool_names:
+            raise BenchmarkError(
+                f"{measurement.server_id} call {call.prompt_id}:{call.intent} "
+                f"uses unlisted tool {call.tool!r}"
+            )
+    missing = [
+        f"{prompt_id}:{intent}"
+        for (prompt_id, intent), count in prompt_intents.items()
+        if count == 0
+    ]
     if missing:
-        raise BenchmarkError(f"{measurement.server_id} missing call coverage for {', '.join(missing)}")
+        raise BenchmarkError(
+            f"{measurement.server_id} missing call coverage for {', '.join(missing)}"
+        )
+
+
+def audited_response_bytes(result: dict[str, Any]) -> int | None:
+    content = result.get("content")
+    if not isinstance(content, list) or not content:
+        return None
+    first = content[0]
+    if not isinstance(first, dict) or not isinstance(first.get("text"), str):
+        return None
+    try:
+        payload = json.loads(first["text"])
+    except json.JSONDecodeError:
+        return None
+    audit = payload.get("redaction_audit")
+    if not isinstance(audit, dict):
+        return None
+    raw_bytes = audit.get("raw_response_bytes")
+    redacted_bytes = audit.get("redacted_response_bytes")
+    if not isinstance(raw_bytes, int) or raw_bytes <= 0:
+        raise BenchmarkError(
+            "redaction_audit.raw_response_bytes must be a positive integer"
+        )
+    if not isinstance(redacted_bytes, int) or redacted_bytes <= 0:
+        raise BenchmarkError(
+            "redaction_audit.redacted_response_bytes must be a positive integer"
+        )
+    tolerance = max(1, int(raw_bytes * 0.01))
+    if abs(raw_bytes - redacted_bytes) > tolerance:
+        raise BenchmarkError(
+            "redacted response byte audit differs from raw by more than 1%"
+        )
+    return raw_bytes
+
+
+def response_size(result: dict[str, Any]) -> int:
+    audited = audited_response_bytes(result)
+    if audited is not None:
+        return audited
+    return len(canonical_bytes(result))
 
 
 def redact_env(env: dict[str, str] | None) -> dict[str, str]:
@@ -280,7 +355,12 @@ def redact_env(env: dict[str, str] | None) -> dict[str, str]:
     redacted: dict[str, str] = {}
     for key, value in sorted(env.items()):
         upper = key.upper()
-        if "KEY" in upper or "TOKEN" in upper or "SECRET" in upper or "PASSWORD" in upper:
+        if (
+            "KEY" in upper
+            or "TOKEN" in upper
+            or "SECRET" in upper
+            or "PASSWORD" in upper
+        ):
             redacted[key] = "<redacted>"
         else:
             redacted[key] = value
@@ -302,8 +382,10 @@ def summarize(
         response_bytes = []
         for index, call in enumerate(measurement.calls, start=1):
             if call.result is None:
-                raise BenchmarkError(f"{measurement.server_id} call {index} has no result")
-            size = len(canonical_bytes(call.result))
+                raise BenchmarkError(
+                    f"{measurement.server_id} call {index} has no result"
+                )
+            size = response_size(call.result)
             response_bytes.append(size)
             response_rows.append(
                 {
@@ -331,7 +413,8 @@ def summarize(
         )
     return {
         "schema_version": "kr5-benchmark-result-v1",
-        "generated_at": generated_at or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "generated_at": generated_at
+        or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "prompt_set_version": prompt_set["version"],
         "prompt_count": len(prompt_set["prompts"]),
         "tokenizer": {"name": token_counter.name, "package": token_counter.package},
@@ -343,11 +426,20 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=["fixtures", "live"], default="fixtures")
     parser.add_argument("--prompt-set", type=Path, required=True)
-    parser.add_argument("--fixture-dir", type=Path, default=Path("scripts/benchmark/testdata/fixtures"))
+    parser.add_argument(
+        "--fixture-dir", type=Path, default=Path("scripts/benchmark/testdata/fixtures")
+    )
     parser.add_argument("--config", type=Path)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--allow-approx-tokenizer", action="store_true", help="smoke tests only; not valid for KR5 results")
-    parser.add_argument("--generated-at", help="fixed RFC3339 timestamp for reproducible committed results")
+    parser.add_argument(
+        "--allow-approx-tokenizer",
+        action="store_true",
+        help="smoke tests only; not valid for KR5 results",
+    )
+    parser.add_argument(
+        "--generated-at",
+        help="fixed RFC3339 timestamp for reproducible committed results",
+    )
     args = parser.parse_args()
 
     try:
@@ -359,7 +451,9 @@ def main() -> int:
             if args.config is None:
                 raise BenchmarkError("--config is required for live mode")
             measurements = load_live_measurements(args.config)
-        result = summarize(prompt_set, measurements, token_counter, generated_at=args.generated_at)
+        result = summarize(
+            prompt_set, measurements, token_counter, generated_at=args.generated_at
+        )
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(canonical_json(result) + "\n", encoding="utf-8")
         print(f"wrote {args.output}")

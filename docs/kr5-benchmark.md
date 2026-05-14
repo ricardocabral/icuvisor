@@ -18,7 +18,7 @@ The benchmark compares four catalog surfaces:
 For each server, the harness opens a fresh MCP session and calls `tools/list`. It builds a stable JSON array from every registered tool:
 
 ```json
-[{"name":"...","description":"...","inputSchema":{}}]
+[{ "name": "...", "description": "...", "inputSchema": {} }]
 ```
 
 The array is sorted by tool name and serialized as canonical compact UTF-8 JSON. The reported token count is the sum of tokens in that canonical catalog payload.
@@ -27,9 +27,9 @@ The pinned tokenizer is `cl100k_base` via `tiktoken==0.12.0`. The tokenizer pack
 
 ### Median per-call response bytes
 
-For each shared prompt scenario, the harness executes the pinned MCP tool-call plan for each server. For every `tools/call`, it serializes the MCP `result` object as canonical compact UTF-8 JSON and records its byte length. The reported response-size metric is the median of those per-call byte lengths across the full prompt set.
+For each shared prompt scenario, the harness executes the pinned MCP tool-call plan for each server. In live mode, every `tools/call` MCP `result` object is serialized as canonical compact UTF-8 JSON and measured in bytes. In fixture mode, redacted call fixtures may carry `redaction_audit.raw_response_bytes` inside the redacted content; when present, the harness counts that audited raw byte value and validates that the redacted byte audit is within ±1% of raw. Calls without an audit field, including explicit unavailable/error results, are measured from their canonical MCP result JSON.
 
-Only response bytes are counted; transport framing, logs, latency, and the user's final natural-language answer are excluded.
+Only response bytes are counted; benchmark-only redaction padding/audit wrappers, transport framing, logs, latency, and the user's final natural-language answer are excluded.
 
 ## Shared prompt set and call-plan rules
 
@@ -55,7 +55,7 @@ Snapshot contents:
 - Entities: one redacted athlete profile, representative ride/run activities, one activity with intervals/splits/messages, one wellness row containing both `sleepQuality` and `sleepScore`, upcoming events/training-plan/workout-library summaries, and synthetic non-destructive write confirmations.
 - Reference surfaces: black-box `tools/list` outputs and redacted `tools/call` result shapes for the two Python references. The `mvilanova` fixture is derived only from running the server and capturing JSON-RPC output; no GPL source was read or copied.
 - Redaction: athlete IDs, activity/event/workout IDs, comments, names, exact dates, threshold values, body metrics, and account-specific text are replaced with placeholders or shifted synthetic values.
-- Byte policy: redaction is performed before committing; benchmark bytes are computed from committed redacted JSON. For live recalibration, raw bytes are measured before redaction and the redacted fixture must remain within ±1% of the raw median for each server.
+- Byte policy: redaction is performed before committing; live raw response byte counts are preserved as `redaction_audit.raw_response_bytes`, with `redacted_response_bytes` required to remain within ±1% per audited call. Benchmark-only padding and audit fields are not counted as response bytes.
 
 ## Non-determinism policy
 
@@ -63,7 +63,7 @@ The committed benchmark runs in fixture mode by default so CI and contributors c
 
 Live mode is supported for recalibration. A live run must use the same prompt-set version, the same dedicated test athlete account snapshot manifest, and exact server versions recorded in the result file. Raw live transcripts must not be committed; only redacted fixture/result files are allowed.
 
-Acceptable fixture rerun tolerance is zero for catalog token counts and zero for response-byte medians because both are computed from committed canonical JSON. Live reruns should stay within ±5% response-byte median unless upstream data changed; outside that range, refresh the frozen snapshot and document why.
+Acceptable fixture rerun tolerance is zero for catalog token counts and zero for response-byte medians because both are computed deterministically from committed canonical JSON and audited byte fields. Live reruns should stay within ±5% response-byte median unless upstream data changed; outside that range, refresh the frozen snapshot and document why.
 
 ## Running
 
