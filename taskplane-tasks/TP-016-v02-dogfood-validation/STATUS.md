@@ -3,7 +3,7 @@
 **Issue:** v0.2 — read path
 **Review Level:** 1
 **Status:** 🔴 Blocked
-**Iteration:** 1
+**Iteration:** 2
 **Current Step:** Step 3: Invited athletes (2–3) read-only
 **Last Updated:** 2026-05-14
 **State:** Blocked on maintainer-supplied invited-athlete recruitment/results
@@ -35,6 +35,7 @@ _Task scaffolded from PROMPT.md; execution hydrated from PROMPT.md Step 1._
 - [x] R001 plan revision: pin exact run instructions, allowed clients, prompt set, and fresh-session requirements
 - [x] R001 plan revision: add a redacted invited-athlete findings template and explicit forbidden-data list
 - [x] R001 plan revision: document local response-size measurement, temporary-artifact cleanup, coverage fallback rules, and Step 4 triage boundary
+- [x] R002 plan hardening: require invites to name the exact release artifact or git revision participants should run
 - [ ] Recruit 2–3 forum-friendly athletes (one ideally an miles/imperial user; one ideally using a non-Garmin bridge like Polar or Oura to exercise wellness provenance)
 - [ ] Provide them the manual-config recipe (v0.1 docs); have them run the same prompt set
 - [ ] Collect findings via a redacted template; never receive raw athlete data
@@ -104,3 +105,13 @@ _Task scaffolded from PROMPT.md; execution hydrated from PROMPT.md Step 1._
 | 2026-05-14 18:55 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-14 18:55 | Step 1 started | Assemble the prompt set |
 | 2026-05-14 | Resume check | Step 1 and Step 2 remain complete; Step 3 protocol/template deliverables remain present in `docs/dogfood/v0.2-findings.md`. Remaining invited-athlete recruitment, participant runs, collection, Step 4 triage, and Step 5 sign-off are still blocked on external maintainer action/results. |
+| 2026-05-14 19:01 | Exit intercept timeout | Supervisor did not respond within 60s — closing session |
+| 2026-05-14 19:01 | Agent escalate | Blocked at TP-016 Step 3. Step 1 and Step 2 are complete, and the Step 3 participant protocol, run instructions, consent/privacy note, redacted findings template, cleanup/measurement guidance, fallbac |
+| 2026-05-14 19:01 | Agent reply | Acknowledged. TP-016 remains blocked at Step 3; I will not attempt external outreach or fabricate invited-athlete results. STATUS.md records the steering and blocked state so the run can fail as direc |
+| 2026-05-14 19:01 | Worker iter 1 | done in 176s, tools: 13 |
+| 2026-05-14 19:01 | No progress | Iteration 1: 0 new checkboxes (1/3 stall limit) |
+| 2026-05-14 19:01 | Step 1 started | Assemble the prompt set |
+| 2026-05-14 | Resume correction | Current step reset to Step 3 because Step 1 and Step 2 are already complete; remaining invited-athlete recruitment/run/collection work is blocked on maintainer-supplied participants and redacted results. |
+| 2026-05-14 | Step 3 plan hardening | Added invite guidance requiring the maintainer to name the exact release artifact or git revision each participant should run. |
+| 2026-05-14 19:05 | Review R001 | plan Step 3: APPROVE |
+| 2026-05-14 | Validation commands | `make test`, `make build`, and `make lint` passed after docs/status-only plan hardening. |
