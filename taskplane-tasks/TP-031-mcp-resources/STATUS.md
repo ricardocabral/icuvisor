@@ -69,10 +69,10 @@
 
 ### Step 7: Verify
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
-- [ ] Manual: `resources/list` shows four entries; `resources/read` returns each; confirm at least one MCP client renders them (note any client that ignores `resources/list` in `STATUS.md` per §7.4 #13)
+- [x] `make test`, `make build`, `make lint`, `go test -race ./...`
+- [x] Manual: `resources/list` shows four entries; `resources/read` returns each; confirm at least one MCP client renders them (note any client that ignores `resources/list` in `STATUS.md` per §7.4 #13)
 
 ---
 
@@ -213,6 +213,12 @@ _None_
 ### R019 revision notes
 
 - Simplify `athleteProfileReader.Read` so staticcheck no longer reports SA4004 while preserving context-aware waiting and shared refresh results.
+
+### Step 7 verification notes
+
+- Full quality gate passed: `make test`, `make build`, `make lint`, and `go test -race ./...`.
+- Manual resource check used the Go SDK in-memory MCP client via `go test ./internal/mcp -run TestProtocolDefaultResourceRegistryIncludesAllResources -v`; it registered four resources, `resources/list` saw all four URIs, and `resources/read` returned contents for `workout-syntax`, `event-categories`, `custom-item-schemas`, and `athlete-profile`.
+- No MCP client ignoring `resources/list` was observed during this verification; the in-memory SDK client rendered resource content successfully.
 | 2026-05-14 16:13 | Review R016 | plan Step 5: APPROVE |
 | 2026-05-14 16:26 | Review R017 | code Step 5: REVISE |
 | 2026-05-14 16:33 | Review R018 | code Step 5: REVISE |
