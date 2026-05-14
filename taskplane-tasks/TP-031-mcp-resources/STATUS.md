@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -55,6 +55,7 @@
 | R001 | Plan | 1 | REVISE | .reviews/R001-plan-step1.md |
 | R002 | Plan | 1 | APPROVE | inline |
 | R003 | Code | 1 | APPROVE | inline |
+| R004 | Plan | 2 | REVISE | .reviews/R004-plan-step2.md |
 
 ---
 
@@ -62,6 +63,7 @@
 
 | Discovery | Disposition | Location |
 | --------- | ----------- | -------- |
+| `workoutdoc` has implicit serializer grammar but no exported syntax descriptor yet; pace text is supported only as non-ramp text ending in `Pace`, while text targets cannot be ramps. | Add a `workoutdoc` syntax descriptor in Step 2 and generate the resource from it. | `internal/workoutdoc/{types,serialize,parse}.go` |
 
 ---
 
@@ -94,3 +96,14 @@ _None_
 - Step 1 content contract: read handlers return one text `ResourceContents` item with populated `URI`, `MIMEType`, and `Text`; per-resource steps may override MIME type, with long-form docs defaulting to `text/markdown`.
 - Static/dynamic decisions: `icuvisor://workout-syntax` is static/derived from `internal/workoutdoc`; `icuvisor://event-categories` is static from the same enum/source as event tools; `icuvisor://custom-item-schemas` is static/derived from custom-item validation/schema sources; `icuvisor://athlete-profile` is dynamic cached content with TTL/staleness policy finalized in Step 5.
 - Protocol tests for Step 1 will use in-memory MCP client helpers to assert initialize advertises resources when configured, list returns metadata, read dispatches with URI/MIME/text, invalid/duplicate registrations fail server construction, and unknown reads return the SDK not-found protocol error.
+
+### Step 2 plan
+
+- Add a small exported `internal/workoutdoc` syntax/spec descriptor as the single source for resource docs and parity tests. The descriptor will list step forms, target families, supported units/aliases, examples, and limitations that match `Serialize`/`Parse`; `internal/resources` will generate Markdown from this descriptor instead of storing a standalone Markdown grammar.
+- Add `internal/resources/registry.go` with `NewRegistry`/default registry construction and one greppable `WorkoutSyntaxResource` registration. Wire `internal/app` to pass this registry to `mcp.NewServer` so normal server runs advertise the resource.
+- Resource contract: URI `icuvisor://workout-syntax`, name `workout_syntax`, title `Workout syntax`, short description for the intervals.icu structured-workout DSL, MIME type `text/markdown`, static/no-network read handler that checks context cancellation, one text content item with URI/MIME/text populated.
+- Markdown content will document serializer coverage: duration and distance steps (`mtr`, `km`, `mi` canonical output), repeat blocks and no nested repeats, free-ride steps, ramps using `start`/`end`, optional cadence (`rpm`), power targets (`%FTP`, watts, power zones, scalar/range), HR targets (`%HR`, `%LTHR`, bpm, HR zones, scalar/range), pace targets (percent threshold pace, pace zones, `PACE` numeric/text handling as actually supported), and RPE scalar/range.
+- Markdown content will also document limitations enforced by the serializer: one primary target per step, ramp requires a primary target and cannot use text targets, freeride cannot combine with ramp, repeat blocks cannot also carry simple-step fields, repeat blocks require reps/children, and simple steps require duration or distance.
+- Coverage parity tests will table-drive representative `workoutdoc.Step` values through `workoutdoc.Serialize`, compare their generated DSL snippets to descriptor examples, and assert each documented feature key is rendered into the Markdown. New serializer-supported families/units should require adding a descriptor entry and corresponding expected Markdown.
+- Add deterministic tests: a golden/snapshot-style generated Markdown test under `internal/resources/testdata`, plus protocol/registry assertions that `resources/list` exposes `icuvisor://workout-syntax` and `resources/read` returns the generated Markdown as `text/markdown`.
+- Planned file layout: `internal/workoutdoc/syntax.go` for descriptors and generated examples, `internal/resources/registry.go`, `internal/resources/workout_syntax.go`, `internal/resources/workout_syntax_test.go`, `internal/resources/testdata/workout_syntax.md`, and small app/protocol test updates. README/tool-description trimming remains Step 6; CHANGELOG will be updated once resources are documented in final steps.
