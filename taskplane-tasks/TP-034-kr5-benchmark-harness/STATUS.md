@@ -29,8 +29,8 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Measure `core` and `full` tiers separately; `core` is the headline KR5 number
-- [ ] Capture description tokens from `tools/list` and response bytes per call
+- [x] Measure `core` and `full` tiers separately; `core` is the headline KR5 number
+- [x] Capture description tokens from `tools/list` and response bytes per call
 
 ### Step 4: Reference-server measurement
 
@@ -105,6 +105,8 @@ _None_
 Step 1: Selected `scripts/benchmark/` rather than `internal/benchmark/` because the harness is an operator/release validation utility, not shipped server code. Metrics are canonical `tools/list` catalog-token counts and median canonical MCP `tools/call` result bytes. Tokenizer pinned to `cl100k_base` via `tiktoken==0.12.0`; prompt set pinned as `kr5-forum-prompts-v1`; frozen redacted account snapshot pinned as `kr5-redacted-test-athlete-v1` with manifest at `scripts/benchmark/testdata/snapshot-manifest.json`. Non-determinism is handled by committed redacted fixtures for reproducibility; live reruns are for recalibration only. R001 revisions removed premature results, pinned a real tokenizer, added call-plan guardrails, and defined snapshot manifest/redaction policy.
 
 Step 2: R003 revisions replaced destructive KR5-10 with a non-destructive coach triage prompt and added `source_prompt_ids`/`prd_anchor` provenance to every scenario.
+
+Step 3: Fixture run measured `icuvisor-core` (17 tools, 2,393 description tokens, 1,200 median response bytes) and `icuvisor-full` (38 tools, 5,340 description tokens, 1,460 median response bytes) in `scripts/benchmark/results/kr5-results.json`.
 | 2026-05-14 20:35 | Review R001 | plan Step 1: REVISE |
 | 2026-05-14 20:37 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-14 20:40 | Review R003 | plan Step 2: REVISE |
