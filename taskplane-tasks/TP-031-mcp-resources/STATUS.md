@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -25,6 +25,8 @@
 - [x] Register `icuvisor://workout-syntax` in the default resource registry
 - [x] Content derived from the `internal/workoutdoc` grammar — do not hand-author a second copy that can drift
 - [x] Covers every step/target type the serializer supports; a test asserts coverage parity with `workoutdoc`
+- [ ] R006: Make the parity source non-self-referential by driving serializer-supported forms/units from shared `workoutdoc` data used by docs/tests
+- [ ] R006: Fix resource-handler lint issue from `fmt.Errorf(genericResourceErrorMessage)`
 
 ### Step 3: `icuvisor://event-categories`
 
@@ -57,6 +59,7 @@
 | R003 | Code | 1 | APPROVE | inline |
 | R004 | Plan | 2 | REVISE | .reviews/R004-plan-step2.md |
 | R005 | Plan | 2 | APPROVE | inline |
+| R006 | Code | 2 | REVISE | .reviews/R006-code-step2.md |
 
 ---
 
@@ -108,3 +111,8 @@ _None_
 - Coverage parity tests will table-drive representative `workoutdoc.Step` values through `workoutdoc.Serialize`, compare their generated DSL snippets to descriptor examples, and assert each documented feature key is rendered into the Markdown. New serializer-supported families/units should require adding a descriptor entry and corresponding expected Markdown.
 - Add deterministic tests: a golden/snapshot-style generated Markdown test under `internal/resources/testdata`, plus protocol/registry assertions that `resources/list` exposes `icuvisor://workout-syntax` and `resources/read` returns the generated Markdown as `text/markdown`.
 - Planned file layout: `internal/workoutdoc/syntax.go` for descriptors and generated examples, `internal/resources/registry.go`, `internal/resources/workout_syntax.go`, `internal/resources/workout_syntax_test.go`, `internal/resources/testdata/workout_syntax.md`, and small app/protocol test updates. README/tool-description trimming remains Step 6; CHANGELOG will be updated once resources are documented in final steps.
+
+### R006 revision notes
+
+- Code review found the first syntax descriptor was still self-referential; revise by moving supported unit/alias matrices into exported `workoutdoc` syntax data and using those matrices in serializer formatting plus resource tests.
+- Code review also noted a lint failure in Step 1 resource error handling; replace `fmt.Errorf(genericResourceErrorMessage)` with a non-format error.
