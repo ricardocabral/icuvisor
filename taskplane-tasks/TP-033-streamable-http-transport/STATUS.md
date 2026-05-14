@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 11
+**Review Counter:** 12
 **Iteration:** 2
 **Size:** M
 
@@ -43,6 +43,7 @@
 
 - [ ] The same protocol tests that cover stdio (initialize, tools/list, tool calls, resources, prompts, malformed requests, sanitized errors) run against the HTTP transport.
 - [ ] Handler behaviour is byte-identical across transports — assert this where practical.
+- [ ] Add HTTP-specific malformed POST coverage while keeping the raw newline malformed test for stdio/IO framing.
 
 ### Step 5: Docs
 
@@ -110,3 +111,5 @@ _None_
 | 2026-05-14 17:56 | Review R009 | plan Step 3: APPROVE |
 | 2026-05-14 18:01 | Review R010 | code Step 3: REVISE |
 | 2026-05-14 18:05 | Review R011 | code Step 3: APPROVE |
+| 2026-05-14 18:08 | Review R012 | plan Step 4: REVISE |
+- Step 4 revised plan after R012: refactor `internal/mcp/protocol_test.go` around a `connectProtocolClient(t, transportKind, opts)` helper with two cases: the current in-memory/stdio-equivalent SDK transport and Streamable HTTP served on `127.0.0.1:0` at `StreamableHTTPPath` using `sdkmcp.StreamableClientTransport`, `MaxRetries: -1`, short HTTP timeouts, session close, context cancellation, and `waitForServerRun`. Run the shared protocol suite across both transports for initialize, `tools/list`, successful calls, missing/unknown tools, sanitized tool errors, `resources/list`, `resources/read`, missing resources, sanitized resource errors, and current `prompts/list` behaviour. Add a parity test that serializes stable SDK results to canonical JSON and compares bytes for initialize server info/capabilities, tools/list, call-tool content/structured content, resources/list/read, and prompts/list, excluding only unavoidable transport/session-specific metadata. Keep the existing raw newline malformed-request test for IO framing and add an HTTP-specific malformed POST to `/mcp` that asserts a client-visible error response without panic or leaked secrets.
