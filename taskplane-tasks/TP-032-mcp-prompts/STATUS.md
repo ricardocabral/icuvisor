@@ -1,10 +1,10 @@
 # TP-032-mcp-prompts: TP-032-mcp-prompts — Status
 
-**Current Step:** Step 5: Verify
-**Status:** 🟡 In Progress
+**Current Step:** Complete
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-14
 **Review Level:** 1
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** S/M
 
@@ -45,10 +45,10 @@
 
 ### Step 5: Verify
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
-- [ ] Manual: `prompts/list` shows five; `prompts/get` renders each; confirm at least one MCP client surfaces them (note any client that ignores `prompts/list` in `STATUS.md` per §7.4 #13)
+- [x] `make test`, `make build`, `make lint`, `go test -race ./...`
+- [x] Manual: `prompts/list` shows five; `prompts/get` renders each; confirm at least one MCP client surfaces them (note any client that ignores `prompts/list` in `STATUS.md` per §7.4 #13)
 
 ---
 
@@ -60,6 +60,7 @@
 | 3 | code | Step 3 | REVISE | `.reviews/R003-code-step3.md` |
 | 4 | code | Step 3 | REVISE | `.reviews/R004-code-step3.md` |
 | 5 | code | Step 3 | APPROVE | inline |
+| 6 | code | Step 5 | APPROVE | inline |
 
 ---
 
@@ -87,6 +88,8 @@
 | 2026-05-14 19:46 | Review R004 addressed | Removed unrelated TP-016 status diff from the worktree so TP-032 commits stay scoped. |
 | 2026-05-14 19:49 | README updated | Documented the five MCP prompts and client support expectations. |
 | 2026-05-14 19:50 | CHANGELOG updated | Added an Unreleased entry for MCP Prompts. |
+| 2026-05-14 19:55 | Verification suite passed | `make test`, `make build`, `make lint`, and `go test -race ./...` all passed. |
+| 2026-05-14 19:56 | Prompt protocol smoke passed | Go SDK MCP client test `TestProtocolSharedTransportSuite/prompts_list_and_get` verified `prompts/list` shows five and `prompts/get` renders prompts over in-memory and Streamable HTTP transports. |
 
 ---
 
@@ -99,3 +102,4 @@ _None_
 ## Notes
 
 - Targeted `go test ./internal/prompts ./internal/mcp ./internal/app` hit an existing Streamable HTTP shutdown flake in `internal/mcp`; focused prompt/parity rerun passed.
+- Client prompt support: the official Go MCP SDK client surfaces the five prompts through `ListPrompts` and renders them through `GetPrompt` in protocol smoke coverage. No GUI client that ignores `prompts/list` was observed in this lane.
