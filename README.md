@@ -111,6 +111,19 @@ For local development, `icuvisor` can read a local untracked `.env` file contain
 
 `stdio` is the default MCP transport. Streamable HTTP is opt-in with `ICUVISOR_TRANSPORT=http` or `--transport http`; when enabled without a bind override it listens only on `127.0.0.1:8765` and serves MCP at `/mcp`.
 
+```bash
+# stdio remains the default
+./bin/icuvisor
+
+# Streamable HTTP on loopback only: http://127.0.0.1:8765/mcp
+ICUVISOR_TRANSPORT=http ./bin/icuvisor
+
+# Equivalent CLI flags
+./bin/icuvisor --transport http --http-bind 127.0.0.1:8765
+```
+
+Config files may also set `transport` (`stdio` or `http`) and `http_bind` (IP address plus port). Invalid transport names or bind addresses fail at startup.
+
 Only set `ICUVISOR_HTTP_BIND` or `--http-bind` to a LAN address if you deliberately want other machines to reach the server. LAN binding exposes an unauthenticated MCP server: anyone who can connect to that address can call registered tools using the intervals.icu credentials configured for this icuvisor process.
 
 ### Delete/write safety mode

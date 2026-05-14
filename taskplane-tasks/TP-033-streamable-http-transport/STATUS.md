@@ -1,10 +1,10 @@
 # TP-033-streamable-http-transport: TP-033-streamable-http-transport — Status
 
-**Current Step:** Step 5: Docs
+**Current Step:** Step 6: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 13
+**Review Counter:** 15
 **Iteration:** 1
 **Size:** M
 
@@ -47,7 +47,10 @@
 
 ### Step 5: Docs
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
+
+- [x] README: transport selection, default loopback bind, opt-in LAN bind + security note.
+- [x] CHANGELOG `[Unreleased]` entry.
 
 ### Step 6: Verify
 
@@ -117,3 +120,10 @@ _None_
 - Step 4 revised plan after R012: refactor `internal/mcp/protocol_test.go` around a `connectProtocolClient(t, transportKind, opts)` helper with two cases: the current in-memory/stdio-equivalent SDK transport and Streamable HTTP served on `127.0.0.1:0` at `StreamableHTTPPath` using `sdkmcp.StreamableClientTransport`, `MaxRetries: -1`, short HTTP timeouts, session close, context cancellation, and `waitForServerRun`. Run the shared protocol suite across both transports for initialize, `tools/list`, successful calls, missing/unknown tools, sanitized tool errors, `resources/list`, `resources/read`, missing resources, sanitized resource errors, and current `prompts/list` behaviour. Add a parity test that serializes stable SDK results to canonical JSON and compares bytes for initialize server info/capabilities, tools/list, call-tool content/structured content, resources/list/read, and prompts/list, excluding only unavoidable transport/session-specific metadata. Keep the existing raw newline malformed-request test for IO framing and add an HTTP-specific malformed POST to `/mcp` that asserts a client-visible error response without panic or leaked secrets.
 | 2026-05-14 18:39 | Review R013 | code Step 4: APPROVE |
 | 2026-05-14 18:40 | Step 4 complete | Code review R013 approved parity tests. |
+| 2026-05-14 18:41 | Step 5 started | Plan: expand README MCP transport docs with env/flag/config names, loopback default endpoint, and LAN unauthenticated threat note; add a concise CHANGELOG `[Unreleased]` entry for Streamable HTTP. |
+| 2026-05-14 18:42 | README docs updated | Added Streamable HTTP env/flag examples, JSON config fields, default loopback endpoint, invalid config behaviour, and LAN security warning. |
+| 2026-05-14 18:43 | CHANGELOG updated | Added `[Unreleased]` Streamable HTTP transport entry. |
+| 2026-05-14 18:44 | Review R015 | code Step 5: APPROVE |
+| 2026-05-14 18:44 | Step 5 complete | Docs reviewed and approved. |
+| 2026-05-14 18:42 | Review R014 | plan Step 5: APPROVE |
+| 2026-05-14 18:44 | Review R015 | code Step 5: APPROVE |
