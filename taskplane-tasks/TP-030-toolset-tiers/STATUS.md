@@ -1,6 +1,6 @@
 # TP-030-toolset-tiers: TP-030-toolset-tiers — Status
 
-**Current Step:** Step 3: Registry filtering composition
+**Current Step:** Step 4: `icuvisor_list_advanced_capabilities`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
@@ -43,7 +43,11 @@
 
 ### Step 4: `icuvisor_list_advanced_capabilities`
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] Lives in `core`; returns the `full`-only tools with one-line summaries and the exact `ICUVISOR_TOOLSET=full` instruction to enable them
+- [ ] Output is static/derived from the catalog — no upstream calls; terse by default
+- [ ] When the tier is already `full`, it still works and says so
 
 ### Step 5: `_meta` surfacing + docs
 
