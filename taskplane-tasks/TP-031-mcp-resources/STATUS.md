@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 17
+**Review Counter:** 18
 **Iteration:** 2
 **Size:** M
 
@@ -56,6 +56,7 @@
 - [x] Register `icuvisor://athlete-profile` as a dynamic cached resource with documented TTL/staleness behavior
 - [x] Cover resource list/read, cache refresh, context cancellation, and shape parity with focused tests
 - [x] R017: Make athlete-profile cache refresh waiters context-aware and test canceled reads behind an in-flight refresh
+- [ ] R018: Share failed refresh results with concurrent waiters to avoid retry amplification
 
 ### Step 6: Trim inline tool descriptions
 
@@ -87,6 +88,7 @@
 | R014 | Code | 4 | REVISE | .reviews/R014-code-step4.md |
 | R016 | Plan | 5 | APPROVE | .reviews/R016-plan-step5.md |
 | R017 | Code | 5 | REVISE | .reviews/R017-code-step5.md |
+| R018 | Code | 5 | REVISE | .reviews/R018-code-step5.md |
 
 ---
 
@@ -190,5 +192,11 @@ _None_
 
 - Replace the athlete-profile resource cache mutex-as-refresh-lock with context-aware coordination so a read canceled while another refresh is in flight returns promptly instead of blocking behind `sync.Mutex.Lock`.
 - Add a focused test using a blocked refresh and a second canceled read to prove the second read returns `context.Canceled` without waiting for the first refresh to unblock.
+
+### R018 revision notes
+
+- Store the in-flight refresh result/error so waiters that were already queued behind a failed cold/expired refresh return that same failure instead of sequentially starting their own upstream calls.
+- Add a focused test with multiple concurrent waiters behind a blocked failing refresh and assert one upstream call plus failure results for all waiters.
 | 2026-05-14 16:13 | Review R016 | plan Step 5: APPROVE |
 | 2026-05-14 16:26 | Review R017 | code Step 5: REVISE |
+| 2026-05-14 16:33 | Review R018 | code Step 5: REVISE |
