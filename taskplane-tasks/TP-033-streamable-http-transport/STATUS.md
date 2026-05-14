@@ -1,10 +1,10 @@
 # TP-033-streamable-http-transport: TP-033-streamable-http-transport — Status
 
-**Current Step:** Step 4: Parity tests
+**Current Step:** Step 5: Docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 9
 **Iteration:** 1
 **Size:** M
 
@@ -36,14 +36,14 @@
 
 ### Step 4: Parity tests
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] The same protocol tests that cover stdio (initialize, tools/list, tool calls, resources, prompts, malformed requests, sanitized errors) run against the HTTP transport.
-- [ ] Handler behaviour is byte-identical across transports — assert this where practical.
+- [x] The same protocol tests that cover stdio (initialize, tools/list, tool calls, resources, prompts, malformed requests, sanitized errors) run against the HTTP transport.
+- [x] Handler behaviour is byte-identical across transports — assert this where practical.
 
 ### Step 5: Docs
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] README: transport selection, default loopback bind, opt-in LAN bind + security note.
 - [ ] CHANGELOG `[Unreleased]` entry.
@@ -71,6 +71,8 @@
 | R005 | code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
 | R006 | plan | 3 | APPROVE | `.reviews/R006-plan-step3.md` |
 | R007 | code | 3 | APPROVE | `.reviews/R007-code-step3.md` |
+| R008 | plan | 4 | APPROVE | `.reviews/R008-plan-step4.md` |
+| R009 | code | 4 | APPROVE | `.reviews/R009-code-step4.md` |
 
 ---
 
@@ -109,6 +111,12 @@
 | 2026-05-14 20:06 | Step 3 checkpoint | README LAN-bind threat model audited. |
 | 2026-05-14 20:06 | Review R007 | code Step 3: APPROVE |
 | 2026-05-14 20:07 | Step 3 complete | Security posture audited and approved; Step 4 started. |
+| 2026-05-14 20:08 | Review R008 | plan Step 4: APPROVE |
+| 2026-05-14 20:09 | Step 4 checkpoint | Shared protocol suite audited across in-memory and Streamable HTTP; `go test ./internal/mcp` passed. |
+| 2026-05-14 20:10 | Step 4 checkpoint | `TestProtocolTransportParity` byte-comparison audited for stable handler responses across transports. |
+| 2026-05-14 20:11 | Review R009 | code Step 4: APPROVE |
+| 2026-05-14 20:12 | Step 4 verify | `go test ./internal/mcp -run 'TestProtocol(SharedTransportSuite|TransportParity|MalformedHTTPPost)$' -count=1` passed. |
+| 2026-05-14 20:12 | Step 4 complete | Parity tests audited and approved; Step 5 started. |
 
 ---
 
@@ -128,3 +136,5 @@ _None_
 - Step 2 lifecycle plan: `RunStreamableHTTP` owns `net.Listen`, `ServeStreamableHTTP` accepts an injected listener for tests, uses `http.Server` with request contexts rooted in the worker context, treats `http.ErrServerClosed` as expected, and on cancellation calls bounded `Shutdown` followed by `Close` if needed. Tests cover app transport dispatch, HTTP initialize smoke, and cancellation closing the listener.
 - Step 3 plan: verify the default HTTP bind remains `127.0.0.1:8765` and is loopback via `internal/config` tests; keep non-loopback binds explicit and WARN-only. Audit HTTP logs for startup/listen/shutdown/malformed request paths to ensure no API keys, tokens, raw athlete IDs, or request payloads are logged.
 - Step 3 docs plan: README must state the LAN-bind threat model clearly: Streamable HTTP has no auth in this task, so anyone on the LAN who can reach the bind address can invoke registered tools with the configured intervals.icu credentials.
+- Step 4 plan: audit the shared protocol suite in `internal/mcp/protocol_test.go`, where `connectProtocolClient` runs scenarios against in-memory/stdio-equivalent SDK transport and Streamable HTTP. Coverage must include initialize, tools/list, successful tool call, missing tool, sanitized tool errors, resources list/read/not-found/sanitized errors, prompts list/get, and malformed HTTP requests.
+- Step 4 parity plan: confirm `TestProtocolTransportParity` serializes stable SDK results to canonical JSON and byte-compares handler outputs across in-memory and Streamable HTTP transports where practical.
