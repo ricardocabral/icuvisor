@@ -300,7 +300,7 @@ func (r *safeResourceRegistrar) AddResource(resource resources.Resource) (err er
 				return nil, err
 			}
 			r.logger.Error("resource handler failed", "resource_uri", resource.URI, "error", err)
-			return nil, fmt.Errorf(genericResourceErrorMessage)
+			return nil, errors.New(genericResourceErrorMessage)
 		}
 		return &sdkmcp.ReadResourceResult{Contents: []*sdkmcp.ResourceContents{{
 			URI:      stringOrDefault(result.URI, req.Params.URI),

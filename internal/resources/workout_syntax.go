@@ -45,7 +45,31 @@ func WorkoutSyntaxMarkdown() (string, error) {
 	b.WriteString("- Repeat blocks use an `Nx` header and two-space-indented child steps.\n")
 	b.WriteString("- Numeric ranges use `low-high`; zones use `Zlow-Zhigh`.\n\n")
 
-	b.WriteString("## Supported features\n")
+	b.WriteString("## Distance units\n\n")
+	for _, unit := range workoutdoc.WorkoutDistanceUnitSyntax() {
+		b.WriteString("- `")
+		b.WriteString(unit.Key)
+		b.WriteString("`: ")
+		b.WriteString(unit.Description)
+		b.WriteString(" Aliases: `")
+		b.WriteString(strings.Join(unit.Aliases, "`, `"))
+		b.WriteString("`; canonical suffix: `")
+		b.WriteString(unit.Canonical)
+		b.WriteString("`.\n")
+	}
+	b.WriteString("\n## Primary target units\n\n")
+	for _, unit := range workoutdoc.WorkoutTargetUnitSyntax() {
+		b.WriteString("- `")
+		b.WriteString(unit.Key)
+		b.WriteString("` (`")
+		b.WriteString(unit.Family)
+		b.WriteString("`): ")
+		b.WriteString(unit.Description)
+		b.WriteString(" Units: `")
+		b.WriteString(strings.Join(unit.Units, "`, `"))
+		b.WriteString("`.\n")
+	}
+	b.WriteString("\n## Supported features\n")
 	for _, feature := range spec.Features {
 		if feature.Key == "" || feature.Title == "" {
 			return "", fmt.Errorf("workout syntax feature is missing key/title")

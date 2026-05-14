@@ -8,6 +8,26 @@ This resource documents the Intervals.icu structured-workout DSL emitted by icuv
 - Repeat blocks use an `Nx` header and two-space-indented child steps.
 - Numeric ranges use `low-high`; zones use `Zlow-Zhigh`.
 
+## Distance units
+
+- `distance_mtr`: Meters serialize with the canonical `mtr` suffix. Aliases: `m`, `meter`, `meters`, `metre`, `metres`, `mtr`; canonical suffix: `mtr`.
+- `distance_km`: Kilometers serialize with the canonical `km` suffix. Aliases: `km`, `kilometer`, `kilometers`, `kilometre`, `kilometres`; canonical suffix: `km`.
+- `distance_mi`: Miles serialize with the canonical `mi` suffix. Aliases: `mi`, `mile`, `miles`; canonical suffix: `mi`.
+
+## Primary target units
+
+- `power_percent_ftp` (`power`): Power as percent FTP; blank units default to percent FTP. Units: ``, `PERCENT_FTP`, `%FTP`.
+- `power_watts` (`power`): Absolute power in watts. Units: `WATTS`, `WATT`, `W`.
+- `power_zone` (`power`): Power zones as `Zn` or `Zlow-Zhigh`. Units: `ZONE`, `POWER_ZONE`.
+- `hr_lthr` (`hr`): Heart rate as percent lactate-threshold HR. Units: `PERCENT_LTHR`, `%LTHR`, `LTHR`.
+- `hr_percent` (`hr`): Heart rate as percent max HR. Units: `PERCENT_HR`, `PERCENT_MAX_HR`, `%HR`, `HR`.
+- `hr_bpm` (`hr`): Heart rate in beats per minute. Units: `BPM`.
+- `hr_zone` (`hr`): Heart-rate zones. Units: `ZONE`, `HR_ZONE`.
+- `pace_percent` (`pace`): Pace as percent threshold pace; blank units default to percent threshold pace. Units: ``, `PERCENT_THRESHOLD`, `PERCENT_THRESHOLD_PACE`, `PERCENT_PACE`, `%PACE`.
+- `pace_zone` (`pace`): Pace zones. Units: `ZONE`, `PACE_ZONE`.
+- `pace_numeric` (`pace`): Numeric PACE values as currently emitted by the serializer. Units: `PACE`.
+- `rpe` (`rpe`): Rating of perceived exertion scalar or range. Units: ``, `RPE`.
+
 ## Supported features
 
 ### Duration steps

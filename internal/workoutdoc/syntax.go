@@ -27,6 +27,59 @@ type SyntaxLimitation struct {
 	Description string
 }
 
+// DistanceUnitSyntax describes distance units accepted by Serialize.
+type DistanceUnitSyntax struct {
+	Key         string
+	Canonical   string
+	Aliases     []string
+	Description string
+}
+
+// TargetUnitSyntax describes a target unit form accepted by Serialize.
+type TargetUnitSyntax struct {
+	Key         string
+	Family      string
+	Units       []string
+	Prefix      string
+	Suffix      string
+	Zone        bool
+	Description string
+}
+
+var workoutDistanceUnits = []DistanceUnitSyntax{
+	{Key: "distance_mtr", Canonical: "mtr", Aliases: []string{"m", "meter", "meters", "metre", "metres", "mtr"}, Description: "Meters serialize with the canonical `mtr` suffix."},
+	{Key: "distance_km", Canonical: "km", Aliases: []string{"km", "kilometer", "kilometers", "kilometre", "kilometres"}, Description: "Kilometers serialize with the canonical `km` suffix."},
+	{Key: "distance_mi", Canonical: "mi", Aliases: []string{"mi", "mile", "miles"}, Description: "Miles serialize with the canonical `mi` suffix."},
+}
+
+var workoutTargetUnits = []TargetUnitSyntax{
+	{Key: "power_percent_ftp", Family: "power", Units: []string{"", "PERCENT_FTP", "%FTP"}, Suffix: "%", Description: "Power as percent FTP; blank units default to percent FTP."},
+	{Key: "power_watts", Family: "power", Units: []string{"WATTS", "WATT", "W"}, Suffix: "w", Description: "Absolute power in watts."},
+	{Key: "power_zone", Family: "power", Units: []string{"ZONE", "POWER_ZONE"}, Zone: true, Description: "Power zones as `Zn` or `Zlow-Zhigh`."},
+	{Key: "hr_lthr", Family: "hr", Units: []string{"PERCENT_LTHR", "%LTHR", "LTHR"}, Suffix: "% LTHR", Description: "Heart rate as percent lactate-threshold HR."},
+	{Key: "hr_percent", Family: "hr", Units: []string{"PERCENT_HR", "PERCENT_MAX_HR", "%HR", "HR"}, Suffix: "% HR", Description: "Heart rate as percent max HR."},
+	{Key: "hr_bpm", Family: "hr", Units: []string{"BPM"}, Suffix: "bpm", Description: "Heart rate in beats per minute."},
+	{Key: "hr_zone", Family: "hr", Units: []string{"ZONE", "HR_ZONE"}, Suffix: " HR", Zone: true, Description: "Heart-rate zones."},
+	{Key: "pace_percent", Family: "pace", Units: []string{"", "PERCENT_THRESHOLD", "PERCENT_THRESHOLD_PACE", "PERCENT_PACE", "%PACE"}, Suffix: "% Pace", Description: "Pace as percent threshold pace; blank units default to percent threshold pace."},
+	{Key: "pace_zone", Family: "pace", Units: []string{"ZONE", "PACE_ZONE"}, Suffix: " Pace", Zone: true, Description: "Pace zones."},
+	{Key: "pace_numeric", Family: "pace", Units: []string{"PACE"}, Suffix: " Pace", Description: "Numeric PACE values as currently emitted by the serializer."},
+	{Key: "rpe", Family: "rpe", Units: []string{"", "RPE"}, Prefix: "RPE ", Description: "Rating of perceived exertion scalar or range."},
+}
+
+// WorkoutDistanceUnitSyntax returns distance units accepted by Serialize.
+func WorkoutDistanceUnitSyntax() []DistanceUnitSyntax {
+	out := make([]DistanceUnitSyntax, len(workoutDistanceUnits))
+	copy(out, workoutDistanceUnits)
+	return out
+}
+
+// WorkoutTargetUnitSyntax returns primary target unit forms accepted by Serialize.
+func WorkoutTargetUnitSyntax() []TargetUnitSyntax {
+	out := make([]TargetUnitSyntax, len(workoutTargetUnits))
+	copy(out, workoutTargetUnits)
+	return out
+}
+
 // WorkoutSyntaxSpec returns the workout DSL syntax supported by this package.
 func WorkoutSyntaxSpec() SyntaxSpec {
 	return SyntaxSpec{

@@ -34,6 +34,39 @@ func TestWorkoutSyntaxMarkdownGolden(t *testing.T) {
 	}
 }
 
+func TestWorkoutSyntaxUnitMatricesAreRendered(t *testing.T) {
+	t.Parallel()
+
+	markdown, err := WorkoutSyntaxMarkdown()
+	if err != nil {
+		t.Fatalf("WorkoutSyntaxMarkdown() error = %v", err)
+	}
+	for _, unit := range workoutdoc.WorkoutDistanceUnitSyntax() {
+		for _, want := range []string{"`" + unit.Key + "`", "`" + unit.Canonical + "`"} {
+			if !strings.Contains(markdown, want) {
+				t.Fatalf("markdown missing distance unit marker %q", want)
+			}
+		}
+		for _, alias := range unit.Aliases {
+			if !strings.Contains(markdown, "`"+alias+"`") {
+				t.Fatalf("markdown missing distance unit alias %q for %s", alias, unit.Key)
+			}
+		}
+	}
+	for _, unit := range workoutdoc.WorkoutTargetUnitSyntax() {
+		for _, want := range []string{"`" + unit.Key + "`", "`" + unit.Family + "`"} {
+			if !strings.Contains(markdown, want) {
+				t.Fatalf("markdown missing target unit marker %q", want)
+			}
+		}
+		for _, alias := range unit.Units {
+			if !strings.Contains(markdown, "`"+alias+"`") {
+				t.Fatalf("markdown missing target unit alias %q for %s", alias, unit.Key)
+			}
+		}
+	}
+}
+
 func TestWorkoutSyntaxSpecExamplesAreRenderedFromSerializer(t *testing.T) {
 	t.Parallel()
 

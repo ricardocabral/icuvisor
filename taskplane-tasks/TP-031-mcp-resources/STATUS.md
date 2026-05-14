@@ -25,8 +25,8 @@
 - [x] Register `icuvisor://workout-syntax` in the default resource registry
 - [x] Content derived from the `internal/workoutdoc` grammar — do not hand-author a second copy that can drift
 - [x] Covers every step/target type the serializer supports; a test asserts coverage parity with `workoutdoc`
-- [ ] R006: Make the parity source non-self-referential by driving serializer-supported forms/units from shared `workoutdoc` data used by docs/tests
-- [ ] R006: Fix resource-handler lint issue from `fmt.Errorf(genericResourceErrorMessage)`
+- [x] R006: Make the parity source non-self-referential by driving serializer-supported forms/units from shared `workoutdoc` data used by docs/tests
+- [x] R006: Fix resource-handler lint issue from `fmt.Errorf(genericResourceErrorMessage)`
 
 ### Step 3: `icuvisor://event-categories`
 
