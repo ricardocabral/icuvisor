@@ -1,6 +1,6 @@
 # TP-031-mcp-resources: TP-031-mcp-resources — Status
 
-**Current Step:** Step 6: Trim inline tool descriptions
+**Current Step:** Step 7: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
@@ -69,7 +69,10 @@
 
 ### Step 7: Verify
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
+- [ ] Manual: `resources/list` shows four entries; `resources/read` returns each; confirm at least one MCP client renders them (note any client that ignores `resources/list` in `STATUS.md` per §7.4 #13)
 
 ---
 
