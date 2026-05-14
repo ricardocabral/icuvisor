@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- KR5 benchmark harness, shared prompt set, redacted fixtures, and methodology/results documentation comparing icuvisor core/full against the hhopke and mvilanova Python reference servers.
 - MCP Prompts for curated training analysis, recovery check, weekly planning, race-week taper, and coach roster triage workflows.
 - MCP Resources for long-form reference content: `icuvisor://workout-syntax`, `icuvisor://event-categories`, `icuvisor://custom-item-schemas`, and a dynamic cached `icuvisor://athlete-profile`, with inline tool descriptions trimmed to point at resource URIs.
 - `ICUVISOR_TOOLSET` with default `core` and opt-in `full` tool catalog tiers, including `icuvisor_list_advanced_capabilities` for discovering hidden tools and `_meta.toolset` response metadata.

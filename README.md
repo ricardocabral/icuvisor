@@ -185,6 +185,8 @@ make snapshot    # local goreleaser snapshot
 make help        # list all targets
 ```
 
+The KR5 token-efficiency benchmark harness and current Python-reference results are documented in [`docs/kr5-benchmark.md`](docs/kr5-benchmark.md).
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
 
 ## Security
