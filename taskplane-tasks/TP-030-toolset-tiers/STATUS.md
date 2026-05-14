@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 1
 **Size:** M
 
@@ -32,7 +32,7 @@
 
 ### Step 3: Registry filtering composition
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Propagate the already-resolved active toolset from `Config.Toolset`/`ServerInfo.Toolset` into `mcp.Options`/`safeRegistrar` without re-reading env or adding a tool-call override; empty defaults to `core`
 - [x] Registration filters on tier **and** delete-mode after validation; `core` registers only core tools, `full` registers core+full tools, and a tool appears only when both gates allow it
@@ -67,6 +67,7 @@
 | R006 | code | 2 | APPROVE | `.reviews/R006-code-step2.md` |
 | R007 | plan | 3 | REVISE | `.reviews/R007-plan-step3.md` |
 | R008 | plan | 3 | APPROVE | `.reviews/R008-plan-step3.md` |
+| R009 | code | 3 | APPROVE | `.reviews/R009-code-step3.md` |
 
 ---
 
@@ -122,9 +123,11 @@ Skip-count semantics: evaluate the toolset gate and capability gate independentl
 Composition test matrix: synthetic tools cover core read, core write, full read, full write, and full delete. Expected visible sets: `core+none` → core read only; `core+safe` → core read/core write; `core+full` and zero-value active toolset + full delete mode → core read/core write; `full+none` → core read/full read only; `full+safe` → core read/core write/full read/full write; `full+full` → all synthetic tools. Protocol coverage must show a hidden full-only tool is absent from `tools/list` under core and cannot be called as a registered tool. Existing test-only tools are marked core only when the test needs default visibility; otherwise tests set active toolset full deliberately.
 
 - R008 approved the revised Step 3 plan and suggested adding an explicit zero-value `mcp.Options.Toolset` defaults-to-core assertion, which was folded into the composition matrix.
+- R009 approved the Step 3 implementation.
 | 2026-05-14 12:40 | Review R003 | code Step 1: APPROVE |
 | 2026-05-14 12:45 | Review R004 | plan Step 2: REVISE |
 | 2026-05-14 12:50 | Review R005 | plan Step 2: APPROVE |
 | 2026-05-14 12:59 | Review R006 | code Step 2: APPROVE |
 | 2026-05-14 13:04 | Review R007 | plan Step 3: REVISE |
 | 2026-05-14 13:07 | Review R008 | plan Step 3: APPROVE |
+| 2026-05-14 13:16 | Review R009 | code Step 3: APPROVE |
