@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 21
+**Review Counter:** 22
 **Iteration:** 2
 **Size:** M
 
@@ -61,7 +61,7 @@
 
 ### Step 6: Trim inline tool descriptions
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Remove long-form schema prose from tool descriptions now covered by a resource; replace with a one-line `see icuvisor://...` pointer
 - [x] Confirm the schema-stability CI guard (TP-015) still passes — description trims must not break confusability/first-sentence checks
@@ -97,6 +97,7 @@
 | R019 | Code | 5 | REVISE | .reviews/R019-code-step5.md |
 | R020 | Code | 5 | APPROVE | inline |
 | R021 | Plan | 6 | APPROVE | .reviews/R021-plan-step6.md |
+| R022 | Code | 6 | APPROVE | inline |
 
 ---
 
@@ -215,3 +216,4 @@ _None_
 | 2026-05-14 16:40 | Review R019 | code Step 5: REVISE |
 | 2026-05-14 16:47 | Review R020 | code Step 5: APPROVE |
 | 2026-05-14 16:52 | Review R021 | plan Step 6: APPROVE |
+| 2026-05-14 17:00 | Review R022 | code Step 6: APPROVE |
