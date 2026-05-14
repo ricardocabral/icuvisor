@@ -1,6 +1,6 @@
 # TP-031-mcp-resources: TP-031-mcp-resources — Status
 
-**Current Step:** Step 2: `icuvisor://workout-syntax`
+**Current Step:** Step 3: `icuvisor://event-categories`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
@@ -30,7 +30,11 @@
 
 ### Step 3: `icuvisor://event-categories`
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] Register `icuvisor://event-categories` in the default resource registry
+- [ ] Full event-category enum with one-line descriptions, sourced from the same enum the event tools use
+- [ ] Static content; golden-file locked
 
 ### Step 4: `icuvisor://custom-item-schemas`
 
