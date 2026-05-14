@@ -1,18 +1,22 @@
 # TP-031-mcp-resources: TP-031-mcp-resources — Status
 
 **Current Step:** Step 1: Resource registration plumbing
-**Status:** ⏳ Not started
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** M
 
 ---
 
 ### Step 1: Resource registration plumbing
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] Wire `resources/list` and `resources/read` into the MCP server via the Go SDK
+- [ ] Define a small internal interface so each resource is one greppable registration, mirroring the tool registry pattern
+- [ ] Decide static vs dynamic per resource; document in `STATUS.md`
 
 ### Step 2: `icuvisor://workout-syntax`
 
@@ -59,6 +63,8 @@
 | Timestamp  | Action      | Outcome                          |
 | ---------- | ----------- | -------------------------------- |
 | 2026-05-14 | Task staged | Scaffolded from ROADMAP.md v0.4   |
+| 2026-05-14 14:09 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-14 14:09 | Step 1 started | Resource registration plumbing |
 
 ---
 
