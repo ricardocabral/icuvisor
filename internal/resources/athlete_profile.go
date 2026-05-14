@@ -40,10 +40,12 @@ type athleteProfileReader struct {
 	ttl              time.Duration
 	now              func() time.Time
 
-	mu        sync.Mutex
-	cached    Result
-	expiresAt time.Time
-	hasCached bool
+	mu         sync.Mutex
+	cached     Result
+	expiresAt  time.Time
+	hasCached  bool
+	refreshing bool
+	waitCh     chan struct{}
 }
 
 // AthleteProfileResource returns the dynamic cached athlete-profile resource definition.
@@ -86,17 +88,50 @@ func newAthleteProfileReader(opts athleteProfileOptions) *athleteProfileReader {
 }
 
 func (r *athleteProfileReader) Read(ctx context.Context, _ Request) (Result, error) {
+	for {
+		if err := ctx.Err(); err != nil {
+			return Result{}, err
+		}
+		now := r.now()
+		r.mu.Lock()
+		if r.hasCached && now.Before(r.expiresAt) {
+			result := r.cached
+			r.mu.Unlock()
+			return result, nil
+		}
+		if r.refreshing {
+			waitCh := r.waitCh
+			r.mu.Unlock()
+			select {
+			case <-ctx.Done():
+				return Result{}, ctx.Err()
+			case <-waitCh:
+				continue
+			}
+		}
+		r.refreshing = true
+		r.waitCh = make(chan struct{})
+		waitCh := r.waitCh
+		r.mu.Unlock()
+
+		result, err := r.refresh(ctx)
+
+		r.mu.Lock()
+		if err == nil {
+			r.cached = result
+			r.expiresAt = now.Add(r.ttl)
+			r.hasCached = true
+		}
+		r.refreshing = false
+		close(waitCh)
+		r.mu.Unlock()
+		return result, err
+	}
+}
+
+func (r *athleteProfileReader) refresh(ctx context.Context) (Result, error) {
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
-	}
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if err := ctx.Err(); err != nil {
-		return Result{}, err
-	}
-	now := r.now()
-	if r.hasCached && now.Before(r.expiresAt) {
-		return r.cached, nil
 	}
 	if r.client == nil {
 		return Result{}, errors.New("could not fetch athlete profile; check intervals.icu credentials and athlete ID")
@@ -119,9 +154,5 @@ func (r *athleteProfileReader) Read(ctx context.Context, _ Request) (Result, err
 	if err != nil {
 		return Result{}, fmt.Errorf("encoding athlete profile resource: %w", err)
 	}
-	result := Result{URI: AthleteProfileURI, MIMEType: AthleteProfileMIMEType, Text: string(text)}
-	r.cached = result
-	r.expiresAt = now.Add(r.ttl)
-	r.hasCached = true
-	return result, nil
+	return Result{URI: AthleteProfileURI, MIMEType: AthleteProfileMIMEType, Text: string(text)}, nil
 }

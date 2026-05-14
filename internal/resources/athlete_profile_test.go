@@ -134,6 +134,75 @@ func TestAthleteProfileResourceHonorsCanceledContext(t *testing.T) {
 	}
 }
 
+func TestAthleteProfileResourceCanceledReadDoesNotWaitForInFlightRefresh(t *testing.T) {
+	client := &blockingAthleteProfileClient{
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+		profile: resourceTestProfile("i12345", "Blocked Athlete"),
+	}
+	resource := AthleteProfileResource(client, ResourceOptions{Version: "test", TimezoneFallback: "UTC"})
+	firstDone := make(chan error, 1)
+	go func() {
+		_, err := resource.Handler(context.Background(), Request{URI: AthleteProfileURI})
+		firstDone <- err
+	}()
+
+	select {
+	case <-client.started:
+	case <-time.After(time.Second):
+		t.Fatal("first refresh did not start")
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	secondDone := make(chan error, 1)
+	go func() {
+		_, err := resource.Handler(ctx, Request{URI: AthleteProfileURI})
+		secondDone <- err
+	}()
+	time.Sleep(10 * time.Millisecond)
+	cancel()
+
+	select {
+	case err := <-secondDone:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("second read error = %v, want context.Canceled", err)
+		}
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("second canceled read waited for in-flight refresh")
+	}
+
+	close(client.release)
+	select {
+	case err := <-firstDone:
+		if err != nil {
+			t.Fatalf("first read error = %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("first refresh did not finish")
+	}
+	if client.calls != 1 {
+		t.Fatalf("client calls = %d, want one shared in-flight refresh", client.calls)
+	}
+}
+
+type blockingAthleteProfileClient struct {
+	started chan struct{}
+	release chan struct{}
+	profile intervals.AthleteWithSportSettings
+	calls   int
+}
+
+func (c *blockingAthleteProfileClient) GetAthleteProfile(ctx context.Context) (intervals.AthleteWithSportSettings, error) {
+	c.calls++
+	close(c.started)
+	select {
+	case <-ctx.Done():
+		return intervals.AthleteWithSportSettings{}, ctx.Err()
+	case <-c.release:
+		return c.profile, nil
+	}
+}
+
 func resourceTestProfile(id string, name string) intervals.AthleteWithSportSettings {
 	return intervals.AthleteWithSportSettings{
 		ID:             id,
