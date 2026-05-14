@@ -17,6 +17,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/resources"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
@@ -416,6 +417,65 @@ func TestServeStreamableHTTPInitializesClient(t *testing.T) {
 	session.Close()
 	cancel()
 	waitForServerRun(t, runDone)
+}
+
+func TestServeStreamableHTTPLogsDoNotLeakConfigOrPayload(t *testing.T) {
+	t.Parallel()
+
+	logs := &safeLogBuffer{}
+	logger := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("net.Listen() error = %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	server, err := NewServer(ctx, Options{
+		Version: "v1.2.3",
+		Logger:  logger,
+		Config: config.Config{
+			APIKey:    "sentinel-api-key",
+			AthleteID: "i12345",
+		},
+	})
+	if err != nil {
+		cancel()
+		listener.Close()
+		t.Fatalf("NewServer() error = %v", err)
+	}
+	runDone := make(chan error, 1)
+	go func() {
+		runDone <- server.ServeStreamableHTTP(ctx, listener)
+	}()
+	waitForLog(t, logs, "server started listening")
+
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://"+listener.Addr().String()+StreamableHTTPPath, strings.NewReader("not json sentinel-api-key i12345"))
+	if err != nil {
+		cancel()
+		waitForServerRun(t, runDone)
+		t.Fatalf("NewRequestWithContext() error = %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	response, err := (&http.Client{Timeout: time.Second}).Do(request)
+	if err != nil {
+		cancel()
+		waitForServerRun(t, runDone)
+		t.Fatalf("malformed HTTP request error = %v", err)
+	}
+	response.Body.Close()
+
+	cancel()
+	waitForServerRun(t, runDone)
+	out := logs.String()
+	for _, want := range []string{"server started listening", "server session ended"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("logs %q missing %q", out, want)
+		}
+	}
+	for _, forbidden := range []string{"sentinel-api-key", "i12345"} {
+		if strings.Contains(out, forbidden) {
+			t.Fatalf("logs leaked %q: %q", forbidden, out)
+		}
+	}
 }
 
 func TestServeStreamableHTTPCancelClosesListener(t *testing.T) {

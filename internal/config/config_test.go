@@ -379,6 +379,27 @@ func TestLoadTransportAndHTTPBindSelection(t *testing.T) {
 	if HTTPBindAddressIsLoopback(cfg.HTTPBindAddress) {
 		t.Fatalf("HTTPBindAddressIsLoopback(%q) = true, want false", cfg.HTTPBindAddress)
 	}
+
+	cfg, err = Load(context.Background(), Options{
+		DotEnvPath: dir + "/missing.env",
+		Env: map[string]string{
+			EnvAPIKey:    "env-key",
+			EnvAthleteID: "333",
+			EnvTransport: "http",
+		},
+	})
+	if err != nil {
+		t.Fatalf("Load() HTTP default bind error = %v", err)
+	}
+	if cfg.Transport != TransportHTTP {
+		t.Fatalf("Transport = %q, want http", cfg.Transport)
+	}
+	if cfg.HTTPBindAddress != DefaultHTTPBindAddress {
+		t.Fatalf("HTTPBindAddress = %q, want default %q", cfg.HTTPBindAddress, DefaultHTTPBindAddress)
+	}
+	if !HTTPBindAddressIsLoopback(cfg.HTTPBindAddress) {
+		t.Fatalf("HTTP-mode default bind %q is not loopback", cfg.HTTPBindAddress)
+	}
 }
 
 func TestValidateHTTPBindAddress(t *testing.T) {

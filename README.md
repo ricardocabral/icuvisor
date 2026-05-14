@@ -107,6 +107,12 @@ export INTERVALS_ICU_ATHLETE_ID="i12345"
 
 For local development, `icuvisor` can read a local untracked `.env` file containing `INTERVALS_ICU_API_KEY` and `INTERVALS_ICU_ATHLETE_ID`. Do not commit real API keys. For MCP client config, use process env vars or pass a JSON file with `--config /path/to/icuvisor.json` using fields `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout`.
 
+### MCP transport
+
+`stdio` is the default MCP transport. Streamable HTTP is opt-in with `ICUVISOR_TRANSPORT=http` or `--transport http`; when enabled without a bind override it listens only on `127.0.0.1:8765` and serves MCP at `/mcp`.
+
+Only set `ICUVISOR_HTTP_BIND` or `--http-bind` to a LAN address if you deliberately want other machines to reach the server. LAN binding exposes an unauthenticated MCP server: anyone who can connect to that address can call registered tools using the intervals.icu credentials configured for this icuvisor process.
+
 ### Delete/write safety mode
 
 `ICUVISOR_DELETE_MODE` is read once at startup and controls which write-capable tools are registered with the MCP server:

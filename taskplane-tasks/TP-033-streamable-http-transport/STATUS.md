@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 2
 **Size:** M
 
@@ -31,10 +31,10 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Default bind is loopback only; confirm with a test that the default config never produces a non-loopback listener.
-- [ ] No API keys or athlete IDs in HTTP logs; reuse the existing redaction conventions.
-- [ ] Document the LAN-bind threat model briefly in README (anyone on the LAN can reach the server with no auth — opt in deliberately).
-- [ ] Add a race-safe HTTP log redaction test that exercises startup/listen/shutdown and a malformed request without leaking API keys or athlete IDs.
+- [x] Default bind is loopback only; confirm with a test that the default config never produces a non-loopback listener.
+- [x] No API keys or athlete IDs in HTTP logs; reuse the existing redaction conventions.
+- [x] Document the LAN-bind threat model briefly in README (anyone on the LAN can reach the server with no auth — opt in deliberately).
+- [x] Add a race-safe HTTP log redaction test that exercises startup/listen/shutdown and a malformed request without leaking API keys or athlete IDs.
 
 ### Step 4: Parity tests
 
@@ -102,3 +102,4 @@ _None_
 | 2026-05-14 17:49 | Review R007 | code Step 2: APPROVE |
 | 2026-05-14 17:53 | Review R008 | plan Step 3: REVISE |
 - Step 3 revised plan after R008: extend `internal/config` coverage for `ICUVISOR_TRANSPORT=http` with no bind override and assert `DefaultHTTPBindAddress` is the canonical value, parses as loopback, and is not wildcard/non-loopback without starting a fixed port. Extend HTTP logging tests using the synchronized log-buffer pattern, with sentinel API key and raw athlete ID values, covering startup, non-loopback warning, listener log, shutdown, and one malformed HTTP request; assert neither sentinel appears. Do not add HTTP request/response/header/body access logging, and keep SDK Streamable HTTP logger use limited to lifecycle/spec-level messages. Update the README transport/configuration section to state that default Streamable HTTP is loopback-only and that `ICUVISOR_HTTP_BIND`/`--http-bind` to a LAN address exposes an unauthenticated MCP server whose reachable clients can invoke tools using the configured intervals.icu credentials.
+| 2026-05-14 17:56 | Review R009 | plan Step 3: APPROVE |
