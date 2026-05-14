@@ -7,7 +7,7 @@
       "command": ["./bin/icuvisor"],
       "env": {
         "INTERVALS_ICU_API_KEY": "set-outside-repo",
-        "INTERVALS_ICU_ATHLETE_ID": "i12345",
+        "INTERVALS_ICU_ATHLETE_ID": "[ATHLETE]",
         "ICUVISOR_TOOLSET": "core",
         "ICUVISOR_DELETE_MODE": "safe"
       },

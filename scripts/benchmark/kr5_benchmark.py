@@ -180,6 +180,15 @@ def load_prompt_set(path: Path) -> dict[str, Any]:
     return data
 
 
+def unavailable_result(server_id: str, intent: str) -> dict[str, Any]:
+    return {
+        "isError": True,
+        "content": [
+            {"type": "text", "text": f"intent unavailable on {server_id}: {intent}"}
+        ],
+    }
+
+
 def load_fixture(path: Path) -> ServerMeasurement:
     data = json.loads(path.read_text(encoding="utf-8"))
     calls = [
@@ -235,13 +244,17 @@ def load_live_measurements(config_path: Path) -> list[ServerMeasurement]:
             tools_result = client.request("tools/list")
             calls: list[ToolCall] = []
             for item in server.get("calls", []):
-                params = {"name": item["tool"], "arguments": item.get("arguments", {})}
-                result = client.request("tools/call", params)
+                tool = item["tool"]
+                if tool.startswith("unavailable:"):
+                    result = unavailable_result(server["id"], item["intent"])
+                else:
+                    params = {"name": tool, "arguments": item.get("arguments", {})}
+                    result = client.request("tools/call", params)
                 calls.append(
                     ToolCall(
                         prompt_id=item["prompt_id"],
                         intent=item["intent"],
-                        tool=item["tool"],
+                        tool=tool,
                         arguments=item.get("arguments", {}),
                         result=result,
                     )
@@ -321,7 +334,7 @@ def audited_response_bytes(result: dict[str, Any]) -> int | None:
         payload = json.loads(first["text"])
     except json.JSONDecodeError:
         return None
-    audit = payload.get("redaction_audit")
+    audit = payload.pop("redaction_audit", None)
     if not isinstance(audit, dict):
         return None
     raw_bytes = audit.get("raw_response_bytes")
@@ -334,8 +347,21 @@ def audited_response_bytes(result: dict[str, Any]) -> int | None:
         raise BenchmarkError(
             "redaction_audit.redacted_response_bytes must be a positive integer"
         )
-    tolerance = max(1, int(raw_bytes * 0.01))
-    if abs(raw_bytes - redacted_bytes) > tolerance:
+    stripped_result = dict(result)
+    stripped_content = list(content)
+    stripped_first = dict(first)
+    stripped_first["text"] = canonical_json(payload)
+    stripped_content[0] = stripped_first
+    stripped_result["content"] = stripped_content
+    actual_redacted_bytes = len(canonical_bytes(stripped_result))
+    redacted_tolerance = max(1, int(redacted_bytes * 0.01))
+    if abs(actual_redacted_bytes - redacted_bytes) > redacted_tolerance:
+        raise BenchmarkError(
+            "redaction_audit.redacted_response_bytes does not match "
+            "the committed redacted result after removing audit metadata"
+        )
+    raw_tolerance = max(1, int(raw_bytes * 0.01))
+    if abs(raw_bytes - redacted_bytes) > raw_tolerance:
         raise BenchmarkError(
             "redacted response byte audit differs from raw by more than 1%"
         )
@@ -356,7 +382,8 @@ def redact_env(env: dict[str, str] | None) -> dict[str, str]:
     for key, value in sorted(env.items()):
         upper = key.upper()
         if (
-            "KEY" in upper
+            "ATHLETE" in upper
+            or "KEY" in upper
             or "TOKEN" in upper
             or "SECRET" in upper
             or "PASSWORD" in upper

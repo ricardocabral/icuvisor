@@ -27,7 +27,7 @@ The pinned tokenizer is `cl100k_base` via `tiktoken==0.12.0`. The tokenizer pack
 
 ### Median per-call response bytes
 
-For each shared prompt scenario, the harness executes the pinned MCP tool-call plan for each server. In live mode, every `tools/call` MCP `result` object is serialized as canonical compact UTF-8 JSON and measured in bytes. In fixture mode, redacted call fixtures may carry `redaction_audit.raw_response_bytes` inside the redacted content; when present, the harness counts that audited raw byte value and validates that the redacted byte audit is within ±1% of raw. Calls without an audit field, including explicit unavailable/error results, are measured from their canonical MCP result JSON.
+For each shared prompt scenario, the harness executes the pinned MCP tool-call plan for each server. In live mode, every `tools/call` MCP `result` object is serialized as canonical compact UTF-8 JSON and measured in bytes. In fixture mode, redacted call fixtures may carry `redaction_audit.raw_response_bytes` inside the redacted content; when present, the harness counts that audited raw byte value, removes only the audit metadata, validates `redaction_audit.redacted_response_bytes` against the committed redacted MCP result, and validates that redacted bytes are within ±1% of raw. Calls without an audit field, including explicit unavailable/error results, are measured from their canonical MCP result JSON.
 
 Only response bytes are counted; benchmark-only redaction padding/audit wrappers, transport framing, logs, latency, and the user's final natural-language answer are excluded.
 
@@ -55,7 +55,7 @@ Snapshot contents:
 - Entities: one redacted athlete profile, representative ride/run activities, one activity with intervals/splits/messages, one wellness row containing both `sleepQuality` and `sleepScore`, upcoming events/training-plan/workout-library summaries, and synthetic non-destructive write confirmations.
 - Reference surfaces: black-box `tools/list` outputs and redacted `tools/call` result shapes for the two Python references. The `mvilanova` fixture is derived only from running the server and capturing JSON-RPC output; no GPL source was read or copied.
 - Redaction: athlete IDs, activity/event/workout IDs, comments, names, exact dates, threshold values, body metrics, and account-specific text are replaced with placeholders or shifted synthetic values.
-- Byte policy: redaction is performed before committing; live raw response byte counts are preserved as `redaction_audit.raw_response_bytes`, with `redacted_response_bytes` required to remain within ±1% per audited call. Benchmark-only padding and audit fields are not counted as response bytes.
+- Byte policy: redaction is performed before committing; live raw response byte counts are preserved as `redaction_audit.raw_response_bytes`, with `redacted_response_bytes` validated against the committed redacted MCP result after removing audit metadata and required to remain within ±1% per audited call. Audit fields are not counted as response bytes.
 
 ## Non-determinism policy
 
@@ -77,7 +77,7 @@ python3 scripts/benchmark/kr5_benchmark.py \
   --output scripts/benchmark/results/kr5-results.json
 ```
 
-Live mode uses the same harness with `--mode live --config <config.json>`. Start from `scripts/benchmark/benchmark-config.example.json`, provide commands and environment outside the repository, and never commit secrets.
+Live mode uses the same harness with `--mode live --config <config.json>`. Start from `scripts/benchmark/benchmark-config.example.json`, provide commands and environment outside the repository, and never commit secrets. When a live server lacks a required intent, set that call's `tool` to `unavailable:<intent>` in the private config so the harness records an explicit `isError=true` unavailable result instead of attempting `tools/call`.
 
 ## Current results
 
