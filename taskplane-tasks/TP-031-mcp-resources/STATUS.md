@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 13
+**Review Counter:** 14
 **Iteration:** 1
 **Size:** M
 
@@ -45,6 +45,8 @@
 - [x] Per-`item_type` schema for the `content` field (chart/field/stream/panel/zones)
 - [x] Reuses the schema samples the custom-item reads/writes already validate against — single source of truth
 - [x] Golden-file locked
+- [ ] R014: Remove library panic from static custom-item sample construction
+- [ ] R014: Render and test per-`item_type` schemas via concrete samples or explicit aliases
 
 ### Step 5: `icuvisor://athlete-profile`
 
@@ -77,6 +79,7 @@
 | R011 | Code | 3 | APPROVE | inline |
 | R012 | Plan | 4 | REVISE | .reviews/R012-plan-step4.md |
 | R013 | Plan | 4 | APPROVE | inline |
+| R014 | Code | 4 | REVISE | .reviews/R014-code-step4.md |
 
 ---
 
@@ -159,3 +162,8 @@ _None_
 - Register `CustomItemSchemasResource()` in `resources.NewRegistry()` alongside workout syntax and event categories so normal server runs expose it in `resources/list` and `resources/read`.
 - Tests: golden-lock generated Markdown; assert every descriptor family/item type/sample and inferred path appears in the resource; add registry/read/cancellation/protocol coverage; update custom-item write validation tests or add focused tests to prove existing rejection behavior and detail-sample fallback still work after moving inference code.
 - Step 6 boundary: defer broad custom-item tool-description trimming and README updates; only minimal wording changes are allowed if needed to point metadata at the resource or compile against the shared package.
+
+### R014 revision notes
+
+- Replace `mustSample` panic in `internal/customitemschemas/descriptors.go` with plain Go literals or an error-returning descriptor path.
+- Change descriptor/resource output so each documented `item_type` has its own concrete sample/schema subsection or explicitly declares an alias, with tests enforcing coverage.
