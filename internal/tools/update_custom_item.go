@@ -12,7 +12,7 @@ import (
 
 const (
 	updateCustomItemName                    = "update_custom_item"
-	updateCustomItemDescription             = "Update one custom item definition by item_id with sparse fields only. Omitted fields are left untouched; content patches are validated against the readable schema from the existing item before upload."
+	updateCustomItemDescription             = "Update one custom item definition by item_id with sparse fields only. Content patches are validated against the existing item; see icuvisor://custom-item-schemas."
 	invalidUpdateCustomItemArgumentsMessage = "invalid update_custom_item arguments; provide item_id plus at least one sparse field matching the existing custom-item schema"
 	updateCustomItemMessage                 = "could not update custom item; check intervals.icu credentials, athlete ID, item ID, writable custom-item fields, and schema"
 )
@@ -42,7 +42,7 @@ type updateCustomItemRequest struct {
 }
 
 func newUpdateCustomItemTool(client CustomItemUpdaterClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: updateCustomItemName, Description: updateCustomItemDescription, InputSchema: updateCustomItemInputSchema(), OutputSchema: updateCustomItemOutputSchema(), Requirement: RequirementWrite, Handler: updateCustomItemHandler(client, readClient, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: updateCustomItemName, Description: updateCustomItemDescription, InputSchema: updateCustomItemInputSchema(), OutputSchema: updateCustomItemOutputSchema(), Requirement: RequirementWrite, Handler: updateCustomItemHandler(client, readClient, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func updateCustomItemHandler(client CustomItemUpdaterClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
@@ -193,7 +193,7 @@ func updateCustomItemInputSchema() map[string]any {
 		"image":       map[string]any{"type": "string", "description": "Optional replacement upstream image identifier or URL when supported by the custom-item type. Omit to leave unchanged."},
 		"index":       map[string]any{"type": "integer", "description": "Optional replacement display/order index. Omit to leave unchanged."},
 		"hide_script": map[string]any{"type": "boolean", "description": "Optional replacement upstream hide_script flag. Omit to leave unchanged."},
-		"content":     map[string]any{"type": "object", "description": "Optional sparse content patch. The server fetches the existing item, validates this patch against its readable item_type schema, merges it with existing content, and uploads the merged content so omitted content keys are left untouched."},
+		"content":     map[string]any{"type": "object", "description": "Optional sparse content patch. Validated against the existing item_type schema, then merged so omitted keys stay untouched; see icuvisor://custom-item-schemas."},
 	}}
 }
 

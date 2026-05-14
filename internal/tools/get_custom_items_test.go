@@ -39,8 +39,8 @@ func TestCustomItemsRegistrationMetadata(t *testing.T) {
 	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	if len(registrar.tools) != 5 {
-		t.Fatalf("registered tool count = %d, want profile + custom item read/write tools", len(registrar.tools))
+	if len(registrar.tools) != 6 {
+		t.Fatalf("registered tool count = %d, want profile + custom item read/write tools + advanced capabilities", len(registrar.tools))
 	}
 	listTool := findTool(t, registrar.tools, getCustomItemsName)
 	if !strings.Contains(listTool.Description, "id, name, and item_type") {
@@ -137,7 +137,7 @@ func TestGetCustomItemByIDReturnsFullContentPayload(t *testing.T) {
 		t.Fatalf("content = %#v, want verbatim nested payload", content)
 	}
 	meta := out["_meta"].(map[string]any)
-	if meta["content_preserved"] != true || meta["schema_documentation"] != "inline_v0.2_tool_description; moves_to_resource_v0.4" {
+	if meta["content_preserved"] != true || meta["schema_documentation"] != "icuvisor://custom-item-schemas" {
 		t.Fatalf("meta = %#v, want content preservation and resource note", meta)
 	}
 }

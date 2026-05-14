@@ -29,7 +29,7 @@ type deleteActivityRequest struct {
 }
 
 func newDeleteActivityTool(client ActivityDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: deleteActivityName, Description: deleteActivityDescription, InputSchema: deleteActivityInputSchema(), OutputSchema: deleteActivityOutputSchema(), Requirement: RequirementDelete, Handler: deleteActivityHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: deleteActivityName, Description: deleteActivityDescription, InputSchema: deleteActivityInputSchema(), OutputSchema: deleteActivityOutputSchema(), Requirement: RequirementDelete, Handler: deleteActivityHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func deleteActivityHandler(client ActivityDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

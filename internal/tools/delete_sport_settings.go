@@ -28,7 +28,7 @@ type deleteSportSettingsRequest struct {
 }
 
 func newDeleteSportSettingsTool(client SportSettingsDeleterClient, profileClient ProfileClient, version string, _ string, debugMetadata bool) Tool {
-	return Tool{Name: deleteSportSettingsName, Description: deleteSportSettingsDescription, InputSchema: deleteSportSettingsInputSchema(), OutputSchema: deleteSportSettingsOutputSchema(), Requirement: RequirementDelete, Handler: deleteSportSettingsHandler(client, profileClient, version, debugMetadata)}
+	return fullTool(Tool{Name: deleteSportSettingsName, Description: deleteSportSettingsDescription, InputSchema: deleteSportSettingsInputSchema(), OutputSchema: deleteSportSettingsOutputSchema(), Requirement: RequirementDelete, Handler: deleteSportSettingsHandler(client, profileClient, version, debugMetadata)})
 }
 
 func deleteSportSettingsHandler(client SportSettingsDeleterClient, profileClient ProfileClient, version string, debugMetadata bool) Handler {

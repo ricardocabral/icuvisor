@@ -52,7 +52,7 @@ type activityMessageRow struct {
 }
 
 func newGetActivityMessagesTool(client ActivityMessagesClient, profileClient ProfileClient, detailsClient ActivityDetailsClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: getActivityMessagesName, Description: getActivityMessagesDescription, InputSchema: activityMessagesInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityMessagesHandler(client, profileClient, detailsClient, version, timezoneFallback, debugMetadata)}
+	return coreTool(Tool{Name: getActivityMessagesName, Description: getActivityMessagesDescription, InputSchema: activityMessagesInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityMessagesHandler(client, profileClient, detailsClient, version, timezoneFallback, debugMetadata)})
 }
 
 func getActivityMessagesHandler(client ActivityMessagesClient, profileClient ProfileClient, detailsClient ActivityDetailsClient, version string, timezoneFallback string, debugMetadata bool) Handler {

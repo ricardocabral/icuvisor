@@ -91,7 +91,7 @@ type updateSportSettingsMeta struct {
 }
 
 func newUpdateSportSettingsTool(client SportSettingsWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability) Tool {
-	return Tool{Name: updateSportSettingsName, Description: updateSportSettingsDescription, InputSchema: updateSportSettingsInputSchema(), OutputSchema: updateSportSettingsOutputSchema(), Requirement: RequirementWrite, Handler: updateSportSettingsHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability))}
+	return fullTool(Tool{Name: updateSportSettingsName, Description: updateSportSettingsDescription, InputSchema: updateSportSettingsInputSchema(), OutputSchema: updateSportSettingsOutputSchema(), Requirement: RequirementWrite, Handler: updateSportSettingsHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability))})
 }
 
 func updateSportSettingsHandler(client SportSettingsWriterClient, profileClient ProfileClient, version string, timezoneFallback string, _ bool, capability safety.Capability) Handler {

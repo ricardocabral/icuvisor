@@ -43,7 +43,7 @@ type addActivityMessageMeta struct {
 }
 
 func newAddActivityMessageTool(client ActivityMessageWriterClient, profileClient ProfileClient, version string, debugMetadata bool) Tool {
-	return Tool{Name: addActivityMessageName, Description: addActivityMessageDescription, InputSchema: addActivityMessageInputSchema(), OutputSchema: addActivityMessageOutputSchema(), Requirement: RequirementWrite, Handler: addActivityMessageHandler(client, profileClient, version, debugMetadata)}
+	return coreTool(Tool{Name: addActivityMessageName, Description: addActivityMessageDescription, InputSchema: addActivityMessageInputSchema(), OutputSchema: addActivityMessageOutputSchema(), Requirement: RequirementWrite, Handler: addActivityMessageHandler(client, profileClient, version, debugMetadata)})
 }
 
 func addActivityMessageHandler(client ActivityMessageWriterClient, profileClient ProfileClient, version string, debugMetadata bool) Handler {

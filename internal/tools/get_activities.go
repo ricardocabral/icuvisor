@@ -121,13 +121,13 @@ type activitiesPageToken struct {
 }
 
 func newGetActivitiesTool(activityClient ActivitiesClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{
+	return coreTool(Tool{
 		Name:         getActivitiesName,
 		Description:  getActivitiesDescription,
 		InputSchema:  getActivitiesInputSchema(),
 		OutputSchema: getActivitiesOutputSchema(),
 		Handler:      getActivitiesHandler(activityClient, profileClient, version, timezoneFallback, debugMetadata),
-	}
+	})
 }
 
 func getActivitiesHandler(activityClient ActivitiesClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

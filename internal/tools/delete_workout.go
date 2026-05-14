@@ -39,7 +39,7 @@ type deleteWorkoutMeta struct {
 }
 
 func newDeleteWorkoutTool(client WorkoutDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: deleteWorkoutName, Description: deleteWorkoutDescription, InputSchema: deleteWorkoutInputSchema(), OutputSchema: deleteWorkoutOutputSchema(), Requirement: RequirementDelete, Handler: deleteWorkoutHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: deleteWorkoutName, Description: deleteWorkoutDescription, InputSchema: deleteWorkoutInputSchema(), OutputSchema: deleteWorkoutOutputSchema(), Requirement: RequirementDelete, Handler: deleteWorkoutHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func deleteWorkoutHandler(client WorkoutDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

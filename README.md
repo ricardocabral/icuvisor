@@ -71,6 +71,18 @@ Currently implemented tools:
 - `create_custom_item` — creates custom charts, fields, streams, panels, histograms, maps, or zones in write-enabled modes (`safe`/`full`), validating `content` against readable per-`item_type` schema samples before upload.
 - `update_custom_item` — sparsely updates one custom item in write-enabled modes (`safe`/`full`), validating content patches against the existing item's readable schema and leaving omitted fields untouched.
 - `delete_custom_item` — deletes one custom item only when `ICUVISOR_DELETE_MODE=full`, returning `_meta.deleted` with a terse before-shape echo.
+- `icuvisor_list_advanced_capabilities` — lists tools hidden from the default core catalog and explains how to enable the full toolset.
+
+## MCP resources
+
+icuvisor also exposes long-form reference content as MCP Resources so clients can fetch it only when needed instead of spending every tool-description token on it:
+
+- `icuvisor://workout-syntax` — the structured-workout DSL emitted from `workout_doc`, generated from the same `internal/workoutdoc` grammar used by serializers and tests.
+- `icuvisor://event-categories` — documented intervals.icu calendar event categories, including `WORKOUT`, race priority categories, notes, plans, health/travel markers, and fitness-model categories.
+- `icuvisor://custom-item-schemas` — per-`item_type` custom-item `content` schema guidance for chart/table/trace, field/stream, panel, and zones items, derived from the same samples used by write validation.
+- `icuvisor://athlete-profile` — dynamic cached athlete identity, units, timezone, thresholds, zones, and `_meta` shaping matching `get_athlete_profile` without requiring a tool call.
+
+Clients that do not render `resources/list` can still use the equivalent tools; the resource URIs are stable pointers for MCP clients that support Resources.
 
 ## Install
 
@@ -95,6 +107,25 @@ export INTERVALS_ICU_ATHLETE_ID="i12345"
 
 For local development, `icuvisor` can read a local untracked `.env` file containing `INTERVALS_ICU_API_KEY` and `INTERVALS_ICU_ATHLETE_ID`. Do not commit real API keys. For MCP client config, use process env vars or pass a JSON file with `--config /path/to/icuvisor.json` using fields `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout`.
 
+### MCP transport
+
+`stdio` is the default MCP transport. Streamable HTTP is opt-in with `ICUVISOR_TRANSPORT=http` or `--transport http`; when enabled without a bind override it listens only on `127.0.0.1:8765` and serves MCP at `/mcp`.
+
+```bash
+# stdio remains the default
+./bin/icuvisor
+
+# Streamable HTTP on loopback only: http://127.0.0.1:8765/mcp
+ICUVISOR_TRANSPORT=http ./bin/icuvisor
+
+# Equivalent CLI flags
+./bin/icuvisor --transport http --http-bind 127.0.0.1:8765
+```
+
+Config files may also set `transport` (`stdio` or `http`) and `http_bind` (IP address plus port). Invalid transport names or bind addresses fail at startup.
+
+Only set `ICUVISOR_HTTP_BIND` or `--http-bind` to a LAN address if you deliberately want other machines to reach the server. LAN binding exposes an unauthenticated MCP server: anyone who can connect to that address can call registered tools using the intervals.icu credentials configured for this icuvisor process.
+
 ### Delete/write safety mode
 
 `ICUVISOR_DELETE_MODE` is read once at startup and controls which write-capable tools are registered with the MCP server:
@@ -104,6 +135,17 @@ For local development, `icuvisor` can read a local untracked `.env` file contain
 - `none`: write and delete tools are omitted, leaving read-only tools only.
 
 Unknown or empty values resolve to `safe`. The active mode is reported in response metadata as `_meta.delete_mode`.
+
+### Toolset tiers
+
+`ICUVISOR_TOOLSET` is read once at startup and controls how much of the MCP tool catalog is registered:
+
+- `core` (default): registers the daily-use catalog for activities, fitness, wellness, events, non-destructive writes, and `icuvisor_list_advanced_capabilities`.
+- `full`: registers the core catalog plus advanced/heavier tools such as raw streams, workout-library and custom-item management, sport settings, training-plan application, and delete-capable tools when delete mode also allows them.
+
+Unknown or empty values resolve to `core`. Change the environment variable in your MCP client/server configuration and restart icuvisor for the catalog to change. The active tier is reported in response metadata as `_meta.toolset`.
+
+`icuvisor_list_advanced_capabilities` remains available in `core` so an AI client can discover hidden full-only tools and tell the user to set `ICUVISOR_TOOLSET=full` when a prompt needs them. Toolset tiering is orthogonal to delete/write safety: destructive tools still require `ICUVISOR_DELETE_MODE=full` even when `ICUVISOR_TOOLSET=full` is set.
 
 For the v0.1 macOS Claude Desktop manual JSON setup and smoke checklist, see [`docs/clients/claude-desktop.md`](docs/clients/claude-desktop.md). For Codex CLI local MCP validation, see [`docs/clients/codex-local.md`](docs/clients/codex-local.md).
 

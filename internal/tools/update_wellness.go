@@ -98,7 +98,7 @@ type updateWellnessMeta struct {
 }
 
 func newUpdateWellnessTool(client WellnessWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: updateWellnessName, Description: updateWellnessDescription, InputSchema: updateWellnessInputSchema(), OutputSchema: updateWellnessOutputSchema(), Requirement: RequirementWrite, Handler: updateWellnessHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return coreTool(Tool{Name: updateWellnessName, Description: updateWellnessDescription, InputSchema: updateWellnessInputSchema(), OutputSchema: updateWellnessOutputSchema(), Requirement: RequirementWrite, Handler: updateWellnessHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func updateWellnessHandler(client WellnessWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

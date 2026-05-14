@@ -29,7 +29,7 @@ type deleteCustomItemRequest struct {
 }
 
 func newDeleteCustomItemTool(client CustomItemDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: deleteCustomItemName, Description: deleteCustomItemDescription, InputSchema: deleteCustomItemInputSchema(), OutputSchema: deleteCustomItemOutputSchema(), Requirement: RequirementDelete, Handler: deleteCustomItemHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: deleteCustomItemName, Description: deleteCustomItemDescription, InputSchema: deleteCustomItemInputSchema(), OutputSchema: deleteCustomItemOutputSchema(), Requirement: RequirementDelete, Handler: deleteCustomItemHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func deleteCustomItemHandler(client CustomItemDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

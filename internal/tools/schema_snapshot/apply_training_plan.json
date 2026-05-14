@@ -1,5 +1,41 @@
 {
   "additionalProperties": false,
+  "examples": [
+    {
+      "plan_id": "plan-base-8",
+      "start_date": "2026-07-06"
+    },
+    {
+      "conflict_policy": "skip_existing",
+      "dry_run": true,
+      "plan_id": "plan-build-12",
+      "start_date": "2026-08-03"
+    },
+    {
+      "conflict_policy": "skip_existing",
+      "dry_run": false,
+      "plan_id": "plan-race-4",
+      "start_date": "2026-09-14"
+    }
+  ],
+  "input_examples": [
+    {
+      "plan_id": "plan-base-8",
+      "start_date": "2026-07-06"
+    },
+    {
+      "conflict_policy": "skip_existing",
+      "dry_run": true,
+      "plan_id": "plan-build-12",
+      "start_date": "2026-08-03"
+    },
+    {
+      "conflict_policy": "skip_existing",
+      "dry_run": false,
+      "plan_id": "plan-race-4",
+      "start_date": "2026-09-14"
+    }
+  ],
   "properties": {
     "conflict_policy": {
       "default": "skip_existing",

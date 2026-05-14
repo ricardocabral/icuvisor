@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/netip"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -22,44 +24,73 @@ const (
 	EnvTimezone    = "ICUVISOR_TIMEZONE"
 	EnvAPIBaseURL  = "ICUVISOR_API_BASE_URL"
 	EnvHTTPTimeout = "ICUVISOR_HTTP_TIMEOUT"
+	EnvTransport   = "ICUVISOR_TRANSPORT"
+	EnvHTTPBind    = "ICUVISOR_HTTP_BIND"
 
-	DefaultAPIBaseURL  = "https://intervals.icu/api/v1"
-	DefaultTimezone    = "UTC"
-	DefaultHTTPTimeout = 30 * time.Second
+	DefaultAPIBaseURL      = "https://intervals.icu/api/v1"
+	DefaultTimezone        = "UTC"
+	DefaultHTTPTimeout     = 30 * time.Second
+	DefaultHTTPBindAddress = "127.0.0.1:8765"
 )
+
+// Transport identifies the selected MCP transport.
+type Transport string
+
+const (
+	TransportStdio Transport = "stdio"
+	TransportHTTP  Transport = "http"
+)
+
+// String returns the configured transport name.
+func (t Transport) String() string {
+	if t == "" {
+		return string(TransportStdio)
+	}
+	return string(t)
+}
 
 // Config contains the v0.1 runtime configuration consumed by lower layers.
 type Config struct {
-	APIKey      string        `json:"api_key"`
-	AthleteID   string        `json:"athlete_id"`
-	Timezone    string        `json:"timezone"`
-	APIBaseURL  string        `json:"api_base_url"`
-	HTTPTimeout time.Duration `json:"-"`
-	DeleteMode  safety.Mode   `json:"-"`
+	APIKey          string         `json:"api_key"`
+	AthleteID       string         `json:"athlete_id"`
+	Timezone        string         `json:"timezone"`
+	APIBaseURL      string         `json:"api_base_url"`
+	HTTPTimeout     time.Duration  `json:"-"`
+	Transport       Transport      `json:"-"`
+	HTTPBindAddress string         `json:"-"`
+	DeleteMode      safety.Mode    `json:"-"`
+	Toolset         safety.Toolset `json:"-"`
 }
 
 // Options controls config loading inputs.
 type Options struct {
-	Path       string
-	DotEnvPath string
-	Env        map[string]string
+	Path            string
+	DotEnvPath      string
+	Env             map[string]string
+	Transport       string
+	HTTPBindAddress string
 }
 
 type fileConfig struct {
-	APIKey      string `json:"api_key"`
-	AthleteID   string `json:"athlete_id"`
-	Timezone    string `json:"timezone"`
-	APIBaseURL  string `json:"api_base_url"`
-	HTTPTimeout string `json:"http_timeout"`
+	APIKey          string `json:"api_key"`
+	AthleteID       string `json:"athlete_id"`
+	Timezone        string `json:"timezone"`
+	APIBaseURL      string `json:"api_base_url"`
+	HTTPTimeout     string `json:"http_timeout"`
+	Transport       string `json:"transport"`
+	HTTPBindAddress string `json:"http_bind"`
 }
 
 type rawConfig struct {
-	apiKey      string
-	athleteID   string
-	timezone    string
-	apiBaseURL  string
-	httpTimeout string
-	deleteMode  string
+	apiKey          string
+	athleteID       string
+	timezone        string
+	apiBaseURL      string
+	httpTimeout     string
+	transport       string
+	httpBindAddress string
+	deleteMode      string
+	toolset         string
 }
 
 // Load reads v0.1 config from JSON, .env, and process environment.
@@ -100,6 +131,7 @@ func Load(ctx context.Context, opts Options) (Config, error) {
 	}
 
 	raw.merge(rawFromEnv(env), false)
+	raw.merge(rawConfig{transport: strings.TrimSpace(opts.Transport), httpBindAddress: strings.TrimSpace(opts.HTTPBindAddress)}, false)
 	return validate(raw)
 }
 
@@ -142,7 +174,7 @@ func (c Config) String() string {
 	if c.AthleteID != "" {
 		athleteID = "<set>"
 	}
-	return fmt.Sprintf("api_key=%s athlete_id=%s timezone=%q api_base_url=%q http_timeout=%s delete_mode=%s", apiKey, athleteID, c.Timezone, c.APIBaseURL, c.HTTPTimeout, c.DeleteMode)
+	return fmt.Sprintf("api_key=%s athlete_id=%s timezone=%q api_base_url=%q http_timeout=%s transport=%s http_bind=%q delete_mode=%s toolset=%s", apiKey, athleteID, c.Timezone, c.APIBaseURL, c.HTTPTimeout, c.Transport, c.HTTPBindAddress, c.DeleteMode, c.Toolset)
 }
 
 func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
@@ -164,15 +196,17 @@ func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
 	decoder := json.NewDecoder(strings.NewReader(string(data)))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&file); err != nil {
-		return rawConfig{}, fmt.Errorf("invalid config JSON in %q; expected fields api_key, athlete_id, timezone, api_base_url, http_timeout: %w", path, err)
+		return rawConfig{}, fmt.Errorf("invalid config JSON in %q; expected fields api_key, athlete_id, timezone, api_base_url, http_timeout, transport, http_bind: %w", path, err)
 	}
 
 	return rawConfig{
-		apiKey:      strings.TrimSpace(file.APIKey),
-		athleteID:   strings.TrimSpace(file.AthleteID),
-		timezone:    strings.TrimSpace(file.Timezone),
-		apiBaseURL:  strings.TrimSpace(file.APIBaseURL),
-		httpTimeout: strings.TrimSpace(file.HTTPTimeout),
+		apiKey:          strings.TrimSpace(file.APIKey),
+		athleteID:       strings.TrimSpace(file.AthleteID),
+		timezone:        strings.TrimSpace(file.Timezone),
+		apiBaseURL:      strings.TrimSpace(file.APIBaseURL),
+		httpTimeout:     strings.TrimSpace(file.HTTPTimeout),
+		transport:       strings.TrimSpace(file.Transport),
+		httpBindAddress: strings.TrimSpace(file.HTTPBindAddress),
 	}, nil
 }
 
@@ -237,12 +271,15 @@ func processEnv() map[string]string {
 
 func rawFromEnv(env map[string]string) rawConfig {
 	return rawConfig{
-		apiKey:      strings.TrimSpace(env[EnvAPIKey]),
-		athleteID:   strings.TrimSpace(env[EnvAthleteID]),
-		timezone:    strings.TrimSpace(env[EnvTimezone]),
-		apiBaseURL:  strings.TrimSpace(env[EnvAPIBaseURL]),
-		httpTimeout: strings.TrimSpace(env[EnvHTTPTimeout]),
-		deleteMode:  strings.TrimSpace(env[safety.EnvDeleteMode]),
+		apiKey:          strings.TrimSpace(env[EnvAPIKey]),
+		athleteID:       strings.TrimSpace(env[EnvAthleteID]),
+		timezone:        strings.TrimSpace(env[EnvTimezone]),
+		apiBaseURL:      strings.TrimSpace(env[EnvAPIBaseURL]),
+		httpTimeout:     strings.TrimSpace(env[EnvHTTPTimeout]),
+		transport:       strings.TrimSpace(env[EnvTransport]),
+		httpBindAddress: strings.TrimSpace(env[EnvHTTPBind]),
+		deleteMode:      strings.TrimSpace(env[safety.EnvDeleteMode]),
+		toolset:         strings.TrimSpace(env[safety.EnvToolset]),
 	}
 }
 
@@ -262,8 +299,17 @@ func (r *rawConfig) merge(next rawConfig, absentOnly bool) {
 	if shouldSet(r.httpTimeout, next.httpTimeout, absentOnly) {
 		r.httpTimeout = next.httpTimeout
 	}
+	if shouldSet(r.transport, next.transport, absentOnly) {
+		r.transport = next.transport
+	}
+	if shouldSet(r.httpBindAddress, next.httpBindAddress, absentOnly) {
+		r.httpBindAddress = next.httpBindAddress
+	}
 	if shouldSet(r.deleteMode, next.deleteMode, absentOnly) {
 		r.deleteMode = next.deleteMode
+	}
+	if shouldSet(r.toolset, next.toolset, absentOnly) {
+		r.toolset = next.toolset
 	}
 }
 
@@ -311,19 +357,94 @@ func validate(raw rawConfig) (Config, error) {
 		}
 	}
 
+	transport := TransportStdio
+	if raw.transport != "" {
+		transport = Transport(strings.ToLower(raw.transport))
+	}
+	if transport != TransportStdio && transport != TransportHTTP {
+		return Config{}, errors.New("invalid MCP transport; use stdio or http")
+	}
+
+	httpBindAddress := raw.httpBindAddress
+	if httpBindAddress == "" {
+		httpBindAddress = DefaultHTTPBindAddress
+	}
+	httpBindAddress, err = NormalizeHTTPBindAddress(httpBindAddress)
+	if err != nil {
+		return Config{}, err
+	}
+
 	return Config{
-		APIKey:      apiKey,
-		AthleteID:   athleteID,
-		Timezone:    loc.String(),
-		APIBaseURL:  strings.TrimRight(baseURL, "/"),
-		HTTPTimeout: timeout,
-		DeleteMode:  safety.ParseMode(raw.deleteMode),
+		APIKey:          apiKey,
+		AthleteID:       athleteID,
+		Timezone:        loc.String(),
+		APIBaseURL:      strings.TrimRight(baseURL, "/"),
+		HTTPTimeout:     timeout,
+		Transport:       transport,
+		HTTPBindAddress: httpBindAddress,
+		DeleteMode:      safety.ParseMode(raw.deleteMode),
+		Toolset:         safety.ParseToolset(raw.toolset),
 	}, nil
+}
+
+// ValidateHTTPBindAddress rejects accidental wildcard binds and malformed ports.
+func ValidateHTTPBindAddress(value string) error {
+	_, err := NormalizeHTTPBindAddress(value)
+	return err
+}
+
+// NormalizeHTTPBindAddress validates and returns value as a canonical netip.AddrPort string.
+func NormalizeHTTPBindAddress(value string) (string, error) {
+	host, port, err := splitHTTPBindAddress(value)
+	if err != nil {
+		return "", err
+	}
+	if host == "" {
+		return "", errors.New("invalid HTTP bind address; use an explicit IP host and port like 127.0.0.1:8765")
+	}
+	portNumber, err := strconv.ParseUint(port, 10, 16)
+	if err != nil || portNumber == 0 {
+		return "", errors.New("invalid HTTP bind address; port must be between 1 and 65535")
+	}
+	addr, err := netip.ParseAddr(host)
+	if err != nil {
+		return "", errors.New("invalid HTTP bind address; host must be an IP address like 127.0.0.1 or 192.168.1.10")
+	}
+	if !addr.IsValid() {
+		return "", errors.New("invalid HTTP bind address; host must be a valid IP address")
+	}
+	return netip.AddrPortFrom(addr, uint16(portNumber)).String(), nil
+}
+
+// HTTPBindAddressIsLoopback reports whether value binds only to a loopback IP.
+func HTTPBindAddressIsLoopback(value string) bool {
+	normalized, err := NormalizeHTTPBindAddress(value)
+	if err != nil {
+		return false
+	}
+	addrPort, err := netip.ParseAddrPort(normalized)
+	return err == nil && addrPort.Addr().IsLoopback()
+}
+
+func splitHTTPBindAddress(value string) (string, string, error) {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return "", "", errors.New("invalid HTTP bind address; use host:port like 127.0.0.1:8765")
+	}
+	host, port, ok := strings.Cut(trimmed, ":")
+	if !ok || strings.Contains(port, ":") || strings.Contains(host, ":") {
+		addrPort, err := netip.ParseAddrPort(trimmed)
+		if err != nil {
+			return "", "", errors.New("invalid HTTP bind address; use host:port like 127.0.0.1:8765 or [::1]:8765")
+		}
+		return addrPort.Addr().String(), strconv.Itoa(int(addrPort.Port())), nil
+	}
+	return strings.TrimSpace(host), strings.TrimSpace(port), nil
 }
 
 func recognizedEnvKey(key string) bool {
 	switch key {
-	case EnvAPIKey, EnvAthleteID, EnvConfigPath, EnvTimezone, EnvAPIBaseURL, EnvHTTPTimeout, safety.EnvDeleteMode:
+	case EnvAPIKey, EnvAthleteID, EnvConfigPath, EnvTimezone, EnvAPIBaseURL, EnvHTTPTimeout, EnvTransport, EnvHTTPBind, safety.EnvDeleteMode, safety.EnvToolset:
 		return true
 	default:
 		return false

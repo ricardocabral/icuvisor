@@ -29,7 +29,7 @@ type deleteEventRequest struct {
 }
 
 func newDeleteEventTool(client EventDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: deleteEventName, Description: deleteEventDescription, InputSchema: deleteEventInputSchema(), OutputSchema: deleteEventOutputSchema(), Requirement: RequirementDelete, Handler: deleteEventHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: deleteEventName, Description: deleteEventDescription, InputSchema: deleteEventInputSchema(), OutputSchema: deleteEventOutputSchema(), Requirement: RequirementDelete, Handler: deleteEventHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func deleteEventHandler(client EventDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

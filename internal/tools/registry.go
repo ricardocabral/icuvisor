@@ -20,6 +20,7 @@ type RegistryOptions struct {
 	TimezoneFallback string
 	DebugMetadata    bool
 	Capability       safety.Capability
+	Toolset          safety.Toolset
 }
 
 // NewRegistry creates the default tool registry.
@@ -38,6 +39,7 @@ func NewRegistryWithOptions(profileClient ProfileClient, opts RegistryOptions) R
 		timezoneFallback: normalizeTimezoneFallback(opts.TimezoneFallback),
 		debugMetadata:    opts.DebugMetadata,
 		capability:       capabilityOrSafe(opts.Capability),
+		toolset:          safety.ParseToolset(string(opts.Toolset)),
 	}
 }
 
@@ -47,6 +49,7 @@ type defaultRegistry struct {
 	timezoneFallback string
 	debugMetadata    bool
 	capability       safety.Capability
+	toolset          safety.Toolset
 }
 
 func capabilityOrSafe(capability safety.Capability) safety.Capability {
@@ -66,6 +69,8 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	if registrar == nil {
 		return fmt.Errorf("registering %s: missing registrar", getAthleteProfileName)
 	}
+	collector := &catalogCollectingRegistrar{downstream: registrar}
+	registrar = collector
 	if err := registrar.AddTool(newGetAthleteProfileTool(r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
 		return err
 	}
@@ -251,7 +256,20 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
+	if err := collector.downstream.AddTool(newListAdvancedCapabilitiesTool(collector.tools, r.toolset)); err != nil {
+		return err
+	}
 	return nil
+}
+
+type catalogCollectingRegistrar struct {
+	downstream Registrar
+	tools      []Tool
+}
+
+func (r *catalogCollectingRegistrar) AddTool(tool Tool) error {
+	r.tools = append(r.tools, tool)
+	return r.downstream.AddTool(tool)
 }
 
 // Registrar accepts tool definitions from a Registry.
@@ -281,7 +299,29 @@ type Tool struct {
 	InputSchema  any
 	OutputSchema any
 	Requirement  Requirement
+	Toolset      safety.Toolset
 	Handler      Handler
+}
+
+func coreTool(tool Tool) Tool {
+	tool.Toolset = safety.ToolsetCore
+	return tool
+}
+
+func fullTool(tool Tool) Tool {
+	tool.Toolset = safety.ToolsetFull
+	return tool
+}
+
+// EffectiveToolset reports the registration tier declared by the tool. Empty
+// values default to full so new/unmarked tools do not silently expand core.
+func (t Tool) EffectiveToolset() safety.Toolset {
+	switch t.Toolset {
+	case safety.ToolsetCore, safety.ToolsetFull:
+		return t.Toolset
+	default:
+		return safety.ToolsetFull
+	}
 }
 
 // RequiresWrite reports whether the tool needs write capability to be registered.

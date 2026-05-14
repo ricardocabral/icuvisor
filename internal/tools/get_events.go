@@ -84,7 +84,7 @@ type dateRangeMeta struct {
 }
 
 func newGetEventsTool(client EventsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: getEventsName, Description: getEventsDescription, InputSchema: getEventsInputSchema(), OutputSchema: getEventsOutputSchema(), Handler: getEventsHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return coreTool(Tool{Name: getEventsName, Description: getEventsDescription, InputSchema: getEventsInputSchema(), OutputSchema: getEventsOutputSchema(), Handler: getEventsHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func getEventsHandler(client EventsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
@@ -247,7 +247,7 @@ func getEventsInputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"oldest", "newest"}, "properties": map[string]any{
 		"oldest":       map[string]any{"type": "string", "description": "Required athlete-local start date YYYY-MM-DD."},
 		"newest":       map[string]any{"type": "string", "description": "Required athlete-local end date YYYY-MM-DD; date range is capped at 366 days."},
-		"category":     map[string]any{"type": "string", "description": "Optional upstream event category enum filter. Returned categories preserve upstream enum values."},
+		"category":     map[string]any{"type": "string", "description": intervals.EventCategoryReferenceDescription("Optional upstream event category filter.")},
 		"calendar_id":  map[string]any{"type": "string", "description": "Optional upstream calendar ID filter."},
 		"limit":        map[string]any{"type": "integer", "default": defaultEventsLimit, "minimum": 1, "maximum": maxEventsLimit, "description": "Maximum event rows to request; defaults to 100 and values above 500 are capped."},
 		"resolve":      map[string]any{"type": "boolean", "description": "Optional upstream resolve flag for recurring/derived events when supported by intervals.icu."},

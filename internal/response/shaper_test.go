@@ -291,6 +291,54 @@ func TestShapeAddsDeleteModeMetadata(t *testing.T) {
 	}
 }
 
+func TestShapeAddsToolsetMetadata(t *testing.T) {
+	tests := []struct {
+		name string
+		set  string
+		want string
+	}{
+		{name: "default", set: "", want: "core"},
+		{name: "full", set: "full", want: "full"},
+		{name: "invalid", set: "surprise", want: "core"},
+		{name: "empty", set: "   ", want: "core"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			SetToolset(tc.set)
+			t.Cleanup(func() { SetToolset("core") })
+
+			got, err := Shape(map[string]any{"name": "athlete"}, Options{})
+			if err != nil {
+				t.Fatalf("Shape() error = %v", err)
+			}
+			meta := got.(map[string]any)["_meta"].(map[string]any)
+			if meta["toolset"] != tc.want {
+				t.Fatalf("toolset = %v, want %s", meta["toolset"], tc.want)
+			}
+		})
+	}
+}
+
+func TestShapeOverwritesStaleCallerToolsetMetadata(t *testing.T) {
+	SetToolset("full")
+	t.Cleanup(func() { SetToolset("core") })
+
+	got, err := Shape(map[string]any{
+		"name": "athlete",
+		"_meta": map[string]any{
+			"toolset": "core",
+			"count":   3,
+		},
+	}, Options{})
+	if err != nil {
+		t.Fatalf("Shape() error = %v", err)
+	}
+	meta := got.(map[string]any)["_meta"].(map[string]any)
+	if meta["toolset"] != "full" || meta["count"] != float64(3) {
+		t.Fatalf("_meta = %#v, want toolset full and preserved count", meta)
+	}
+}
+
 func TestShapeDebugMetadataGate(t *testing.T) {
 	input := map[string]any{
 		"name":       "athlete",
@@ -410,7 +458,7 @@ func TestShapeIncludeFullNullConvention(t *testing.T) {
 
 func assertJSONEqual(t *testing.T, got any, want any) {
 	t.Helper()
-	want = withDefaultDeleteMode(want)
+	want = withDefaultCommonMeta(want)
 	gotJSON, err := json.Marshal(got)
 	if err != nil {
 		t.Fatalf("marshal got: %v", err)
@@ -424,30 +472,31 @@ func assertJSONEqual(t *testing.T, got any, want any) {
 	}
 }
 
-func withDefaultDeleteMode(value any) any {
+func withDefaultCommonMeta(value any) any {
 	root, ok := value.(map[string]any)
 	if !ok {
 		return value
 	}
 	out := cloneExpectedMap(root)
-	addDefaultDeleteModeToExpected(out)
+	addDefaultCommonMetaToExpected(out)
 	return out
 }
 
-func addDefaultDeleteModeToExpected(value any) {
+func addDefaultCommonMetaToExpected(value any) {
 	switch typed := value.(type) {
 	case map[string]any:
 		if meta, ok := typed["_meta"].(map[string]any); ok {
 			if _, hasServerVersion := meta["server_version"]; hasServerVersion {
 				meta["delete_mode"] = "safe"
+				meta["toolset"] = "core"
 			}
 		}
 		for _, item := range typed {
-			addDefaultDeleteModeToExpected(item)
+			addDefaultCommonMetaToExpected(item)
 		}
 	case []any:
 		for _, item := range typed {
-			addDefaultDeleteModeToExpected(item)
+			addDefaultCommonMetaToExpected(item)
 		}
 	}
 }

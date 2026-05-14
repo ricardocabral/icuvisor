@@ -72,7 +72,7 @@ type getWorkoutLibraryMeta struct {
 }
 
 func newGetWorkoutLibraryTool(client WorkoutLibraryClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: getWorkoutLibraryName, Description: getWorkoutLibraryDescription, InputSchema: getWorkoutLibraryInputSchema(), OutputSchema: getWorkoutLibraryOutputSchema(), Handler: getWorkoutLibraryHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: getWorkoutLibraryName, Description: getWorkoutLibraryDescription, InputSchema: getWorkoutLibraryInputSchema(), OutputSchema: getWorkoutLibraryOutputSchema(), Handler: getWorkoutLibraryHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func getWorkoutLibraryHandler(client WorkoutLibraryClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

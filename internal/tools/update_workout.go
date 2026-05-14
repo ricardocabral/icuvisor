@@ -14,7 +14,7 @@ import (
 
 const (
 	updateWorkoutName                    = "update_workout"
-	updateWorkoutDescription             = "Update one reusable workout-library template by workout_id with sparse fields only. Omitted fields are left untouched; structured workout_doc steps are serialized to the intervals.icu workout-description DSL before upload."
+	updateWorkoutDescription             = "Update one reusable workout-library template by workout_id with sparse fields only. Omitted fields stay untouched; workout_doc syntax is at icuvisor://workout-syntax."
 	invalidUpdateWorkoutArgumentsMessage = "invalid update_workout arguments; provide workout_id plus at least one sparse workout field"
 	updateWorkoutMessage                 = "could not update workout; check intervals.icu credentials, athlete ID, workout ID, folder ID, and writable workout fields"
 )
@@ -56,7 +56,7 @@ type updateWorkoutMeta struct {
 }
 
 func newUpdateWorkoutTool(client WorkoutUpdaterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: updateWorkoutName, Description: updateWorkoutDescription, InputSchema: updateWorkoutInputSchema(), OutputSchema: updateWorkoutOutputSchema(), Requirement: RequirementWrite, Handler: updateWorkoutHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: updateWorkoutName, Description: updateWorkoutDescription, InputSchema: updateWorkoutInputSchema(), OutputSchema: updateWorkoutOutputSchema(), Requirement: RequirementWrite, Handler: updateWorkoutHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func updateWorkoutHandler(client WorkoutUpdaterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
@@ -192,7 +192,7 @@ func updateWorkoutInputSchema() map[string]any {
 		"name":        map[string]any{"type": "string", "description": "Optional replacement workout-library template name/title. Omit to leave unchanged."},
 		"folder_id":   map[string]any{"type": "string", "description": "Optional replacement intervals.icu workout-library folder or plan ID. Omit to leave unchanged; an explicit empty string moves the workout to the top level when upstream supports it."},
 		"description": map[string]any{"type": "string", "description": "Optional replacement free-text workout description. Omit to leave unchanged; mutually exclusive with workout_doc. Empty strings are rejected to avoid accidentally clearing structured workout content."},
-		"workout_doc": map[string]any{"type": "object", "description": "Optional replacement structured WorkoutDoc. The server serializes this to the intervals.icu workout-description DSL string and never sends workout_doc upstream; an explicit empty steps list serializes to an empty DSL to clear structured content intentionally."},
+		"workout_doc": map[string]any{"type": "object", "description": "Optional replacement structured WorkoutDoc. Serialized to the upstream workout-description DSL; empty steps clear structured content. Syntax reference: icuvisor://workout-syntax."},
 		"tags":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional replacement workout-library tags. Omit to leave unchanged; provide the full desired tag list when appending a tag."},
 		"sport":       map[string]any{"type": "string", "description": "Optional replacement upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Omit to leave unchanged."},
 	}}

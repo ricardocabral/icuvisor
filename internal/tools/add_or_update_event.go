@@ -53,7 +53,7 @@ type addOrUpdateEventMeta struct {
 }
 
 func newAddOrUpdateEventTool(client EventWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: addOrUpdateEventName, Description: addOrUpdateEventDescription, InputSchema: addOrUpdateEventInputSchema(), OutputSchema: addOrUpdateEventOutputSchema(), Requirement: RequirementWrite, Handler: addOrUpdateEventHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return coreTool(Tool{Name: addOrUpdateEventName, Description: addOrUpdateEventDescription, InputSchema: addOrUpdateEventInputSchema(), OutputSchema: addOrUpdateEventOutputSchema(), Requirement: RequirementWrite, Handler: addOrUpdateEventHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
@@ -167,11 +167,11 @@ func addOrUpdateEventInputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"date", "category"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
 		"date":                 map[string]any{"type": "string", "description": "Required athlete-local event date as YYYY-MM-DD; interpreted in the configured athlete timezone."},
 		"event_id":             map[string]any{"type": "string", "description": "Optional upstream event ID to update. Omit to create a new event; this tool never deletes events."},
-		"category":             map[string]any{"type": "string", "description": "Required upstream event category enum such as WORKOUT, RACE, NOTE, or the athlete account's configured category value."},
+		"category":             map[string]any{"type": "string", "description": intervals.EventCategoryReferenceDescription("Required upstream event category.")},
 		"type":                 map[string]any{"type": "string", "description": "Required for WORKOUT events: upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Surrounding whitespace is trimmed."},
 		"name":                 map[string]any{"type": "string", "description": "Optional event title/name shown on the athlete calendar."},
 		"description":          map[string]any{"type": "string", "description": "Optional free-text athlete or coach notes. Preserved verbatim, including whitespace and line breaks; mutually exclusive with workout_doc."},
-		"workout_doc":          map[string]any{"type": "object", "description": "Optional structured workout steps using icuvisor's WorkoutDoc shape. Mutually exclusive with description; the server serializes this to the intervals.icu workout DSL string in the upstream description field and never sends the structured object upstream."},
+		"workout_doc":          map[string]any{"type": "object", "description": "Optional structured WorkoutDoc. Mutually exclusive with description; serialized to the upstream workout DSL. Syntax reference: icuvisor://workout-syntax."},
 		"tags":                 map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional event tags to preserve on the upstream event, in caller-provided order."},
 		"target_load":          map[string]any{"type": "number", "minimum": 0, "description": "Optional planned training load / TSS equivalent when supported upstream."},
 		"distance_meters":      map[string]any{"type": "number", "minimum": 0, "description": "Optional planned distance in meters when supported upstream."},
@@ -210,7 +210,7 @@ func addOrUpdateEventInputExamples() []map[string]any {
 		{
 			"event_id":             "evt-example-42",
 			"date":                 "2026-06-21",
-			"category":             "RACE",
+			"category":             "RACE_B",
 			"type":                 "Run",
 			"name":                 "10K tune-up race",
 			"description":          "B race. Practice breakfast, warm-up, and even pacing.",

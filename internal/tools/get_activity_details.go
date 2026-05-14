@@ -92,11 +92,11 @@ type activityIntervalGroup struct {
 }
 
 func newGetActivityDetailsTool(client ActivityDetailsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: getActivityDetailsName, Description: getActivityDetailsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityDetailsHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return coreTool(Tool{Name: getActivityDetailsName, Description: getActivityDetailsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityDetailsHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func newGetActivityIntervalsTool(client ActivityIntervalsClient, detailsClient ActivityDetailsClient, version string, debugMetadata bool) Tool {
-	return Tool{Name: getActivityIntervalsName, Description: getActivityIntervalsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityIntervalsHandler(client, detailsClient, version, debugMetadata)}
+	return coreTool(Tool{Name: getActivityIntervalsName, Description: getActivityIntervalsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityIntervalsHandler(client, detailsClient, version, debugMetadata)})
 }
 
 func getActivityDetailsHandler(client ActivityDetailsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

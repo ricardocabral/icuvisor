@@ -150,43 +150,25 @@ func formatTarget(family string, target Target, ramp bool) (string, error) {
 		return "", err
 	}
 	unit := canonicalUnit(target.Units)
-	switch family {
-	case "power":
-		switch unit {
-		case "", "PERCENT_FTP", "%FTP":
-			return formatRange(lo, hi, ranged, "%"), nil
-		case "WATTS", "WATT", "W":
-			return formatRange(lo, hi, ranged, "w"), nil
-		case "ZONE", "POWER_ZONE":
-			return formatZoneRange(lo, hi, ranged, ""), nil
+	for _, syntax := range workoutTargetUnits {
+		if syntax.Family != family || !syntaxUnitMatches(syntax.Units, unit) {
+			continue
 		}
-	case "hr":
-		switch unit {
-		case "PERCENT_LTHR", "%LTHR", "LTHR":
-			return formatRange(lo, hi, ranged, "%") + " LTHR", nil
-		case "PERCENT_HR", "PERCENT_MAX_HR", "%HR", "HR":
-			return formatRange(lo, hi, ranged, "%") + " HR", nil
-		case "BPM":
-			return formatRange(lo, hi, ranged, "bpm"), nil
-		case "ZONE", "HR_ZONE":
-			return formatZoneRange(lo, hi, ranged, " HR"), nil
+		if syntax.Zone {
+			return syntax.Prefix + formatZoneRange(lo, hi, ranged, syntax.Suffix), nil
 		}
-	case "pace":
-		switch unit {
-		case "", "PERCENT_THRESHOLD", "PERCENT_THRESHOLD_PACE", "PERCENT_PACE", "%PACE":
-			return formatRange(lo, hi, ranged, "%") + " Pace", nil
-		case "ZONE", "PACE_ZONE":
-			return formatZoneRange(lo, hi, ranged, " Pace"), nil
-		case "PACE":
-			return formatRange(lo, hi, ranged, "") + " Pace", nil
-		}
-	case "rpe":
-		switch unit {
-		case "", "RPE":
-			return "RPE " + formatRange(lo, hi, ranged, ""), nil
-		}
+		return syntax.Prefix + formatRange(lo, hi, ranged, syntax.Suffix), nil
 	}
 	return "", fmt.Errorf("unsupported %s target units %q", family, target.Units)
+}
+
+func syntaxUnitMatches(units []string, unit string) bool {
+	for _, candidate := range units {
+		if canonicalUnit(candidate) == unit {
+			return true
+		}
+	}
+	return false
 }
 
 func targetBounds(target Target, ramp bool) (float64, float64, bool, error) {
@@ -241,17 +223,14 @@ func formatDuration(seconds int) string {
 
 func formatDistance(distance Length) (string, error) {
 	unit := strings.ToLower(strings.TrimSpace(distance.Unit))
-	switch unit {
-	case "m", "meter", "meters", "metre", "metres", "mtr":
-		unit = "mtr"
-	case "km", "kilometer", "kilometers", "kilometre", "kilometres":
-		unit = "km"
-	case "mi", "mile", "miles":
-		unit = "mi"
-	default:
-		return "", fmt.Errorf("unsupported distance unit %q", distance.Unit)
+	for _, syntax := range workoutDistanceUnits {
+		for _, alias := range syntax.Aliases {
+			if strings.ToLower(strings.TrimSpace(alias)) == unit {
+				return formatNumber(distance.Value) + syntax.Canonical, nil
+			}
+		}
 	}
-	return formatNumber(distance.Value) + unit, nil
+	return "", fmt.Errorf("unsupported distance unit %q", distance.Unit)
 }
 
 func formatRange(lo float64, hi float64, ranged bool, suffix string) string {
