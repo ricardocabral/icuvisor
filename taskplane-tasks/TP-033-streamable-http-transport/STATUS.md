@@ -1,10 +1,10 @@
 # TP-033-streamable-http-transport: TP-033-streamable-http-transport — Status
 
-**Current Step:** Step 2: Streamable HTTP transport
+**Current Step:** Step 3: Security posture
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -20,15 +20,15 @@
 
 ### Step 2: Streamable HTTP transport
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Wire the Go SDK Streamable HTTP transport onto the shared server core; the tool/resource/prompt registry is identical across transports.
-- [ ] Single shared server lifecycle (startup/shutdown, context cancellation honored).
-- [ ] Graceful shutdown closes the listener and in-flight requests cleanly.
+- [x] Wire the Go SDK Streamable HTTP transport onto the shared server core; the tool/resource/prompt registry is identical across transports.
+- [x] Single shared server lifecycle (startup/shutdown, context cancellation honored).
+- [x] Graceful shutdown closes the listener and in-flight requests cleanly.
 
 ### Step 3: Security posture
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Default bind is loopback only; confirm with a test that the default config never produces a non-loopback listener.
 - [ ] No API keys or athlete IDs in HTTP logs; reuse the existing redaction conventions.
@@ -67,6 +67,8 @@
 | R001 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
+| R004 | plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
+| R005 | code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
 
 ---
 
@@ -93,6 +95,12 @@
 | 2026-05-14 19:58 | Recovery | Reverted premature Step 1 completion before required code review. |
 | 2026-05-14 19:57 | Review R003 | code Step 1: APPROVE |
 | 2026-05-14 19:59 | Step 1 complete | Transport selection plumbing audited and approved; Step 2 started. |
+| 2026-05-14 19:59 | Review R004 | plan Step 2: APPROVE |
+| 2026-05-14 20:00 | Step 2 checkpoint | Shared SDK server and `NewStreamableHTTPHandler` wiring audited in `internal/mcp`; `go test ./internal/mcp ./internal/app` passed. |
+| 2026-05-14 20:01 | Step 2 checkpoint | Startup/shutdown paths use one `Server` wrapper for stdio and HTTP with context cancellation honored. |
+| 2026-05-14 20:02 | Step 2 checkpoint | Graceful shutdown and listener-close tests audited in `TestServeStreamableHTTPCancelClosesListener`. |
+| 2026-05-14 20:01 | Review R005 | code Step 2: APPROVE |
+| 2026-05-14 20:03 | Step 2 complete | Streamable HTTP transport wiring and lifecycle audited and approved; Step 3 started. |
 
 ---
 
@@ -108,3 +116,5 @@ _None_
 - Step 1 plan: expose config JSON fields `transport` and `http_bind`, `.env`/process env keys `ICUVISOR_TRANSPORT` and `ICUVISOR_HTTP_BIND`, and CLI overrides `--transport`/`--http-bind`; precedence is JSON < `.env` for absent values < process env < CLI options. `cmd/icuvisor/main.go` stays thin and delegates to `internal/app`, which owns flag parsing.
 - Step 1 validation plan: default transport is `stdio`; HTTP mode is selected only by explicit `http`; default HTTP bind is `127.0.0.1:8765`. Accepted transports are exactly `stdio` and `http`. Bind parsing requires explicit IP host plus numeric port 1-65535 (IPv4 and bracketed IPv6 accepted), rejects wildcard-by-omission such as `:8765`, URL strings, missing port, non-numeric port, and out-of-range port. Non-loopback addresses are accepted only when explicitly configured because the default is loopback.
 - Step 1 warning/test plan: log a structured WARN only when `transport=http` and the active bind is non-loopback; include transport and bind address only, never API keys or raw athlete IDs. Cover defaults, JSON/env/CLI selection, invalid transport/bind errors, non-loopback detection, and backward-compatible `version`, `--config path`, and `--config=path` CLI parsing.
+- Step 2 plan: keep `internal/mcp.NewServer` as the single shared SDK server/registry constructor. For stdio, keep `Server.Run(ctx)` over `sdkmcp.StdioTransport`. For HTTP, serve the same SDK server through `sdkmcp.NewStreamableHTTPHandler(func(*http.Request) *sdkmcp.Server { return sharedSDKServer }, options)` mounted at `/mcp`; do not duplicate tool/resource/prompt registration or handler logic.
+- Step 2 lifecycle plan: `RunStreamableHTTP` owns `net.Listen`, `ServeStreamableHTTP` accepts an injected listener for tests, uses `http.Server` with request contexts rooted in the worker context, treats `http.ErrServerClosed` as expected, and on cancellation calls bounded `Shutdown` followed by `Close` if needed. Tests cover app transport dispatch, HTTP initialize smoke, and cancellation closing the listener.
