@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 16
+**Review Counter:** 17
 **Iteration:** 2
 **Size:** M
 
@@ -55,6 +55,7 @@
 - [x] Add a shared athlete-profile shaper used by both `get_athlete_profile` and the resource
 - [x] Register `icuvisor://athlete-profile` as a dynamic cached resource with documented TTL/staleness behavior
 - [x] Cover resource list/read, cache refresh, context cancellation, and shape parity with focused tests
+- [ ] R017: Make athlete-profile cache refresh waiters context-aware and test canceled reads behind an in-flight refresh
 
 ### Step 6: Trim inline tool descriptions
 
@@ -84,6 +85,8 @@
 | R012 | Plan | 4 | REVISE | .reviews/R012-plan-step4.md |
 | R013 | Plan | 4 | APPROVE | inline |
 | R014 | Code | 4 | REVISE | .reviews/R014-code-step4.md |
+| R016 | Plan | 5 | APPROVE | .reviews/R016-plan-step5.md |
+| R017 | Code | 5 | REVISE | .reviews/R017-code-step5.md |
 
 ---
 
@@ -182,4 +185,10 @@ _None_
 - Context cancellation is honored before acquiring/refreshing the cache and while calling the upstream client. No unbounded upstream calls: each `resources/read` causes at most one `GetAthleteProfile` call, and cached reads cause zero calls.
 - Wire `resources.NewRegistryWithOptions(client, ResourceOptions{Version, TimezoneFallback, DebugMetadata})` from `internal/app`; keep `resources.NewRegistry()` for static test/default use by accepting nil client only when callers intentionally want static resources.
 - Tests: shared shaper parity with current tool outputs, dynamic resource cache hit/expiry behavior, canceled context behavior, registry/protocol list/read coverage for all four resources.
+
+### R017 revision notes
+
+- Replace the athlete-profile resource cache mutex-as-refresh-lock with context-aware coordination so a read canceled while another refresh is in flight returns promptly instead of blocking behind `sync.Mutex.Lock`.
+- Add a focused test using a blocked refresh and a second canceled read to prove the second read returns `context.Canceled` without waiting for the first refresh to unblock.
 | 2026-05-14 16:13 | Review R016 | plan Step 5: APPROVE |
+| 2026-05-14 16:26 | Review R017 | code Step 5: REVISE |
