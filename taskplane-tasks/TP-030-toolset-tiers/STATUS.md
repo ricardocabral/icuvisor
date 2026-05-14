@@ -1,6 +1,6 @@
 # TP-030-toolset-tiers: TP-030-toolset-tiers — Status
 
-**Current Step:** Step 5: `_meta` surfacing + docs
+**Current Step:** Step 6: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
@@ -66,7 +66,10 @@
 
 ### Step 6: Verify
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
+- [ ] Manual: start the binary in `core` and `full`; confirm `tools/list` counts and that `icuvisor_list_advanced_capabilities` is present in `core`
 
 ---
 
