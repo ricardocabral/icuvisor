@@ -46,6 +46,7 @@ func capabilityTestTool(name string, requirement tools.Requirement) tools.Tool {
 		Description: "Capability filtering test tool.",
 		InputSchema: map[string]any{"type": "object"},
 		Requirement: requirement,
+		Toolset:     safety.ToolsetCore,
 		Handler: func(context.Context, tools.Request) (tools.Result, error) {
 			return tools.Result{}, nil
 		},
@@ -142,6 +143,92 @@ func (deleteToolsRegistry) Register(ctx context.Context, registrar tools.Registr
 		}
 	}
 	return nil
+}
+
+type toolsetCapabilityRegistry struct{}
+
+func (toolsetCapabilityRegistry) Register(ctx context.Context, registrar tools.Registrar) error {
+	for _, tool := range []tools.Tool{
+		toolsetCapabilityTestTool("core_read", safety.ToolsetCore, tools.RequirementRead),
+		toolsetCapabilityTestTool("core_write", safety.ToolsetCore, tools.RequirementWrite),
+		toolsetCapabilityTestTool("full_read", safety.ToolsetFull, tools.RequirementRead),
+		toolsetCapabilityTestTool("full_write", safety.ToolsetFull, tools.RequirementWrite),
+		toolsetCapabilityTestTool("full_delete", safety.ToolsetFull, tools.RequirementDelete),
+	} {
+		if err := registrar.AddTool(tool); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func toolsetCapabilityTestTool(name string, toolset safety.Toolset, requirement tools.Requirement) tools.Tool {
+	tool := capabilityTestTool(name, requirement)
+	tool.Toolset = toolset
+	return tool
+}
+
+func TestProtocolFiltersToolsByToolsetAndCapability(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		toolset safety.Toolset
+		mode    safety.Mode
+		want    []string
+	}{
+		{name: "core none", toolset: safety.ToolsetCore, mode: safety.ModeNone, want: []string{"core_read"}},
+		{name: "core safe", toolset: safety.ToolsetCore, mode: safety.ModeSafe, want: []string{"core_read", "core_write"}},
+		{name: "core full", toolset: safety.ToolsetCore, mode: safety.ModeFull, want: []string{"core_read", "core_write"}},
+		{name: "zero toolset defaults core", toolset: "", mode: safety.ModeFull, want: []string{"core_read", "core_write"}},
+		{name: "full none", toolset: safety.ToolsetFull, mode: safety.ModeNone, want: []string{"core_read", "full_read"}},
+		{name: "full safe", toolset: safety.ToolsetFull, mode: safety.ModeSafe, want: []string{"core_read", "core_write", "full_read", "full_write"}},
+		{name: "full full", toolset: safety.ToolsetFull, mode: safety.ModeFull, want: []string{"core_read", "core_write", "full_read", "full_write", "full_delete"}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, session, cleanup := connectTestClientWithOptions(t, Options{Registry: toolsetCapabilityRegistry{}, Capability: safety.NewCapability(tc.mode), Toolset: tc.toolset})
+			defer cleanup()
+
+			result, err := session.ListTools(ctx, nil)
+			if err != nil {
+				t.Fatalf("ListTools() error = %v", err)
+			}
+			got := make([]string, 0, len(result.Tools))
+			for _, tool := range result.Tools {
+				got = append(got, tool.Name)
+			}
+			slices.Sort(got)
+			slices.Sort(tc.want)
+			if strings.Join(got, ",") != strings.Join(tc.want, ",") {
+				t.Fatalf("tools/list = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestProtocolHiddenFullToolIsAbsentAndUnknown(t *testing.T) {
+	t.Parallel()
+
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Registry: toolsetCapabilityRegistry{}, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetCore})
+	defer cleanup()
+
+	result, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools() error = %v", err)
+	}
+	for _, tool := range result.Tools {
+		if tool.Name == "full_read" {
+			t.Fatalf("full-only tool appeared in core tools/list: %#v", result.Tools)
+		}
+	}
+	if _, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: "full_read", Arguments: map[string]any{}}); err == nil {
+		t.Fatal("CallTool(full_read) error = nil, want unknown tool protocol error")
+	} else if !strings.Contains(err.Error(), "unknown tool") {
+		t.Fatalf("CallTool(full_read) error = %q, want unknown tool", err.Error())
+	}
 }
 
 func TestProtocolFiltersDeleteToolsByCapability(t *testing.T) {
@@ -259,6 +346,7 @@ func TestProtocolMalformedRequestsAndHandlerErrors(t *testing.T) {
 			Name:        "test_failure",
 			Description: "Returns a sanitized test failure.",
 			InputSchema: map[string]any{"type": "object"},
+			Toolset:     safety.ToolsetCore,
 			Handler: func(context.Context, tools.Request) (tools.Result, error) {
 				return tools.Result{}, errors.New("secret upstream stack detail")
 			},

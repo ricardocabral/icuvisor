@@ -25,6 +25,7 @@ type Options struct {
 	Logger     *slog.Logger
 	Registry   tools.Registry
 	Capability safety.Capability
+	Toolset    safety.Toolset
 	Transport  sdkmcp.Transport
 }
 
@@ -60,11 +61,11 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 		return nil, err
 	}
 	if opts.Registry != nil {
-		registrar := &safeRegistrar{server: sdkServer, logger: logger, capability: capabilityOrSafe(opts.Capability), names: make(map[string]struct{})}
+		registrar := &safeRegistrar{server: sdkServer, logger: logger, capability: capabilityOrSafe(opts.Capability), toolset: toolsetOrCore(opts), names: make(map[string]struct{})}
 		if err := opts.Registry.Register(ctx, registrar); err != nil {
 			return nil, fmt.Errorf("registering tools: %w", err)
 		}
-		logger.Info("tool registration complete", "registered_count", registrar.registeredCount, "skipped_count", registrar.skippedCount)
+		logger.Info("tool registration complete", "registered_count", registrar.registeredCount, "skipped_toolset_count", registrar.skippedToolsetCount, "skipped_capability_count", registrar.skippedCapabilityCount)
 	}
 
 	return &Server{server: sdkServer, transport: transport, logger: logger, version: version}, nil
@@ -136,6 +137,14 @@ func capabilityOrSafe(capability safety.Capability) safety.Capability {
 	return safety.NewCapability(safety.ModeSafe)
 }
 
+func toolsetOrCore(opts Options) safety.Toolset {
+	toolset := opts.Toolset
+	if toolset == "" {
+		toolset = opts.Config.Toolset
+	}
+	return safety.ParseToolset(string(toolset))
+}
+
 func newSDKServer(version string, logger *slog.Logger) (server *sdkmcp.Server, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
@@ -146,20 +155,30 @@ func newSDKServer(version string, logger *slog.Logger) (server *sdkmcp.Server, e
 }
 
 type safeRegistrar struct {
-	server          *sdkmcp.Server
-	logger          *slog.Logger
-	capability      safety.Capability
-	names           map[string]struct{}
-	registeredCount int
-	skippedCount    int
+	server                 *sdkmcp.Server
+	logger                 *slog.Logger
+	capability             safety.Capability
+	toolset                safety.Toolset
+	names                  map[string]struct{}
+	registeredCount        int
+	skippedToolsetCount    int
+	skippedCapabilityCount int
 }
 
 func (r *safeRegistrar) AddTool(tool tools.Tool) (err error) {
 	if err := r.validateTool(tool); err != nil {
 		return err
 	}
-	if r.shouldSkip(tool) {
-		r.skippedCount++
+	r.names[tool.Name] = struct{}{}
+	skippedByToolset := !r.toolsetAllows(tool)
+	skippedByCapability := !r.capabilityAllows(tool)
+	if skippedByToolset {
+		r.skippedToolsetCount++
+	}
+	if skippedByCapability {
+		r.skippedCapabilityCount++
+	}
+	if skippedByToolset || skippedByCapability {
 		return nil
 	}
 	defer func() {
@@ -189,20 +208,27 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) (err error) {
 		}
 		return converted, nil
 	})
-	r.names[tool.Name] = struct{}{}
 	r.registeredCount++
 	return nil
 }
 
-func (r *safeRegistrar) shouldSkip(tool tools.Tool) bool {
+func (r *safeRegistrar) toolsetAllows(tool tools.Tool) bool {
+	active := safety.ParseToolset(string(r.toolset))
+	if active == safety.ToolsetFull {
+		return true
+	}
+	return tool.EffectiveToolset() == safety.ToolsetCore
+}
+
+func (r *safeRegistrar) capabilityAllows(tool tools.Tool) bool {
 	capability := r.capability
 	if capability == nil {
 		capability = safety.NewCapability(safety.ModeSafe)
 	}
 	if tool.RequiresDelete() && !capability.CanDelete() {
-		return true
+		return false
 	}
-	return tool.RequiresWrite() && !capability.CanWrite()
+	return !tool.RequiresWrite() || capability.CanWrite()
 }
 
 func (r *safeRegistrar) validateTool(tool tools.Tool) error {

@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -34,12 +34,12 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Propagate the already-resolved active toolset from `Config.Toolset`/`ServerInfo.Toolset` into `mcp.Options`/`safeRegistrar` without re-reading env or adding a tool-call override; empty defaults to `core`
-- [ ] Registration filters on tier **and** delete-mode after validation; `core` registers only core tools, `full` registers core+full tools, and a tool appears only when both gates allow it
-- [ ] Tools outside the active tier are **absent** from `tools/list`, not registered-and-erroring
-- [ ] Startup INFO line reports count-only `registered_count`, `skipped_toolset_count`, and `skipped_capability_count` with independent gate evaluation and no tool names
-- [ ] Add composition tests crossing active toolset (`core`/`full`) with delete mode (`none`/`safe`/`full`) plus protocol absence/logging coverage for hidden tools
-- [ ] Update unmarked test fixtures (`testEchoRegistry`, `capabilityRegistry`, protocol helpers) deliberately so default-core behavior is preserved rather than weakened
+- [x] Propagate the already-resolved active toolset from `Config.Toolset`/`ServerInfo.Toolset` into `mcp.Options`/`safeRegistrar` without re-reading env or adding a tool-call override; empty defaults to `core`
+- [x] Registration filters on tier **and** delete-mode after validation; `core` registers only core tools, `full` registers core+full tools, and a tool appears only when both gates allow it
+- [x] Tools outside the active tier are **absent** from `tools/list`, not registered-and-erroring
+- [x] Startup INFO line reports count-only `registered_count`, `skipped_toolset_count`, and `skipped_capability_count` with independent gate evaluation and no tool names
+- [x] Add composition tests crossing active toolset (`core`/`full`) with delete mode (`none`/`safe`/`full`) plus protocol absence/logging coverage for hidden tools
+- [x] Update unmarked test fixtures (`testEchoRegistry`, `capabilityRegistry`, protocol helpers) deliberately so default-core behavior is preserved rather than weakened
 
 ### Step 4: `icuvisor_list_advanced_capabilities`
 
@@ -66,6 +66,7 @@
 | R005 | plan | 2 | APPROVE | `.reviews/R005-plan-step2.md` |
 | R006 | code | 2 | APPROVE | `.reviews/R006-code-step2.md` |
 | R007 | plan | 3 | REVISE | `.reviews/R007-plan-step3.md` |
+| R008 | plan | 3 | APPROVE | `.reviews/R008-plan-step3.md` |
 
 ---
 
@@ -118,9 +119,12 @@ Filtering semantics: `safeRegistrar.validateTool` runs before skip decisions, so
 
 Skip-count semantics: evaluate the toolset gate and capability gate independently for every validated tool; increment `skipped_toolset_count` when the active tier would hide it and `skipped_capability_count` when delete/write capability would hide it, even if both gates suppress the same tool. Register only when neither gate suppresses it. Startup logs count-only `registered_count`, `skipped_toolset_count`, and `skipped_capability_count`, never tool names/descriptions.
 
-Composition test matrix: synthetic tools cover core read, core write, full read, full write, and full delete. Expected visible sets: `core+none` → core read only; `core+safe` → core read/core write; `core+full` → core read/core write; `full+none` → core read/full read only; `full+safe` → core read/core write/full read/full write; `full+full` → all synthetic tools. Protocol coverage must show a hidden full-only tool is absent from `tools/list` under core and cannot be called as a registered tool. Existing test-only tools are marked core only when the test needs default visibility; otherwise tests set active toolset full deliberately.
+Composition test matrix: synthetic tools cover core read, core write, full read, full write, and full delete. Expected visible sets: `core+none` → core read only; `core+safe` → core read/core write; `core+full` and zero-value active toolset + full delete mode → core read/core write; `full+none` → core read/full read only; `full+safe` → core read/core write/full read/full write; `full+full` → all synthetic tools. Protocol coverage must show a hidden full-only tool is absent from `tools/list` under core and cannot be called as a registered tool. Existing test-only tools are marked core only when the test needs default visibility; otherwise tests set active toolset full deliberately.
+
+- R008 approved the revised Step 3 plan and suggested adding an explicit zero-value `mcp.Options.Toolset` defaults-to-core assertion, which was folded into the composition matrix.
 | 2026-05-14 12:40 | Review R003 | code Step 1: APPROVE |
 | 2026-05-14 12:45 | Review R004 | plan Step 2: REVISE |
 | 2026-05-14 12:50 | Review R005 | plan Step 2: APPROVE |
 | 2026-05-14 12:59 | Review R006 | code Step 2: APPROVE |
 | 2026-05-14 13:04 | Review R007 | plan Step 3: REVISE |
+| 2026-05-14 13:07 | Review R008 | plan Step 3: APPROVE |

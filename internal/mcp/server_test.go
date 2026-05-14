@@ -93,6 +93,7 @@ func (testEchoRegistry) Register(ctx context.Context, registrar tools.Registrar)
 			"additionalProperties": true,
 		},
 		OutputSchema: map[string]any{"type": "object"},
+		Toolset:      safety.ToolsetCore,
 		Handler: func(ctx context.Context, req tools.Request) (tools.Result, error) {
 			if err := ctx.Err(); err != nil {
 				return tools.Result{}, err
@@ -164,7 +165,7 @@ func TestNewServerLogsRegistrationCountsOnly(t *testing.T) {
 		t.Fatalf("NewServer() error = %v", err)
 	}
 	out := log.String()
-	for _, want := range []string{"tool registration complete", "registered_count=2", "skipped_count=1"} {
+	for _, want := range []string{"tool registration complete", "registered_count=2", "skipped_toolset_count=0", "skipped_capability_count=1"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("log %q missing %q", out, want)
 		}

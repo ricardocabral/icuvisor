@@ -134,6 +134,7 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 		Version:    info.Version,
 		Logger:     logger,
 		Capability: capability,
+		Toolset:    toolset,
 		Registry: tools.NewRegistryWithOptions(client, tools.RegistryOptions{
 			Version:          info.Version,
 			TimezoneFallback: info.Config.Timezone,
