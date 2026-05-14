@@ -92,24 +92,26 @@
 
 ## Execution Log
 
-| Timestamp        | Action         | Outcome                                         |
-| ---------------- | -------------- | ----------------------------------------------- |
-| 2026-05-14       | Task staged    | Scaffolded from ROADMAP.md v0.4                 |
-| 2026-05-14 20:28 | Task started   | Runtime V2 lane-runner execution                |
-| 2026-05-14 20:28 | Step 1 started | Methodology                                     |
-| 2026-05-14 20:30 | Worker iter 1  | done in 87s, tools: 31                          |
-| 2026-05-14 20:30 | No progress    | Iteration 1: 0 new checkboxes (1/3 stall limit) |
-| 2026-05-14 21:04 | Worker iter 2 | done in 2077s, tools: 96 |
-| 2026-05-14 21:04 | Step 4 started | Reference-server measurement |
-| 2026-05-14 21:11 | Recovery | Reverted premature Step 4 completion before code review |
-| 2026-05-14 21:35 | Step 4 completed | Reference-server measurement approved |
-| 2026-05-14 21:35 | Step 5 started | Results and KR5 verdict |
-| 2026-05-14 21:39 | Step 5 completed | Results and partial KR5 verdict approved |
-| 2026-05-14 21:39 | Step 6 started | Repeatability |
-| 2026-05-14 21:44 | Step 6 completed | Repeatability approved |
-| 2026-05-14 21:44 | Step 7 started | Verification |
-| 2026-05-14 21:48 | Step 7 completed | Verification approved |
-| 2026-05-14 21:48 | Task completed | All acceptance criteria satisfied |
+| Timestamp        | Action           | Outcome                                                 |
+| ---------------- | ---------------- | ------------------------------------------------------- |
+| 2026-05-14       | Task staged      | Scaffolded from ROADMAP.md v0.4                         |
+| 2026-05-14 20:28 | Task started     | Runtime V2 lane-runner execution                        |
+| 2026-05-14 20:28 | Step 1 started   | Methodology                                             |
+| 2026-05-14 20:30 | Worker iter 1    | done in 87s, tools: 31                                  |
+| 2026-05-14 20:30 | No progress      | Iteration 1: 0 new checkboxes (1/3 stall limit)         |
+| 2026-05-14 21:04 | Worker iter 2    | done in 2077s, tools: 96                                |
+| 2026-05-14 21:04 | Step 4 started   | Reference-server measurement                            |
+| 2026-05-14 21:11 | Recovery         | Reverted premature Step 4 completion before code review |
+| 2026-05-14 21:35 | Step 4 completed | Reference-server measurement approved                   |
+| 2026-05-14 21:35 | Step 5 started   | Results and KR5 verdict                                 |
+| 2026-05-14 21:39 | Step 5 completed | Results and partial KR5 verdict approved                |
+| 2026-05-14 21:39 | Step 6 started   | Repeatability                                           |
+| 2026-05-14 21:44 | Step 6 completed | Repeatability approved                                  |
+| 2026-05-14 21:44 | Step 7 started   | Verification                                            |
+| 2026-05-14 21:48 | Step 7 completed | Verification approved                                   |
+| 2026-05-14 21:48 | Task completed   | All acceptance criteria satisfied                       |
+| 2026-05-14 21:49 | Worker iter 3 | done in 2666s, tools: 174 |
+| 2026-05-14 21:49 | Task complete | .DONE created |
 
 ---
 

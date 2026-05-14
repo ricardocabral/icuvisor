@@ -84,20 +84,20 @@ Live mode uses the same harness with `--mode live --config <config.json>`. Start
 
 Committed fixture result: `scripts/benchmark/results/kr5-results.json`, generated from `kr5-forum-prompts-v1` at `2026-05-14T20:00:00Z`.
 
-| Server | Version | Tools | Description tokens | Median response bytes |
-| --- | --- | ---: | ---: | ---: |
-| `icuvisor-core` | `cc566c3-dirty` | 17 | 4,396 | 976.5 |
-| `icuvisor-full` | `cc566c3-dirty` | 38 | 9,490 | 1,154.0 |
-| `hhopke-intervals-icu-mcp` | `intervals-icu-mcp==2.0.0`, tag `v2.0.0` (`d6d8f2b381db0776b0bb6d3ff1081d733bf0ac96`) | 58 | 10,845 | 2,063.5 |
-| `mvilanova-intervals-mcp-server` | `0.1.0` at `12199c61d88f580a885f04921b23dcf7c4524de8` | 17 | 6,227 | 1,649.5 |
+| Server                           | Version                                                                               | Tools | Description tokens | Median response bytes |
+| -------------------------------- | ------------------------------------------------------------------------------------- | ----: | -----------------: | --------------------: |
+| `icuvisor-core`                  | `cc566c3-dirty`                                                                       |    17 |              4,396 |                 976.5 |
+| `icuvisor-full`                  | `cc566c3-dirty`                                                                       |    38 |              9,490 |               1,154.0 |
+| `hhopke-intervals-icu-mcp`       | `intervals-icu-mcp==2.0.0`, tag `v2.0.0` (`d6d8f2b381db0776b0bb6d3ff1081d733bf0ac96`) |    58 |             10,845 |               2,063.5 |
+| `mvilanova-intervals-mcp-server` | `0.1.0` at `12199c61d88f580a885f04921b23dcf7c4524de8`                                 |    17 |              6,227 |               1,649.5 |
 
 Headline KR5 deltas use `icuvisor-core`:
 
-| KR5 metric | Baseline | Target | Measured reduction | Result |
-| --- | --- | ---: | ---: | --- |
-| Tool-description tokens | hhopke 58-tool surface | ≥60% | 59.47% | Miss |
-| Median response bytes | hhopke | ≥40% | 52.68% | Pass |
-| Median response bytes | mvilanova | ≥40% | 40.80% | Pass |
+| KR5 metric              | Baseline               | Target | Measured reduction | Result |
+| ----------------------- | ---------------------- | -----: | -----------------: | ------ |
+| Tool-description tokens | hhopke 58-tool surface |   ≥60% |             59.47% | Miss   |
+| Median response bytes   | hhopke                 |   ≥40% |             52.68% | Pass   |
+| Median response bytes   | mvilanova              |   ≥40% |             40.80% | Pass   |
 
 ## KR5 verdict
 
