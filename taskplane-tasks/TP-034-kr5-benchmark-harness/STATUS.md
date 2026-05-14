@@ -44,9 +44,9 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Compute the deltas: icuvisor `core` description tokens vs hhopke's 58-tool surface (target ≥60% reduction); median response bytes vs both references (target ≥40% reduction)
-- [ ] Write the methodology + results doc in `docs/`; state plainly whether KR5 targets are confirmed or need recalibration (§7.4 #9 — measure honestly, do not flatter the result)
-- [ ] If a target misses, file the gap and a recalibration proposal rather than quietly adjusting the KR
+- [x] Compute the deltas: icuvisor `core` description tokens vs hhopke's 58-tool surface (target ≥60% reduction); median response bytes vs both references (target ≥40% reduction)
+- [x] Write the methodology + results doc in `docs/`; state plainly whether KR5 targets are confirmed or need recalibration (§7.4 #9 — measure honestly, do not flatter the result)
+- [x] If a target misses, file the gap and a recalibration proposal rather than quietly adjusting the KR
 
 ### Step 6: Repeatability
 
@@ -119,6 +119,8 @@ Step 2: R003 revisions replaced destructive KR5-10 with a non-destructive coach 
 Step 3: Fixture run measured `icuvisor-core` (17 tools, 4,396 description tokens, 976.5 median audited response bytes) and `icuvisor-full` (38 tools, 9,490 description tokens, 1,154.0 median audited response bytes) in `scripts/benchmark/results/kr5-results.json`. R005 revisions added the harness/results/fixtures to the diff and replaced synthetic icuvisor catalog fixtures with exact `tools/list` output captured from `./bin/icuvisor` for core and full tiers.
 
 Step 4: Stood up `hhopke/intervals-icu-mcp` with `uvx intervals-icu-mcp==2.0.0`, `INTERVALS_ICU_DELETE_MODE=full`, package version `2.0.0`, git tag `v2.0.0` (`d6d8f2b381db0776b0bb6d3ff1081d733bf0ac96`) to capture its 58-tool `tools/list` surface. Stood up `mvilanova/intervals-mcp-server` as a black box from a depth-1 checkout at `12199c61d88f580a885f04921b23dcf7c4524de8`, `uv sync --frozen`, and `uv run mcp run src/intervals_mcp_server/server.py`; installed package metadata reported `intervals-mcp-server==0.1.0` and `tools/list` returned 17 tools. R007/R008/R009 revisions count audited raw response bytes instead of benchmark padding, validate audited redacted byte sizes against committed fixtures, redact athlete IDs from measurement environments, support live `unavailable:<intent>` rows, validate unavailable calls as `isError=true`, preserve exact `.5` medians, and measured `hhopke-intervals-icu-mcp` (58 tools, 10,845 description tokens, 2,063.5 median response bytes) and `mvilanova-intervals-mcp-server` (17 tools, 6,227 description tokens, 1,649.5 median response bytes) in `scripts/benchmark/results/kr5-results.json`.
+
+Step 5: Computed KR5 deltas from committed fixture results: icuvisor core reduces tool-description tokens by 59.47% vs hhopke (target ≥60%, misses by 0.53 percentage points / 58 tokens), median response bytes by 52.68% vs hhopke, and median response bytes by 40.80% vs mvilanova. `docs/kr5-benchmark.md` states KR5 is partially confirmed and files gap `TP-034-KR5-DESC-001` with a trim-or-recalibrate proposal.
 | 2026-05-14 20:35 | Review R001 | plan Step 1: REVISE |
 | 2026-05-14 20:37 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-14 20:40 | Review R003 | plan Step 2: REVISE |

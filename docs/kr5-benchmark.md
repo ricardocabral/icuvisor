@@ -81,8 +81,25 @@ Live mode uses the same harness with `--mode live --config <config.json>`. Start
 
 ## Current results
 
-TBD after the harness runs against the frozen fixtures and the reference-server versions are recorded.
+Committed fixture result: `scripts/benchmark/results/kr5-results.json`, generated from `kr5-forum-prompts-v1` at `2026-05-14T20:00:00Z`.
+
+| Server | Version | Tools | Description tokens | Median response bytes |
+| --- | --- | ---: | ---: | ---: |
+| `icuvisor-core` | `cc566c3-dirty` | 17 | 4,396 | 976.5 |
+| `icuvisor-full` | `cc566c3-dirty` | 38 | 9,490 | 1,154.0 |
+| `hhopke-intervals-icu-mcp` | `intervals-icu-mcp==2.0.0`, tag `v2.0.0` (`d6d8f2b381db0776b0bb6d3ff1081d733bf0ac96`) | 58 | 10,845 | 2,063.5 |
+| `mvilanova-intervals-mcp-server` | `0.1.0` at `12199c61d88f580a885f04921b23dcf7c4524de8` | 17 | 6,227 | 1,649.5 |
+
+Headline KR5 deltas use `icuvisor-core`:
+
+| KR5 metric | Baseline | Target | Measured reduction | Result |
+| --- | --- | ---: | ---: | --- |
+| Tool-description tokens | hhopke 58-tool surface | ≥60% | 59.47% | Miss |
+| Median response bytes | hhopke | ≥40% | 52.68% | Pass |
+| Median response bytes | mvilanova | ≥40% | 40.80% | Pass |
 
 ## KR5 verdict
 
-TBD. The verdict must state whether the committed frozen snapshot confirms the ≥60% description-token reduction versus hhopke and the ≥40% median response-byte reduction versus both Python references. If any target misses, this section must include the gap and recalibration proposal rather than changing KR5 silently.
+KR5 is **partially confirmed** on the committed frozen snapshot. The response-byte target is confirmed against both Python references. The description-token target is not confirmed: `icuvisor-core` is 4,396 tokens versus a ≤4,338-token threshold for a 60% reduction against hhopke's 10,845-token surface, a gap of 58 tokens or 0.53 percentage points.
+
+Gap `TP-034-KR5-DESC-001`: trim at least 60 `icuvisor-core` catalog tokens without weakening tool-selection clarity, then rerun this benchmark. If follow-up measurement shows those 60 tokens cannot be removed without materially degrading tool choice, propose recalibrating KR5's description-token target from ≥60% to ≥59% while keeping the ≥40% response-byte target unchanged.
