@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 3
 **Size:** M/L
 
@@ -75,6 +75,7 @@
 | R005 | code | 3    | REVISE  | `.reviews/R005-code-step3.md` |
 | R007 | code | 4    | REVISE  | `.reviews/R007-code-step4.md` |
 | R008 | code | 4    | REVISE  | `.reviews/R008-code-step4.md` |
+| R009 | code | 4    | REVISE  | `.reviews/R009-code-step4.md` |
 
 ---
 
@@ -112,9 +113,9 @@ Step 1: Selected `scripts/benchmark/` rather than `internal/benchmark/` because 
 
 Step 2: R003 revisions replaced destructive KR5-10 with a non-destructive coach triage prompt and added `source_prompt_ids`/`prd_anchor` provenance to every scenario.
 
-Step 3: Fixture run measured `icuvisor-core` (17 tools, 4,396 description tokens, 976 median audited response bytes) and `icuvisor-full` (38 tools, 9,490 description tokens, 1,154 median audited response bytes) in `scripts/benchmark/results/kr5-results.json`. R005 revisions added the harness/results/fixtures to the diff and replaced synthetic icuvisor catalog fixtures with exact `tools/list` output captured from `./bin/icuvisor` for core and full tiers.
+Step 3: Fixture run measured `icuvisor-core` (17 tools, 4,396 description tokens, 976.5 median audited response bytes) and `icuvisor-full` (38 tools, 9,490 description tokens, 1,154.0 median audited response bytes) in `scripts/benchmark/results/kr5-results.json`. R005 revisions added the harness/results/fixtures to the diff and replaced synthetic icuvisor catalog fixtures with exact `tools/list` output captured from `./bin/icuvisor` for core and full tiers.
 
-Step 4: Stood up `hhopke/intervals-icu-mcp` with `uvx intervals-icu-mcp==2.0.0`, `INTERVALS_ICU_DELETE_MODE=full`, package version `2.0.0`, git tag `v2.0.0` (`d6d8f2b381db0776b0bb6d3ff1081d733bf0ac96`) to capture its 58-tool `tools/list` surface. Stood up `mvilanova/intervals-mcp-server` as a black box from a depth-1 checkout at `12199c61d88f580a885f04921b23dcf7c4524de8`, `uv sync --frozen`, and `uv run mcp run src/intervals_mcp_server/server.py`; installed package metadata reported `intervals-mcp-server==0.1.0` and `tools/list` returned 17 tools. R007/R008 revisions count audited raw response bytes instead of benchmark padding, validate audited redacted byte sizes against committed fixtures, redact athlete IDs from measurement environments, support live `unavailable:<intent>` rows, validate unavailable calls as `isError=true`, and measured `hhopke-intervals-icu-mcp` (58 tools, 10,845 description tokens, 2,063 median response bytes) and `mvilanova-intervals-mcp-server` (17 tools, 6,227 description tokens, 1,649 median response bytes) in `scripts/benchmark/results/kr5-results.json`.
+Step 4: Stood up `hhopke/intervals-icu-mcp` with `uvx intervals-icu-mcp==2.0.0`, `INTERVALS_ICU_DELETE_MODE=full`, package version `2.0.0`, git tag `v2.0.0` (`d6d8f2b381db0776b0bb6d3ff1081d733bf0ac96`) to capture its 58-tool `tools/list` surface. Stood up `mvilanova/intervals-mcp-server` as a black box from a depth-1 checkout at `12199c61d88f580a885f04921b23dcf7c4524de8`, `uv sync --frozen`, and `uv run mcp run src/intervals_mcp_server/server.py`; installed package metadata reported `intervals-mcp-server==0.1.0` and `tools/list` returned 17 tools. R007/R008/R009 revisions count audited raw response bytes instead of benchmark padding, validate audited redacted byte sizes against committed fixtures, redact athlete IDs from measurement environments, support live `unavailable:<intent>` rows, validate unavailable calls as `isError=true`, preserve exact `.5` medians, and measured `hhopke-intervals-icu-mcp` (58 tools, 10,845 description tokens, 2,063.5 median response bytes) and `mvilanova-intervals-mcp-server` (17 tools, 6,227 description tokens, 1,649.5 median response bytes) in `scripts/benchmark/results/kr5-results.json`.
 | 2026-05-14 20:35 | Review R001 | plan Step 1: REVISE |
 | 2026-05-14 20:37 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-14 20:40 | Review R003 | plan Step 2: REVISE |
@@ -123,3 +124,4 @@ Step 4: Stood up `hhopke/intervals-icu-mcp` with `uvx intervals-icu-mcp==2.0.0`,
 | 2026-05-14 21:02 | Review R006 | code Step 3: UNKNOWN |
 | 2026-05-14 21:15 | Review R007 | code Step 4: REVISE |
 | 2026-05-14 21:22 | Review R008 | code Step 4: REVISE |
+| 2026-05-14 21:31 | Review R009 | code Step 4: REVISE |

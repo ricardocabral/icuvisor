@@ -422,7 +422,7 @@ def summarize(
                     "response_bytes": size,
                 }
             )
-        median_bytes = int(statistics.median(response_bytes)) if response_bytes else 0
+        median_bytes = statistics.median(response_bytes) if response_bytes else 0
         servers.append(
             {
                 "server_id": measurement.server_id,
