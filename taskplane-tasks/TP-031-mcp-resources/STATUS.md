@@ -1,11 +1,11 @@
 # TP-031-mcp-resources: TP-031-mcp-resources — Status
 
-**Current Step:** Step 4: `icuvisor://custom-item-schemas`
+**Current Step:** Step 5: `icuvisor://athlete-profile`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 14
-**Iteration:** 1
+**Review Counter:** 15
+**Iteration:** 2
 **Size:** M
 
 ---
@@ -39,7 +39,7 @@
 
 ### Step 4: `icuvisor://custom-item-schemas`
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Register `icuvisor://custom-item-schemas` in the default resource registry
 - [x] Per-`item_type` schema for the `content` field (chart/field/stream/panel/zones)
@@ -50,7 +50,11 @@
 
 ### Step 5: `icuvisor://athlete-profile`
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] Add a shared athlete-profile shaper used by both `get_athlete_profile` and the resource
+- [ ] Register `icuvisor://athlete-profile` as a dynamic cached resource with documented TTL/staleness behavior
+- [ ] Cover resource list/read, cache refresh, context cancellation, and shape parity with focused tests
 
 ### Step 6: Trim inline tool descriptions
 
@@ -99,6 +103,8 @@
 | 2026-05-14 | Task staged | Scaffolded from ROADMAP.md v0.4   |
 | 2026-05-14 14:09 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-14 14:09 | Step 1 started | Resource registration plumbing |
+| 2026-05-14 16:09 | Worker iter 1 | killed (wall-clock timeout) in 7200s, tools: 229 |
+| 2026-05-14 16:09 | Step 5 started | `icuvisor://athlete-profile` |
 
 ---
 
@@ -167,3 +173,12 @@ _None_
 
 - Replace `mustSample` panic in `internal/customitemschemas/descriptors.go` with plain Go literals or an error-returning descriptor path.
 - Change descriptor/resource output so each documented `item_type` has its own concrete sample/schema subsection or explicitly declares an alias, with tests enforcing coverage.
+
+### Step 5 plan
+
+- Factor the existing `get_athlete_profile` response structs and shaping helpers into a small shared package so the tool and resource cannot drift on unit/timezone/`_meta` behavior.
+- Resource contract: URI `icuvisor://athlete-profile`, name `athlete_profile`, title `Athlete profile`, MIME type `application/json`, dynamic read handler that returns the default terse shaped profile (`include_full=false`) as one text resource content item.
+- Refresh/staleness policy: cache one shaped profile per resource instance for 15 minutes; concurrent reads share the same cache; after TTL expiry the next read refreshes via the configured intervals client; failed refreshes return the short safe profile-fetch error and do not perform retry loops or background polling.
+- Context cancellation is honored before acquiring/refreshing the cache and while calling the upstream client. No unbounded upstream calls: each `resources/read` causes at most one `GetAthleteProfile` call, and cached reads cause zero calls.
+- Wire `resources.NewRegistryWithOptions(client, ResourceOptions{Version, TimezoneFallback, DebugMetadata})` from `internal/app`; keep `resources.NewRegistry()` for static test/default use by accepting nil client only when callers intentionally want static resources.
+- Tests: shared shaper parity with current tool outputs, dynamic resource cache hit/expiry behavior, canceled context behavior, registry/protocol list/read coverage for all four resources.
