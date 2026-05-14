@@ -369,7 +369,8 @@ func validate(raw rawConfig) (Config, error) {
 	if httpBindAddress == "" {
 		httpBindAddress = DefaultHTTPBindAddress
 	}
-	if err := ValidateHTTPBindAddress(httpBindAddress); err != nil {
+	httpBindAddress, err = NormalizeHTTPBindAddress(httpBindAddress)
+	if err != nil {
 		return Config{}, err
 	}
 
@@ -388,38 +389,41 @@ func validate(raw rawConfig) (Config, error) {
 
 // ValidateHTTPBindAddress rejects accidental wildcard binds and malformed ports.
 func ValidateHTTPBindAddress(value string) error {
+	_, err := NormalizeHTTPBindAddress(value)
+	return err
+}
+
+// NormalizeHTTPBindAddress validates and returns value as a canonical netip.AddrPort string.
+func NormalizeHTTPBindAddress(value string) (string, error) {
 	host, port, err := splitHTTPBindAddress(value)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if host == "" {
-		return errors.New("invalid HTTP bind address; use an explicit IP host and port like 127.0.0.1:8765")
+		return "", errors.New("invalid HTTP bind address; use an explicit IP host and port like 127.0.0.1:8765")
 	}
-	if _, err := strconv.Atoi(port); err != nil {
-		return errors.New("invalid HTTP bind address; port must be a number from 1 to 65535")
+	portNumber, err := strconv.ParseUint(port, 10, 16)
+	if err != nil || portNumber == 0 {
+		return "", errors.New("invalid HTTP bind address; port must be between 1 and 65535")
 	}
 	addr, err := netip.ParseAddr(host)
 	if err != nil {
-		return errors.New("invalid HTTP bind address; host must be an IP address like 127.0.0.1 or 192.168.1.10")
+		return "", errors.New("invalid HTTP bind address; host must be an IP address like 127.0.0.1 or 192.168.1.10")
 	}
 	if !addr.IsValid() {
-		return errors.New("invalid HTTP bind address; host must be a valid IP address")
+		return "", errors.New("invalid HTTP bind address; host must be a valid IP address")
 	}
-	portNumber, _ := strconv.Atoi(port)
-	if portNumber < 1 || portNumber > 65535 {
-		return errors.New("invalid HTTP bind address; port must be between 1 and 65535")
-	}
-	return nil
+	return netip.AddrPortFrom(addr, uint16(portNumber)).String(), nil
 }
 
 // HTTPBindAddressIsLoopback reports whether value binds only to a loopback IP.
 func HTTPBindAddressIsLoopback(value string) bool {
-	host, _, err := splitHTTPBindAddress(value)
+	normalized, err := NormalizeHTTPBindAddress(value)
 	if err != nil {
 		return false
 	}
-	addr, err := netip.ParseAddr(host)
-	return err == nil && addr.IsLoopback()
+	addrPort, err := netip.ParseAddrPort(normalized)
+	return err == nil && addrPort.Addr().IsLoopback()
 }
 
 func splitHTTPBindAddress(value string) (string, string, error) {

@@ -384,11 +384,18 @@ func TestLoadTransportAndHTTPBindSelection(t *testing.T) {
 func TestValidateHTTPBindAddress(t *testing.T) {
 	t.Parallel()
 
-	valid := []string{"127.0.0.1:8765", "192.168.1.20:8765", "[::1]:8765"}
+	valid := []string{"127.0.0.1:8765", "192.168.1.20:8765", "[::1]:8765", "127.0.0.1 : 8765"}
 	for _, value := range valid {
 		if err := ValidateHTTPBindAddress(value); err != nil {
 			t.Fatalf("ValidateHTTPBindAddress(%q) error = %v", value, err)
 		}
+	}
+	normalized, err := NormalizeHTTPBindAddress("127.0.0.1 : 8765")
+	if err != nil {
+		t.Fatalf("NormalizeHTTPBindAddress() error = %v", err)
+	}
+	if normalized != "127.0.0.1:8765" {
+		t.Fatalf("NormalizeHTTPBindAddress() = %q, want 127.0.0.1:8765", normalized)
 	}
 	if !HTTPBindAddressIsLoopback("127.0.0.1:8765") {
 		t.Fatal("127.0.0.1:8765 should be loopback")

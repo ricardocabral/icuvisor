@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -13,6 +14,23 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
+
+type safeAppLogBuffer struct {
+	mu sync.Mutex
+	bytes.Buffer
+}
+
+func (b *safeAppLogBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.Buffer.Write(p)
+}
+
+func (b *safeAppLogBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.Buffer.String()
+}
 
 func TestRunVersionWritesInjectedVersion(t *testing.T) {
 	t.Parallel()
@@ -213,23 +231,74 @@ func TestRunFlagErrorsAreActionable(t *testing.T) {
 	}
 }
 
+func TestDefaultStartServerDispatchesHTTPTransport(t *testing.T) {
+	logs := &safeAppLogBuffer{}
+	previous := slog.Default()
+	t.Cleanup(func() { slog.SetDefault(previous) })
+	slog.SetDefault(slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelInfo})))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		done <- defaultStartServer(ctx, ServerInfo{Version: "v7.8.9", Config: config.Config{
+			APIKey:          "secret",
+			AthleteID:       "i12345",
+			Timezone:        "UTC",
+			APIBaseURL:      config.DefaultAPIBaseURL,
+			HTTPTimeout:     30 * time.Second,
+			Transport:       config.TransportHTTP,
+			HTTPBindAddress: "127.0.0.1:0",
+		}})
+	}()
+	deadline := time.After(time.Second)
+	for !strings.Contains(logs.String(), "transport=streamable_http") {
+		select {
+		case <-deadline:
+			cancel()
+			t.Fatalf("startup log %q missing streamable_http transport", logs.String())
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
+	cancel()
+	if err := <-done; !errors.Is(err, context.Canceled) {
+		t.Fatalf("defaultStartServer() error = %v, want context.Canceled", err)
+	}
+}
+
 func TestDefaultStartServerWarnsForHTTPNonLoopbackBind(t *testing.T) {
 	var logs bytes.Buffer
 	previous := slog.Default()
 	t.Cleanup(func() { slog.SetDefault(previous) })
 	slog.SetDefault(slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelInfo})))
 
-	_ = defaultStartServer(context.Background(), ServerInfo{Version: "v7.8.9", Config: config.Config{
-		APIKey:          "secret",
-		AthleteID:       "i12345",
-		Timezone:        "UTC",
-		APIBaseURL:      config.DefaultAPIBaseURL,
-		HTTPTimeout:     30 * time.Second,
-		Transport:       config.TransportHTTP,
-		HTTPBindAddress: "0.0.0.0:8765",
-	}})
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		done <- defaultStartServer(ctx, ServerInfo{Version: "v7.8.9", Config: config.Config{
+			APIKey:          "secret",
+			AthleteID:       "i12345",
+			Timezone:        "UTC",
+			APIBaseURL:      config.DefaultAPIBaseURL,
+			HTTPTimeout:     30 * time.Second,
+			Transport:       config.TransportHTTP,
+			HTTPBindAddress: "0.0.0.0:0",
+		}})
+	}()
+	deadline := time.After(time.Second)
+	for !strings.Contains(logs.String(), "non-loopback bind") {
+		select {
+		case <-deadline:
+			cancel()
+			t.Fatalf("startup log %q missing non-loopback bind warning", logs.String())
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
+	cancel()
+	if err := <-done; !errors.Is(err, context.Canceled) {
+		t.Fatalf("defaultStartServer() error = %v, want context.Canceled", err)
+	}
 	out := logs.String()
-	for _, want := range []string{"level=WARN", "non-loopback bind", "transport=http", "http_bind=0.0.0.0:8765"} {
+	for _, want := range []string{"level=WARN", "non-loopback bind", "transport=http", "http_bind=0.0.0.0:0"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("startup log %q missing %q", out, want)
 		}

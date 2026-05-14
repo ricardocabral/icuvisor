@@ -203,5 +203,8 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 	if err != nil {
 		return err
 	}
+	if info.Config.Transport == config.TransportHTTP {
+		return server.RunStreamableHTTP(ctx, info.Config.HTTPBindAddress)
+	}
 	return server.Run(ctx)
 }

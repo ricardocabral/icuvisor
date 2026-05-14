@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
+	"net/http"
 	"strings"
 	"sync"
 	"testing"
@@ -362,6 +364,86 @@ func TestRunHonorsCanceledContext(t *testing.T) {
 
 	if err := server.Run(ctx); !errors.Is(err, context.Canceled) {
 		t.Fatalf("Run() error = %v, want context.Canceled", err)
+	}
+}
+
+func TestServeStreamableHTTPInitializesClient(t *testing.T) {
+	t.Parallel()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("net.Listen() error = %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	server, err := NewServer(ctx, Options{Version: "v1.2.3", Registry: testEchoRegistry{}})
+	if err != nil {
+		cancel()
+		listener.Close()
+		t.Fatalf("NewServer() error = %v", err)
+	}
+	runDone := make(chan error, 1)
+	go func() {
+		runDone <- server.ServeStreamableHTTP(ctx, listener)
+	}()
+
+	client := sdkmcp.NewClient(&sdkmcp.Implementation{Name: "icuvisor-http-test-client", Version: "test"}, nil)
+	session, err := client.Connect(ctx, &sdkmcp.StreamableClientTransport{
+		Endpoint:             "http://" + listener.Addr().String() + StreamableHTTPPath,
+		HTTPClient:           &http.Client{Timeout: 2 * time.Second},
+		MaxRetries:           -1,
+		DisableStandaloneSSE: true,
+	}, nil)
+	if err != nil {
+		cancel()
+		waitForServerRun(t, runDone)
+		t.Fatalf("client Connect() error = %v", err)
+	}
+
+	if initResult := session.InitializeResult(); initResult == nil || initResult.ServerInfo == nil || initResult.ServerInfo.Name != "icuvisor" {
+		t.Fatalf("initialize result = %#v, want icuvisor server info", initResult)
+	}
+	toolsResult, err := session.ListTools(ctx, nil)
+	if err != nil {
+		session.Close()
+		cancel()
+		waitForServerRun(t, runDone)
+		t.Fatalf("ListTools() error = %v", err)
+	}
+	if len(toolsResult.Tools) != 1 || toolsResult.Tools[0].Name != "test_echo" {
+		t.Fatalf("tools = %#v, want test_echo", toolsResult.Tools)
+	}
+
+	session.Close()
+	cancel()
+	waitForServerRun(t, runDone)
+}
+
+func TestServeStreamableHTTPCancelClosesListener(t *testing.T) {
+	t.Parallel()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("net.Listen() error = %v", err)
+	}
+	address := listener.Addr().String()
+	ctx, cancel := context.WithCancel(context.Background())
+	server, err := NewServer(ctx, Options{})
+	if err != nil {
+		cancel()
+		listener.Close()
+		t.Fatalf("NewServer() error = %v", err)
+	}
+	runDone := make(chan error, 1)
+	go func() {
+		runDone <- server.ServeStreamableHTTP(ctx, listener)
+	}()
+
+	cancel()
+	waitForServerRun(t, runDone)
+	conn, err := net.DialTimeout("tcp", address, 100*time.Millisecond)
+	if err == nil {
+		conn.Close()
+		t.Fatalf("listener %s still accepts connections after cancellation", address)
 	}
 }
 
