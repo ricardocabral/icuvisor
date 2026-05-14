@@ -1,6 +1,6 @@
 # TP-032-mcp-prompts: TP-032-mcp-prompts — Status
 
-**Current Step:** Step 4: Docs
+**Current Step:** Step 5: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 1
@@ -38,14 +38,14 @@
 
 ### Step 4: Docs
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] README: document the five prompts and which clients surface them
-- [ ] CHANGELOG `[Unreleased]` entry
+- [x] README: document the five prompts and which clients surface them
+- [x] CHANGELOG `[Unreleased]` entry
 
 ### Step 5: Verify
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
 - [ ] Manual: `prompts/list` shows five; `prompts/get` renders each; confirm at least one MCP client surfaces them (note any client that ignores `prompts/list` in `STATUS.md` per §7.4 #13)
@@ -85,6 +85,8 @@
 | 2026-05-14 19:38 | Step 2 completed | Five prompts authored with resource URIs and expected tool names. |
 | 2026-05-14 19:43 | Review R003 addressed | Weekly planning now includes the advanced-capabilities discovery fallback; race-week taper validates missing `race_date`. |
 | 2026-05-14 19:46 | Review R004 addressed | Removed unrelated TP-016 status diff from the worktree so TP-032 commits stay scoped. |
+| 2026-05-14 19:49 | README updated | Documented the five MCP prompts and client support expectations. |
+| 2026-05-14 19:50 | CHANGELOG updated | Added an Unreleased entry for MCP Prompts. |
 
 ---
 
