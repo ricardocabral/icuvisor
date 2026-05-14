@@ -135,3 +135,4 @@ Partial solo triage completed before invited-athlete aggregation: issue #11 cove
 | 2026-05-14 | Validation commands | `make test`, `make build`, and `make lint` passed after docs/status/roadmap updates. |
 | 2026-05-14 | Step 4 partial triage | Opened v0.2 follow-up issue #11 for solo activity detail read fetch failures and issue #12 for `get_workouts_in_folder` default verbosity; invited-athlete evidence is still required before completing Step 4. |
 | 2026-05-14 | Roadmap correction | Left the v0.2 dogfood ROADMAP checkbox unchecked because invited-athlete validation is not complete and sign-off remains blocked. |
+| 2026-05-14 | Blocker escalation | Escalated that remaining Step 3 recruitment/run/collection, Step 4 final triage, and Step 5 sign-off require maintainer-supplied invited-athlete results; no outreach or fabricated data attempted. |
