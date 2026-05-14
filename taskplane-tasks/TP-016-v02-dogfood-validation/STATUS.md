@@ -41,6 +41,24 @@ _Task scaffolded from PROMPT.md; execution hydrated from PROMPT.md Step 1._
 - [ ] Collect findings via a redacted template; never receive raw athlete data
 - [ ] Aggregate into `docs/dogfood/v0.2-findings.md`
 
+## Step 4: Triage findings
+
+**Status:** ⏸️ Blocked pending Step 3 invited-athlete evidence
+
+- [ ] For each scale / unit / provenance / Strava-detection failure: open a GitHub issue tagged `v0.2-followup` linking the specific tool task
+- [ ] For latency / token-budget regressions: confirm against KR4 / KR5 targets; if a tool exceeds the soft 30k-token ceiling, open a follow-up issue for pagination or shape tightening
+- [ ] Decide which findings are launch-blocking for v0.5 vs follow-up; record the call in `STATUS.md`
+
+Partial solo triage completed before invited-athlete aggregation: issue #11 covers activity detail read fetch failures from TP-009; issue #12 covers `get_workouts_in_folder` default verbosity from TP-013.
+
+## Step 5: Sign-off
+
+**Status:** ⏸️ Blocked pending Step 3 and Step 4 completion
+
+- [ ] Update `ROADMAP.md` v0.2 to check off the dogfood item
+- [ ] If any code/doc changed, run `make test`, `make build`, `make lint`, update `CHANGELOG.md`
+- [ ] Confirm no athlete API keys, raw personal data, or training-load values are committed
+
 ## Notes
 
 - Step 1 plan inputs read: PRD §6/§7.2.C/§7.2.D, ROADMAP.md v0.2, TP-006 recipe, and TP-009…TP-015 STATUS summaries.
@@ -114,4 +132,6 @@ _Task scaffolded from PROMPT.md; execution hydrated from PROMPT.md Step 1._
 | 2026-05-14 | Resume correction | Current step reset to Step 3 because Step 1 and Step 2 are already complete; remaining invited-athlete recruitment/run/collection work is blocked on maintainer-supplied participants and redacted results. |
 | 2026-05-14 | Step 3 plan hardening | Added invite guidance requiring the maintainer to name the exact release artifact or git revision each participant should run. |
 | 2026-05-14 19:05 | Review R001 | plan Step 3: APPROVE |
-| 2026-05-14 | Validation commands | `make test`, `make build`, and `make lint` passed after docs/status-only plan hardening. |
+| 2026-05-14 | Validation commands | `make test`, `make build`, and `make lint` passed after docs/status/roadmap updates. |
+| 2026-05-14 | Step 4 partial triage | Opened v0.2 follow-up issue #11 for solo activity detail read fetch failures and issue #12 for `get_workouts_in_folder` default verbosity; invited-athlete evidence is still required before completing Step 4. |
+| 2026-05-14 | Roadmap correction | Left the v0.2 dogfood ROADMAP checkbox unchecked because invited-athlete validation is not complete and sign-off remains blocked. |
