@@ -122,3 +122,6 @@
 | 2026-05-14 12:08 | Exit intercept reprompt | Supervisor provided instructions (885 chars) — reprompting worker |
 | 2026-05-14       | Steering applied | External forum posting remains blocked, so TP-014 completed the implementable artifact by documenting the exact fields searched, sources checked, no-public-API verdict, ready-to-post Coggan forum request draft, and explicit public-URL placeholder. |
 | 2026-05-14       | Final verification | `git diff --check` passed; gap doc contains the explicit public feature-request URL placeholder and grep-confirmed the searched fields/endpoints/no-public-API verdict/draft content. |
+| 2026-05-14 12:11 | Agent escalate | TP-014 remains genuinely blocked. The only unchecked item is Step 2B: filing an intervals.icu API feature request through Coggan's forum and linking it. Prior attempts showed anonymous POST is rejecte |
+| 2026-05-14 12:11 | Worker iter 1 | done in 308s, tools: 31 |
+| 2026-05-14 12:11 | Task complete | .DONE created |
