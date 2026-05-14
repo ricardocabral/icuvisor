@@ -1,10 +1,10 @@
 # TP-034-kr5-benchmark-harness: TP-034-kr5-benchmark-harness — Status
 
-**Current Step:** Step 5: Results + KR5 verdict
+**Current Step:** Step 6: Repeatability
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 3
 **Size:** M/L
 
@@ -42,7 +42,7 @@
 
 ### Step 5: Results + KR5 verdict
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Compute the deltas: icuvisor `core` description tokens vs hhopke's 58-tool surface (target ≥60% reduction); median response bytes vs both references (target ≥40% reduction)
 - [x] Write the methodology + results doc in `docs/`; state plainly whether KR5 targets are confirmed or need recalibration (§7.4 #9 — measure honestly, do not flatter the result)
@@ -50,7 +50,7 @@
 
 ### Step 6: Repeatability
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] The harness is re-runnable with one command; document it
 - [ ] Committed results are redacted of any athlete PII
@@ -77,6 +77,7 @@
 | R008 | code | 4    | REVISE  | `.reviews/R008-code-step4.md` |
 | R009 | code | 4    | REVISE  | `.reviews/R009-code-step4.md` |
 | R010 | code | 4    | APPROVE | inline                        |
+| R011 | code | 5    | APPROVE | inline                        |
 
 ---
 
@@ -101,6 +102,8 @@
 | 2026-05-14 21:11 | Recovery | Reverted premature Step 4 completion before code review |
 | 2026-05-14 21:35 | Step 4 completed | Reference-server measurement approved |
 | 2026-05-14 21:35 | Step 5 started | Results and KR5 verdict |
+| 2026-05-14 21:39 | Step 5 completed | Results and partial KR5 verdict approved |
+| 2026-05-14 21:39 | Step 6 started | Repeatability |
 
 ---
 
@@ -131,3 +134,4 @@ Step 5: Computed KR5 deltas from committed fixture results: icuvisor core reduce
 | 2026-05-14 21:22 | Review R008 | code Step 4: REVISE |
 | 2026-05-14 21:31 | Review R009 | code Step 4: REVISE |
 | 2026-05-14 21:35 | Review R010 | code Step 4: APPROVE |
+| 2026-05-14 21:39 | Review R011 | code Step 5: APPROVE |
