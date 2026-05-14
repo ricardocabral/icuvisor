@@ -1,11 +1,11 @@
 # TP-030-toolset-tiers: TP-030-toolset-tiers — Status
 
 **Current Step:** Step 6: Verify
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-14
 **Review Level:** 2
 **Review Counter:** 16
-**Iteration:** 1
+**Iteration:** 2
 **Size:** M
 
 ---
@@ -66,10 +66,10 @@
 
 ### Step 6: Verify
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `make test`, `make build`, `make lint`, `go test -race ./...`
-- [ ] Manual: start the binary in `core` and `full`; confirm `tools/list` counts and that `icuvisor_list_advanced_capabilities` is present in `core`
+- [x] `make test`, `make build`, `make lint`, `go test -race ./...`
+- [x] Manual: start the binary in `core` and `full`; confirm `tools/list` counts and that `icuvisor_list_advanced_capabilities` is present in `core`
 
 ---
 
@@ -111,6 +111,7 @@
 | 2026-05-14 | Task staged | Scaffolded from ROADMAP.md v0.4   |
 | 2026-05-14 12:05 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-14 12:05 | Step 1 started | Tier enum and parsing |
+| 2026-05-14 14:05 | Worker iter 1 | killed (wall-clock timeout) in 7200s, tools: 283 |
 
 ---
 
@@ -156,6 +157,7 @@ Composition test matrix: synthetic tools cover core read, core write, full read,
 - R014 required Step 5 to pin response-owned metadata semantics, direct-return tool handling, targeted tests, and exact README/CHANGELOG scope before implementation.
 - R015 approved the revised Step 5 plan for implementation.
 - R016 approved the Step 5 implementation.
+- Step 6 manual verification started `bin/icuvisor` over stdio with dummy local env and `ICUVISOR_DELETE_MODE=full`: `ICUVISOR_TOOLSET=core` returned 17 tools including `icuvisor_list_advanced_capabilities`; `ICUVISOR_TOOLSET=full` returned 38 tools including `icuvisor_list_advanced_capabilities`.
 
 ### Step 5 metadata/docs plan
 
