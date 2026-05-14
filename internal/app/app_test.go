@@ -11,6 +11,7 @@ import (
 
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/response"
+	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 func TestRunVersionWritesInjectedVersion(t *testing.T) {
@@ -44,6 +45,7 @@ func TestRunDefaultDelegatesToStarterWithVersionAndConfig(t *testing.T) {
 		Timezone:    "UTC",
 		APIBaseURL:  config.DefaultAPIBaseURL,
 		HTTPTimeout: 30 * time.Second,
+		Toolset:     safety.ToolsetFull,
 	}
 	var gotInfo ServerInfo
 	err := Run(context.Background(), Options{
@@ -68,6 +70,9 @@ func TestRunDefaultDelegatesToStarterWithVersionAndConfig(t *testing.T) {
 	if gotInfo.Config.AthleteID != wantConfig.AthleteID {
 		t.Fatalf("server athlete ID = %q, want %q", gotInfo.Config.AthleteID, wantConfig.AthleteID)
 	}
+	if gotInfo.Toolset != safety.ToolsetFull {
+		t.Fatalf("server toolset = %q, want full", gotInfo.Toolset)
+	}
 }
 
 func TestDefaultStartServerLogsStartupVersion(t *testing.T) {
@@ -81,9 +86,17 @@ func TestDefaultStartServerLogsStartupVersion(t *testing.T) {
 		t.Fatal("defaultStartServer() error = nil, want config/client error")
 	}
 	out := logs.String()
-	for _, want := range []string{"server starting", "version=v7.8.9"} {
+	for _, want := range []string{"server starting", "version=v7.8.9", "resolved toolset", "toolset=core"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("startup log %q missing %q", out, want)
+		}
+	}
+	if got := strings.Count(out, "resolved toolset"); got != 1 {
+		t.Fatalf("resolved toolset log count = %d, want 1 in %q", got, out)
+	}
+	for _, forbidden := range []string{"get_activity_streams", "delete_event", "advanced_capabilities"} {
+		if strings.Contains(out, forbidden) {
+			t.Fatalf("startup log leaked tool name %q: %q", forbidden, out)
 		}
 	}
 }

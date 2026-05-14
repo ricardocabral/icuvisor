@@ -30,12 +30,13 @@ const (
 
 // Config contains the v0.1 runtime configuration consumed by lower layers.
 type Config struct {
-	APIKey      string        `json:"api_key"`
-	AthleteID   string        `json:"athlete_id"`
-	Timezone    string        `json:"timezone"`
-	APIBaseURL  string        `json:"api_base_url"`
-	HTTPTimeout time.Duration `json:"-"`
-	DeleteMode  safety.Mode   `json:"-"`
+	APIKey      string         `json:"api_key"`
+	AthleteID   string         `json:"athlete_id"`
+	Timezone    string         `json:"timezone"`
+	APIBaseURL  string         `json:"api_base_url"`
+	HTTPTimeout time.Duration  `json:"-"`
+	DeleteMode  safety.Mode    `json:"-"`
+	Toolset     safety.Toolset `json:"-"`
 }
 
 // Options controls config loading inputs.
@@ -60,6 +61,7 @@ type rawConfig struct {
 	apiBaseURL  string
 	httpTimeout string
 	deleteMode  string
+	toolset     string
 }
 
 // Load reads v0.1 config from JSON, .env, and process environment.
@@ -142,7 +144,7 @@ func (c Config) String() string {
 	if c.AthleteID != "" {
 		athleteID = "<set>"
 	}
-	return fmt.Sprintf("api_key=%s athlete_id=%s timezone=%q api_base_url=%q http_timeout=%s delete_mode=%s", apiKey, athleteID, c.Timezone, c.APIBaseURL, c.HTTPTimeout, c.DeleteMode)
+	return fmt.Sprintf("api_key=%s athlete_id=%s timezone=%q api_base_url=%q http_timeout=%s delete_mode=%s toolset=%s", apiKey, athleteID, c.Timezone, c.APIBaseURL, c.HTTPTimeout, c.DeleteMode, c.Toolset)
 }
 
 func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
@@ -243,6 +245,7 @@ func rawFromEnv(env map[string]string) rawConfig {
 		apiBaseURL:  strings.TrimSpace(env[EnvAPIBaseURL]),
 		httpTimeout: strings.TrimSpace(env[EnvHTTPTimeout]),
 		deleteMode:  strings.TrimSpace(env[safety.EnvDeleteMode]),
+		toolset:     strings.TrimSpace(env[safety.EnvToolset]),
 	}
 }
 
@@ -264,6 +267,9 @@ func (r *rawConfig) merge(next rawConfig, absentOnly bool) {
 	}
 	if shouldSet(r.deleteMode, next.deleteMode, absentOnly) {
 		r.deleteMode = next.deleteMode
+	}
+	if shouldSet(r.toolset, next.toolset, absentOnly) {
+		r.toolset = next.toolset
 	}
 }
 
@@ -318,12 +324,13 @@ func validate(raw rawConfig) (Config, error) {
 		APIBaseURL:  strings.TrimRight(baseURL, "/"),
 		HTTPTimeout: timeout,
 		DeleteMode:  safety.ParseMode(raw.deleteMode),
+		Toolset:     safety.ParseToolset(raw.toolset),
 	}, nil
 }
 
 func recognizedEnvKey(key string) bool {
 	switch key {
-	case EnvAPIKey, EnvAthleteID, EnvConfigPath, EnvTimezone, EnvAPIBaseURL, EnvHTTPTimeout, safety.EnvDeleteMode:
+	case EnvAPIKey, EnvAthleteID, EnvConfigPath, EnvTimezone, EnvAPIBaseURL, EnvHTTPTimeout, safety.EnvDeleteMode, safety.EnvToolset:
 		return true
 	default:
 		return false

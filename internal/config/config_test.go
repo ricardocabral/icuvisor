@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 func TestNormalizeAthleteIDForDisplay(t *testing.T) {
@@ -89,6 +91,7 @@ func TestLoadPrecedenceAndDefaults(t *testing.T) {
 		"ICUVISOR_TIMEZONE=Europe/Lisbon",
 		"ICUVISOR_API_BASE_URL=https://dotenv.example.test/api",
 		"ICUVISOR_HTTP_TIMEOUT=20s",
+		"ICUVISOR_TOOLSET=full",
 		"IGNORED=value",
 	}, "\n"))
 
@@ -96,9 +99,11 @@ func TestLoadPrecedenceAndDefaults(t *testing.T) {
 		Path:       configPath,
 		DotEnvPath: dotEnvPath,
 		Env: map[string]string{
-			EnvAPIKey:      "env-key",
-			EnvAthleteID:   "333",
-			EnvHTTPTimeout: "45s",
+			EnvAPIKey:            "env-key",
+			EnvAthleteID:         "333",
+			EnvHTTPTimeout:       "45s",
+			safety.EnvToolset:    "core",
+			safety.EnvDeleteMode: "full",
 		},
 	})
 	if err != nil {
@@ -118,6 +123,12 @@ func TestLoadPrecedenceAndDefaults(t *testing.T) {
 	}
 	if cfg.HTTPTimeout != 45*time.Second {
 		t.Fatalf("HTTPTimeout = %s, want 45s", cfg.HTTPTimeout)
+	}
+	if cfg.Toolset != safety.ToolsetCore {
+		t.Fatalf("Toolset = %q, want core", cfg.Toolset)
+	}
+	if cfg.DeleteMode != safety.ModeFull {
+		t.Fatalf("DeleteMode = %q, want full", cfg.DeleteMode)
 	}
 }
 
@@ -146,6 +157,37 @@ func TestLoadDotEnvFillsAbsentValues(t *testing.T) {
 	}
 	if cfg.HTTPTimeout != DefaultHTTPTimeout {
 		t.Fatalf("HTTPTimeout = %s, want %s", cfg.HTTPTimeout, DefaultHTTPTimeout)
+	}
+	if cfg.Toolset != safety.ToolsetCore {
+		t.Fatalf("Toolset = %q, want default core", cfg.Toolset)
+	}
+}
+
+func TestLoadToolsetFromDotEnvAndInvalidEnvFallback(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	dotEnvPath := dir + "/.env"
+	writeFile(t, dotEnvPath, strings.Join([]string{
+		"INTERVALS_ICU_API_KEY=dotenv-key",
+		"INTERVALS_ICU_ATHLETE_ID=i444",
+		"ICUVISOR_TOOLSET=full",
+	}, "\n"))
+
+	cfg, err := Load(context.Background(), Options{DotEnvPath: dotEnvPath, Env: map[string]string{}})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.Toolset != safety.ToolsetFull {
+		t.Fatalf("Toolset = %q, want full from .env", cfg.Toolset)
+	}
+
+	cfg, err = Load(context.Background(), Options{DotEnvPath: dotEnvPath, Env: map[string]string{safety.EnvToolset: "unexpected"}})
+	if err != nil {
+		t.Fatalf("Load() with invalid env toolset error = %v", err)
+	}
+	if cfg.Toolset != safety.ToolsetCore {
+		t.Fatalf("Toolset = %q, want invalid env fallback core", cfg.Toolset)
 	}
 }
 
@@ -279,7 +321,7 @@ func TestConfigStringRedactsSecret(t *testing.T) {
 	if strings.Contains(got, testCredential) || strings.Contains(got, "i12345") {
 		t.Fatalf("Config.String() leaked sensitive data: %q", got)
 	}
-	for _, want := range []string{"api_key=<redacted>", "athlete_id=<set>", "UTC"} {
+	for _, want := range []string{"api_key=<redacted>", "athlete_id=<set>", "UTC", "toolset=core"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("Config.String() = %q, want %q", got, want)
 		}

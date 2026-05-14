@@ -33,6 +33,7 @@ type ServerInfo struct {
 	Config        config.Config
 	DebugMetadata bool
 	DeleteMode    safety.Mode
+	Toolset       safety.Toolset
 	Capability    safety.Capability
 }
 
@@ -94,6 +95,7 @@ func startServer(ctx context.Context, loader func(context.Context, config.Option
 	}
 	info.Config = cfg
 	info.DeleteMode = cfg.DeleteMode
+	info.Toolset = cfg.Toolset
 	info.Capability = safety.NewCapability(cfg.DeleteMode)
 
 	if starter == nil {
@@ -119,8 +121,10 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 		capability = safety.NewCapability(info.DeleteMode)
 	}
 	deleteMode := safety.ParseMode(capability.Mode())
+	toolset := safety.ParseToolset(info.Toolset.String())
 	response.SetDeleteMode(deleteMode.String())
 	safety.LogResolvedMode(logger, deleteMode)
+	safety.LogResolvedToolset(logger, toolset)
 	client, err := intervals.NewClient(intervals.Options{Config: info.Config, Version: info.Version})
 	if err != nil {
 		return err
