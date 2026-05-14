@@ -28,7 +28,7 @@ type deleteGearRequest struct {
 }
 
 func newDeleteGearTool(client GearDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: deleteGearName, Description: deleteGearDescription, InputSchema: deleteGearInputSchema(), OutputSchema: deleteGearOutputSchema(), Requirement: RequirementDelete, Handler: deleteGearHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: deleteGearName, Description: deleteGearDescription, InputSchema: deleteGearInputSchema(), OutputSchema: deleteGearOutputSchema(), Requirement: RequirementDelete, Handler: deleteGearHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func deleteGearHandler(client GearDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

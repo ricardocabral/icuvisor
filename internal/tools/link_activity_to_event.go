@@ -48,7 +48,7 @@ type linkActivityToEventWarning struct {
 }
 
 func newLinkActivityToEventTool(client ActivityEventLinkClient, activityClient ActivityDetailsClient, eventClient EventByIDClient, version string, debugMetadata bool) Tool {
-	return Tool{Name: linkActivityToEventName, Description: linkActivityToEventDescription, InputSchema: linkActivityToEventInputSchema(), OutputSchema: linkActivityToEventOutputSchema(), Requirement: RequirementWrite, Handler: linkActivityToEventHandler(client, activityClient, eventClient, version, debugMetadata)}
+	return coreTool(Tool{Name: linkActivityToEventName, Description: linkActivityToEventDescription, InputSchema: linkActivityToEventInputSchema(), OutputSchema: linkActivityToEventOutputSchema(), Requirement: RequirementWrite, Handler: linkActivityToEventHandler(client, activityClient, eventClient, version, debugMetadata)})
 }
 
 func linkActivityToEventHandler(client ActivityEventLinkClient, activityClient ActivityDetailsClient, eventClient EventByIDClient, version string, debugMetadata bool) Handler {

@@ -215,6 +215,9 @@ func (r *safeRegistrar) validateTool(tool tools.Tool) error {
 	if tool.Description == "" {
 		return fmt.Errorf("tool %q is missing a description", tool.Name)
 	}
+	if err := validateToolset(tool); err != nil {
+		return err
+	}
 	if err := validateObjectSchema("input", tool.Name, tool.InputSchema, true); err != nil {
 		return err
 	}
@@ -225,6 +228,15 @@ func (r *safeRegistrar) validateTool(tool tools.Tool) error {
 		return fmt.Errorf("tool %q is missing a handler", tool.Name)
 	}
 	return nil
+}
+
+func validateToolset(tool tools.Tool) error {
+	switch tool.Toolset {
+	case "", safety.ToolsetCore, safety.ToolsetFull:
+		return nil
+	default:
+		return fmt.Errorf("tool %q has invalid toolset %q", tool.Name, tool.Toolset)
+	}
 }
 
 func validateObjectSchema(kind, name string, schema any, required bool) error {

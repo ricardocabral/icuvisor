@@ -281,7 +281,29 @@ type Tool struct {
 	InputSchema  any
 	OutputSchema any
 	Requirement  Requirement
+	Toolset      safety.Toolset
 	Handler      Handler
+}
+
+func coreTool(tool Tool) Tool {
+	tool.Toolset = safety.ToolsetCore
+	return tool
+}
+
+func fullTool(tool Tool) Tool {
+	tool.Toolset = safety.ToolsetFull
+	return tool
+}
+
+// EffectiveToolset reports the registration tier declared by the tool. Empty
+// values default to full so new/unmarked tools do not silently expand core.
+func (t Tool) EffectiveToolset() safety.Toolset {
+	switch t.Toolset {
+	case safety.ToolsetCore, safety.ToolsetFull:
+		return t.Toolset
+	default:
+		return safety.ToolsetFull
+	}
 }
 
 // RequiresWrite reports whether the tool needs write capability to be registered.

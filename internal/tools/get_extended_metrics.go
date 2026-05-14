@@ -90,7 +90,7 @@ type extendedMetricsMeta struct {
 }
 
 func newGetExtendedMetricsTool(client ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: getExtendedMetricsName, Description: getExtendedMetricsDescription, InputSchema: extendedMetricsInputSchema(), OutputSchema: genericOutputSchema("Upstream-exposed extended metrics for one activity."), Handler: getExtendedMetricsHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: getExtendedMetricsName, Description: getExtendedMetricsDescription, InputSchema: extendedMetricsInputSchema(), OutputSchema: genericOutputSchema("Upstream-exposed extended metrics for one activity."), Handler: getExtendedMetricsHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func getExtendedMetricsHandler(client ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

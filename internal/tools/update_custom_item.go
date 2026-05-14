@@ -42,7 +42,7 @@ type updateCustomItemRequest struct {
 }
 
 func newUpdateCustomItemTool(client CustomItemUpdaterClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: updateCustomItemName, Description: updateCustomItemDescription, InputSchema: updateCustomItemInputSchema(), OutputSchema: updateCustomItemOutputSchema(), Requirement: RequirementWrite, Handler: updateCustomItemHandler(client, readClient, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: updateCustomItemName, Description: updateCustomItemDescription, InputSchema: updateCustomItemInputSchema(), OutputSchema: updateCustomItemOutputSchema(), Requirement: RequirementWrite, Handler: updateCustomItemHandler(client, readClient, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func updateCustomItemHandler(client CustomItemUpdaterClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

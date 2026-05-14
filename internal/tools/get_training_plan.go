@@ -60,7 +60,7 @@ type getTrainingPlanResponseMeta struct {
 }
 
 func newGetTrainingPlanTool(client TrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: getTrainingPlanName, Description: getTrainingPlanDescription, InputSchema: getTrainingPlanInputSchema(), OutputSchema: getTrainingPlanOutputSchema(), Handler: getTrainingPlanHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: getTrainingPlanName, Description: getTrainingPlanDescription, InputSchema: getTrainingPlanInputSchema(), OutputSchema: getTrainingPlanOutputSchema(), Handler: getTrainingPlanHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func getTrainingPlanHandler(client TrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

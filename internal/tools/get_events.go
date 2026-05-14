@@ -84,7 +84,7 @@ type dateRangeMeta struct {
 }
 
 func newGetEventsTool(client EventsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: getEventsName, Description: getEventsDescription, InputSchema: getEventsInputSchema(), OutputSchema: getEventsOutputSchema(), Handler: getEventsHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return coreTool(Tool{Name: getEventsName, Description: getEventsDescription, InputSchema: getEventsInputSchema(), OutputSchema: getEventsOutputSchema(), Handler: getEventsHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func getEventsHandler(client EventsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

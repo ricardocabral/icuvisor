@@ -33,7 +33,7 @@ type createCustomItemRequest struct {
 }
 
 func newCreateCustomItemTool(client CustomItemCreatorClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: createCustomItemName, Description: createCustomItemDescription, InputSchema: createCustomItemInputSchema(), OutputSchema: createCustomItemOutputSchema(), Requirement: RequirementWrite, Handler: createCustomItemHandler(client, readClient, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: createCustomItemName, Description: createCustomItemDescription, InputSchema: createCustomItemInputSchema(), OutputSchema: createCustomItemOutputSchema(), Requirement: RequirementWrite, Handler: createCustomItemHandler(client, readClient, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func createCustomItemHandler(client CustomItemCreatorClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

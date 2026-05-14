@@ -66,7 +66,7 @@ func newGetEventByIDToolWithClock(client EventByIDClient, profileClient ProfileC
 	if now == nil {
 		now = time.Now
 	}
-	return Tool{Name: getEventByIDName, Description: getEventByIDDescription, InputSchema: getEventByIDInputSchema(), OutputSchema: getEventByIDOutputSchema(), Handler: getEventByIDHandler(client, profileClient, version, timezoneFallback, debugMetadata, now)}
+	return coreTool(Tool{Name: getEventByIDName, Description: getEventByIDDescription, InputSchema: getEventByIDInputSchema(), OutputSchema: getEventByIDOutputSchema(), Handler: getEventByIDHandler(client, profileClient, version, timezoneFallback, debugMetadata, now)})
 }
 
 func getEventByIDHandler(client EventByIDClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, now func() time.Time) Handler {

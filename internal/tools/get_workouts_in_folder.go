@@ -53,7 +53,7 @@ type getWorkoutsInFolderMeta struct {
 }
 
 func newGetWorkoutsInFolderTool(client WorkoutLibraryClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: getWorkoutsInFolderName, Description: getWorkoutsInFolderDescription, InputSchema: getWorkoutsInFolderInputSchema(), OutputSchema: getWorkoutsInFolderOutputSchema(), Handler: getWorkoutsInFolderHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: getWorkoutsInFolderName, Description: getWorkoutsInFolderDescription, InputSchema: getWorkoutsInFolderInputSchema(), OutputSchema: getWorkoutsInFolderOutputSchema(), Handler: getWorkoutsInFolderHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func getWorkoutsInFolderHandler(client WorkoutLibraryClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

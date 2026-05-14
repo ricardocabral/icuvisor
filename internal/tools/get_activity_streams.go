@@ -83,11 +83,11 @@ type activitySplitsMeta struct {
 }
 
 func newGetActivityStreamsTool(client ActivityStreamsClient, version string, debugMetadata bool) Tool {
-	return Tool{Name: getActivityStreamsName, Description: getActivityStreamsDescription, InputSchema: activityStreamsInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityStreamsHandler(client, version, debugMetadata)}
+	return fullTool(Tool{Name: getActivityStreamsName, Description: getActivityStreamsDescription, InputSchema: activityStreamsInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityStreamsHandler(client, version, debugMetadata)})
 }
 
 func newGetActivitySplitsTool(streamsClient ActivityStreamsClient, intervalsClient ActivityIntervalsClient, profileClient ProfileClient, version string, debugMetadata bool) Tool {
-	return Tool{Name: getActivitySplitsName, Description: getActivitySplitsDescription, InputSchema: activitySplitsInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivitySplitsHandler(streamsClient, intervalsClient, profileClient, version, debugMetadata)}
+	return coreTool(Tool{Name: getActivitySplitsName, Description: getActivitySplitsDescription, InputSchema: activitySplitsInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivitySplitsHandler(streamsClient, intervalsClient, profileClient, version, debugMetadata)})
 }
 
 func getActivityStreamsHandler(client ActivityStreamsClient, version string, debugMetadata bool) Handler {

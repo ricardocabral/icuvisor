@@ -176,6 +176,30 @@ func TestNewServerLogsRegistrationCountsOnly(t *testing.T) {
 	}
 }
 
+func TestNewServerRejectsInvalidToolset(t *testing.T) {
+	t.Parallel()
+
+	_, err := NewServer(context.Background(), Options{
+		Registry: registryFunc(func(_ context.Context, registrar tools.Registrar) error {
+			return registrar.AddTool(tools.Tool{
+				Name:        "test_invalid_toolset",
+				Description: "bad tier",
+				Toolset:     safety.Toolset("advanced"),
+				InputSchema: map[string]any{"type": "object"},
+				Handler: func(context.Context, tools.Request) (tools.Result, error) {
+					return tools.Result{}, nil
+				},
+			})
+		}),
+	})
+	if err == nil {
+		t.Fatal("NewServer() error = nil, want invalid toolset error")
+	}
+	if !strings.Contains(err.Error(), "invalid toolset") {
+		t.Fatalf("NewServer() error = %q, want invalid toolset", err.Error())
+	}
+}
+
 func TestNewServerRejectsDuplicateToolNames(t *testing.T) {
 	t.Parallel()
 

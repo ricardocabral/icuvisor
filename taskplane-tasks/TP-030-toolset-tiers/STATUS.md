@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -24,11 +24,11 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Add `tools.Tool.Toolset safety.Toolset` plus an effective-tier helper that defaults empty to `full` and rejects unknown non-empty in-code tier values during validation
-- [ ] Each tool self-declares its tier (`core` or `full`) in its constructor; no production name→tier map is introduced
-- [ ] Curate the `core` set to the §7.2.E daily-use path: read activities/fitness/wellness/events, write events/wellness/messages, plus `icuvisor_list_advanced_capabilities`. Target ~17 tools; record the exact list in `STATUS.md`
-- [ ] Test matrix: every registered current tool's tier membership is asserted in a table-driven test that fails on missing expected tools and unexpected newly registered tools
-- [ ] Preserve Step 2 boundaries: no `tools/list` filtering, no startup skip counts, and no implementation of `icuvisor_list_advanced_capabilities` yet
+- [x] Add `tools.Tool.Toolset safety.Toolset` plus an effective-tier helper that defaults empty to `full` and rejects unknown non-empty in-code tier values during validation
+- [x] Each tool self-declares its tier (`core` or `full`) in its constructor; no production name→tier map is introduced
+- [x] Curate the `core` set to the §7.2.E daily-use path: read activities/fitness/wellness/events, write events/wellness/messages, plus `icuvisor_list_advanced_capabilities`. Target ~17 tools; record the exact list in `STATUS.md`
+- [x] Test matrix: every registered current tool's tier membership is asserted in a table-driven test that fails on missing expected tools and unexpected newly registered tools
+- [x] Preserve Step 2 boundaries: no `tools/list` filtering, no startup skip counts, and no implementation of `icuvisor_list_advanced_capabilities` yet
 
 ### Step 3: Registry filtering composition
 
@@ -56,6 +56,7 @@
 | R002 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
 | R004 | plan | 2 | REVISE | `.reviews/R004-plan-step2.md` |
+| R005 | plan | 2 | APPROVE | `.reviews/R005-plan-step2.md` |
 
 ---
 
@@ -89,6 +90,7 @@ _None_
 - R002 approved the revised Step 1 plan for implementation.
 - R003 approved the Step 1 implementation; reviewer verified `go test ./...` and diff checks.
 - R004 required Step 2 to pin a `Tool` metadata/helper API, keep membership self-declared, record an exact core/full tier table before coding, define the drift-catching catalog test, and avoid Step 3/4 scope.
+- R005 approved the revised Step 2 plan; implementation kept invalid in-code tier validation on the MCP registration path and used a full-capability collecting registrar for the membership matrix.
 
 ### Step 2 tier plan
 
@@ -99,3 +101,4 @@ Current full-only tools: `get_power_curves`, `get_extended_metrics`, `get_activi
 Rationale: core covers profile context plus daily activity/fitness/wellness/event reads and non-destructive event/wellness/message writes; full holds raw/heavy reads, specialist workout-library/training-plan/custom-item/sport-settings surfaces, and all destructive delete tools.
 | 2026-05-14 12:40 | Review R003 | code Step 1: APPROVE |
 | 2026-05-14 12:45 | Review R004 | plan Step 2: REVISE |
+| 2026-05-14 12:50 | Review R005 | plan Step 2: APPROVE |

@@ -48,7 +48,7 @@ type createWorkoutMeta struct {
 }
 
 func newCreateWorkoutTool(client WorkoutCreatorClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: createWorkoutName, Description: createWorkoutDescription, InputSchema: createWorkoutInputSchema(), OutputSchema: createWorkoutOutputSchema(), Requirement: RequirementWrite, Handler: createWorkoutHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: createWorkoutName, Description: createWorkoutDescription, InputSchema: createWorkoutInputSchema(), OutputSchema: createWorkoutOutputSchema(), Requirement: RequirementWrite, Handler: createWorkoutHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func createWorkoutHandler(client WorkoutCreatorClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

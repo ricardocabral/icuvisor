@@ -94,13 +94,13 @@ type GetAthleteProfileMeta struct {
 }
 
 func newGetAthleteProfileTool(client ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{
+	return coreTool(Tool{
 		Name:         getAthleteProfileName,
 		Description:  getAthleteProfileDescription,
 		InputSchema:  getAthleteProfileInputSchema(),
 		OutputSchema: getAthleteProfileOutputSchema(),
 		Handler:      getAthleteProfileHandler(client, version, timezoneFallback, debugMetadata),
-	}
+	})
 }
 
 func getAthleteProfileHandler(client ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

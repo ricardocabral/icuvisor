@@ -36,7 +36,7 @@ type getCustomItemByIDMeta struct {
 }
 
 func newGetCustomItemByIDTool(client CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: getCustomItemByIDName, Description: getCustomItemByIDDescription, InputSchema: getCustomItemByIDInputSchema(), OutputSchema: getCustomItemByIDOutputSchema(), Handler: getCustomItemByIDHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: getCustomItemByIDName, Description: getCustomItemByIDDescription, InputSchema: getCustomItemByIDInputSchema(), OutputSchema: getCustomItemByIDOutputSchema(), Handler: getCustomItemByIDHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func getCustomItemByIDHandler(client CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

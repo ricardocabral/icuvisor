@@ -44,7 +44,7 @@ type getWellnessDataMeta struct {
 }
 
 func newGetWellnessDataTool(client WellnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: getWellnessDataName, Description: getWellnessDataDescription, InputSchema: wellnessDataInputSchema(), OutputSchema: getWellnessDataOutputSchema(), Handler: getWellnessDataHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return coreTool(Tool{Name: getWellnessDataName, Description: getWellnessDataDescription, InputSchema: wellnessDataInputSchema(), OutputSchema: getWellnessDataOutputSchema(), Handler: getWellnessDataHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func getWellnessDataHandler(client WellnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

@@ -53,7 +53,7 @@ type getCustomItemsMeta struct {
 }
 
 func newGetCustomItemsTool(client CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: getCustomItemsName, Description: getCustomItemsDescription, InputSchema: getCustomItemsInputSchema(), OutputSchema: getCustomItemsOutputSchema(), Handler: getCustomItemsHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: getCustomItemsName, Description: getCustomItemsDescription, InputSchema: getCustomItemsInputSchema(), OutputSchema: getCustomItemsOutputSchema(), Handler: getCustomItemsHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func getCustomItemsHandler(client CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

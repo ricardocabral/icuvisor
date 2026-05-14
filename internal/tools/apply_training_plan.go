@@ -88,7 +88,7 @@ type applyTrainingPlanWorkout struct {
 }
 
 func newApplyTrainingPlanTool(client ApplyTrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability) Tool {
-	return Tool{Name: applyTrainingPlanName, Description: applyTrainingPlanDescription, InputSchema: applyTrainingPlanInputSchema(capabilityOrSafe(capability)), OutputSchema: applyTrainingPlanOutputSchema(), Requirement: RequirementWrite, Handler: applyTrainingPlanHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability))}
+	return fullTool(Tool{Name: applyTrainingPlanName, Description: applyTrainingPlanDescription, InputSchema: applyTrainingPlanInputSchema(capabilityOrSafe(capability)), OutputSchema: applyTrainingPlanOutputSchema(), Requirement: RequirementWrite, Handler: applyTrainingPlanHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability))})
 }
 
 func applyTrainingPlanHandler(client ApplyTrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability) Handler {

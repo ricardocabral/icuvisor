@@ -56,7 +56,7 @@ type updateWorkoutMeta struct {
 }
 
 func newUpdateWorkoutTool(client WorkoutUpdaterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: updateWorkoutName, Description: updateWorkoutDescription, InputSchema: updateWorkoutInputSchema(), OutputSchema: updateWorkoutOutputSchema(), Requirement: RequirementWrite, Handler: updateWorkoutHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: updateWorkoutName, Description: updateWorkoutDescription, InputSchema: updateWorkoutInputSchema(), OutputSchema: updateWorkoutOutputSchema(), Requirement: RequirementWrite, Handler: updateWorkoutHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func updateWorkoutHandler(client WorkoutUpdaterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

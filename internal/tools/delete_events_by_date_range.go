@@ -53,7 +53,7 @@ type deleteEventsByDateRangeResponseMeta struct {
 }
 
 func newDeleteEventsByDateRangeTool(client EventsByDateRangeDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return Tool{Name: deleteEventsByDateRangeName, Description: deleteEventsByDateRangeDescription, InputSchema: deleteEventsByDateRangeInputSchema(), OutputSchema: deleteEventsByDateRangeOutputSchema(), Requirement: RequirementDelete, Handler: deleteEventsByDateRangeHandler(client, profileClient, version, timezoneFallback, debugMetadata)}
+	return fullTool(Tool{Name: deleteEventsByDateRangeName, Description: deleteEventsByDateRangeDescription, InputSchema: deleteEventsByDateRangeInputSchema(), OutputSchema: deleteEventsByDateRangeOutputSchema(), Requirement: RequirementDelete, Handler: deleteEventsByDateRangeHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
 }
 
 func deleteEventsByDateRangeHandler(client EventsByDateRangeDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
