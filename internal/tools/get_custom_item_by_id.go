@@ -11,7 +11,7 @@ import (
 
 const (
 	getCustomItemByIDName                    = "get_custom_item_by_id"
-	getCustomItemByIDDescription             = "Fetch one custom item by item_id and return the full item_type-specific content payload. In v0.2, content schema guidance is inline: FITNESS_CHART, FITNESS_TABLE, and TRACE_CHART content describes chart/table traces, axes, series, formulas, filters, and display layout; INPUT_FIELD, ACTIVITY_FIELD, INTERVAL_FIELD, and ACTIVITY_STREAM content describes custom field or stream definitions, formulas/scripts, units, formats, and visibility; ACTIVITY_CHART, ACTIVITY_HISTOGRAM, ACTIVITY_HEATMAP, ACTIVITY_MAP, and ACTIVITY_PANEL content describes activity-detail visualizations, aggregations, map/layer options, and panel layout; ZONES content describes custom zone definitions, labels, boundaries, colors, and sport/metric applicability. This long-form guidance moves to the icuvisor://custom-item-schemas MCP Resource in v0.4."
+	getCustomItemByIDDescription             = "Fetch one custom item by item_id and preserve its full content payload. For per-item_type content schema guidance, see icuvisor://custom-item-schemas."
 	invalidGetCustomItemByIDArgumentsMessage = "invalid get_custom_item_by_id arguments; provide item_id"
 	fetchCustomItemByIDMessage               = "could not fetch custom item; check intervals.icu credentials, athlete ID, and item ID"
 	customItemByIDEndpoint                   = "/athlete/{id}/custom-item/{itemId}"
@@ -90,7 +90,7 @@ func shapeGetCustomItemByIDResponse(item intervals.CustomItem, requestedID strin
 	if item.Content != nil {
 		detail["content"] = item.Content
 	}
-	return getCustomItemByIDResponse{CustomItem: detail, Meta: getCustomItemByIDMeta{SourceEndpoint: customItemByIDEndpoint, ItemID: requestedID, ItemType: itemType, ContentPreserved: item.Content != nil || detail["content"] != nil, SchemaDocumentation: "inline_v0.2_tool_description; moves_to_resource_v0.4", DefaultPayloadScope: "full upstream custom item with content preserved verbatim"}}
+	return getCustomItemByIDResponse{CustomItem: detail, Meta: getCustomItemByIDMeta{SourceEndpoint: customItemByIDEndpoint, ItemID: requestedID, ItemType: itemType, ContentPreserved: item.Content != nil || detail["content"] != nil, SchemaDocumentation: "icuvisor://custom-item-schemas", DefaultPayloadScope: "full upstream custom item with content preserved verbatim"}}
 }
 
 func getCustomItemByIDInputSchema() map[string]any {

@@ -8,7 +8,7 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 )
 
-const customItemSchemaDocumentation = "inline_v0.2_tool_description; moves_to_resource_v0.4"
+const customItemSchemaDocumentation = "icuvisor://custom-item-schemas"
 
 type customItemWriteResponse struct {
 	CustomItem map[string]any      `json:"custom_item"`

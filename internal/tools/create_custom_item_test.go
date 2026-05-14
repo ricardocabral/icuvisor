@@ -114,8 +114,8 @@ func TestCreateCustomItemRegistrationMetadata(t *testing.T) {
 	if tool.Requirement != RequirementWrite {
 		t.Fatalf("requirement = %q, want write", tool.Requirement)
 	}
-	if strings.Contains(strings.ToLower(tool.Description), "confirm") || !strings.Contains(tool.Description, "validated before upload") {
-		t.Fatalf("description = %q, want ungated validation language and no confirm", tool.Description)
+	if strings.Contains(strings.ToLower(tool.Description), "confirm") || !strings.Contains(tool.Description, "validated against readable samples") || !strings.Contains(tool.Description, "icuvisor://custom-item-schemas") {
+		t.Fatalf("description = %q, want validation/resource language and no confirm", tool.Description)
 	}
 }
 

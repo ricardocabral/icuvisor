@@ -6,7 +6,7 @@
       "type": "string"
     },
     "category": {
-      "description": "Optional upstream event category enum filter. Returned categories preserve upstream enum values.",
+      "description": "Optional upstream event category filter. Documented upstream categories include WORKOUT, RACE_A, RACE_B, RACE_C, NOTE, PLAN, HOLIDAY, SICK, INJURED, SET_EFTP, FITNESS_DAYS, SEASON_START, TARGET, SET_FITNESS; see icuvisor://event-categories. Custom athlete/account category values are passed through.",
       "type": "string"
     },
     "include_full": {

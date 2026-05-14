@@ -13,7 +13,7 @@ import (
 
 const (
 	createWorkoutName                    = "create_workout"
-	createWorkoutDescription             = "Create a reusable workout-library template, not a calendar event. Accepts either verbatim free-text description or structured workout_doc steps that icuvisor serializes to the intervals.icu workout-description DSL before upload."
+	createWorkoutDescription             = "Create a reusable workout-library template, not a calendar event. Use description or workout_doc; workout_doc syntax is documented at icuvisor://workout-syntax."
 	invalidCreateWorkoutArgumentsMessage = "invalid create_workout arguments; provide name, sport, optional folder_id/tags, and either description or workout_doc"
 	createWorkoutMessage                 = "could not create workout; check intervals.icu credentials, athlete ID, folder ID, and writable workout fields"
 )
@@ -123,7 +123,7 @@ func createWorkoutInputSchema() map[string]any {
 		"name":        map[string]any{"type": "string", "description": "Required workout-library template name/title. Surrounding whitespace is trimmed."},
 		"folder_id":   map[string]any{"type": "string", "description": "Optional intervals.icu workout-library folder or plan ID to place the new template in. Omit to create a top-level library workout."},
 		"description": map[string]any{"type": "string", "description": "Optional free-text workout description. Preserved verbatim when workout_doc is omitted; mutually exclusive with workout_doc because intervals.icu accepts one description DSL string on writes."},
-		"workout_doc": map[string]any{"type": "object", "description": "Optional structured workout steps using icuvisor's WorkoutDoc shape. Mutually exclusive with description; the server serializes this to the intervals.icu workout-description DSL string and never sends the structured workout_doc object upstream."},
+		"workout_doc": map[string]any{"type": "object", "description": "Optional structured WorkoutDoc. Mutually exclusive with description; serialized to the upstream workout-description DSL. Syntax reference: icuvisor://workout-syntax."},
 		"tags":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional workout-library tags to preserve on the upstream template, in caller-provided order."},
 		"sport":       map[string]any{"type": "string", "description": "Required upstream sport/activity type for the workout template, such as Ride, Run, Swim, VirtualRide, or the athlete account's configured activity type."},
 	}}

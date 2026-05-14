@@ -1,5 +1,63 @@
 {
   "additionalProperties": false,
+  "examples": [
+    {
+      "date": "2026-06-15",
+      "feel": 4
+    },
+    {
+      "date": "2026-06-16",
+      "fatigue": 2,
+      "hrv": 62.5,
+      "locked": true,
+      "mood": 4,
+      "motivation": 4,
+      "restingHR": 48,
+      "sleepQuality": 3,
+      "soreness": 2,
+      "stress": 3
+    },
+    {
+      "bloodGlucose": 88,
+      "bodyFat": 14.5,
+      "date": "2026-06-17",
+      "diastolic": 72,
+      "include_full": true,
+      "injury": "Mild calf tightness after hills; keep run easy.",
+      "lactate": 1.2,
+      "systolic": 118,
+      "weight": 68.4
+    }
+  ],
+  "input_examples": [
+    {
+      "date": "2026-06-15",
+      "feel": 4
+    },
+    {
+      "date": "2026-06-16",
+      "fatigue": 2,
+      "hrv": 62.5,
+      "locked": true,
+      "mood": 4,
+      "motivation": 4,
+      "restingHR": 48,
+      "sleepQuality": 3,
+      "soreness": 2,
+      "stress": 3
+    },
+    {
+      "bloodGlucose": 88,
+      "bodyFat": 14.5,
+      "date": "2026-06-17",
+      "diastolic": 72,
+      "include_full": true,
+      "injury": "Mild calf tightness after hills; keep run easy.",
+      "lactate": 1.2,
+      "systolic": 118,
+      "weight": 68.4
+    }
+  ],
   "properties": {
     "bloodGlucose": {
       "description": "Manual blood glucose in the upstream intervals.icu wellness unit.",

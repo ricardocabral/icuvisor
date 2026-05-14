@@ -1,5 +1,85 @@
 {
   "additionalProperties": false,
+  "examples": [
+    {
+      "name": "Endurance aerobic ride - revised",
+      "workout_id": "workout-example-7"
+    },
+    {
+      "workout_doc": {
+        "steps": [
+          {
+            "description": "Warm up",
+            "duration": 600,
+            "power": {
+              "units": "PERCENT_FTP",
+              "value": 55
+            }
+          },
+          {
+            "description": "Tempo",
+            "duration": 1800,
+            "power": {
+              "max": 85,
+              "min": 80,
+              "units": "PERCENT_FTP"
+            }
+          }
+        ]
+      },
+      "workout_id": "workout-example-8"
+    },
+    {
+      "description": "Sharpening workout with short openers. Keep recoveries honest.",
+      "folder_id": "folder-race-prep",
+      "sport": "Ride",
+      "tags": [
+        "race-prep",
+        "indoor"
+      ],
+      "workout_id": "workout-example-9"
+    }
+  ],
+  "input_examples": [
+    {
+      "name": "Endurance aerobic ride - revised",
+      "workout_id": "workout-example-7"
+    },
+    {
+      "workout_doc": {
+        "steps": [
+          {
+            "description": "Warm up",
+            "duration": 600,
+            "power": {
+              "units": "PERCENT_FTP",
+              "value": 55
+            }
+          },
+          {
+            "description": "Tempo",
+            "duration": 1800,
+            "power": {
+              "max": 85,
+              "min": 80,
+              "units": "PERCENT_FTP"
+            }
+          }
+        ]
+      },
+      "workout_id": "workout-example-8"
+    },
+    {
+      "description": "Sharpening workout with short openers. Keep recoveries honest.",
+      "folder_id": "folder-race-prep",
+      "sport": "Ride",
+      "tags": [
+        "race-prep",
+        "indoor"
+      ],
+      "workout_id": "workout-example-9"
+    }
+  ],
   "properties": {
     "description": {
       "description": "Optional replacement free-text workout description. Omit to leave unchanged; mutually exclusive with workout_doc. Empty strings are rejected to avoid accidentally clearing structured workout content.",
@@ -25,7 +105,7 @@
       "type": "array"
     },
     "workout_doc": {
-      "description": "Optional replacement structured WorkoutDoc. The server serializes this to the intervals.icu workout-description DSL string and never sends workout_doc upstream; an explicit empty steps list serializes to an empty DSL to clear structured content intentionally.",
+      "description": "Optional replacement structured WorkoutDoc. Serialized to the upstream workout-description DSL; empty steps clear structured content. Syntax reference: icuvisor://workout-syntax.",
       "type": "object"
     },
     "workout_id": {

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- MCP Resources for long-form reference content: `icuvisor://workout-syntax`, `icuvisor://event-categories`, `icuvisor://custom-item-schemas`, and a dynamic cached `icuvisor://athlete-profile`, with inline tool descriptions trimmed to point at resource URIs.
 - `ICUVISOR_TOOLSET` with default `core` and opt-in `full` tool catalog tiers, including `icuvisor_list_advanced_capabilities` for discovering hidden tools and `_meta.toolset` response metadata.
 - Startup logs now include the server version and a structured "started listening" entry once the MCP transport is ready.
 - Adversarial safe-mode delete prompt corpus with redacted Codex local-binary outcomes, plus static catalog safety matrix coverage for v0.3 write/delete gating.

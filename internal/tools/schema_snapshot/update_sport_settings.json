@@ -1,5 +1,83 @@
 {
   "additionalProperties": false,
+  "examples": [
+    {
+      "effective_date": "2026-06-01",
+      "ftp": 285,
+      "sport": "Ride"
+    },
+    {
+      "effective_date": "2026-06-01",
+      "sport": "Run",
+      "threshold_hr": 172,
+      "threshold_pace": {
+        "unit": "seconds_per_km",
+        "value": 255
+      }
+    },
+    {
+      "effective_date": "2026-07-01",
+      "ftp": 290,
+      "sport": "Ride",
+      "threshold_hr": 168,
+      "zones": [
+        {
+          "boundaries": [
+            150,
+            200,
+            250,
+            300
+          ],
+          "kind": "power",
+          "names": [
+            "Endurance",
+            "Tempo",
+            "Threshold",
+            "VO2"
+          ]
+        }
+      ]
+    }
+  ],
+  "input_examples": [
+    {
+      "effective_date": "2026-06-01",
+      "ftp": 285,
+      "sport": "Ride"
+    },
+    {
+      "effective_date": "2026-06-01",
+      "sport": "Run",
+      "threshold_hr": 172,
+      "threshold_pace": {
+        "unit": "seconds_per_km",
+        "value": 255
+      }
+    },
+    {
+      "effective_date": "2026-07-01",
+      "ftp": 290,
+      "sport": "Ride",
+      "threshold_hr": 168,
+      "zones": [
+        {
+          "boundaries": [
+            150,
+            200,
+            250,
+            300
+          ],
+          "kind": "power",
+          "names": [
+            "Endurance",
+            "Tempo",
+            "Threshold",
+            "VO2"
+          ]
+        }
+      ]
+    }
+  ],
   "properties": {
     "effective_date": {
       "description": "Required athlete-local effective date as YYYY-MM-DD; used as the oldest date for upstream sport-setting recompute.",

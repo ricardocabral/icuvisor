@@ -1,8 +1,142 @@
 {
   "additionalProperties": false,
+  "examples": [
+    {
+      "category": "NOTE",
+      "date": "2026-06-15",
+      "description": "Keep the day flexible; optional mobility only.",
+      "name": "Travel day"
+    },
+    {
+      "category": "WORKOUT",
+      "date": "2026-06-16",
+      "moving_time_seconds": 4200,
+      "name": "Sweet spot repeats",
+      "tags": [
+        "sweet-spot",
+        "indoor"
+      ],
+      "target_load": 72,
+      "type": "Ride",
+      "workout_doc": {
+        "steps": [
+          {
+            "description": "Warm up",
+            "duration": 600,
+            "power": {
+              "units": "PERCENT_FTP",
+              "value": 60
+            }
+          },
+          {
+            "description": "Main set",
+            "reps": 3,
+            "steps": [
+              {
+                "duration": 480,
+                "power": {
+                  "units": "PERCENT_FTP",
+                  "value": 88
+                }
+              },
+              {
+                "duration": 240,
+                "power": {
+                  "units": "PERCENT_FTP",
+                  "value": 55
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "category": "RACE_B",
+      "date": "2026-06-21",
+      "description": "B race. Practice breakfast, warm-up, and even pacing.",
+      "distance_meters": 10000,
+      "elapsed_time_seconds": 3300,
+      "event_id": "evt-example-42",
+      "include_full": true,
+      "name": "10K tune-up race",
+      "tags": [
+        "race",
+        "tune-up"
+      ],
+      "type": "Run"
+    }
+  ],
+  "input_examples": [
+    {
+      "category": "NOTE",
+      "date": "2026-06-15",
+      "description": "Keep the day flexible; optional mobility only.",
+      "name": "Travel day"
+    },
+    {
+      "category": "WORKOUT",
+      "date": "2026-06-16",
+      "moving_time_seconds": 4200,
+      "name": "Sweet spot repeats",
+      "tags": [
+        "sweet-spot",
+        "indoor"
+      ],
+      "target_load": 72,
+      "type": "Ride",
+      "workout_doc": {
+        "steps": [
+          {
+            "description": "Warm up",
+            "duration": 600,
+            "power": {
+              "units": "PERCENT_FTP",
+              "value": 60
+            }
+          },
+          {
+            "description": "Main set",
+            "reps": 3,
+            "steps": [
+              {
+                "duration": 480,
+                "power": {
+                  "units": "PERCENT_FTP",
+                  "value": 88
+                }
+              },
+              {
+                "duration": 240,
+                "power": {
+                  "units": "PERCENT_FTP",
+                  "value": 55
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "category": "RACE_B",
+      "date": "2026-06-21",
+      "description": "B race. Practice breakfast, warm-up, and even pacing.",
+      "distance_meters": 10000,
+      "elapsed_time_seconds": 3300,
+      "event_id": "evt-example-42",
+      "include_full": true,
+      "name": "10K tune-up race",
+      "tags": [
+        "race",
+        "tune-up"
+      ],
+      "type": "Run"
+    }
+  ],
   "properties": {
     "category": {
-      "description": "Required upstream event category enum such as WORKOUT, RACE, NOTE, or the athlete account's configured category value.",
+      "description": "Required upstream event category. Documented upstream categories include WORKOUT, RACE_A, RACE_B, RACE_C, NOTE, PLAN, HOLIDAY, SICK, INJURED, SET_EFTP, FITNESS_DAYS, SEASON_START, TARGET, SET_FITNESS; see icuvisor://event-categories. Custom athlete/account category values are passed through.",
       "type": "string"
     },
     "date": {
@@ -58,7 +192,7 @@
       "type": "string"
     },
     "workout_doc": {
-      "description": "Optional structured workout steps using icuvisor's WorkoutDoc shape. Mutually exclusive with description; the server serializes this to the intervals.icu workout DSL string in the upstream description field and never sends the structured object upstream.",
+      "description": "Optional structured WorkoutDoc. Mutually exclusive with description; serialized to the upstream workout DSL. Syntax reference: icuvisor://workout-syntax.",
       "type": "object"
     }
   },

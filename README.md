@@ -73,6 +73,17 @@ Currently implemented tools:
 - `delete_custom_item` — deletes one custom item only when `ICUVISOR_DELETE_MODE=full`, returning `_meta.deleted` with a terse before-shape echo.
 - `icuvisor_list_advanced_capabilities` — lists tools hidden from the default core catalog and explains how to enable the full toolset.
 
+## MCP resources
+
+icuvisor also exposes long-form reference content as MCP Resources so clients can fetch it only when needed instead of spending every tool-description token on it:
+
+- `icuvisor://workout-syntax` — the structured-workout DSL emitted from `workout_doc`, generated from the same `internal/workoutdoc` grammar used by serializers and tests.
+- `icuvisor://event-categories` — documented intervals.icu calendar event categories, including `WORKOUT`, race priority categories, notes, plans, health/travel markers, and fitness-model categories.
+- `icuvisor://custom-item-schemas` — per-`item_type` custom-item `content` schema guidance for chart/table/trace, field/stream, panel, and zones items, derived from the same samples used by write validation.
+- `icuvisor://athlete-profile` — dynamic cached athlete identity, units, timezone, thresholds, zones, and `_meta` shaping matching `get_athlete_profile` without requiring a tool call.
+
+Clients that do not render `resources/list` can still use the equivalent tools; the resource URIs are stable pointers for MCP clients that support Resources.
+
 ## Install
 
 > Installers will land with v1.0. For now, build from source:

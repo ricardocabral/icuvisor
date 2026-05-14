@@ -171,7 +171,7 @@ func addOrUpdateEventInputSchema() map[string]any {
 		"type":                 map[string]any{"type": "string", "description": "Required for WORKOUT events: upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Surrounding whitespace is trimmed."},
 		"name":                 map[string]any{"type": "string", "description": "Optional event title/name shown on the athlete calendar."},
 		"description":          map[string]any{"type": "string", "description": "Optional free-text athlete or coach notes. Preserved verbatim, including whitespace and line breaks; mutually exclusive with workout_doc."},
-		"workout_doc":          map[string]any{"type": "object", "description": "Optional structured workout steps using icuvisor's WorkoutDoc shape. Mutually exclusive with description; the server serializes this to the intervals.icu workout DSL string in the upstream description field and never sends the structured object upstream."},
+		"workout_doc":          map[string]any{"type": "object", "description": "Optional structured WorkoutDoc. Mutually exclusive with description; serialized to the upstream workout DSL. Syntax reference: icuvisor://workout-syntax."},
 		"tags":                 map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional event tags to preserve on the upstream event, in caller-provided order."},
 		"target_load":          map[string]any{"type": "number", "minimum": 0, "description": "Optional planned training load / TSS equivalent when supported upstream."},
 		"distance_meters":      map[string]any{"type": "number", "minimum": 0, "description": "Optional planned distance in meters when supported upstream."},

@@ -1,10 +1,10 @@
 # TP-031-mcp-resources: TP-031-mcp-resources — Status
 
-**Current Step:** Step 5: `icuvisor://athlete-profile`
+**Current Step:** Step 6: Trim inline tool descriptions
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 20
+**Review Counter:** 21
 **Iteration:** 2
 **Size:** M
 
@@ -61,7 +61,11 @@
 
 ### Step 6: Trim inline tool descriptions
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [x] Remove long-form schema prose from tool descriptions now covered by a resource; replace with a one-line `see icuvisor://...` pointer
+- [x] Confirm the schema-stability CI guard (TP-015) still passes — description trims must not break confusability/first-sentence checks
+- [x] README: document the four resource URIs and what each carries
 
 ### Step 7: Verify
 
@@ -92,6 +96,7 @@
 | R018 | Code | 5 | REVISE | .reviews/R018-code-step5.md |
 | R019 | Code | 5 | REVISE | .reviews/R019-code-step5.md |
 | R020 | Code | 5 | APPROVE | inline |
+| R021 | Plan | 6 | APPROVE | .reviews/R021-plan-step6.md |
 
 ---
 
@@ -209,3 +214,4 @@ _None_
 | 2026-05-14 16:33 | Review R018 | code Step 5: REVISE |
 | 2026-05-14 16:40 | Review R019 | code Step 5: REVISE |
 | 2026-05-14 16:47 | Review R020 | code Step 5: APPROVE |
+| 2026-05-14 16:52 | Review R021 | plan Step 6: APPROVE |

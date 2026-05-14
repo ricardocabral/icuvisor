@@ -11,7 +11,7 @@ import (
 
 const (
 	createCustomItemName                    = "create_custom_item"
-	createCustomItemDescription             = "Create a custom item definition such as a chart, field, stream, panel, histogram, map, or zones item. Content is validated before upload against the readable schema from existing custom items of the same item_type."
+	createCustomItemDescription             = "Create one custom item definition. Content is validated against readable samples; see icuvisor://custom-item-schemas for item_type content guidance."
 	invalidCreateCustomItemArgumentsMessage = "invalid create_custom_item arguments; provide item_type, name, content matching a readable custom-item schema, and optional visibility/description/index/hide_script"
 	createCustomItemMessage                 = "could not create custom item; check intervals.icu credentials, athlete ID, writable custom-item fields, and available schema samples"
 )
@@ -150,7 +150,7 @@ func createCustomItemInputSchema() map[string]any {
 		"image":       map[string]any{"type": "string", "description": "Optional upstream image identifier or URL when supported by the custom-item type."},
 		"index":       map[string]any{"type": "integer", "description": "Optional display/order index for item types that support ordering."},
 		"hide_script": map[string]any{"type": "boolean", "description": "Optional upstream hide_script flag for script/formula based custom items."},
-		"content":     map[string]any{"type": "object", "description": "Required item_type-specific content object. It is validated against existing readable custom items of the same item_type before upload; long-form schema guidance lives in get_custom_item_by_id and later icuvisor://custom-item-schemas."},
+		"content":     map[string]any{"type": "object", "description": "Required item_type-specific content object. Validated against existing readable custom items before upload; see icuvisor://custom-item-schemas for schema guidance."},
 	}}
 }
 
