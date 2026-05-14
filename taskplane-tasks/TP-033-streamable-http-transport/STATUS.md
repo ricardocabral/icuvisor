@@ -1,10 +1,10 @@
 # TP-033-streamable-http-transport: TP-033-streamable-http-transport — Status
 
-**Current Step:** Step 6: Verify
-**Status:** 🟡 In Progress
+**Current Step:** Complete
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 15
+**Review Counter:** 18
 **Iteration:** 1
 **Size:** M
 
@@ -54,7 +54,13 @@
 
 ### Step 6: Verify
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
+
+- [x] `make test`
+- [x] `make build`
+- [x] `make lint`
+- [x] `go test -race ./...`
+- [x] Manual: start in `http` mode; confirm it binds `127.0.0.1` only by default; drive a tool call over HTTP from one MCP client.
 
 ---
 
@@ -125,5 +131,18 @@ _None_
 | 2026-05-14 18:43 | CHANGELOG updated | Added `[Unreleased]` Streamable HTTP transport entry. |
 | 2026-05-14 18:44 | Review R015 | code Step 5: APPROVE |
 | 2026-05-14 18:44 | Step 5 complete | Docs reviewed and approved. |
+| 2026-05-14 18:45 | Step 6 started | Plan: run required make/go verification commands, then manually launch HTTP mode with dummy local config on the default loopback bind and drive an MCP `tools/list` call over Streamable HTTP. |
+| 2026-05-14 18:46 | Review R016 | plan Step 6: REVISE |
+| 2026-05-14 18:47 | Step 6 revised plan | Automated checks stay `make test`, `make build`, `make lint`, and `go test -race ./...`. Manual smoke will start `./bin/icuvisor --transport http` without `--http-bind`/`ICUVISOR_HTTP_BIND`, using sentinel config env values, verify the startup log and `lsof` listener are `127.0.0.1:8765` and not wildcard/non-loopback, then use a small Go MCP client script with `sdkmcp.StreamableClientTransport` pointed at `http://127.0.0.1:8765/mcp` to run both `tools/list` and a real `tools/call` for no-network `icuvisor_list_advanced_capabilities`. |
+| 2026-05-14 18:48 | Verify | `make test` passed. |
+| 2026-05-14 18:49 | Verify | `make build` passed. |
+| 2026-05-14 18:51 | Verify | `make lint` initially caught copyloopvar/whitespace in the new protocol test; fixed and reran `go test ./internal/mcp` plus `make lint`, both passed. |
+| 2026-05-14 18:52 | Verify | `go test -race ./...` passed. |
+| 2026-05-14 18:53 | Verify | Manual HTTP smoke passed: started `./bin/icuvisor` with `ICUVISOR_TRANSPORT=http` and sentinel config, confirmed startup log and `lsof` listener were `127.0.0.1:8765` only, then used an SDK Streamable HTTP client to run `tools/list` and `tools/call` for no-network `icuvisor_list_advanced_capabilities`. |
+| 2026-05-14 18:54 | Verify | Re-ran `make test` after the lint cleanup; passed. |
 | 2026-05-14 18:42 | Review R014 | plan Step 5: APPROVE |
 | 2026-05-14 18:44 | Review R015 | code Step 5: APPROVE |
+| 2026-05-14 18:47 | Review R016 | plan Step 6: REVISE |
+| 2026-05-14 18:48 | Review R017 | plan Step 6: APPROVE |
+| 2026-05-14 18:54 | Review R018 | code Step 6: APPROVE |
+| 2026-05-14 18:55 | Step 6 complete | All automated and manual verification passed; code review R018 approved. |

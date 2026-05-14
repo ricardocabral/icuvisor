@@ -212,10 +212,8 @@ func TestProtocolSharedTransportSuite(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		scenario := scenario
 		t.Run(scenario.name, func(t *testing.T) {
 			for _, kind := range protocolTransportKinds {
-				kind := kind
 				t.Run(string(kind), func(t *testing.T) {
 					ctx, session, cleanup := connectProtocolClient(t, kind, scenario.opts)
 					defer cleanup()
@@ -290,7 +288,6 @@ func TestProtocolMalformedHTTPPost(t *testing.T) {
 	if strings.Contains(lowerBody, "panic") || strings.Contains(body, "sentinel-api-key") || strings.Contains(body, "i12345") {
 		t.Fatalf("malformed HTTP response leaked internal detail: %q", body)
 	}
-
 }
 
 func TestProtocolInitialize(t *testing.T) {
