@@ -5,7 +5,7 @@
 **Last Updated:** 2026-05-14
 **Review Level:** 2
 **Review Counter:** 12
-**Iteration:** 2
+**Iteration:** 1
 **Size:** M
 
 ---
@@ -41,9 +41,9 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] The same protocol tests that cover stdio (initialize, tools/list, tool calls, resources, prompts, malformed requests, sanitized errors) run against the HTTP transport.
-- [ ] Handler behaviour is byte-identical across transports — assert this where practical.
-- [ ] Add HTTP-specific malformed POST coverage while keeping the raw newline malformed test for stdio/IO framing.
+- [x] The same protocol tests that cover stdio (initialize, tools/list, tool calls, resources, prompts, malformed requests, sanitized errors) run against the HTTP transport.
+- [x] Handler behaviour is byte-identical across transports — assert this where practical.
+- [x] Add HTTP-specific malformed POST coverage while keeping the raw newline malformed test for stdio/IO framing.
 
 ### Step 5: Docs
 
@@ -79,6 +79,8 @@
 | 2026-05-14 17:03 | Step 1 started | Transport selection plumbing |
 | 2026-05-14 17:11 | Worker iter 1 | done in 479s, tools: 26 |
 | 2026-05-14 17:11 | Soft progress | Iteration 1: 0 new checkboxes but uncommitted source changes detected — not counting as stall |
+| 2026-05-14 18:28 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-14 18:38 | Step 4 implemented | Added shared in-memory/HTTP protocol suite, canonical parity snapshot, and HTTP malformed POST coverage; `go test ./internal/mcp` and `go test -race ./internal/mcp` pass. |
 
 ---
 
