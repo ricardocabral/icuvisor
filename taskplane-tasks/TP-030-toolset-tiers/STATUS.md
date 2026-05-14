@@ -1,6 +1,6 @@
 # TP-030-toolset-tiers: TP-030-toolset-tiers — Status
 
-**Current Step:** Step 4: `icuvisor_list_advanced_capabilities`
+**Current Step:** Step 5: `_meta` surfacing + docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
@@ -56,7 +56,11 @@
 
 ### Step 5: `_meta` surfacing + docs
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] Add `_meta.toolset` to every response from the same chokepoint TP-018 used for `_meta.delete_mode`
+- [ ] README: short section documenting `ICUVISOR_TOOLSET`, the two tiers, the default, and the discoverability tool
+- [ ] CHANGELOG `[Unreleased]` entry
 
 ### Step 6: Verify
 
