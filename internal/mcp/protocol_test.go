@@ -16,6 +16,7 @@ import (
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	promptscatalog "github.com/ricardocabral/icuvisor/internal/prompts"
 	"github.com/ricardocabral/icuvisor/internal/resources"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
@@ -196,7 +197,7 @@ func TestProtocolSharedTransportSuite(t *testing.T) {
 			},
 		},
 		{
-			name: "prompts_list",
+			name: "prompts_list_empty",
 			opts: Options{},
 			run: func(t *testing.T, ctx context.Context, session *sdkmcp.ClientSession) {
 				t.Helper()
@@ -206,6 +207,42 @@ func TestProtocolSharedTransportSuite(t *testing.T) {
 				}
 				if len(result.Prompts) != 0 {
 					t.Fatalf("prompts/list = %#v, want empty current prompt catalog", result.Prompts)
+				}
+			},
+		},
+		{
+			name: "prompts_list_and_get",
+			opts: Options{PromptRegistry: promptscatalog.NewRegistry()},
+			run: func(t *testing.T, ctx context.Context, session *sdkmcp.ClientSession) {
+				t.Helper()
+				result, err := session.ListPrompts(ctx, nil)
+				if err != nil {
+					t.Fatalf("ListPrompts() error = %v", err)
+				}
+				if len(result.Prompts) != 5 {
+					t.Fatalf("prompts/list length = %d, want 5: %#v", len(result.Prompts), result.Prompts)
+				}
+				wantNames := []string{"coach_roster_triage", "race_week_taper", "recovery_check", "training_analysis", "weekly_planning"}
+				for i, want := range wantNames {
+					if result.Prompts[i].Name != want || result.Prompts[i].Description == "" {
+						t.Fatalf("prompts[%d] = %#v, want name %q with description", i, result.Prompts[i], want)
+					}
+				}
+				got, err := session.GetPrompt(ctx, &sdkmcp.GetPromptParams{Name: promptscatalog.CoachRosterTriageName, Arguments: map[string]string{"athlete_id": "12345"}})
+				if err != nil {
+					t.Fatalf("GetPrompt() error = %v", err)
+				}
+				if len(got.Messages) != 1 {
+					t.Fatalf("GetPrompt() messages = %#v, want one message", got.Messages)
+				}
+				text, ok := got.Messages[0].Content.(*sdkmcp.TextContent)
+				if !ok {
+					t.Fatalf("GetPrompt() content = %T, want TextContent", got.Messages[0].Content)
+				}
+				for _, want := range []string{"Scope: athlete_id=i12345", "athlete_id as a coach-mode selector", "get_wellness_data"} {
+					if !strings.Contains(text.Text, want) {
+						t.Fatalf("GetPrompt() text missing %q:\n%s", want, text.Text)
+					}
 				}
 			},
 		},

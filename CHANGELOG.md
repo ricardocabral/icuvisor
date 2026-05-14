@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- MCP Prompts for curated training analysis, recovery check, weekly planning, race-week taper, and coach roster triage workflows.
 - MCP Resources for long-form reference content: `icuvisor://workout-syntax`, `icuvisor://event-categories`, `icuvisor://custom-item-schemas`, and a dynamic cached `icuvisor://athlete-profile`, with inline tool descriptions trimmed to point at resource URIs.
 - `ICUVISOR_TOOLSET` with default `core` and opt-in `full` tool catalog tiers, including `icuvisor_list_advanced_capabilities` for discovering hidden tools and `_meta.toolset` response metadata.
 - Streamable HTTP MCP transport alongside stdio, with `stdio` remaining the default, loopback-only `127.0.0.1:8765` HTTP binding by default, explicit `ICUVISOR_TRANSPORT`/`ICUVISOR_HTTP_BIND` and CLI overrides, and warning logs for LAN binds.

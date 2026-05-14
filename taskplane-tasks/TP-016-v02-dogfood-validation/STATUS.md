@@ -2,11 +2,11 @@
 
 **Issue:** v0.2 — read path
 **Review Level:** 1
-**Status:** 🟡 In Progress
-**Iteration:** 4
-**Current Step:** Step 1: Assemble the prompt set
-**Last Updated:** 2026-05-12
-**State:** Pending
+**Status:** 🔴 Blocked
+**Iteration:** 3
+**Current Step:** Step 3: Invited athletes (2–3) read-only
+**Last Updated:** 2026-05-14
+**State:** Blocked on maintainer-supplied invited-athlete recruitment/results
 
 _Task scaffolded from PROMPT.md; execution hydrated from PROMPT.md Step 1._
 
@@ -35,10 +35,29 @@ _Task scaffolded from PROMPT.md; execution hydrated from PROMPT.md Step 1._
 - [x] R001 plan revision: pin exact run instructions, allowed clients, prompt set, and fresh-session requirements
 - [x] R001 plan revision: add a redacted invited-athlete findings template and explicit forbidden-data list
 - [x] R001 plan revision: document local response-size measurement, temporary-artifact cleanup, coverage fallback rules, and Step 4 triage boundary
+- [x] R002 plan hardening: require invites to name the exact release artifact or git revision participants should run
 - [ ] Recruit 2–3 forum-friendly athletes (one ideally an miles/imperial user; one ideally using a non-Garmin bridge like Polar or Oura to exercise wellness provenance)
 - [ ] Provide them the manual-config recipe (v0.1 docs); have them run the same prompt set
 - [ ] Collect findings via a redacted template; never receive raw athlete data
 - [ ] Aggregate into `docs/dogfood/v0.2-findings.md`
+
+## Step 4: Triage findings
+
+**Status:** ⏸️ Blocked pending Step 3 invited-athlete evidence
+
+- [ ] For each scale / unit / provenance / Strava-detection failure: open a GitHub issue tagged `v0.2-followup` linking the specific tool task
+- [ ] For latency / token-budget regressions: confirm against KR4 / KR5 targets; if a tool exceeds the soft 30k-token ceiling, open a follow-up issue for pagination or shape tightening
+- [ ] Decide which findings are launch-blocking for v0.5 vs follow-up; record the call in `STATUS.md`
+
+Partial solo triage completed before invited-athlete aggregation: issue #11 covers activity detail read fetch failures from TP-009; issue #12 covers `get_workouts_in_folder` default verbosity from TP-013.
+
+## Step 5: Sign-off
+
+**Status:** ⏸️ Blocked pending Step 3 and Step 4 completion
+
+- [ ] Update `ROADMAP.md` v0.2 to check off the dogfood item
+- [ ] If any code/doc changed, run `make test`, `make build`, `make lint`, update `CHANGELOG.md`
+- [ ] Confirm no athlete API keys, raw personal data, or training-load values are committed
 
 ## Notes
 
@@ -101,3 +120,25 @@ _Task scaffolded from PROMPT.md; execution hydrated from PROMPT.md Step 1._
 | 2026-05-12 08:26 | Worker iter 4 | done in 97s, tools: 7 |
 | 2026-05-12 08:26 | No progress | Iteration 4: 0 new checkboxes (3/3 stall limit) |
 | 2026-05-12 08:26 | Task blocked | No progress after 3 iterations |
+| 2026-05-14 18:55 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-14 18:55 | Step 1 started | Assemble the prompt set |
+| 2026-05-14 | Resume check | Step 1 and Step 2 remain complete; Step 3 protocol/template deliverables remain present in `docs/dogfood/v0.2-findings.md`. Remaining invited-athlete recruitment, participant runs, collection, Step 4 triage, and Step 5 sign-off are still blocked on external maintainer action/results. |
+| 2026-05-14 19:01 | Exit intercept timeout | Supervisor did not respond within 60s — closing session |
+| 2026-05-14 19:01 | Agent escalate | Blocked at TP-016 Step 3. Step 1 and Step 2 are complete, and the Step 3 participant protocol, run instructions, consent/privacy note, redacted findings template, cleanup/measurement guidance, fallbac |
+| 2026-05-14 19:01 | Agent reply | Acknowledged. TP-016 remains blocked at Step 3; I will not attempt external outreach or fabricate invited-athlete results. STATUS.md records the steering and blocked state so the run can fail as direc |
+| 2026-05-14 19:01 | Worker iter 1 | done in 176s, tools: 13 |
+| 2026-05-14 19:01 | No progress | Iteration 1: 0 new checkboxes (1/3 stall limit) |
+| 2026-05-14 19:01 | Step 1 started | Assemble the prompt set |
+| 2026-05-14 | Resume correction | Current step reset to Step 3 because Step 1 and Step 2 are already complete; remaining invited-athlete recruitment/run/collection work is blocked on maintainer-supplied participants and redacted results. |
+| 2026-05-14 | Step 3 plan hardening | Added invite guidance requiring the maintainer to name the exact release artifact or git revision each participant should run. |
+| 2026-05-14 19:05 | Review R001 | plan Step 3: APPROVE |
+| 2026-05-14 | Validation commands | `make test`, `make build`, and `make lint` passed after docs/status/roadmap updates. |
+| 2026-05-14 | Step 4 partial triage | Opened v0.2 follow-up issue #11 for solo activity detail read fetch failures and issue #12 for `get_workouts_in_folder` default verbosity; invited-athlete evidence is still required before completing Step 4. |
+| 2026-05-14 | Roadmap correction | Left the v0.2 dogfood ROADMAP checkbox unchecked because invited-athlete validation is not complete and sign-off remains blocked. |
+| 2026-05-14 | Blocker escalation | Escalated that remaining Step 3 recruitment/run/collection, Step 4 final triage, and Step 5 sign-off require maintainer-supplied invited-athlete results; no outreach or fabricated data attempted. |
+| 2026-05-14 19:10 | Exit intercept timeout | Supervisor did not respond within 60s — closing session |
+| 2026-05-14 19:10 | Agent escalate | TP-016 remains blocked at Step 3 on maintainer-supplied invited-athlete recruitment/results. I did not attempt external outreach or fabricate participant data. New progress this iteration: hardened th |
+| 2026-05-14 19:10 | Worker iter 2 | done in 505s, tools: 55 |
+| 2026-05-14 19:10 | No progress | Iteration 2: 0 new checkboxes (2/3 stall limit) |
+| 2026-05-14 19:10 | Step 1 started | Assemble the prompt set |
+| 2026-05-14 | Resume correction | Current step reset to Step 3 because Step 1 and Step 2 are complete; invited-athlete recruitment/run/collection remains blocked on external maintainer action and redacted participant results. |

@@ -84,6 +84,16 @@ icuvisor also exposes long-form reference content as MCP Resources so clients ca
 
 Clients that do not render `resources/list` can still use the equivalent tools; the resource URIs are stable pointers for MCP clients that support Resources.
 
+## MCP prompts
+
+Clients that surface MCP Prompts via `prompts/list` / `prompts/get` can show curated entrypoints without requiring users to learn the tool catalog. Clients that ignore Prompts can still ask for the same workflows in chat.
+
+- `training_analysis` — training-load, fitness trend, volume, and best-effort readout.
+- `recovery_check` — wellness-led readiness check with sleepQuality (1-4), sleepScore (0-100), HRV, and staleness cues.
+- `weekly_planning` — planned-vs-completed week structure from events, activities, summaries, and training-plan discovery.
+- `race_week_taper` — race-week taper review anchored by required `race_date` and optional `race_name`.
+- `coach_roster_triage` — coach-mode per-athlete scan; `athlete_id` is a selector, not a credential.
+
 ## Install
 
 > Installers will land with v1.0. For now, build from source:
@@ -157,6 +167,7 @@ internal/app/       CLI/default startup wiring
 internal/config/    Manual v0.1 config loading and athlete-ID normalization
 internal/intervals/ intervals.icu API client
 internal/mcp/       MCP server + transports
+internal/prompts/   Curated MCP prompt registry and golden prompt text tests
 internal/tools/     Tool implementations
 docs/               PRD, roadmap, design notes
 ```
