@@ -159,6 +159,38 @@ func TestProtocolUnknownResourceReturnsNotFound(t *testing.T) {
 	}
 }
 
+func TestProtocolDefaultResourceRegistryIncludesWorkoutSyntax(t *testing.T) {
+	t.Parallel()
+
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{ResourceRegistry: resources.NewRegistry()})
+	defer cleanup()
+
+	list, err := session.ListResources(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListResources() error = %v", err)
+	}
+	var found bool
+	for _, resource := range list.Resources {
+		if resource.URI == resources.WorkoutSyntaxURI {
+			found = true
+			if resource.MIMEType != resources.WorkoutSyntaxMIMEType || resource.Name != "workout_syntax" {
+				t.Fatalf("workout resource metadata = %#v", resource)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("resources/list = %#v, missing %s", list.Resources, resources.WorkoutSyntaxURI)
+	}
+
+	read, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: resources.WorkoutSyntaxURI})
+	if err != nil {
+		t.Fatalf("ReadResource(%s) error = %v", resources.WorkoutSyntaxURI, err)
+	}
+	if len(read.Contents) != 1 || read.Contents[0].URI != resources.WorkoutSyntaxURI || read.Contents[0].MIMEType != resources.WorkoutSyntaxMIMEType || !strings.Contains(read.Contents[0].Text, "# Workout syntax") {
+		t.Fatalf("workout resource read = %#v", read.Contents)
+	}
+}
+
 func TestProtocolResourceHandlerErrorsAreSanitized(t *testing.T) {
 	t.Parallel()
 

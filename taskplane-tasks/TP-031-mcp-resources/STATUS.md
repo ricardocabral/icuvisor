@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -22,9 +22,9 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Register `icuvisor://workout-syntax` in the default resource registry
-- [ ] Content derived from the `internal/workoutdoc` grammar — do not hand-author a second copy that can drift
-- [ ] Covers every step/target type the serializer supports; a test asserts coverage parity with `workoutdoc`
+- [x] Register `icuvisor://workout-syntax` in the default resource registry
+- [x] Content derived from the `internal/workoutdoc` grammar — do not hand-author a second copy that can drift
+- [x] Covers every step/target type the serializer supports; a test asserts coverage parity with `workoutdoc`
 
 ### Step 3: `icuvisor://event-categories`
 
@@ -56,6 +56,7 @@
 | R002 | Plan | 1 | APPROVE | inline |
 | R003 | Code | 1 | APPROVE | inline |
 | R004 | Plan | 2 | REVISE | .reviews/R004-plan-step2.md |
+| R005 | Plan | 2 | APPROVE | inline |
 
 ---
 

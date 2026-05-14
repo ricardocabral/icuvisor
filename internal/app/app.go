@@ -11,6 +11,7 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	mcpserver "github.com/ricardocabral/icuvisor/internal/mcp"
+	"github.com/ricardocabral/icuvisor/internal/resources"
 	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
@@ -131,11 +132,12 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 		return err
 	}
 	server, err := mcpserver.NewServer(ctx, mcpserver.Options{
-		Config:     info.Config,
-		Version:    info.Version,
-		Logger:     logger,
-		Capability: capability,
-		Toolset:    toolset,
+		Config:           info.Config,
+		Version:          info.Version,
+		Logger:           logger,
+		Capability:       capability,
+		Toolset:          toolset,
+		ResourceRegistry: resources.NewRegistry(),
 		Registry: tools.NewRegistryWithOptions(client, tools.RegistryOptions{
 			Version:          info.Version,
 			TimezoneFallback: info.Config.Timezone,
