@@ -3,8 +3,11 @@ package mcp
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
 	"net"
+	"net/http"
 	"slices"
 	"strings"
 	"testing"
@@ -60,6 +63,234 @@ func capabilityTestTool(name string, requirement tools.Requirement) tools.Tool {
 			return tools.Result{}, nil
 		},
 	}
+}
+
+type protocolTransportKind string
+
+const (
+	protocolTransportInMemory       protocolTransportKind = "in_memory"
+	protocolTransportStreamableHTTP protocolTransportKind = "streamable_http"
+)
+
+var protocolTransportKinds = []protocolTransportKind{protocolTransportInMemory, protocolTransportStreamableHTTP}
+
+func TestProtocolSharedTransportSuite(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		name string
+		opts Options
+		run  func(*testing.T, context.Context, *sdkmcp.ClientSession)
+	}{
+		{
+			name: "initialize",
+			opts: Options{Registry: testEchoRegistry{}},
+			run: func(t *testing.T, ctx context.Context, session *sdkmcp.ClientSession) {
+				t.Helper()
+				initResult := session.InitializeResult()
+				if initResult == nil {
+					t.Fatal("InitializeResult is nil")
+				}
+				if initResult.ServerInfo == nil || initResult.ServerInfo.Name != "icuvisor" {
+					t.Fatalf("server info = %#v, want icuvisor", initResult.ServerInfo)
+				}
+				if initResult.ProtocolVersion == "" {
+					t.Fatal("protocol version is empty")
+				}
+				if _, err := session.ListTools(ctx, nil); err != nil {
+					t.Fatalf("ListTools() after initialize error = %v", err)
+				}
+			},
+		},
+		{
+			name: "tools_list",
+			opts: Options{Registry: testEchoRegistry{}},
+			run: func(t *testing.T, ctx context.Context, session *sdkmcp.ClientSession) {
+				t.Helper()
+				result, err := session.ListTools(ctx, nil)
+				if err != nil {
+					t.Fatalf("ListTools() error = %v", err)
+				}
+				if len(result.Tools) != 1 || result.Tools[0].Name != "test_echo" || result.Tools[0].Description == "" {
+					t.Fatalf("tools/list = %#v, want populated test_echo", result.Tools)
+				}
+			},
+		},
+		{
+			name: "tool_call_success",
+			opts: Options{Registry: testEchoRegistry{}},
+			run: func(t *testing.T, ctx context.Context, session *sdkmcp.ClientSession) {
+				t.Helper()
+				result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: "test_echo", Arguments: map[string]any{"message": "hello"}})
+				if err != nil {
+					t.Fatalf("CallTool() error = %v", err)
+				}
+				assertEchoToolResult(t, result, "hello")
+			},
+		},
+		{
+			name: "missing_tool_and_sanitized_error",
+			opts: Options{Registry: failingToolRegistry()},
+			run: func(t *testing.T, ctx context.Context, session *sdkmcp.ClientSession) {
+				t.Helper()
+				if _, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: "missing_tool"}); err == nil {
+					t.Fatal("CallTool(missing_tool) error = nil, want protocol error")
+				} else if !strings.Contains(err.Error(), "unknown tool") {
+					t.Fatalf("CallTool(missing_tool) error = %q, want unknown tool", err.Error())
+				}
+				result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: "test_failure", Arguments: map[string]any{}})
+				if err != nil {
+					t.Fatalf("CallTool(test_failure) protocol error = %v", err)
+				}
+				assertSanitizedToolError(t, result)
+			},
+		},
+		{
+			name: "resources_list_and_read",
+			opts: Options{ResourceRegistry: testResourceRegistry{}},
+			run: func(t *testing.T, ctx context.Context, session *sdkmcp.ClientSession) {
+				t.Helper()
+				list, err := session.ListResources(ctx, nil)
+				if err != nil {
+					t.Fatalf("ListResources() error = %v", err)
+				}
+				if len(list.Resources) != 1 || list.Resources[0].URI != "icuvisor://test-resource" {
+					t.Fatalf("resources/list = %#v, want test resource", list.Resources)
+				}
+				read, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: "icuvisor://test-resource"})
+				if err != nil {
+					t.Fatalf("ReadResource() error = %v", err)
+				}
+				assertTestResourceRead(t, read)
+			},
+		},
+		{
+			name: "missing_resource",
+			opts: Options{ResourceRegistry: testResourceRegistry{}},
+			run: func(t *testing.T, ctx context.Context, session *sdkmcp.ClientSession) {
+				t.Helper()
+				_, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: "icuvisor://missing-resource"})
+				if err == nil {
+					t.Fatal("ReadResource(missing) error = nil, want not-found protocol error")
+				}
+				if !strings.Contains(err.Error(), "Resource not found") {
+					t.Fatalf("ReadResource(missing) error = %q, want Resource not found", err.Error())
+				}
+			},
+		},
+		{
+			name: "sanitized_resource_error",
+			opts: Options{ResourceRegistry: failingResourceRegistry()},
+			run: func(t *testing.T, ctx context.Context, session *sdkmcp.ClientSession) {
+				t.Helper()
+				_, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: "icuvisor://failing-resource"})
+				if err == nil {
+					t.Fatal("ReadResource(failing) error = nil, want sanitized protocol error")
+				}
+				if !strings.Contains(err.Error(), genericResourceErrorMessage) {
+					t.Fatalf("ReadResource(failing) error = %q, want generic resource message", err.Error())
+				}
+				if strings.Contains(err.Error(), "secret") {
+					t.Fatalf("ReadResource(failing) error leaked internal detail: %q", err.Error())
+				}
+			},
+		},
+		{
+			name: "prompts_list",
+			opts: Options{},
+			run: func(t *testing.T, ctx context.Context, session *sdkmcp.ClientSession) {
+				t.Helper()
+				result, err := session.ListPrompts(ctx, nil)
+				if err != nil {
+					t.Fatalf("ListPrompts() error = %v", err)
+				}
+				if len(result.Prompts) != 0 {
+					t.Fatalf("prompts/list = %#v, want empty current prompt catalog", result.Prompts)
+				}
+			},
+		},
+	}
+
+	for _, scenario := range scenarios {
+		scenario := scenario
+		t.Run(scenario.name, func(t *testing.T) {
+			for _, kind := range protocolTransportKinds {
+				kind := kind
+				t.Run(string(kind), func(t *testing.T) {
+					ctx, session, cleanup := connectProtocolClient(t, kind, scenario.opts)
+					defer cleanup()
+					scenario.run(t, ctx, session)
+				})
+			}
+		})
+	}
+}
+
+func TestProtocolTransportParity(t *testing.T) {
+	t.Parallel()
+
+	snapshots := make(map[protocolTransportKind][]byte, len(protocolTransportKinds))
+	for _, kind := range protocolTransportKinds {
+		ctx, session, cleanup := connectProtocolClient(t, kind, Options{Registry: testEchoRegistry{}, ResourceRegistry: testResourceRegistry{}})
+		snapshot, err := protocolParitySnapshot(ctx, session)
+		cleanup()
+		if err != nil {
+			t.Fatalf("%s parity snapshot error = %v", kind, err)
+		}
+		snapshots[kind] = snapshot
+	}
+
+	if string(snapshots[protocolTransportInMemory]) != string(snapshots[protocolTransportStreamableHTTP]) {
+		t.Fatalf("protocol responses differ across transports\nin_memory: %s\nstreamable_http: %s", snapshots[protocolTransportInMemory], snapshots[protocolTransportStreamableHTTP])
+	}
+}
+
+func TestProtocolMalformedHTTPPost(t *testing.T) {
+	t.Parallel()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("net.Listen() error = %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	server, err := NewServer(ctx, Options{Version: "test"})
+	if err != nil {
+		cancel()
+		listener.Close()
+		t.Fatalf("NewServer() error = %v", err)
+	}
+	runDone := make(chan error, 1)
+	go func() {
+		runDone <- server.ServeStreamableHTTP(ctx, listener)
+	}()
+	defer func() {
+		cancel()
+		waitForServerRun(t, runDone)
+	}()
+
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://"+listener.Addr().String()+StreamableHTTPPath, strings.NewReader("not json sentinel-api-key i12345"))
+	if err != nil {
+		t.Fatalf("NewRequestWithContext() error = %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	response, err := (&http.Client{Timeout: time.Second}).Do(request)
+	if err != nil {
+		t.Fatalf("malformed HTTP request error = %v", err)
+	}
+	defer response.Body.Close()
+	bodyBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		t.Fatalf("read malformed HTTP response: %v", err)
+	}
+	body := string(bodyBytes)
+	if response.StatusCode < http.StatusBadRequest {
+		t.Fatalf("malformed HTTP status = %d, body = %q; want client/server error", response.StatusCode, body)
+	}
+	lowerBody := strings.ToLower(body)
+	if strings.Contains(lowerBody, "panic") || strings.Contains(body, "sentinel-api-key") || strings.Contains(body, "i12345") {
+		t.Fatalf("malformed HTTP response leaked internal detail: %q", body)
+	}
+
 }
 
 func TestProtocolInitialize(t *testing.T) {
@@ -625,6 +856,26 @@ func connectTestClient(t *testing.T, registry tools.Registry) (context.Context, 
 func connectTestClientWithOptions(t *testing.T, opts Options) (context.Context, *sdkmcp.ClientSession, func()) {
 	t.Helper()
 
+	return connectProtocolClient(t, protocolTransportInMemory, opts)
+}
+
+func connectProtocolClient(t *testing.T, kind protocolTransportKind, opts Options) (context.Context, *sdkmcp.ClientSession, func()) {
+	t.Helper()
+
+	switch kind {
+	case protocolTransportInMemory:
+		return connectInMemoryProtocolClient(t, opts)
+	case protocolTransportStreamableHTTP:
+		return connectStreamableHTTPProtocolClient(t, opts)
+	default:
+		t.Fatalf("unknown protocol transport kind %q", kind)
+		return nil, nil, nil
+	}
+}
+
+func connectInMemoryProtocolClient(t *testing.T, opts Options) (context.Context, *sdkmcp.ClientSession, func()) {
+	t.Helper()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	serverTransport, clientTransport := sdkmcp.NewInMemoryTransports()
 	opts.Version = "test"
@@ -656,6 +907,165 @@ func connectTestClientWithOptions(t *testing.T, opts Options) (context.Context, 
 	return ctx, clientSession, cleanup
 }
 
+func connectStreamableHTTPProtocolClient(t *testing.T, opts Options) (context.Context, *sdkmcp.ClientSession, func()) {
+	t.Helper()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("net.Listen() error = %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	opts.Version = "test"
+	opts.Transport = nil
+	server, err := NewServer(ctx, opts)
+	if err != nil {
+		cancel()
+		listener.Close()
+		t.Fatalf("NewServer() error = %v", err)
+	}
+
+	runDone := make(chan error, 1)
+	go func() {
+		runDone <- server.ServeStreamableHTTP(ctx, listener)
+	}()
+
+	client := sdkmcp.NewClient(&sdkmcp.Implementation{Name: "icuvisor-http-test-client", Version: "test"}, nil)
+	clientSession, err := client.Connect(ctx, &sdkmcp.StreamableClientTransport{
+		Endpoint:             "http://" + listener.Addr().String() + StreamableHTTPPath,
+		HTTPClient:           &http.Client{Timeout: 2 * time.Second},
+		MaxRetries:           -1,
+		DisableStandaloneSSE: true,
+	}, nil)
+	if err != nil {
+		cancel()
+		waitForServerRun(t, runDone)
+		t.Fatalf("client Connect() error = %v", err)
+	}
+
+	cleanup := func() {
+		clientSession.Close()
+		cancel()
+		waitForServerRun(t, runDone)
+	}
+	return ctx, clientSession, cleanup
+}
+
+func protocolParitySnapshot(ctx context.Context, session *sdkmcp.ClientSession) ([]byte, error) {
+	toolsResult, err := session.ListTools(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	callResult, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: "test_echo", Arguments: map[string]any{"message": "parity"}})
+	if err != nil {
+		return nil, err
+	}
+	resourcesResult, err := session.ListResources(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	readResult, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: "icuvisor://test-resource"})
+	if err != nil {
+		return nil, err
+	}
+	promptsResult, err := session.ListPrompts(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(struct {
+		Initialize *sdkmcp.InitializeResult    `json:"initialize"`
+		Tools      *sdkmcp.ListToolsResult     `json:"tools"`
+		Call       *sdkmcp.CallToolResult      `json:"call"`
+		Resources  *sdkmcp.ListResourcesResult `json:"resources"`
+		Read       *sdkmcp.ReadResourceResult  `json:"read"`
+		Prompts    *sdkmcp.ListPromptsResult   `json:"prompts"`
+	}{
+		Initialize: session.InitializeResult(),
+		Tools:      toolsResult,
+		Call:       callResult,
+		Resources:  resourcesResult,
+		Read:       readResult,
+		Prompts:    promptsResult,
+	})
+}
+
+func failingToolRegistry() tools.Registry {
+	return registryFunc(func(_ context.Context, registrar tools.Registrar) error {
+		return registrar.AddTool(tools.Tool{
+			Name:        "test_failure",
+			Description: "Returns a sanitized test failure.",
+			InputSchema: map[string]any{"type": "object"},
+			Toolset:     safety.ToolsetCore,
+			Handler: func(context.Context, tools.Request) (tools.Result, error) {
+				return tools.Result{}, errors.New("secret upstream stack detail")
+			},
+		})
+	})
+}
+
+func failingResourceRegistry() resources.Registry {
+	return resourceRegistryFunc(func(_ context.Context, registrar resources.Registrar) error {
+		return registrar.AddResource(resources.Resource{
+			URI:         "icuvisor://failing-resource",
+			Name:        "failing_resource",
+			Title:       "Failing Resource",
+			Description: "Fails for protocol error sanitization tests.",
+			MIMEType:    "text/markdown",
+			Handler: func(context.Context, resources.Request) (resources.Result, error) {
+				return resources.Result{}, errors.New("secret upstream stack detail")
+			},
+		})
+	})
+}
+
+func assertEchoToolResult(t *testing.T, result *sdkmcp.CallToolResult, wantText string) {
+	t.Helper()
+
+	if result.IsError {
+		t.Fatalf("CallTool() IsError = true, content = %#v", result.Content)
+	}
+	if len(result.Content) != 1 {
+		t.Fatalf("content count = %d, want 1", len(result.Content))
+	}
+	text, ok := result.Content[0].(*sdkmcp.TextContent)
+	if !ok {
+		t.Fatalf("content type = %T, want TextContent", result.Content[0])
+	}
+	if !strings.Contains(text.Text, wantText) {
+		t.Fatalf("text content = %q, want %q", text.Text, wantText)
+	}
+}
+
+func assertSanitizedToolError(t *testing.T, result *sdkmcp.CallToolResult) {
+	t.Helper()
+
+	if !result.IsError {
+		t.Fatal("CallTool(test_failure) IsError = false, want true")
+	}
+	text, ok := result.Content[0].(*sdkmcp.TextContent)
+	if !ok {
+		t.Fatalf("content type = %T, want TextContent", result.Content[0])
+	}
+	if text.Text != genericToolErrorMessage {
+		t.Fatalf("handler error text = %q, want generic message", text.Text)
+	}
+	if strings.Contains(text.Text, "secret") {
+		t.Fatalf("handler error leaked internal detail: %q", text.Text)
+	}
+}
+
+func assertTestResourceRead(t *testing.T, read *sdkmcp.ReadResourceResult) {
+	t.Helper()
+
+	if len(read.Contents) != 1 {
+		t.Fatalf("content count = %d, want 1", len(read.Contents))
+	}
+	content := read.Contents[0]
+	if content.URI != "icuvisor://test-resource" || content.MIMEType != "text/markdown" || !strings.Contains(content.Text, "Test Resource") {
+		t.Fatalf("resource content = %#v, want URI/MIME/text", content)
+	}
+}
+
 func waitForServerRun(t *testing.T, runDone <-chan error) {
 	t.Helper()
 
@@ -664,7 +1074,7 @@ func waitForServerRun(t *testing.T, runDone <-chan error) {
 		if err != nil && !errors.Is(err, context.Canceled) && !strings.Contains(err.Error(), "closed") {
 			t.Fatalf("server Run() error = %v", err)
 		}
-	case <-time.After(2 * time.Second):
+	case <-time.After(5 * time.Second):
 		t.Fatal("server Run() did not stop")
 	}
 }

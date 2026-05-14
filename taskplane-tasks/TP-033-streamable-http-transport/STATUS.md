@@ -1,10 +1,10 @@
 # TP-033-streamable-http-transport: TP-033-streamable-http-transport — Status
 
-**Current Step:** Step 4: Parity tests
+**Current Step:** Step 5: Docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 12
+**Review Counter:** 13
 **Iteration:** 1
 **Size:** M
 
@@ -39,7 +39,7 @@
 
 ### Step 4: Parity tests
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] The same protocol tests that cover stdio (initialize, tools/list, tool calls, resources, prompts, malformed requests, sanitized errors) run against the HTTP transport.
 - [x] Handler behaviour is byte-identical across transports — assert this where practical.
@@ -115,3 +115,5 @@ _None_
 | 2026-05-14 18:05 | Review R011 | code Step 3: APPROVE |
 | 2026-05-14 18:08 | Review R012 | plan Step 4: REVISE |
 - Step 4 revised plan after R012: refactor `internal/mcp/protocol_test.go` around a `connectProtocolClient(t, transportKind, opts)` helper with two cases: the current in-memory/stdio-equivalent SDK transport and Streamable HTTP served on `127.0.0.1:0` at `StreamableHTTPPath` using `sdkmcp.StreamableClientTransport`, `MaxRetries: -1`, short HTTP timeouts, session close, context cancellation, and `waitForServerRun`. Run the shared protocol suite across both transports for initialize, `tools/list`, successful calls, missing/unknown tools, sanitized tool errors, `resources/list`, `resources/read`, missing resources, sanitized resource errors, and current `prompts/list` behaviour. Add a parity test that serializes stable SDK results to canonical JSON and compares bytes for initialize server info/capabilities, tools/list, call-tool content/structured content, resources/list/read, and prompts/list, excluding only unavoidable transport/session-specific metadata. Keep the existing raw newline malformed-request test for IO framing and add an HTTP-specific malformed POST to `/mcp` that asserts a client-visible error response without panic or leaked secrets.
+| 2026-05-14 18:39 | Review R013 | code Step 4: APPROVE |
+| 2026-05-14 18:40 | Step 4 complete | Code review R013 approved parity tests. |
