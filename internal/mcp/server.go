@@ -16,6 +16,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 
 	"github.com/ricardocabral/icuvisor/internal/config"
+	"github.com/ricardocabral/icuvisor/internal/prompts"
 	"github.com/ricardocabral/icuvisor/internal/resources"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
@@ -39,6 +40,7 @@ type Options struct {
 	Logger           *slog.Logger
 	Registry         tools.Registry
 	ResourceRegistry resources.Registry
+	PromptRegistry   prompts.Registry
 	Capability       safety.Capability
 	Toolset          safety.Toolset
 	Transport        sdkmcp.Transport
@@ -88,6 +90,13 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 			return nil, fmt.Errorf("registering resources: %w", err)
 		}
 		logger.Info("resource registration complete", "registered_count", registrar.registeredCount)
+	}
+	if opts.PromptRegistry != nil {
+		registrar := &safePromptRegistrar{server: sdkServer, logger: logger, names: make(map[string]struct{})}
+		if err := opts.PromptRegistry.Register(ctx, registrar); err != nil {
+			return nil, fmt.Errorf("registering prompts: %w", err)
+		}
+		logger.Info("prompt registration complete", "registered_count", registrar.registeredCount)
 	}
 
 	return &Server{server: sdkServer, transport: transport, logger: logger, version: version}, nil
