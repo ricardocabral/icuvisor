@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 12
+**Review Counter:** 13
 **Iteration:** 1
 **Size:** M
 
@@ -41,10 +41,10 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Register `icuvisor://custom-item-schemas` in the default resource registry
-- [ ] Per-`item_type` schema for the `content` field (chart/field/stream/panel/zones)
-- [ ] Reuses the schema samples the custom-item reads/writes already validate against — single source of truth
-- [ ] Golden-file locked
+- [x] Register `icuvisor://custom-item-schemas` in the default resource registry
+- [x] Per-`item_type` schema for the `content` field (chart/field/stream/panel/zones)
+- [x] Reuses the schema samples the custom-item reads/writes already validate against — single source of truth
+- [x] Golden-file locked
 
 ### Step 5: `icuvisor://athlete-profile`
 
@@ -76,6 +76,7 @@
 | R010 | Code | 3 | REVISE | .reviews/R010-code-step3.md |
 | R011 | Code | 3 | APPROVE | inline |
 | R012 | Plan | 4 | REVISE | .reviews/R012-plan-step4.md |
+| R013 | Plan | 4 | APPROVE | inline |
 
 ---
 

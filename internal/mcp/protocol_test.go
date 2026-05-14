@@ -174,8 +174,9 @@ func TestProtocolDefaultResourceRegistryIncludesStaticResources(t *testing.T) {
 		mimeType string
 		heading  string
 	}{
-		resources.WorkoutSyntaxURI:   {name: "workout_syntax", mimeType: resources.WorkoutSyntaxMIMEType, heading: "# Workout syntax"},
-		resources.EventCategoriesURI: {name: "event_categories", mimeType: resources.EventCategoriesMIMEType, heading: "# Event categories"},
+		resources.WorkoutSyntaxURI:     {name: "workout_syntax", mimeType: resources.WorkoutSyntaxMIMEType, heading: "# Workout syntax"},
+		resources.EventCategoriesURI:   {name: "event_categories", mimeType: resources.EventCategoriesMIMEType, heading: "# Event categories"},
+		resources.CustomItemSchemasURI: {name: "custom_item_schemas", mimeType: resources.CustomItemSchemasMIMEType, heading: "# Custom item content schemas"},
 	}
 	for _, resource := range list.Resources {
 		if expected, ok := want[resource.URI]; ok {
@@ -193,8 +194,9 @@ func TestProtocolDefaultResourceRegistryIncludesStaticResources(t *testing.T) {
 		mimeType string
 		heading  string
 	}{
-		resources.WorkoutSyntaxURI:   {mimeType: resources.WorkoutSyntaxMIMEType, heading: "# Workout syntax"},
-		resources.EventCategoriesURI: {mimeType: resources.EventCategoriesMIMEType, heading: "# Event categories"},
+		resources.WorkoutSyntaxURI:     {mimeType: resources.WorkoutSyntaxMIMEType, heading: "# Workout syntax"},
+		resources.EventCategoriesURI:   {mimeType: resources.EventCategoriesMIMEType, heading: "# Event categories"},
+		resources.CustomItemSchemasURI: {mimeType: resources.CustomItemSchemasMIMEType, heading: "# Custom item content schemas"},
 	} {
 		read, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: uri})
 		if err != nil {

@@ -8,7 +8,7 @@ type staticRegistry struct {
 
 // NewRegistry returns the default MCP resource registry.
 func NewRegistry() Registry {
-	return staticRegistry{entries: []Resource{WorkoutSyntaxResource(), EventCategoriesResource()}}
+	return staticRegistry{entries: []Resource{WorkoutSyntaxResource(), EventCategoriesResource(), CustomItemSchemasResource()}}
 }
 
 func (r staticRegistry) Register(ctx context.Context, registrar Registrar) error {
