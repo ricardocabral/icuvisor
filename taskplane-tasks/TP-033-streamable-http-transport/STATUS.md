@@ -1,6 +1,6 @@
 # TP-033-streamable-http-transport: TP-033-streamable-http-transport — Status
 
-**Current Step:** Step 3: Security posture
+**Current Step:** Step 4: Parity tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
@@ -39,7 +39,10 @@
 
 ### Step 4: Parity tests
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] The same protocol tests that cover stdio (initialize, tools/list, tool calls, resources, prompts, malformed requests, sanitized errors) run against the HTTP transport.
+- [ ] Handler behaviour is byte-identical across transports — assert this where practical.
 
 ### Step 5: Docs
 
