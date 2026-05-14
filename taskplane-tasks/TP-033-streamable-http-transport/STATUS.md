@@ -1,10 +1,10 @@
 # TP-033-streamable-http-transport: TP-033-streamable-http-transport — Status
 
-**Current Step:** Step 1: Transport selection plumbing
+**Current Step:** Step 2: Streamable HTTP transport
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -12,7 +12,7 @@
 
 ### Step 1: Transport selection plumbing
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Config/flag selects `stdio` (default) or `http`; HTTP bind defaults to `127.0.0.1:<port>`.
 - [x] Non-loopback bind requires an explicit config value and logs a clear WARNING when active.
@@ -20,7 +20,7 @@
 
 ### Step 2: Streamable HTTP transport
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Wire the Go SDK Streamable HTTP transport onto the shared server core; the tool/resource/prompt registry is identical across transports.
 - [ ] Single shared server lifecycle (startup/shutdown, context cancellation honored).
@@ -66,6 +66,7 @@
 | ---- | ---- | ---- | ------- | ---- |
 | R001 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
+| R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
 
 ---
 
@@ -90,6 +91,8 @@
 | 2026-05-14 19:56 | Step 1 checkpoint | Non-loopback explicit bind and WARN path audited in `internal/config`/`internal/app`; logs avoid API keys and athlete IDs. |
 | 2026-05-14 19:57 | Step 1 checkpoint | Invalid transport and bind values fail in config validation. |
 | 2026-05-14 19:58 | Recovery | Reverted premature Step 1 completion before required code review. |
+| 2026-05-14 19:57 | Review R003 | code Step 1: APPROVE |
+| 2026-05-14 19:59 | Step 1 complete | Transport selection plumbing audited and approved; Step 2 started. |
 
 ---
 
