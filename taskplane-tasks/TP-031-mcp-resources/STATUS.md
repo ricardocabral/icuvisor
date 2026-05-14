@@ -1,6 +1,6 @@
 # TP-031-mcp-resources: TP-031-mcp-resources — Status
 
-**Current Step:** Step 1: Resource registration plumbing
+**Current Step:** Step 2: `icuvisor://workout-syntax`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
@@ -20,7 +20,11 @@
 
 ### Step 2: `icuvisor://workout-syntax`
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] Register `icuvisor://workout-syntax` in the default resource registry
+- [ ] Content derived from the `internal/workoutdoc` grammar — do not hand-author a second copy that can drift
+- [ ] Covers every step/target type the serializer supports; a test asserts coverage parity with `workoutdoc`
 
 ### Step 3: `icuvisor://event-categories`
 
