@@ -15,6 +15,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/ricardocabral/icuvisor/internal/resources"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
@@ -82,7 +83,39 @@ func (f registryFunc) Register(ctx context.Context, registrar tools.Registrar) e
 	return f(ctx, registrar)
 }
 
+type resourceRegistryFunc func(context.Context, resources.Registrar) error
+
+func (f resourceRegistryFunc) Register(ctx context.Context, registrar resources.Registrar) error {
+	return f(ctx, registrar)
+}
+
 type testEchoRegistry struct{}
+
+type testResourceRegistry struct{}
+
+func (testResourceRegistry) Register(ctx context.Context, registrar resources.Registrar) error {
+	return registrar.AddResource(validTestResource("icuvisor://test-resource"))
+}
+
+func validTestResource(uri string) resources.Resource {
+	return resources.Resource{
+		URI:         uri,
+		Name:        "test_resource",
+		Title:       "Test Resource",
+		Description: "Resource registration test fixture.",
+		MIMEType:    "text/markdown",
+		Handler:     testResourceHandler("# Test Resource\n"),
+	}
+}
+
+func testResourceHandler(text string) resources.Handler {
+	return func(ctx context.Context, req resources.Request) (resources.Result, error) {
+		if err := ctx.Err(); err != nil {
+			return resources.Result{}, err
+		}
+		return resources.Result{URI: req.URI, MIMEType: "text/markdown", Text: text}, nil
+	}
+}
 
 func (testEchoRegistry) Register(ctx context.Context, registrar tools.Registrar) error {
 	return registrar.AddTool(tools.Tool{
@@ -148,6 +181,83 @@ func TestNewServerReturnsToolRegistrationErrors(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "invalid tool name") {
 		t.Fatalf("NewServer() error = %q, want invalid tool name", err.Error())
+	}
+}
+
+func TestNewServerReturnsResourceRegistrationErrors(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		resource resources.Resource
+		want     string
+	}{
+		{name: "bad uri", resource: validTestResource("not-absolute"), want: "invalid resource URI"},
+		{name: "missing name", resource: resources.Resource{URI: "icuvisor://missing-name", Title: "Missing Name", Description: "bad resource", MIMEType: "text/markdown", Handler: testResourceHandler("bad")}, want: "missing a name"},
+		{name: "missing title", resource: resources.Resource{URI: "icuvisor://missing-title", Name: "missing_title", Description: "bad resource", MIMEType: "text/markdown", Handler: testResourceHandler("bad")}, want: "missing a title"},
+		{name: "missing description", resource: resources.Resource{URI: "icuvisor://missing-description", Name: "missing_description", Title: "Missing Description", MIMEType: "text/markdown", Handler: testResourceHandler("bad")}, want: "missing a description"},
+		{name: "missing mime", resource: resources.Resource{URI: "icuvisor://missing-mime", Name: "missing_mime", Title: "Missing MIME", Description: "bad resource", Handler: testResourceHandler("bad")}, want: "missing a MIME type"},
+		{name: "missing handler", resource: resources.Resource{URI: "icuvisor://missing-handler", Name: "missing_handler", Title: "Missing Handler", Description: "bad resource", MIMEType: "text/markdown"}, want: "missing a handler"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := NewServer(context.Background(), Options{
+				ResourceRegistry: resourceRegistryFunc(func(_ context.Context, registrar resources.Registrar) error {
+					return registrar.AddResource(tc.resource)
+				}),
+			})
+			if err == nil {
+				t.Fatal("NewServer() error = nil, want resource registration error")
+			}
+			if !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("NewServer() error = %q, want %q", err.Error(), tc.want)
+			}
+		})
+	}
+}
+
+func TestNewServerRejectsDuplicateResourceURIs(t *testing.T) {
+	t.Parallel()
+
+	resource := validTestResource("icuvisor://duplicate-resource")
+	_, err := NewServer(context.Background(), Options{
+		ResourceRegistry: resourceRegistryFunc(func(_ context.Context, registrar resources.Registrar) error {
+			if err := registrar.AddResource(resource); err != nil {
+				return err
+			}
+			return registrar.AddResource(resource)
+		}),
+	})
+	if err == nil {
+		t.Fatal("NewServer() error = nil, want duplicate resource error")
+	}
+	if !strings.Contains(err.Error(), "duplicate resource URI") {
+		t.Fatalf("NewServer() error = %q, want duplicate resource URI", err.Error())
+	}
+}
+
+func TestNewServerLogsResourceRegistrationCountsOnly(t *testing.T) {
+	t.Parallel()
+
+	var log bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&log, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	_, err := NewServer(context.Background(), Options{
+		ResourceRegistry: testResourceRegistry{},
+		Logger:           logger,
+	})
+	if err != nil {
+		t.Fatalf("NewServer() error = %v", err)
+	}
+	out := log.String()
+	for _, want := range []string{"resource registration complete", "registered_count=1"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("log %q missing %q", out, want)
+		}
+	}
+	if strings.Contains(out, "icuvisor://test-resource") {
+		t.Fatalf("startup registration log leaked resource URI in %q", out)
 	}
 }
 

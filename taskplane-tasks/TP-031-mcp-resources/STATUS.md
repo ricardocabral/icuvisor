@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -14,9 +14,9 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Wire `resources/list` and `resources/read` into the MCP server via the Go SDK
-- [ ] Define a small internal interface so each resource is one greppable registration, mirroring the tool registry pattern
-- [ ] Decide static vs dynamic per resource; document in `STATUS.md`
+- [x] Wire `resources/list` and `resources/read` into the MCP server via the Go SDK
+- [x] Define a small internal interface so each resource is one greppable registration, mirroring the tool registry pattern
+- [x] Decide static vs dynamic per resource; document in `STATUS.md`
 
 ### Step 2: `icuvisor://workout-syntax`
 
@@ -49,6 +49,7 @@
 | #   | Type | Step | Verdict | File |
 | --- | ---- | ---- | ------- | ---- |
 | R001 | Plan | 1 | REVISE | .reviews/R001-plan-step1.md |
+| R002 | Plan | 1 | APPROVE | inline |
 
 ---
 
@@ -76,8 +77,6 @@ _None_
 ---
 
 ## Notes
-
-| 2026-05-14 14:12 | Review R001 | plan Step 1: UNKNOWN |
 
 ### Step 1 plan
 

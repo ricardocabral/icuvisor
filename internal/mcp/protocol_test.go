@@ -13,6 +13,7 @@ import (
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/resources"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
@@ -101,6 +102,91 @@ func TestProtocolListTools(t *testing.T) {
 	}
 	if tool.Description == "" {
 		t.Fatal("tool description is empty")
+	}
+}
+
+func TestProtocolResourceInitializeListAndRead(t *testing.T) {
+	t.Parallel()
+
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{ResourceRegistry: testResourceRegistry{}})
+	defer cleanup()
+
+	initResult := session.InitializeResult()
+	if initResult == nil || initResult.Capabilities == nil || initResult.Capabilities.Resources == nil {
+		t.Fatalf("initialize capabilities = %#v, want resources capability", initResult)
+	}
+
+	list, err := session.ListResources(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListResources() error = %v", err)
+	}
+	if len(list.Resources) != 1 {
+		t.Fatalf("resource count = %d, want 1", len(list.Resources))
+	}
+	resource := list.Resources[0]
+	if resource.URI != "icuvisor://test-resource" {
+		t.Fatalf("resource URI = %q, want icuvisor://test-resource", resource.URI)
+	}
+	if resource.Name != "test_resource" || resource.Title != "Test Resource" || resource.Description == "" || resource.MIMEType != "text/markdown" {
+		t.Fatalf("resource metadata = %#v, want populated metadata", resource)
+	}
+
+	read, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: "icuvisor://test-resource"})
+	if err != nil {
+		t.Fatalf("ReadResource() error = %v", err)
+	}
+	if len(read.Contents) != 1 {
+		t.Fatalf("content count = %d, want 1", len(read.Contents))
+	}
+	content := read.Contents[0]
+	if content.URI != "icuvisor://test-resource" || content.MIMEType != "text/markdown" || !strings.Contains(content.Text, "Test Resource") {
+		t.Fatalf("resource content = %#v, want URI/MIME/text", content)
+	}
+}
+
+func TestProtocolUnknownResourceReturnsNotFound(t *testing.T) {
+	t.Parallel()
+
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{ResourceRegistry: testResourceRegistry{}})
+	defer cleanup()
+
+	_, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: "icuvisor://missing-resource"})
+	if err == nil {
+		t.Fatal("ReadResource(missing) error = nil, want not-found protocol error")
+	}
+	if !strings.Contains(err.Error(), "Resource not found") {
+		t.Fatalf("ReadResource(missing) error = %q, want Resource not found", err.Error())
+	}
+}
+
+func TestProtocolResourceHandlerErrorsAreSanitized(t *testing.T) {
+	t.Parallel()
+
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{
+		ResourceRegistry: resourceRegistryFunc(func(_ context.Context, registrar resources.Registrar) error {
+			return registrar.AddResource(resources.Resource{
+				URI:         "icuvisor://failing-resource",
+				Name:        "failing_resource",
+				Title:       "Failing Resource",
+				Description: "Fails for protocol error sanitization tests.",
+				MIMEType:    "text/markdown",
+				Handler: func(context.Context, resources.Request) (resources.Result, error) {
+					return resources.Result{}, errors.New("secret upstream stack detail")
+				},
+			})
+		}),
+	})
+	defer cleanup()
+
+	_, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: "icuvisor://failing-resource"})
+	if err == nil {
+		t.Fatal("ReadResource(failing) error = nil, want sanitized protocol error")
+	}
+	if !strings.Contains(err.Error(), genericResourceErrorMessage) {
+		t.Fatalf("ReadResource(failing) error = %q, want generic resource message", err.Error())
+	}
+	if strings.Contains(err.Error(), "secret") {
+		t.Fatalf("ReadResource(failing) error leaked internal detail: %q", err.Error())
 	}
 }
 
