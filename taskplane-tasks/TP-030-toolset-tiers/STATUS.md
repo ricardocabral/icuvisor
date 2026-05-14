@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -15,7 +15,9 @@
 **Status:** 🟨 In Progress
 
 - [ ] Enum: `core` (default) and `full`; case-insensitive parsing; unknown/empty → `core`
-- [ ] Log the resolved tier once at startup at INFO (count only — never leak tool names that hint roadmap state, consistent with TP-018)
+- [ ] Wire `ICUVISOR_TOOLSET` through config loading (`Config.Toolset`, `.env`/env precedence, defensive string rendering)
+- [ ] Propagate parsed toolset into app startup (`ServerInfo`) and log the resolved tier exactly once without tool names
+- [ ] Pin Step 1 behavior with tests for parsing, config loading, startup propagation, and minimal logging
 - [x] Decide and document the package boundary: extend `internal/safety` vs new `internal/toolset`. Record the choice and rationale in `STATUS.md`
 
 ### Step 2: Per-tool tier membership
@@ -44,6 +46,7 @@
 
 | #   | Type | Step | Verdict | File |
 | --- | ---- | ---- | ------- | ---- |
+| R001 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -73,4 +76,4 @@ _None_
 
 ## Notes
 
-_Reserved for execution notes_
+- R001 required the Step 1 plan to explicitly include a separate `safety.Toolset` API, config loader plumbing, app startup propagation/logging, and tests before implementation.
