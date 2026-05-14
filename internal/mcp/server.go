@@ -32,6 +32,8 @@ type Options struct {
 type Server struct {
 	server    *sdkmcp.Server
 	transport sdkmcp.Transport
+	logger    *slog.Logger
+	version   string
 }
 
 // NewServer constructs an icuvisor MCP server.
@@ -65,7 +67,7 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 		logger.Info("tool registration complete", "registered_count", registrar.registeredCount, "skipped_count", registrar.skippedCount)
 	}
 
-	return &Server{server: sdkServer, transport: transport}, nil
+	return &Server{server: sdkServer, transport: transport, logger: logger, version: version}, nil
 }
 
 // Run serves one MCP session until the client disconnects or ctx is cancelled.
@@ -76,7 +78,55 @@ func (s *Server) Run(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	return s.server.Run(ctx, s.transport)
+	logger := s.logger
+	if logger == nil {
+		logger = slog.Default()
+	}
+	version := s.version
+	if version == "" {
+		version = "dev"
+	}
+	serverSession, err := s.server.Connect(ctx, s.transport, nil)
+	if err != nil {
+		logger.Error("server startup failed", "version", version, "transport", transportName(s.transport), "error", err)
+		return err
+	}
+	logger.Info("server started listening", "version", version, "transport", transportName(s.transport))
+
+	closed := make(chan error)
+	go func() {
+		closed <- serverSession.Wait()
+	}()
+
+	select {
+	case <-ctx.Done():
+		serverSession.Close()
+		<-closed
+		logger.Error("server run cancelled", "version", version, "transport", transportName(s.transport), "error", ctx.Err())
+		return ctx.Err()
+	case err := <-closed:
+		if err != nil {
+			logger.Error("server session ended with error", "version", version, "transport", transportName(s.transport), "error", err)
+		} else {
+			logger.Info("server session ended", "version", version, "transport", transportName(s.transport))
+		}
+		return err
+	}
+}
+
+func transportName(transport sdkmcp.Transport) string {
+	switch transport.(type) {
+	case *sdkmcp.StdioTransport:
+		return "stdio"
+	case *sdkmcp.IOTransport:
+		return "io"
+	case *sdkmcp.InMemoryTransport:
+		return "in_memory"
+	case *sdkmcp.StreamableServerTransport:
+		return "streamable_http"
+	default:
+		return fmt.Sprintf("%T", transport)
+	}
 }
 
 func capabilityOrSafe(capability safety.Capability) safety.Capability {

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Startup logs now include the server version and a structured "started listening" entry once the MCP transport is ready.
 - Adversarial safe-mode delete prompt corpus with redacted Codex local-binary outcomes, plus static catalog safety matrix coverage for v0.3 write/delete gating.
 - `input_examples` and JSON Schema `examples` for complex v0.3 write-tool input schemas, with catalog-wide regression tests ensuring new complex write tools carry examples.
 - Destructive delete MCP tools gated by `ICUVISOR_DELETE_MODE=full`: `delete_event`, `delete_events_by_date_range` with a 31-day inclusive range cap, `delete_activity`, `delete_custom_item`, `delete_sport_settings`, and `delete_gear`, each returning deleted IDs and terse before-shape deletion metadata.

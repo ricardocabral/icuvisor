@@ -106,13 +106,21 @@ func startServer(ctx context.Context, loader func(context.Context, config.Option
 }
 
 func defaultStartServer(ctx context.Context, info ServerInfo) error {
+	logger := slog.Default()
+	version := strings.TrimSpace(info.Version)
+	if version == "" {
+		version = "dev"
+	}
+	info.Version = version
+	logger.Info("server starting", "version", version)
+
 	capability := info.Capability
 	if capability == nil {
 		capability = safety.NewCapability(info.DeleteMode)
 	}
 	deleteMode := safety.ParseMode(capability.Mode())
 	response.SetDeleteMode(deleteMode.String())
-	safety.LogResolvedMode(slog.Default(), deleteMode)
+	safety.LogResolvedMode(logger, deleteMode)
 	client, err := intervals.NewClient(intervals.Options{Config: info.Config, Version: info.Version})
 	if err != nil {
 		return err
@@ -120,7 +128,7 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 	server, err := mcpserver.NewServer(ctx, mcpserver.Options{
 		Config:     info.Config,
 		Version:    info.Version,
-		Logger:     slog.Default(),
+		Logger:     logger,
 		Capability: capability,
 		Registry: tools.NewRegistryWithOptions(client, tools.RegistryOptions{
 			Version:          info.Version,

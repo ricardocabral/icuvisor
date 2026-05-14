@@ -5,13 +5,76 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"strings"
+	"sync"
 	"testing"
+	"time"
+
+	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
+	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
+
+type safeLogBuffer struct {
+	mu sync.Mutex
+	bytes.Buffer
+}
+
+func (b *safeLogBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.Buffer.Write(p)
+}
+
+func (b *safeLogBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.Buffer.String()
+}
+
+type blockingTransport struct {
+	connected chan struct{}
+}
+
+func (t *blockingTransport) Connect(context.Context) (sdkmcp.Connection, error) {
+	conn := &blockingConn{done: make(chan struct{})}
+	close(t.connected)
+	return conn, nil
+}
+
+type blockingConn struct {
+	done chan struct{}
+	once sync.Once
+}
+
+func (c *blockingConn) Read(ctx context.Context) (jsonrpc.Message, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-c.done:
+		return nil, io.EOF
+	}
+}
+
+func (c *blockingConn) Write(context.Context, jsonrpc.Message) error {
+	select {
+	case <-c.done:
+		return io.ErrClosedPipe
+	default:
+		return nil
+	}
+}
+
+func (c *blockingConn) Close() error {
+	c.once.Do(func() { close(c.done) })
+	return nil
+}
+
+func (c *blockingConn) SessionID() string { return "" }
 
 type registryFunc func(context.Context, tools.Registrar) error
 
@@ -164,5 +227,64 @@ func TestRunHonorsCanceledContext(t *testing.T) {
 
 	if err := server.Run(ctx); !errors.Is(err, context.Canceled) {
 		t.Fatalf("Run() error = %v, want context.Canceled", err)
+	}
+}
+
+func TestRunLogsStartedListening(t *testing.T) {
+	t.Parallel()
+
+	logs := &safeLogBuffer{}
+	logger := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	transport := &blockingTransport{connected: make(chan struct{})}
+	server, err := NewServer(context.Background(), Options{
+		Version:   "v1.2.3",
+		Logger:    logger,
+		Transport: transport,
+	})
+	if err != nil {
+		t.Fatalf("NewServer() error = %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	runDone := make(chan error, 1)
+	go func() {
+		runDone <- server.Run(ctx)
+	}()
+
+	select {
+	case <-transport.connected:
+	case <-time.After(time.Second):
+		cancel()
+		t.Fatal("server transport did not connect")
+	}
+	waitForLog(t, logs, "server started listening")
+
+	cancel()
+	if err := <-runDone; !errors.Is(err, context.Canceled) {
+		t.Fatalf("Run() error = %v, want context.Canceled", err)
+	}
+
+	out := logs.String()
+	for _, want := range []string{"server started listening", "version=v1.2.3"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("listen log %q missing %q", out, want)
+		}
+	}
+}
+
+func waitForLog(t *testing.T, logs *safeLogBuffer, want string) {
+	t.Helper()
+	deadline := time.After(time.Second)
+	tick := time.NewTicker(10 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		if strings.Contains(logs.String(), want) {
+			return
+		}
+		select {
+		case <-deadline:
+			t.Fatalf("log %q missing %q", logs.String(), want)
+		case <-tick.C:
+		}
 	}
 }

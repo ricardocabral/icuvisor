@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"log/slog"
 	"strings"
 	"testing"
 	"time"
@@ -66,6 +67,24 @@ func TestRunDefaultDelegatesToStarterWithVersionAndConfig(t *testing.T) {
 	}
 	if gotInfo.Config.AthleteID != wantConfig.AthleteID {
 		t.Fatalf("server athlete ID = %q, want %q", gotInfo.Config.AthleteID, wantConfig.AthleteID)
+	}
+}
+
+func TestDefaultStartServerLogsStartupVersion(t *testing.T) {
+	var logs bytes.Buffer
+	previous := slog.Default()
+	t.Cleanup(func() { slog.SetDefault(previous) })
+	slog.SetDefault(slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelInfo})))
+
+	err := defaultStartServer(context.Background(), ServerInfo{Version: "v7.8.9"})
+	if err == nil {
+		t.Fatal("defaultStartServer() error = nil, want config/client error")
+	}
+	out := logs.String()
+	for _, want := range []string{"server starting", "version=v7.8.9"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("startup log %q missing %q", out, want)
+		}
 	}
 }
 
