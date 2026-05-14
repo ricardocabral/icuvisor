@@ -1,6 +1,6 @@
 # TP-031-mcp-resources: TP-031-mcp-resources — Status
 
-**Current Step:** Step 3: `icuvisor://event-categories`
+**Current Step:** Step 4: `icuvisor://custom-item-schemas`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
@@ -39,7 +39,12 @@
 
 ### Step 4: `icuvisor://custom-item-schemas`
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+- [ ] Register `icuvisor://custom-item-schemas` in the default resource registry
+- [ ] Per-`item_type` schema for the `content` field (chart/field/stream/panel/zones)
+- [ ] Reuses the schema samples the custom-item reads/writes already validate against — single source of truth
+- [ ] Golden-file locked
 
 ### Step 5: `icuvisor://athlete-profile`
 
