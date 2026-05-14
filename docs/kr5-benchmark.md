@@ -67,14 +67,15 @@ Acceptable fixture rerun tolerance is zero for catalog token counts and zero for
 
 ## Running
 
-Fixture-mode reproducibility command:
+Fixture-mode reproducibility command for the committed result:
 
 ```bash
 python3 scripts/benchmark/kr5_benchmark.py \
   --mode fixtures \
   --prompt-set scripts/benchmark/prompts/kr5_shared_prompts.json \
   --fixture-dir scripts/benchmark/testdata/fixtures \
-  --output scripts/benchmark/results/kr5-results.json
+  --output scripts/benchmark/results/kr5-results.json \
+  --generated-at 2026-05-14T20:00:00Z
 ```
 
 Live mode uses the same harness with `--mode live --config <config.json>`. Start from `scripts/benchmark/benchmark-config.example.json`, provide commands and environment outside the repository, and never commit secrets. When a live server lacks a required intent, set that call's `tool` to `unavailable:<intent>` in the private config so the harness records an explicit `isError=true` unavailable result instead of attempting `tools/call`.

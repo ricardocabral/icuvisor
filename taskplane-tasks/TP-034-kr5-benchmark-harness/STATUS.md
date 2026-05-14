@@ -52,8 +52,8 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] The harness is re-runnable with one command; document it
-- [ ] Committed results are redacted of any athlete PII
+- [x] The harness is re-runnable with one command; document it
+- [x] Committed results are redacted of any athlete PII
 
 ### Step 7: Verify
 
@@ -76,8 +76,8 @@
 | R007 | code | 4    | REVISE  | `.reviews/R007-code-step4.md` |
 | R008 | code | 4    | REVISE  | `.reviews/R008-code-step4.md` |
 | R009 | code | 4    | REVISE  | `.reviews/R009-code-step4.md` |
-| R010 | code | 4    | APPROVE | inline                        |
-| R011 | code | 5    | APPROVE | inline                        |
+| R010 | code | 4    | APPROVE | `.reviews/R010-code-step4.md` |
+| R011 | code | 5    | APPROVE | `.reviews/R011-code-step5.md` |
 
 ---
 
@@ -124,6 +124,8 @@ Step 3: Fixture run measured `icuvisor-core` (17 tools, 4,396 description tokens
 Step 4: Stood up `hhopke/intervals-icu-mcp` with `uvx intervals-icu-mcp==2.0.0`, `INTERVALS_ICU_DELETE_MODE=full`, package version `2.0.0`, git tag `v2.0.0` (`d6d8f2b381db0776b0bb6d3ff1081d733bf0ac96`) to capture its 58-tool `tools/list` surface. Stood up `mvilanova/intervals-mcp-server` as a black box from a depth-1 checkout at `12199c61d88f580a885f04921b23dcf7c4524de8`, `uv sync --frozen`, and `uv run mcp run src/intervals_mcp_server/server.py`; installed package metadata reported `intervals-mcp-server==0.1.0` and `tools/list` returned 17 tools. R007/R008/R009 revisions count audited raw response bytes instead of benchmark padding, validate audited redacted byte sizes against committed fixtures, redact athlete IDs from measurement environments, support live `unavailable:<intent>` rows, validate unavailable calls as `isError=true`, preserve exact `.5` medians, and measured `hhopke-intervals-icu-mcp` (58 tools, 10,845 description tokens, 2,063.5 median response bytes) and `mvilanova-intervals-mcp-server` (17 tools, 6,227 description tokens, 1,649.5 median response bytes) in `scripts/benchmark/results/kr5-results.json`.
 
 Step 5: Computed KR5 deltas from committed fixture results: icuvisor core reduces tool-description tokens by 59.47% vs hhopke (target ≥60%, misses by 0.53 percentage points / 58 tokens), median response bytes by 52.68% vs hhopke, and median response bytes by 40.80% vs mvilanova. `docs/kr5-benchmark.md` states KR5 is partially confirmed and files gap `TP-034-KR5-DESC-001` with a trim-or-recalibrate proposal.
+
+Step 6: Documented the exact one-command fixture rerun with fixed `--generated-at` in `docs/kr5-benchmark.md`; reran it to `/tmp/kr5-results-redaction.json` and confirmed byte-for-byte equality with committed results. A redaction scan found no athlete-like `i####` IDs or unredacted API key values in committed result/fixture JSON.
 | 2026-05-14 20:35 | Review R001 | plan Step 1: REVISE |
 | 2026-05-14 20:37 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-14 20:40 | Review R003 | plan Step 2: REVISE |
