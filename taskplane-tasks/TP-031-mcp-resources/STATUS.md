@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -65,6 +65,7 @@
 | R005 | Plan | 2 | APPROVE | inline |
 | R006 | Code | 2 | REVISE | .reviews/R006-code-step2.md |
 | R007 | Code | 2 | APPROVE | inline |
+| R008 | Plan | 3 | REVISE | .reviews/R008-plan-step3.md |
 
 ---
 
@@ -73,6 +74,7 @@
 | Discovery | Disposition | Location |
 | --------- | ----------- | -------- |
 | `workoutdoc` has implicit serializer grammar but no exported syntax descriptor yet; pace text is supported only as non-ramp text ending in `Pace`, while text targets cannot be ramps. | Add a `workoutdoc` syntax descriptor in Step 2 and generate the resource from it. | `internal/workoutdoc/{types,serialize,parse}.go` |
+| Event tools currently trim/pass through arbitrary category strings and do not share an enum descriptor; Intervals public OpenAPI `GET https://intervals.icu/api/v1/docs` exposes `Event`/`EventEx.category` enum values `WORKOUT`, `RACE_A`, `RACE_B`, `RACE_C`, `NOTE`, `PLAN`, `HOLIDAY`, `SICK`, `INJURED`, `SET_EFTP`, `FITNESS_DAYS`, `SEASON_START`, `TARGET`, `SET_FITNESS`. | Add a shared descriptor but do not turn it into validation; preserve pass-through/custom category behavior. | `internal/intervals/events.go`; public OpenAPI |
 
 ---
 
@@ -121,3 +123,13 @@ _None_
 
 - Code review found the first syntax descriptor was still self-referential; revise by moving supported unit/alias matrices into exported `workoutdoc` syntax data and using those matrices in serializer formatting plus resource tests.
 - Code review also noted a lint failure in Step 1 resource error handling; replace `fmt.Errorf(genericResourceErrorMessage)` with a non-format error.
+
+### Step 3 plan
+
+- Add a shared event-category descriptor in `internal/intervals` (for example `EventCategories() []EventCategory`) containing the public OpenAPI `Event`/`EventEx.category` enum and one-line descriptions. Event-facing code and the resource will consume this descriptor; generated Markdown will not be the source of truth.
+- Upstream evidence: public intervals.icu OpenAPI document at `https://intervals.icu/api/v1/docs`, `components.schemas.Event.properties.category` and `EventEx.properties.category`, fetched during planning without consulting GPL sources. Scope is the calendar event category enum including fitness-model calendar categories (`SET_EFTP`, `FITNESS_DAYS`, `SET_FITNESS`); `WithCourses.category` and `CategorySummary.category` are different schemas and out of scope.
+- Preserve current tool behavior: `get_events` filters and `add_or_update_event` writes still trim/pass through caller category values and preserve upstream/custom values in responses. The descriptor is documentation/schema metadata only and must not reject athlete/account-specific category strings.
+- Resource contract: URI `icuvisor://event-categories`, name `event_categories`, title `Event categories`, short description, MIME type `text/markdown`, static/no-network read handler that checks context cancellation, deterministic OpenAPI order, and one text content item with URI/MIME/text populated.
+- Register `EventCategoriesResource()` in `resources.NewRegistry()` alongside `WorkoutSyntaxResource()` so normal server runs expose it in `resources/list` and `resources/read`.
+- Tests: golden-lock generated Markdown; assert every descriptor entry appears exactly once with a non-empty one-line description; assert event tool schemas/descriptions reference the shared descriptor/resource without enum validation; add registry/protocol assertions for list/read URI and MIME type.
+- Step 6 boundary: avoid broad tool-description trimming and README updates here; only minimal wording/schema metadata changes needed to point category docs at the shared descriptor/resource.
