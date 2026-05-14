@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 11
+**Review Counter:** 12
 **Iteration:** 1
 **Size:** M
 
@@ -75,6 +75,7 @@
 | R009 | code | 4 | APPROVE | `.reviews/R009-code-step4.md` |
 | R010 | plan | 5 | APPROVE | `.reviews/R010-plan-step5.md` |
 | R011 | code | 5 | APPROVE | `.reviews/R011-code-step5.md` |
+| R012 | plan | 6 | APPROVE | `.reviews/R012-plan-step6.md` |
 
 ---
 
@@ -83,6 +84,7 @@
 | Discovery | Disposition | Location |
 | --------- | ----------- | -------- |
 | Current worktree already contains the Streamable HTTP implementation from the previous merged TP-033 history; this iteration is auditing, re-verifying, and restoring current task artifacts. | Use existing implementation where it satisfies the prompt; do not duplicate handler logic. | `internal/config`, `internal/app`, `internal/mcp` |
+| Initial `make test` exposed stale prompt golden fixtures unrelated to HTTP transport; rendered prompt output is current and fixtures had extra blank/indented lines. | Updated `internal/prompts/testdata/*.md` to match the renderer and confirmed `go test ./internal/prompts` passes before retrying the full gate. | `internal/prompts/testdata` |
 
 ---
 
@@ -124,6 +126,8 @@
 | 2026-05-14 20:14 | Step 5 checkpoint | CHANGELOG `[Unreleased]` Streamable HTTP entry audited. |
 | 2026-05-14 20:16 | Review R011 | code Step 5: APPROVE |
 | 2026-05-14 20:17 | Step 5 complete | Docs audited and approved; Step 6 started. |
+| 2026-05-14 20:18 | Review R012 | plan Step 6: APPROVE |
+| 2026-05-14 20:20 | Verify | Initial `make test` failed in `internal/prompts` due stale golden fixtures; updated fixtures and `go test ./internal/prompts` passed. |
 
 ---
 
@@ -146,3 +150,4 @@ _None_
 - Step 4 plan: audit the shared protocol suite in `internal/mcp/protocol_test.go`, where `connectProtocolClient` runs scenarios against in-memory/stdio-equivalent SDK transport and Streamable HTTP. Coverage must include initialize, tools/list, successful tool call, missing tool, sanitized tool errors, resources list/read/not-found/sanitized errors, prompts list/get, and malformed HTTP requests.
 - Step 4 parity plan: confirm `TestProtocolTransportParity` serializes stable SDK results to canonical JSON and byte-compares handler outputs across in-memory and Streamable HTTP transports where practical.
 - Step 5 plan: audit README for transport selection via `ICUVISOR_TRANSPORT=http`/`--transport http`, the default endpoint `http://127.0.0.1:8765/mcp`, config fields `transport`/`http_bind`, invalid config startup failure, and LAN-bind security warning. Audit CHANGELOG `[Unreleased]` for a concise Streamable HTTP entry.
+- Step 6 plan: run required gates in order: `make test`, `make build`, `make lint`, and `go test -race ./...`. For manual smoke, start `./bin/icuvisor` with `ICUVISOR_TRANSPORT=http` and sentinel env config without `--http-bind`, confirm logs/listener show `127.0.0.1:8765` only, then use a tiny Go SDK Streamable HTTP client against `http://127.0.0.1:8765/mcp` to run `tools/list` and a no-network `icuvisor_list_advanced_capabilities` tool call.
