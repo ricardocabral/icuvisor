@@ -1,10 +1,10 @@
 # TP-033-streamable-http-transport: TP-033-streamable-http-transport — Status
 
-**Current Step:** Step 3: Security posture
+**Current Step:** Step 4: Parity tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 
@@ -28,15 +28,15 @@
 
 ### Step 3: Security posture
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Default bind is loopback only; confirm with a test that the default config never produces a non-loopback listener.
-- [ ] No API keys or athlete IDs in HTTP logs; reuse the existing redaction conventions.
-- [ ] Document the LAN-bind threat model briefly in README (anyone on the LAN can reach the server with no auth — opt in deliberately).
+- [x] Default bind is loopback only; confirm with a test that the default config never produces a non-loopback listener.
+- [x] No API keys or athlete IDs in HTTP logs; reuse the existing redaction conventions.
+- [x] Document the LAN-bind threat model briefly in README (anyone on the LAN can reach the server with no auth — opt in deliberately).
 
 ### Step 4: Parity tests
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] The same protocol tests that cover stdio (initialize, tools/list, tool calls, resources, prompts, malformed requests, sanitized errors) run against the HTTP transport.
 - [ ] Handler behaviour is byte-identical across transports — assert this where practical.
@@ -69,6 +69,8 @@
 | R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
 | R004 | plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
 | R005 | code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
+| R006 | plan | 3 | APPROVE | `.reviews/R006-plan-step3.md` |
+| R007 | code | 3 | APPROVE | `.reviews/R007-code-step3.md` |
 
 ---
 
@@ -101,6 +103,12 @@
 | 2026-05-14 20:02 | Step 2 checkpoint | Graceful shutdown and listener-close tests audited in `TestServeStreamableHTTPCancelClosesListener`. |
 | 2026-05-14 20:01 | Review R005 | code Step 2: APPROVE |
 | 2026-05-14 20:03 | Step 2 complete | Streamable HTTP transport wiring and lifecycle audited and approved; Step 3 started. |
+| 2026-05-14 20:03 | Review R006 | plan Step 3: APPROVE |
+| 2026-05-14 20:04 | Step 3 checkpoint | Default loopback bind audited in config tests; `go test ./internal/config ./internal/mcp ./internal/app` passed. |
+| 2026-05-14 20:05 | Step 3 checkpoint | HTTP log redaction tests audited for malformed requests, startup/listen/shutdown, API keys, and athlete IDs. |
+| 2026-05-14 20:06 | Step 3 checkpoint | README LAN-bind threat model audited. |
+| 2026-05-14 20:06 | Review R007 | code Step 3: APPROVE |
+| 2026-05-14 20:07 | Step 3 complete | Security posture audited and approved; Step 4 started. |
 
 ---
 
@@ -118,3 +126,5 @@ _None_
 - Step 1 warning/test plan: log a structured WARN only when `transport=http` and the active bind is non-loopback; include transport and bind address only, never API keys or raw athlete IDs. Cover defaults, JSON/env/CLI selection, invalid transport/bind errors, non-loopback detection, and backward-compatible `version`, `--config path`, and `--config=path` CLI parsing.
 - Step 2 plan: keep `internal/mcp.NewServer` as the single shared SDK server/registry constructor. For stdio, keep `Server.Run(ctx)` over `sdkmcp.StdioTransport`. For HTTP, serve the same SDK server through `sdkmcp.NewStreamableHTTPHandler(func(*http.Request) *sdkmcp.Server { return sharedSDKServer }, options)` mounted at `/mcp`; do not duplicate tool/resource/prompt registration or handler logic.
 - Step 2 lifecycle plan: `RunStreamableHTTP` owns `net.Listen`, `ServeStreamableHTTP` accepts an injected listener for tests, uses `http.Server` with request contexts rooted in the worker context, treats `http.ErrServerClosed` as expected, and on cancellation calls bounded `Shutdown` followed by `Close` if needed. Tests cover app transport dispatch, HTTP initialize smoke, and cancellation closing the listener.
+- Step 3 plan: verify the default HTTP bind remains `127.0.0.1:8765` and is loopback via `internal/config` tests; keep non-loopback binds explicit and WARN-only. Audit HTTP logs for startup/listen/shutdown/malformed request paths to ensure no API keys, tokens, raw athlete IDs, or request payloads are logged.
+- Step 3 docs plan: README must state the LAN-bind threat model clearly: Streamable HTTP has no auth in this task, so anyone on the LAN who can reach the bind address can invoke registered tools with the configured intervals.icu credentials.
