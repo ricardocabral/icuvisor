@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 13
+**Review Counter:** 14
 **Iteration:** 1
 **Size:** M
 
@@ -58,8 +58,10 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Add `_meta.toolset` to every response from the same chokepoint TP-018 used for `_meta.delete_mode`
-- [ ] README: short section documenting `ICUVISOR_TOOLSET`, the two tiers, the default, and the discoverability tool
+- [ ] Extend `internal/response` with process-level `SetToolset`/`Toolset` state parallel to delete mode, defaulting invalid/empty to `core`, and have `addCommonMeta` overwrite response-owned `_meta.toolset`
+- [ ] Ensure direct-return `icuvisor_list_advanced_capabilities` responses also include `_meta.toolset` in both structured content and serialized text using the same response-owned source
+- [ ] Add targeted tests for response metadata defaults/overwrites, startup setter propagation, and advanced-capabilities `_meta.toolset` in core/full modes
+- [ ] README: short section documenting `ICUVISOR_TOOLSET`, the two tiers, the default, restart requirement, delete-mode orthogonality, and the discoverability tool
 - [ ] CHANGELOG `[Unreleased]` entry
 
 ### Step 6: Verify
@@ -85,6 +87,7 @@
 | R011 | plan | 4 | APPROVE | `.reviews/R011-plan-step4.md` |
 | R012 | code | 4 | REVISE | `.reviews/R012-code-step4.md` |
 | R013 | code | 4 | APPROVE | `.reviews/R013-code-step4.md` |
+| R014 | plan | 5 | REVISE | `.reviews/R014-plan-step5.md` |
 
 ---
 
@@ -145,6 +148,19 @@ Composition test matrix: synthetic tools cover core read, core write, full read,
 - R011 approved the revised Step 4 plan for implementation.
 - R012 requested adding the new discoverability tool to `internal/safety/adversarial_test.go`'s static catalog; reviewer found `go test ./...` failing only on that catalog count drift.
 - R013 approved the revised Step 4 implementation.
+- R014 required Step 5 to pin response-owned metadata semantics, direct-return tool handling, targeted tests, and exact README/CHANGELOG scope before implementation.
+
+### Step 5 metadata/docs plan
+
+Response mechanism: add process-global toolset state in `internal/response` beside delete mode (`SetToolset`, `Toolset`), store `safety.ParseToolset(...).String()`, and call `response.SetToolset(toolset.String())` from `app.defaultStartServer` using the already-resolved startup value. No handler/env re-read.
+
+Metadata semantics: `addCommonMeta` owns `server_version`, `delete_mode`, `toolset`, and units. It preserves existing caller `_meta` keys (counts, pagination, scales, delete-mode notes, etc.) but overwrites stale caller-supplied `toolset` with the normalized process value, matching the response-owned metadata contract.
+
+Direct-return tool handling: update `icuvisor_list_advanced_capabilities` to source `_meta.toolset` from `response.Toolset()` so both `StructuredContent` and marshaled text JSON include the same common process value. Keep its catalog-specific `_meta.count`, `_meta.source`, and `_meta.delete_mode_note` intact.
+
+Tests: extend `internal/response/shaper_test.go` for default core, explicit full, invalid/empty fallback, and stale `_meta.toolset` overwrite while preserving other meta keys; update shared expected-meta helper to include default `toolset`. Add app startup propagation coverage and advanced-capabilities handler assertions for `_meta.toolset` in core and full mode text/structured output.
+
+Docs: README documents `ICUVISOR_TOOLSET` near delete safety: `core` default, `full` opt-in, invalid/empty fallback to `core`, restart required, `icuvisor_list_advanced_capabilities` discoverability, and `ICUVISOR_DELETE_MODE` remains separate for destructive tools. CHANGELOG `[Unreleased]` gets a concise bullet for toolset tiers, discoverability tool, and `_meta.toolset`.
 
 ### Step 4 discoverability plan
 
@@ -168,3 +184,4 @@ Tests: update tier matrix expected core list/count for `icuvisor_list_advanced_c
 | 2026-05-14 13:26 | Review R011 | plan Step 4: APPROVE |
 | 2026-05-14 13:42 | Review R012 | code Step 4: REVISE |
 | 2026-05-14 13:47 | Review R013 | code Step 4: APPROVE |
+| 2026-05-14 13:50 | Review R014 | plan Step 5: REVISE |
