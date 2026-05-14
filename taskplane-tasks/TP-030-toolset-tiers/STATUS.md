@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-14
 **Review Level:** 2
-**Review Counter:** 12
+**Review Counter:** 13
 **Iteration:** 1
 **Size:** M
 
@@ -43,7 +43,7 @@
 
 ### Step 4: `icuvisor_list_advanced_capabilities`
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Add a catalog-collecting registrar inside `internal/tools` so `icuvisor_list_advanced_capabilities` derives full-only rows from the same self-declared `Tool` metadata and first description sentences while forwarding registration normally
 - [x] Register `icuvisor_list_advanced_capabilities` after collecting the existing catalog, mark it `core`, use a no-argument closed input schema, exclude core tools/self, and keep it available in both active tiers
@@ -80,6 +80,7 @@
 | R010 | plan | 4 | REVISE | `.reviews/R010-plan-step4.md` |
 | R011 | plan | 4 | APPROVE | `.reviews/R011-plan-step4.md` |
 | R012 | code | 4 | REVISE | `.reviews/R012-code-step4.md` |
+| R013 | code | 4 | APPROVE | `.reviews/R013-code-step4.md` |
 
 ---
 
@@ -139,6 +140,7 @@ Composition test matrix: synthetic tools cover core read, core write, full read,
 - R010 required Step 4 to pin catalog derivation from existing `Tool` metadata, active-toolset propagation to handlers, a concrete response shape/instruction, and drift/protocol/schema tests before implementation.
 - R011 approved the revised Step 4 plan for implementation.
 - R012 requested adding the new discoverability tool to `internal/safety/adversarial_test.go`'s static catalog; reviewer found `go test ./...` failing only on that catalog count drift.
+- R013 approved the revised Step 4 implementation.
 
 ### Step 4 discoverability plan
 
@@ -161,3 +163,4 @@ Tests: update tier matrix expected core list/count for `icuvisor_list_advanced_c
 | 2026-05-14 13:23 | Review R010 | plan Step 4: REVISE |
 | 2026-05-14 13:26 | Review R011 | plan Step 4: APPROVE |
 | 2026-05-14 13:42 | Review R012 | code Step 4: REVISE |
+| 2026-05-14 13:47 | Review R013 | code Step 4: APPROVE |
