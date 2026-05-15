@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 2
 **Size:** M
 
@@ -34,7 +34,9 @@
 - [ ] Notarization/stapling scaffold uses `xcrun notarytool submit --wait` and `xcrun stapler`, with live execution operator-deferred until Apple credentials exist
 - [ ] R005/R006 plan: remove the GoReleaser `brews` block and `HOMEBREW_TAP_GITHUB_TOKEN` from this tag-release path
 - [ ] R005/R006 plan: suppress standalone darwin archives so the macOS release artifact is the signed/notarized DMG only, while Linux/Windows archives stay unchanged
-- [ ] R005/R006 plan: add `build/macos/package_dmg.sh` as the GoReleaser after-hook orchestrator for plist substitution, `.app` assembly, signing, verification, `hdiutil`, `notarytool`, stapling, and validation
+- [ ] R005/R006/R007 plan: split GoReleaser builds so archives include only Linux/Windows build IDs; darwin builds feed `universal_binaries` for the DMG script but produce no standalone darwin archive
+- [ ] R005/R006/R007 plan: add `build/macos/package_dmg.sh` for plist substitution, `.app` assembly, Developer ID app signing/verification, `hdiutil`, DMG container signing/verification, `notarytool`, stapling, and validation
+- [ ] R005/R006/R007 plan: use explicit GitHub Actions steps after GoReleaser to run `package_dmg.sh`, append the DMG to `SHA256SUMS.txt`, and upload both with `gh release upload` so the promoted DMG is released and checksummed
 - [ ] R005/R006 plan: use `ICUVISOR_MACOS_RELEASE=1` as the fail-closed tag-release switch requiring Developer ID identity plus `APPLE_TEAM_ID`, `APPLE_API_KEY_ID`, `APPLE_API_KEY_ISSUER`, and decoded API key path; snapshots omit the flag and build unsigned with warnings
 - [ ] R005/R006 plan: validate with `goreleaser check`, local snapshot/dry-run app+DMG assembly, and a release-mode negative test proving missing Apple prerequisites fail closed on macOS-only tooling
 
@@ -74,7 +76,7 @@
 - **macOS app launch model:** v0.5 ships a headless `.app` wrapper with `LSUIElement=true`; MCP clients execute `/Applications/icuvisor.app/Contents/MacOS/icuvisor` directly over stdio. Finder double-click/open is permitted for Gatekeeper/keychain trust but may exit or run without visible UI; no tray/menu-bar app is shipped. LaunchAgent support is optional documentation only and must not be auto-loaded by the installer.
 - **Info.plist plan:** `build/macos/Info.plist` will carry `CFBundleIdentifier=dev.icuvisor.icuvisor`, `CFBundleExecutable=icuvisor`, `CFBundleName=icuvisor`, `CFBundlePackageType=APPL`, `LSUIElement=true`, and placeholder `CFBundleShortVersionString`/`CFBundleVersion` values that release packaging substitutes from GoReleaser instead of hard-coding per release.
 - **Cross-platform installers:** explicitly deferred to v1.0; v0.5 is macOS-only.
-- **Step 2 release-shaping decisions:** remove Homebrew auto-publishing from `.goreleaser.yaml`/`.github/workflows/release.yml` for TP-037; do not publish standalone darwin archives because only the DMG receives the release signing/notarization gate; keep Linux/Windows archives unchanged; implement macOS packaging in `build/macos/package_dmg.sh` invoked as a GoReleaser `after` hook; use `ICUVISOR_MACOS_RELEASE=1` in the tag release workflow to require Apple credentials and fail closed, while local snapshots without that flag may create an explicitly unsigned DMG scaffold for dry-run validation.
+- **Step 2 release-shaping decisions:** remove Homebrew auto-publishing from `.goreleaser.yaml`/`.github/workflows/release.yml` for TP-037; split GoReleaser builds so Linux/Windows archives remain unchanged but darwin builds only feed `universal_binaries`; do not publish standalone darwin archives because only the DMG receives the release signing/notarization gate; implement macOS packaging in `build/macos/package_dmg.sh`; run DMG creation/upload/checksum as explicit GitHub Actions steps after GoReleaser so `gh release upload` attaches the DMG and updated `SHA256SUMS.txt`; sign the `.app` with `codesign --options runtime --timestamp`, sign the DMG container with `codesign --timestamp`, verify both before notarization, then submit/staple/validate; use `ICUVISOR_MACOS_RELEASE=1` in the tag release workflow to require Apple credentials and fail closed, while local snapshots without that flag may create an explicitly unsigned DMG scaffold for dry-run validation.
 
 ## Blockers
 
@@ -102,3 +104,4 @@ _Add notes as work progresses._
 | 2026-05-15 17:59 | Review R004 | code Step 1: APPROVE |
 | 2026-05-15 18:03 | Review R005 | plan Step 2: REVISE |
 | 2026-05-15 18:05 | Review R006 | plan Step 2: REVISE |
+| 2026-05-15 18:10 | Review R007 | plan Step 2: REVISE |
