@@ -274,6 +274,29 @@ func TestRunSetupFlagErrorsAreActionable(t *testing.T) {
 	}
 }
 
+func TestRunSetupRejectsAPIKeyFlagWithoutEchoingValue(t *testing.T) {
+	t.Parallel()
+
+	var stdout, stderr bytes.Buffer
+	code := RunCLI(context.Background(), Options{
+		Args:   []string{"setup", "--api-key=supersecret"},
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+	if code != 2 {
+		t.Fatalf("exit code = %d, want 2", code)
+	}
+	if strings.Contains(stderr.String(), "supersecret") {
+		t.Fatalf("stderr leaked command-line secret value: %q", stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "unknown setup flag \"--api-key\"") {
+		t.Fatalf("stderr = %q, want redacted api-key flag", stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty", stdout.String())
+	}
+}
+
 func TestRunDefaultDelegatesToStarterWithVersionAndConfig(t *testing.T) {
 	t.Parallel()
 

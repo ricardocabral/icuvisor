@@ -6,6 +6,7 @@ require (
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/modelcontextprotocol/go-sdk v1.4.1
 	github.com/zalando/go-keyring v0.2.8
+	golang.org/x/term v0.43.0
 )
 
 require (
@@ -16,5 +17,4 @@ require (
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sys v0.44.0 // indirect
-	golang.org/x/term v0.43.0 // indirect
 )

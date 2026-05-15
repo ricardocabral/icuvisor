@@ -25,7 +25,7 @@
 - [x] `--help` golden file updated
 - [x] Overwrite prompts for keychain + config-file
 - [x] Honours `--config`
-- [ ] R006: redact setup unknown-flag values, especially `--api-key=...`, and tidy direct `golang.org/x/term` dependency
+- [x] R006: redact setup unknown-flag values, especially `--api-key=...`, and tidy direct `golang.org/x/term` dependency
 
 ### Step 3: Autodetect + verify
 

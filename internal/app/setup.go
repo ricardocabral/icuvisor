@@ -177,10 +177,20 @@ func parseSetupArgs(args []string) (setupArgs, error) {
 		case arg == "--force":
 			parsed.force = true
 		default:
-			return setupArgs{}, newSetupUsageError("unknown setup flag %q", arg)
+			return setupArgs{}, newSetupUsageError("unknown setup flag %q", unknownSetupFlagName(arg))
 		}
 	}
 	return parsed, nil
+}
+
+func unknownSetupFlagName(arg string) string {
+	if strings.HasPrefix(arg, "--") {
+		name, _, hasValue := strings.Cut(arg, "=")
+		if hasValue {
+			return name
+		}
+	}
+	return arg
 }
 
 func setupUsageError(err error) error {
