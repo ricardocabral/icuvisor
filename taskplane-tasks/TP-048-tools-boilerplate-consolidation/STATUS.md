@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -14,11 +14,11 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Add `internal/tools/decode.go` with `DecodeStrict[T any]`
-- [ ] Add `internal/tools/result.go` with `TextResult`
-- [ ] Table-driven tests for both helpers (zero input, unknown field, malformed, happy path)
-- [ ] Cover `DecodeStrict` trailing JSON rejection plus empty/whitespace zero-value and non-object argument errors
-- [ ] Document `TextResult` as a no-error helper for shaped values that are JSON-marshalable by construction, comparing test output to a hand-built `Result`
+- [x] Add `internal/tools/decode.go` with `DecodeStrict[T any]`
+- [x] Add `internal/tools/result.go` with `TextResult`
+- [x] Table-driven tests for both helpers (zero input, unknown field, malformed, happy path)
+- [x] Cover `DecodeStrict` trailing JSON rejection plus empty/whitespace zero-value and non-object argument errors
+- [x] Document `TextResult` as a no-error helper for shaped values that are JSON-marshalable by construction, comparing test output to a hand-built `Result`
 
 ### Step 2: Mechanical replacement across tool files
 
@@ -67,3 +67,4 @@ _Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
 | 2026-05-15 13:33 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 13:33 | Step 1 started | Helpers + tests |
 | 2026-05-15 13:37 | Review R001 | plan Step 1: UNKNOWN |
+| 2026-05-15 13:40 | Review R002 | plan Step 1: APPROVE |
