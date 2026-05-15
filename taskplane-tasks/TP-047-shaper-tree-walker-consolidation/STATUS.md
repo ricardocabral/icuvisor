@@ -34,11 +34,11 @@
 
 **Status:** 🟨 In Progress
 
+- [x] Add R008 guardrails: fresh-copy ownership for all JSON containers (including `include_full` maps), explicit converter fallback scope (`json.Marshaler`, `encoding.TextMarshaler`, `json.RawMessage`, unsupported values, numeric behavior), and fallback accounting in Decisions
+- [ ] Add focused Step 3 tests for converter tag/omitempty/deep-copy/fallback behavior and walker provenance/debug/scale semantics
 - [ ] Remove marshal round-trip from `marshalToJSONValue` on happy path
 - [ ] Collapse five near-duplicate recursive walkers
 - [ ] Preserve every existing path predicate's semantics
-- [ ] Add R008 guardrails: fresh-copy ownership for all JSON containers (including `include_full` maps), explicit converter fallback scope (`json.Marshaler`, `encoding.TextMarshaler`, `json.RawMessage`, unsupported values, numeric behavior), and fallback accounting in Decisions
-- [ ] Add focused Step 3 tests for converter tag/omitempty/deep-copy/fallback behavior and walker provenance/debug/scale semantics
 
 ### Step 4: Adjacent P2 cleanups
 
@@ -74,6 +74,8 @@
 **Marshal replacement / package-boundary plan:** Replace `marshalToJSONValue` with `toJSONValue` implemented in `internal/response` using reflection: maps/slices/arrays recurse directly; structs honor exported fields, embedded fields, `json:"-"`, renamed fields, and `omitempty`; pointers/interfaces unwrap or become nil; primitives remain primitives. This covers typed tool DTOs (`get_activities`, `get_fitness`, athlete profile, stream/detail envelopes) without importing `internal/tools`. `include_full` maps such as activity `Full`, curve raw payloads, and training summary raw rows remain `map[string]any` / `[]any` and are not decoded/re-encoded. `dropDebugVisitor` must drop ordinary `fetched_at` / `query_type` only outside provenance; `provenanceFetchedAtPredicate` preserves `_meta.provenance.<field>.fetched_at` and keeps it out of debug filtering; scale collection must still skip nested `_meta` content.
 
 **Potential fallback:** If Step 3 encounters a custom `json.Marshaler` value that cannot be represented without calling its marshaler, retain a tiny fallback for that value class only and record it here. No normal tool response fixture should take that fallback.
+
+**Step 3 guardrails:** `toJSONValue` must allocate fresh maps and slices for every container it returns, including nested `Full` / `include_full` raw maps, so shaper mutations never touch caller-owned inputs. Fast path scope is plain structs, maps with string keys, slices/arrays, pointers/interfaces, and JSON primitives used by tool DTOs; unsupported values must fail with a wrapped error comparable to the current `json.Marshal` failure path. Values implementing `json.Marshaler` / `encoding.TextMarshaler` may use a per-value marshal fallback; `json.RawMessage` must be decoded as JSON (or nil for nil raw messages), not reflected as `[]byte`; numeric values may retain their concrete Go numeric type internally as long as canonical JSON bytes match the Step 1 goldens. Step 3 tests must cover tags/renames, `json:"-"`, `omitempty`, deep-copy/no-mutation, fallback/raw-message behavior, null stripping, debug removal, provenance `fetched_at`, and scale collection skipping nested `_meta`.
 
 ## Notes
 
