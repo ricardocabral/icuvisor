@@ -103,3 +103,7 @@ _Add notes as work progresses._
 | 2026-05-15 14:28 | Steering | Accepted documented/operator-deferred manual sweep for Windows/Linux; requested safe macOS dummy keychain validation only. |
 | 2026-05-15 14:29 | Manual validation | macOS native security dummy write/read/delete passed; temporary OSKeychain live test dummy Set/Get/Delete passed and cleaned up. |
 | 2026-05-15 14:34 | Review R011 | code Step 4: APPROVE |
+
+| 2026-05-15 14:35 | Agent reply | Acknowledged steering for TP-036 Step 4: I will use documented/operator-deferred manual sweep acceptance, run safe macOS dummy keychain write/read/delete cleanup if available, document exactly what wa |
+| 2026-05-15 14:35 | Worker iter 2 | done in 486s, tools: 36 |
+| 2026-05-15 14:35 | Task complete | .DONE created |
