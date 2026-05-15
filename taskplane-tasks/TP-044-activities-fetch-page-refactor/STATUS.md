@@ -1,26 +1,26 @@
 # TP-044-activities-fetch-page-refactor: `fetchActivitiesPage` pagination driver refactor — Status
 
-**Current Step:** Step 1: Characterize current behaviour
-**Status:** ⏳ Not started
+**Current Step:** Step 2: Extract `pageCursor` + `iteratePages`
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 0
-**Iteration:** 0
+**Review Counter:** 1
+**Iteration:** 1
 **Size:** S
 
 ---
 
 ### Step 1: Characterize current behaviour
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
-- [ ] Pin the four boundary cases with golden fixtures (empty, partial, exact full window, identical-timestamp stall)
-- [ ] Capture pre-refactor `next_page_token` values for byte-identity assertions
-- [ ] Confirm result ordering captured by fixtures
+- [x] Pin the four boundary cases with golden fixtures (empty, partial, exact full window, identical-timestamp stall)
+- [x] Capture pre-refactor `next_page_token` values for byte-identity assertions
+- [x] Confirm result ordering captured by fixtures
 
 ### Step 2: Extract `pageCursor` + `iteratePages`
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Introduce `pageCursor` state struct (replaces the four ad-hoc booleans)
 - [ ] Introduce `iteratePages` driver yielding candidates one page at a time
@@ -54,3 +54,7 @@
 ## Notes
 
 _Add notes as work progresses._
+
+| 2026-05-15 14:25 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-15 14:25 | Step 1 started | Characterize current behaviour |
+| 2026-05-15 14:27 | Review R001 | plan Step 1: APPROVE |
