@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** L
 
@@ -15,8 +15,9 @@
 **Status:** 🟨 In Progress
 
 - [x] Threat model written (`athlete_id` cannot exfiltrate, escalate, or escape roster)
-- [x] Coach-roster endpoint probed; path/auth/shape documented OR gap documented
+- [ ] Coach-roster endpoint probed; path/auth/shape documented OR gap documented
 - [x] Writeup in `docs/threat-models/coach-mode.md`
+- [ ] R001 revision: mark authenticated coach-key roster probe as blocked/incomplete unless a real coach-scoped key is provided, and phrase config roster as a temporary fallback pending validation
 
 ### Step 2: Config + feature flag
 
@@ -66,6 +67,10 @@
 
 - **Per-athlete delegated keys:** out of scope for v0.5. v0.5 ships single-coach-key + many-athletes-it-can-already-see.
 
+## Blockers
+
+- Step 1 authenticated roster probe is blocked: this execution environment has no `INTERVALS_ICU_API_KEY`, `INTERVALS_ICU_ATHLETE_ID`, `ICUVISOR_CONFIG`, or `ICUVISOR_ENV_FILE`, and no real coach-scoped intervals.icu key was provided. Public OpenAPI and unauthenticated probes identified the likely endpoint, but R001 correctly rejected that as insufficient to complete the authenticated coach-key probe requirement.
+
 ## Notes
 
 - Step 1 writeup lives at `docs/threat-models/coach-mode.md`.
@@ -74,3 +79,4 @@
 
 | 2026-05-15 20:00 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 20:00 | Step 1 started | Threat-model review + endpoint probe |
+| 2026-05-15 20:07 | Review R001 | code Step 1: UNKNOWN |
