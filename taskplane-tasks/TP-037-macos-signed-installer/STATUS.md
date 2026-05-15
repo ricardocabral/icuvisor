@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 2
 **Size:** M
 
@@ -32,6 +32,10 @@
 - [ ] Apple-native signing scaffold uses `codesign --options runtime --timestamp` with hard preflight gates
 - [ ] DMG packaging scaffold uses `hdiutil` with minimal `.app` + Applications symlink layout
 - [ ] Notarization/stapling scaffold uses `xcrun notarytool submit --wait` and `xcrun stapler`, with live execution operator-deferred until Apple credentials exist
+- [ ] R005 plan: remove or disable Homebrew auto-publishing and prevent unsigned standalone macOS archives from release promotion
+- [ ] R005 plan: implement concrete `.app` assembly order (plist substitution, sign app, verify, build DMG, notarize, staple, validate)
+- [ ] R005 plan: make snapshot/local builds unsigned with explicit warning while real tag releases fail closed without Developer ID/notary prerequisites
+- [ ] R005 plan: constrain Apple-native tooling to macOS release execution with clear errors on non-macOS hosts
 
 ### Step 3: Release workflow
 
@@ -94,3 +98,4 @@ _Add notes as work progresses._
 | 2026-05-15 17:52 | Worker iter 1 | done in 536s, tools: 47 |
 | 2026-05-15 17:56 | Review R003 | code Step 1: REVISE |
 | 2026-05-15 17:59 | Review R004 | code Step 1: APPROVE |
+| 2026-05-15 18:03 | Review R005 | plan Step 2: REVISE |
