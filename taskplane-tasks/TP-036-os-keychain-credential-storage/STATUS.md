@@ -1,10 +1,10 @@
 # TP-036-os-keychain-credential-storage: OS keychain credential storage — Status
 
-**Current Step:** Step 2: Backends
+**Current Step:** Step 3: Precedence chain in `internal/config`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 
@@ -30,12 +30,14 @@
 
 ### Step 3: Precedence chain in `internal/config`
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Order: env > keychain > file > error
 - [ ] `_source` diagnostic indicator (env|keychain|file)
 - [ ] Updated missing-key error message
 - [ ] WARN on legacy file `api_key`
+- [ ] `credstore.Store` injection in config options and production startup wiring
+- [ ] Keychain error flow: env skips lookup, only `ErrNotFound` falls through, other errors fail load
 
 ### Step 4: Tests + manual sweep
 
@@ -71,6 +73,10 @@
 - **Step 2 Linux degradation plan:** add an `isKeychainUnavailable(err)` helper with Linux and non-Linux implementations. On `Get` only, map `go-keyring` not-found and Linux headless/unavailable session/Secret Service/collection errors to `ErrNotFound`; permission denials, unlock failures, malformed responses, and unexpected backend errors remain wrapped. `Set` and `Delete` return actionable wrapped errors for unavailable Linux keyrings.
 - **Step 2 logging plan:** log `credential get/set/delete` attempts and outcomes at debug level with `service` and `account` fields only. Do not include secret values. Tests capture `slog` output around `Set` with a known secret and assert it is absent from messages and fields.
 - **Step 2 build plan:** prefer one wrapper file plus Linux/non-Linux classifier files. Validate `CGO_ENABLED=0 go test`/compile for linux, darwin, and windows targets after adding the dependency; live keychain tests remain behind `//go:build keychain_live`.
+- **Step 3 injection plan:** add `CredentialStore credstore.Store` to `config.Options`. A nil store means no keychain lookup so existing tests and explicit headless loads remain deterministic; production startup wires `credstore.OSKeychain()` before invoking `config.Load`; tests pass fakes/`credstore.NoopStore` and never touch a live keychain.
+- **Step 3 query plan:** read JSON and `.env` first to preserve existing non-secret settings and relative legacy-file precedence; then if trimmed process env `INTERVALS_ICU_API_KEY` is present, set source `env` and skip keychain entirely. If process env is absent, query `CredentialStore.Get(ctx, credstore.IntervalsAPIKeyAccount)`. A keychain value overrides plaintext `.env`/JSON; `credstore.ErrNotFound` falls through to legacy file values; any other keychain error fails load with a wrapped, actionable error and never falls through to plaintext credentials.
+- **Step 3 legacy warning plan:** any plaintext file-sourced API key (`config.json api_key` or `.env INTERVALS_ICU_API_KEY`) emits one WARN at load with source/path metadata only; the credential value is never logged. Process env does not warn.
+- **Step 3 source plan:** add a `Config.APIKeySource` diagnostic field with `json:"-"` and values `env`, `keychain`, `file`, or empty. `Config.String()` renders `api_key_source=<source>` beside `api_key=<redacted>`. `.env` and JSON both report `file`. The missing-key error names process env, OS keychain `service=icuvisor` / `account=intervals-icu-api-key`, JSON `api_key`, and `.env`.
 
 ## Notes
 
@@ -84,3 +90,4 @@ _Add notes as work progresses._
 | 2026-05-15 13:53 | Review R004 | plan Step 2: REVISE |
 | 2026-05-15 13:55 | Review R005 | plan Step 2: APPROVE |
 | 2026-05-15 14:05 | Review R006 | code Step 2: APPROVE |
+| 2026-05-15 14:08 | Review R007 | plan Step 3: REVISE |
