@@ -1,7 +1,7 @@
 # TP-037-macos-signed-installer: macOS signed installer + manual client config docs — Status
 
 **Current Step:** Step 5: Verification
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-15
 **Review Level:** 3
 **Review Counter:** 14
@@ -60,13 +60,13 @@
 
 ### Step 5: Verification
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Local full test/config validation passes (`go test ./...`, `goreleaser check`, workflow YAML parse, plist lint)
-- [ ] Local dry-run DMG assembly passes and release-mode negative test fails closed without Apple credentials
-- [ ] Operator-deferred clean-account drag-install/Gatekeeper preflight documented with exact `codesign`, `spctl`, and `stapler` commands
-- [ ] Operator-deferred Claude Desktop/Claude Code config-and-prompt round trip documented with installed-app snippets and `What's my FTP?` recipe
-- [ ] No plaintext key on disk verified by docs/config scan and Keychain-only client snippets
+- [x] Local full test/config validation passes (`go test ./...`, `goreleaser check`, workflow YAML parse, plist lint)
+- [x] Local dry-run DMG assembly passes and release-mode negative test fails closed without Apple credentials
+- [x] Operator-deferred clean-account drag-install/Gatekeeper preflight documented with exact `codesign`, `spctl`, and `stapler` commands
+- [x] Operator-deferred Claude Desktop/Claude Code config-and-prompt round trip documented with installed-app snippets and `What's my FTP?` recipe
+- [x] No plaintext key on disk verified by docs/config scan and Keychain-only client snippets
 
 ---
 
@@ -97,6 +97,7 @@ _Add notes as work progresses._
 - Step 2 validation: `goreleaser check` passed; `goreleaser release --snapshot --clean --skip=publish` produced Linux/Windows archives and darwin universal binary without a standalone darwin archive; `build/macos/package_dmg.sh` produced an unsigned dry-run DMG; `ICUVISOR_MACOS_RELEASE=1 build/macos/package_dmg.sh` failed closed because `APPLE_TEAM_ID` was absent; `go test ./...` passed.
 - Step 3 validation: `.github/workflows/release.yml` parsed as YAML via Ruby; grep confirmed tag trigger, Apple secret names, draft release upload/publish commands, and no Homebrew token path; release preflight includes `go test -race` and `golangci-lint` before GoReleaser.
 - Step 4 validation: grep confirmed installed app path, API-key-in-Keychain callouts, and `What's my FTP?` verification recipes in both Claude client docs; `plutil -lint build/macos/Info.plist` still passes.
+- Step 5 validation: `make test`, `goreleaser check`, workflow YAML parse, and plist lint passed; snapshot release plus `build/macos/package_dmg.sh` created an unsigned dry-run DMG; release-mode packaging failed closed without Apple credentials; live Gatekeeper/notarization and Claude client round trips remain operator-deferred because Apple assets and real client setup are unavailable in this workspace.
 
 | 2026-05-15 17:43 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 17:43 | Step 1 started | Apple Developer setup + bundle identity |
