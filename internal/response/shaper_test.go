@@ -290,6 +290,22 @@ func TestShapeAddsDeleteModeMetadata(t *testing.T) {
 	}
 }
 
+func TestShapeUsesPerCallDeleteModeMetadata(t *testing.T) {
+	full, err := Shape(map[string]any{"name": "athlete"}, Options{DeleteMode: safety.ModeFull})
+	if err != nil {
+		t.Fatalf("Shape(full) error = %v", err)
+	}
+	none, err := Shape(map[string]any{"name": "athlete"}, Options{DeleteMode: safety.ModeNone})
+	if err != nil {
+		t.Fatalf("Shape(none) error = %v", err)
+	}
+	fullMeta := full.(map[string]any)["_meta"].(map[string]any)
+	noneMeta := none.(map[string]any)["_meta"].(map[string]any)
+	if fullMeta["delete_mode"] != "full" || noneMeta["delete_mode"] != "none" {
+		t.Fatalf("delete modes = full:%v none:%v, want full/none", fullMeta["delete_mode"], noneMeta["delete_mode"])
+	}
+}
+
 func TestShapeAddsToolsetMetadata(t *testing.T) {
 	tests := []struct {
 		name string

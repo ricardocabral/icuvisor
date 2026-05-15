@@ -1,10 +1,10 @@
 # TP-043-shaper-remove-global-state — Status
 
-**Current Step:** Step 2: Refactor
+**Current Step:** Step 3: Tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** S
 
@@ -32,10 +32,10 @@
 
 ### Step 3: Tests
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Existing tests pass without `Set*`
-- [ ] Add divergent-`Options` regression test
+- [x] Existing tests pass without `Set*`
+- [x] Add divergent-`Options` regression test
 
 ### Step 4: Verify
 
@@ -62,3 +62,4 @@
 | 2026-05-15 14:29 | Review R002 | code Step 1: UNKNOWN |
 | 2026-05-15 14:32 | Review R003 | plan Step 2: APPROVE |
 | 2026-05-15 14:50 | Review R004 | code Step 2: APPROVE |
+| 2026-05-15 14:52 | Review R005 | plan Step 3: APPROVE |
