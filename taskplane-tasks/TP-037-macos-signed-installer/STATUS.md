@@ -1,6 +1,6 @@
 # TP-037-macos-signed-installer: macOS signed installer + manual client config docs — Status
 
-**Current Step:** Step 4: Manual client config docs
+**Current Step:** Step 5: Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
@@ -60,12 +60,13 @@
 
 ### Step 5: Verification
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Clean-account drag-install passes Gatekeeper
-- [ ] `codesign --verify` + `spctl -a` pass
-- [ ] Claude Desktop config-and-prompt round trip
-- [ ] No plaintext key on disk after first run
+- [ ] Local full test/config validation passes (`go test ./...`, `goreleaser check`, workflow YAML parse, plist lint)
+- [ ] Local dry-run DMG assembly passes and release-mode negative test fails closed without Apple credentials
+- [ ] Operator-deferred clean-account drag-install/Gatekeeper preflight documented with exact `codesign`, `spctl`, and `stapler` commands
+- [ ] Operator-deferred Claude Desktop/Claude Code config-and-prompt round trip documented with installed-app snippets and `What's my FTP?` recipe
+- [ ] No plaintext key on disk verified by docs/config scan and Keychain-only client snippets
 
 ---
 
