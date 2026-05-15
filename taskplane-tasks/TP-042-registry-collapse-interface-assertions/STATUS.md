@@ -1,7 +1,7 @@
 # TP-042-registry-collapse-interface-assertions — Status
 
 **Current Step:** Step 5: Verify
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-15
 **Review Level:** 2
 **Review Counter:** 12
@@ -54,11 +54,11 @@
 
 ### Step 5: Verify
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `make build` / `test` / `test-race` / `lint`
-- [ ] Manual `list_tools` parity check
-- [ ] Update `CHANGELOG.md` `[Unreleased]`
+- [x] `make build` / `test` / `test-race` / `lint`
+- [x] Manual `list_tools` parity check
+- [x] Update `CHANGELOG.md` `[Unreleased]`
 
 ---
 
@@ -67,6 +67,8 @@
 Step 1 dependency-shape decision: choose direct `*intervals.Client` for `tools.NewRegistry`/`NewRegistryWithOptions`, not a `Deps` struct. Rationale: production has exactly one concrete dependency today; no logger/clock/secondary dependency is required by registry; every per-tool narrow interface remains in constructors for unit tests; compile-time assertions verified `*intervals.Client` satisfies all 33 interfaces. Migration: registry/catalog tests that only inspect registration should use a no-network dummy real client built with dummy API key, normalized athlete ID, loopback base URL, and optionally a panic `RoundTripper` to prove registration does not execute HTTP. Tests that exercise handler behavior with narrow fakes should instantiate the target `newXxxTool` directly. Toolchecks schema parity should not use unrestricted full-client registration unless paired with a schema catalog filter, because it adds 8 tools versus current snapshots.
 
 ## Notes
+
+Step 5 verification: `make build` and `make test` passed; initial `make test-race` hit a flaky `TestProtocolSharedTransportSuite/.../streamable_http` shutdown timeout, and immediate `make test-race` rerun passed; `make lint` passed with 0 issues. Manual list-tools parity was checked with `go test ./internal/mcp -run TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry -v` (core/full MCP list_tools paths) and `go test ./internal/tools -run TestRegistryWithIntervalsClientRegistersFullCatalog -v` (exact 38-tool full registry catalog).
 
 Step 1 registry/interface inventory:
 
