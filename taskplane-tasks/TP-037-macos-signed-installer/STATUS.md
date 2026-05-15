@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 2
 **Size:** M
 
@@ -28,17 +28,17 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Universal-2 binary configured for darwin amd64 + arm64 via GoReleaser `universal_binaries`
-- [ ] Apple-native signing scaffold uses `codesign --options runtime --timestamp` with hard preflight gates
-- [ ] DMG packaging scaffold uses `hdiutil` with minimal `.app` + Applications symlink layout
-- [ ] Notarization/stapling scaffold uses `xcrun notarytool submit --wait` and `xcrun stapler`, with live execution operator-deferred until Apple credentials exist
-- [ ] R005/R006 plan: remove the GoReleaser `brews` block and `HOMEBREW_TAP_GITHUB_TOKEN` from this tag-release path
-- [ ] R005/R006 plan: suppress standalone darwin archives so the macOS release artifact is the signed/notarized DMG only, while Linux/Windows archives stay unchanged
-- [ ] R005/R006/R007 plan: split GoReleaser builds so archives include only Linux/Windows build IDs; darwin builds feed `universal_binaries` for the DMG script but produce no standalone darwin archive
-- [ ] R005/R006/R007 plan: add `build/macos/package_dmg.sh` for plist substitution, `.app` assembly, Developer ID app signing/verification, `hdiutil`, DMG container signing/verification, `notarytool`, stapling, and validation
-- [ ] R005/R006/R007/R008 plan: keep GoReleaser publishing to a draft release only, run explicit GitHub Actions steps to package/upload the DMG and clobber the final `SHA256SUMS.txt`, then publish the draft only after all artifacts verify/upload successfully
-- [ ] R005/R006 plan: use `ICUVISOR_MACOS_RELEASE=1` as the fail-closed tag-release switch requiring Developer ID identity plus `APPLE_TEAM_ID`, `APPLE_API_KEY_ID`, `APPLE_API_KEY_ISSUER`, and decoded API key path; snapshots omit the flag and build unsigned with warnings
-- [ ] R005/R006 plan: validate with `goreleaser check`, local snapshot/dry-run app+DMG assembly, and a release-mode negative test proving missing Apple prerequisites fail closed on macOS-only tooling
+- [x] Universal-2 binary configured for darwin amd64 + arm64 via GoReleaser `universal_binaries`
+- [x] Apple-native signing scaffold uses `codesign --options runtime --timestamp` with hard preflight gates
+- [x] DMG packaging scaffold uses `hdiutil` with minimal `.app` + Applications symlink layout
+- [x] Notarization/stapling scaffold uses `xcrun notarytool submit --wait` and `xcrun stapler`, with live execution operator-deferred until Apple credentials exist
+- [x] R005/R006 plan: remove the GoReleaser `brews` block and `HOMEBREW_TAP_GITHUB_TOKEN` from this tag-release path
+- [x] R005/R006 plan: suppress standalone darwin archives so the macOS release artifact is the signed/notarized DMG only, while Linux/Windows archives stay unchanged
+- [x] R005/R006/R007 plan: split GoReleaser builds so archives include only Linux/Windows build IDs; darwin builds feed `universal_binaries` for the DMG script but produce no standalone darwin archive
+- [x] R005/R006/R007 plan: add `build/macos/package_dmg.sh` for plist substitution, `.app` assembly, Developer ID app signing/verification, `hdiutil`, DMG container signing/verification, `notarytool`, stapling, and validation
+- [x] R005/R006/R007/R008 plan: keep GoReleaser publishing to a draft release only, run explicit GitHub Actions steps to package/upload the DMG and clobber the final `SHA256SUMS.txt`, then publish the draft only after all artifacts verify/upload successfully
+- [x] R005/R006 plan: use `ICUVISOR_MACOS_RELEASE=1` as the fail-closed tag-release switch requiring Developer ID identity plus `APPLE_TEAM_ID`, `APPLE_API_KEY_ID`, `APPLE_API_KEY_ISSUER`, and decoded API key path; snapshots omit the flag and build unsigned with warnings
+- [x] R005/R006 plan: validate with `goreleaser check`, local snapshot/dry-run app+DMG assembly, and a release-mode negative test proving missing Apple prerequisites fail closed on macOS-only tooling
 
 ### Step 3: Release workflow
 
@@ -92,6 +92,7 @@ _Add notes as work progresses._
 - Steering accepted for Step 1: live Apple Developer certificate validation is maintainer-owned and deferred to release operator; SECURITY.md now carries the hard preflight gate/checklist and no secret or placeholder secret material is committed.
 - Supervisor confirmed Apple metadata/keys are unavailable now; proceed with scaffoldable implementation and mark live cert/notarization/Gatekeeper checks as operator-deferred release preflight with exact commands.
 - R003 suggestion: keep the authoritative non-secret release-operator record in STATUS.md while SECURITY.md documents the reusable gate.
+- Step 2 validation: `goreleaser check` passed; `goreleaser release --snapshot --clean --skip=publish` produced Linux/Windows archives and darwin universal binary without a standalone darwin archive; `build/macos/package_dmg.sh` produced an unsigned dry-run DMG; `ICUVISOR_MACOS_RELEASE=1 build/macos/package_dmg.sh` failed closed because `APPLE_TEAM_ID` was absent; `go test ./...` passed.
 
 | 2026-05-15 17:43 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 17:43 | Step 1 started | Apple Developer setup + bundle identity |
@@ -106,3 +107,4 @@ _Add notes as work progresses._
 | 2026-05-15 18:05 | Review R006 | plan Step 2: REVISE |
 | 2026-05-15 18:10 | Review R007 | plan Step 2: REVISE |
 | 2026-05-15 18:13 | Review R008 | plan Step 2: REVISE |
+| 2026-05-15 18:15 | Review R009 | plan Step 2: APPROVE |
