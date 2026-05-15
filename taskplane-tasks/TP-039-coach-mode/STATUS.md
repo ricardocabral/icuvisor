@@ -1,6 +1,6 @@
 # TP-039-coach-mode: Coach mode + per-athlete tool ACLs — Status
 
-**Current Step:** Step 5: Catalog-cache caveat + Tests
+**Current Step:** Step 6: Documentation
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
@@ -86,12 +86,12 @@
 
 ### Step 6: Documentation
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
-- [ ] `docs/coach-mode.md`
-- [ ] README pointer
-- [ ] CHANGELOG
-- [ ] Follow-up issue for PRD §7.4 #5 status update
+- [x] `docs/coach-mode.md`
+- [x] README pointer
+- [x] CHANGELOG
+- [x] Follow-up issue for PRD §7.4 #5 status update
 
 ---
 
@@ -116,6 +116,7 @@
 - Step 4 plan decisions from R014: effective coach mode must register the union of athlete-scoped tools allowed by at least one roster athlete (after delete-mode/toolset), then filter `tools/list` and tool calls by the active session athlete. `list_athletes` remains config-backed (`_meta.source: "config"`) until the operator-deferred upstream roster probe is validated.
 - Step 4 implementation uses `coach.SelectionStore` keyed by SDK session ID, with documented process fallback when the SDK session ID is empty (stdio/in-memory transports).
 - Step 5 plan decisions from R017/R018: select/catalog metadata must use `internal/mcp.safeRegistrar.visibleToolNamesForAthlete` over the post-registration tool set, the same source used for `tools/list`; tests must parse structured JSON and compare exact tool-name sets, including hidden delete/full-toolset cases and two-session isolation. The cache caveat is documented in `docs/coach-mode.md` during Step 5 and expanded in Step 6.
+- Step 6 follow-up issue opened: https://github.com/ricardocabral/icuvisor/issues/13 tracks the separate PRD §7.4 #5 status update.
 
 | 2026-05-15 20:00 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 20:00 | Step 1 started | Threat-model review + endpoint probe |
