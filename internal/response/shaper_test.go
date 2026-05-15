@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -556,11 +557,14 @@ func TestShapeJSONConversionContract(t *testing.T) {
 	})
 
 	t.Run("duplicate json field names use encoding json dominance", func(t *testing.T) {
-		type input struct {
-			A int `json:"x"`
-			B int `json:"x"`
-		}
-		got, err := Shape(input{A: 1, B: 2}, Options{})
+		inputType := reflect.StructOf([]reflect.StructField{
+			{Name: "A", Type: reflect.TypeOf(0), Tag: `json:"x"`},
+			{Name: "B", Type: reflect.TypeOf(0), Tag: `json:"x"`},
+		})
+		input := reflect.New(inputType).Elem()
+		input.Field(0).SetInt(1)
+		input.Field(1).SetInt(2)
+		got, err := Shape(input.Interface(), Options{})
 		if err != nil {
 			t.Fatalf("Shape() error = %v", err)
 		}
@@ -652,6 +656,28 @@ func TestShapeIncludeFullNullConvention(t *testing.T) {
 		"keep":  nil,
 		"_meta": map[string]any{"server_version": "dev"},
 	})
+}
+
+func BenchmarkShapeLargeIncludeFull(b *testing.B) {
+	payload := map[string]any{"activities": make([]any, 0, 250), "_meta": map[string]any{"include_full": true}}
+	for i := 0; i < 250; i++ {
+		payload["activities"] = append(payload["activities"].([]any), map[string]any{
+			"activity_id":           i,
+			"name":                  "Long include_full activity",
+			"fetched_at":            "2026-05-15T12:00:00Z",
+			"icu_training_load":     nil,
+			"power_stream":          []any{180, 190, nil, 205, 210, 215},
+			"heart_rate_stream":     []any{120, 125, nil, 130, 135, 140},
+			"nested_debug_metadata": map[string]any{"query_type": "debug", "keep": true},
+		})
+	}
+	opts := Options{IncludeFull: true, RowCollections: []string{"activities"}, ServerVersion: "bench"}
+	b.ReportAllocs()
+	for b.Loop() {
+		if _, err := Shape(payload, opts); err != nil {
+			b.Fatalf("Shape() error = %v", err)
+		}
+	}
 }
 
 func TestShapeGoldenSnapshots(t *testing.T) {

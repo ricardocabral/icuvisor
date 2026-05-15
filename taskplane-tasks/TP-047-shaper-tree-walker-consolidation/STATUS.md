@@ -65,9 +65,9 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Update `CHANGELOG.md` `[Unreleased]` Changed entry for internal shaper refactor with no user-visible output changes
-- [ ] `make build` / `test` / `test-race` / `lint`
-- [ ] Eyeball-benchmark large `include_full` response; must not regress
+- [x] Update `CHANGELOG.md` `[Unreleased]` Changed entry for internal shaper refactor with no user-visible output changes
+- [x] `make build` / `test` / `test-race` / `lint`
+- [x] Eyeball-benchmark large `include_full` response; must not regress
 
 ---
 
