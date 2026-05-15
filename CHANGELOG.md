@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- OS keychain credential storage for the intervals.icu API key via macOS Keychain, Windows Credential Manager, and Linux libsecret/Secret Service, with a no-CGO wrapper and injectable test store.
 - CLI help via `icuvisor --help`, `-h`, `help`, and `version --help`, documenting commands, flags, environment variables, examples, and exit codes.
 - `--env-file` CLI flag and `ICUVISOR_ENV_FILE` environment variable for reading a custom local env file instead of the default `.env`; explicitly requested env-file paths must exist (the default `.env` remains silently skipped when absent).
 - KR5 benchmark harness, shared prompt set, redacted fixtures, and methodology/results documentation comparing icuvisor core/full against the hhopke and mvilanova Python reference servers.
@@ -55,5 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial repository scaffolding: Go module, Makefile, GoReleaser config, GitHub Actions CI/release pipelines, golangci-lint config, issue/PR templates, CODEOWNERS.
 - Project documentation: README, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, ROADMAP, CHANGELOG.
 - PRD for v1.0 (`docs/prd/PRD-icuvisor.md`).
+
+### Changed
+
+- Config loading now resolves API keys in the order `INTERVALS_ICU_API_KEY` process env, OS keychain, plaintext `.env`/JSON legacy files, then error; plaintext file-sourced keys remain supported but emit a migration warning.
 
 [Unreleased]: https://github.com/ricardocabral/icuvisor/compare/HEAD...HEAD

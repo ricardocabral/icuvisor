@@ -109,13 +109,35 @@ make build
 
 ```bash
 # 1. Get an intervals.icu API key from https://intervals.icu/settings
-# 2. Provide v0.1 manual config via env or JSON
-export INTERVALS_ICU_API_KEY="YOUR_INTERVALS_ICU_API_KEY"
+# 2. Store the key in your OS keychain (see "Getting an API key" below)
+# 3. Provide non-secret config via env or JSON
 export INTERVALS_ICU_ATHLETE_ID="i12345"
 ./bin/icuvisor version
 ```
 
-For local development, `icuvisor` can read a local untracked `.env` file containing `INTERVALS_ICU_API_KEY` and `INTERVALS_ICU_ATHLETE_ID`. Do not commit real API keys. To use a custom env-file path, pass `--env-file /path/to/custom.env` or set `ICUVISOR_ENV_FILE`; explicit paths must exist (unlike the default `.env`, which is silently skipped when absent). For MCP client config, use process env vars or pass a JSON file with `--config /path/to/icuvisor.json` using fields `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout`.
+### Getting an API key
+
+Create an intervals.icu API key at <https://intervals.icu/settings>, then store it under service `icuvisor` and account `intervals-icu-api-key`. icuvisor reads that OS-keychain entry at startup when `INTERVALS_ICU_API_KEY` is not set.
+
+Platform-native storage options:
+
+- **macOS Keychain:** open Keychain Access, choose **File > New Password Item**, set **Keychain Item Name** to `icuvisor`, **Account Name** to `intervals-icu-api-key`, paste the API key as the password, and save. CLI equivalent:
+  ```bash
+  security add-generic-password -U -s icuvisor -a intervals-icu-api-key -w 'YOUR_INTERVALS_ICU_API_KEY'
+  ```
+- **Windows Credential Manager:** open Credential Manager, add a Windows credential with internet/network address `icuvisor:intervals-icu-api-key`, username `intervals-icu-api-key`, and the API key as the password. CLI equivalent:
+  ```powershell
+  cmdkey /add:icuvisor:intervals-icu-api-key /user:intervals-icu-api-key /pass:YOUR_INTERVALS_ICU_API_KEY
+  ```
+- **Linux libsecret (GNOME Keyring / KWallet Secret Service):** use Passwords and Keys/KWallet to create a secret labeled `icuvisor intervals.icu API key` with attributes `service=icuvisor` and `username=intervals-icu-api-key`, or run:
+  ```bash
+  secret-tool store --label='icuvisor intervals.icu API key' service icuvisor username intervals-icu-api-key
+  # Paste the intervals.icu API key when prompted.
+  ```
+
+For headless servers, CI, and emergency fallback, `INTERVALS_ICU_API_KEY` still overrides the keychain. Legacy plaintext config also remains supported below the keychain: `icuvisor` can read a local untracked `.env` file containing `INTERVALS_ICU_API_KEY` and `INTERVALS_ICU_ATHLETE_ID`, or a JSON file with `api_key`. Plaintext file keys emit a warning and should not be committed or backed up. To use a custom env-file path, pass `--env-file /path/to/custom.env` or set `ICUVISOR_ENV_FILE`; explicit paths must exist (unlike the default `.env`, which is silently skipped when absent). For MCP client config, prefer process env vars for non-secret values or pass a JSON file with `--config /path/to/icuvisor.json` using fields `athlete_id`, `timezone`, `api_base_url`, `http_timeout`, `transport`, and `http_bind`.
+
+Credential precedence is: process env `INTERVALS_ICU_API_KEY` > OS keychain > plaintext `.env`/JSON legacy file > startup error. `Config.String()` and startup diagnostics redact the key value and show only the source.
 
 Run `./bin/icuvisor --help` to list the current CLI flags, environment variables, examples, and exit codes.
 

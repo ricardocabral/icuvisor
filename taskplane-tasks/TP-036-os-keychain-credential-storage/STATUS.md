@@ -1,10 +1,10 @@
 # TP-036-os-keychain-credential-storage: OS keychain credential storage — Status
 
-**Current Step:** Step 3: Precedence chain in `internal/config`
+**Current Step:** Step 5: Documentation
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 1
 **Size:** M
 
@@ -41,20 +41,20 @@
 
 ### Step 4: Tests + manual sweep
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Table-driven precedence tests
-- [ ] Headless-D-Bus degradation test
+- [x] Table-driven precedence tests
+- [x] Headless-D-Bus degradation test
 - [ ] Manual three-OS sweep with platform-native UI
-- [ ] `go test -race` clean
+- [x] `go test -race` clean
 
 ### Step 5: Documentation
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] README "Getting an API key"
-- [ ] CHANGELOG `[Unreleased]`
-- [ ] SECURITY.md threat-model note
+- [x] README "Getting an API key"
+- [x] CHANGELOG `[Unreleased]`
+- [x] SECURITY.md threat-model note
 
 ---
 
@@ -80,6 +80,8 @@
 
 ## Notes
 
+- **Blocker (Step 4 manual sweep):** Worker environment is a single macOS worktree and cannot access Windows Credential Manager or Linux Secret Service native UI sessions. Implemented and compiled platform backends/tests; README will document the three-OS manual recipes, but the actual Windows/Linux native UI smoke sweep requires operator hardware or CI runners for those OSes.
+
 _Add notes as work progresses._
 
 | 2026-05-15 13:39 | Task started | Runtime V2 lane-runner execution |
@@ -93,3 +95,4 @@ _Add notes as work progresses._
 | 2026-05-15 14:08 | Review R007 | plan Step 3: REVISE |
 | 2026-05-15 14:10 | Review R008 | plan Step 3: APPROVE |
 | 2026-05-15 14:18 | Review R009 | code Step 3: APPROVE |
+| 2026-05-15 14:22 | Review R010 | plan Step 4: APPROVE |
