@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 1
 **Size:** M
 
@@ -41,6 +41,7 @@
 - [x] Preserve every existing path predicate's semantics
 - [x] Fix R010 float conversion semantics: reject NaN/Inf early with wrapped errors and preserve float32 JSON byte behavior via narrow fallback, with regression tests
 - [x] Fix R010 provenance debug semantics so `_meta.provenance.<field>.query_type` is preserved and make `_meta` path matching segment-exact, with regression tests
+- [ ] Fix R011 `json.Number` semantics by routing valid/invalid numbers through the narrow JSON fallback with regression tests
 
 ### Step 4: Adjacent P2 cleanups
 
@@ -83,6 +84,7 @@
 
 _Add notes as work progresses._
 
+| 2026-05-15 18:18 | Code review R011 | Added blocking revision item: preserve `json.Number` as a JSON number and reject invalid numbers. |
 | 2026-05-15 18:13 | Code review R010 | Added blocking revision items: restore JSON float error/float32 behavior and preserve provenance query_type while tightening _meta segment matching. |
 | 2026-05-15 18:01 | Plan review R008 | Added Step 3 guardrails: deep-copy ownership, converter fallback scope, fallback accounting, and focused converter/walker tests. |
 | 2026-05-15 17:55 | Plan review R005 | Added Step 2 planning item to specify the exact marshal replacement, package-boundary strategy, include_full fit, and predicate preservation. |
@@ -100,3 +102,4 @@ _Add notes as work progresses._
 | 2026-05-15 18:14 | Review R008 | plan Step 3: REVISE |
 | 2026-05-15 18:17 | Review R009 | plan Step 3: APPROVE |
 | 2026-05-15 18:29 | Review R010 | code Step 3: REVISE |
+| 2026-05-15 18:37 | Review R011 | code Step 3: REVISE |
