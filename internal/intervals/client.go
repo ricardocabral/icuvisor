@@ -44,6 +44,27 @@ type RetryConfig struct {
 	Jitter      float64
 }
 
+// WithDefaults returns a retry config with unset fields filled from client defaults.
+func (cfg RetryConfig) WithDefaults() RetryConfig {
+	allFieldsUnset := cfg.MaxAttempts == 0 && cfg.BaseDelay == 0 && cfg.MaxDelay == 0 && cfg.Jitter == 0
+	if cfg.MaxAttempts <= 0 {
+		cfg.MaxAttempts = defaultMaxAttempts
+	}
+	if cfg.BaseDelay <= 0 {
+		cfg.BaseDelay = defaultBaseDelay
+	}
+	if cfg.MaxDelay <= 0 {
+		cfg.MaxDelay = defaultMaxDelay
+	}
+	if cfg.Jitter < 0 {
+		cfg.Jitter = 0
+	}
+	if allFieldsUnset {
+		cfg.Jitter = defaultJitter
+	}
+	return cfg
+}
+
 // Client is a typed intervals.icu API client.
 type Client struct {
 	baseURL    *url.URL
@@ -92,7 +113,7 @@ func NewClient(opts Options) (*Client, error) {
 		athleteID:  athleteID,
 		userAgent:  fmt.Sprintf("icuvisor/%s", version),
 		httpClient: httpClient,
-		retry:      normalizeRetryConfig(opts.Retry),
+		retry:      opts.Retry.WithDefaults(),
 	}, nil
 }
 
@@ -185,26 +206,6 @@ func readBody(r io.Reader) ([]byte, error) {
 		return nil, ErrResponseTooLarge
 	}
 	return body, nil
-}
-
-func normalizeRetryConfig(cfg RetryConfig) RetryConfig {
-	useDefaultJitter := cfg == (RetryConfig{})
-	if cfg.MaxAttempts <= 0 {
-		cfg.MaxAttempts = defaultMaxAttempts
-	}
-	if cfg.BaseDelay <= 0 {
-		cfg.BaseDelay = defaultBaseDelay
-	}
-	if cfg.MaxDelay <= 0 {
-		cfg.MaxDelay = defaultMaxDelay
-	}
-	if cfg.Jitter < 0 {
-		cfg.Jitter = 0
-	}
-	if useDefaultJitter {
-		cfg.Jitter = defaultJitter
-	}
-	return cfg
 }
 
 func shouldRetry(resp *http.Response, err error) bool {

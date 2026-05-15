@@ -172,7 +172,7 @@ func TestDoJSONClosesResponseBody(t *testing.T) {
 func TestSleepBeforeRetryHonorsContextCancellation(t *testing.T) {
 	t.Parallel()
 
-	client := &Client{retry: normalizeRetryConfig(RetryConfig{MaxAttempts: 3, BaseDelay: time.Hour, MaxDelay: time.Hour})}
+	client := &Client{retry: RetryConfig{MaxAttempts: 3, BaseDelay: time.Hour, MaxDelay: time.Hour}.WithDefaults()}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	err := client.sleepBeforeRetry(ctx, 1, 0)

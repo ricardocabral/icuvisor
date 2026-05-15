@@ -1,10 +1,10 @@
 # TP-045-intervals-client-dojsonquery-hardening — Status
 
-**Current Step:** Step 2: Implement the split
+**Current Step:** Step 3: Replace `normalizeRetryConfig`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -31,11 +31,11 @@
 
 ### Step 3: Replace `normalizeRetryConfig`
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Add `RetryConfig.WithDefaults` (or `NewRetryConfig`)
-- [ ] Update all call sites
-- [ ] Delete `normalizeRetryConfig` and the zero-value comparison
+- [x] Add `RetryConfig.WithDefaults` (or `NewRetryConfig`)
+- [x] Update all call sites
+- [x] Delete `normalizeRetryConfig` and the zero-value comparison
 
 ### Step 4: Tests
 
@@ -79,3 +79,4 @@ _Add notes as work progresses._
 | 2026-05-15 15:06 | Review R003 | code Step 1: APPROVE |
 | 2026-05-15 15:08 | Review R004 | plan Step 2: APPROVE |
 | 2026-05-15 15:13 | Review R005 | code Step 2: APPROVE |
+| 2026-05-15 15:17 | Review R006 | plan Step 3: APPROVE |
