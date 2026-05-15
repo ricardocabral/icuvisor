@@ -1,10 +1,10 @@
 # TP-044-activities-fetch-page-refactor: `fetchActivitiesPage` pagination driver refactor — Status
 
-**Current Step:** Step 2: Extract `pageCursor` + `iteratePages`
+**Current Step:** Step 3: Tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 
@@ -20,16 +20,16 @@
 
 ### Step 2: Extract `pageCursor` + `iteratePages`
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Introduce `pageCursor` state struct (replaces the four ad-hoc booleans)
-- [ ] Introduce `iteratePages` driver yielding candidates one page at a time
-- [ ] Reduce `fetchActivitiesPage` to a thin shell
-- [ ] No new exported identifiers
+- [x] Introduce `pageCursor` state struct (replaces the four ad-hoc booleans)
+- [x] Introduce `iteratePages` driver yielding candidates one page at a time
+- [x] Reduce `fetchActivitiesPage` to a thin shell
+- [x] No new exported identifiers
 
 ### Step 3: Tests
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Table-driven coverage of the four boundary cases
 - [ ] Byte-identical `next_page_token` assertions vs. captured fixtures
@@ -58,3 +58,4 @@ _Add notes as work progresses._
 | 2026-05-15 14:25 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 14:25 | Step 1 started | Characterize current behaviour |
 | 2026-05-15 14:27 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-15 14:33 | Review R002 | plan Step 2: APPROVE |

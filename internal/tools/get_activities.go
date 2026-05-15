@@ -282,100 +282,146 @@ func encodeActivitiesPageToken(token activitiesPageToken) (string, error) {
 }
 
 func fetchActivitiesPage(ctx context.Context, client ActivitiesClient, args GetActivitiesRequest, token *activitiesPageToken) ([]intervals.Activity, string, error) {
-	cursor := activitiesPageToken{Version: 1, Oldest: args.Oldest, Newest: args.Newest, RouteID: args.RouteID, IncludeUnnamed: args.IncludeUnnamed, IncludeFull: args.IncludeFull, PageSize: args.PageSize}
-	if !args.IncludeFull {
-		cursor.Fields = append([]string(nil), terseActivityFields...)
-	}
-	if token != nil {
-		cursor.BeforeStartDateLocal = token.BeforeStartDateLocal
-		cursor.BeforeID = token.BeforeID
-		cursor.SkipIDsAtBoundary = append([]string(nil), token.SkipIDsAtBoundary...)
-		cursor.Fields = append([]string(nil), token.Fields...)
-	}
+	cursor := newPageCursor(args, token)
 	page := make([]intervals.Activity, 0, args.PageSize)
-	fetchLimit := min(args.PageSize*2+1, maxActivityFetchLimit)
-	lastFullWindow := false
-	cursorAdvanced := false
-	for fetches := 0; fetches < maxActivityPageFetches; fetches++ {
-		newest := effectiveNewest(args.Newest, cursor)
-		if activityBoundaryBefore(newest, args.Oldest) {
-			lastFullWindow = false
-			break
-		}
-		params := intervals.ListActivitiesParams{Oldest: args.Oldest, Newest: newest, RouteID: args.RouteID, Limit: fetchLimit}
-		if !args.IncludeFull {
-			params.Fields = cursor.Fields
-		}
-		activities, err := client.ListActivities(ctx, params)
+	for {
+		candidates, done, err := iteratePages(ctx, client, args, &cursor)
 		if err != nil {
 			return nil, "", err
 		}
-		if len(activities) == 0 {
-			lastFullWindow = false
+		if done {
 			break
-		}
-		lastFullWindow = len(activities) == fetchLimit
-		sortActivities(activities)
-		candidates := activitiesAfterCursor(activities, cursor)
-		if len(candidates) == 0 {
-			advanced := advanceCursorPast(&cursor, activities[len(activities)-1])
-			if !advanced && lastFullWindow && fetchLimit < maxActivityFetchLimit {
-				fetchLimit = maxActivityFetchLimit
-				continue
-			}
-			if !advanced && lastFullWindow && fetchLimit >= maxActivityFetchLimit {
-				return nil, "", errActivitiesPaginationBoundary
-			}
-			if !advanced {
-				advanced = advanceCursorBeforeBoundary(&cursor)
-			}
-			cursorAdvanced = advanced || cursorAdvanced
-			if !advanced {
-				lastFullWindow = false
-				break
-			}
-			continue
 		}
 		for _, activity := range candidates {
 			if !args.IncludeUnnamed && strings.TrimSpace(stringValue(activity.Name)) == "" && !isStravaBlocked(activity) {
-				cursorAdvanced = advanceCursorPast(&cursor, activity) || cursorAdvanced
+				cursor.advancePast(activity)
 				continue
 			}
 			if len(page) == args.PageSize {
-				if !cursorAdvanced {
-					return page, "", nil
-				}
-				nextToken, err := encodeActivitiesPageToken(cursor)
-				if err != nil {
-					return nil, "", err
-				}
-				return page, nextToken, nil
+				nextToken, err := cursor.encodeTokenIfAdvanced()
+				return page, nextToken, err
 			}
 			page = append(page, activity)
-			cursorAdvanced = advanceCursorPast(&cursor, activity) || cursorAdvanced
+			cursor.advancePast(activity)
 		}
-		if len(activities) < fetchLimit {
+		if !cursor.fullWindow {
 			break
 		}
 		if len(page) == args.PageSize {
-			if !cursorAdvanced {
-				return page, "", nil
-			}
-			nextToken, err := encodeActivitiesPageToken(cursor)
-			if err != nil {
-				return nil, "", err
-			}
-			return page, nextToken, nil
+			nextToken, err := cursor.encodeTokenIfAdvanced()
+			return page, nextToken, err
 		}
 	}
-	if lastFullWindow && cursorAdvanced {
-		nextToken, err := encodeActivitiesPageToken(cursor)
+	if cursor.fullWindow && cursor.advanced {
+		nextToken, err := encodeActivitiesPageToken(cursor.token)
 		if err != nil {
 			return nil, "", err
 		}
 		return page, nextToken, nil
 	}
 	return page, "", nil
+}
+
+func iteratePages(ctx context.Context, client ActivitiesClient, args GetActivitiesRequest, cursor *pageCursor) ([]intervals.Activity, bool, error) {
+	for cursor.canFetch() {
+		cursor.beginIteration()
+		newest := effectiveNewest(args.Newest, cursor.token)
+		if activityBoundaryBefore(newest, args.Oldest) {
+			cursor.fullWindow = false
+			return nil, true, nil
+		}
+		params := intervals.ListActivitiesParams{Oldest: args.Oldest, Newest: newest, RouteID: args.RouteID, Limit: cursor.fetchLimit}
+		if !args.IncludeFull {
+			params.Fields = cursor.token.Fields
+		}
+		activities, err := client.ListActivities(ctx, params)
+		cursor.fetches++
+		if err != nil {
+			return nil, true, err
+		}
+		if len(activities) == 0 {
+			cursor.fullWindow = false
+			return nil, true, nil
+		}
+		cursor.fullWindow = len(activities) == cursor.fetchLimit
+		sortActivities(activities)
+		candidates := activitiesAfterCursor(activities, cursor.token)
+		if len(candidates) > 0 {
+			return candidates, false, nil
+		}
+		if !cursor.advancePast(activities[len(activities)-1]) && cursor.fullWindow && cursor.fetchLimit < maxActivityFetchLimit {
+			cursor.fetchLimit = maxActivityFetchLimit
+			continue
+		}
+		if !cursor.advancedThisIteration && cursor.fullWindow && cursor.fetchLimit >= maxActivityFetchLimit {
+			return nil, true, errActivitiesPaginationBoundary
+		}
+		if !cursor.advancedThisIteration {
+			cursor.advanceBeforeBoundary()
+		}
+		if !cursor.advancedThisIteration {
+			cursor.fullWindow = false
+			return nil, true, nil
+		}
+	}
+	return nil, true, nil
+}
+
+type pageCursor struct {
+	token                 activitiesPageToken
+	fetchLimit            int
+	fetches               int
+	fullWindow            bool
+	advanced              bool
+	advancedThisIteration bool
+}
+
+func newPageCursor(args GetActivitiesRequest, token *activitiesPageToken) pageCursor {
+	cursor := pageCursor{
+		token:      activitiesPageToken{Version: 1, Oldest: args.Oldest, Newest: args.Newest, RouteID: args.RouteID, IncludeUnnamed: args.IncludeUnnamed, IncludeFull: args.IncludeFull, PageSize: args.PageSize},
+		fetchLimit: min(args.PageSize*2+1, maxActivityFetchLimit),
+	}
+	if !args.IncludeFull {
+		cursor.token.Fields = append([]string(nil), terseActivityFields...)
+	}
+	if token != nil {
+		cursor.token.BeforeStartDateLocal = token.BeforeStartDateLocal
+		cursor.token.BeforeID = token.BeforeID
+		cursor.token.SkipIDsAtBoundary = append([]string(nil), token.SkipIDsAtBoundary...)
+		cursor.token.Fields = append([]string(nil), token.Fields...)
+	}
+	return cursor
+}
+
+func (c *pageCursor) canFetch() bool {
+	return c.fetches < maxActivityPageFetches
+}
+
+func (c *pageCursor) beginIteration() {
+	c.advancedThisIteration = false
+}
+
+func (c *pageCursor) advancePast(activity intervals.Activity) bool {
+	return c.markAdvanced(advanceCursorPast(&c.token, activity))
+}
+
+func (c *pageCursor) advanceBeforeBoundary() bool {
+	return c.markAdvanced(advanceCursorBeforeBoundary(&c.token))
+}
+
+func (c *pageCursor) markAdvanced(advanced bool) bool {
+	if advanced {
+		c.advanced = true
+		c.advancedThisIteration = true
+	}
+	return advanced
+}
+
+func (c pageCursor) encodeTokenIfAdvanced() (string, error) {
+	if !c.advanced {
+		return "", nil
+	}
+	return encodeActivitiesPageToken(c.token)
 }
 
 func effectiveNewest(newest string, cursor activitiesPageToken) string {
