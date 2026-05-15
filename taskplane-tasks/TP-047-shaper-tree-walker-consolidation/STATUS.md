@@ -57,7 +57,7 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Address R017 plan: verify goldens only in non-update mode with `env -u UPDATE_RESPONSE_GOLDENS go test ./internal/response -run '^TestShapeGoldenSnapshots$' -count=1`, then require `git diff --exit-code -- internal/response/testdata`
+- [x] Address R017 plan: verify goldens only in non-update mode with `env -u UPDATE_RESPONSE_GOLDENS go test ./internal/response -run '^TestShapeGoldenSnapshots$' -count=1`, then require `git diff --exit-code -- internal/response/testdata`
 - [ ] Re-run snapshot fixtures; diff must be empty
 - [ ] If diff non-empty, stop and resolve
 
