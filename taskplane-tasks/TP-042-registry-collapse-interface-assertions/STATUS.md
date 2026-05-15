@@ -1,6 +1,6 @@
 # TP-042-registry-collapse-interface-assertions — Status
 
-**Current Step:** Step 4: Tests
+**Current Step:** Step 5: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
@@ -54,10 +54,11 @@
 
 ### Step 5: Verify
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] `make build` / `test` / `test-race` / `lint`
 - [ ] Manual `list_tools` parity check
+- [ ] Update `CHANGELOG.md` `[Unreleased]`
 
 ---
 
