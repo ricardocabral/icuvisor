@@ -1,10 +1,10 @@
 # TP-040-schema-change-notification: Post-update schema-change notification — Status
 
-**Current Step:** Step 2: `_meta` injector
+**Current Step:** Step 3: Tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 1
 **Size:** S
 
@@ -32,11 +32,11 @@
 
 ### Step 3: Tests
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Hash determinism + sensitivity
-- [ ] Injector session-start / steady / simulated-change
-- [ ] Tool golden files unaffected
+- [x] Hash determinism + sensitivity
+- [x] Injector session-start / steady / simulated-change
+- [x] Tool golden files unaffected
 
 ### Step 4: Documentation
 
@@ -65,3 +65,4 @@ _Add notes as work progresses._
 | 2026-05-15 15:00 | Review R006 | plan Step 2: REVISE |
 | 2026-05-15 15:02 | Review R007 | plan Step 2: APPROVE |
 | 2026-05-15 15:13 | Review R008 | code Step 2: APPROVE |
+| 2026-05-15 15:15 | Review R009 | plan Step 3: APPROVE |
