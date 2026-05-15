@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 19
+**Review Counter:** 20
 **Iteration:** 3
 **Size:** L
 
@@ -81,6 +81,8 @@
 - [x] §7.4 #7 caveat documented
 - [x] Composition truth-table coverage
 - [x] End-to-end with faked intervals client
+- [ ] R020 revision: add structured exact `icuvisor_list_advanced_capabilities` row-name assertions for active-athlete post-gate catalogs, including delete-mode-hidden and core-toolset-hidden regressions
+- [ ] R020 revision: make fake-client write/delete denial use valid arguments and assert the upstream request log is unchanged
 
 ### Step 6: Documentation
 
@@ -149,3 +151,4 @@
 | 2026-05-15 22:13 | Agent reply | Acknowledged. I documented the authenticated roster probe as an operator-deferred validation gap, kept upstream roster support unproven/deferred, and am proceeding with config-backed roster behavior f |
 | 2026-05-15 22:13 | Worker iter 2 | killed (wall-clock timeout) in 7472s, tools: 364 |
 | 2026-05-15 22:13 | Step 5 started | Catalog-cache caveat + Tests |
+| 2026-05-15 22:25 | Review R020 | code Step 5: REVISE |
