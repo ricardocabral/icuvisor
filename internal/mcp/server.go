@@ -333,15 +333,15 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) error {
 		return err
 	}
 	r.names[tool.Name] = struct{}{}
-	if tool.Name != toolcatalog.ICUvisorListAdvancedCapabilities && r.coachAllows(tool) {
-		r.coachVisibleCatalog = append(r.coachVisibleCatalog, tool)
-	}
 	if tool.Name == toolcatalog.ICUvisorListAdvancedCapabilities && r.config.CoachModeEnabled() {
 		tool.Handler = r.coachFilteredAdvancedCapabilitiesHandler()
 	}
 	if !r.capabilityAllows(tool) {
 		r.skippedCapabilityCount++
 		return nil
+	}
+	if tool.Name != toolcatalog.ICUvisorListAdvancedCapabilities && r.coachAllows(tool) {
+		r.coachVisibleCatalog = append(r.coachVisibleCatalog, tool)
 	}
 	if !r.toolsetAllows(tool) {
 		r.skippedToolsetCount++

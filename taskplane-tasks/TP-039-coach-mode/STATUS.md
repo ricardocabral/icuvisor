@@ -81,8 +81,8 @@
 - [x] §7.4 #7 caveat documented
 - [x] Composition truth-table coverage
 - [x] End-to-end with faked intervals client
-- [ ] R020 revision: add structured exact `icuvisor_list_advanced_capabilities` row-name assertions for active-athlete post-gate catalogs, including delete-mode-hidden and core-toolset-hidden regressions
-- [ ] R020 revision: make fake-client write/delete denial use valid arguments and assert the upstream request log is unchanged
+- [x] R020 revision: add structured exact `icuvisor_list_advanced_capabilities` row-name assertions for active-athlete post-gate catalogs, including delete-mode-hidden and core-toolset-hidden regressions
+- [x] R020 revision: make fake-client write/delete denial use valid arguments and assert the upstream request log is unchanged
 
 ### Step 6: Documentation
 

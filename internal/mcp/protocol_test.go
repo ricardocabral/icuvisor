@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -862,6 +863,30 @@ func requireSameStrings(t *testing.T, label string, got []string, want []string)
 	}
 }
 
+func advancedCapabilityNames(t *testing.T, result *sdkmcp.CallToolResult) []string {
+	t.Helper()
+	var parsed struct {
+		AdvancedCapabilities []struct {
+			Name string `json:"name"`
+		} `json:"advanced_capabilities"`
+		Meta struct {
+			Count int `json:"count"`
+		} `json:"_meta"`
+	}
+	if err := json.Unmarshal([]byte(result.Content[0].(*sdkmcp.TextContent).Text), &parsed); err != nil {
+		t.Fatalf("unmarshal advanced capabilities: %v", err)
+	}
+	if parsed.Meta.Count != len(parsed.AdvancedCapabilities) {
+		t.Fatalf("advanced capabilities count = %d, want %d rows", parsed.Meta.Count, len(parsed.AdvancedCapabilities))
+	}
+	names := make([]string, 0, len(parsed.AdvancedCapabilities))
+	for _, row := range parsed.AdvancedCapabilities {
+		names = append(names, row.Name)
+	}
+	slices.Sort(names)
+	return names
+}
+
 func TestProtocolGateCompositionTruthTable(t *testing.T) {
 	t.Parallel()
 
@@ -1076,7 +1101,9 @@ func TestProtocolCoachModeEndToEndRoutesSelectedDefaultAndOverrideTargets(t *tes
 			},
 		},
 	}
+	var upstreamRequests atomic.Int64
 	client, closeServer := newProtocolIntervalsClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		upstreamRequests.Add(1)
 		if r.Method != http.MethodGet || (r.URL.Path != "/athlete/i111" && r.URL.Path != "/athlete/i222") {
 			t.Fatalf("unexpected intervals request %s %s", r.Method, r.URL.Path)
 		}
@@ -1150,17 +1177,27 @@ func TestProtocolCoachModeEndToEndRoutesSelectedDefaultAndOverrideTargets(t *tes
 		t.Fatalf("override profile text = %s, want i111 route", text)
 	}
 
-	for _, denied := range []string{toolcatalog.AddOrUpdateEvent, toolcatalog.DeleteEvent} {
-		result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: denied, Arguments: map[string]any{}})
+	beforeDenied := upstreamRequests.Load()
+	for _, denied := range []struct {
+		name string
+		args map[string]any
+	}{
+		{name: toolcatalog.AddOrUpdateEvent, args: map[string]any{"date": "2026-05-15", "category": "NOTE", "name": "Denied write"}},
+		{name: toolcatalog.DeleteEvent, args: map[string]any{"event_id": "e-denied"}},
+	} {
+		result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: denied.name, Arguments: denied.args})
 		if err != nil {
-			t.Fatalf("CallTool(%s) protocol error = %v", denied, err)
+			t.Fatalf("CallTool(%s) protocol error = %v", denied.name, err)
 		}
 		if !result.IsError {
-			t.Fatalf("CallTool(%s) IsError = false, want read-only coach ACL denial", denied)
+			t.Fatalf("CallTool(%s) IsError = false, want read-only coach ACL denial", denied.name)
 		}
 		if text := result.Content[0].(*sdkmcp.TextContent).Text; text != invalidTargetAthleteMessage {
-			t.Fatalf("CallTool(%s) error text = %q, want %q", denied, text, invalidTargetAthleteMessage)
+			t.Fatalf("CallTool(%s) error text = %q, want %q", denied.name, text, invalidTargetAthleteMessage)
 		}
+	}
+	if afterDenied := upstreamRequests.Load(); afterDenied != beforeDenied {
+		t.Fatalf("denied write/delete upstream requests = %d after denial, want unchanged %d", afterDenied, beforeDenied)
 	}
 }
 
@@ -1235,21 +1272,75 @@ func TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry(t *testing.T
 func TestProtocolAdvancedCapabilitiesUsesCoachFilteredCatalog(t *testing.T) {
 	t.Parallel()
 
-	cfg := coachACLTestConfig()
-	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC"})
-	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: registry})
-	defer cleanup()
+	tests := []struct {
+		name          string
+		mode          safety.Mode
+		toolset       safety.Toolset
+		activeAllowed []string
+		wantTools     []string
+		wantAdvanced  []string
+	}{
+		{
+			name:          "safe core hides delete rows but advertises full read rows",
+			mode:          safety.ModeSafe,
+			toolset:       safety.ToolsetCore,
+			activeAllowed: []string{"*"},
+			wantTools:     []string{toolcatalog.GetAthleteProfile, toolcatalog.ICUvisorListAdvancedCapabilities},
+			wantAdvanced:  []string{toolcatalog.GetPowerCurves},
+		},
+		{
+			name:          "full core advertises post-capability full rows hidden by toolset",
+			mode:          safety.ModeFull,
+			toolset:       safety.ToolsetCore,
+			activeAllowed: []string{"*"},
+			wantTools:     []string{toolcatalog.GetAthleteProfile, toolcatalog.ICUvisorListAdvancedCapabilities},
+			wantAdvanced:  []string{toolcatalog.DeleteEvent, toolcatalog.GetPowerCurves},
+		},
+		{
+			name:          "full full keeps advanced rows aligned with active athlete ACL",
+			mode:          safety.ModeFull,
+			toolset:       safety.ToolsetFull,
+			activeAllowed: []string{toolcatalog.GetAthleteProfile, toolcatalog.GetPowerCurves},
+			wantTools:     []string{toolcatalog.GetAthleteProfile, toolcatalog.GetPowerCurves, toolcatalog.ICUvisorListAdvancedCapabilities},
+			wantAdvanced:  []string{toolcatalog.GetPowerCurves},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.ICUvisorListAdvancedCapabilities, Arguments: map[string]any{}})
-	if err != nil {
-		t.Fatalf("CallTool(advanced) error = %v", err)
-	}
-	if result.IsError {
-		t.Fatalf("CallTool(advanced) IsError = true, content = %#v", result.Content)
-	}
-	text := result.Content[0].(*sdkmcp.TextContent).Text
-	if strings.Contains(text, toolcatalog.GetPowerCurves) {
-		t.Fatalf("advanced capabilities leaked coach-denied tool: %s", text)
+			cfg := config.Config{AthleteID: "i111", CoachMode: coach.ModeOn, Coach: coach.Config{DefaultAthleteID: "i111", Athletes: []coach.Athlete{{ID: "i111", AllowedTools: tc.activeAllowed}, {ID: "i222", AllowedTools: []string{"*"}}}}}
+			registry := registryFunc(func(_ context.Context, registrar tools.Registrar) error {
+				for _, tool := range []tools.Tool{
+					coachACLTestTool(toolcatalog.GetAthleteProfile, safety.ToolsetCore, tools.RequirementRead),
+					coachACLTestTool(toolcatalog.GetPowerCurves, safety.ToolsetFull, tools.RequirementRead),
+					coachACLTestTool(toolcatalog.DeleteEvent, safety.ToolsetFull, tools.RequirementDelete),
+					coachACLTestTool(toolcatalog.ICUvisorListAdvancedCapabilities, safety.ToolsetCore, tools.RequirementRead),
+				} {
+					if err := registrar.AddTool(tool); err != nil {
+						return err
+					}
+				}
+				return nil
+			})
+			ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: registry, Capability: safety.NewCapability(tc.mode), Toolset: tc.toolset})
+			defer cleanup()
+
+			listed, err := session.ListTools(ctx, nil)
+			if err != nil {
+				t.Fatalf("ListTools() error = %v", err)
+			}
+			requireSameStrings(t, "tools/list", toolNamesFromList(listed.Tools), tc.wantTools)
+
+			result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.ICUvisorListAdvancedCapabilities, Arguments: map[string]any{}})
+			if err != nil {
+				t.Fatalf("CallTool(advanced) error = %v", err)
+			}
+			if result.IsError {
+				t.Fatalf("CallTool(advanced) IsError = true, content = %#v", result.Content)
+			}
+			requireSameStrings(t, "advanced_capabilities names", advancedCapabilityNames(t, result), tc.wantAdvanced)
+		})
 	}
 }
 
