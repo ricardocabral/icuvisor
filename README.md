@@ -181,6 +181,8 @@ Unknown or empty values resolve to `core`. Change the environment variable in yo
 
 `icuvisor_list_advanced_capabilities` remains available in `core` so an AI client can discover hidden full-only tools and tell the user to set `ICUVISOR_TOOLSET=full` when a prompt needs them. Toolset tiering is orthogonal to delete/write safety: destructive tools still require `ICUVISOR_DELETE_MODE=full` even when `ICUVISOR_TOOLSET=full` is set.
 
+After upgrading icuvisor, open a new AI-client conversation if `_meta.schema_changed` appears; see [`docs/post-update.md`](docs/post-update.md).
+
 For the v0.1 macOS Claude Desktop manual JSON setup and smoke checklist, see [`docs/clients/claude-desktop.md`](docs/clients/claude-desktop.md). For Codex CLI local MCP validation, see [`docs/clients/codex-local.md`](docs/clients/codex-local.md).
 
 ## Project layout

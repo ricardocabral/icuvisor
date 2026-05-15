@@ -40,11 +40,11 @@
 
 ### Step 4: Documentation
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `docs/post-update.md`
-- [ ] README one-line pointer under updating/post-install guidance
-- [ ] CHANGELOG `[Unreleased]`
+- [x] `docs/post-update.md`
+- [x] README one-line pointer under updating/post-install guidance
+- [x] CHANGELOG `[Unreleased]`
 
 ---
 
