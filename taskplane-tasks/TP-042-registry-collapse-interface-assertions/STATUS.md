@@ -1,23 +1,25 @@
 # TP-042-registry-collapse-interface-assertions — Status
 
 **Current Step:** Step 1: Map the current assertion chain
-**Status:** ⏳ Not started
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 0
-**Iteration:** 0
+**Review Counter:** 1
+**Iteration:** 1
 **Size:** M
 
 ---
 
 ### Step 1: Map the current assertion chain
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Enumerate every `XxxClient` interface in `internal/tools/`
+- [ ] Enumerate every `XxxClient` interface in `internal/tools/`, including required methods, tool constructors, registry condition/order, and schemaCatalogClient coverage
 - [ ] Verify all are satisfied by `*intervals.Client`
-- [ ] Identify existing unit-test fakes
-- [ ] Decide direct-dep vs `Deps` struct
+- [ ] Identify existing unit-test fakes and `NewRegistry`/`NewRegistryWithOptions` registry-level fake call sites
+- [ ] Inventory schema snapshot catalog membership versus full production registration and note parity risk
+- [ ] Record special constructor coupling and conditional registration semantics (`customItemsClient`, splits, link activity optional clients)
+- [ ] Decide direct-dep vs `Deps` struct with migration action for tests/toolchecks and no-network dummy-client rationale
 
 ### Step 2: Refactor `Register`
 
@@ -59,3 +61,7 @@ _Record dep-shape decision (direct vs `Deps` struct) in Step 1._
 ## Notes
 
 _Add notes as work progresses._
+
+| 2026-05-15 13:18 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-15 13:18 | Step 1 started | Map the current assertion chain |
+| 2026-05-15 13:22 | Review R001 | plan Step 1: UNKNOWN |
