@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -18,6 +18,8 @@
 - [x] Add automated golden snapshot test/generator that maps each case to its input, exact shaping options, fixture path, and comparison command without hitting the network
 - [x] Capture `_meta`-shaped output as golden fixtures under `internal/response/testdata/`
 - [x] Commit fixtures before touching shaper code
+- [ ] Fix R003 catalog runtime isolation so golden snapshots restore default metadata under shuffle/update/early returns
+- [ ] Convert representative golden inputs (`get_activities` terse/full and `get_fitness`) from maps to typed local DTO structs with JSON tags/omitempty matching tool shapes, then regenerate fixtures
 
 ### Step 2: Pick the approach
 
@@ -68,8 +70,10 @@ _Record any narrow case where the marshal round-trip survives, with rationale._
 
 _Add notes as work progresses._
 
+| 2026-05-15 17:49 | Code review R003 | Added blocking revision items: isolate catalog runtime state and use typed DTO inputs for activity/fitness snapshots so JSON tags and omitempty are locked. |
 | 2026-05-15 17:44 | Plan review R001 | Added blocking Step 1 plan items: deterministic named fixtures, automated regeneration/comparison, stable metadata setup, canonical JSON; using synthetic fixtures to avoid network/tool import cycles. |
 | 2026-05-15 17:43 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 17:43 | Step 1 started | Snapshot pre-refactor output |
 | 2026-05-15 17:47 | Review R001 | plan Step 1: REVISE |
 | 2026-05-15 17:49 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-15 17:56 | Review R003 | code Step 1: REVISE |
