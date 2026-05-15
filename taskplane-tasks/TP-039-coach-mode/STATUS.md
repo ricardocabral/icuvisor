@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 17
+**Review Counter:** 18
 **Iteration:** 2
 **Size:** L
 
@@ -75,6 +75,9 @@
 - [ ] R017 plan revision: document the catalog-cache caveat in `docs/coach-mode.md` now, including new conversation/reconnect guidance and TP-040 future notifications
 - [ ] R017 plan revision: protocol truth-table tests assert catalog exposure and call-time vetoes for delete-mode, toolset, and coach ACL gates
 - [ ] R017 plan revision: end-to-end fake intervals coverage proves selected/default/override routing and read-only athlete write/delete denial with enumeration-safe errors
+- [ ] R018 plan revision: implement/select metadata through an `internal/mcp.safeRegistrar.visibleToolNamesForAthlete` helper over post-registration tools and inject it into `select_athlete` context
+- [ ] R018 plan revision: add hidden-gate metadata regressions for delete-mode-hidden `delete_event`, core-toolset-hidden full tools, and visible core-read changes
+- [ ] R018 plan revision: structured JSON tests compare exact visible tool sets across `tools/list`, `select_athlete.allowed_tools`, and `icuvisor_list_advanced_capabilities`, plus two-session isolation
 - [ ] §7.4 #7 caveat documented
 - [ ] Composition truth-table coverage
 - [ ] End-to-end with faked intervals client
@@ -110,7 +113,7 @@
 - R011 compatibility decision: `athlete_id` schema injection and stripping are active only when coach mode is effectively on; coach-mode-off tool schemas and strict-decoder behavior remain unchanged.
 - Step 4 plan decisions from R014: effective coach mode must register the union of athlete-scoped tools allowed by at least one roster athlete (after delete-mode/toolset), then filter `tools/list` and tool calls by the active session athlete. `list_athletes` remains config-backed (`_meta.source: "config"`) until the operator-deferred upstream roster probe is validated.
 - Step 4 implementation uses `coach.SelectionStore` keyed by SDK session ID, with documented process fallback when the SDK session ID is empty (stdio/in-memory transports).
-- Step 5 plan decisions from R017: select/catalog metadata must use the same post-gate visible catalog as `tools/list`; the cache caveat is documented in `docs/coach-mode.md` during Step 5 and expanded in Step 6.
+- Step 5 plan decisions from R017/R018: select/catalog metadata must use `internal/mcp.safeRegistrar.visibleToolNamesForAthlete` over the post-registration tool set, the same source used for `tools/list`; tests must parse structured JSON and compare exact tool-name sets, including hidden delete/full-toolset cases and two-session isolation. The cache caveat is documented in `docs/coach-mode.md` during Step 5 and expanded in Step 6.
 
 | 2026-05-15 20:00 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 20:00 | Step 1 started | Threat-model review + endpoint probe |
@@ -140,3 +143,4 @@
 | 2026-05-15 21:35 | Review R015 | plan Step 4: APPROVE |
 | 2026-05-15 21:49 | Review R016 | code Step 4: APPROVE |
 | 2026-05-15 21:52 | Review R017 | plan Step 5: REVISE |
+| 2026-05-15 21:55 | Review R018 | plan Step 5: REVISE |
