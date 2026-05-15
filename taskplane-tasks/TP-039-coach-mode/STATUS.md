@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 16
+**Review Counter:** 17
 **Iteration:** 2
 **Size:** L
 
@@ -71,6 +71,10 @@
 
 **Status:** ⏳ Not started
 
+- [ ] R017 plan revision: derive `select_athlete.allowed_tools` and `requires_new_conversation` from the authoritative post-gate visible catalog, not coach evaluator alone
+- [ ] R017 plan revision: document the catalog-cache caveat in `docs/coach-mode.md` now, including new conversation/reconnect guidance and TP-040 future notifications
+- [ ] R017 plan revision: protocol truth-table tests assert catalog exposure and call-time vetoes for delete-mode, toolset, and coach ACL gates
+- [ ] R017 plan revision: end-to-end fake intervals coverage proves selected/default/override routing and read-only athlete write/delete denial with enumeration-safe errors
 - [ ] §7.4 #7 caveat documented
 - [ ] Composition truth-table coverage
 - [ ] End-to-end with faked intervals client
@@ -106,6 +110,7 @@
 - R011 compatibility decision: `athlete_id` schema injection and stripping are active only when coach mode is effectively on; coach-mode-off tool schemas and strict-decoder behavior remain unchanged.
 - Step 4 plan decisions from R014: effective coach mode must register the union of athlete-scoped tools allowed by at least one roster athlete (after delete-mode/toolset), then filter `tools/list` and tool calls by the active session athlete. `list_athletes` remains config-backed (`_meta.source: "config"`) until the operator-deferred upstream roster probe is validated.
 - Step 4 implementation uses `coach.SelectionStore` keyed by SDK session ID, with documented process fallback when the SDK session ID is empty (stdio/in-memory transports).
+- Step 5 plan decisions from R017: select/catalog metadata must use the same post-gate visible catalog as `tools/list`; the cache caveat is documented in `docs/coach-mode.md` during Step 5 and expanded in Step 6.
 
 | 2026-05-15 20:00 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 20:00 | Step 1 started | Threat-model review + endpoint probe |
@@ -134,3 +139,4 @@
 | 2026-05-15 21:31 | Review R014 | plan Step 4: REVISE |
 | 2026-05-15 21:35 | Review R015 | plan Step 4: APPROVE |
 | 2026-05-15 21:49 | Review R016 | code Step 4: APPROVE |
+| 2026-05-15 21:52 | Review R017 | plan Step 5: REVISE |
