@@ -1,0 +1,44 @@
+icuvisor connects intervals.icu training data to MCP-compatible AI clients.
+
+Usage:
+  icuvisor [flags]
+  icuvisor <command> [flags]
+
+Commands:
+  (no command)  Run the MCP server (stdio transport by default).
+  version       Print the icuvisor version and exit.
+  help          Print this help and exit.
+
+Flags:
+  --config <path>        JSON config file path. Can also be set with ICUVISOR_CONFIG.
+  --env-file <path>      Env-file path to load before process env. Can also be set with ICUVISOR_ENV_FILE. Default: .env when present.
+  --transport <name>     MCP transport: stdio or http. Default: stdio.
+  --http-bind <addr>     HTTP bind address for --transport http. Default: 127.0.0.1:8765.
+  -h, --help             Print this help and exit.
+
+Environment variables:
+  INTERVALS_ICU_API_KEY      intervals.icu API key. Required unless provided by config/keychain.
+  INTERVALS_ICU_ATHLETE_ID   Athlete ID, with or without leading i. Required unless provided by config.
+  ICUVISOR_CONFIG            JSON config file path used when --config is omitted.
+  ICUVISOR_ENV_FILE          Env-file path used when --env-file is omitted.
+  ICUVISOR_TIMEZONE          Athlete timezone. Default: UTC.
+  ICUVISOR_API_BASE_URL      intervals.icu API base URL. Default: https://intervals.icu/api/v1.
+  ICUVISOR_HTTP_TIMEOUT      HTTP client timeout. Default: 30s.
+  ICUVISOR_TRANSPORT         MCP transport: stdio or http. Default: stdio.
+  ICUVISOR_HTTP_BIND         HTTP bind address for Streamable HTTP. Default: 127.0.0.1:8765.
+  ICUVISOR_DELETE_MODE       Write/delete registration mode: safe, full, or none. Default: safe.
+  ICUVISOR_TOOLSET           Tool catalog tier: core or full. Default: core.
+  ICUVISOR_DEBUG_METADATA    Include debug metadata in MCP responses when set to true. Default: false.
+
+Examples:
+  icuvisor
+  ICUVISOR_TRANSPORT=http icuvisor
+  icuvisor --transport http --http-bind 127.0.0.1:8765
+  icuvisor --config /path/to/icuvisor.json
+
+Exit codes:
+  0  Success, including help and version output.
+  2  Usage error, such as an unknown flag or missing flag value.
+  1  Runtime error while loading config or running the server.
+
+For deeper documentation, see README.md and docs/prd/PRD-icuvisor.md.
