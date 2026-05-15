@@ -34,8 +34,8 @@
 - [x] Preserve delete-mode / toolset / capability gating via existing `Tool` metadata/downstream registrar behavior; do not add registry-side filtering
 - [x] Migrate Step 2 call sites/tests enough to keep the tree buildable after constructor signature changes
 - [x] Fix hardcoded `getAthleteProfileName` missing-client/registrar error messages
-- [ ] R007: Format changed Go files with gofmt/goimports-clean output
-- [ ] R007: Remove stale registry fake types no longer referenced by tests
+- [x] R007: Format changed Go files with gofmt/goimports-clean output
+- [x] R007: Remove stale registry fake types no longer referenced by tests
 
 ### Step 3: Collapse `schemaCatalogClient`
 

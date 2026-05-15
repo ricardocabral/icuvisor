@@ -30,14 +30,6 @@ func (c testProfileClient) GetAthleteProfile(context.Context) (intervals.Athlete
 	return c.profile, nil
 }
 
-type advancedProtocolClient struct {
-	testProfileClient
-}
-
-func (advancedProtocolClient) ListAthletePowerCurves(context.Context, intervals.CurveParams) (intervals.DataCurveSet, error) {
-	return intervals.DataCurveSet{}, nil
-}
-
 type capabilityRegistry struct{}
 
 func (capabilityRegistry) Register(ctx context.Context, registrar tools.Registrar) error {

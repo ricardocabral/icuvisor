@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
@@ -108,14 +107,6 @@ func TestListAdvancedCapabilitiesRejectsArguments(t *testing.T) {
 	if message, ok := PublicErrorMessage(err); !ok || !strings.Contains(message, "no arguments") {
 		t.Fatalf("Handler() error = %v, public=%q ok=%v", err, message, ok)
 	}
-}
-
-type staticCatalogPanicClient struct {
-	fullCatalogTierClient
-}
-
-func (staticCatalogPanicClient) GetAthleteProfile(context.Context) (intervals.AthleteWithSportSettings, error) {
-	panic("icuvisor_list_advanced_capabilities must not fetch athlete profile")
 }
 
 func advancedCapabilitiesResult(t *testing.T, result Result) listAdvancedCapabilitiesResponse {
