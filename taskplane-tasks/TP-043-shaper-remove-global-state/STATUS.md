@@ -1,6 +1,6 @@
 # TP-043-shaper-remove-global-state — Status
 
-**Current Step:** Step 1: Audit reads
+**Current Step:** Step 2: Refactor
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
@@ -21,10 +21,12 @@
 
 ### Step 2: Refactor
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Add fields to `Options`
 - [ ] Update `addCommonMeta`
+- [ ] Replace `list_advanced_capabilities` global toolset reader with captured toolset
+- [ ] Thread delete-mode/toolset through tool and athlete-profile resource shaping paths
 - [ ] Delete globals, `init()`, setters
 - [ ] Update call sites
 
