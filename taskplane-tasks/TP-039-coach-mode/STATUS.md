@@ -1,10 +1,10 @@
 # TP-039-coach-mode: Coach mode + per-athlete tool ACLs — Status
 
-**Current Step:** Step 4: `list_athletes` + `select_athlete`
+**Current Step:** Step 5: Catalog-cache caveat + Tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 15
+**Review Counter:** 16
 **Iteration:** 2
 **Size:** L
 
@@ -57,7 +57,7 @@
 
 ### Step 4: `list_athletes` + `select_athlete`
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
 - [x] R014 plan revision: coach mode registers the union of tools allowed by at least one roster athlete, then filters `tools/list`, advanced capabilities, and select responses through one active-athlete visibility helper
 - [x] R014 plan revision: session selection store uses SDK session IDs when available, process fallback when not, initializes to `coach.default_athlete_id`, and feeds the Step 3 target resolver
@@ -133,3 +133,4 @@
 | 2026-05-15 21:26 | Review R013 | code Step 3: APPROVE |
 | 2026-05-15 21:31 | Review R014 | plan Step 4: REVISE |
 | 2026-05-15 21:35 | Review R015 | plan Step 4: APPROVE |
+| 2026-05-15 21:49 | Review R016 | code Step 4: APPROVE |
