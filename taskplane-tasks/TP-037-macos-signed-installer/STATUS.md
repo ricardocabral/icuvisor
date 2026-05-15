@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 2
 **Size:** M
 
@@ -20,6 +20,7 @@
 - [x] R001 plan: record only non-secret Apple signing metadata requirements/TBDs and secret-handling boundaries
 - [x] R001 plan: confirm final bundle identifier rationale and TP-036 keychain interaction
 - [x] R001 plan: document headless `.app` launch behavior and Info.plist version-substitution plan
+- [ ] R003 code: make deferred Developer ID validation visible as an operator release gate and clean STATUS.md notes/newline
 
 ### Step 2: GoReleaser DMG + signing
 
@@ -79,6 +80,7 @@ _Add notes as work progresses._
 - R002 plan review approved implementation but requires real Apple Team ID, Developer ID Application common name, certificate expiration date, and GitHub secret presence before checking the Developer ID certificate item complete.
 - Step 1 plist validation: `plutil -lint build/macos/Info.plist` passed.
 - Steering accepted for Step 1: live Apple Developer certificate validation is maintainer-owned and deferred to release operator; SECURITY.md now carries the hard preflight gate and no secret or placeholder secret material is committed.
+- R003 suggestion: keep the authoritative non-secret release-operator record in STATUS.md while SECURITY.md documents the reusable gate.
 
 | 2026-05-15 17:43 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 17:43 | Step 1 started | Apple Developer setup + bundle identity |
@@ -87,3 +89,4 @@ _Add notes as work progresses._
 
 | 2026-05-15 17:52 | Agent escalate | TP-037 Step 1 is blocked on maintainer-owned Apple Developer setup. The plan reviewer explicitly said not to mark `Developer ID cert enrolled, .p12 exportable for CI` complete until real non-secret me |
 | 2026-05-15 17:52 | Worker iter 1 | done in 536s, tools: 47 |
+| 2026-05-15 17:56 | Review R003 | code Step 1: REVISE |
