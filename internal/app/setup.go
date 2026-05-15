@@ -310,11 +310,47 @@ func profileFTP(profile intervals.AthleteWithSportSettings) int {
 }
 
 func detectLocalTimezone() string {
-	name := time.Local.String()
-	if name == "Local" {
-		return config.DefaultTimezone
+	return detectLocalTimezoneWith(time.Local.String(), os.Getenv("TZ"), os.Readlink)
+}
+
+func detectLocalTimezoneWith(localName string, tzEnv string, readlink func(string) (string, error)) string {
+	if zone, ok := validTimezoneName(tzEnv); ok {
+		return zone
 	}
-	return name
+	if zone, ok := validTimezoneName(localName); ok {
+		return zone
+	}
+	if readlink != nil {
+		if target, err := readlink("/etc/localtime"); err == nil {
+			if zone, ok := zoneFromLocaltimeTarget(target); ok {
+				return zone
+			}
+		}
+	}
+	return config.DefaultTimezone
+}
+
+func validTimezoneName(value string) (string, bool) {
+	zone := strings.TrimSpace(value)
+	zone = strings.TrimPrefix(zone, ":")
+	if zone == "" || zone == "Local" || strings.HasPrefix(zone, "/") || strings.Contains(zone, "..") {
+		return "", false
+	}
+	if _, err := time.LoadLocation(zone); err != nil {
+		return "", false
+	}
+	return zone, true
+}
+
+func zoneFromLocaltimeTarget(target string) (string, bool) {
+	trimmed := strings.TrimSpace(target)
+	for _, marker := range []string{"/zoneinfo/", "/usr/share/zoneinfo/"} {
+		if index := strings.LastIndex(trimmed, marker); index >= 0 {
+			candidate := trimmed[index+len(marker):]
+			return validTimezoneName(candidate)
+		}
+	}
+	return "", false
 }
 
 func parseSetupArgs(args []string) (setupArgs, error) {

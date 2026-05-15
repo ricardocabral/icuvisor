@@ -321,6 +321,32 @@ func TestRunSetupOfflineSkipsVerifyAndReadsAthleteIDTimezone(t *testing.T) {
 	}
 }
 
+func TestDetectLocalTimezoneUsesIANAZoneWhenLocalNameIsLocal(t *testing.T) {
+	t.Parallel()
+
+	got := detectLocalTimezoneWith("Local", "", func(path string) (string, error) {
+		if path != "/etc/localtime" {
+			t.Fatalf("readlink path = %q, want /etc/localtime", path)
+		}
+		return "/var/db/timezone/zoneinfo/America/Sao_Paulo", nil
+	})
+	if got != "America/Sao_Paulo" {
+		t.Fatalf("timezone = %q, want America/Sao_Paulo", got)
+	}
+}
+
+func TestDetectLocalTimezonePrefersValidTZEnvironment(t *testing.T) {
+	t.Parallel()
+
+	got := detectLocalTimezoneWith("Local", ":Europe/Madrid", func(string) (string, error) {
+		t.Fatal("readlink must not be called when TZ is valid")
+		return "", nil
+	})
+	if got != "Europe/Madrid" {
+		t.Fatalf("timezone = %q, want Europe/Madrid", got)
+	}
+}
+
 func TestRunSetupStillPromptsForExistingKeyWithForce(t *testing.T) {
 	t.Parallel()
 

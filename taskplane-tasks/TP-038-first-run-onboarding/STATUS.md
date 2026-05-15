@@ -35,7 +35,7 @@
 - [x] Timezone: `time.Local` → IANA validated
 - [x] 401/403: no writes, named error + fix URL
 - [x] `--offline` override
-- [ ] R009: replace `time.Local == Local` UTC fallback with real IANA timezone detection and regression test
+- [x] R009: replace `time.Local == Local` UTC fallback with real IANA timezone detection and regression test
 
 ### Step 4: Write
 
