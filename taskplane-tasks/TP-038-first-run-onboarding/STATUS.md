@@ -79,10 +79,10 @@ Paste your intervals.icu API key (from https://intervals.icu/settings):
 
 Checking intervals.icu… connected as "Jane Doe" (athlete i12345, FTP 245 W).
 Detected timezone: Europe/Madrid. Use this? [Y/n]
-> 
+>
 
 Save athlete id i12345 and timezone Europe/Madrid to /Users/jane/.config/icuvisor/config.json? [Y/n]
-> 
+>
 
 Saved. Your key is in the macOS Keychain; athlete id + timezone are in /Users/jane/.config/icuvisor/config.json.
 Test connection OK: Jane Doe, FTP 245 W.
@@ -151,15 +151,18 @@ Plan review R003 requested a concrete CLI wiring plan before coding. Implement S
 - Config target path precedence: `setup --config` wins; then `ICUVISOR_CONFIG`; then platform default `os.UserConfigDir()/icuvisor/config.json` exposed through a central `internal/config` helper if needed. Existence checks use `os.Stat` only and do not call `config.Load` or require valid JSON. If the file exists, prompt `A config file already exists at <path>. Overwrite? [y/N]`; default no returns nil with `Setup canceled; nothing changed.` and no key/config/server side effects. `--force` bypasses only this config-file prompt.
 - Resolve and pass the config target path without requiring the file to exist. If `internal/config` lacks a default path helper suitable for writes, add one before Step 4 uses it.
 - Parser/dispatch tests should cover config path propagation, setup bypassing server startup/config load, unknown setup flags returning usage errors, setup-specific help, unsupported `icuvisor --config <path> setup`, existing-key default-no, existing-config default-no, and existing-config with `--force`.
-| 2026-05-15 18:51 | Review R001 | plan Step 1: APPROVE |
-| 2026-05-15 18:54 | Review R002 | code Step 1: APPROVE |
-| 2026-05-15 18:56 | Review R003 | plan Step 2: UNKNOWN |
-| 2026-05-15 18:58 | Review R004 | plan Step 2: REVISE |
-| 2026-05-15 19:00 | Review R005 | plan Step 2: APPROVE |
-| 2026-05-15 19:09 | Review R006 | code Step 2: REVISE |
-| 2026-05-15 19:15 | Review R008 | plan Step 3: APPROVE |
-| 2026-05-15 19:25 | Review R009 | code Step 3: REVISE |
-| 2026-05-15 19:39 | Review R011 | plan Step 4: REVISE |
-| 2026-05-15 19:41 | Review R012 | plan Step 4: REVISE |
-| 2026-05-15 19:44 | Review R013 | plan Step 4: APPROVE |
-| 2026-05-15 19:54 | Review R014 | code Step 4: APPROVE |
+  | 2026-05-15 18:51 | Review R001 | plan Step 1: APPROVE |
+  | 2026-05-15 18:54 | Review R002 | code Step 1: APPROVE |
+  | 2026-05-15 18:56 | Review R003 | plan Step 2: UNKNOWN |
+  | 2026-05-15 18:58 | Review R004 | plan Step 2: REVISE |
+  | 2026-05-15 19:00 | Review R005 | plan Step 2: APPROVE |
+  | 2026-05-15 19:09 | Review R006 | code Step 2: REVISE |
+  | 2026-05-15 19:15 | Review R008 | plan Step 3: APPROVE |
+  | 2026-05-15 19:25 | Review R009 | code Step 3: REVISE |
+  | 2026-05-15 19:39 | Review R011 | plan Step 4: REVISE |
+  | 2026-05-15 19:41 | Review R012 | plan Step 4: REVISE |
+  | 2026-05-15 19:44 | Review R013 | plan Step 4: APPROVE |
+  | 2026-05-15 19:54 | Review R014 | code Step 4: APPROVE |
+
+| 2026-05-15 19:57 | Worker iter 1 | done in 4121s, tools: 208 |
+| 2026-05-15 19:57 | Task complete | .DONE created |
