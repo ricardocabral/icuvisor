@@ -2,11 +2,11 @@
 
 **Issue:** v0.2 — read path
 **Review Level:** 1
-**Status:** 🔴 Blocked
+**Status:** ✅ Complete
 **Iteration:** 3
-**Current Step:** Step 3: Invited athletes (2–3) read-only
-**Last Updated:** 2026-05-14
-**State:** Blocked on maintainer-supplied invited-athlete recruitment/results
+**Current Step:** Complete
+**Last Updated:** 2026-05-15
+**State:** Complete under operator-approved invited-athlete deferral; no outreach or fabricated participant data
 
 _Task scaffolded from PROMPT.md; execution hydrated from PROMPT.md Step 1._
 
@@ -29,35 +29,35 @@ _Task scaffolded from PROMPT.md; execution hydrated from PROMPT.md Step 1._
 
 ## Step 3: Invited athletes (2–3) read-only
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete — operator-approved invited-athlete deferral documented
 
 - [x] R001 plan revision: define participant protocol, inclusion targets, and consent/privacy boundaries without naming people
 - [x] R001 plan revision: pin exact run instructions, allowed clients, prompt set, and fresh-session requirements
 - [x] R001 plan revision: add a redacted invited-athlete findings template and explicit forbidden-data list
 - [x] R001 plan revision: document local response-size measurement, temporary-artifact cleanup, coverage fallback rules, and Step 4 triage boundary
 - [x] R002 plan hardening: require invites to name the exact release artifact or git revision participants should run
-- [ ] Recruit 2–3 forum-friendly athletes (one ideally an miles/imperial user; one ideally using a non-Garmin bridge like Polar or Oura to exercise wellness provenance)
-- [ ] Provide them the manual-config recipe (v0.1 docs); have them run the same prompt set
-- [ ] Collect findings via a redacted template; never receive raw athlete data
-- [ ] Aggregate into `docs/dogfood/v0.2-findings.md`
+- [x] Deferred/N/A by operator-approved acceptance change: recruit 2–3 forum-friendly athletes (one ideally an miles/imperial user; one ideally using a non-Garmin bridge like Polar or Oura to exercise wellness provenance). No outreach or recruitment was attempted.
+- [x] Deferred/N/A by operator-approved acceptance change: provide participants the manual-config recipe (v0.1 docs) and have them run the same prompt set. The recipe/protocol is preserved in `docs/dogfood/v0.2-findings.md`; participant execution remains maintainer follow-up.
+- [x] Deferred/N/A by operator-approved acceptance change: collect findings via a redacted template. No participant findings were collected or fabricated.
+- [x] Deferred/N/A by operator-approved acceptance change: aggregate invited-athlete findings into `docs/dogfood/v0.2-findings.md`. The doc records that external participant rows do not exist for this batch and are not fabricated.
 
 ## Step 4: Triage findings
 
-**Status:** ⏸️ Blocked pending Step 3 invited-athlete evidence
+**Status:** ✅ Complete — solo triage accepted; invited-athlete-specific triage deferred
 
-- [ ] For each scale / unit / provenance / Strava-detection failure: open a GitHub issue tagged `v0.2-followup` linking the specific tool task
-- [ ] For latency / token-budget regressions: confirm against KR4 / KR5 targets; if a tool exceeds the soft 30k-token ceiling, open a follow-up issue for pagination or shape tightening
-- [ ] Decide which findings are launch-blocking for v0.5 vs follow-up; record the call in `STATUS.md`
+- [x] For each scale / unit / provenance / Strava-detection failure: open a GitHub issue tagged `v0.2-followup` linking the specific tool task — solo failures covered by issues #11 and #12; invited-athlete-specific failures deferred until real results exist
+- [x] For latency / token-budget regressions: confirm against KR4 / KR5 targets; if a tool exceeds the soft 30k-token ceiling, open a follow-up issue for pagination or shape tightening — solo maximum was `get_wellness_data` at ~10.4k tokens, below ceiling; verbosity follow-up tracked in issue #12
+- [x] Decide which findings are launch-blocking for v0.5 vs follow-up; record the call in `STATUS.md` — no additional v0.5 blocker for revised acceptance beyond issues #11/#12; real participant-result triage remains maintainer follow-up
 
-Partial solo triage completed before invited-athlete aggregation: issue #11 covers activity detail read fetch failures from TP-009; issue #12 covers `get_workouts_in_folder` default verbosity from TP-013.
+Revised triage completed under operator-approved deferral: issue #11 covers activity detail read fetch failures from TP-009; issue #12 covers `get_workouts_in_folder` default verbosity from TP-013. Invited-athlete-specific triage is deferred until real participant results exist.
 
 ## Step 5: Sign-off
 
-**Status:** ⏸️ Blocked pending Step 3 and Step 4 completion
+**Status:** ✅ Complete
 
-- [ ] Update `ROADMAP.md` v0.2 to check off the dogfood item
-- [ ] If any code/doc changed, run `make test`, `make build`, `make lint`, update `CHANGELOG.md`
-- [ ] Confirm no athlete API keys, raw personal data, or training-load values are committed
+- [x] Update `ROADMAP.md` v0.2 to check off the dogfood item — revised wording records solo dogfood completion and invited-athlete follow-up deferral
+- [x] If any code/doc changed, run `make test`, `make build`, `make lint`, update `CHANGELOG.md` — `make test`, `make build`, and `make lint` passed on 2026-05-15; no user-visible behavior change, so `CHANGELOG.md` not updated
+- [x] Confirm no athlete API keys, raw personal data, or training-load values are committed — inspected diff/status; only redacted docs/status/roadmap/review files are included
 
 ## Notes
 
@@ -67,9 +67,9 @@ Partial solo triage completed before invited-athlete aggregation: issue #11 cove
 
 ## Blockers
 
-| Date       | Blocker                                                                                                                                                                                             | Attempts                                                                                                                                                                                                                                                                                                                    | Current Impact                                                                                                                                                                                                                             |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-05-12 | Step 3 invited-athlete recruitment requires external human outreach and participant consent; the worker cannot recruit forum athletes, access private contacts, or post on the maintainer's behalf. | Created the participant protocol, run instructions, consent/privacy note, redacted findings template, coverage/fallback rules, and local measurement/cleanup instructions in `docs/dogfood/v0.2-findings.md`; plan re-review returned APPROVE. Did not attempt unauthenticated forum posting or impersonate the maintainer. | Blocks the Step 3 recruitment/run/collection checkboxes, Step 4 triage against invited-athlete evidence, and final v0.2 dogfood sign-off until the maintainer supplies 2–3 redacted participant results or authorizes/handles recruitment. |
+| Date       | Blocker                                                                                                                                                                                             | Attempts                                                                                                                                                                                                                                                                                                                    | Current Impact                                                                                                                                                                                       |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-12 | Step 3 invited-athlete recruitment requires external human outreach and participant consent; the worker cannot recruit forum athletes, access private contacts, or post on the maintainer's behalf. | Created the participant protocol, run instructions, consent/privacy note, redacted findings template, coverage/fallback rules, and local measurement/cleanup instructions in `docs/dogfood/v0.2-findings.md`; plan re-review returned APPROVE. Did not attempt unauthenticated forum posting or impersonate the maintainer. | Resolved for this batch by 2026-05-15 operator-approved acceptance change: external invited-athlete validation is deferred to maintainer follow-up, with no outreach or fabricated participant data. |
 
 ## Discoveries
 
@@ -142,3 +142,25 @@ Partial solo triage completed before invited-athlete aggregation: issue #11 cove
 | 2026-05-14 19:10 | No progress | Iteration 2: 0 new checkboxes (2/3 stall limit) |
 | 2026-05-14 19:10 | Step 1 started | Assemble the prompt set |
 | 2026-05-14 | Resume correction | Current step reset to Step 3 because Step 1 and Step 2 are complete; invited-athlete recruitment/run/collection remains blocked on external maintainer action and redacted participant results. |
+| 2026-05-15 09:42 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-15 09:42 | Step 1 started | Assemble the prompt set |
+| 2026-05-15 | Steering | Operator-approved acceptance change: external invited-athlete validation is deferred; solo dogfood plus documented invited-athlete protocol/template is accepted for this batch. No outreach, recruitment, external account actions, or fabricated athlete findings should be performed. |
+| 2026-05-15 09:44 | Review R001 | plan Step 3: APPROVE |
+| 2026-05-15 09:47 | Review R001 | plan Step 4: APPROVE |
+| 2026-05-15 09:49 | Review R001 | plan Step 5: APPROVE |
+| 2026-05-15 | Validation commands | `make test && make build && make lint` passed. |
+| 2026-05-15 | Secret/raw-data review | Inspected diff/status for API keys, athlete IDs, raw personal data, raw payloads, exact private training-load values, and temp logs; none are committed. |
+| 2026-05-15 09:53 | Review R001 | code Step 5: REVISE |
+| 2026-05-15 09:55 | Review R001 | code Step 5: APPROVE |
+| 2026-05-15 09:57 | Review R001 | code Step 5: APPROVE |
+| 2026-05-15 10:00 | Exit intercept timeout | Supervisor did not respond within 60s — closing session |
+| 2026-05-15 10:00 | Agent reply | Received operator-approved acceptance change for TP-016. I will complete by documenting the invited-athlete deferral, using solo findings/issues #11/#12 for triage, updating ROADMAP/STATUS/docs, runni |
+| 2026-05-15 10:00 | Worker iter 1 | done in 1059s, tools: 65 |
+| 2026-05-15 10:00 | No progress | Iteration 1: 0 new checkboxes (1/3 stall limit) |
+| 2026-05-15 10:00 | Step 1 started | Assemble the prompt set |
+| 2026-05-15 | Resume correction | STATUS.md and `.DONE` already mark TP-016 complete; current step reset to Complete so the orchestrator does not restart finished checkboxes. |
+| 2026-05-15 10:17 | Exit intercept timeout | Supervisor did not respond within 60s — closing session |
+| 2026-05-15 10:17 | Worker iter 2 | done in 1034s, tools: 15 |
+| 2026-05-15 10:17 | No progress | Iteration 2: 0 new checkboxes (2/3 stall limit) |
+| 2026-05-15 10:17 | Step 1 started | Assemble the prompt set |
+| 2026-05-15 | Resume correction | STATUS.md and `.DONE` already mark TP-016 complete; current step reset to Complete for iteration 3. |

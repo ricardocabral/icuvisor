@@ -39,7 +39,7 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 - [x] Tool-name disambiguation pass on read clusters (`get_activity_details` / `_intervals` / `_streams`); CI guard for new confusable clusters.
 - [x] Tool-schema stability rules enforced in CI: additive-only on stable tools; renames/removals require a new tool name.
 - [x] Manual JSON config still; stdio only.
-- [ ] Dogfooded solo + 2–3 invited athletes, read-only.
+- [x] Dogfooded solo, read-only; invited-athlete protocol/template documented and 2–3 athlete validation deferred as maintainer follow-up by TP-016 operator-approved acceptance change.
 
 ## v0.3 — Writes with safety gate
 
