@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 2
 **Size:** M
 
@@ -26,7 +26,7 @@
 
 ### Step 2: GoReleaser DMG + signing
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Universal-2 binary configured for darwin amd64 + arm64 via GoReleaser `universal_binaries`
 - [x] Apple-native signing scaffold uses `codesign --options runtime --timestamp` with hard preflight gates
@@ -108,3 +108,4 @@ _Add notes as work progresses._
 | 2026-05-15 18:10 | Review R007 | plan Step 2: REVISE |
 | 2026-05-15 18:13 | Review R008 | plan Step 2: REVISE |
 | 2026-05-15 18:15 | Review R009 | plan Step 2: APPROVE |
+| 2026-05-15 18:26 | Review R010 | code Step 2: APPROVE |
