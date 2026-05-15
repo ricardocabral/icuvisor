@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 15
+**Review Counter:** 16
 **Iteration:** 1
 **Size:** M
 
@@ -47,7 +47,7 @@
 
 ### Step 4: Adjacent P2 cleanups
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Address R014 plan note: helper only finalizes row metadata/debug/scale/common meta; wrapper traversal, RowCollections, and wrapper-specific null handling stay outside; nested row collections call helper with common/debug disabled
 - [x] Move `defaultScaleLabels` to `internal/response/scales.go`
@@ -113,3 +113,4 @@ _Add notes as work progresses._
 | 2026-05-15 18:42 | Review R012 | code Step 3: REVISE |
 | 2026-05-15 18:59 | Review R014 | plan Step 4: REVISE |
 | 2026-05-15 19:01 | Review R015 | plan Step 4: APPROVE |
+| 2026-05-15 19:05 | Review R016 | code Step 4: APPROVE |
