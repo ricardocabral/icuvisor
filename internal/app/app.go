@@ -22,11 +22,17 @@ import (
 type Options struct {
 	Version string
 	Args    []string
+	Stdin   io.Reader
 	Stdout  io.Writer
 	Stderr  io.Writer
 
 	LoadConfig  func(context.Context, config.Options) (config.Config, error)
 	StartServer func(context.Context, ServerInfo) error
+
+	SetupRunner          SetupRunner
+	SetupCredentialStore credstore.Store
+	SetupPrompter        SetupPrompter
+	SetupConfigExists    func(string) (bool, error)
 }
 
 // ServerInfo carries process metadata needed by lower layers.
@@ -65,6 +71,9 @@ func Run(ctx context.Context, opts Options) error {
 	}
 
 	args := opts.Args
+	if len(args) > 0 && args[0] == "setup" {
+		return runSetupCommand(ctx, opts, args[1:])
+	}
 	if helpRequested(args) {
 		if hasCommand(args, "version") {
 			return writeVersionHelp(stdout)

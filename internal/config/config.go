@@ -10,6 +10,7 @@ import (
 	"net/netip"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -111,6 +112,15 @@ type rawConfig struct {
 	deleteMode      string
 	toolset         string
 	debugMetadata   string
+}
+
+// DefaultPath returns the platform default icuvisor config path.
+func DefaultPath() (string, error) {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "", fmt.Errorf("locating user config directory: %w", err)
+	}
+	return filepath.Join(dir, "icuvisor", "config.json"), nil
 }
 
 // Load reads v0.1 config from JSON, .env, and process environment.

@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -21,10 +21,10 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] `setup` registered in TP-035 parser
-- [ ] `--help` golden file updated
-- [ ] Overwrite prompts for keychain + config-file
-- [ ] Honours `--config`
+- [x] `setup` registered in TP-035 parser
+- [x] `--help` golden file updated
+- [x] Overwrite prompts for keychain + config-file
+- [x] Honours `--config`
 
 ### Step 3: Autodetect + verify
 
@@ -129,3 +129,4 @@ Plan review R003 requested a concrete CLI wiring plan before coding. Implement S
 | 2026-05-15 18:54 | Review R002 | code Step 1: APPROVE |
 | 2026-05-15 18:56 | Review R003 | plan Step 2: UNKNOWN |
 | 2026-05-15 18:58 | Review R004 | plan Step 2: REVISE |
+| 2026-05-15 19:00 | Review R005 | plan Step 2: APPROVE |

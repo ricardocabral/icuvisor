@@ -17,6 +17,7 @@ Usage:
 
 Commands:
   (no command)  Run the MCP server (stdio transport by default).
+  setup         Store intervals.icu credentials and write non-secret config.
   version       Print the icuvisor version and exit.
   help          Print this help and exit.
 
@@ -43,6 +44,8 @@ Environment variables:
 
 Examples:
   icuvisor
+  icuvisor setup
+  icuvisor setup --config /path/to/icuvisor.json
   ICUVISOR_TRANSPORT=http icuvisor
   icuvisor --transport http --http-bind 127.0.0.1:8765
   icuvisor --config /path/to/icuvisor.json
@@ -60,6 +63,33 @@ For deeper documentation, see README.md and docs/prd/PRD-icuvisor.md.
 		safety.EnvToolset, safety.ToolsetCore, config.EnvDebugMetadata)
 	if err != nil {
 		return fmt.Errorf("writing help: %w", err)
+	}
+	return nil
+}
+
+func writeSetupHelp(w io.Writer) error {
+	_, err := fmt.Fprintf(w, `Set up intervals.icu credentials and non-secret icuvisor config.
+
+Usage:
+  icuvisor setup [flags]
+
+Flags:
+  --config <path>   Config file path to write. Can also be set with %[1]s.
+  --offline         Skip intervals.icu verification and write settings after explicit prompts.
+  --force           Overwrite an existing config file without prompting. Existing keychain credentials still require confirmation.
+  -h, --help        Print this help and exit.
+
+Notes:
+  The API key is always requested interactively with masked terminal input; there is no --api-key flag.
+  Setup does not start the MCP server and does not require an existing config file.
+
+Exit codes:
+  0  Success, including help output and user-canceled setup.
+  2  Usage error, such as an unknown setup flag or missing flag value.
+  1  Runtime error while checking credentials, config, or intervals.icu.
+`, config.EnvConfigPath)
+	if err != nil {
+		return fmt.Errorf("writing setup help: %w", err)
 	}
 	return nil
 }

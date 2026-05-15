@@ -6,6 +6,7 @@ Usage:
 
 Commands:
   (no command)  Run the MCP server (stdio transport by default).
+  setup         Store intervals.icu credentials and write non-secret config.
   version       Print the icuvisor version and exit.
   help          Print this help and exit.
 
@@ -32,6 +33,8 @@ Environment variables:
 
 Examples:
   icuvisor
+  icuvisor setup
+  icuvisor setup --config /path/to/icuvisor.json
   ICUVISOR_TRANSPORT=http icuvisor
   icuvisor --transport http --http-bind 127.0.0.1:8765
   icuvisor --config /path/to/icuvisor.json
