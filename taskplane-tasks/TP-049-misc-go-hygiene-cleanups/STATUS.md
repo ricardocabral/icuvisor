@@ -1,6 +1,6 @@
 # TP-049-misc-go-hygiene-cleanups — Status
 
-**Current Step:** Step 5: Fix registry error message (item 5)
+**Current Step:** Step 6: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
@@ -51,17 +51,17 @@
 
 ### Step 5: Fix registry error message (item 5)
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Check if TP-042 already fixed `internal/tools/registry.go:67-70` — note overlap here
 - [x] If not fixed: replace hardcoded `getAthleteProfileName` with failing tool's name
 - [x] If fixed: mark step a no-op (not applicable; TP-042 had not fixed it)
 - [x] `make build` / `test` / `lint`
-- [ ] Commit (if not skipped) `TP-049 fix misleading registry error message`
+- [x] Commit (if not skipped) `TP-049 fix misleading registry error message`
 
 ### Step 6: Verify
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] `make build` / `test` / `test-race` / `lint` all green
 - [ ] No `os.Getenv` outside `internal/config/` (or justified)
