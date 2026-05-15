@@ -7,7 +7,7 @@ before:
     - go mod tidy
 
 builds:
-  - id: icuvisor
+  - id: icuvisor-linux-windows
     main: ./cmd/icuvisor
     binary: icuvisor
     env:
@@ -16,17 +16,29 @@ builds:
       - -trimpath
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
-    goos: [linux, darwin, windows]
+    goos: [linux, windows]
+    goarch: [amd64, arm64]
+  - id: icuvisor-darwin
+    main: ./cmd/icuvisor
+    binary: icuvisor
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    goos: [darwin]
     goarch: [amd64, arm64]
 
 universal_binaries:
-  - id: icuvisor-darwin
-    ids: [icuvisor]
+  - id: icuvisor-darwin-universal
+    ids: [icuvisor-darwin]
     replace: true
     name_template: icuvisor
 
 archives:
   - id: default
+    ids: [icuvisor-linux-windows]
     name_template: >-
       {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
     formats: [tar.gz]
@@ -39,7 +51,7 @@ archives:
       - CHANGELOG.md
 
 checksum:
-  name_template: checksums.txt
+  name_template: SHA256SUMS.txt
   algorithm: sha256
 
 snapshot:
@@ -73,18 +85,5 @@ release:
   github:
     owner: ricardocabral
     name: icuvisor
-  draft: false
+  draft: true
   prerelease: auto
-
-brews:
-  - name: icuvisor
-    repository:
-      owner: ricardocabral
-      name: homebrew-icuvisor
-    homepage: https://icuvisor.dev
-    description: Local MCP server connecting intervals.icu training data to AI assistants.
-    license: MIT
-    test: |
-      system "#{bin}/icuvisor version"
-    install: |
-      bin.install "icuvisor"

@@ -7,13 +7,11 @@ on:
 
 permissions:
   contents: write
-  packages: write
-  id-token: write
 
 jobs:
-  goreleaser:
-    name: GoReleaser
-    runs-on: macos-latest
+  preflight:
+    name: Release preflight
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,7 +23,93 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Run GoReleaser
+      - name: Verify go.mod is tidy
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+
+      - name: Test
+        run: go test -race -count=1 ./...
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+          args: --timeout=5m
+
+      - name: GoReleaser config check
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: check
+
+  release:
+    name: Build signed macOS DMG and draft release
+    runs-on: macos-latest
+    needs: preflight
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_DEVELOPER_ID_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
+      APPLE_DEVELOPER_ID_P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_P12_PASSWORD }}
+      APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+      APPLE_API_KEY_ISSUER: ${{ secrets.APPLE_API_KEY_ISSUER }}
+      APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Import Developer ID certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in APPLE_TEAM_ID APPLE_DEVELOPER_ID_P12_BASE64 APPLE_DEVELOPER_ID_P12_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "error: missing required GitHub Actions secret $name" >&2
+              exit 1
+            fi
+          done
+
+          kc_passphrase="$(openssl rand -hex 24)"
+          echo "::add-mask::$kc_passphrase"
+          keychain_path="$RUNNER_TEMP/icuvisor-signing.keychain-db"
+          p12_path="$RUNNER_TEMP/developer-id.p12"
+
+          printf '%s' "$APPLE_DEVELOPER_ID_P12_BASE64" | base64 --decode > "$p12_path"
+          security create-keychain -p "$kc_passphrase" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "$kc_passphrase" "$keychain_path"
+          security import "$p12_path" -k "$keychain_path" -P "$APPLE_DEVELOPER_ID_P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security list-keychains -d user -s "$keychain_path" $(security list-keychains -d user | tr -d '"')
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$kc_passphrase" "$keychain_path"
+          security find-identity -v -p codesigning "$keychain_path"
+
+      - name: Decode App Store Connect API key
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in APPLE_API_KEY_ID APPLE_API_KEY_ISSUER APPLE_API_KEY_BASE64; do
+            if [ -z "${!name:-}" ]; then
+              echo "error: missing required GitHub Actions secret $name" >&2
+              exit 1
+            fi
+          done
+
+          key_dir="$RUNNER_TEMP/notary"
+          key_path="$key_dir/AuthKey_${APPLE_API_KEY_ID}.p8"
+          mkdir -p "$key_dir"
+          printf '%s' "$APPLE_API_KEY_BASE64" | base64 --decode > "$key_path"
+          chmod 600 "$key_path"
+          echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+
+      - name: Run GoReleaser to draft release
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
@@ -33,4 +117,34 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+
+      - name: Build, sign, notarize, and staple macOS DMG
+        shell: bash
+        run: build/macos/package_dmg.sh
+        env:
+          ICUVISOR_MACOS_RELEASE: "1"
+
+      - name: Regenerate SHA256SUMS for promoted artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist
+          shasum -a 256 \
+            icuvisor_*_linux_*.tar.gz \
+            icuvisor_*_windows_*.zip \
+            icuvisor_*_macos_universal.dmg \
+            > SHA256SUMS.txt
+
+      - name: Upload DMG and final checksums to draft release
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release upload "$GITHUB_REF_NAME" dist/icuvisor_*_macos_universal.dmg dist/SHA256SUMS.txt --clobber
+
+      - name: Publish draft release
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false

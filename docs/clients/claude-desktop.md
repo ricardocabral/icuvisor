@@ -1,111 +1,26 @@
-# Claude Desktop manual setup (macOS, v0.1)
+# Claude Desktop manual setup (macOS)
 
-This guide documents the v0.1 manual path for running icuvisor as a local MCP stdio server in Claude Desktop on macOS. v0.1 does not include an installer, keychain storage, or one-click client configuration yet.
-
-Use placeholders in examples and replace them only on your own machine. Do not commit API keys, real athlete IDs, or local config files that contain secrets.
+Use this guide after installing `icuvisor.app` from the signed macOS DMG. Claude Desktop starts icuvisor over MCP stdio by executing the binary inside the app bundle.
 
 ## Prerequisites
 
 - macOS with Claude Desktop installed.
-- Go 1.23 or newer.
-- An intervals.icu account.
-- A local clone of this repository.
+- `icuvisor.app` installed in `/Applications`.
+- Your intervals.icu athlete ID, written as `i12345` or `12345`.
+- Your intervals.icu API key stored in the macOS Keychain under service `icuvisor` and account `intervals-icu-api-key`.
 
-## Build the local binary
+> **Do not put your intervals.icu API key in `claude_desktop_config.json`.** icuvisor reads it from the macOS Keychain. The Claude Desktop JSON should contain only non-secret configuration such as athlete ID, timezone, and transport.
 
-From the repository root:
-
-```bash
-make build
-./bin/icuvisor version
-```
-
-`make build` writes the v0.1 binary to `./bin/icuvisor`. For Claude Desktop, use an absolute path to that binary in `claude_desktop_config.json`; do not rely on shell aliases or a relative path.
-
-If you prefer a user-local install, you can copy the built binary to a stable path such as:
+If the key is not already in Keychain, add it from Terminal:
 
 ```bash
-mkdir -p "$HOME/bin"
-cp ./bin/icuvisor "$HOME/bin/icuvisor"
-"$HOME/bin/icuvisor" version
+security add-generic-password -U \
+  -s icuvisor \
+  -a intervals-icu-api-key \
+  -w 'YOUR_INTERVALS_ICU_API_KEY'
 ```
 
-## Get an intervals.icu API key
-
-1. Sign in to intervals.icu in your browser.
-2. Open <https://intervals.icu/settings>.
-3. Find the API key section and create or copy your personal API key.
-4. Keep the key private. Treat it like a password: do not paste it into chat messages, screenshots, issues, commits, or shared config examples.
-
-icuvisor v0.1 uses Basic Auth to call intervals.icu with the API key supplied by local config. The key is never a tool argument and should never be controlled by the LLM.
-
-## v0.1 configuration inputs
-
-icuvisor v0.1 can read configuration from a JSON file, a local untracked `.env` file, and process environment variables. Process environment variables win over `.env`, and `--config` or `ICUVISOR_CONFIG` chooses a JSON file to load before env overrides.
-
-Required inputs:
-
-| Purpose                  | Environment variable       | JSON field   | Example placeholder          |
-| ------------------------ | -------------------------- | ------------ | ---------------------------- |
-| intervals.icu API key    | `INTERVALS_ICU_API_KEY`    | `api_key`    | `YOUR_INTERVALS_ICU_API_KEY` |
-| intervals.icu athlete ID | `INTERVALS_ICU_ATHLETE_ID` | `athlete_id` | `i12345`                     |
-
-Optional inputs:
-
-| Purpose          | Environment variable    | JSON field     | Default                        | Example placeholder                         |
-| ---------------- | ----------------------- | -------------- | ------------------------------ | ------------------------------------------- |
-| Athlete timezone | `ICUVISOR_TIMEZONE`     | `timezone`     | `UTC`                          | `America/Sao_Paulo`                         |
-| API base URL     | `ICUVISOR_API_BASE_URL` | `api_base_url` | `https://intervals.icu/api/v1` | `https://intervals.icu/api/v1`              |
-| HTTP timeout     | `ICUVISOR_HTTP_TIMEOUT` | `http_timeout` | `30s`                          | `30s`                                       |
-| Config path      | `ICUVISOR_CONFIG`       | n/a            | unset                          | `/Users/YOU/.config/icuvisor/icuvisor.json` |
-
-Athlete IDs may be written as `12345` or `i12345`; icuvisor normalizes them to the `i12345` form in responses. Timezones must be IANA timezone names such as `UTC`, `America/Sao_Paulo`, or `Europe/London`.
-
-A JSON config file can look like this:
-
-```json
-{
-  "api_key": "YOUR_INTERVALS_ICU_API_KEY",
-  "athlete_id": "i12345",
-  "timezone": "America/Sao_Paulo",
-  "api_base_url": "https://intervals.icu/api/v1",
-  "http_timeout": "30s"
-}
-```
-
-Store this file outside the repository and restrict its permissions:
-
-```bash
-mkdir -p "$HOME/.config/icuvisor"
-chmod 700 "$HOME/.config/icuvisor"
-# Create the file with your editor, then:
-chmod 600 "$HOME/.config/icuvisor/icuvisor.json"
-```
-
-## Optional local `.env` flow for maintainers
-
-The config loader reads recognized keys from `.env` in the current working directory. This is useful for local maintainer smoke testing, but `.env` must remain untracked and must not be displayed in logs, issues, or screenshots.
-
-Create a local `.env` only on your machine:
-
-```bash
-cat > .env <<'ENV'
-INTERVALS_ICU_API_KEY=YOUR_INTERVALS_ICU_API_KEY
-INTERVALS_ICU_ATHLETE_ID=i12345
-ICUVISOR_TIMEZONE=America/Sao_Paulo
-ENV
-chmod 600 .env
-```
-
-Before committing, verify the file is ignored or untracked and do not print its values:
-
-```bash
-git status --short .env
-```
-
-For Claude Desktop, prefer the explicit `env` block or a JSON file referenced by `--config`, because Claude starts icuvisor with its own process environment and working directory.
-
-## Configure Claude Desktop on macOS
+## Configure Claude Desktop
 
 Claude Desktop reads MCP server definitions from:
 
@@ -113,156 +28,51 @@ Claude Desktop reads MCP server definitions from:
 ~/Library/Application Support/Claude/claude_desktop_config.json
 ```
 
-Create the file if it does not exist. The top-level shape is an `mcpServers` object. Use an absolute path for `command`.
-
-### Option A: pass config with environment variables
+Create the file if it does not exist. Add or merge this `mcpServers.icuvisor` block, replacing only the non-secret placeholders:
 
 ```json
 {
   "mcpServers": {
     "icuvisor": {
-      "command": "/absolute/path/to/icuvisor",
+      "command": "/Applications/icuvisor.app/Contents/MacOS/icuvisor",
       "env": {
-        "INTERVALS_ICU_API_KEY": "YOUR_INTERVALS_ICU_API_KEY",
         "INTERVALS_ICU_ATHLETE_ID": "i12345",
-        "ICUVISOR_TIMEZONE": "America/Sao_Paulo"
+        "ICUVISOR_TIMEZONE": "America/Sao_Paulo",
+        "ICUVISOR_TRANSPORT": "stdio"
       }
     }
   }
 }
 ```
 
-### Option B: pass a JSON config file
+Notes:
 
-```json
-{
-  "mcpServers": {
-    "icuvisor": {
-      "command": "/absolute/path/to/icuvisor",
-      "args": ["--config", "/Users/YOU/.config/icuvisor/icuvisor.json"]
-    }
-  }
-}
-```
+- `ICUVISOR_TRANSPORT=stdio` is optional because stdio is the default, but keeping it explicit makes the MCP client setup easier to audit.
+- Use a real IANA timezone such as `UTC`, `America/Sao_Paulo`, or `Europe/London`.
+- If you installed the app somewhere else, update `command` to the absolute path to `icuvisor.app/Contents/MacOS/icuvisor`.
 
-After editing the config file, fully quit and reopen Claude Desktop so it starts the local MCP server again.
+After editing the config file, fully quit and reopen Claude Desktop.
 
-## Start a new chat after binary or tool changes
+## Verify the connection
 
-MCP clients, including Claude Desktop, can cache the tool catalog and JSON schemas for a conversation. If you rebuild icuvisor, change a tool, or edit configuration, restart Claude Desktop and start a new chat before testing. An existing conversation may continue using the old schema and can make it look like a fix did not land.
+1. Open Claude Desktop after restarting it.
+2. Start a new chat so Claude refreshes the MCP tool catalog.
+3. Ask: `What's my FTP?`
+4. Expected result: Claude calls icuvisor, reads your athlete profile, and answers with the configured FTP/threshold data from intervals.icu.
 
-## Troubleshooting
-
-### Claude Desktop cannot start icuvisor
-
-- Confirm `command` is an absolute path to an executable file.
-- Run the same binary from Terminal with `version`:
-  ```bash
-  /absolute/path/to/icuvisor version
-  ```
-- If you copied the binary, confirm macOS permissions allow execution:
-  ```bash
-  chmod +x /absolute/path/to/icuvisor
-  ```
-
-### `missing intervals.icu API key`
-
-Set `INTERVALS_ICU_API_KEY` in the Claude Desktop `env` block, or put `api_key` in the JSON file passed with `--config`. Do not pass the API key as a chat message or tool argument.
-
-### `missing athlete ID` or `invalid athlete ID`
-
-Set `INTERVALS_ICU_ATHLETE_ID` or `athlete_id` to the intervals.icu athlete identifier. Both `12345` and `i12345` are accepted; other characters are rejected.
-
-### `invalid timezone`
-
-Use an IANA timezone name such as `UTC`, `America/Sao_Paulo`, or `Europe/London`.
-
-### Authentication or profile fetch fails
-
-Check that the API key is current, belongs to the expected intervals.icu account, and can access the configured athlete ID. The tool returns a short message such as `could not fetch athlete profile; check intervals.icu credentials and athlete ID` while internal details stay out of the LLM-visible response.
-
-### Tool is missing or arguments look stale
-
-Fully quit and reopen Claude Desktop, then start a new chat. The previous conversation may have cached an older MCP schema.
-
-### JSON config is rejected
-
-Check for trailing commas, comments, misspelled fields, or unknown fields. v0.1 accepts `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout` in JSON config.
-
-## Local smoke checklist
-
-Use this checklist before declaring the v0.1 Claude Desktop path ready.
-
-### 1. Confirm the binary reports a version
-
-Run:
+If the answer says the tool is missing or cannot start:
 
 ```bash
-./bin/icuvisor version
+/Applications/icuvisor.app/Contents/MacOS/icuvisor version
+plutil -lint "$HOME/Library/Application Support/Claude/claude_desktop_config.json"
 ```
 
-Expected: a short version string such as `dev`, a commit-derived version, or a release tag. Any startup/config error here indicates the `version` command path is broken and should be fixed before MCP testing.
-
-### 2. Build from source
-
-Run:
+If the answer reports missing credentials, confirm the Keychain item exists and the athlete ID is set in the JSON:
 
 ```bash
-make build
+security find-generic-password -s icuvisor -a intervals-icu-api-key >/dev/null
 ```
 
-Expected: `bin/icuvisor` is created or replaced without errors. If the command fails, fix the build before editing Claude Desktop config.
+## Updating the app
 
-### 3. Confirm Claude Desktop sees the tool
-
-1. Edit `~/Library/Application Support/Claude/claude_desktop_config.json` with one of the placeholder-backed examples above, replacing placeholders only on your local machine.
-2. Fully quit and reopen Claude Desktop.
-3. Start a new chat.
-4. Ask Claude: `What icuvisor tools are available?`
-5. Confirm `get_athlete_profile` is listed.
-6. Ask Claude to call `get_athlete_profile`.
-
-Expected: Claude can call the tool through MCP stdio. If the tool is not listed, restart Claude Desktop and re-check the config file path, JSON syntax, and absolute binary path.
-
-### 4. Verify the successful response shape
-
-A successful `get_athlete_profile` call should return structured profile data shaped like this anonymized example:
-
-```json
-{
-  "athlete_id": "i12345",
-  "name": "Example Athlete",
-  "timezone": "America/Sao_Paulo",
-  "locale": "en_US",
-  "units": {
-    "measurement_preference": "metric",
-    "weight": "kg",
-    "temperature": "celsius"
-  },
-  "sport_settings": [
-    {
-      "types": ["Ride"],
-      "ftp_watts": 250,
-      "lthr_bpm": 170,
-      "power_zones_watts": [125, 188, 225, 263, 300],
-      "power_zone_names": ["Z1", "Z2", "Z3", "Z4", "Z5"]
-    }
-  ],
-  "_meta": {
-    "server_version": "dev",
-    "units": {
-      "system": "metric",
-      "distance": "km"
-    },
-    "athlete_id_format": "i-prefixed intervals.icu athlete ID",
-    "timezone_convention": "IANA timezone from athlete profile when available; config timezone fallback otherwise",
-    "include_full": false
-  }
-}
-```
-
-Actual values will differ. The response must not include the intervals.icu API key.
-
-### 5. Record whether manual network smoke was possible
-
-Unit tests in this repository do not hit the network; they use local fakes and fixtures. The Claude Desktop smoke path requires a real intervals.icu account, a real API key, and the matching athlete ID. If credentials are unavailable, record the remaining human verification instead of claiming an end-to-end intervals.icu result.
+Download the newer signed DMG from the GitHub release, replace `/Applications/icuvisor.app`, fully quit Claude Desktop, and start a new chat. Do not move the API key into the JSON during upgrades; it remains in Keychain.

@@ -77,6 +77,7 @@ func TestRunHelpFlagsAndUsagePaths(t *testing.T) {
 		{name: "help command", args: []string{"help"}, wantOut: string(golden)},
 		{name: "help after flag", args: []string{"--transport", "http", "help"}, wantOut: string(golden)},
 		{name: "version help", args: []string{"version", "--help"}, wantOut: "Print the icuvisor version and exit.\n\nUsage:\n  icuvisor version [--help]\n\nExit codes:\n  0  Success, including help and version output.\n"},
+		{name: "setup help", args: []string{"setup", "--help"}, wantOut: "Set up intervals.icu credentials and non-secret icuvisor config.\n\nUsage:\n  icuvisor setup [flags]\n\nFlags:\n  --config <path>   Config file path to write. Can also be set with ICUVISOR_CONFIG.\n  --offline         Skip intervals.icu verification and write settings after explicit prompts.\n  --force           Overwrite an existing config file without prompting. Existing keychain credentials still require confirmation.\n  -h, --help        Print this help and exit.\n\nNotes:\n  The API key is always requested interactively with masked terminal input; there is no --api-key flag.\n  Setup does not start the MCP server and does not require an existing config file.\n\nExit codes:\n  0  Success, including help output and user-canceled setup.\n  2  Usage error, such as an unknown setup flag or missing flag value.\n  1  Runtime error while checking credentials, config, or intervals.icu.\n"},
 		{name: "unknown flag", args: []string{"--bogus"}, wantErr: []string{"unknown command or flag", "--bogus", "Run 'icuvisor --help' for usage."}, wantCode: 2},
 		{name: "missing flag value", args: []string{"--config"}, wantErr: []string{"missing value", "--config", "Run 'icuvisor --help' for usage."}, wantCode: 2},
 		{name: "valid flags parse", args: []string{"--config", "/tmp/icuvisor.json", "--transport=http", "--http-bind", "127.0.0.1:9999"}, wantErr: []string{"stop"}, wantCode: 1, wantConfig: config.Options{Path: "/tmp/icuvisor.json", Transport: "http", HTTPBindAddress: "127.0.0.1:9999"}, checkConfig: true},
@@ -164,6 +165,135 @@ func TestRunVersionWritesInjectedVersion(t *testing.T) {
 	}
 	if got, want := stdout.String(), "v1.2.3-test\n"; got != want {
 		t.Fatalf("stdout = %q, want %q", got, want)
+	}
+}
+
+func TestRunSetupDispatchPassesFlagsAndBypassesServer(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		args []string
+		want SetupOptions
+	}{
+		{
+			name: "separate config",
+			args: []string{"setup", "--config", "/tmp/icuvisor.json"},
+			want: SetupOptions{ConfigPath: "/tmp/icuvisor.json"},
+		},
+		{
+			name: "inline config offline force",
+			args: []string{"setup", "--config=/tmp/icuvisor.json", "--offline", "--force"},
+			want: SetupOptions{ConfigPath: "/tmp/icuvisor.json", Offline: true, Force: true},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			called := false
+			err := Run(context.Background(), Options{
+				Args: tc.args,
+				LoadConfig: func(context.Context, config.Options) (config.Config, error) {
+					t.Fatal("setup must not load runtime config")
+					return config.Config{}, nil
+				},
+				StartServer: func(context.Context, ServerInfo) error {
+					t.Fatal("setup must not start the MCP server")
+					return nil
+				},
+				SetupRunner: func(_ context.Context, opts SetupOptions) error {
+					called = true
+					if opts.ConfigPath != tc.want.ConfigPath || opts.Offline != tc.want.Offline || opts.Force != tc.want.Force {
+						t.Fatalf("setup options = %#v, want %#v", opts, tc.want)
+					}
+					return nil
+				},
+			})
+			if err != nil {
+				t.Fatalf("Run() error = %v", err)
+			}
+			if !called {
+				t.Fatal("setup runner was not called")
+			}
+		})
+	}
+}
+
+func TestRunSetupUsesConfigEnvironmentFallback(t *testing.T) {
+	t.Setenv(config.EnvConfigPath, "/tmp/from-env.json")
+
+	var got SetupOptions
+	err := Run(context.Background(), Options{
+		Args: []string{"setup"},
+		SetupRunner: func(_ context.Context, opts SetupOptions) error {
+			got = opts
+			return nil
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if got.ConfigPath != "/tmp/from-env.json" {
+		t.Fatalf("ConfigPath = %q, want env path", got.ConfigPath)
+	}
+}
+
+func TestRunSetupFlagErrorsAreActionable(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		args []string
+		want []string
+	}{
+		{name: "unknown setup flag", args: []string{"setup", "--bogus"}, want: []string{"unknown setup flag", "--bogus", "icuvisor setup --help"}},
+		{name: "missing setup config", args: []string{"setup", "--config"}, want: []string{"missing value", "--config", "icuvisor setup --help"}},
+		{name: "pre-command config unsupported", args: []string{"--config", "/tmp/icuvisor.json", "setup"}, want: []string{"unknown command", "setup", "icuvisor version"}},
+		{name: "no api key flag", args: []string{"setup", "--api-key=secret"}, want: []string{"unknown setup flag", "--api-key", "icuvisor setup --help"}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := Run(context.Background(), Options{Args: tc.args})
+			if err == nil {
+				t.Fatal("Run() error = nil, want usage error")
+			}
+			msg := err.Error()
+			for _, want := range tc.want {
+				if !strings.Contains(msg, want) {
+					t.Fatalf("error %q does not contain %q", msg, want)
+				}
+			}
+			if got := ExitCode(err); got != 2 {
+				t.Fatalf("ExitCode() = %d, want 2", got)
+			}
+		})
+	}
+}
+
+func TestRunSetupRejectsAPIKeyFlagWithoutEchoingValue(t *testing.T) {
+	t.Parallel()
+
+	var stdout, stderr bytes.Buffer
+	code := RunCLI(context.Background(), Options{
+		Args:   []string{"setup", "--api-key=supersecret"},
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+	if code != 2 {
+		t.Fatalf("exit code = %d, want 2", code)
+	}
+	if strings.Contains(stderr.String(), "supersecret") {
+		t.Fatalf("stderr leaked command-line secret value: %q", stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "unknown setup flag \"--api-key\"") {
+		t.Fatalf("stderr = %q, want redacted api-key flag", stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty", stdout.String())
 	}
 }
 
