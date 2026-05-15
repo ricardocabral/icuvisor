@@ -1,10 +1,10 @@
 # TP-039-coach-mode: Coach mode + per-athlete tool ACLs — Status
 
-**Current Step:** Step 3: Tool registry plumbing
+**Current Step:** Step 4: `list_athletes` + `select_athlete`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 12
+**Review Counter:** 13
 **Iteration:** 2
 **Size:** L
 
@@ -38,7 +38,7 @@
 
 ### Step 3: Tool registry plumbing
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] R009 plan revision: compose all three gates in `internal/mcp.safeRegistrar` so coach-denied tools are absent from SDK tools/list, catalog hash inputs, and skip counts
 - [x] R009 plan revision: filter `icuvisor_list_advanced_capabilities` against the active-athlete coach ACL so denied tools are not leaked through capability discovery
@@ -124,3 +124,4 @@
 | 2026-05-15 20:47 | Review R010 | plan Step 3: APPROVE |
 | 2026-05-15 21:04 | Review R011 | code Step 3: REVISE |
 | 2026-05-15 21:18 | Review R012 | code Step 3: REVISE |
+| 2026-05-15 21:26 | Review R013 | code Step 3: APPROVE |
