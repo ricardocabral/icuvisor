@@ -16,12 +16,12 @@ Template only. Do not add example or fabricated participant data. Fill this duri
 ## Participant table
 
 | Participant | Segment | Client | Coach mode? | Install-to-first-call minutes (KR1) | Top 5 tool calls (names/timestamps only) | Mobile need (§7.4 #8) | Recommend/demand (§7.4 #6) | Schema-change clarity (§7.4 #12) | Surprises (redacted) | Blockers filed |
-| --- | --- | --- | --- | ---: | --- | --- | --- | --- | --- | --- |
+| ----------- | ------- | ------ | ----------- | ----------------------------------: | ---------------------------------------- | --------------------- | -------------------------- | -------------------------------- | -------------------- | -------------- |
 
 ## Follow-up issues
 
 | Issue | Source participant(s) | Severity | Notes |
-| --- | --- | --- | --- |
+| ----- | --------------------- | -------- | ----- |
 
 ## Redaction checklist
 

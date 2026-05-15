@@ -13,14 +13,14 @@ Purpose: recruit a small, consented beta group to validate v0.5 prep against PRD
 
 Ask each candidate:
 
-| Filter | Eligible answer |
-| --- | --- |
-| OS | macOS user willing to install a signed DMG. |
-| AI client | Uses or can install Claude Desktop or Claude Code. |
-| intervals.icu | Has their own intervals.icu account and API key. |
-| Coach mode | Athlete-only is fine; coach candidates must manage a small roster and accept redacted feedback only. |
-| Mobile need | Can answer whether mobile/tray access would change daily use (PRD §7.4 #8). |
-| Availability | Can complete install + first call and a short exit interview inside the beta window. |
+| Filter        | Eligible answer                                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------------------- |
+| OS            | macOS user willing to install a signed DMG.                                                          |
+| AI client     | Uses or can install Claude Desktop or Claude Code.                                                   |
+| intervals.icu | Has their own intervals.icu account and API key.                                                     |
+| Coach mode    | Athlete-only is fine; coach candidates must manage a small roster and accept redacted feedback only. |
+| Mobile need   | Can answer whether mobile/tray access would change daily use (PRD §7.4 #8).                          |
+| Availability  | Can complete install + first call and a short exit interview inside the beta window.                 |
 
 ## Recruitment script
 
@@ -40,7 +40,7 @@ Before onboarding, send and receive explicit agreement to:
 Track only this minimal roster outside the repo while running the beta:
 
 | Participant label | Segment | OS/client | Coach-mode? | Consent received? | Onboarded? |
-| --- | --- | --- | --- | --- | --- |
-| P01 |  |  |  |  |  |
+| ----------------- | ------- | --------- | ----------- | ----------------- | ---------- |
+| P01               |         |           |             |                   |            |
 
 Do not commit the live roster or contact details to the repository.

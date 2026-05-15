@@ -39,13 +39,13 @@ Use only for coach participants who consented to redacted coach-mode feedback.
 
 ## Troubleshooting
 
-| Symptom | Operator action |
-| --- | --- |
-| Client cannot find server | Re-check the linked Claude Desktop/Code doc and restart the client. |
-| Setup cannot load credentials | Re-run `icuvisor setup`; participant types secrets locally. |
-| Tool catalog seems stale | Start a new client conversation; for coach-mode changes, follow catalog-cache guidance in `docs/coach-mode.md`. |
-| Need local support bundle | Ask participant to run `icuvisor diagnostics` and voluntarily paste only that redacted output. |
-| HTTP transport confusion | Use stdio for beta unless the participant is explicitly testing Streamable HTTP. |
+| Symptom                       | Operator action                                                                                                 |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Client cannot find server     | Re-check the linked Claude Desktop/Code doc and restart the client.                                             |
+| Setup cannot load credentials | Re-run `icuvisor setup`; participant types secrets locally.                                                     |
+| Tool catalog seems stale      | Start a new client conversation; for coach-mode changes, follow catalog-cache guidance in `docs/coach-mode.md`. |
+| Need local support bundle     | Ask participant to run `icuvisor diagnostics` and voluntarily paste only that redacted output.                  |
+| HTTP transport confusion      | Use stdio for beta unless the participant is explicitly testing Streamable HTTP.                                |
 
 ## Mid-beta update exercise
 

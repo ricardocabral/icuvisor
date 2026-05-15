@@ -4,12 +4,12 @@ Collect evidence manually. TP-041 does not add telemetry, run the cohort, or pop
 
 ## PRD anchors
 
-| Anchor | What this beta measures | Manual procedure |
-| --- | --- | --- |
-| KR1 (§4) | Time from install start to first successful MCP tool call. | Operator starts a timer at DMG install step 1 and stops after first successful icuvisor tool response. |
-| PRD §7.4 #6 | Demand / willingness to keep using and recommend. | Ask exit-interview recommendation and daily-use questions; record a short signal. |
-| PRD §7.4 #8 | Whether mobile/tray access is needed for daily usefulness. | Ask the mobile-need question during screening and exit interview. |
-| PRD §7.4 #12 | Whether schema-change/catalog guidance is understandable. | During update exercise or discussion, ask if catalog-hash/schema-change guidance was clear. |
+| Anchor       | What this beta measures                                    | Manual procedure                                                                                       |
+| ------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| KR1 (§4)     | Time from install start to first successful MCP tool call. | Operator starts a timer at DMG install step 1 and stops after first successful icuvisor tool response. |
+| PRD §7.4 #6  | Demand / willingness to keep using and recommend.          | Ask exit-interview recommendation and daily-use questions; record a short signal.                      |
+| PRD §7.4 #8  | Whether mobile/tray access is needed for daily usefulness. | Ask the mobile-need question during screening and exit interview.                                      |
+| PRD §7.4 #12 | Whether schema-change/catalog guidance is understandable.  | During update exercise or discussion, ask if catalog-hash/schema-change guidance was clear.            |
 
 ## What to collect
 
@@ -28,7 +28,7 @@ Collect evidence manually. TP-041 does not add telemetry, run the cohort, or pop
 Copy this table into [findings.md](findings.md) and fill one row per participant during the run.
 
 | Participant | Segment | Client | Coach mode? | Install-to-first-call minutes (KR1) | Top 5 tool calls (names/timestamps only) | Mobile need (§7.4 #8) | Recommend/demand (§7.4 #6) | Schema-change clarity (§7.4 #12) | Surprises (redacted) | Blockers filed |
-| --- | --- | --- | --- | ---: | --- | --- | --- | --- | --- | --- |
+| ----------- | ------- | ------ | ----------- | ----------------------------------: | ---------------------------------------- | --------------------- | -------------------------- | -------------------------------- | -------------------- | -------------- |
 
 ## Operator notes
 

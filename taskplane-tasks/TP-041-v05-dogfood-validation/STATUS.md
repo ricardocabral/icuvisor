@@ -34,6 +34,7 @@ Implementation plan (R001):
 **Status:** ✅ Complete
 
 Implementation plan (R005):
+
 - Create `docs/internal-beta/` with all seven outputs: `README.md`, `protocol.md`, `onboarding-playbook.md`, `measurement.md`, `exit-interview.md`, `findings.md`, and `checklist.md`; keep each under ~150 lines with checklists/tables instead of long prose and no beta execution or fabricated findings.
 - `README.md` will be an execution-order index linking the six runnable docs. `protocol.md` will contain recruitment copy, consent/privacy wording, eligibility filters, 5–10 cohort cap, 14-day time-box, and a clear non-execution boundary.
 - `onboarding-playbook.md` will cover DMG download/install, `icuvisor setup`, first-call verification, coach-mode variant referencing TP-039 roster/ACL behavior, troubleshooting via `icuvisor diagnostics`, and release/update exercise instructions only. It will link to `docs/install/macos.md`, `docs/clients/claude-desktop.md`, `docs/clients/claude-code.md`, and `docs/coach-mode.md` rather than duplicating JSON snippets.
@@ -80,3 +81,6 @@ _Add notes as work progresses._
 | 2026-05-15 23:43 | Review R005 | plan Step 2: REVISE |
 | 2026-05-15 23:45 | Review R006 | plan Step 2: APPROVE |
 | 2026-05-15 23:50 | Review R007 | code Step 2: APPROVE |
+
+| 2026-05-15 23:53 | Worker iter 1 | done in 4392s, tools: 138 |
+| 2026-05-15 23:53 | Task complete | .DONE created |
