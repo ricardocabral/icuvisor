@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -32,12 +32,12 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Order: env > keychain > file > error
-- [ ] `_source` diagnostic indicator (env|keychain|file)
-- [ ] Updated missing-key error message
-- [ ] WARN on legacy file `api_key`
-- [ ] `credstore.Store` injection in config options and production startup wiring
-- [ ] Keychain error flow: env skips lookup, only `ErrNotFound` falls through, other errors fail load
+- [x] Order: env > keychain > file > error
+- [x] `_source` diagnostic indicator (env|keychain|file)
+- [x] Updated missing-key error message
+- [x] WARN on legacy file `api_key`
+- [x] `credstore.Store` injection in config options and production startup wiring
+- [x] Keychain error flow: env skips lookup, only `ErrNotFound` falls through, other errors fail load
 
 ### Step 4: Tests + manual sweep
 
@@ -91,3 +91,4 @@ _Add notes as work progresses._
 | 2026-05-15 13:55 | Review R005 | plan Step 2: APPROVE |
 | 2026-05-15 14:05 | Review R006 | code Step 2: APPROVE |
 | 2026-05-15 14:08 | Review R007 | plan Step 3: REVISE |
+| 2026-05-15 14:10 | Review R008 | plan Step 3: APPROVE |

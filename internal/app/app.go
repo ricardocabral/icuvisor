@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/config"
+	"github.com/ricardocabral/icuvisor/internal/credstore"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	mcpserver "github.com/ricardocabral/icuvisor/internal/mcp"
 	"github.com/ricardocabral/icuvisor/internal/prompts"
@@ -215,6 +216,9 @@ func requireInlineFlagValue(arg string, name string, example string) (string, er
 func startServer(ctx context.Context, loader func(context.Context, config.Options) (config.Config, error), starter func(context.Context, ServerInfo) error, info ServerInfo, configOpts config.Options) error {
 	if loader == nil {
 		loader = config.Load
+		if configOpts.CredentialStore == nil {
+			configOpts.CredentialStore = credstore.OSKeychain()
+		}
 	}
 	cfg, err := loader(ctx, configOpts)
 	if err != nil {
