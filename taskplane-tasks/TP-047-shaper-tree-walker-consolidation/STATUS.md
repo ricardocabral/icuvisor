@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 
@@ -23,7 +23,7 @@
 
 ### Step 2: Pick the approach
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Decide typed-shape vs single visitor walker
 - [x] Justify in Decisions below (diff size, blast radius, `include_full` fit)
@@ -87,3 +87,5 @@ _Add notes as work progresses._
 | 2026-05-15 17:56 | Review R003 | code Step 1: REVISE |
 | 2026-05-15 18:00 | Review R004 | code Step 1: APPROVE |
 | 2026-05-15 18:03 | Review R005 | plan Step 2: REVISE |
+| 2026-05-15 18:08 | Review R006 | plan Step 2: APPROVE |
+| 2026-05-15 18:11 | Review R007 | code Step 2: APPROVE |
