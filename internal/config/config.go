@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"net/url"
 	"os"
@@ -118,6 +119,9 @@ func Load(ctx context.Context, opts Options) (Config, error) {
 			return Config{}, err
 		}
 		raw.merge(fileRaw, false)
+		slog.Default().Info("config file loaded", "path", path)
+	} else {
+		slog.Default().Info("config file not used", "hint", "set --config or "+EnvConfigPath)
 	}
 
 	dotEnvPath := strings.TrimSpace(opts.DotEnvPath)
@@ -138,8 +142,10 @@ func Load(ctx context.Context, opts Options) (Config, error) {
 		if explicitDotEnv {
 			return Config{}, fmt.Errorf("env file %q not found; check --env-file path or %s", dotEnvPath, EnvDotEnvPath)
 		}
+		slog.Default().Info("env file not found", "path", dotEnvPath)
 	} else {
 		raw.merge(rawFromEnv(dotEnv), true)
+		slog.Default().Info("env file loaded", "path", dotEnvPath)
 	}
 
 	raw.merge(rawFromEnv(env), false)
