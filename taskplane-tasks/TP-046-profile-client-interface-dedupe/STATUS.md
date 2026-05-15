@@ -1,10 +1,10 @@
 # TP-046-profile-client-interface-dedupe — Status
 
-**Current Step:** Step 3: Tests
+**Current Step:** Step 4: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** S
 
@@ -30,14 +30,14 @@
 
 ### Step 3: Tests
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `go build ./...` — fakes still satisfy
-- [ ] `make test` + `make test-race`
+- [x] `go build ./...` — fakes still satisfy
+- [x] `make test` + `make test-race`
 
 ### Step 4: Verify
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] `make build` / `test` / `test-race` / `lint`
 - [ ] `grep -rn "type ProfileClient interface" internal/` returns one hit
@@ -63,3 +63,4 @@ _Add notes as work progresses. If TP-042 lands first, note any textual merge res
 | 2026-05-15 13:21 | Review R001 | plan Step 1: REVISE |
 | 2026-05-15 13:23 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-15 13:27 | Review R003 | plan Step 2: APPROVE |
+| 2026-05-15 13:31 | Review R004 | plan Step 3: APPROVE |
