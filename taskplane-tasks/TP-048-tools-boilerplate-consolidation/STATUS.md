@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 11
+**Review Counter:** 12
 **Iteration:** 1
 **Size:** M
 
@@ -43,11 +43,11 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Choose `int`+`iota` vs typed `string` (record decision below)
-- [ ] Convert constants in `internal/tools/registry.go:286-293`
-- [ ] Update all call sites, including `internal/mcp` and `internal/safety` references from `grep -rn "Requirement" internal/`
-- [ ] Preserve zero-value/default read behavior without raw string comparisons
-- [ ] Preserve wire format if serialised
+- [x] Choose `int`+`iota` vs typed `string` (record decision below)
+- [x] Convert constants in `internal/tools/registry.go:286-293`
+- [x] Update all call sites, including `internal/mcp` and `internal/safety` references from `grep -rn "Requirement" internal/`
+- [x] Preserve zero-value/default read behavior without raw string comparisons
+- [x] Preserve wire format if serialised
 
 ### Step 5: Verify
 
@@ -86,3 +86,4 @@
 | 2026-05-15 14:07 | Review R009 | plan Step 3: APPROVE |
 | 2026-05-15 14:11 | Review R010 | code Step 3: APPROVE |
 | 2026-05-15 14:14 | Review R011 | plan Step 4: REVISE |
+| 2026-05-15 14:16 | Review R012 | plan Step 4: APPROVE |

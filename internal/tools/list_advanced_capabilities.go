@@ -126,8 +126,5 @@ func nextSentenceStartsUpper(value string) bool {
 }
 
 func toolRequirement(tool Tool) string {
-	if tool.Requirement == "" {
-		return string(RequirementRead)
-	}
-	return string(tool.Requirement)
+	return string(tool.Requirement.effective())
 }

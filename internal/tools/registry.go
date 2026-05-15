@@ -284,6 +284,8 @@ type Handler func(context.Context, Request) (Result, error)
 type Requirement string
 
 const (
+	requirementDefault Requirement = ""
+
 	// RequirementRead registers the tool in every mode.
 	RequirementRead Requirement = "read"
 	// RequirementWrite registers the tool only when write tools are allowed.
@@ -291,6 +293,13 @@ const (
 	// RequirementDelete registers the tool only when delete tools are allowed.
 	RequirementDelete Requirement = "delete"
 )
+
+func (r Requirement) effective() Requirement {
+	if r == requirementDefault {
+		return RequirementRead
+	}
+	return r
+}
 
 // Tool describes one MCP tool without exposing SDK-specific types.
 type Tool struct {
@@ -326,12 +335,13 @@ func (t Tool) EffectiveToolset() safety.Toolset {
 
 // RequiresWrite reports whether the tool needs write capability to be registered.
 func (t Tool) RequiresWrite() bool {
-	return t.Requirement == RequirementWrite || t.Requirement == RequirementDelete
+	requirement := t.Requirement.effective()
+	return requirement == RequirementWrite || requirement == RequirementDelete
 }
 
 // RequiresDelete reports whether the tool needs delete capability to be registered.
 func (t Tool) RequiresDelete() bool {
-	return t.Requirement == RequirementDelete
+	return t.Requirement.effective() == RequirementDelete
 }
 
 // Request carries an MCP tool call to a Handler.
