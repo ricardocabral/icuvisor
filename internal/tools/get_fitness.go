@@ -1,12 +1,10 @@
 package tools
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"math"
 	"sort"
 	"strings"
@@ -322,9 +320,14 @@ func getTrainingSummaryHandler(client FitnessClient, profileClient ProfileClient
 
 func decodeDateRangeRequest(raw json.RawMessage) (dateRangeRequest, error) {
 	var args dateRangeRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[dateRangeRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.StartDate = strings.TrimSpace(args.StartDate)
 	args.EndDate = strings.TrimSpace(args.EndDate)
 	if !validDate(args.StartDate) || !validDate(args.EndDate) {
@@ -338,9 +341,14 @@ func decodeDateRangeRequest(raw json.RawMessage) (dateRangeRequest, error) {
 
 func decodePowerCurvesRequest(raw json.RawMessage) (powerCurvesRequest, error) {
 	var args powerCurvesRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[powerCurvesRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.Oldest = strings.TrimSpace(args.Oldest)
 	args.Newest = strings.TrimSpace(args.Newest)
 	args.Sport = firstNonEmpty(strings.TrimSpace(args.Sport), defaultPowerCurveSport)
@@ -356,9 +364,14 @@ func decodePowerCurvesRequest(raw json.RawMessage) (powerCurvesRequest, error) {
 
 func decodeBestEffortsRequest(raw json.RawMessage) (bestEffortsRequest, error) {
 	var args bestEffortsRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[bestEffortsRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.Oldest = strings.TrimSpace(args.Oldest)
 	args.Newest = strings.TrimSpace(args.Newest)
 	if (args.Oldest == "") != (args.Newest == "") {
@@ -371,22 +384,6 @@ func decodeBestEffortsRequest(raw json.RawMessage) (bestEffortsRequest, error) {
 	args.DurationSeconds = normalizePositiveInts(args.DurationSeconds, defaultDurationBuckets)
 	args.DistanceMeters = normalizePositiveInts(args.DistanceMeters, nil)
 	return args, nil
-}
-
-func decodeStrict(raw json.RawMessage, out any) error {
-	trimmed := bytes.TrimSpace(raw)
-	if len(trimmed) == 0 || trimmed[0] != '{' {
-		return errors.New("arguments must be a JSON object")
-	}
-	decoder := json.NewDecoder(bytes.NewReader(trimmed))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(out); err != nil {
-		return err
-	}
-	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
-		return errors.New("unexpected trailing JSON")
-	}
-	return nil
 }
 
 func validDate(value string) bool { _, err := time.Parse(time.DateOnly, value); return err == nil }
@@ -654,11 +651,10 @@ func encodeShaped(payload any, includeFull bool, rowCollections []string, versio
 	if err != nil {
 		return Result{}, err
 	}
-	text, err := json.Marshal(shaped)
-	if err != nil {
+	if _, err := json.Marshal(shaped); err != nil {
 		return Result{}, fmt.Errorf("encoding %s response: %w", queryType, err)
 	}
-	return Result{Content: []Content{{Type: ContentTypeText, Text: string(text)}}, StructuredContent: shaped}, nil
+	return TextResult(shaped), nil
 }
 
 func roundPtr(value float64) *float64 { rounded := round(value, 3); return &rounded }

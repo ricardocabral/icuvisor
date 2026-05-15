@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
@@ -106,6 +107,166 @@ func TestGetActivitiesPaginationFiltersAndTokenRoundTrip(t *testing.T) {
 	secondRows := resultMap(t, second)["activities"].([]any)
 	if got := secondRows[0].(map[string]any)["activity_id"]; got != "a1" {
 		t.Fatalf("second activity_id = %v, want a1 after unnamed same-timestamp row is filtered", got)
+	}
+}
+
+func TestFetchActivitiesPageBoundaryGoldenFixtures(t *testing.T) {
+	t.Parallel()
+
+	const exactFullWindowToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJkZXZpY2VfbmFtZSJdLCJiZWZvcmVfc3RhcnRfZGF0ZV9sb2NhbCI6IjIwMjYtMDEtMDNUMDc6MDA6MDAiLCJiZWZvcmVfaWQiOiJmMyIsInNraXBfaWRzX2F0X2JvdW5kYXJ5IjpbImYzIl19`
+	const identicalTimestampStallToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJkZXZpY2VfbmFtZSJdLCJiZWZvcmVfc3RhcnRfZGF0ZV9sb2NhbCI6IjIwMjYtMDEtMDNUMDc6MDA6MDAiLCJiZWZvcmVfaWQiOiJzMyIsInNraXBfaWRzX2F0X2JvdW5kYXJ5IjpbInMzIl19`
+
+	tests := []struct {
+		name            string
+		rawActivities   []string
+		args            GetActivitiesRequest
+		nextPageToken   string
+		applyListParams bool
+		wantIDs         []string
+		wantToken       string
+	}{
+		{
+			name: "empty upstream page",
+			args: GetActivitiesRequest{Oldest: "2026-01-01", PageSize: 2},
+		},
+		{
+			name: "partial page",
+			rawActivities: []string{
+				`{"id":"p2","name":"Tempo","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
+				`{"id":"p1","name":"Easy","type":"Run","start_date_local":"2026-01-02T07:00:00","distance":1000,"moving_time":300}`,
+			},
+			args:    GetActivitiesRequest{Oldest: "2026-01-01", PageSize: 3},
+			wantIDs: []string{"p2", "p1"},
+		},
+		{
+			name: "exact full window",
+			rawActivities: []string{
+				`{"id":"f2","name":"Middle","type":"Run","start_date_local":"2026-01-02T07:00:00","distance":1000,"moving_time":300}`,
+				`{"id":"f1","name":"Oldest","type":"Run","start_date_local":"2026-01-01T07:00:00","distance":1000,"moving_time":300}`,
+				`{"id":"f3","name":"Newest","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
+			},
+			args:      GetActivitiesRequest{Oldest: "2026-01-01", PageSize: 1},
+			wantIDs:   []string{"f3"},
+			wantToken: exactFullWindowToken,
+		},
+		{
+			name: "identical-timestamp stall",
+			rawActivities: []string{
+				`{"id":"s3","name":"Named","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
+				`{"id":"s2","name":"","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
+				`{"id":"s1","name":"","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
+			},
+			args:            GetActivitiesRequest{Oldest: "2026-01-01", PageSize: 1},
+			nextPageToken:   identicalTimestampStallToken,
+			applyListParams: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := newFakeActivitiesClient(t, tc.rawActivities, "metric")
+			client.applyListParams = tc.applyListParams
+			var token *activitiesPageToken
+			if tc.nextPageToken != "" {
+				parsed, err := parseActivitiesPageToken(tc.nextPageToken)
+				if err != nil {
+					t.Fatalf("parseActivitiesPageToken() error = %v", err)
+				}
+				token = parsed
+			}
+
+			activities, nextToken, err := fetchActivitiesPage(context.Background(), client, tc.args, token)
+			if err != nil {
+				t.Fatalf("fetchActivitiesPage() error = %v", err)
+			}
+			if got := activityIDs(activities); !slices.Equal(got, tc.wantIDs) {
+				t.Fatalf("activity IDs = %#v, want %#v", got, tc.wantIDs)
+			}
+			if nextToken != tc.wantToken {
+				t.Fatalf("next token = %q, want %q", nextToken, tc.wantToken)
+			}
+		})
+	}
+}
+
+func TestGetActivitiesBoundaryResponseShapeGoldenFixtures(t *testing.T) {
+	t.Parallel()
+
+	const identicalTimestampStallToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJkZXZpY2VfbmFtZSJdLCJiZWZvcmVfc3RhcnRfZGF0ZV9sb2NhbCI6IjIwMjYtMDEtMDNUMDc6MDA6MDAiLCJiZWZvcmVfaWQiOiJzMyIsInNraXBfaWRzX2F0X2JvdW5kYXJ5IjpbInMzIl19`
+
+	tests := []struct {
+		name            string
+		rawActivities   []string
+		arguments       string
+		applyListParams bool
+		wantIDs         []string
+		wantPageSize    float64
+		wantMore        bool
+	}{
+		{
+			name:         "empty upstream page",
+			arguments:    `{"oldest":"2026-01-01","page_size":2}`,
+			wantPageSize: 2,
+		},
+		{
+			name: "partial page",
+			rawActivities: []string{
+				`{"id":"p2","name":"Tempo","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
+				`{"id":"p1","name":"Easy","type":"Run","start_date_local":"2026-01-02T07:00:00","distance":1000,"moving_time":300}`,
+			},
+			arguments:    `{"oldest":"2026-01-01","page_size":3}`,
+			wantIDs:      []string{"p2", "p1"},
+			wantPageSize: 3,
+		},
+		{
+			name: "exact full window",
+			rawActivities: []string{
+				`{"id":"f2","name":"Middle","type":"Run","start_date_local":"2026-01-02T07:00:00","distance":1000,"moving_time":300}`,
+				`{"id":"f1","name":"Oldest","type":"Run","start_date_local":"2026-01-01T07:00:00","distance":1000,"moving_time":300}`,
+				`{"id":"f3","name":"Newest","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
+			},
+			arguments:    `{"oldest":"2026-01-01","page_size":1}`,
+			wantIDs:      []string{"f3"},
+			wantPageSize: 1,
+			wantMore:     true,
+		},
+		{
+			name: "identical-timestamp stall",
+			rawActivities: []string{
+				`{"id":"s3","name":"Named","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
+				`{"id":"s2","name":"","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
+				`{"id":"s1","name":"","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
+			},
+			arguments:       fmt.Sprintf(`{"next_page_token":"%s"}`, identicalTimestampStallToken),
+			applyListParams: true,
+			wantPageSize:    1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := newFakeActivitiesClient(t, tc.rawActivities, "metric")
+			client.applyListParams = tc.applyListParams
+			tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.arguments)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			resultMap := resultMap(t, result)
+			rows := resultMap["activities"].([]any)
+			if got := activityRowIDs(rows); !slices.Equal(got, tc.wantIDs) {
+				t.Fatalf("activity IDs = %#v, want %#v", got, tc.wantIDs)
+			}
+			meta := resultMap["_meta"].(map[string]any)
+			if meta["page_size"] != tc.wantPageSize || meta["include_full"] != false || meta["more_available"] != tc.wantMore {
+				t.Fatalf("_meta = %#v, want page_size=%v include_full=false more_available=%v", meta, tc.wantPageSize, tc.wantMore)
+			}
+			_, hasToken := meta["next_page_token"].(string)
+			if hasToken != tc.wantMore {
+				t.Fatalf("next_page_token present = %v, want %v; _meta = %#v", hasToken, tc.wantMore, meta)
+			}
+		})
 	}
 }
 
@@ -491,6 +652,24 @@ func findTool(t *testing.T, tools []Tool, name string) Tool {
 	}
 	t.Fatalf("tool %s not found in %#v", name, tools)
 	return Tool{}
+}
+
+func activityIDs(activities []intervals.Activity) []string {
+	ids := make([]string, 0, len(activities))
+	for _, activity := range activities {
+		ids = append(ids, activity.ID)
+	}
+	return ids
+}
+
+func activityRowIDs(rows []any) []string {
+	ids := make([]string, 0, len(rows))
+	for _, rawRow := range rows {
+		row := rawRow.(map[string]any)
+		id, _ := row["activity_id"].(string)
+		ids = append(ids, id)
+	}
+	return ids
 }
 
 func resultMap(t *testing.T, result Result) map[string]any {

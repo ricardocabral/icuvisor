@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/ricardocabral/icuvisor/internal/clients"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
@@ -28,7 +29,7 @@ func NewRegistry() Registry {
 }
 
 // NewRegistryWithOptions returns the default MCP resource registry.
-func NewRegistryWithOptions(profileClient ProfileClient, opts ResourceOptions) Registry {
+func NewRegistryWithOptions(profileClient clients.ProfileClient, opts ResourceOptions) Registry {
 	entries := []Resource{WorkoutSyntaxResource(), EventCategoriesResource(), CustomItemSchemasResource()}
 	if profileClient != nil {
 		entries = append(entries, AthleteProfileResource(profileClient, opts))

@@ -87,9 +87,11 @@ func decodeGetCustomItemsRequest(raw json.RawMessage) (getCustomItemsRequest, er
 	if len(strings.TrimSpace(string(raw))) == 0 {
 		return args, nil
 	}
-	if err := decodeStrict(raw, &args); err != nil {
+	decoded, err := DecodeStrict[getCustomItemsRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.ItemType = strings.TrimSpace(args.ItemType)
 	return args, nil
 }

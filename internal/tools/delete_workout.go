@@ -69,9 +69,14 @@ func deleteWorkoutHandler(client WorkoutDeleterClient, profileClient ProfileClie
 
 func decodeDeleteWorkoutRequest(raw json.RawMessage) (deleteWorkoutRequest, error) {
 	var args deleteWorkoutRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[deleteWorkoutRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.WorkoutID = strings.TrimSpace(args.WorkoutID)
 	if args.WorkoutID == "" {
 		return args, errors.New("workout_id is required")

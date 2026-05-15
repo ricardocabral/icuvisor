@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Threaded delete-mode and toolset response metadata through explicit response-shaping options instead of process-global state.
 - Refactored internal MCP tool registry wiring to depend directly on the typed intervals.icu client instead of a runtime assertion chain, preserving the public tool catalog and schemas.
+- Refactored the internal `get_activities` pagination driver around explicit cursor state while preserving response shape and opaque page tokens.
+- Consolidated duplicated internal tools-package strict argument decoding and text-result construction behind shared helpers, without changing tool schemas.
+- Consolidated the internal athlete profile client interface into a shared `internal/clients` package used by tools and resources.
 
 ### Added
 

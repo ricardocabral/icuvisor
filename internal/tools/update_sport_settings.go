@@ -137,9 +137,14 @@ func decodeUpdateSportSettingsRequest(raw json.RawMessage) (updateSportSettingsR
 		return updateSportSettingsRequest{}, err
 	}
 	var args updateSportSettingsRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[updateSportSettingsRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.zonesProvided = zonesProvided
 	args.Sport = canonicalSport(args.Sport)
 	args.EffectiveDate = strings.TrimSpace(args.EffectiveDate)

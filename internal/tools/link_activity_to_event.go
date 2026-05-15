@@ -82,9 +82,14 @@ func linkActivityToEventHandler(client ActivityEventLinkClient, activityClient A
 
 func decodeLinkActivityToEventRequest(raw json.RawMessage) (linkActivityToEventRequest, error) {
 	var args linkActivityToEventRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[linkActivityToEventRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.ActivityID = strings.TrimSpace(args.ActivityID)
 	args.EventID = strings.TrimSpace(args.EventID)
 	if args.ActivityID == "" {

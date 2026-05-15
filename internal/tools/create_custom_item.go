@@ -68,9 +68,14 @@ func createCustomItemHandler(client CustomItemCreatorClient, readClient CustomIt
 
 func decodeCreateCustomItemRequest(raw json.RawMessage) (createCustomItemRequest, error) {
 	var args createCustomItemRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[createCustomItemRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.ItemType = strings.TrimSpace(args.ItemType)
 	args.Name = strings.TrimSpace(args.Name)
 	trimOptionalString(args.Visibility)

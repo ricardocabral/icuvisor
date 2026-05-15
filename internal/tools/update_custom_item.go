@@ -81,9 +81,14 @@ func decodeUpdateCustomItemRequest(raw json.RawMessage) (updateCustomItemRequest
 		return updateCustomItemRequest{}, err
 	}
 	var args updateCustomItemRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[updateCustomItemRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.ItemID = strings.TrimSpace(args.ItemID)
 	args.Name = strings.TrimSpace(args.Name)
 	trimOptionalString(args.Visibility)

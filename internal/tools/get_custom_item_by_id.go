@@ -67,9 +67,14 @@ func getCustomItemByIDHandler(client CustomItemsClient, profileClient ProfileCli
 
 func decodeGetCustomItemByIDRequest(raw json.RawMessage) (getCustomItemByIDRequest, error) {
 	var args getCustomItemByIDRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[getCustomItemByIDRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.ItemID = strings.TrimSpace(args.ItemID)
 	if args.ItemID == "" {
 		return args, errors.New("item_id is required")

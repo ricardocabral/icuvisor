@@ -70,9 +70,14 @@ func deleteCustomItemHandler(client CustomItemDeleterClient, profileClient Profi
 
 func decodeDeleteCustomItemRequest(raw json.RawMessage) (deleteCustomItemRequest, error) {
 	var args deleteCustomItemRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[deleteCustomItemRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.ItemID = strings.TrimSpace(args.ItemID)
 	if args.ItemID == "" {
 		return args, errors.New("item_id is required")

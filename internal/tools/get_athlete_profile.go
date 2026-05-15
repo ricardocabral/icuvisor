@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/athleteprofile"
+	"github.com/ricardocabral/icuvisor/internal/clients"
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/response"
@@ -22,10 +22,8 @@ const (
 	fetchAthleteProfileMessage               = "could not fetch athlete profile; check intervals.icu credentials and athlete ID"
 )
 
-// ProfileClient fetches athlete profile data for tools.
-type ProfileClient interface {
-	GetAthleteProfile(context.Context) (intervals.AthleteWithSportSettings, error)
-}
+// ProfileClient is the shared athlete profile client interface used by tools.
+type ProfileClient = clients.ProfileClient
 
 // GetAthleteProfileRequest contains the get_athlete_profile tool arguments.
 type GetAthleteProfileRequest struct {
@@ -81,14 +79,10 @@ func getAthleteProfileHandler(client ProfileClient, version string, timezoneFall
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_athlete_profile response: %w", err)
 		}
-		text, err := json.Marshal(shaped)
-		if err != nil {
+		if _, err := json.Marshal(shaped); err != nil {
 			return Result{}, fmt.Errorf("encoding get_athlete_profile response: %w", err)
 		}
-		return Result{
-			Content:           []Content{{Type: ContentTypeText, Text: string(text)}},
-			StructuredContent: shaped,
-		}, nil
+		return TextResult(shaped), nil
 	}
 }
 
@@ -100,14 +94,9 @@ func decodeGetAthleteProfileRequest(raw json.RawMessage) (GetAthleteProfileReque
 	if trimmed[0] != '{' {
 		return GetAthleteProfileRequest{}, errors.New("arguments must be a JSON object")
 	}
-	decoder := json.NewDecoder(bytes.NewReader(trimmed))
-	decoder.DisallowUnknownFields()
-	var args GetAthleteProfileRequest
-	if err := decoder.Decode(&args); err != nil {
+	args, err := DecodeStrict[GetAthleteProfileRequest](trimmed)
+	if err != nil {
 		return GetAthleteProfileRequest{}, err
-	}
-	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
-		return GetAthleteProfileRequest{}, errors.New("unexpected trailing JSON")
 	}
 	return args, nil
 }

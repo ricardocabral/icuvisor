@@ -122,9 +122,14 @@ func getEventByIDHandler(client EventByIDClient, profileClient ProfileClient, ve
 
 func decodeGetEventByIDRequest(raw json.RawMessage) (getEventByIDRequest, error) {
 	var args getEventByIDRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[getEventByIDRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.EventID = strings.TrimSpace(args.EventID)
 	args.Date = strings.TrimSpace(args.Date)
 	args.Oldest = strings.TrimSpace(args.Oldest)

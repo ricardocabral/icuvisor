@@ -72,9 +72,14 @@ func getWellnessDataHandler(client WellnessClient, profileClient ProfileClient, 
 
 func decodeGetWellnessDataRequest(raw json.RawMessage) (getWellnessDataRequest, error) {
 	var args getWellnessDataRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[getWellnessDataRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.Oldest = strings.TrimSpace(args.Oldest)
 	args.Newest = strings.TrimSpace(args.Newest)
 	if !validDate(args.Oldest) || !validDate(args.Newest) {
