@@ -68,7 +68,9 @@ Requested upstream shape: an enum such as `intensity_distribution_preference` wi
 
 ## Feature request status
 
-Status: not filed — maintainer action required.
+Status: not filed — maintainer-authenticated forum filing required.
+
+Public feature-request URL: pending maintainer-authenticated forum filing.
 
 Target public channel URL: `https://forum.intervals.icu/`
 
@@ -77,7 +79,7 @@ Suggested context links for the maintainer to include:
 - `https://forum.intervals.icu/t/any-reviews-or-comparisons-of-the-wealth-of-ai-tools-for-intervals/123739/28`
 - `https://forum.intervals.icu/t/any-reviews-or-comparisons-of-the-wealth-of-ai-tools-for-intervals/123739/30`
 
-On 2026-05-11, TP-014 attempted to post the request to the public intervals.icu forum endpoint, but the anonymous request was rejected with `403` / `BAD CSRF`; an authenticated forum session or maintainer action is required. Per maintainer steering, no further anonymous or authenticated POSTs or external account actions should be attempted by task workers.
+On 2026-05-11, TP-014 attempted to post the request to the public intervals.icu forum endpoint, but the anonymous request was rejected with `403` / `BAD CSRF`; an authenticated forum session or maintainer action is required. Per maintainer steering, no further anonymous or authenticated POSTs or external account actions should be attempted by task workers. Until that external action happens, the URL placeholder above is the canonical link target for TP-014.
 
 ### Copy-paste-ready feature-request draft
 
@@ -110,7 +112,7 @@ A small read-only resource such as `GET /api/v1/athlete/{id}/planning-parameters
 Thanks!
 ```
 
-Once filed, add the forum/support URL here and update the TP-014 status file.
+Once filed, replace the placeholder above with the forum/support URL and update the TP-014 status file.
 
 ## References
 
