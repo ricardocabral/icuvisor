@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -25,6 +25,7 @@
 - [x] `--help` golden file updated
 - [x] Overwrite prompts for keychain + config-file
 - [x] Honours `--config`
+- [ ] R006: redact setup unknown-flag values, especially `--api-key=...`, and tidy direct `golang.org/x/term` dependency
 
 ### Step 3: Autodetect + verify
 
@@ -130,3 +131,4 @@ Plan review R003 requested a concrete CLI wiring plan before coding. Implement S
 | 2026-05-15 18:56 | Review R003 | plan Step 2: UNKNOWN |
 | 2026-05-15 18:58 | Review R004 | plan Step 2: REVISE |
 | 2026-05-15 19:00 | Review R005 | plan Step 2: APPROVE |
+| 2026-05-15 19:09 | Review R006 | code Step 2: REVISE |
