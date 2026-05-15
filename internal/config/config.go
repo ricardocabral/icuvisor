@@ -537,9 +537,25 @@ func validate(raw rawConfig) (Config, error) {
 		return Config{}, fmt.Errorf("missing intervals.icu API key; set %s, store it in OS keychain service %q account %q, or set legacy api_key in config JSON/.env", EnvAPIKey, credstore.ServiceName, credstore.IntervalsAPIKeyAccount)
 	}
 
-	athleteID, err := NormalizeAthleteID(raw.athleteID)
+	coachMode, err := coach.ParseMode(raw.coachMode)
 	if err != nil {
 		return Config{}, err
+	}
+	var rawCoach coach.Config
+	if raw.coach != nil {
+		rawCoach = *raw.coach
+	}
+	coachConfig, err := coach.ValidateConfig(rawCoach, coachMode, NormalizeAthleteID)
+	if err != nil {
+		return Config{}, err
+	}
+
+	athleteID := coachConfig.DefaultAthleteID
+	if strings.TrimSpace(raw.athleteID) != "" || coach.EffectiveMode(coachMode, coachConfig) != coach.ModeOn {
+		athleteID, err = NormalizeAthleteID(raw.athleteID)
+		if err != nil {
+			return Config{}, err
+		}
 	}
 
 	timezone := raw.timezone
@@ -581,19 +597,6 @@ func validate(raw rawConfig) (Config, error) {
 		httpBindAddress = DefaultHTTPBindAddress
 	}
 	httpBindAddress, err = NormalizeHTTPBindAddress(httpBindAddress)
-	if err != nil {
-		return Config{}, err
-	}
-
-	coachMode, err := coach.ParseMode(raw.coachMode)
-	if err != nil {
-		return Config{}, err
-	}
-	var rawCoach coach.Config
-	if raw.coach != nil {
-		rawCoach = *raw.coach
-	}
-	coachConfig, err := coach.ValidateConfig(rawCoach, coachMode, NormalizeAthleteID)
 	if err != nil {
 		return Config{}, err
 	}

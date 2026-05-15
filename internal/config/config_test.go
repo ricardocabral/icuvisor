@@ -369,6 +369,40 @@ func TestLoadCoachConfigSchemaAndValidation(t *testing.T) {
 	}
 }
 
+func TestLoadCoachModeAllowsCoachOnlyConfig(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		mode string
+	}{
+		{name: "on", mode: "on"},
+		{name: "auto", mode: "auto"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			dir := t.TempDir()
+			path := dir + "/config.json"
+			writeFile(t, path, `{
+				"api_key": "json-key",
+				"coach": {
+					"athletes": [{"id": "222", "allowed_tools": ["*"]}],
+					"default_athlete_id": "222"
+				}
+			}`)
+			cfg, err := Load(context.Background(), Options{Path: path, DotEnvPath: dir + "/missing.env", Env: map[string]string{EnvCoachMode: tc.mode}})
+			if err != nil {
+				t.Fatalf("Load() error = %v", err)
+			}
+			if !cfg.CoachModeEnabled() || cfg.AthleteID != "i222" {
+				t.Fatalf("Coach enabled=%t AthleteID=%q, want enabled with default i222", cfg.CoachModeEnabled(), cfg.AthleteID)
+			}
+		})
+	}
+}
+
 func TestLoadCoachConfigValidationErrors(t *testing.T) {
 	t.Parallel()
 

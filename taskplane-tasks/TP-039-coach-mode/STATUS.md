@@ -32,8 +32,8 @@
 - [x] `ICUVISOR_COACH_MODE=on|off|auto`
 - [x] `coach.athletes[]` schema with `allowed_tools` / `denied_tools` / `default_athlete_id`
 - [x] Unknown tool names fail loudly
-- [ ] R006 revision: allow coach-mode `on`/effective `auto` configs to omit top-level `athlete_id` by resolving `Config.AthleteID` from `coach.default_athlete_id`
-- [ ] R006 revision: add explicit registered-catalog drift test against `toolcatalog.AthleteScopedToolNames()` so ACL validation and registry cannot diverge silently
+- [x] R006 revision: allow coach-mode `on`/effective `auto` configs to omit top-level `athlete_id` by resolving `Config.AthleteID` from `coach.default_athlete_id`
+- [x] R006 revision: add explicit registered-catalog drift test against `toolcatalog.AthleteScopedToolNames()` so ACL validation and registry cannot diverge silently
 
 ### Step 3: Tool registry plumbing
 

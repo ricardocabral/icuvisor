@@ -40,3 +40,31 @@ func TestRegistryWithIntervalsClientRegistersFullCatalog(t *testing.T) {
 		t.Fatalf("registered tools = %v, want %v", gotNames, wantNames)
 	}
 }
+
+func TestRegisteredAthleteScopedToolsMatchSharedCatalog(t *testing.T) {
+	t.Parallel()
+
+	registrar := &collectingRegistrar{}
+	registry := NewRegistryWithOptions(newNoNetworkIntervalsClient(t), RegistryOptions{
+		Version:          "test",
+		TimezoneFallback: "UTC",
+		Capability:       safety.NewCapability(safety.ModeFull),
+		Toolset:          safety.ToolsetFull,
+	})
+	if err := registry.Register(context.Background(), registrar); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+
+	gotNames := make([]string, 0, len(registrar.tools))
+	for _, tool := range registrar.tools {
+		if toolcatalog.IsAthleteScopedTool(tool.Name) {
+			gotNames = append(gotNames, tool.Name)
+		}
+	}
+	slices.Sort(gotNames)
+
+	wantNames := toolcatalog.AthleteScopedToolNames()
+	if !slices.Equal(gotNames, wantNames) {
+		t.Fatalf("registered athlete-scoped tools = %v, want shared catalog %v", gotNames, wantNames)
+	}
+}
