@@ -201,13 +201,17 @@ func TestDeleteToolsRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
 	client := &fakeDeleteToolsClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "UTC"}}}
-	registrar := &collectingRegistrar{}
-	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
+	tools := []Tool{
+		newDeleteEventTool(client, client, "test", "UTC", false),
+		newDeleteActivityTool(client, client, "test", "UTC", false),
+		newDeleteCustomItemTool(client, client, "test", "UTC", false),
+		newDeleteSportSettingsTool(client, client, "test", "UTC", false),
+		newDeleteGearTool(client, client, "test", "UTC", false),
+		newDeleteEventsByDateRangeTool(client, client, "test", "UTC", false),
 	}
 	for _, name := range []string{deleteEventName, deleteActivityName, deleteCustomItemName, deleteSportSettingsName, deleteGearName, deleteEventsByDateRangeName} {
 		t.Run(name, func(t *testing.T) {
-			tool := findTool(t, registrar.tools, name)
+			tool := findTool(t, tools, name)
 			if tool.Requirement != RequirementDelete || !tool.RequiresDelete() {
 				t.Fatalf("requirement = %q delete=%v, want delete", tool.Requirement, tool.RequiresDelete())
 			}

@@ -167,11 +167,7 @@ func TestApplyTrainingPlanRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
 	client := newApplyTrainingPlanTestClient(t)
-	registrar := &collectingRegistrar{}
-	if err := NewRegistryWithOptions(client, RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeSafe)}).Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
-	}
-	tool := findTool(t, registrar.tools, applyTrainingPlanName)
+	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
 	if tool.Requirement != RequirementWrite {
 		t.Fatalf("requirement = %q, want write", tool.Requirement)
 	}

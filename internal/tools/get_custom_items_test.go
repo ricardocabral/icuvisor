@@ -35,18 +35,11 @@ func TestCustomItemsRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
 	client := &fakeCustomItemsClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "UTC"}}}
-	registrar := &collectingRegistrar{}
-	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
-	}
-	if len(registrar.tools) != 6 {
-		t.Fatalf("registered tool count = %d, want profile + custom item read/write tools + advanced capabilities", len(registrar.tools))
-	}
-	listTool := findTool(t, registrar.tools, getCustomItemsName)
+	listTool := newGetCustomItemsTool(client, client, "test", "UTC", false)
 	if !strings.Contains(listTool.Description, "id, name, and item_type") {
 		t.Fatalf("list description = %q, want terse row language", listTool.Description)
 	}
-	detailTool := findTool(t, registrar.tools, getCustomItemByIDName)
+	detailTool := newGetCustomItemByIDTool(client, client, "test", "UTC", false)
 	if !strings.Contains(detailTool.Description, "icuvisor://custom-item-schemas") {
 		t.Fatalf("detail description = %q, want v0.4 resource note", detailTool.Description)
 	}

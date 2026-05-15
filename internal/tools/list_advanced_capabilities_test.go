@@ -16,7 +16,7 @@ func TestListAdvancedCapabilitiesOutputFromCatalog(t *testing.T) {
 	t.Cleanup(func() { response.SetToolset("core") })
 
 	registrar := &collectingRegistrar{}
-	client := staticCatalogPanicClient{}
+	client := newNoNetworkIntervalsClient(t)
 	if err := NewRegistryWithOptions(client, RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull)}).Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
@@ -74,7 +74,7 @@ func TestListAdvancedCapabilitiesFullModeStatus(t *testing.T) {
 	t.Cleanup(func() { response.SetToolset("core") })
 
 	registrar := &collectingRegistrar{}
-	if err := NewRegistryWithOptions(staticCatalogPanicClient{}, RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull}).Register(context.Background(), registrar); err != nil {
+	if err := NewRegistryWithOptions(newNoNetworkIntervalsClient(t), RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull}).Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
 	tool := findTool(t, registrar.tools, listAdvancedCapabilitiesName)

@@ -59,14 +59,7 @@ func TestGetActivitiesRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
 	client := newFakeActivitiesClient(t, nil, "metric")
-	registrar := &collectingRegistrar{}
-	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
-	}
-	if len(registrar.tools) != 3 {
-		t.Fatalf("registered tool count = %d, want profile + activities + advanced capabilities", len(registrar.tools))
-	}
-	tool := findTool(t, registrar.tools, getActivitiesName)
+	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
 	if !strings.Contains(tool.Description, "List activities for a date range") {
 		t.Fatalf("description = %q, want distinguishing activity-list sentence", tool.Description)
 	}

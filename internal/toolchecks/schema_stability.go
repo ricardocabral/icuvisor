@@ -5,12 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
 
+	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
@@ -40,14 +42,79 @@ type SchemaFailure struct {
 	Current  string
 }
 
-func GenerateSchemaSnapshots() (map[string]Snapshot, error) {
+type schemaCatalogRoundTripper struct{}
+
+func (schemaCatalogRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, fmt.Errorf("schema catalog generation must not perform HTTP")
+}
+
+var schemaCatalogToolNames = map[string]struct{}{
+	"add_activity_message":                 {},
+	"add_or_update_event":                  {},
+	"apply_training_plan":                  {},
+	"create_workout":                       {},
+	"delete_workout":                       {},
+	"get_activities":                       {},
+	"get_activity_details":                 {},
+	"get_activity_intervals":               {},
+	"get_activity_messages":                {},
+	"get_activity_splits":                  {},
+	"get_activity_streams":                 {},
+	"get_athlete_profile":                  {},
+	"get_best_efforts":                     {},
+	"get_custom_item_by_id":                {},
+	"get_custom_items":                     {},
+	"get_event_by_id":                      {},
+	"get_events":                           {},
+	"get_extended_metrics":                 {},
+	"get_fitness":                          {},
+	"get_power_curves":                     {},
+	"get_training_plan":                    {},
+	"get_training_summary":                 {},
+	"get_wellness_data":                    {},
+	"get_workout_library":                  {},
+	"get_workouts_in_folder":               {},
+	"icuvisor_list_advanced_capabilities": {},
+	"link_activity_to_event":               {},
+	"update_sport_settings":                {},
+	"update_wellness":                      {},
+	"update_workout":                       {},
+}
+
+func generateSchemaCatalogTools() ([]tools.Tool, error) {
+	client, err := intervals.NewClient(intervals.Options{
+		Config: config.Config{
+			APIKey:     strings.Repeat("x", 8),
+			AthleteID:  "12345",
+			APIBaseURL: "http://127.0.0.1",
+		},
+		Version:    "snapshot",
+		HTTPClient: &http.Client{Transport: schemaCatalogRoundTripper{}},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("creating schema catalog client: %w", err)
+	}
 	registrar := &schemaRegistrar{}
-	registry := tools.NewRegistryWithOptions(schemaCatalogClient{}, tools.RegistryOptions{Version: "snapshot", TimezoneFallback: "UTC"})
+	registry := tools.NewRegistryWithOptions(client, tools.RegistryOptions{Version: "snapshot", TimezoneFallback: "UTC"})
 	if err := registry.Register(context.Background(), registrar); err != nil {
 		return nil, fmt.Errorf("registering tools: %w", err)
 	}
-	out := make(map[string]Snapshot, len(registrar.tools))
+	filtered := make([]tools.Tool, 0, len(schemaCatalogToolNames))
 	for _, tool := range registrar.tools {
+		if _, ok := schemaCatalogToolNames[tool.Name]; ok {
+			filtered = append(filtered, tool)
+		}
+	}
+	return filtered, nil
+}
+
+func GenerateSchemaSnapshots() (map[string]Snapshot, error) {
+	toolCatalog, err := generateSchemaCatalogTools()
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]Snapshot, len(toolCatalog))
+	for _, tool := range toolCatalog {
 		raw, err := CanonicalJSON(tool.InputSchema)
 		if err != nil {
 			return nil, fmt.Errorf("marshalling schema for %s: %w", tool.Name, err)

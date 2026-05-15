@@ -23,7 +23,7 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 	t.Parallel()
 
 	registrar := &collectingRegistrar{}
-	if err := NewRegistryWithOptions(fullCatalogTierClient{}, RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull)}).Register(context.Background(), registrar); err != nil {
+	if err := NewRegistryWithOptions(newNoNetworkIntervalsClient(t), RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull)}).Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
 

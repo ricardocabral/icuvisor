@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -28,12 +28,12 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Change `NewRegistry` / `NewRegistryWithOptions` and `defaultRegistry` storage to direct `*intervals.Client` while preserving `Registry.Register(context.Context, Registrar) error`
-- [ ] Replace assertion blocks with direct constructor calls in the existing order, including optional collaborator and custom-item couplings
-- [ ] Add per-tool `AddTool` error wrapping that names the failing tool, including `icuvisor_list_advanced_capabilities`
-- [ ] Preserve delete-mode / toolset / capability gating via existing `Tool` metadata/downstream registrar behavior; do not add registry-side filtering
-- [ ] Migrate Step 2 call sites/tests enough to keep the tree buildable after constructor signature changes
-- [ ] Fix hardcoded `getAthleteProfileName` missing-client/registrar error messages
+- [x] Change `NewRegistry` / `NewRegistryWithOptions` and `defaultRegistry` storage to direct `*intervals.Client` while preserving `Registry.Register(context.Context, Registrar) error`
+- [x] Replace assertion blocks with direct constructor calls in the existing order, including optional collaborator and custom-item couplings
+- [x] Add per-tool `AddTool` error wrapping that names the failing tool, including `icuvisor_list_advanced_capabilities`
+- [x] Preserve delete-mode / toolset / capability gating via existing `Tool` metadata/downstream registrar behavior; do not add registry-side filtering
+- [x] Migrate Step 2 call sites/tests enough to keep the tree buildable after constructor signature changes
+- [x] Fix hardcoded `getAthleteProfileName` missing-client/registrar error messages
 
 ### Step 3: Collapse `schemaCatalogClient`
 
@@ -136,3 +136,4 @@ Special coupling/conditional semantics to preserve in refactor:
 | 2026-05-15 13:34 | Review R003 | code Step 1: UNKNOWN |
 | 2026-05-15 13:39 | Review R004 | code Step 1: APPROVE |
 | 2026-05-15 13:42 | Review R005 | plan Step 2: UNKNOWN |
+| 2026-05-15 13:44 | Review R006 | plan Step 2: APPROVE |
