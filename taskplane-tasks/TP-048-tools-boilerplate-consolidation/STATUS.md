@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -24,6 +24,7 @@
 
 **Status:** 🟨 In Progress
 
+- [ ] Audit package-local `decodeStrict(raw, &args)` callers and preserve their existing empty/whitespace `arguments must be a JSON object` behavior with minimal prechecks where required
 - [ ] Replace package-local `decodeStrict(raw, &args)` callers with `DecodeStrict[T](raw)` and remove the old helper when unused
 - [ ] Replace decode boilerplate in every `internal/tools/<tool>.go` with `DecodeStrict`, preserving bespoke empty-input/raw-field validation ordering
 - [ ] Replace exact-match `Result{…}` boilerplate with `TextResult`, limiting checked `json.Marshal` sites to JSON-marshalable-by-construction payloads
@@ -65,6 +66,7 @@ _Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
 
 - Step 1 plan review R001: keep `DecodeStrict` object-only semantics (`arguments must be a JSON object`), reject trailing JSON with `unexpected trailing JSON`, and keep `TextResult(shaped any) Result` no-error per prompt; Step 2 should only replace exact result construction where this preserves behavior.
 - Step 2 plan review R004: remove the old unexported `decodeStrict` instead of wrapping it; preserve `decodeGetActivitiesRequest`, `decodeActivityReadRequest`, and raw-field precheck error ordering; use `TextResult` for exact constructions where payloads are JSON-marshalable by construction.
+- Step 2 plan review R005: old `decodeStrict(raw, &args)` callers currently reject empty/whitespace as `arguments must be a JSON object`; audit those callers and add minimal prechecks before `DecodeStrict[T]` unless a wrapper already explicitly allowed empty input.
 
 
 | 2026-05-15 13:33 | Task started | Runtime V2 lane-runner execution |
@@ -73,3 +75,4 @@ _Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
 | 2026-05-15 13:40 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-15 13:46 | Review R003 | code Step 1: APPROVE |
 | 2026-05-15 13:50 | Review R004 | plan Step 2: REVISE |
+| 2026-05-15 13:53 | Review R005 | plan Step 2: REVISE |
