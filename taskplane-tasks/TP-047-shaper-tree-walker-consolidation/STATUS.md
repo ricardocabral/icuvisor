@@ -42,8 +42,8 @@
 - [x] Fix R010 float conversion semantics: reject NaN/Inf early with wrapped errors and preserve float32 JSON byte behavior via narrow fallback, with regression tests
 - [x] Fix R010 provenance debug semantics so `_meta.provenance.<field>.query_type` is preserved and make `_meta` path matching segment-exact, with regression tests
 - [x] Fix R011 `json.Number` semantics by routing valid/invalid numbers through the narrow JSON fallback with regression tests
-- [ ] Fix R012 struct field semantics by falling back for duplicate JSON field names and unsupported tag options such as `,string`, with regression tests
-- [ ] Fix R012 cycle handling so self-referential maps/slices/pointers return wrapped JSON errors instead of recursing unbounded, with regression tests
+- [x] Fix R012 struct field semantics by falling back for duplicate JSON field names and unsupported tag options such as `,string`, with regression tests
+- [x] Fix R012 cycle handling so self-referential maps/slices/pointers return wrapped JSON errors instead of recursing unbounded, with regression tests
 
 ### Step 4: Adjacent P2 cleanups
 

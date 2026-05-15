@@ -554,6 +554,37 @@ func TestShapeJSONConversionContract(t *testing.T) {
 			t.Fatal("Shape(invalid json.Number) error = nil, want invalid number error")
 		}
 	})
+
+	t.Run("duplicate json field names use encoding json dominance", func(t *testing.T) {
+		type input struct {
+			A int `json:"x"`
+			B int `json:"x"`
+		}
+		got, err := Shape(input{A: 1, B: 2}, Options{})
+		if err != nil {
+			t.Fatalf("Shape() error = %v", err)
+		}
+		assertJSONEqual(t, got, map[string]any{"_meta": map[string]any{"server_version": "dev"}})
+	})
+
+	t.Run("string tag option uses encoding json representation", func(t *testing.T) {
+		type input struct {
+			Count int `json:"count,string"`
+		}
+		got, err := Shape(input{Count: 7}, Options{})
+		if err != nil {
+			t.Fatalf("Shape() error = %v", err)
+		}
+		assertJSONEqual(t, got, map[string]any{"count": "7", "_meta": map[string]any{"server_version": "dev"}})
+	})
+
+	t.Run("cycles fail with wrapped json error", func(t *testing.T) {
+		input := map[string]any{}
+		input["self"] = input
+		if _, err := Shape(input, Options{}); err == nil {
+			t.Fatal("Shape(cycle) error = nil, want wrapped cycle error")
+		}
+	})
 }
 
 func TestShapeDoesNotMutateCallerOwnedInput(t *testing.T) {

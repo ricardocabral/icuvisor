@@ -109,14 +109,19 @@ func Shape(value any, opts Options) (any, error) {
 }
 
 func marshalToJSONValue(value any) (any, error) {
-	out, err := toJSONValue(reflect.ValueOf(value))
+	out, err := toJSONValue(reflect.ValueOf(value), map[jsonVisit]bool{})
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func toJSONValue(value reflect.Value) (any, error) {
+type jsonVisit struct {
+	typ reflect.Type
+	ptr uintptr
+}
+
+func toJSONValue(value reflect.Value, visits map[jsonVisit]bool) (any, error) {
 	if !value.IsValid() {
 		return nil, nil
 	}
@@ -124,7 +129,7 @@ func toJSONValue(value reflect.Value) (any, error) {
 		if value.IsNil() {
 			return nil, nil
 		}
-		return toJSONValue(value.Elem())
+		return toJSONValue(value.Elem(), visits)
 	}
 	if value.Kind() == reflect.Pointer {
 		if value.IsNil() {
@@ -135,7 +140,12 @@ func toJSONValue(value reflect.Value) (any, error) {
 				return marshaled, err
 			}
 		}
-		return toJSONValue(value.Elem())
+		cleanup, err := enterJSONVisit(value, visits)
+		if err != nil {
+			return nil, err
+		}
+		defer cleanup()
+		return toJSONValue(value.Elem(), visits)
 	}
 	if canInterface(value) {
 		if marshaled, ok, err := marshalSpecialValue(value.Interface()); ok || err != nil {
@@ -147,10 +157,10 @@ func toJSONValue(value reflect.Value) (any, error) {
 			return marshalJSONValue(value.Interface())
 		}
 	}
-	return reflectJSONValue(value)
+	return reflectJSONValue(value, visits)
 }
 
-func reflectJSONValue(value reflect.Value) (any, error) {
+func reflectJSONValue(value reflect.Value, visits map[jsonVisit]bool) (any, error) {
 	switch value.Kind() {
 	case reflect.Bool:
 		return value.Bool(), nil
@@ -176,11 +186,11 @@ func reflectJSONValue(value reflect.Value) (any, error) {
 		}
 		return floatValue, nil
 	case reflect.Map:
-		return mapToJSONValue(value)
+		return mapToJSONValue(value, visits)
 	case reflect.Slice, reflect.Array:
-		return sliceToJSONValue(value)
+		return sliceToJSONValue(value, visits)
 	case reflect.Struct:
-		return structToJSONValue(value)
+		return structToJSONValue(value, visits)
 	case reflect.Invalid:
 		return nil, nil
 	default:
@@ -192,10 +202,15 @@ func unsupportedFloatError(value float64, bitSize int) error {
 	return fmt.Errorf("marshaling response value: json: unsupported value: %s", strconv.FormatFloat(value, 'g', -1, bitSize))
 }
 
-func mapToJSONValue(value reflect.Value) (any, error) {
+func mapToJSONValue(value reflect.Value, visits map[jsonVisit]bool) (any, error) {
 	if value.IsNil() {
 		return nil, nil
 	}
+	cleanup, err := enterJSONVisit(value, visits)
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup()
 	if value.Type().Key().Kind() != reflect.String {
 		if canInterface(value) {
 			return marshalJSONValue(value.Interface())
@@ -205,7 +220,7 @@ func mapToJSONValue(value reflect.Value) (any, error) {
 	out := make(map[string]any, value.Len())
 	iter := value.MapRange()
 	for iter.Next() {
-		item, err := toJSONValue(iter.Value())
+		item, err := toJSONValue(iter.Value(), visits)
 		if err != nil {
 			return nil, err
 		}
@@ -214,13 +229,20 @@ func mapToJSONValue(value reflect.Value) (any, error) {
 	return out, nil
 }
 
-func sliceToJSONValue(value reflect.Value) (any, error) {
+func sliceToJSONValue(value reflect.Value, visits map[jsonVisit]bool) (any, error) {
 	if value.Kind() == reflect.Slice && value.IsNil() {
 		return nil, nil
 	}
+	if value.Kind() == reflect.Slice {
+		cleanup, err := enterJSONVisit(value, visits)
+		if err != nil {
+			return nil, err
+		}
+		defer cleanup()
+	}
 	out := make([]any, value.Len())
 	for i := range value.Len() {
-		item, err := toJSONValue(value.Index(i))
+		item, err := toJSONValue(value.Index(i), visits)
 		if err != nil {
 			return nil, err
 		}
@@ -229,8 +251,9 @@ func sliceToJSONValue(value reflect.Value) (any, error) {
 	return out, nil
 }
 
-func structToJSONValue(value reflect.Value) (any, error) {
+func structToJSONValue(value reflect.Value, visits map[jsonVisit]bool) (any, error) {
 	out := make(map[string]any, value.NumField())
+	seenFields := map[string]struct{}{}
 	valueType := value.Type()
 	for i := range value.NumField() {
 		field := valueType.Field(i)
@@ -244,17 +267,41 @@ func structToJSONValue(value reflect.Value) (any, error) {
 		if fallback {
 			return marshalJSONValue(value.Interface())
 		}
+		if _, exists := seenFields[name]; exists {
+			return marshalJSONValue(value.Interface())
+		}
+		seenFields[name] = struct{}{}
 		fieldValue := value.Field(i)
 		if omitEmpty && isEmptyJSONValue(fieldValue) {
 			continue
 		}
-		item, err := toJSONValue(fieldValue)
+		item, err := toJSONValue(fieldValue, visits)
 		if err != nil {
 			return nil, err
 		}
 		out[name] = item
 	}
 	return out, nil
+}
+
+func enterJSONVisit(value reflect.Value, visits map[jsonVisit]bool) (func(), error) {
+	if !canInterface(value) {
+		return func() {}, nil
+	}
+	ptr := value.Pointer()
+	if ptr == 0 {
+		return func() {}, nil
+	}
+	visit := jsonVisit{typ: value.Type(), ptr: ptr}
+	if visits[visit] {
+		_, err := marshalJSONValue(value.Interface())
+		if err != nil {
+			return func() {}, err
+		}
+		return func() {}, nil
+	}
+	visits[visit] = true
+	return func() { delete(visits, visit) }, nil
 }
 
 func jsonField(field reflect.StructField) (name string, omitEmpty bool, skip bool, fallback bool) {
@@ -270,11 +317,14 @@ func jsonField(field reflect.StructField) (name string, omitEmpty bool, skip boo
 		return "", false, false, true
 	}
 	for _, option := range parts[1:] {
-		if option == "omitempty" {
+		switch option {
+		case "omitempty":
 			omitEmpty = true
+		case "string":
+			fallback = true
 		}
 	}
-	return name, omitEmpty, false, false
+	return name, omitEmpty, false, fallback
 }
 
 func isEmptyJSONValue(value reflect.Value) bool {
