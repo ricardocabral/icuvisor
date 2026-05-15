@@ -42,19 +42,6 @@ var responseOwnedMetaKeys = map[string]struct{}{
 	"units":                 {},
 }
 
-var defaultScaleLabels = map[string]string{
-	"feel":         "1-5 (athlete-reported feel)",
-	"fatigue":      "1-5 (athlete-reported fatigue)",
-	"mood":         "1-5 (athlete-reported mood)",
-	"motivation":   "1-5 (athlete-reported motivation)",
-	"rpe":          "1-10 (rating of perceived exertion)",
-	"session_rpe":  "1-10 (session rating of perceived exertion)",
-	"sleepQuality": "1-4 (athlete-entered, 1=poor 4=great)",
-	"sleepScore":   "0-100 (device-imported nightly score)",
-	"soreness":     "1-5 (athlete-reported soreness)",
-	"stress":       "1-5 (athlete-reported stress)",
-}
-
 // Options controls response shaping at the MCP response boundary.
 type Options struct {
 	IncludeFull    bool
@@ -491,20 +478,7 @@ func shapeWrapperRow(row map[string]any, opts Options) map[string]any {
 		out[key] = stripped
 		missing = append(missing, nestedMissing...)
 	}
-	if opts.DebugMetadata {
-		addDebugMetadata(out, opts)
-	} else {
-		if dropped, ok := dropDebugMetadata(out, "").(map[string]any); ok {
-			out = dropped
-		}
-		missing = filterDebugMissing(missing)
-	}
-	if !opts.IncludeFull && len(missing) > 0 {
-		addStripMeta(out, missing)
-	}
-	addScaleMeta(out)
-	addCommonMeta(out, opts)
-	return out
+	return finalizeShapedRow(out, missing, opts, true, true)
 }
 
 func shapeRow(row map[string]any, opts Options, includeCommonMeta bool) map[string]any {
@@ -521,24 +495,28 @@ func shapeRow(row map[string]any, opts Options, includeCommonMeta bool) map[stri
 		}
 		missing = strippedMissing
 	}
+	return finalizeShapedRow(shaped, missing, opts, includeCommonMeta, includeCommonMeta)
+}
+
+func finalizeShapedRow(row map[string]any, missing []string, opts Options, includeDebugMetadata bool, includeCommonMeta bool) map[string]any {
 	if opts.DebugMetadata {
-		if includeCommonMeta {
-			addDebugMetadata(shaped, opts)
+		if includeDebugMetadata {
+			addDebugMetadata(row, opts)
 		}
 	} else {
-		if dropped, ok := dropDebugMetadata(shaped, "").(map[string]any); ok {
-			shaped = dropped
+		if dropped, ok := dropDebugMetadata(row, "").(map[string]any); ok {
+			row = dropped
 		}
 		missing = filterDebugMissing(missing)
 	}
 	if !opts.IncludeFull && len(missing) > 0 {
-		addStripMeta(shaped, missing)
+		addStripMeta(row, missing)
 	}
-	addScaleMeta(shaped)
+	addScaleMeta(row)
 	if includeCommonMeta {
-		addCommonMeta(shaped, opts)
+		addCommonMeta(row, opts)
 	}
-	return shaped
+	return row
 }
 
 func addDebugMetadata(row map[string]any, opts Options) {

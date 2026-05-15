@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 14
+**Review Counter:** 15
 **Iteration:** 1
 **Size:** M
 
@@ -50,8 +50,8 @@
 **Status:** 🟨 In Progress
 
 - [x] Address R014 plan note: helper only finalizes row metadata/debug/scale/common meta; wrapper traversal, RowCollections, and wrapper-specific null handling stay outside; nested row collections call helper with common/debug disabled
-- [ ] Move `defaultScaleLabels` to `internal/response/scales.go`
-- [ ] Extract common helper shared by `shapeRow` / `shapeWrapperRow`
+- [x] Move `defaultScaleLabels` to `internal/response/scales.go`
+- [x] Extract common helper shared by `shapeRow` / `shapeWrapperRow`
 
 ### Step 5: Verify byte-identical output
 
@@ -112,3 +112,4 @@ _Add notes as work progresses._
 | 2026-05-15 18:37 | Review R011 | code Step 3: REVISE |
 | 2026-05-15 18:42 | Review R012 | code Step 3: REVISE |
 | 2026-05-15 18:59 | Review R014 | plan Step 4: REVISE |
+| 2026-05-15 19:01 | Review R015 | plan Step 4: APPROVE |
