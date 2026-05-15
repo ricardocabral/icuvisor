@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 2
 **Size:** M
 
@@ -44,9 +44,9 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] GH Actions job on tag push reuses release preflight and publishes only after DMG packaging succeeds
-- [ ] All Apple secrets via GH Actions secrets (named in SECURITY.md) with no secret values or placeholder secrets in git
-- [ ] DMG + SHA256SUMS uploaded to the draft release and draft published only after successful uploads
+- [x] GH Actions job on tag push reuses release preflight and publishes only after DMG packaging succeeds
+- [x] All Apple secrets via GH Actions secrets (named in SECURITY.md) with no secret values or placeholder secrets in git
+- [x] DMG + SHA256SUMS uploaded to the draft release and draft published only after successful uploads
 
 ### Step 4: Manual client config docs
 
@@ -93,6 +93,7 @@ _Add notes as work progresses._
 - Supervisor confirmed Apple metadata/keys are unavailable now; proceed with scaffoldable implementation and mark live cert/notarization/Gatekeeper checks as operator-deferred release preflight with exact commands.
 - R003 suggestion: keep the authoritative non-secret release-operator record in STATUS.md while SECURITY.md documents the reusable gate.
 - Step 2 validation: `goreleaser check` passed; `goreleaser release --snapshot --clean --skip=publish` produced Linux/Windows archives and darwin universal binary without a standalone darwin archive; `build/macos/package_dmg.sh` produced an unsigned dry-run DMG; `ICUVISOR_MACOS_RELEASE=1 build/macos/package_dmg.sh` failed closed because `APPLE_TEAM_ID` was absent; `go test ./...` passed.
+- Step 3 validation: `.github/workflows/release.yml` parsed as YAML via Ruby; grep confirmed tag trigger, Apple secret names, draft release upload/publish commands, and no Homebrew token path; release preflight includes `go test -race` and `golangci-lint` before GoReleaser.
 
 | 2026-05-15 17:43 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 17:43 | Step 1 started | Apple Developer setup + bundle identity |
@@ -109,3 +110,4 @@ _Add notes as work progresses._
 | 2026-05-15 18:13 | Review R008 | plan Step 2: REVISE |
 | 2026-05-15 18:15 | Review R009 | plan Step 2: APPROVE |
 | 2026-05-15 18:26 | Review R010 | code Step 2: APPROVE |
+| 2026-05-15 18:29 | Review R011 | plan Step 3: APPROVE |
