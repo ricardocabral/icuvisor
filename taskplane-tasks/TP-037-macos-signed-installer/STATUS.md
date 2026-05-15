@@ -1,6 +1,6 @@
 # TP-037-macos-signed-installer: macOS signed installer + manual client config docs — Status
 
-**Current Step:** Step 2: GoReleaser DMG + signing
+**Current Step:** Step 3: Release workflow
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
@@ -42,11 +42,11 @@
 
 ### Step 3: Release workflow
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] GH Actions job on tag push
-- [ ] All Apple secrets via GH Actions secrets (named in SECURITY.md)
-- [ ] DMG + SHA256SUMS uploaded to release
+- [ ] GH Actions job on tag push reuses release preflight and publishes only after DMG packaging succeeds
+- [ ] All Apple secrets via GH Actions secrets (named in SECURITY.md) with no secret values or placeholder secrets in git
+- [ ] DMG + SHA256SUMS uploaded to the draft release and draft published only after successful uploads
 
 ### Step 4: Manual client config docs
 
