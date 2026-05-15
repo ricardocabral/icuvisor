@@ -1,10 +1,10 @@
 # TP-048-tools-boilerplate-consolidation — Status
 
-**Current Step:** Step 1: Helpers + tests
+**Current Step:** Step 2: Mechanical replacement across tool files
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -22,10 +22,12 @@
 
 ### Step 2: Mechanical replacement across tool files
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Replace decode boilerplate in every `internal/tools/<tool>.go` with `DecodeStrict`
-- [ ] Replace exact-match `Result{…}` boilerplate with `TextResult`
+- [ ] Replace package-local `decodeStrict(raw, &args)` callers with `DecodeStrict[T](raw)` and remove the old helper when unused
+- [ ] Replace decode boilerplate in every `internal/tools/<tool>.go` with `DecodeStrict`, preserving bespoke empty-input/raw-field validation ordering
+- [ ] Replace exact-match `Result{…}` boilerplate with `TextResult`, limiting checked `json.Marshal` sites to JSON-marshalable-by-construction payloads
+- [ ] Run targeted `go test ./internal/tools` and acceptance greps for `DisallowUnknownFields`, `decodeStrict(`, and `ContentTypeText`
 - [ ] Commit per logical batch (reads / writes / wellness / etc.)
 
 ### Step 3: `get_activities.go` cleanups
@@ -62,6 +64,7 @@ _Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
 ## Notes
 
 - Step 1 plan review R001: keep `DecodeStrict` object-only semantics (`arguments must be a JSON object`), reject trailing JSON with `unexpected trailing JSON`, and keep `TextResult(shaped any) Result` no-error per prompt; Step 2 should only replace exact result construction where this preserves behavior.
+- Step 2 plan review R004: remove the old unexported `decodeStrict` instead of wrapping it; preserve `decodeGetActivitiesRequest`, `decodeActivityReadRequest`, and raw-field precheck error ordering; use `TextResult` for exact constructions where payloads are JSON-marshalable by construction.
 
 
 | 2026-05-15 13:33 | Task started | Runtime V2 lane-runner execution |
@@ -69,3 +72,4 @@ _Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
 | 2026-05-15 13:37 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-05-15 13:40 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-15 13:46 | Review R003 | code Step 1: APPROVE |
+| 2026-05-15 13:50 | Review R004 | plan Step 2: REVISE |
