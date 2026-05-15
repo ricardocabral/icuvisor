@@ -1,22 +1,23 @@
 # TP-046-profile-client-interface-dedupe — Status
 
 **Current Step:** Step 1: Confirm the duplication is exact
-**Status:** ⏳ Not started
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 0
-**Iteration:** 0
+**Review Counter:** 1
+**Iteration:** 1
 **Size:** S
 
 ---
 
 ### Step 1: Confirm the duplication is exact
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Diff the two `ProfileClient` declarations; confirm or normalize
+- [ ] Inventory all `ProfileClient` usages under `internal/` and record notable non-declaration consumers
 - [ ] Confirm `*intervals.Client` satisfies the merged interface
-- [ ] Locate and verify test fakes for both consumers
+- [ ] Locate and verify test fakes/stubs across tools, resources, MCP tests, and toolchecks
 
 ### Step 2: Create the shared declaration
 
@@ -50,3 +51,7 @@ _Record placement decision (`internal/clients` vs `internal/intervals`) in Step 
 ## Notes
 
 _Add notes as work progresses. If TP-042 lands first, note any textual merge resolved here._
+
+| 2026-05-15 13:18 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-15 13:18 | Step 1 started | Confirm the duplication is exact |
+| 2026-05-15 13:21 | Review R001 | plan Step 1: REVISE |
