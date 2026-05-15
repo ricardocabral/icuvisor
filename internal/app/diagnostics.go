@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"runtime"
 	"strings"
@@ -35,10 +36,10 @@ func runDiagnosticsCommand(ctx context.Context, opts Options, args []string) err
 	}
 	loader := opts.LoadConfig
 	if loader == nil {
-		loader = config.Load
 		if configOpts.CredentialStore == nil {
 			configOpts.CredentialStore = credstore.OSKeychain()
 		}
+		loader = loadDiagnosticsConfig
 	}
 	cfg, err := loader(ctx, configOpts)
 	if err != nil {
@@ -87,6 +88,13 @@ type diagnosticsSnapshot struct {
 	Runtime        string
 	RecentToolCall []diagnostics.RecentToolCall
 	RecentReadable bool
+}
+
+func loadDiagnosticsConfig(ctx context.Context, opts config.Options) (config.Config, error) {
+	previous := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	defer slog.SetDefault(previous)
+	return config.Load(ctx, opts)
 }
 
 func diagnosticsCatalogHash(ctx context.Context, cfg config.Config, version string) (string, error) {

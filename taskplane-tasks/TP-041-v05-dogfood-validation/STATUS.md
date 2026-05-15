@@ -27,7 +27,7 @@ Implementation plan (R001):
 - [x] No-secret-leakage test (fixture-injected key, stdout grep)
 - [x] TP-035 `--help` golden file updated
 - [x] CHANGELOG.md records `icuvisor diagnostics` under Added
-- [ ] R003: suppress or redirect default config-loader logs during diagnostics and add real-loader leakage coverage for secret/path output
+- [x] R003: suppress or redirect default config-loader logs during diagnostics and add real-loader leakage coverage for secret/path output
 
 ### Step 2: Docs
 

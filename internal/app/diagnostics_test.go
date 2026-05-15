@@ -5,6 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -98,6 +101,50 @@ func TestRunDiagnosticsLoadErrorIsSanitized(t *testing.T) {
 		}
 	}
 	assertDiagnosticsNoSecrets(t, combined, secret, rawAthleteID, "i"+rawAthleteID)
+}
+
+func TestRunDiagnosticsDefaultLoaderSuppressesPathLogs(t *testing.T) {
+	secret := "sk-" + strings.Repeat("z", 40)
+	rawAthleteID := "9997771"
+	baseDir := filepath.Join(t.TempDir(), "i"+rawAthleteID, secret)
+	if err := os.MkdirAll(baseDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+	configPath := filepath.Join(baseDir, "config.json")
+	envPath := filepath.Join(baseDir, "diag.env")
+	if err := os.WriteFile(configPath, []byte(`{"athlete_id":"`+rawAthleteID+`","timezone":"UTC"}`), 0o600); err != nil {
+		t.Fatalf("WriteFile(config) error = %v", err)
+	}
+	if err := os.WriteFile(envPath, []byte("ICUVISOR_TIMEZONE=UTC\n"), 0o600); err != nil {
+		t.Fatalf("WriteFile(env) error = %v", err)
+	}
+	t.Setenv(config.EnvAPIKey, secret)
+	t.Setenv(config.EnvAthleteID, rawAthleteID)
+
+	previous := slog.Default()
+	var logs bytes.Buffer
+	slog.SetDefault(slog.New(slog.NewTextHandler(&logs, nil)))
+	defer slog.SetDefault(previous)
+
+	var stdout bytes.Buffer
+	err := Run(context.Background(), Options{
+		Version: "v0.5.0-test",
+		Args:    []string{"diagnostics", "--config", configPath, "--env-file", envPath},
+		Stdout:  &stdout,
+	})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	combined := stdout.String() + logs.String()
+	assertDiagnosticsNoSecrets(t, combined, secret, rawAthleteID, "i"+rawAthleteID)
+	for _, leaked := range []string{configPath, envPath, baseDir} {
+		if strings.Contains(combined, leaked) {
+			t.Fatalf("diagnostics output/logs leaked path %q:\n%s", leaked, combined)
+		}
+	}
+	if logs.Len() != 0 {
+		t.Fatalf("diagnostics emitted default logger output: %s", logs.String())
+	}
 }
 
 func TestRunDiagnosticsHelpAndFlagErrors(t *testing.T) {
