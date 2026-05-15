@@ -17,8 +17,7 @@
   "activities": [
     {
       "activity_id": "a1",
-      "name": "Tempo Ride",
-      "raw": {
+      "full": {
         "icu_training_load": null,
         "power_stream": [
           220,
@@ -26,6 +25,7 @@
           235
         ]
       },
+      "name": "Tempo Ride",
       "sport": "Ride"
     }
   ]

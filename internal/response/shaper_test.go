@@ -482,9 +482,11 @@ func TestShapeIncludeFullNullConvention(t *testing.T) {
 }
 
 func TestShapeGoldenSnapshots(t *testing.T) {
+	t.Cleanup(resetRuntimeCatalogMetadataForTest)
 	for _, tc := range goldenSnapshotCases() {
 		t.Run(tc.name, func(t *testing.T) {
 			resetRuntimeCatalogMetadataForTest()
+			t.Cleanup(resetRuntimeCatalogMetadataForTest)
 			setRuntimeCatalogMetadataForTest("v0.4.0", "golden-catalog-hash")
 			got, err := Shape(tc.input, tc.opts)
 			if err != nil {
@@ -519,6 +521,55 @@ type goldenSnapshotCase struct {
 	opts    Options
 }
 
+type snapshotActivitiesResponse struct {
+	Activities []snapshotActivityRow  `json:"activities"`
+	Meta       snapshotActivitiesMeta `json:"_meta"`
+}
+
+type snapshotActivityRow struct {
+	ActivityID        string               `json:"activity_id,omitempty"`
+	Name              string               `json:"name,omitempty"`
+	Sport             string               `json:"sport,omitempty"`
+	DistanceKM        *float64             `json:"distance_km,omitempty"`
+	MovingTimeSeconds int                  `json:"moving_time_seconds,omitempty"`
+	Full              map[string]any       `json:"full,omitempty"`
+	Unavailable       *snapshotUnavailable `json:"unavailable,omitempty"`
+}
+
+type snapshotUnavailable struct {
+	Reason     string `json:"reason"`
+	Workaround string `json:"workaround"`
+}
+
+type snapshotActivitiesMeta struct {
+	PageSize      int    `json:"page_size"`
+	NextPageToken string `json:"next_page_token,omitempty"`
+	MoreAvailable bool   `json:"more_available"`
+	IncludeFull   bool   `json:"include_full"`
+}
+
+type snapshotFitnessResponse struct {
+	Rows []snapshotFitnessRow `json:"fitness"`
+	Meta snapshotFitnessMeta  `json:"_meta"`
+}
+
+type snapshotFitnessRow struct {
+	Date string   `json:"date"`
+	CTL  *float64 `json:"ctl,omitempty"`
+	ATL  *float64 `json:"atl,omitempty"`
+	TSB  *float64 `json:"tsb,omitempty"`
+}
+
+type snapshotFitnessMeta struct {
+	ServerVersion string   `json:"server_version"`
+	StartDate     string   `json:"start_date"`
+	EndDate       string   `json:"end_date"`
+	Timezone      string   `json:"timezone"`
+	Count         int      `json:"count"`
+	IncludeFull   bool     `json:"include_full"`
+	SourceTools   []string `json:"source_tools,omitempty"`
+}
+
 func goldenSnapshotCases() []goldenSnapshotCase {
 	baseOpts := func(includeFull bool, rowCollections ...string) Options {
 		return Options{
@@ -531,39 +582,43 @@ func goldenSnapshotCases() []goldenSnapshotCase {
 			Toolset:        safety.ToolsetCore,
 		}
 	}
+	distanceKM := 42.2
+	ctl := 51.2
+	atl := 56.7
+	tsb := -4.8
 	return []goldenSnapshotCase{
 		{
 			name:    "get activities terse",
 			fixture: "get_activities_terse.golden.json",
-			input: map[string]any{
-				"activities": []any{
-					map[string]any{"activity_id": "a1", "name": "Tempo Ride", "sport": "Ride", "distance_km": 42.2, "moving_time_seconds": 5400, "average_watts": nil, "fetched_at": "2026-05-15T10:00:00Z"},
-					map[string]any{"activity_id": "a2", "name": "", "sport": "Run", "distance_km": nil, "moving_time_seconds": 1800, "unavailable": map[string]any{"reason": "strava_tos", "workaround": "connect device directly"}},
+			input: snapshotActivitiesResponse{
+				Activities: []snapshotActivityRow{
+					{ActivityID: "a1", Name: "Tempo Ride", Sport: "Ride", DistanceKM: &distanceKM, MovingTimeSeconds: 5400},
+					{ActivityID: "a2", Sport: "Run", MovingTimeSeconds: 1800, Unavailable: &snapshotUnavailable{Reason: "strava_tos", Workaround: "connect device directly"}},
 				},
-				"_meta": map[string]any{"page_size": 2, "more_available": false, "include_full": false},
+				Meta: snapshotActivitiesMeta{PageSize: 2, MoreAvailable: false, IncludeFull: false},
 			},
 			opts: baseOpts(false, "activities"),
 		},
 		{
 			name:    "get activities include full",
 			fixture: "get_activities_full.golden.json",
-			input: map[string]any{
-				"activities": []any{
-					map[string]any{"activity_id": "a1", "name": "Tempo Ride", "sport": "Ride", "raw": map[string]any{"icu_training_load": nil, "power_stream": []any{220.0, nil, 235.0}}, "fetched_at": "2026-05-15T10:00:00Z"},
+			input: snapshotActivitiesResponse{
+				Activities: []snapshotActivityRow{
+					{ActivityID: "a1", Name: "Tempo Ride", Sport: "Ride", Full: map[string]any{"icu_training_load": nil, "power_stream": []any{220.0, nil, 235.0}}},
 				},
-				"_meta": map[string]any{"page_size": 1, "more_available": false, "include_full": true},
+				Meta: snapshotActivitiesMeta{PageSize: 1, MoreAvailable: false, IncludeFull: true},
 			},
 			opts: baseOpts(true, "activities"),
 		},
 		{
 			name:    "get fitness",
 			fixture: "get_fitness.golden.json",
-			input: map[string]any{
-				"fitness": []any{
-					map[string]any{"date": "2026-05-14", "ctl": 51.2, "atl": nil, "tsb": -4.8, "sleepQuality": 3},
-					map[string]any{"date": "2026-05-15", "ctl": nil, "atl": 56.7, "tsb": nil, "sleepScore": 82},
+			input: snapshotFitnessResponse{
+				Rows: []snapshotFitnessRow{
+					{Date: "2026-05-14", CTL: &ctl, TSB: &tsb},
+					{Date: "2026-05-15", ATL: &atl},
 				},
-				"_meta": map[string]any{"server_version": "stale", "count": 2, "include_full": false, "source_tools": []any{"get_fitness"}},
+				Meta: snapshotFitnessMeta{ServerVersion: "stale", StartDate: "2026-05-14", EndDate: "2026-05-15", Timezone: "UTC", Count: 2, IncludeFull: false, SourceTools: []string{"get_fitness"}},
 			},
 			opts: baseOpts(false, "fitness"),
 		},

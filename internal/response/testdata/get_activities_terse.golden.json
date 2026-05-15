@@ -16,18 +16,6 @@
   },
   "activities": [
     {
-      "_meta": {
-        "fields_present": [
-          "activity_id",
-          "distance_km",
-          "moving_time_seconds",
-          "name",
-          "sport"
-        ],
-        "missing_fields": [
-          "average_watts"
-        ]
-      },
       "activity_id": "a1",
       "distance_km": 42.2,
       "moving_time_seconds": 5400,
@@ -35,21 +23,8 @@
       "sport": "Ride"
     },
     {
-      "_meta": {
-        "fields_present": [
-          "activity_id",
-          "moving_time_seconds",
-          "name",
-          "sport",
-          "unavailable"
-        ],
-        "missing_fields": [
-          "distance_km"
-        ]
-      },
       "activity_id": "a2",
       "moving_time_seconds": 1800,
-      "name": "",
       "sport": "Run",
       "unavailable": {
         "reason": "strava_tos",

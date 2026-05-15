@@ -18,8 +18,8 @@
 - [x] Add automated golden snapshot test/generator that maps each case to its input, exact shaping options, fixture path, and comparison command without hitting the network
 - [x] Capture `_meta`-shaped output as golden fixtures under `internal/response/testdata/`
 - [x] Commit fixtures before touching shaper code
-- [ ] Fix R003 catalog runtime isolation so golden snapshots restore default metadata under shuffle/update/early returns
-- [ ] Convert representative golden inputs (`get_activities` terse/full and `get_fitness`) from maps to typed local DTO structs with JSON tags/omitempty matching tool shapes, then regenerate fixtures
+- [x] Fix R003 catalog runtime isolation so golden snapshots restore default metadata under shuffle/update/early returns
+- [x] Convert representative golden inputs (`get_activities` terse/full and `get_fitness`) from maps to typed local DTO structs with JSON tags/omitempty matching tool shapes, then regenerate fixtures
 
 ### Step 2: Pick the approach
 
