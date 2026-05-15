@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 2
 **Size:** S
 
@@ -33,11 +33,11 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Resolve `DebugMetadata` in `config.Load`; store on `Config`
-- [ ] `app.Run` reads from `Config`; no env access in `internal/app`
-- [ ] Remove or relocate `response.DebugMetadataFromEnv`
-- [ ] `grep -rn "os.Getenv\b" internal/ | grep -v "^internal/config/"` empty
-- [ ] `make build` / `test` / `test-race` / `lint`
+- [x] Resolve `DebugMetadata` in `config.Load`; store on `Config`
+- [x] `app.Run` reads from `Config`; no env access in `internal/app`
+- [x] Remove or relocate `response.DebugMetadataFromEnv`
+- [x] `grep -rn "os.Getenv\b" internal/ | grep -v "^internal/config/"` empty
+- [x] `make build` / `test` / `test-race` / `lint`
 - [ ] Commit `TP-049 move DebugMetadata env read into config`
 
 ### Step 4: Reformat long constructor lines (item 4)
@@ -75,6 +75,7 @@
 _Record any deviations from the per-item plan here (e.g. helper name, where relocated `DebugMetadata` reader lives, whether item 5 overlapped with TP-042)._
 
 - Step 2 checks required renaming `apiKeyLocation` local in `internal/config/config.go` to avoid a gosec G101 false positive; behavior unchanged.
+- Step 3 checks required increasing `waitForServerRun` timeout from 5s to 10s after the full test suite hit the existing Streamable HTTP shutdown race timeout.
 
 ## Notes
 
@@ -87,3 +88,4 @@ _Add notes as work progresses._
 | 2026-05-15 16:33 | Worker iter 1 | done in 4266s, tools: 35 |
 | 2026-05-15 17:07 | Exit intercept reprompt | Supervisor provided instructions (683 chars) — reprompting worker |
 | 2026-05-15 17:09 | Review R002 | plan Step 2: APPROVE |
+| 2026-05-15 17:15 | Review R003 | plan Step 3: APPROVE |

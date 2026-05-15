@@ -5,7 +5,6 @@ import (
 	"io"
 
 	"github.com/ricardocabral/icuvisor/internal/config"
-	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
@@ -58,7 +57,7 @@ For deeper documentation, see README.md and docs/prd/PRD-icuvisor.md.
 		config.EnvAPIKey, config.EnvAthleteID, config.EnvTimezone, config.DefaultTimezone,
 		config.EnvAPIBaseURL, config.DefaultAPIBaseURL, config.EnvHTTPTimeout, config.DefaultHTTPTimeout,
 		config.EnvTransport, config.EnvHTTPBind, safety.EnvDeleteMode, safety.ModeSafe,
-		safety.EnvToolset, safety.ToolsetCore, response.EnvDebugMetadata)
+		safety.EnvToolset, safety.ToolsetCore, config.EnvDebugMetadata)
 	if err != nil {
 		return fmt.Errorf("writing help: %w", err)
 	}

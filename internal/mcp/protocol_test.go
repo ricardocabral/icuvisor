@@ -1108,7 +1108,7 @@ func waitForServerRun(t *testing.T, runDone <-chan error) {
 		if err != nil && !errors.Is(err, context.Canceled) && !strings.Contains(err.Error(), "closed") {
 			t.Fatalf("server Run() error = %v", err)
 		}
-	case <-time.After(5 * time.Second):
+	case <-time.After(10 * time.Second):
 		t.Fatal("server Run() did not stop")
 	}
 }

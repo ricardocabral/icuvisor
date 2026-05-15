@@ -85,7 +85,7 @@ func Run(ctx context.Context, opts Options) error {
 		return err
 	}
 
-	return startServer(ctx, opts.LoadConfig, opts.StartServer, ServerInfo{Version: version, DebugMetadata: response.DebugMetadataFromEnv()}, configOpts)
+	return startServer(ctx, opts.LoadConfig, opts.StartServer, ServerInfo{Version: version}, configOpts)
 }
 
 // UsageError reports invalid CLI input that should exit with code 2.
@@ -225,6 +225,7 @@ func startServer(ctx context.Context, loader func(context.Context, config.Option
 		return err
 	}
 	info.Config = cfg
+	info.DebugMetadata = cfg.DebugMetadata
 	info.DeleteMode = cfg.DeleteMode
 	info.Toolset = cfg.Toolset
 	info.Capability = safety.NewCapability(cfg.DeleteMode)

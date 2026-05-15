@@ -20,15 +20,16 @@ import (
 )
 
 const (
-	EnvAPIKey      = "INTERVALS_ICU_API_KEY" // #nosec G101 -- environment variable name, not a credential.
-	EnvAthleteID   = "INTERVALS_ICU_ATHLETE_ID"
-	EnvConfigPath  = "ICUVISOR_CONFIG"
-	EnvTimezone    = "ICUVISOR_TIMEZONE"
-	EnvAPIBaseURL  = "ICUVISOR_API_BASE_URL"
-	EnvHTTPTimeout = "ICUVISOR_HTTP_TIMEOUT"
-	EnvTransport   = "ICUVISOR_TRANSPORT"
-	EnvHTTPBind    = "ICUVISOR_HTTP_BIND"
-	EnvDotEnvPath  = "ICUVISOR_ENV_FILE"
+	EnvAPIKey        = "INTERVALS_ICU_API_KEY" // #nosec G101 -- environment variable name, not a credential.
+	EnvAthleteID     = "INTERVALS_ICU_ATHLETE_ID"
+	EnvConfigPath    = "ICUVISOR_CONFIG"
+	EnvTimezone      = "ICUVISOR_TIMEZONE"
+	EnvAPIBaseURL    = "ICUVISOR_API_BASE_URL"
+	EnvHTTPTimeout   = "ICUVISOR_HTTP_TIMEOUT"
+	EnvTransport     = "ICUVISOR_TRANSPORT"
+	EnvHTTPBind      = "ICUVISOR_HTTP_BIND"
+	EnvDotEnvPath    = "ICUVISOR_ENV_FILE"
+	EnvDebugMetadata = "ICUVISOR_DEBUG_METADATA"
 
 	DefaultAPIBaseURL      = "https://intervals.icu/api/v1"
 	DefaultTimezone        = "UTC"
@@ -64,6 +65,7 @@ type Config struct {
 	HTTPBindAddress string         `json:"-"`
 	DeleteMode      safety.Mode    `json:"-"`
 	Toolset         safety.Toolset `json:"-"`
+	DebugMetadata   bool           `json:"-"`
 }
 
 // APIKeySource identifies where the loaded API key came from.
@@ -108,6 +110,7 @@ type rawConfig struct {
 	httpBindAddress string
 	deleteMode      string
 	toolset         string
+	debugMetadata   string
 }
 
 // Load reads v0.1 config from JSON, .env, and process environment.
@@ -353,6 +356,7 @@ func rawFromEnv(env map[string]string, apiKeySource APIKeySource, apiKeyLocation
 		httpBindAddress: strings.TrimSpace(env[EnvHTTPBind]),
 		deleteMode:      strings.TrimSpace(env[safety.EnvDeleteMode]),
 		toolset:         strings.TrimSpace(env[safety.EnvToolset]),
+		debugMetadata:   strings.TrimSpace(env[EnvDebugMetadata]),
 	}
 }
 
@@ -385,6 +389,9 @@ func (r *rawConfig) merge(next rawConfig, absentOnly bool) {
 	}
 	if shouldSet(r.toolset, next.toolset, absentOnly) {
 		r.toolset = next.toolset
+	}
+	if shouldSet(r.debugMetadata, next.debugMetadata, absentOnly) {
+		r.debugMetadata = next.debugMetadata
 	}
 }
 
@@ -467,7 +474,13 @@ func validate(raw rawConfig) (Config, error) {
 		HTTPBindAddress: httpBindAddress,
 		DeleteMode:      safety.ParseMode(raw.deleteMode),
 		Toolset:         safety.ParseToolset(raw.toolset),
+		DebugMetadata:   ParseDebugMetadata(raw.debugMetadata),
 	}, nil
+}
+
+// ParseDebugMetadata reports whether a raw debug metadata value enables debug output.
+func ParseDebugMetadata(value string) bool {
+	return strings.EqualFold(strings.TrimSpace(value), "true")
 }
 
 // ValidateHTTPBindAddress rejects accidental wildcard binds and malformed ports.

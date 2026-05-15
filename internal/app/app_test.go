@@ -139,7 +139,7 @@ func TestTopLevelHelpDocumentsRuntimeEnvVars(t *testing.T) {
 		config.EnvDotEnvPath,
 		safety.EnvDeleteMode,
 		safety.EnvToolset,
-		response.EnvDebugMetadata,
+		config.EnvDebugMetadata,
 	} {
 		if !strings.Contains(help, name) {
 			t.Fatalf("help fixture missing env var %s", name)
@@ -239,20 +239,19 @@ func TestDefaultStartServerLogsStartupVersion(t *testing.T) {
 	}
 }
 
-func TestRunCapturesDebugMetadataOnceForServerInfo(t *testing.T) {
-	t.Setenv(response.EnvDebugMetadata, "true")
+func TestRunUsesConfigDebugMetadataForServerInfo(t *testing.T) {
 	wantConfig := config.Config{
-		APIKey:      "secret",
-		AthleteID:   "i12345",
-		Timezone:    "UTC",
-		APIBaseURL:  config.DefaultAPIBaseURL,
-		HTTPTimeout: 30 * time.Second,
+		APIKey:        "secret",
+		AthleteID:     "i12345",
+		Timezone:      "UTC",
+		APIBaseURL:    config.DefaultAPIBaseURL,
+		HTTPTimeout:   30 * time.Second,
+		DebugMetadata: true,
 	}
 	var gotInfo ServerInfo
 	wantErr := errors.New("stop")
 	err := Run(context.Background(), Options{
 		LoadConfig: func(context.Context, config.Options) (config.Config, error) {
-			t.Setenv(response.EnvDebugMetadata, "false")
 			return wantConfig, nil
 		},
 		StartServer: func(_ context.Context, info ServerInfo) error {
@@ -264,7 +263,7 @@ func TestRunCapturesDebugMetadataOnceForServerInfo(t *testing.T) {
 		t.Fatalf("Run() error = %v, want %v", err, wantErr)
 	}
 	if !gotInfo.DebugMetadata {
-		t.Fatal("DebugMetadata = false, want startup-captured true")
+		t.Fatal("DebugMetadata = false, want config value true")
 	}
 }
 

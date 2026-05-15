@@ -141,6 +141,46 @@ func TestLoadPrecedenceAndDefaults(t *testing.T) {
 	}
 }
 
+func TestLoadDebugMetadataFromEnv(t *testing.T) {
+	t.Parallel()
+
+	cfg, err := Load(context.Background(), Options{Env: map[string]string{
+		EnvAPIKey:        "env-key",
+		EnvAthleteID:     "12345",
+		EnvDebugMetadata: " TRUE ",
+	}})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if !cfg.DebugMetadata {
+		t.Fatal("DebugMetadata = false, want true")
+	}
+}
+
+func TestParseDebugMetadata(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		in   string
+		want bool
+	}{
+		{name: "true", in: "true", want: true},
+		{name: "mixed case", in: " TRUE ", want: true},
+		{name: "false", in: "false", want: false},
+		{name: "invalid", in: "yes", want: false},
+		{name: "empty", in: "", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := ParseDebugMetadata(tt.in); got != tt.want {
+				t.Fatalf("ParseDebugMetadata(%q) = %t, want %t", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestLoadDotEnvExplicitMissingErrorsActionable(t *testing.T) {
 	t.Parallel()
 

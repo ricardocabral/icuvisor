@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -13,8 +12,6 @@ import (
 
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
-
-const EnvDebugMetadata = "ICUVISOR_DEBUG_METADATA"
 
 const defaultCatalogHash = "dev-catalog-hash"
 
@@ -120,16 +117,6 @@ func Toolset() string {
 		return safety.ToolsetCore.String()
 	}
 	return safety.ParseToolset(toolset).String()
-}
-
-// DebugMetadataFromEnv reads the debug metadata toggle for startup configuration.
-func DebugMetadataFromEnv() bool {
-	return ParseDebugMetadata(os.Getenv(EnvDebugMetadata))
-}
-
-// ParseDebugMetadata reports whether a raw debug metadata value enables debug output.
-func ParseDebugMetadata(value string) bool {
-	return strings.EqualFold(strings.TrimSpace(value), "true")
 }
 
 // RegisteredScaleLabels returns the central field-name to scale-label registry.

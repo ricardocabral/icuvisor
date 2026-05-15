@@ -454,47 +454,6 @@ func TestShapeDebugNullsDoNotLeakThroughMissingFields(t *testing.T) {
 	})
 }
 
-func TestDebugMetadataFromEnv(t *testing.T) {
-	tests := []struct {
-		name  string
-		value string
-		want  bool
-	}{
-		{name: "on", value: "true", want: true},
-		{name: "off", value: "false", want: false},
-		{name: "invalid", value: "yes", want: false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Setenv(EnvDebugMetadata, tt.value)
-			if got := DebugMetadataFromEnv(); got != tt.want {
-				t.Fatalf("DebugMetadataFromEnv() = %t, want %t", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestParseDebugMetadata(t *testing.T) {
-	tests := []struct {
-		name string
-		in   string
-		want bool
-	}{
-		{name: "true", in: "true", want: true},
-		{name: "mixed case", in: " TRUE ", want: true},
-		{name: "false", in: "false", want: false},
-		{name: "invalid", in: "yes", want: false},
-		{name: "empty", in: "", want: false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := ParseDebugMetadata(tt.in); got != tt.want {
-				t.Fatalf("ParseDebugMetadata(%q) = %t, want %t", tt.in, got, tt.want)
-			}
-		})
-	}
-}
-
 func TestShapeIncludeFullNullConvention(t *testing.T) {
 	type row struct {
 		Keep *float64 `json:"keep"`
