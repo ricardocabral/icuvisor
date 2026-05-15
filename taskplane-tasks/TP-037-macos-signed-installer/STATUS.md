@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 2
 **Size:** M
 
@@ -12,7 +12,7 @@
 
 ### Step 1: Apple Developer setup + bundle identity
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 **Operator-deferred release preflight (not locally satisfied):** the operator confirmed they do not have Apple metadata or keys now. Before any real signed/notarized macOS release is cut, the maintainer/release operator must enroll in the Apple Developer Program, create/export a Developer ID Application certificate as a password-protected `.p12` from Keychain Access, create an App Store Connect API key for `xcrun notarytool`, record non-secret Apple Team ID / Developer ID Application common name / certificate expiration date, add GitHub Actions secrets by name only, run a `v*` tag release, and verify with `security find-identity -v -p codesigning`, `codesign --verify --deep --strict /Applications/icuvisor.app`, `spctl -a -v /Applications/icuvisor.app`, and `xcrun stapler validate /path/to/icuvisor_*.dmg`. Local evidence remains `security find-identity -v -p codesigning` => `0 valid identities found`; this task only documents/scaffolds the gate and does not claim a live signed release was produced.
 
@@ -93,3 +93,4 @@ _Add notes as work progresses._
 | 2026-05-15 17:52 | Agent escalate | TP-037 Step 1 is blocked on maintainer-owned Apple Developer setup. The plan reviewer explicitly said not to mark `Developer ID cert enrolled, .p12 exportable for CI` complete until real non-secret metadata and GitHub secret-presence evidence are supplied. |
 | 2026-05-15 17:52 | Worker iter 1 | done in 536s, tools: 47 |
 | 2026-05-15 17:56 | Review R003 | code Step 1: REVISE |
+| 2026-05-15 17:59 | Review R004 | code Step 1: APPROVE |
