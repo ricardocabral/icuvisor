@@ -1,10 +1,10 @@
 # TP-035-cli-help-documentation: CLI help documentation — Status
 
-**Current Step:** Step 2: Parser changes
+**Current Step:** Step 3: Tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 
@@ -20,17 +20,17 @@
 
 ### Step 2: Parser changes
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Recognize `--help`, `-h`, `help`
-- [ ] Per-subcommand help (`version --help`)
-- [ ] Unknown-flag errors include usage hint and exit code 2
-- [ ] Preserve `--flag value` and `--flag=value` parsing
-- [ ] All I/O routed through `opts.Stdout` / `opts.Stderr`
+- [x] Recognize `--help`, `-h`, `help`
+- [x] Per-subcommand help (`version --help`)
+- [x] Unknown-flag errors include usage hint and exit code 2
+- [x] Preserve `--flag value` and `--flag=value` parsing
+- [x] All I/O routed through `opts.Stdout` / `opts.Stderr`
 
 ### Step 3: Tests
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Table-driven coverage of help flags / subcommand / errors
 - [ ] Golden-file fixture for `--help` output
@@ -65,3 +65,4 @@
 | 2026-05-15 13:18 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 13:18 | Step 1 started | Help-text design |
 | 2026-05-15 13:21 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-15 13:25 | Review R002 | plan Step 2: APPROVE |

@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/ricardocabral/icuvisor/internal/app"
@@ -13,13 +12,10 @@ import (
 var version = "dev"
 
 func main() {
-	if err := app.Run(context.Background(), app.Options{
+	os.Exit(app.RunCLI(context.Background(), app.Options{
 		Version: version,
 		Args:    os.Args[1:],
 		Stdout:  os.Stdout,
 		Stderr:  os.Stderr,
-	}); err != nil {
-		fmt.Fprintf(os.Stderr, "icuvisor: %v\n", err)
-		os.Exit(1)
-	}
+	}))
 }

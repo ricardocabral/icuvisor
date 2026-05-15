@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -38,6 +39,19 @@ type ServerInfo struct {
 	Capability    safety.Capability
 }
 
+// RunCLI executes the icuvisor CLI, writes any error to opts.Stderr, and returns a process exit code.
+func RunCLI(ctx context.Context, opts Options) int {
+	stderr := opts.Stderr
+	if stderr == nil {
+		stderr = io.Discard
+	}
+	if err := Run(ctx, opts); err != nil {
+		_, _ = fmt.Fprintf(stderr, "icuvisor: %v\n", err)
+		return ExitCode(err)
+	}
+	return 0
+}
+
 // Run executes the icuvisor CLI.
 func Run(ctx context.Context, opts Options) error {
 	version := opts.Version
@@ -51,6 +65,12 @@ func Run(ctx context.Context, opts Options) error {
 	}
 
 	args := opts.Args
+	if helpRequested(args) {
+		if hasCommand(args, "version") {
+			return writeVersionHelp(stdout)
+		}
+		return writeTopLevelHelp(stdout)
+	}
 	if len(args) > 0 && args[0] == "version" {
 		_, err := fmt.Fprintln(stdout, version)
 		if err != nil {
@@ -65,6 +85,49 @@ func Run(ctx context.Context, opts Options) error {
 	}
 
 	return startServer(ctx, opts.LoadConfig, opts.StartServer, ServerInfo{Version: version, DebugMetadata: response.DebugMetadataFromEnv()}, configOpts)
+}
+
+// UsageError reports invalid CLI input that should exit with code 2.
+type UsageError struct {
+	message string
+}
+
+func (e UsageError) Error() string {
+	return e.message
+}
+
+// ExitCode maps Run errors to process exit codes.
+func ExitCode(err error) int {
+	if err == nil {
+		return 0
+	}
+	var usageErr UsageError
+	if errors.As(err, &usageErr) {
+		return 2
+	}
+	return 1
+}
+
+func newUsageError(format string, args ...any) UsageError {
+	return UsageError{message: fmt.Sprintf(format, args...) + "\nRun 'icuvisor --help' for usage."}
+}
+
+func helpRequested(args []string) bool {
+	for _, arg := range args {
+		if arg == "--help" || arg == "-h" || arg == "help" {
+			return true
+		}
+	}
+	return false
+}
+
+func hasCommand(args []string, command string) bool {
+	for _, arg := range args {
+		if arg == command {
+			return true
+		}
+	}
+	return false
 }
 
 func parseDefaultArgs(args []string) (config.Options, error) {
@@ -127,7 +190,7 @@ func parseDefaultArgs(args []string) (config.Options, error) {
 			opts.DotEnvPath = value
 			opts.DotEnvExplicit = true
 		default:
-			return config.Options{}, fmt.Errorf("unknown command or flag %q (try: icuvisor version, --config, --env-file, --transport, --http-bind)", arg)
+			return config.Options{}, newUsageError("unknown command or flag %q (try: icuvisor version)", arg)
 		}
 	}
 	return opts, nil
@@ -136,7 +199,7 @@ func parseDefaultArgs(args []string) (config.Options, error) {
 func requireFlagValue(args []string, index int, name string, example string) (string, int, error) {
 	next := index + 1
 	if next >= len(args) || strings.TrimSpace(args[next]) == "" || strings.HasPrefix(args[next], "--") {
-		return "", index, fmt.Errorf("missing value for %s; use %s %s", name, name, example)
+		return "", index, newUsageError("missing value for %s; use %s %s", name, name, example)
 	}
 	return args[next], next, nil
 }
@@ -144,7 +207,7 @@ func requireFlagValue(args []string, index int, name string, example string) (st
 func requireInlineFlagValue(arg string, name string, example string) (string, error) {
 	value, _ := strings.CutPrefix(arg, name+"=")
 	if strings.TrimSpace(value) == "" {
-		return "", fmt.Errorf("missing value for %s; use %s %s", name, name, example)
+		return "", newUsageError("missing value for %s; use %s %s", name, name, example)
 	}
 	return value, nil
 }
