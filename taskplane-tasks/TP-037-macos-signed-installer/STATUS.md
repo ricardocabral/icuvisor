@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 12
+**Review Counter:** 13
 **Iteration:** 2
 **Size:** M
 
@@ -52,11 +52,11 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] `docs/clients/claude-desktop.md` installer-path config updated for `/Applications/icuvisor.app/Contents/MacOS/icuvisor`
-- [ ] `docs/clients/claude-code.md` project `.mcp.json` config added with installed app path
-- [ ] Both client docs include "API key in keychain, not in JSON" callout and non-secret env-only snippets
-- [ ] Verify-the-connection recipe included for both Claude clients
-- [ ] `docs/install/macos.md`, README Quickstart, CHANGELOG, and SECURITY/release checklist docs updated for the signed-DMG/operator-preflight flow
+- [x] `docs/clients/claude-desktop.md` installer-path config updated for `/Applications/icuvisor.app/Contents/MacOS/icuvisor`
+- [x] `docs/clients/claude-code.md` project `.mcp.json` config added with installed app path
+- [x] Both client docs include "API key in keychain, not in JSON" callout and non-secret env-only snippets
+- [x] Verify-the-connection recipe included for both Claude clients
+- [x] `docs/install/macos.md`, README Quickstart, CHANGELOG, and SECURITY/release checklist docs updated for the signed-DMG/operator-preflight flow
 
 ### Step 5: Verification
 
@@ -95,6 +95,7 @@ _Add notes as work progresses._
 - R003 suggestion: keep the authoritative non-secret release-operator record in STATUS.md while SECURITY.md documents the reusable gate.
 - Step 2 validation: `goreleaser check` passed; `goreleaser release --snapshot --clean --skip=publish` produced Linux/Windows archives and darwin universal binary without a standalone darwin archive; `build/macos/package_dmg.sh` produced an unsigned dry-run DMG; `ICUVISOR_MACOS_RELEASE=1 build/macos/package_dmg.sh` failed closed because `APPLE_TEAM_ID` was absent; `go test ./...` passed.
 - Step 3 validation: `.github/workflows/release.yml` parsed as YAML via Ruby; grep confirmed tag trigger, Apple secret names, draft release upload/publish commands, and no Homebrew token path; release preflight includes `go test -race` and `golangci-lint` before GoReleaser.
+- Step 4 validation: grep confirmed installed app path, API-key-in-Keychain callouts, and `What's my FTP?` verification recipes in both Claude client docs; `plutil -lint build/macos/Info.plist` still passes.
 
 | 2026-05-15 17:43 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 17:43 | Step 1 started | Apple Developer setup + bundle identity |
@@ -113,3 +114,4 @@ _Add notes as work progresses._
 | 2026-05-15 18:26 | Review R010 | code Step 2: APPROVE |
 | 2026-05-15 18:29 | Review R011 | plan Step 3: APPROVE |
 | 2026-05-15 18:33 | Review R012 | code Step 3: APPROVE |
+| 2026-05-15 18:38 | Review R013 | plan Step 4: APPROVE |

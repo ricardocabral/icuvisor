@@ -96,7 +96,17 @@ Clients that surface MCP Prompts via `prompts/list` / `prompts/get` can show cur
 
 ## Install
 
-> Installers will land with v1.0. For now, build from source:
+### Download for macOS
+
+Download the signed macOS DMG from the latest GitHub release, open it, and drag `icuvisor.app` to `/Applications`. MCP clients should execute:
+
+```text
+/Applications/icuvisor.app/Contents/MacOS/icuvisor
+```
+
+See [docs/install/macos.md](docs/install/macos.md) for Gatekeeper verification, uninstall steps, and the maintainer release-signing checklist. Manual client setup guides are available for [Claude Desktop](docs/clients/claude-desktop.md) and [Claude Code](docs/clients/claude-code.md).
+
+### Build from source
 
 ```bash
 git clone https://github.com/ricardocabral/icuvisor.git
@@ -112,8 +122,10 @@ make build
 # 2. Store the key in your OS keychain (see "Getting an API key" below)
 # 3. Provide non-secret config via env or JSON
 export INTERVALS_ICU_ATHLETE_ID="i12345"
-./bin/icuvisor version
+/Applications/icuvisor.app/Contents/MacOS/icuvisor version
 ```
+
+If you built from source instead of installing the DMG, use `./bin/icuvisor version` in the final line.
 
 ### Getting an API key
 

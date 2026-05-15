@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- macOS signed-DMG release scaffolding with a universal app bundle, Apple-native signing/notarization workflow gates, release-operator preflight docs, and manual Claude Desktop / Claude Code installed-app configuration guides.
 - Post-update schema-change notification metadata: every tool response now includes `_meta.catalog_hash`, and simulated catalog divergence emits `_meta.schema_changed` guidance to open a new conversation.
 - OS keychain credential storage for the intervals.icu API key via macOS Keychain, Windows Credential Manager, and Linux libsecret/Secret Service, with a no-CGO wrapper and injectable test store.
 - CLI help via `icuvisor --help`, `-h`, `help`, and `version --help`, documenting commands, flags, environment variables, examples, and exit codes.

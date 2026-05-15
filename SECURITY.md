@@ -50,7 +50,7 @@ Out of scope:
 
 ## Release signing and notarization
 
-Official macOS releases use a Developer ID Application certificate for the app bundle and Apple notarization for the DMG. Maintainers must provision the certificate in Apple Developer, export it as a password-protected `.p12`, and store only the following GitHub Actions secrets for release jobs:
+Official macOS releases use a Developer ID Application certificate for the app bundle and Apple notarization for the DMG. See `docs/install/macos.md` for the operator checklist. Maintainers must provision the certificate in Apple Developer, export it as a password-protected `.p12`, and store only the following GitHub Actions secrets for release jobs:
 
 - `APPLE_TEAM_ID` — Apple Developer Team ID used for code signing and notarization metadata.
 - `APPLE_DEVELOPER_ID_P12_BASE64` — base64-encoded Developer ID Application `.p12` export.
