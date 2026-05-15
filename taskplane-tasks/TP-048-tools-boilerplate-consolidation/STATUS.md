@@ -1,10 +1,10 @@
 # TP-048-tools-boilerplate-consolidation — Status
 
-**Current Step:** Step 2: Mechanical replacement across tool files
+**Current Step:** Step 3: `get_activities.go` cleanups
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -33,9 +33,10 @@
 
 ### Step 3: `get_activities.go` cleanups
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Confirm `stringSet` has no callers, delete it
+- [ ] Confirm current `stringSet` callers and replace them behavior-preservingly before deleting the `internal/tools` helper
+- [ ] Clarify acceptance grep evidence for `stringSet`: `internal/tools` should have no helper/callers; unrelated `internal/toolchecks/schema_stability.go` is out of scope
 - [ ] Promote inline anonymous struct in `validateActivitiesTokenArgs` to a named type
 
 ### Step 4: `Requirement` enum
@@ -67,6 +68,7 @@ _Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
 - Step 1 plan review R001: keep `DecodeStrict` object-only semantics (`arguments must be a JSON object`), reject trailing JSON with `unexpected trailing JSON`, and keep `TextResult(shaped any) Result` no-error per prompt; Step 2 should only replace exact result construction where this preserves behavior.
 - Step 2 plan review R004: remove the old unexported `decodeStrict` instead of wrapping it; preserve `decodeGetActivitiesRequest`, `decodeActivityReadRequest`, and raw-field precheck error ordering; use `TextResult` for exact constructions where payloads are JSON-marshalable by construction.
 - Step 2 plan review R005: old `decodeStrict(raw, &args)` callers currently reject empty/whitespace as `arguments must be a JSON object`; audit those callers and add minimal prechecks before `DecodeStrict[T]` unless a wrapper already explicitly allowed empty input.
+- Step 3 plan review R008: `stringSet` still has callers in `get_activities.go` and `get_activity_streams.go`; remove the helper only after replacing those callers, and scope acceptance to `internal/tools` because `internal/toolchecks/schema_stability.go` has an unrelated helper.
 
 
 | 2026-05-15 13:33 | Task started | Runtime V2 lane-runner execution |
@@ -78,3 +80,4 @@ _Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
 | 2026-05-15 13:53 | Review R005 | plan Step 2: REVISE |
 | 2026-05-15 13:55 | Review R006 | plan Step 2: APPROVE |
 | 2026-05-15 14:03 | Review R007 | code Step 2: APPROVE |
+| 2026-05-15 14:05 | Review R008 | plan Step 3: REVISE |
