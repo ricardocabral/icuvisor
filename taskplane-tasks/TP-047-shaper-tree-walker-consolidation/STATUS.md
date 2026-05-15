@@ -17,7 +17,7 @@
 - [x] Lock deterministic fixture plan: `get_activities_terse.golden.json`, `get_activities_full.golden.json`, `get_fitness.golden.json`, `get_events_wrapper.golden.json`, `wellness_provenance.golden.json`; each uses synthetic DTO input, stable `response.Options`, reset catalog metadata, and canonical indented JSON bytes
 - [x] Add automated golden snapshot test/generator that maps each case to its input, exact shaping options, fixture path, and comparison command without hitting the network
 - [x] Capture `_meta`-shaped output as golden fixtures under `internal/response/testdata/`
-- [ ] Commit fixtures before touching shaper code
+- [x] Commit fixtures before touching shaper code
 
 ### Step 2: Pick the approach
 
