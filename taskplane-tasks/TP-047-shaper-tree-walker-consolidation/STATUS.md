@@ -49,9 +49,9 @@
 
 **Status:** 🟨 In Progress
 
+- [x] Address R014 plan note: helper only finalizes row metadata/debug/scale/common meta; wrapper traversal, RowCollections, and wrapper-specific null handling stay outside; nested row collections call helper with common/debug disabled
 - [ ] Move `defaultScaleLabels` to `internal/response/scales.go`
 - [ ] Extract common helper shared by `shapeRow` / `shapeWrapperRow`
-- [ ] Address R014 plan note: helper only finalizes row metadata/debug/scale/common meta; wrapper traversal, RowCollections, and wrapper-specific null handling stay outside; nested row collections call helper with common/debug disabled
 
 ### Step 5: Verify byte-identical output
 
@@ -78,6 +78,8 @@
 **Visitor sketch:** Introduce one recursive helper over JSON-shaped values, e.g. `walkJSON(value any, path string, visitor jsonVisitor) (any, []string)` with `jsonVisitor` returning a keep/drop decision and optional missing paths. Predicate/action helpers remain small: `debugPathPredicate`, `provenancePathPredicate`, `provenanceFetchedAtPredicate`, `stripNullVisitor`, `dropDebugVisitor`, and `scaleCollectVisitor`. Path construction stays dotted/indexed via the existing `joinPath` and array-index formatting so golden missing-field paths remain byte-identical.
 
 **Marshal replacement / package-boundary plan:** Replace `marshalToJSONValue` with `toJSONValue` implemented in `internal/response` using reflection: maps/slices/arrays recurse directly; structs honor exported fields, embedded fields, `json:"-"`, renamed fields, and `omitempty`; pointers/interfaces unwrap or become nil; primitives remain primitives. This covers typed tool DTOs (`get_activities`, `get_fitness`, athlete profile, stream/detail envelopes) without importing `internal/tools`. `include_full` maps such as activity `Full`, curve raw payloads, and training summary raw rows remain `map[string]any` / `[]any` and are not decoded/re-encoded. `dropDebugVisitor` must drop ordinary `fetched_at` / `query_type` only outside provenance; `provenanceFetchedAtPredicate` preserves `_meta.provenance.<field>.fetched_at` and keeps it out of debug filtering; scale collection must still skip nested `_meta` content.
+
+**Step 4 helper plan:** Extract a narrow `finalizeShapedRow(row, missing, opts, includeDebugMetadata, includeCommonMeta) map[string]any` helper for the shared post-processing only: debug drop/add, missing-field strip metadata, scale metadata, and optional common metadata. `shapeWrapperRow` keeps RowCollections traversal and top-level nil/missing handling outside the helper, then calls it with debug/common enabled. `shapeRow` keeps include_full vs terse setup outside the helper and passes `includeCommonMeta` through; nested row collections still call `shapeRow(..., includeCommonMeta=false)` so they do not gain common/debug metadata.
 
 **Step 3 fallback accounting:** The old whole-response marshal/unmarshal round-trip is removed from the happy path. Narrow per-value marshal fallbacks remain for values that depend on `encoding/json` contracts: `json.Marshaler` (including `json.RawMessage` and `time.Time`), `encoding.TextMarshaler`, `[]byte`, non-string map keys, and anonymous embedded structs where field-promotion semantics would otherwise be reimplemented. The Step 1 typed activity/fitness/wrapper/provenance golden fixtures do not rely on a whole-response fallback; only their special leaf values would use per-value fallback if present.
 
