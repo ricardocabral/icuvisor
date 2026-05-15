@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 1
 **Size:** M
 
@@ -35,6 +35,7 @@
 - [x] Timezone: `time.Local` → IANA validated
 - [x] 401/403: no writes, named error + fix URL
 - [x] `--offline` override
+- [ ] R009: replace `time.Local == Local` UTC fallback with real IANA timezone detection and regression test
 
 ### Step 4: Write
 
@@ -133,3 +134,4 @@ Plan review R003 requested a concrete CLI wiring plan before coding. Implement S
 | 2026-05-15 19:00 | Review R005 | plan Step 2: APPROVE |
 | 2026-05-15 19:09 | Review R006 | code Step 2: REVISE |
 | 2026-05-15 19:15 | Review R008 | plan Step 3: APPROVE |
+| 2026-05-15 19:25 | Review R009 | code Step 3: REVISE |
