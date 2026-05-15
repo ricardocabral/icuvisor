@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/athleteprofile"
-	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/clients"
 )
 
 const (
@@ -18,13 +18,8 @@ const (
 	AthleteProfileTTL      = 15 * time.Minute
 )
 
-// ProfileClient fetches athlete profile data for resources.
-type ProfileClient interface {
-	GetAthleteProfile(context.Context) (intervals.AthleteWithSportSettings, error)
-}
-
 type athleteProfileOptions struct {
-	client           ProfileClient
+	client           clients.ProfileClient
 	version          string
 	timezoneFallback string
 	debugMetadata    bool
@@ -33,7 +28,7 @@ type athleteProfileOptions struct {
 }
 
 type athleteProfileReader struct {
-	client           ProfileClient
+	client           clients.ProfileClient
 	version          string
 	timezoneFallback string
 	debugMetadata    bool
@@ -54,7 +49,7 @@ type athleteProfileRefresh struct {
 }
 
 // AthleteProfileResource returns the dynamic cached athlete-profile resource definition.
-func AthleteProfileResource(client ProfileClient, opts ResourceOptions) Resource {
+func AthleteProfileResource(client clients.ProfileClient, opts ResourceOptions) Resource {
 	reader := newAthleteProfileReader(athleteProfileOptions{
 		client:           client,
 		version:          opts.Version,

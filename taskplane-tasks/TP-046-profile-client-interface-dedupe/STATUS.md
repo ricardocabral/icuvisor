@@ -1,10 +1,10 @@
 # TP-046-profile-client-interface-dedupe — Status
 
-**Current Step:** Step 2: Create the shared declaration
+**Current Step:** Step 3: Tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** S
 
@@ -21,16 +21,16 @@
 
 ### Step 2: Create the shared declaration
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Create shared interface in chosen home (default: `internal/clients/profile.go`) with compile-time producer assertion
-- [ ] Remove the two duplicate declarations while preserving a deliberate `tools.ProfileClient` compatibility alias for internal tools consumers
-- [ ] Update resource consumer imports to use the shared interface
-- [ ] Record placement decision in `STATUS.md` and add `CHANGELOG.md` `[Unreleased]` entry
+- [x] Create shared interface in chosen home (default: `internal/clients/profile.go`) with compile-time producer assertion
+- [x] Remove the two duplicate declarations while preserving a deliberate `tools.ProfileClient` compatibility alias for internal tools consumers
+- [x] Update resource consumer imports to use the shared interface
+- [x] Record placement decision in `STATUS.md` and add `CHANGELOG.md` `[Unreleased]` entry
 
 ### Step 3: Tests
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] `go build ./...` — fakes still satisfy
 - [ ] `make test` + `make test-race`
@@ -47,7 +47,7 @@
 
 ## Decisions
 
-_Record placement decision (`internal/clients` vs `internal/intervals`) in Step 2, with a one-paragraph justification._
+- Step 2 placement: chose `internal/clients/profile.go` instead of `internal/intervals` because `ProfileClient` is a small consumer-facing interface shared by tools and resources, and a neutral internal package avoids cross-importing one consumer package from another while giving likely future shared client interfaces a clear home. The package remains internal-only, imports the concrete intervals response type, and includes a compile-time assertion that `*intervals.Client` satisfies the shared contract.
 
 ## Notes
 
@@ -62,3 +62,4 @@ _Add notes as work progresses. If TP-042 lands first, note any textual merge res
 | 2026-05-15 13:18 | Step 1 started | Confirm the duplication is exact |
 | 2026-05-15 13:21 | Review R001 | plan Step 1: REVISE |
 | 2026-05-15 13:23 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-15 13:27 | Review R003 | plan Step 2: APPROVE |

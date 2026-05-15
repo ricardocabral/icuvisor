@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/athleteprofile"
+	"github.com/ricardocabral/icuvisor/internal/clients"
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/response"
@@ -22,10 +23,8 @@ const (
 	fetchAthleteProfileMessage               = "could not fetch athlete profile; check intervals.icu credentials and athlete ID"
 )
 
-// ProfileClient fetches athlete profile data for tools.
-type ProfileClient interface {
-	GetAthleteProfile(context.Context) (intervals.AthleteWithSportSettings, error)
-}
+// ProfileClient is the shared athlete profile client interface used by tools.
+type ProfileClient = clients.ProfileClient
 
 // GetAthleteProfileRequest contains the get_athlete_profile tool arguments.
 type GetAthleteProfileRequest struct {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Consolidated the internal athlete profile client interface into a shared `internal/clients` package used by tools and resources.
+
 ### Added
 
 - `--env-file` CLI flag and `ICUVISOR_ENV_FILE` environment variable for reading a custom local env file instead of the default `.env`; explicitly requested env-file paths must exist (the default `.env` remains silently skipped when absent).
