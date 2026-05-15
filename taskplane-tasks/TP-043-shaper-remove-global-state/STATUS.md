@@ -1,7 +1,7 @@
 # TP-043-shaper-remove-global-state — Status
 
-**Current Step:** Step 3: Tests
-**Status:** 🟡 In Progress
+**Current Step:** Step 4: Verify
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-15
 **Review Level:** 2
 **Review Counter:** 6
@@ -39,11 +39,11 @@
 
 ### Step 4: Verify
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
-- [ ] Build / test / race / lint
-- [ ] No `init()` left in `internal/response/`
-- [ ] `_meta` byte-identical
+- [x] Build / test / race / lint
+- [x] No `init()` left in `internal/response/`
+- [x] `_meta` byte-identical
 
 ---
 
