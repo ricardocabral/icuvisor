@@ -1,22 +1,24 @@
 # TP-048-tools-boilerplate-consolidation — Status
 
 **Current Step:** Step 1: Helpers + tests
-**Status:** ⏳ Not started
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 0
-**Iteration:** 0
+**Review Counter:** 1
+**Iteration:** 1
 **Size:** M
 
 ---
 
 ### Step 1: Helpers + tests
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Add `internal/tools/decode.go` with `DecodeStrict[T any]`
 - [ ] Add `internal/tools/result.go` with `TextResult`
 - [ ] Table-driven tests for both helpers (zero input, unknown field, malformed, happy path)
+- [ ] Cover `DecodeStrict` trailing JSON rejection plus empty/whitespace zero-value and non-object argument errors
+- [ ] Document `TextResult` as a no-error helper for shaped values that are JSON-marshalable by construction, comparing test output to a hand-built `Result`
 
 ### Step 2: Mechanical replacement across tool files
 
@@ -59,4 +61,9 @@ _Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
 
 ## Notes
 
-_Add notes as work progresses._
+- Step 1 plan review R001: keep `DecodeStrict` object-only semantics (`arguments must be a JSON object`), reject trailing JSON with `unexpected trailing JSON`, and keep `TextResult(shaped any) Result` no-error per prompt; Step 2 should only replace exact result construction where this preserves behavior.
+
+
+| 2026-05-15 13:33 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-15 13:33 | Step 1 started | Helpers + tests |
+| 2026-05-15 13:37 | Review R001 | plan Step 1: UNKNOWN |
