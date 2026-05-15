@@ -1,6 +1,6 @@
 # TP-047-shaper-tree-walker-consolidation — Status
 
-**Current Step:** Step 5: Verify byte-identical output
+**Current Step:** Step 6: Build / test / lint
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
@@ -63,8 +63,9 @@
 
 ### Step 6: Build / test / lint
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
+- [ ] Update `CHANGELOG.md` `[Unreleased]` Changed entry for internal shaper refactor with no user-visible output changes
 - [ ] `make build` / `test` / `test-race` / `lint`
 - [ ] Eyeball-benchmark large `include_full` response; must not regress
 
