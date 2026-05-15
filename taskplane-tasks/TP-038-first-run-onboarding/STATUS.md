@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 1
 **Size:** M
 
@@ -29,7 +29,7 @@
 
 ### Step 3: Autodetect + verify
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Profile fetch → athlete_id normalize + display name + FTP
 - [x] Timezone: `time.Local` → IANA validated
