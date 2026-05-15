@@ -63,10 +63,27 @@ Do not commit certificate exports, `.p8` files, app-specific passwords, API keys
 
 Before cutting a signed macOS release, the release operator must complete this preflight gate and record the non-secret results in the release notes or task status:
 
-- `security find-identity -v -p codesigning` on the release runner/keychain shows a valid `Developer ID Application` identity for the project.
-- Apple Team ID, Developer ID Application common name, and certificate expiration date are known to the release operator.
-- GitHub Actions secrets exist by name for `APPLE_TEAM_ID`, `APPLE_DEVELOPER_ID_P12_BASE64`, `APPLE_DEVELOPER_ID_P12_PASSWORD`, `APPLE_API_KEY_ID`, `APPLE_API_KEY_ISSUER`, and `APPLE_API_KEY_BASE64`.
-- No secret values, decoded `.p12`, decoded `.p8`, or placeholder secret material are committed to git.
+1. Enroll the maintainer account or organization in the Apple Developer Program.
+2. In Apple Developer Certificates, Identifiers & Profiles, create a **Developer ID Application** certificate. Install it into Keychain Access on a trusted Mac, export the certificate and private key as a password-protected `.p12`, then base64-encode the `.p12` for GitHub Actions.
+3. In App Store Connect, create an API key with access suitable for notarization (`xcrun notarytool`) and download the `.p8` once. Base64-encode it for GitHub Actions.
+4. Record only non-secret release metadata: Apple Team ID, Developer ID Application common name, and certificate expiration date.
+5. Add GitHub Actions secrets by name only: `APPLE_TEAM_ID`, `APPLE_DEVELOPER_ID_P12_BASE64`, `APPLE_DEVELOPER_ID_P12_PASSWORD`, `APPLE_API_KEY_ID`, `APPLE_API_KEY_ISSUER`, and `APPLE_API_KEY_BASE64`.
+6. Verify local/release-runner signing identity availability when applicable:
+
+   ```sh
+   security find-identity -v -p codesigning
+   ```
+
+   The output must include a valid `Developer ID Application` identity for icuvisor. Current TP-037 local dry-run evidence was `0 valid identities found`, so live signing/notarization remains an operator-deferred release preflight until the assets exist.
+7. Run the tag release workflow with a `v*` tag. After the workflow uploads the DMG, verify the downloaded artifact:
+
+   ```sh
+   codesign --verify --deep --strict /Applications/icuvisor.app
+   spctl -a -v /Applications/icuvisor.app
+   xcrun stapler validate /path/to/icuvisor_*.dmg
+   ```
+
+No secret values, decoded `.p12`, decoded `.p8`, or placeholder secret material may be committed to git.
 
 Users can verify an installed app with:
 
