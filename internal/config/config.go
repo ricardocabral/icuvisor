@@ -550,8 +550,10 @@ func validate(raw rawConfig) (Config, error) {
 		return Config{}, err
 	}
 
-	athleteID := coachConfig.DefaultAthleteID
-	if strings.TrimSpace(raw.athleteID) != "" || coach.EffectiveMode(coachMode, coachConfig) != coach.ModeOn {
+	var athleteID string
+	if coach.EffectiveMode(coachMode, coachConfig) == coach.ModeOn {
+		athleteID = coachConfig.DefaultAthleteID
+	} else {
 		athleteID, err = NormalizeAthleteID(raw.athleteID)
 		if err != nil {
 			return Config{}, err

@@ -34,7 +34,7 @@
 - [x] Unknown tool names fail loudly
 - [x] R006 revision: allow coach-mode `on`/effective `auto` configs to omit top-level `athlete_id` by resolving `Config.AthleteID` from `coach.default_athlete_id`
 - [x] R006 revision: add explicit registered-catalog drift test against `toolcatalog.AthleteScopedToolNames()` so ACL validation and registry cannot diverge silently
-- [ ] R007 revision: when coach mode is effectively on, `Config.AthleteID` must always resolve to `coach.default_athlete_id` regardless of legacy top-level `athlete_id`, with regression coverage
+- [x] R007 revision: when coach mode is effectively on, `Config.AthleteID` must always resolve to `coach.default_athlete_id` regardless of legacy top-level `athlete_id`, with regression coverage
 
 ### Step 3: Tool registry plumbing
 

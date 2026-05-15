@@ -361,6 +361,9 @@ func TestLoadCoachConfigSchemaAndValidation(t *testing.T) {
 	if cfg.Coach.DefaultAthleteID != "i333" {
 		t.Fatalf("DefaultAthleteID = %q, want i333", cfg.Coach.DefaultAthleteID)
 	}
+	if cfg.AthleteID != "i333" {
+		t.Fatalf("AthleteID = %q, want coach default i333 to override legacy top-level athlete_id", cfg.AthleteID)
+	}
 	if len(cfg.Coach.Athletes) != 2 || cfg.Coach.Athletes[0].ID != "i222" || cfg.Coach.Athletes[0].Label != "Jane" {
 		t.Fatalf("Coach athletes = %#v, want normalized roster", cfg.Coach.Athletes)
 	}
