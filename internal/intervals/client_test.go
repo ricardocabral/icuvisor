@@ -105,6 +105,8 @@ func TestActivityIDEndpointsRequireResolvedTargetOwnership(t *testing.T) {
 					return
 				}
 				switch {
+				case r.Method == http.MethodGet && r.URL.Path == "/athlete/i222/events/42":
+					_, _ = w.Write([]byte(`{"id":"42"}`))
 				case r.Method == http.MethodGet && r.URL.Path == "/activity/a1/streams":
 					_, _ = w.Write([]byte(`[]`))
 				case r.Method == http.MethodPost && r.URL.Path == "/activity/a1/messages":
@@ -127,6 +129,36 @@ func TestActivityIDEndpointsRequireResolvedTargetOwnership(t *testing.T) {
 				t.Fatalf("mismatched target error = %v, want ErrTargetAthleteMismatch", err)
 			}
 		})
+	}
+}
+
+func TestLinkActivityToEventPreflightsTargetEventBeforeWrite(t *testing.T) {
+	t.Parallel()
+
+	var sawPUT atomic.Bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/activity/a1":
+			_, _ = w.Write([]byte(`{"id":"a1","icu_athlete_id":"i222"}`))
+		case r.Method == http.MethodGet && r.URL.Path == "/athlete/i222/events/404":
+			w.WriteHeader(http.StatusNotFound)
+		case r.Method == http.MethodPut && r.URL.Path == "/activity/a1":
+			sawPUT.Store(true)
+			_, _ = w.Write([]byte(`{"id":"a1","icu_athlete_id":"i222"}`))
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	_, err := client.LinkActivityToEvent(WithTargetAthleteID(context.Background(), "i222"), LinkActivityToEventParams{ActivityID: "a1", EventID: "404"})
+	if err == nil {
+		t.Fatal("LinkActivityToEvent() error = nil, want event preflight failure")
+	}
+	if sawPUT.Load() {
+		t.Fatal("LinkActivityToEvent() sent PUT after event preflight failed")
 	}
 }
 

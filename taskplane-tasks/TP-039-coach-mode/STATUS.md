@@ -53,7 +53,7 @@
 - [x] R011 revision: direct activity-ID tools must verify upstream activity ownership against the resolved target athlete before reads/writes/deletes
 - [x] R011 revision: make `icuvisor_list_advanced_capabilities` derive coach filtering from the authoritative MCP gate, not duplicated app-only `CatalogFilter` wiring
 - [x] R011 revision: preserve coach-mode-off catalog compatibility by gating `athlete_id` schema injection/stripping to effective coach mode
-- [ ] R012 revision: `LinkActivityToEvent` must preflight `event_id` under the resolved target athlete before writing the activity pairing
+- [x] R012 revision: `LinkActivityToEvent` must preflight `event_id` under the resolved target athlete before writing the activity pairing
 
 ### Step 4: `list_athletes` + `select_athlete`
 
