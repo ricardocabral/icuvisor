@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -16,6 +16,8 @@
 
 - [x] Grep all readers/writers
 - [x] Decide `Options` construction site
+- [ ] Add `list_advanced_capabilities` response.Toolset reader to audit/plan
+- [ ] Add athlete-profile resource path to `Options` construction decision
 
 ### Step 2: Refactor
 
@@ -54,3 +56,4 @@
 
 | 2026-05-15 14:22 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 14:22 | Step 1 started | Audit reads |
+| 2026-05-15 14:26 | Review R001 | code Step 1: UNKNOWN |
