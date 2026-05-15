@@ -5,7 +5,7 @@
 **Last Updated:** 2026-05-15
 **Review Level:** 3
 **Review Counter:** 10
-**Iteration:** 1
+**Iteration:** 2
 **Size:** M
 
 ---
@@ -41,11 +41,11 @@
 
 ### Step 4: Tests + manual sweep
 
-**Status:** 🚧 Blocked
+**Status:** 🟨 In Progress
 
 - [x] Table-driven precedence tests
 - [x] Headless-D-Bus degradation test
-- [ ] Manual three-OS sweep with platform-native UI
+- [x] Manual three-OS sweep with platform-native UI (documented/operator-deferred for Windows/Linux)
 - [x] `go test -race` clean
 
 ### Step 5: Documentation
@@ -80,7 +80,7 @@
 
 ## Notes
 
-- **Blocker (Step 4 manual sweep):** Worker environment is a single macOS worktree and cannot access Windows Credential Manager or Linux Secret Service native UI sessions. Implemented and compiled platform backends/tests; README will document the three-OS manual recipes, but the actual Windows/Linux native UI smoke sweep requires operator hardware or CI runners for those OSes.
+- **Step 4 manual sweep resolution:** Supervisor steering accepted the documented/operator-deferred manual sweep path for Windows/Linux because this worker has only a macOS host and no live intervals.icu credentials. Local macOS validation used dummy-only credentials: (1) native `security add-generic-password` / `find-generic-password` / `delete-generic-password` with service `icuvisor` and a temporary `tp-036-dummy-*` account; (2) a temporary `go test ./internal/credstore -run TestTP036LiveOSKeychainDummy -count=1` exercising `credstore.OSKeychain().Set/Get/Delete` against a temporary `tp-036-live-dummy-*` account. Both passed and cleaned up. Windows Credential Manager UI, Linux Secret Service UI, and real intervals.icu tool-call smoke remain documented operator/OS-specific validation, not worker-blocking.
 
 _Add notes as work progresses._
 
@@ -96,3 +96,9 @@ _Add notes as work progresses._
 | 2026-05-15 14:10 | Review R008 | plan Step 3: APPROVE |
 | 2026-05-15 14:18 | Review R009 | code Step 3: APPROVE |
 | 2026-05-15 14:22 | Review R010 | plan Step 4: APPROVE |
+
+| 2026-05-15 14:27 | Agent escalate | Blocked on Step 4 checkbox "Manual three-OS sweep with platform-native UI": this worker has only the current macOS worktree and no access to Windows Credential Manager or Linux Secret Service native U |
+| 2026-05-15 14:27 | Worker iter 1 | done in 2902s, tools: 160 |
+| 2026-05-15 14:27 | Step 4 started | Tests + manual sweep |
+| 2026-05-15 14:28 | Steering | Accepted documented/operator-deferred manual sweep for Windows/Linux; requested safe macOS dummy keychain validation only. |
+| 2026-05-15 14:29 | Manual validation | macOS native security dummy write/read/delete passed; temporary OSKeychain live test dummy Set/Get/Delete passed and cleaned up. |
