@@ -120,9 +120,13 @@ func (staticCatalogPanicClient) GetAthleteProfile(context.Context) (intervals.At
 
 func advancedCapabilitiesResult(t *testing.T, result Result) listAdvancedCapabilitiesResponse {
 	t.Helper()
-	payload, ok := result.StructuredContent.(listAdvancedCapabilitiesResponse)
-	if !ok {
-		t.Fatalf("StructuredContent type = %T, want listAdvancedCapabilitiesResponse", result.StructuredContent)
+	data, err := json.Marshal(result.StructuredContent)
+	if err != nil {
+		t.Fatalf("marshal StructuredContent: %v", err)
+	}
+	var payload listAdvancedCapabilitiesResponse
+	if err := json.Unmarshal(data, &payload); err != nil {
+		t.Fatalf("decode StructuredContent: %v", err)
 	}
 	return payload
 }

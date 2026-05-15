@@ -277,6 +277,60 @@ func TestShapeRemovesStaleCallerSuppliedScales(t *testing.T) {
 	})
 }
 
+func TestShapeAddsCatalogHashAndOwnsSchemaMetadata(t *testing.T) {
+	resetRuntimeCatalogMetadataForTest()
+	t.Cleanup(resetRuntimeCatalogMetadataForTest)
+	setRuntimeCatalogMetadataForTest("v0.5.0", "current-hash")
+
+	got, err := Shape(map[string]any{
+		"name": "athlete",
+		"_meta": map[string]any{
+			"catalog_hash":          "spoofed",
+			"schema_changed":        true,
+			"schema_change_message": "spoofed",
+			"previous_version":      "v0.0.1",
+			"current_version":       "v0.0.2",
+			"previous_catalog_hash": "old-spoofed",
+			"source":                "preserved",
+		},
+	}, Options{ServerVersion: "v0.5.0"})
+	if err != nil {
+		t.Fatalf("Shape() error = %v", err)
+	}
+	meta := got.(map[string]any)["_meta"].(map[string]any)
+	if meta["catalog_hash"] != "current-hash" || meta["source"] != "preserved" {
+		t.Fatalf("_meta = %#v, want authoritative catalog hash and preserved source", meta)
+	}
+	for _, key := range []string{"schema_changed", "schema_change_message", "previous_version", "current_version", "previous_catalog_hash"} {
+		if _, ok := meta[key]; ok {
+			t.Fatalf("_meta[%q] present in steady-state metadata: %#v", key, meta)
+		}
+	}
+}
+
+func TestShapeSchemaChangeMetadata(t *testing.T) {
+	resetRuntimeCatalogMetadataForTest()
+	t.Cleanup(resetRuntimeCatalogMetadataForTest)
+	setRuntimeCatalogMetadataForTest("v0.4.1", "old-hash")
+	if _, err := Shape(map[string]any{"name": "first"}, Options{ServerVersion: "v0.4.1"}); err != nil {
+		t.Fatalf("Shape(first) error = %v", err)
+	}
+	setRuntimeCatalogMetadataForTest("v0.5.0", "new-hash")
+
+	got, err := Shape(map[string]any{"name": "second"}, Options{ServerVersion: "v0.5.0"})
+	if err != nil {
+		t.Fatalf("Shape(second) error = %v", err)
+	}
+	meta := got.(map[string]any)["_meta"].(map[string]any)
+	wantMessage := "icuvisor was upgraded from v0.4.1 to v0.5.0 since this conversation started; tool schemas may have changed. Open a new conversation to use the latest tools."
+	if meta["schema_changed"] != true || meta["schema_change_message"] != wantMessage || meta["previous_version"] != "v0.4.1" || meta["current_version"] != "v0.5.0" || meta["previous_catalog_hash"] != "old-hash" || meta["catalog_hash"] != "new-hash" {
+		t.Fatalf("_meta = %#v, want schema-change metadata", meta)
+	}
+	if got := schemaChangeMessage("v0.4.1", "v0.5.0"); got != wantMessage {
+		t.Fatalf("schemaChangeMessage() = %q, want %q", got, wantMessage)
+	}
+}
+
 func TestShapeAddsDeleteModeMetadata(t *testing.T) {
 	SetDeleteMode("full")
 	t.Cleanup(func() { SetDeleteMode("safe") })
@@ -487,6 +541,7 @@ func addDefaultCommonMetaToExpected(value any) {
 	case map[string]any:
 		if meta, ok := typed["_meta"].(map[string]any); ok {
 			if _, hasServerVersion := meta["server_version"]; hasServerVersion {
+				meta["catalog_hash"] = defaultCatalogHash
 				meta["delete_mode"] = "safe"
 				meta["toolset"] = "core"
 			}

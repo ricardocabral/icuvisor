@@ -122,15 +122,12 @@ func updateWellnessHandler(client WellnessWriterClient, profileClient ProfileCli
 			}
 			return Result{}, NewUserError(writeWellnessMessage, err)
 		}
-		payload, err := shapeUpdateWellnessResponse(updated, meta, args.IncludeFull, version, debugMetadata, updateWellnessName, profileUnitSystem(profile))
+		unitSystem := profileUnitSystem(profile)
+		payload, err := shapeUpdateWellnessResponse(updated, meta, args.IncludeFull, version, debugMetadata, updateWellnessName, unitSystem)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping update_wellness response: %w", err)
 		}
-		text, err := json.Marshal(payload)
-		if err != nil {
-			return Result{}, fmt.Errorf("encoding update_wellness response: %w", err)
-		}
-		return Result{Content: []Content{{Type: ContentTypeText, Text: string(text)}}, StructuredContent: payload}, nil
+		return encodeShaped(payload, args.IncludeFull, []string{"wellness"}, version, debugMetadata, updateWellnessName, unitSystem)
 	}
 }
 

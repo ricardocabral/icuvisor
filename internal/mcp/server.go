@@ -18,6 +18,7 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/prompts"
 	"github.com/ricardocabral/icuvisor/internal/resources"
+	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
@@ -107,6 +108,7 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 		}
 		logger.Info("prompt registration complete", "registered_count", registrar.registeredCount)
 	}
+	response.SetRuntimeCatalogMetadata(version, catalogHash)
 
 	return &Server{server: sdkServer, transport: transport, logger: logger, version: version, catalogHash: catalogHash}, nil
 }
