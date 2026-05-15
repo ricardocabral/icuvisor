@@ -95,7 +95,7 @@ _Add notes as work progresses._
 | 2026-05-15 18:31 | Plan review R014 | Added Step 4 helper-boundary planning item for shapeRow/shapeWrapperRow extraction. |
 | 2026-05-15 18:23 | Code review R012 | Added blocking revision items: preserve duplicate-field/string-tag struct semantics and detect cycles with wrapped JSON errors. |
 | 2026-05-15 18:18 | Code review R011 | Added blocking revision item: preserve `json.Number` as a JSON number and reject invalid numbers. |
-| 2026-05-15 18:13 | Code review R010 | Added blocking revision items: restore JSON float error/float32 behavior and preserve provenance query_type while tightening _meta segment matching. |
+| 2026-05-15 18:13 | Code review R010 | Added blocking revision items: restore JSON float error/float32 behavior and preserve provenance query_type while tightening \_meta segment matching. |
 | 2026-05-15 18:01 | Plan review R008 | Added Step 3 guardrails: deep-copy ownership, converter fallback scope, fallback accounting, and focused converter/walker tests. |
 | 2026-05-15 17:55 | Plan review R005 | Added Step 2 planning item to specify the exact marshal replacement, package-boundary strategy, include_full fit, and predicate preservation. |
 | 2026-05-15 17:49 | Code review R003 | Added blocking revision items: isolate catalog runtime state and use typed DTO inputs for activity/fitness snapshots so JSON tags and omitempty are locked. |
@@ -120,3 +120,6 @@ _Add notes as work progresses._
 | 2026-05-15 19:07 | Review R017 | plan Step 5: REVISE |
 | 2026-05-15 19:09 | Review R018 | plan Step 5: APPROVE |
 | 2026-05-15 19:11 | Review R019 | code Step 5: APPROVE |
+
+| 2026-05-15 19:15 | Worker iter 1 | done in 5522s, tools: 230 |
+| 2026-05-15 19:15 | Task complete | .DONE created |
