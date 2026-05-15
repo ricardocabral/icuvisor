@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 2
 **Size:** S
 
@@ -53,10 +53,10 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Check if TP-042 already fixed `internal/tools/registry.go:67-70` — note overlap here
-- [ ] If not fixed: replace hardcoded `getAthleteProfileName` with failing tool's name
-- [ ] If fixed: mark step a no-op
-- [ ] `make build` / `test` / `lint`
+- [x] Check if TP-042 already fixed `internal/tools/registry.go:67-70` — note overlap here
+- [x] If not fixed: replace hardcoded `getAthleteProfileName` with failing tool's name
+- [x] If fixed: mark step a no-op (not applicable; TP-042 had not fixed it)
+- [x] `make build` / `test` / `lint`
 - [ ] Commit (if not skipped) `TP-049 fix misleading registry error message`
 
 ### Step 6: Verify
@@ -76,6 +76,7 @@ _Record any deviations from the per-item plan here (e.g. helper name, where relo
 
 - Step 2 checks required renaming `apiKeyLocation` local in `internal/config/config.go` to avoid a gosec G101 false positive; behavior unchanged.
 - Step 3 checks required increasing `waitForServerRun` timeout from 5s to 10s after the full test suite hit the existing Streamable HTTP shutdown race timeout.
+- Step 5 did not overlap with TP-042; `internal/tools/registry.go` still hardcoded `getAthleteProfileName` for registrar errors.
 
 ## Notes
 
@@ -90,3 +91,4 @@ _Add notes as work progresses._
 | 2026-05-15 17:09 | Review R002 | plan Step 2: APPROVE |
 | 2026-05-15 17:15 | Review R003 | plan Step 3: APPROVE |
 | 2026-05-15 17:22 | Review R004 | plan Step 4: APPROVE |
+| 2026-05-15 17:26 | Review R005 | plan Step 5: APPROVE |
