@@ -50,7 +50,7 @@
 
 ### Step 5: Documentation
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] README "Getting an API key"
 - [x] CHANGELOG `[Unreleased]`
