@@ -1,6 +1,6 @@
 # TP-049-misc-go-hygiene-cleanups — Status
 
-**Current Step:** Step 2: Propagate `ctx` through toolchecks (item 2)
+**Current Step:** Step 3: Move env read into config (item 3)
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
@@ -21,17 +21,17 @@
 
 ### Step 2: Propagate `ctx` through toolchecks (item 2)
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Add `ctx context.Context` to `toolchecks.Register` (schema_stability + confusable_names)
 - [x] Update registry call site to pass through `ctx`
 - [x] Update tests
 - [x] `make build` / `test` / `test-race` / `lint`
-- [ ] Commit `TP-049 propagate ctx through toolchecks Register`
+- [x] Commit `TP-049 propagate ctx through toolchecks Register`
 
 ### Step 3: Move env read into config (item 3)
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Resolve `DebugMetadata` in `config.Load`; store on `Config`
 - [ ] `app.Run` reads from `Config`; no env access in `internal/app`
