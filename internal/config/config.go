@@ -15,19 +15,21 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/ricardocabral/icuvisor/internal/credstore"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 const (
-	EnvAPIKey      = "INTERVALS_ICU_API_KEY" // #nosec G101 -- environment variable name, not a credential.
-	EnvAthleteID   = "INTERVALS_ICU_ATHLETE_ID"
-	EnvConfigPath  = "ICUVISOR_CONFIG"
-	EnvTimezone    = "ICUVISOR_TIMEZONE"
-	EnvAPIBaseURL  = "ICUVISOR_API_BASE_URL"
-	EnvHTTPTimeout = "ICUVISOR_HTTP_TIMEOUT"
-	EnvTransport   = "ICUVISOR_TRANSPORT"
-	EnvHTTPBind    = "ICUVISOR_HTTP_BIND"
-	EnvDotEnvPath  = "ICUVISOR_ENV_FILE"
+	EnvAPIKey        = "INTERVALS_ICU_API_KEY" // #nosec G101 -- environment variable name, not a credential.
+	EnvAthleteID     = "INTERVALS_ICU_ATHLETE_ID"
+	EnvConfigPath    = "ICUVISOR_CONFIG"
+	EnvTimezone      = "ICUVISOR_TIMEZONE"
+	EnvAPIBaseURL    = "ICUVISOR_API_BASE_URL"
+	EnvHTTPTimeout   = "ICUVISOR_HTTP_TIMEOUT"
+	EnvTransport     = "ICUVISOR_TRANSPORT"
+	EnvHTTPBind      = "ICUVISOR_HTTP_BIND"
+	EnvDotEnvPath    = "ICUVISOR_ENV_FILE"
+	EnvDebugMetadata = "ICUVISOR_DEBUG_METADATA"
 
 	DefaultAPIBaseURL      = "https://intervals.icu/api/v1"
 	DefaultTimezone        = "UTC"
@@ -54,6 +56,7 @@ func (t Transport) String() string {
 // Config contains the v0.1 runtime configuration consumed by lower layers.
 type Config struct {
 	APIKey          string         `json:"api_key"`
+	APIKeySource    APIKeySource   `json:"-"`
 	AthleteID       string         `json:"athlete_id"`
 	Timezone        string         `json:"timezone"`
 	APIBaseURL      string         `json:"api_base_url"`
@@ -62,7 +65,17 @@ type Config struct {
 	HTTPBindAddress string         `json:"-"`
 	DeleteMode      safety.Mode    `json:"-"`
 	Toolset         safety.Toolset `json:"-"`
+	DebugMetadata   bool           `json:"-"`
 }
+
+// APIKeySource identifies where the loaded API key came from.
+type APIKeySource string
+
+const (
+	APIKeySourceEnv      APIKeySource = "env"
+	APIKeySourceKeychain APIKeySource = "keychain"
+	APIKeySourceFile     APIKeySource = "file"
+)
 
 // Options controls config loading inputs.
 type Options struct {
@@ -70,6 +83,7 @@ type Options struct {
 	DotEnvPath      string
 	DotEnvExplicit  bool
 	Env             map[string]string
+	CredentialStore credstore.Store
 	Transport       string
 	HTTPBindAddress string
 }
@@ -86,6 +100,8 @@ type fileConfig struct {
 
 type rawConfig struct {
 	apiKey          string
+	apiKeySource    APIKeySource
+	apiKeyLocation  string
 	athleteID       string
 	timezone        string
 	apiBaseURL      string
@@ -94,6 +110,7 @@ type rawConfig struct {
 	httpBindAddress string
 	deleteMode      string
 	toolset         string
+	debugMetadata   string
 }
 
 // Load reads v0.1 config from JSON, .env, and process environment.
@@ -144,13 +161,33 @@ func Load(ctx context.Context, opts Options) (Config, error) {
 		}
 		slog.Default().Info("env file not found", "path", dotEnvPath)
 	} else {
-		raw.merge(rawFromEnv(dotEnv), true)
+		raw.merge(rawFromEnv(dotEnv, APIKeySourceFile, "env_file"), true)
 		slog.Default().Info("env file loaded", "path", dotEnvPath)
 	}
 
-	raw.merge(rawFromEnv(env), false)
+	processRaw := rawFromEnv(env, APIKeySourceEnv, "process_env")
+	if processRaw.apiKey != "" {
+		raw.merge(processRaw, false)
+	} else {
+		if opts.CredentialStore != nil {
+			apiKey, err := opts.CredentialStore.Get(ctx, credstore.IntervalsAPIKeyAccount)
+			if err != nil {
+				if !errors.Is(err, credstore.ErrNotFound) {
+					return Config{}, fmt.Errorf("read intervals.icu API key from OS keychain service %q account %q: %w", credstore.ServiceName, credstore.IntervalsAPIKeyAccount, err)
+				}
+			} else {
+				raw.merge(rawConfig{apiKey: strings.TrimSpace(apiKey), apiKeySource: APIKeySourceKeychain, apiKeyLocation: "os_keychain"}, false)
+			}
+		}
+		raw.merge(processRaw, false)
+	}
 	raw.merge(rawConfig{transport: strings.TrimSpace(opts.Transport), httpBindAddress: strings.TrimSpace(opts.HTTPBindAddress)}, false)
-	return validate(raw)
+	cfg, err := validate(raw)
+	if err != nil {
+		return Config{}, err
+	}
+	warnLegacyAPIKey(cfg, raw)
+	return cfg, nil
 }
 
 // NormalizeAthleteID accepts intervals.icu athlete IDs with or without the i prefix.
@@ -188,11 +225,15 @@ func (c Config) String() string {
 	if c.APIKey != "" {
 		apiKey = "<redacted>"
 	}
+	apiKeySource := string(c.APIKeySource)
+	if apiKeySource == "" {
+		apiKeySource = "<unset>"
+	}
 	athleteID := "<unset>"
 	if c.AthleteID != "" {
 		athleteID = "<set>"
 	}
-	return fmt.Sprintf("api_key=%s athlete_id=%s timezone=%q api_base_url=%q http_timeout=%s transport=%s http_bind=%q delete_mode=%s toolset=%s", apiKey, athleteID, c.Timezone, c.APIBaseURL, c.HTTPTimeout, c.Transport, c.HTTPBindAddress, c.DeleteMode, c.Toolset)
+	return fmt.Sprintf("api_key=%s api_key_source=%s athlete_id=%s timezone=%q api_base_url=%q http_timeout=%s transport=%s http_bind=%q delete_mode=%s toolset=%s", apiKey, apiKeySource, athleteID, c.Timezone, c.APIBaseURL, c.HTTPTimeout, c.Transport, c.HTTPBindAddress, c.DeleteMode, c.Toolset)
 }
 
 func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
@@ -217,8 +258,18 @@ func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
 		return rawConfig{}, fmt.Errorf("invalid config JSON in %q; expected fields api_key, athlete_id, timezone, api_base_url, http_timeout, transport, http_bind: %w", path, err)
 	}
 
+	apiKey := strings.TrimSpace(file.APIKey)
+	apiKeySource := APIKeySourceFile
+	sourceLocation := "config_json"
+	if apiKey == "" {
+		apiKeySource = ""
+		sourceLocation = ""
+	}
+
 	return rawConfig{
-		apiKey:          strings.TrimSpace(file.APIKey),
+		apiKey:          apiKey,
+		apiKeySource:    apiKeySource,
+		apiKeyLocation:  sourceLocation,
 		athleteID:       strings.TrimSpace(file.AthleteID),
 		timezone:        strings.TrimSpace(file.Timezone),
 		apiBaseURL:      strings.TrimSpace(file.APIBaseURL),
@@ -287,9 +338,16 @@ func processEnv() map[string]string {
 	return values
 }
 
-func rawFromEnv(env map[string]string) rawConfig {
+func rawFromEnv(env map[string]string, apiKeySource APIKeySource, apiKeyLocation string) rawConfig {
+	apiKey := strings.TrimSpace(env[EnvAPIKey])
+	if apiKey == "" {
+		apiKeySource = ""
+		apiKeyLocation = ""
+	}
 	return rawConfig{
-		apiKey:          strings.TrimSpace(env[EnvAPIKey]),
+		apiKey:          apiKey,
+		apiKeySource:    apiKeySource,
+		apiKeyLocation:  apiKeyLocation,
 		athleteID:       strings.TrimSpace(env[EnvAthleteID]),
 		timezone:        strings.TrimSpace(env[EnvTimezone]),
 		apiBaseURL:      strings.TrimSpace(env[EnvAPIBaseURL]),
@@ -298,12 +356,15 @@ func rawFromEnv(env map[string]string) rawConfig {
 		httpBindAddress: strings.TrimSpace(env[EnvHTTPBind]),
 		deleteMode:      strings.TrimSpace(env[safety.EnvDeleteMode]),
 		toolset:         strings.TrimSpace(env[safety.EnvToolset]),
+		debugMetadata:   strings.TrimSpace(env[EnvDebugMetadata]),
 	}
 }
 
 func (r *rawConfig) merge(next rawConfig, absentOnly bool) {
 	if shouldSet(r.apiKey, next.apiKey, absentOnly) {
 		r.apiKey = next.apiKey
+		r.apiKeySource = next.apiKeySource
+		r.apiKeyLocation = next.apiKeyLocation
 	}
 	if shouldSet(r.athleteID, next.athleteID, absentOnly) {
 		r.athleteID = next.athleteID
@@ -329,6 +390,9 @@ func (r *rawConfig) merge(next rawConfig, absentOnly bool) {
 	if shouldSet(r.toolset, next.toolset, absentOnly) {
 		r.toolset = next.toolset
 	}
+	if shouldSet(r.debugMetadata, next.debugMetadata, absentOnly) {
+		r.debugMetadata = next.debugMetadata
+	}
 }
 
 func shouldSet(current, next string, absentOnly bool) bool {
@@ -338,10 +402,17 @@ func shouldSet(current, next string, absentOnly bool) bool {
 	return !absentOnly || current == ""
 }
 
+func warnLegacyAPIKey(cfg Config, raw rawConfig) {
+	if cfg.APIKeySource != APIKeySourceFile {
+		return
+	}
+	slog.Default().Warn("api_key found in plaintext config; consider migrating to OS keychain", "source", raw.apiKeyLocation, "migration", "README Getting an API key")
+}
+
 func validate(raw rawConfig) (Config, error) {
 	apiKey := strings.TrimSpace(raw.apiKey)
 	if apiKey == "" {
-		return Config{}, errors.New("missing intervals.icu API key; set INTERVALS_ICU_API_KEY or api_key")
+		return Config{}, fmt.Errorf("missing intervals.icu API key; set %s, store it in OS keychain service %q account %q, or set legacy api_key in config JSON/.env", EnvAPIKey, credstore.ServiceName, credstore.IntervalsAPIKeyAccount)
 	}
 
 	athleteID, err := NormalizeAthleteID(raw.athleteID)
@@ -394,6 +465,7 @@ func validate(raw rawConfig) (Config, error) {
 
 	return Config{
 		APIKey:          apiKey,
+		APIKeySource:    raw.apiKeySource,
 		AthleteID:       athleteID,
 		Timezone:        loc.String(),
 		APIBaseURL:      strings.TrimRight(baseURL, "/"),
@@ -402,7 +474,13 @@ func validate(raw rawConfig) (Config, error) {
 		HTTPBindAddress: httpBindAddress,
 		DeleteMode:      safety.ParseMode(raw.deleteMode),
 		Toolset:         safety.ParseToolset(raw.toolset),
+		DebugMetadata:   ParseDebugMetadata(raw.debugMetadata),
 	}, nil
+}
+
+// ParseDebugMetadata reports whether a raw debug metadata value enables debug output.
+func ParseDebugMetadata(value string) bool {
+	return strings.EqualFold(strings.TrimSpace(value), "true")
 }
 
 // ValidateHTTPBindAddress rejects accidental wildcard binds and malformed ports.

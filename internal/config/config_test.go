@@ -2,11 +2,14 @@ package config
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/ricardocabral/icuvisor/internal/credstore"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
@@ -135,6 +138,46 @@ func TestLoadPrecedenceAndDefaults(t *testing.T) {
 	}
 	if cfg.HTTPBindAddress != DefaultHTTPBindAddress {
 		t.Fatalf("HTTPBindAddress = %q, want %q", cfg.HTTPBindAddress, DefaultHTTPBindAddress)
+	}
+}
+
+func TestLoadDebugMetadataFromEnv(t *testing.T) {
+	t.Parallel()
+
+	cfg, err := Load(context.Background(), Options{Env: map[string]string{
+		EnvAPIKey:        "env-key",
+		EnvAthleteID:     "12345",
+		EnvDebugMetadata: " TRUE ",
+	}})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if !cfg.DebugMetadata {
+		t.Fatal("DebugMetadata = false, want true")
+	}
+}
+
+func TestParseDebugMetadata(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		in   string
+		want bool
+	}{
+		{name: "true", in: "true", want: true},
+		{name: "mixed case", in: " TRUE ", want: true},
+		{name: "false", in: "false", want: false},
+		{name: "invalid", in: "yes", want: false},
+		{name: "empty", in: "", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := ParseDebugMetadata(tt.in); got != tt.want {
+				t.Fatalf("ParseDebugMetadata(%q) = %t, want %t", tt.in, got, tt.want)
+			}
+		})
 	}
 }
 
@@ -478,22 +521,166 @@ func TestValidateHTTPBindAddress(t *testing.T) {
 	}
 }
 
+type fakeCredentialStore struct {
+	value string
+	err   error
+	calls int
+}
+
+func (f *fakeCredentialStore) Get(ctx context.Context, _ string) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+	f.calls++
+	if f.err != nil {
+		return "", f.err
+	}
+	return f.value, nil
+}
+
+func (f *fakeCredentialStore) Set(context.Context, string, string) error {
+	return nil
+}
+
+func (f *fakeCredentialStore) Delete(context.Context, string) error {
+	return nil
+}
+
+func TestLoadAPIKeyPrecedenceWithCredentialStore(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		json      string
+		dotEnv    string
+		env       map[string]string
+		store     *fakeCredentialStore
+		wantKey   string
+		wantSrc   APIKeySource
+		wantCalls int
+		wantErr   string
+	}{
+		{
+			name:      "process env wins and skips keychain",
+			json:      `{"api_key":"json-key","athlete_id":"111"}`,
+			dotEnv:    EnvAPIKey + `=dotenv-key\n` + EnvAthleteID + `=222`,
+			env:       map[string]string{EnvAPIKey: "env-key", EnvAthleteID: "333"},
+			store:     &fakeCredentialStore{err: errors.New("should not be called")},
+			wantKey:   "env-key",
+			wantSrc:   APIKeySourceEnv,
+			wantCalls: 0,
+		},
+		{
+			name:      "keychain beats plaintext files",
+			json:      `{"api_key":"json-key","athlete_id":"111"}`,
+			dotEnv:    EnvAPIKey + `=dotenv-key`,
+			env:       map[string]string{},
+			store:     &fakeCredentialStore{value: "keychain-key"},
+			wantKey:   "keychain-key",
+			wantSrc:   APIKeySourceKeychain,
+			wantCalls: 1,
+		},
+		{
+			name:      "not found falls through to file",
+			json:      `{"api_key":"json-key","athlete_id":"111"}`,
+			dotEnv:    EnvAPIKey + `=dotenv-key`,
+			env:       map[string]string{},
+			store:     &fakeCredentialStore{err: credstore.ErrNotFound},
+			wantKey:   "json-key",
+			wantSrc:   APIKeySourceFile,
+			wantCalls: 1,
+		},
+		{
+			name:      "dotenv supplies legacy file key when json omits it",
+			json:      `{"athlete_id":"111"}`,
+			dotEnv:    EnvAPIKey + `=dotenv-key`,
+			env:       map[string]string{},
+			store:     &fakeCredentialStore{err: credstore.ErrNotFound},
+			wantKey:   "dotenv-key",
+			wantSrc:   APIKeySourceFile,
+			wantCalls: 1,
+		},
+		{
+			name:      "unexpected keychain error fails load",
+			json:      `{"api_key":"json-key","athlete_id":"111"}`,
+			dotEnv:    "",
+			env:       map[string]string{},
+			store:     &fakeCredentialStore{err: errors.New("keychain unavailable in an unexpected way")},
+			wantCalls: 1,
+			wantErr:   "read intervals.icu API key from OS keychain",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			configPath := dir + "/config.json"
+			dotEnvPath := dir + "/.env"
+			writeFile(t, configPath, tc.json)
+			writeFile(t, dotEnvPath, tc.dotEnv)
+
+			cfg, err := Load(context.Background(), Options{Path: configPath, DotEnvPath: dotEnvPath, Env: tc.env, CredentialStore: tc.store})
+			if tc.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+					t.Fatalf("Load() error = %v, want containing %q", err, tc.wantErr)
+				}
+			} else if err != nil {
+				t.Fatalf("Load() error = %v", err)
+			} else {
+				if cfg.APIKey != tc.wantKey || cfg.APIKeySource != tc.wantSrc {
+					t.Fatalf("Load() api key/source = %q/%q, want %q/%q", cfg.APIKey, cfg.APIKeySource, tc.wantKey, tc.wantSrc)
+				}
+			}
+			if tc.store != nil && tc.store.calls != tc.wantCalls {
+				t.Fatalf("credential store calls = %d, want %d", tc.store.calls, tc.wantCalls)
+			}
+		})
+	}
+}
+
+func TestLoadWarnsForLegacyFileAPIKeyWithoutLeakingValue(t *testing.T) {
+	credential := strings.Repeat("w", 12)
+	dir := t.TempDir()
+	configPath := dir + "/config.json"
+	writeFile(t, configPath, `{"api_key":"`+credential+`","athlete_id":"123"}`)
+
+	var logs strings.Builder
+	previous := slog.Default()
+	t.Cleanup(func() { slog.SetDefault(previous) })
+	slog.SetDefault(slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelWarn})))
+
+	cfg, err := Load(context.Background(), Options{Path: configPath, DotEnvPath: dir + "/missing.env", Env: map[string]string{}, CredentialStore: credstore.NoopStore{}})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.APIKeySource != APIKeySourceFile {
+		t.Fatalf("APIKeySource = %q, want file", cfg.APIKeySource)
+	}
+	gotLogs := logs.String()
+	if !strings.Contains(gotLogs, "api_key found in plaintext config") {
+		t.Fatalf("logs = %q, want legacy warning", gotLogs)
+	}
+	if strings.Contains(gotLogs, credential) {
+		t.Fatalf("logs leaked credential: %q", gotLogs)
+	}
+}
+
 func TestConfigStringRedactsSecret(t *testing.T) {
 	t.Parallel()
 
 	testCredential := strings.Repeat("x", 12)
 	cfg := Config{
-		APIKey:      testCredential,
-		AthleteID:   "i12345",
-		Timezone:    "UTC",
-		APIBaseURL:  DefaultAPIBaseURL,
-		HTTPTimeout: DefaultHTTPTimeout,
+		APIKey:       testCredential,
+		APIKeySource: APIKeySourceKeychain,
+		AthleteID:    "i12345",
+		Timezone:     "UTC",
+		APIBaseURL:   DefaultAPIBaseURL,
+		HTTPTimeout:  DefaultHTTPTimeout,
 	}
 	got := cfg.String()
 	if strings.Contains(got, testCredential) || strings.Contains(got, "i12345") {
 		t.Fatalf("Config.String() leaked sensitive data: %q", got)
 	}
-	for _, want := range []string{"api_key=<redacted>", "athlete_id=<set>", "UTC", "toolset=core"} {
+	for _, want := range []string{"api_key=<redacted>", "api_key_source=keychain", "athlete_id=<set>", "UTC", "toolset=core"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("Config.String() = %q, want %q", got, want)
 		}

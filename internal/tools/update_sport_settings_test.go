@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
@@ -152,7 +153,8 @@ func TestUpdateSportSettingsSafeModeRejectsZonesBeforeWrite(t *testing.T) {
 }
 
 func TestUpdateSportSettingsFullModeAppliesZonesAndResponseMeta(t *testing.T) {
-	t.Parallel()
+	response.SetDeleteMode("full")
+	t.Cleanup(func() { response.SetDeleteMode("safe") })
 
 	client := newFakeSportSettingsClient(intervals.SportSettings{ID: 7, Types: []string{"Ride"}, FTP: 250})
 	client.setting = intervals.SportSettings{ID: 7, Type: "Ride", FTP: 280, PowerZones: []int{100, 200}, PowerZoneNames: []string{"Z1", "Z2"}}

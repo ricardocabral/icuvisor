@@ -18,6 +18,7 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/prompts"
 	"github.com/ricardocabral/icuvisor/internal/resources"
+	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
@@ -48,10 +49,11 @@ type Options struct {
 
 // Server wraps the SDK server and selected transport.
 type Server struct {
-	server    *sdkmcp.Server
-	transport sdkmcp.Transport
-	logger    *slog.Logger
-	version   string
+	server      *sdkmcp.Server
+	transport   sdkmcp.Transport
+	logger      *slog.Logger
+	version     string
+	catalogHash string
 }
 
 // NewServer constructs an icuvisor MCP server.
@@ -77,10 +79,18 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	catalogHash, err := hashToolCatalog(nil)
+	if err != nil {
+		return nil, fmt.Errorf("hashing empty tool catalog: %w", err)
+	}
 	if opts.Registry != nil {
 		registrar := &safeRegistrar{server: sdkServer, logger: logger, capability: capabilityOrSafe(opts.Capability), toolset: toolsetOrCore(opts), names: make(map[string]struct{})}
 		if err := opts.Registry.Register(ctx, registrar); err != nil {
 			return nil, fmt.Errorf("registering tools: %w", err)
+		}
+		catalogHash, err = hashToolCatalog(registrar.registeredTools)
+		if err != nil {
+			return nil, fmt.Errorf("hashing tool catalog: %w", err)
 		}
 		logger.Info("tool registration complete", "registered_count", registrar.registeredCount, "skipped_toolset_count", registrar.skippedToolsetCount, "skipped_capability_count", registrar.skippedCapabilityCount)
 	}
@@ -98,8 +108,17 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 		}
 		logger.Info("prompt registration complete", "registered_count", registrar.registeredCount)
 	}
+	response.SetRuntimeCatalogMetadata(version, catalogHash)
 
-	return &Server{server: sdkServer, transport: transport, logger: logger, version: version}, nil
+	return &Server{server: sdkServer, transport: transport, logger: logger, version: version, catalogHash: catalogHash}, nil
+}
+
+// CatalogHash reports the deterministic hash of the exposed tool catalog.
+func (s *Server) CatalogHash() string {
+	if s == nil {
+		return ""
+	}
+	return s.catalogHash
 }
 
 // Run serves one MCP session until the client disconnects or ctx is cancelled.
@@ -257,13 +276,22 @@ func toolsetOrCore(opts Options) safety.Toolset {
 	return safety.ParseToolset(string(toolset))
 }
 
-func newSDKServer(version string, logger *slog.Logger) (server *sdkmcp.Server, err error) {
+// withPanicRecovery converts SDK protocol-boundary panics into errors so callers can fail safely.
+func withPanicRecovery(name string, fn func() error) (err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			err = fmt.Errorf("constructing MCP server: %v", recovered)
+			err = fmt.Errorf("%s: %v", name, recovered)
 		}
 	}()
-	return sdkmcp.NewServer(&sdkmcp.Implementation{Name: "icuvisor", Version: version}, &sdkmcp.ServerOptions{Logger: logger}), nil
+	return fn()
+}
+
+func newSDKServer(version string, logger *slog.Logger) (server *sdkmcp.Server, err error) {
+	err = withPanicRecovery("constructing MCP server", func() error {
+		server = sdkmcp.NewServer(&sdkmcp.Implementation{Name: "icuvisor", Version: version}, &sdkmcp.ServerOptions{Logger: logger})
+		return nil
+	})
+	return server, err
 }
 
 type safeRegistrar struct {
@@ -272,12 +300,13 @@ type safeRegistrar struct {
 	capability             safety.Capability
 	toolset                safety.Toolset
 	names                  map[string]struct{}
+	registeredTools        []tools.Tool
 	registeredCount        int
 	skippedToolsetCount    int
 	skippedCapabilityCount int
 }
 
-func (r *safeRegistrar) AddTool(tool tools.Tool) (err error) {
+func (r *safeRegistrar) AddTool(tool tools.Tool) error {
 	if err := r.validateTool(tool); err != nil {
 		return err
 	}
@@ -293,35 +322,33 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) (err error) {
 	if skippedByToolset || skippedByCapability {
 		return nil
 	}
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			err = fmt.Errorf("registering tool %q: %v", tool.Name, recovered)
-		}
-	}()
 
-	r.server.AddTool(&sdkmcp.Tool{
-		Name:         tool.Name,
-		Description:  tool.Description,
-		InputSchema:  tool.InputSchema,
-		OutputSchema: tool.OutputSchema,
-	}, func(ctx context.Context, req *sdkmcp.CallToolRequest) (*sdkmcp.CallToolResult, error) {
-		result, err := tool.Handler(ctx, tools.Request{
-			Name:      req.Params.Name,
-			Arguments: req.Params.Arguments,
+	return withPanicRecovery(fmt.Sprintf("registering tool %q", tool.Name), func() error {
+		r.server.AddTool(&sdkmcp.Tool{
+			Name:         tool.Name,
+			Description:  tool.Description,
+			InputSchema:  tool.InputSchema,
+			OutputSchema: tool.OutputSchema,
+		}, func(ctx context.Context, req *sdkmcp.CallToolRequest) (*sdkmcp.CallToolResult, error) {
+			result, err := tool.Handler(ctx, tools.Request{
+				Name:      req.Params.Name,
+				Arguments: req.Params.Arguments,
+			})
+			if err != nil {
+				r.logger.Error("tool handler failed", "tool", tool.Name, "error", err)
+				return toolErrorResult(publicToolErrorMessage(err)), nil
+			}
+			converted, err := convertResult(result)
+			if err != nil {
+				r.logger.Error("tool result conversion failed", "tool", tool.Name, "error", err)
+				return toolErrorResult(genericToolErrorMessage), nil
+			}
+			return converted, nil
 		})
-		if err != nil {
-			r.logger.Error("tool handler failed", "tool", tool.Name, "error", err)
-			return toolErrorResult(publicToolErrorMessage(err)), nil
-		}
-		converted, err := convertResult(result)
-		if err != nil {
-			r.logger.Error("tool result conversion failed", "tool", tool.Name, "error", err)
-			return toolErrorResult(genericToolErrorMessage), nil
-		}
-		return converted, nil
+		r.registeredTools = append(r.registeredTools, tool)
+		r.registeredCount++
+		return nil
 	})
-	r.registeredCount++
-	return nil
 }
 
 func (r *safeRegistrar) toolsetAllows(tool tools.Tool) bool {
@@ -375,40 +402,37 @@ type safeResourceRegistrar struct {
 	registeredCount int
 }
 
-func (r *safeResourceRegistrar) AddResource(resource resources.Resource) (err error) {
+func (r *safeResourceRegistrar) AddResource(resource resources.Resource) error {
 	if err := r.validateResource(resource); err != nil {
 		return err
 	}
 	r.uris[resource.URI] = struct{}{}
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			err = fmt.Errorf("registering resource %q: %v", resource.URI, recovered)
-		}
-	}()
 
-	r.server.AddResource(&sdkmcp.Resource{
-		URI:         resource.URI,
-		Name:        resource.Name,
-		Title:       resource.Title,
-		Description: resource.Description,
-		MIMEType:    resource.MIMEType,
-	}, func(ctx context.Context, req *sdkmcp.ReadResourceRequest) (*sdkmcp.ReadResourceResult, error) {
-		result, err := resource.Handler(ctx, resources.Request{URI: req.Params.URI})
-		if err != nil {
-			if isResourceNotFound(err) {
-				return nil, err
+	return withPanicRecovery(fmt.Sprintf("registering resource %q", resource.URI), func() error {
+		r.server.AddResource(&sdkmcp.Resource{
+			URI:         resource.URI,
+			Name:        resource.Name,
+			Title:       resource.Title,
+			Description: resource.Description,
+			MIMEType:    resource.MIMEType,
+		}, func(ctx context.Context, req *sdkmcp.ReadResourceRequest) (*sdkmcp.ReadResourceResult, error) {
+			result, err := resource.Handler(ctx, resources.Request{URI: req.Params.URI})
+			if err != nil {
+				if isResourceNotFound(err) {
+					return nil, err
+				}
+				r.logger.Error("resource handler failed", "resource_uri", resource.URI, "error", err)
+				return nil, errors.New(genericResourceErrorMessage)
 			}
-			r.logger.Error("resource handler failed", "resource_uri", resource.URI, "error", err)
-			return nil, errors.New(genericResourceErrorMessage)
-		}
-		return &sdkmcp.ReadResourceResult{Contents: []*sdkmcp.ResourceContents{{
-			URI:      stringOrDefault(result.URI, req.Params.URI),
-			MIMEType: stringOrDefault(result.MIMEType, resource.MIMEType),
-			Text:     result.Text,
-		}}}, nil
+			return &sdkmcp.ReadResourceResult{Contents: []*sdkmcp.ResourceContents{{
+				URI:      stringOrDefault(result.URI, req.Params.URI),
+				MIMEType: stringOrDefault(result.MIMEType, resource.MIMEType),
+				Text:     result.Text,
+			}}}, nil
+		})
+		r.registeredCount++
+		return nil
 	})
-	r.registeredCount++
-	return nil
 }
 
 func (r *safeResourceRegistrar) validateResource(resource resources.Resource) error {

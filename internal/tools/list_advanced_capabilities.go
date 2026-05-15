@@ -2,7 +2,6 @@ package tools
 
 import (
 	"context"
-	"encoding/json"
 	"sort"
 	"strings"
 	"unicode"
@@ -96,11 +95,7 @@ func listAdvancedCapabilitiesHandler(capabilities []advancedCapabilityRow, activ
 				Toolset:        response.Toolset(),
 			},
 		}
-		text, err := json.Marshal(response)
-		if err != nil {
-			return Result{}, err
-		}
-		return Result{Content: []Content{{Type: ContentTypeText, Text: string(text)}}, StructuredContent: response}, nil
+		return encodeShaped(response, false, nil, "", false, listAdvancedCapabilitiesName, "")
 	}
 }
 

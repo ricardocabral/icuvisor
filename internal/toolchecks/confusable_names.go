@@ -32,10 +32,10 @@ type ConfusablePair struct {
 	SentenceB string
 }
 
-func GenerateToolCatalog() ([]ToolInfo, error) {
+func GenerateToolCatalog(ctx context.Context) ([]ToolInfo, error) {
 	registrar := &schemaRegistrar{}
 	registry := tools.NewRegistryWithOptions(schemaCatalogClient{}, tools.RegistryOptions{Version: "snapshot", TimezoneFallback: "UTC"})
-	if err := registry.Register(context.Background(), registrar); err != nil {
+	if err := registry.Register(ctx, registrar); err != nil {
 		return nil, fmt.Errorf("registering tools: %w", err)
 	}
 	catalog := make([]ToolInfo, 0, len(registrar.tools))

@@ -23,6 +23,18 @@ func (r *collectingRegistrar) AddTool(tool Tool) error {
 	return nil
 }
 
+type failingToolRegistrar struct {
+	name string
+	err  error
+}
+
+func (r failingToolRegistrar) AddTool(tool Tool) error {
+	if tool.Name == r.name {
+		return r.err
+	}
+	return nil
+}
+
 type fakeProfileClient struct {
 	profile intervals.AthleteWithSportSettings
 	err     error
@@ -91,6 +103,19 @@ func TestGetAthleteProfileRegistrationMetadata(t *testing.T) {
 				t.Fatalf("schema property %q contains forbidden %q", name, forbidden)
 			}
 		}
+	}
+}
+
+func TestRegistryErrorNamesFailingTool(t *testing.T) {
+	t.Parallel()
+
+	wantErr := errors.New("boom")
+	err := NewRegistry(newFakeFitnessMetricsClient(t), "test", "UTC").Register(context.Background(), failingToolRegistrar{name: getFitnessName, err: wantErr})
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("Register() error = %v, want wrapped %v", err, wantErr)
+	}
+	if got := err.Error(); !strings.Contains(got, "registering get_fitness") || strings.Contains(got, getAthleteProfileName) {
+		t.Fatalf("Register() error = %q, want failing tool name only", got)
 	}
 }
 

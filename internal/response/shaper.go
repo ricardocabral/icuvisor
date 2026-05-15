@@ -4,23 +4,49 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
-const EnvDebugMetadata = "ICUVISOR_DEBUG_METADATA"
+const defaultCatalogHash = "dev-catalog-hash"
 
 var processDeleteMode atomic.Value
 var processToolset atomic.Value
 
+// catalogRuntime is a process-local fallback for the schema-change protocol. The
+// response shaper does not receive an MCP session handle today, so first-seen
+// state is tracked once per process until future transport plumbing can key it
+// by client session.
+var catalogRuntime = struct {
+	sync.Mutex
+	current   catalogSnapshot
+	firstSeen *catalogSnapshot
+}{current: catalogSnapshot{CatalogHash: defaultCatalogHash}}
+
 func init() {
 	processDeleteMode.Store(safety.ModeSafe.String())
 	processToolset.Store(safety.ToolsetCore.String())
+}
+
+type catalogSnapshot struct {
+	Version     string
+	CatalogHash string
+}
+
+var responseOwnedMetaKeys = map[string]struct{}{
+	"server_version":        {},
+	"catalog_hash":          {},
+	"schema_changed":        {},
+	"schema_change_message": {},
+	"previous_version":      {},
+	"current_version":       {},
+	"previous_catalog_hash": {},
+	"units":                 {},
 }
 
 var defaultScaleLabels = map[string]string{
@@ -45,6 +71,24 @@ type Options struct {
 	QueryType      string
 	FetchedAt      time.Time
 	UnitSystem     UnitSystem
+}
+
+// SetRuntimeCatalogMetadata stores the process-global catalog metadata reported in response metadata.
+func SetRuntimeCatalogMetadata(version string, catalogHash string) {
+	catalogRuntime.Lock()
+	defer catalogRuntime.Unlock()
+	catalogRuntime.current = catalogSnapshot{Version: normalizeVersion(version), CatalogHash: normalizeCatalogHash(catalogHash)}
+}
+
+func resetRuntimeCatalogMetadataForTest() {
+	catalogRuntime.Lock()
+	defer catalogRuntime.Unlock()
+	catalogRuntime.current = catalogSnapshot{CatalogHash: defaultCatalogHash}
+	catalogRuntime.firstSeen = nil
+}
+
+func setRuntimeCatalogMetadataForTest(version string, catalogHash string) {
+	SetRuntimeCatalogMetadata(version, catalogHash)
 }
 
 // SetDeleteMode stores the process-global delete mode reported in response metadata.
@@ -73,16 +117,6 @@ func Toolset() string {
 		return safety.ToolsetCore.String()
 	}
 	return safety.ParseToolset(toolset).String()
-}
-
-// DebugMetadataFromEnv reads the debug metadata toggle for startup configuration.
-func DebugMetadataFromEnv() bool {
-	return ParseDebugMetadata(os.Getenv(EnvDebugMetadata))
-}
-
-// ParseDebugMetadata reports whether a raw debug metadata value enables debug output.
-func ParseDebugMetadata(value string) bool {
-	return strings.EqualFold(strings.TrimSpace(value), "true")
 }
 
 // RegisteredScaleLabels returns the central field-name to scale-label registry.
@@ -292,18 +326,52 @@ func addCommonMeta(row map[string]any, opts Options) {
 	meta := map[string]any{}
 	if existing, ok := row["_meta"].(map[string]any); ok {
 		for key, value := range existing {
-			if key != "units" {
+			if _, owned := responseOwnedMetaKeys[key]; !owned {
 				meta[key] = value
 			}
 		}
 	}
-	meta["server_version"] = normalizeVersion(opts.ServerVersion)
+	serverVersion := normalizeVersion(opts.ServerVersion)
+	meta["server_version"] = serverVersion
+	for key, value := range schemaCatalogMeta(serverVersion) {
+		meta[key] = value
+	}
 	meta["delete_mode"] = DeleteMode()
 	meta["toolset"] = Toolset()
 	if opts.UnitSystem != "" {
 		meta["units"] = opts.UnitSystem.Metadata()
 	}
 	row["_meta"] = meta
+}
+
+func schemaCatalogMeta(serverVersion string) map[string]any {
+	catalogRuntime.Lock()
+	defer catalogRuntime.Unlock()
+	current := catalogRuntime.current
+	if current.Version == "" {
+		current.Version = normalizeVersion(serverVersion)
+	}
+	current.CatalogHash = normalizeCatalogHash(current.CatalogHash)
+	meta := map[string]any{"catalog_hash": current.CatalogHash}
+	if catalogRuntime.firstSeen == nil {
+		firstSeen := current
+		catalogRuntime.firstSeen = &firstSeen
+		return meta
+	}
+	firstSeen := *catalogRuntime.firstSeen
+	firstSeen.CatalogHash = normalizeCatalogHash(firstSeen.CatalogHash)
+	if firstSeen.CatalogHash != current.CatalogHash {
+		meta["schema_changed"] = true
+		meta["schema_change_message"] = schemaChangeMessage(firstSeen.Version, current.Version)
+		meta["previous_version"] = firstSeen.Version
+		meta["current_version"] = current.Version
+		meta["previous_catalog_hash"] = firstSeen.CatalogHash
+	}
+	return meta
+}
+
+func schemaChangeMessage(previousVersion, currentVersion string) string {
+	return fmt.Sprintf("icuvisor was upgraded from %s to %s since this conversation started; tool schemas may have changed. Open a new conversation to use the latest tools.", normalizeVersion(previousVersion), normalizeVersion(currentVersion))
 }
 
 func stripNulls(value any, path string) (any, []string) {
@@ -409,6 +477,14 @@ func normalizeVersion(version string) string {
 		return "dev"
 	}
 	return version
+}
+
+func normalizeCatalogHash(catalogHash string) string {
+	catalogHash = strings.TrimSpace(catalogHash)
+	if catalogHash == "" {
+		return defaultCatalogHash
+	}
+	return catalogHash
 }
 
 func joinPath(base string, key string) string {

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -18,7 +19,7 @@ func main() {
 	summaryFile := flag.String("summary-file", os.Getenv("GITHUB_STEP_SUMMARY"), "optional Markdown summary file; defaults to GITHUB_STEP_SUMMARY")
 	flag.Parse()
 
-	generated, err := toolchecks.GenerateSchemaSnapshots()
+	generated, err := toolchecks.GenerateSchemaSnapshots(context.Background())
 	if err != nil {
 		fatal(err)
 	}

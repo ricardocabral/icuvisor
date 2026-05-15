@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -30,6 +31,120 @@ func (b *safeAppLogBuffer) String() string {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	return b.Buffer.String()
+}
+
+func TestRunTopLevelHelpMatchesGolden(t *testing.T) {
+	t.Parallel()
+
+	golden, err := os.ReadFile("testdata/help.golden")
+	if err != nil {
+		t.Fatalf("read golden help: %v", err)
+	}
+	var stdout bytes.Buffer
+	err = Run(context.Background(), Options{
+		Args:   []string{"--help"},
+		Stdout: &stdout,
+		LoadConfig: func(context.Context, config.Options) (config.Config, error) {
+			t.Fatal("help must not load config")
+			return config.Config{}, nil
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if got, want := stdout.String(), string(golden); got != want {
+		t.Fatalf("help output mismatch\n--- got ---\n%s--- want ---\n%s", got, want)
+	}
+}
+
+func TestRunHelpFlagsAndUsagePaths(t *testing.T) {
+	t.Parallel()
+
+	golden, err := os.ReadFile("testdata/help.golden")
+	if err != nil {
+		t.Fatalf("read golden help: %v", err)
+	}
+	tests := []struct {
+		name        string
+		args        []string
+		wantOut     string
+		wantErr     []string
+		wantCode    int
+		wantConfig  config.Options
+		checkConfig bool
+	}{
+		{name: "long help", args: []string{"--help"}, wantOut: string(golden)},
+		{name: "short help", args: []string{"-h"}, wantOut: string(golden)},
+		{name: "help command", args: []string{"help"}, wantOut: string(golden)},
+		{name: "help after flag", args: []string{"--transport", "http", "help"}, wantOut: string(golden)},
+		{name: "version help", args: []string{"version", "--help"}, wantOut: "Print the icuvisor version and exit.\n\nUsage:\n  icuvisor version [--help]\n\nExit codes:\n  0  Success, including help and version output.\n"},
+		{name: "unknown flag", args: []string{"--bogus"}, wantErr: []string{"unknown command or flag", "--bogus", "Run 'icuvisor --help' for usage."}, wantCode: 2},
+		{name: "missing flag value", args: []string{"--config"}, wantErr: []string{"missing value", "--config", "Run 'icuvisor --help' for usage."}, wantCode: 2},
+		{name: "valid flags parse", args: []string{"--config", "/tmp/icuvisor.json", "--transport=http", "--http-bind", "127.0.0.1:9999"}, wantErr: []string{"stop"}, wantCode: 1, wantConfig: config.Options{Path: "/tmp/icuvisor.json", Transport: "http", HTTPBindAddress: "127.0.0.1:9999"}, checkConfig: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var stdout, stderr bytes.Buffer
+			var gotConfig config.Options
+			code := RunCLI(context.Background(), Options{
+				Args:    tc.args,
+				Stdout:  &stdout,
+				Stderr:  &stderr,
+				Version: "vtest",
+				LoadConfig: func(_ context.Context, opts config.Options) (config.Config, error) {
+					gotConfig = opts
+					return config.Config{}, errors.New("stop")
+				},
+			})
+			if got, want := code, tc.wantCode; got != want {
+				t.Fatalf("exit code = %d, want %d", got, want)
+			}
+			if got := stdout.String(); got != tc.wantOut {
+				t.Fatalf("stdout = %q, want %q", got, tc.wantOut)
+			}
+			for _, want := range tc.wantErr {
+				if !strings.Contains(stderr.String(), want) {
+					t.Fatalf("stderr %q missing %q", stderr.String(), want)
+				}
+			}
+			if tc.wantErr == nil && stderr.Len() != 0 {
+				t.Fatalf("stderr = %q, want empty", stderr.String())
+			}
+			if tc.checkConfig && (gotConfig.Path != tc.wantConfig.Path || gotConfig.Transport != tc.wantConfig.Transport || gotConfig.HTTPBindAddress != tc.wantConfig.HTTPBindAddress) {
+				t.Fatalf("config options = %#v, want %#v", gotConfig, tc.wantConfig)
+			}
+		})
+	}
+}
+
+func TestTopLevelHelpDocumentsRuntimeEnvVars(t *testing.T) {
+	t.Parallel()
+
+	golden, err := os.ReadFile("testdata/help.golden")
+	if err != nil {
+		t.Fatalf("read golden help: %v", err)
+	}
+	help := string(golden)
+	for _, name := range []string{
+		config.EnvAPIKey,
+		config.EnvAthleteID,
+		config.EnvConfigPath,
+		config.EnvTimezone,
+		config.EnvAPIBaseURL,
+		config.EnvHTTPTimeout,
+		config.EnvTransport,
+		config.EnvHTTPBind,
+		config.EnvDotEnvPath,
+		safety.EnvDeleteMode,
+		safety.EnvToolset,
+		config.EnvDebugMetadata,
+	} {
+		if !strings.Contains(help, name) {
+			t.Fatalf("help fixture missing env var %s", name)
+		}
+	}
 }
 
 func TestRunVersionWritesInjectedVersion(t *testing.T) {
@@ -124,20 +239,19 @@ func TestDefaultStartServerLogsStartupVersion(t *testing.T) {
 	}
 }
 
-func TestRunCapturesDebugMetadataOnceForServerInfo(t *testing.T) {
-	t.Setenv(response.EnvDebugMetadata, "true")
+func TestRunUsesConfigDebugMetadataForServerInfo(t *testing.T) {
 	wantConfig := config.Config{
-		APIKey:      "secret",
-		AthleteID:   "i12345",
-		Timezone:    "UTC",
-		APIBaseURL:  config.DefaultAPIBaseURL,
-		HTTPTimeout: 30 * time.Second,
+		APIKey:        "secret",
+		AthleteID:     "i12345",
+		Timezone:      "UTC",
+		APIBaseURL:    config.DefaultAPIBaseURL,
+		HTTPTimeout:   30 * time.Second,
+		DebugMetadata: true,
 	}
 	var gotInfo ServerInfo
 	wantErr := errors.New("stop")
 	err := Run(context.Background(), Options{
 		LoadConfig: func(context.Context, config.Options) (config.Config, error) {
-			t.Setenv(response.EnvDebugMetadata, "false")
 			return wantConfig, nil
 		},
 		StartServer: func(_ context.Context, info ServerInfo) error {
@@ -149,7 +263,7 @@ func TestRunCapturesDebugMetadataOnceForServerInfo(t *testing.T) {
 		t.Fatalf("Run() error = %v, want %v", err, wantErr)
 	}
 	if !gotInfo.DebugMetadata {
-		t.Fatal("DebugMetadata = false, want startup-captured true")
+		t.Fatal("DebugMetadata = false, want config value true")
 	}
 }
 

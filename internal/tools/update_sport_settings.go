@@ -94,7 +94,7 @@ func newUpdateSportSettingsTool(client SportSettingsWriterClient, profileClient 
 	return fullTool(Tool{Name: updateSportSettingsName, Description: updateSportSettingsDescription, InputSchema: updateSportSettingsInputSchema(), OutputSchema: updateSportSettingsOutputSchema(), Requirement: RequirementWrite, Handler: updateSportSettingsHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability))})
 }
 
-func updateSportSettingsHandler(client SportSettingsWriterClient, profileClient ProfileClient, version string, timezoneFallback string, _ bool, capability safety.Capability) Handler {
+func updateSportSettingsHandler(client SportSettingsWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeUpdateSportSettingsRequest(req.Arguments)
 		if err != nil {
@@ -126,11 +126,7 @@ func updateSportSettingsHandler(client SportSettingsWriterClient, profileClient 
 			return Result{}, NewUserError(writeSportSettingsMessage, err)
 		}
 		payload := shapeUpdateSportSettingsResponse(args, params, updated, meta)
-		text, err := json.Marshal(payload)
-		if err != nil {
-			return Result{}, fmt.Errorf("encoding update_sport_settings response: %w", err)
-		}
-		return Result{Content: []Content{{Type: ContentTypeText, Text: string(text)}}, StructuredContent: payload}, nil
+		return encodeShaped(payload, false, nil, version, debugMetadata, updateSportSettingsName, profileUnitSystem(profile))
 	}
 }
 

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -16,7 +17,7 @@ func main() {
 	summaryFile := flag.String("summary-file", os.Getenv("GITHUB_STEP_SUMMARY"), "optional Markdown summary file; defaults to GITHUB_STEP_SUMMARY")
 	flag.Parse()
 
-	catalog, err := toolchecks.GenerateToolCatalog()
+	catalog, err := toolchecks.GenerateToolCatalog(context.Background())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "check confusable names: %v\n", err)
 		os.Exit(1)
