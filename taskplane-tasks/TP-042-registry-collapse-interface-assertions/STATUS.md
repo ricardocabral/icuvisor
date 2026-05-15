@@ -1,10 +1,10 @@
 # TP-042-registry-collapse-interface-assertions — Status
 
-**Current Step:** Step 2: Refactor `Register`
+**Current Step:** Step 3: Collapse `schemaCatalogClient`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 1
 **Size:** M
 
@@ -39,10 +39,10 @@
 
 ### Step 3: Collapse `schemaCatalogClient`
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Replace with minimal fake or real client
-- [ ] Snapshot output byte-identical
+- [x] Replace with minimal fake or real client
+- [x] Snapshot output byte-identical
 
 ### Step 4: Tests
 
@@ -141,3 +141,4 @@ Special coupling/conditional semantics to preserve in refactor:
 | 2026-05-15 13:44 | Review R006 | plan Step 2: APPROVE |
 | 2026-05-15 14:00 | Review R007 | code Step 2: UNKNOWN |
 | 2026-05-15 14:07 | Review R008 | code Step 2: APPROVE |
+| 2026-05-15 14:09 | Review R009 | plan Step 3: APPROVE |
