@@ -1,0 +1,60 @@
+{
+  "_meta": {
+    "catalog_hash": "golden-catalog-hash",
+    "delete_mode": "safe",
+    "include_full": false,
+    "more_available": false,
+    "page_size": 2,
+    "server_version": "v0.4.0",
+    "toolset": "core",
+    "units": {
+      "distance": "km",
+      "pace": "min/km",
+      "speed": "km/h",
+      "system": "metric"
+    }
+  },
+  "activities": [
+    {
+      "_meta": {
+        "fields_present": [
+          "activity_id",
+          "distance_km",
+          "moving_time_seconds",
+          "name",
+          "sport"
+        ],
+        "missing_fields": [
+          "average_watts"
+        ]
+      },
+      "activity_id": "a1",
+      "distance_km": 42.2,
+      "moving_time_seconds": 5400,
+      "name": "Tempo Ride",
+      "sport": "Ride"
+    },
+    {
+      "_meta": {
+        "fields_present": [
+          "activity_id",
+          "moving_time_seconds",
+          "name",
+          "sport",
+          "unavailable"
+        ],
+        "missing_fields": [
+          "distance_km"
+        ]
+      },
+      "activity_id": "a2",
+      "moving_time_seconds": 1800,
+      "name": "",
+      "sport": "Run",
+      "unavailable": {
+        "reason": "strava_tos",
+        "workaround": "connect device directly"
+      }
+    }
+  ]
+}

@@ -1,7 +1,10 @@
 package response
 
 import (
+	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -476,6 +479,130 @@ func TestShapeIncludeFullNullConvention(t *testing.T) {
 		"keep":  nil,
 		"_meta": map[string]any{"server_version": "dev"},
 	})
+}
+
+func TestShapeGoldenSnapshots(t *testing.T) {
+	for _, tc := range goldenSnapshotCases() {
+		t.Run(tc.name, func(t *testing.T) {
+			resetRuntimeCatalogMetadataForTest()
+			setRuntimeCatalogMetadataForTest("v0.4.0", "golden-catalog-hash")
+			got, err := Shape(tc.input, tc.opts)
+			if err != nil {
+				t.Fatalf("Shape() error = %v", err)
+			}
+			gotJSON := canonicalGoldenJSON(t, got)
+			path := filepath.Join("testdata", tc.fixture)
+			if os.Getenv("UPDATE_RESPONSE_GOLDENS") == "1" {
+				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+					t.Fatalf("create testdata dir: %v", err)
+				}
+				if err := os.WriteFile(path, gotJSON, 0o644); err != nil {
+					t.Fatalf("write golden %s: %v", path, err)
+				}
+				return
+			}
+			wantJSON, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatalf("read golden %s: %v", path, err)
+			}
+			if !bytes.Equal(gotJSON, wantJSON) {
+				t.Fatalf("golden mismatch for %s; run UPDATE_RESPONSE_GOLDENS=1 go test ./internal/response -run TestShapeGoldenSnapshots\n--- got ---\n%s--- want ---\n%s", tc.fixture, gotJSON, wantJSON)
+			}
+		})
+	}
+}
+
+type goldenSnapshotCase struct {
+	name    string
+	fixture string
+	input   any
+	opts    Options
+}
+
+func goldenSnapshotCases() []goldenSnapshotCase {
+	baseOpts := func(includeFull bool, rowCollections ...string) Options {
+		return Options{
+			IncludeFull:    includeFull,
+			RowCollections: rowCollections,
+			ServerVersion:  "v0.4.0",
+			FetchedAt:      time.Date(2026, 5, 15, 17, 45, 0, 0, time.UTC),
+			UnitSystem:     UnitSystemMetric,
+			DeleteMode:     safety.ModeSafe,
+			Toolset:        safety.ToolsetCore,
+		}
+	}
+	return []goldenSnapshotCase{
+		{
+			name:    "get activities terse",
+			fixture: "get_activities_terse.golden.json",
+			input: map[string]any{
+				"activities": []any{
+					map[string]any{"activity_id": "a1", "name": "Tempo Ride", "sport": "Ride", "distance_km": 42.2, "moving_time_seconds": 5400, "average_watts": nil, "fetched_at": "2026-05-15T10:00:00Z"},
+					map[string]any{"activity_id": "a2", "name": "", "sport": "Run", "distance_km": nil, "moving_time_seconds": 1800, "unavailable": map[string]any{"reason": "strava_tos", "workaround": "connect device directly"}},
+				},
+				"_meta": map[string]any{"page_size": 2, "more_available": false, "include_full": false},
+			},
+			opts: baseOpts(false, "activities"),
+		},
+		{
+			name:    "get activities include full",
+			fixture: "get_activities_full.golden.json",
+			input: map[string]any{
+				"activities": []any{
+					map[string]any{"activity_id": "a1", "name": "Tempo Ride", "sport": "Ride", "raw": map[string]any{"icu_training_load": nil, "power_stream": []any{220.0, nil, 235.0}}, "fetched_at": "2026-05-15T10:00:00Z"},
+				},
+				"_meta": map[string]any{"page_size": 1, "more_available": false, "include_full": true},
+			},
+			opts: baseOpts(true, "activities"),
+		},
+		{
+			name:    "get fitness",
+			fixture: "get_fitness.golden.json",
+			input: map[string]any{
+				"fitness": []any{
+					map[string]any{"date": "2026-05-14", "ctl": 51.2, "atl": nil, "tsb": -4.8, "sleepQuality": 3},
+					map[string]any{"date": "2026-05-15", "ctl": nil, "atl": 56.7, "tsb": nil, "sleepScore": 82},
+				},
+				"_meta": map[string]any{"server_version": "stale", "count": 2, "include_full": false, "source_tools": []any{"get_fitness"}},
+			},
+			opts: baseOpts(false, "fitness"),
+		},
+		{
+			name:    "get events wrapper",
+			fixture: "get_events_wrapper.golden.json",
+			input: map[string]any{
+				"events": []any{
+					map[string]any{"event_id": "e1", "name": "Endurance", "target_load": 75, "description": nil},
+				},
+				"workouts": []any{
+					map[string]any{"workout_id": "w1", "name": "3x tempo", "steps": []any{map[string]any{"duration_seconds": 600, "target": nil}}},
+				},
+				"warnings": []any{nil, "library folder skipped"},
+				"_meta":    map[string]any{"operation": "apply_training_plan", "events_created": 1},
+			},
+			opts: baseOpts(false, "events", "workouts"),
+		},
+		{
+			name:    "wellness provenance",
+			fixture: "wellness_provenance.golden.json",
+			input: map[string]any{
+				"wellness": []any{
+					map[string]any{"date": "2026-05-15", "readiness": 72, "feel": 4, "fetched_at": "2026-05-15T09:00:00Z", "query_type": "wellness", "_meta": map[string]any{"provenance": map[string]any{"readiness": map[string]any{"source": "polar", "native_scale": "1-6", "fetched_at": "2026-05-15T08:30:00Z"}}}},
+				},
+				"_meta": map[string]any{"include_full": false, "stale": false},
+			},
+			opts: baseOpts(false, "wellness"),
+		},
+	}
+}
+
+func canonicalGoldenJSON(t *testing.T, value any) []byte {
+	t.Helper()
+	data, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		t.Fatalf("marshal golden: %v", err)
+	}
+	return append(data, '\n')
 }
 
 func assertJSONEqual(t *testing.T, got any, want any) {

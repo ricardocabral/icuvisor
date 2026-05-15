@@ -1,0 +1,64 @@
+{
+  "_meta": {
+    "catalog_hash": "golden-catalog-hash",
+    "count": 2,
+    "delete_mode": "safe",
+    "include_full": false,
+    "scales": {
+      "sleepQuality": "1-4 (athlete-entered, 1=poor 4=great)",
+      "sleepScore": "0-100 (device-imported nightly score)"
+    },
+    "server_version": "v0.4.0",
+    "source_tools": [
+      "get_fitness"
+    ],
+    "toolset": "core",
+    "units": {
+      "distance": "km",
+      "pace": "min/km",
+      "speed": "km/h",
+      "system": "metric"
+    }
+  },
+  "fitness": [
+    {
+      "_meta": {
+        "fields_present": [
+          "ctl",
+          "date",
+          "sleepQuality",
+          "tsb"
+        ],
+        "missing_fields": [
+          "atl"
+        ],
+        "scales": {
+          "sleepQuality": "1-4 (athlete-entered, 1=poor 4=great)"
+        }
+      },
+      "ctl": 51.2,
+      "date": "2026-05-14",
+      "sleepQuality": 3,
+      "tsb": -4.8
+    },
+    {
+      "_meta": {
+        "fields_present": [
+          "atl",
+          "date",
+          "sleepScore"
+        ],
+        "missing_fields": [
+          "ctl",
+          "tsb"
+        ],
+        "scales": {
+          "sleepScore": "0-100 (device-imported nightly score)"
+        }
+      },
+      "atl": 56.7,
+      "date": "2026-05-15",
+      "sleepScore": 82
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "_meta": {
+    "catalog_hash": "golden-catalog-hash",
+    "delete_mode": "safe",
+    "events_created": 1,
+    "operation": "apply_training_plan",
+    "server_version": "v0.4.0",
+    "toolset": "core",
+    "units": {
+      "distance": "km",
+      "pace": "min/km",
+      "speed": "km/h",
+      "system": "metric"
+    }
+  },
+  "events": [
+    {
+      "_meta": {
+        "fields_present": [
+          "event_id",
+          "name",
+          "target_load"
+        ],
+        "missing_fields": [
+          "description"
+        ]
+      },
+      "event_id": "e1",
+      "name": "Endurance",
+      "target_load": 75
+    }
+  ],
+  "warnings": [
+    null,
+    "library folder skipped"
+  ],
+  "workouts": [
+    {
+      "_meta": {
+        "fields_present": [
+          "name",
+          "steps",
+          "workout_id"
+        ],
+        "missing_fields": [
+          "steps[0].target"
+        ]
+      },
+      "name": "3x tempo",
+      "steps": [
+        {
+          "duration_seconds": 600
+        }
+      ],
+      "workout_id": "w1"
+    }
+  ]
+}
