@@ -1,6 +1,6 @@
 # TP-048-tools-boilerplate-consolidation — Status
 
-**Current Step:** Step 4: `Requirement` enum
+**Current Step:** Step 5: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
@@ -51,8 +51,9 @@
 
 ### Step 5: Verify
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
+- [ ] Update `CHANGELOG.md` under `[Unreleased]` / `Changed`
 - [ ] `make build` / `test` / `test-race` / `lint`
 - [ ] Schema-stability snapshot byte-identical
 - [ ] Acceptance greps collapse as expected
