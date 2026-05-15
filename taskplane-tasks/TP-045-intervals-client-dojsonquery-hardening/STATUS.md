@@ -1,22 +1,23 @@
 # TP-045-intervals-client-dojsonquery-hardening — Status
 
 **Current Step:** Step 1: Sketch the new function boundaries
-**Status:** ⏳ Not started
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 0
-**Iteration:** 0
+**Review Counter:** 1
+**Iteration:** 1
 **Size:** M
 
 ---
 
 ### Step 1: Sketch the new function boundaries
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Map current `doJSONQuery` into `do` / `readBody` / `shouldRetry` / outer loop
 - [ ] Agree on body-size cap default (recommendation: 32 MiB)
 - [ ] Confirm existing retry policy parameters and re-plumb unchanged
+- [ ] Address R001 plan review by recording helper signatures, body lifecycle rules, retry budget split, oversize sentinel, and `RetryConfig` semantics
 
 ### Step 2: Implement the split
 
@@ -65,3 +66,7 @@ _Record body-size cap default (recommendation 32 MiB) and whether it is configur
 ## Notes
 
 _Add notes as work progresses._
+
+| 2026-05-15 14:58 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-15 14:58 | Step 1 started | Sketch the new function boundaries |
+| 2026-05-15 15:01 | Review R001 | plan Step 1: UNKNOWN |
