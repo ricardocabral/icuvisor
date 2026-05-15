@@ -25,10 +25,10 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Decide typed-shape vs single visitor walker
-- [ ] Justify in Decisions below (diff size, blast radius, `include_full` fit)
-- [ ] Sketch struct set or visitor signature
-- [ ] Address R005 plan details: specify marshal-round-trip replacement, package-boundary strategy, `include_full` handling, and provenance/debug predicate preservation before Step 3
+- [x] Decide typed-shape vs single visitor walker
+- [x] Justify in Decisions below (diff size, blast radius, `include_full` fit)
+- [x] Sketch struct set or visitor signature
+- [x] Address R005 plan details: specify marshal-round-trip replacement, package-boundary strategy, `include_full` handling, and provenance/debug predicate preservation before Step 3
 
 ### Step 3: Implement
 
@@ -63,9 +63,15 @@
 
 ## Decisions
 
-_Record typed-shape vs single-walker choice in Step 2, with rationale (diff size, `include_full` handling, mirror risk with `internal/intervals/`)._
+**Step 2 decision:** Use the fallback **single visitor walker** plus a reflection-based JSON-value builder for typed DTOs. Full typed shaping is not selected because `internal/response` cannot import tool DTOs without cycles and mirroring every response envelope/row would balloon the diff and duplicate `internal/tools` / `internal/intervals` contracts.
 
-_Record any narrow case where the marshal round-trip survives, with rationale._
+**Rationale:** This keeps the diff M-sized and the blast radius inside `internal/response`: public `response.Shape` call sites stay stable, `include_full` payloads remain ordinary map/slice values passed through the same shaper, and JSON tag / `omitempty` behavior is preserved centrally by reflecting typed DTOs into JSON-shaped maps before visitor passes. A narrow marshal/unmarshal fallback may remain only for custom `json.Marshaler` or unsupported reflection cases; if used, it is outside the normal tool DTO happy path and will be documented after Step 3.
+
+**Visitor sketch:** Introduce one recursive helper over JSON-shaped values, e.g. `walkJSON(value any, path string, visitor jsonVisitor) (any, []string)` with `jsonVisitor` returning a keep/drop decision and optional missing paths. Predicate/action helpers remain small: `debugPathPredicate`, `provenancePathPredicate`, `provenanceFetchedAtPredicate`, `stripNullVisitor`, `dropDebugVisitor`, and `scaleCollectVisitor`. Path construction stays dotted/indexed via the existing `joinPath` and array-index formatting so golden missing-field paths remain byte-identical.
+
+**Marshal replacement / package-boundary plan:** Replace `marshalToJSONValue` with `toJSONValue` implemented in `internal/response` using reflection: maps/slices/arrays recurse directly; structs honor exported fields, embedded fields, `json:"-"`, renamed fields, and `omitempty`; pointers/interfaces unwrap or become nil; primitives remain primitives. This covers typed tool DTOs (`get_activities`, `get_fitness`, athlete profile, stream/detail envelopes) without importing `internal/tools`. `include_full` maps such as activity `Full`, curve raw payloads, and training summary raw rows remain `map[string]any` / `[]any` and are not decoded/re-encoded. `dropDebugVisitor` must drop ordinary `fetched_at` / `query_type` only outside provenance; `provenanceFetchedAtPredicate` preserves `_meta.provenance.<field>.fetched_at` and keeps it out of debug filtering; scale collection must still skip nested `_meta` content.
+
+**Potential fallback:** If Step 3 encounters a custom `json.Marshaler` value that cannot be represented without calling its marshaler, retain a tiny fallback for that value class only and record it here. No normal tool response fixture should take that fallback.
 
 ## Notes
 
