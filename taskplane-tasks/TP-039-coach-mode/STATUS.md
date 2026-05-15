@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 2
 **Size:** L
 
@@ -32,6 +32,8 @@
 - [x] `ICUVISOR_COACH_MODE=on|off|auto`
 - [x] `coach.athletes[]` schema with `allowed_tools` / `denied_tools` / `default_athlete_id`
 - [x] Unknown tool names fail loudly
+- [ ] R006 revision: allow coach-mode `on`/effective `auto` configs to omit top-level `athlete_id` by resolving `Config.AthleteID` from `coach.default_athlete_id`
+- [ ] R006 revision: add explicit registered-catalog drift test against `toolcatalog.AthleteScopedToolNames()` so ACL validation and registry cannot diverge silently
 
 ### Step 3: Tool registry plumbing
 
@@ -93,7 +95,9 @@
 | 2026-05-15 20:09 | Worker iter 1 | done in 541s, tools: 51 |
 | 2026-05-15 20:09 | Steering | Authenticated coach-roster probe is operator-deferred; proceed with config-backed roster and mark Step 1 complete on documented-gap/fallback basis. |
 | 2026-05-15 20:10 | Review R002 | code Step 1: reviewer repeated R001 objection; superseded by supervisor steering to treat gap as complete for TP-039 v0.5. |
+| 2026-05-15 20:25 | Review R006 | code Step 2: revise coach-mode configs without top-level athlete_id and strengthen registry/toolcatalog drift test. |
 | 2026-05-15 20:12 | Review R002 | code Step 1: UNKNOWN |
 | 2026-05-15 20:15 | Review R003 | plan Step 2: REVISE |
 | 2026-05-15 20:19 | Review R004 | plan Step 2: REVISE |
 | 2026-05-15 20:21 | Review R005 | plan Step 2: APPROVE |
+| 2026-05-15 20:32 | Review R006 | code Step 2: REVISE |
