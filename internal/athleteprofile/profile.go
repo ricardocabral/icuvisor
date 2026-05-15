@@ -73,15 +73,20 @@ type Meta struct {
 }
 
 // Shape returns the shaped athlete profile used by get_athlete_profile and icuvisor://athlete-profile.
-func Shape(profile intervals.AthleteWithSportSettings, version string, timezoneFallback string, includeFull bool, debugMetadata bool) (any, error) {
+func Shape(profile intervals.AthleteWithSportSettings, version string, timezoneFallback string, includeFull bool, debugMetadata bool, shaping ...response.Options) (any, error) {
 	profileResponse := NewResponse(profile, version, timezoneFallback, includeFull)
-	return response.Shape(profileResponse, response.Options{
+	opts := response.Options{
 		IncludeFull:   includeFull,
 		ServerVersion: NormalizeVersion(version),
 		DebugMetadata: debugMetadata,
 		QueryType:     queryType,
 		UnitSystem:    profileUnitSystem(profile),
-	})
+	}
+	if len(shaping) > 0 {
+		opts.DeleteMode = shaping[0].DeleteMode
+		opts.Toolset = shaping[0].Toolset
+	}
+	return response.Shape(profileResponse, opts)
 }
 
 // NewResponse builds the typed athlete profile response before response-boundary shaping.

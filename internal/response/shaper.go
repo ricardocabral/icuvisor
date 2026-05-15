@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/safety"
@@ -15,23 +14,11 @@ import (
 
 const defaultCatalogHash = "dev-catalog-hash"
 
-var processDeleteMode atomic.Value
-var processToolset atomic.Value
-
-// catalogRuntime is a process-local fallback for the schema-change protocol. The
-// response shaper does not receive an MCP session handle today, so first-seen
-// state is tracked once per process until future transport plumbing can key it
-// by client session.
 var catalogRuntime = struct {
 	sync.Mutex
 	current   catalogSnapshot
 	firstSeen *catalogSnapshot
 }{current: catalogSnapshot{CatalogHash: defaultCatalogHash}}
-
-func init() {
-	processDeleteMode.Store(safety.ModeSafe.String())
-	processToolset.Store(safety.ToolsetCore.String())
-}
 
 type catalogSnapshot struct {
 	Version     string
@@ -46,6 +33,8 @@ var responseOwnedMetaKeys = map[string]struct{}{
 	"previous_version":      {},
 	"current_version":       {},
 	"previous_catalog_hash": {},
+	"delete_mode":           {},
+	"toolset":               {},
 	"units":                 {},
 }
 
@@ -71,6 +60,8 @@ type Options struct {
 	QueryType      string
 	FetchedAt      time.Time
 	UnitSystem     UnitSystem
+	DeleteMode     safety.Mode
+	Toolset        safety.Toolset
 }
 
 // SetRuntimeCatalogMetadata stores the process-global catalog metadata reported in response metadata.
@@ -89,34 +80,6 @@ func resetRuntimeCatalogMetadataForTest() {
 
 func setRuntimeCatalogMetadataForTest(version string, catalogHash string) {
 	SetRuntimeCatalogMetadata(version, catalogHash)
-}
-
-// SetDeleteMode stores the process-global delete mode reported in response metadata.
-func SetDeleteMode(mode string) {
-	processDeleteMode.Store(safety.ParseMode(mode).String())
-}
-
-// DeleteMode returns the process-global delete mode reported in response metadata.
-func DeleteMode() string {
-	mode, ok := processDeleteMode.Load().(string)
-	if !ok || strings.TrimSpace(mode) == "" {
-		return safety.ModeSafe.String()
-	}
-	return mode
-}
-
-// SetToolset stores the process-global toolset reported in response metadata.
-func SetToolset(toolset string) {
-	processToolset.Store(safety.ParseToolset(toolset).String())
-}
-
-// Toolset returns the process-global toolset reported in response metadata.
-func Toolset() string {
-	toolset, ok := processToolset.Load().(string)
-	if !ok || strings.TrimSpace(toolset) == "" {
-		return safety.ToolsetCore.String()
-	}
-	return safety.ParseToolset(toolset).String()
 }
 
 // RegisteredScaleLabels returns the central field-name to scale-label registry.
@@ -336,8 +299,8 @@ func addCommonMeta(row map[string]any, opts Options) {
 	for key, value := range schemaCatalogMeta(serverVersion) {
 		meta[key] = value
 	}
-	meta["delete_mode"] = DeleteMode()
-	meta["toolset"] = Toolset()
+	meta["delete_mode"] = opts.DeleteMode.String()
+	meta["toolset"] = opts.Toolset.String()
 	if opts.UnitSystem != "" {
 		meta["units"] = opts.UnitSystem.Metadata()
 	}

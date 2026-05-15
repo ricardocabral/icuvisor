@@ -52,11 +52,12 @@ type getWorkoutsInFolderMeta struct {
 	DefaultPayloadScope string `json:"default_payload_scope"`
 }
 
-func newGetWorkoutsInFolderTool(client WorkoutLibraryClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: getWorkoutsInFolderName, Description: getWorkoutsInFolderDescription, InputSchema: getWorkoutsInFolderInputSchema(), OutputSchema: getWorkoutsInFolderOutputSchema(), Handler: getWorkoutsInFolderHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newGetWorkoutsInFolderTool(client WorkoutLibraryClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: getWorkoutsInFolderName, Description: getWorkoutsInFolderDescription, InputSchema: getWorkoutsInFolderInputSchema(), OutputSchema: getWorkoutsInFolderOutputSchema(), Handler: getWorkoutsInFolderHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func getWorkoutsInFolderHandler(client WorkoutLibraryClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getWorkoutsInFolderHandler(client WorkoutLibraryClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeGetWorkoutsInFolderRequest(req.Arguments)
 		if err != nil {
@@ -77,7 +78,7 @@ func getWorkoutsInFolderHandler(client WorkoutLibraryClient, profileClient Profi
 			return Result{}, NewUserError(fetchWorkoutsInFolderMessage, err)
 		}
 		payload := shapeGetWorkoutsInFolderResponse(workouts, args)
-		return encodeShaped(payload, args.IncludeFull, []string{"workouts"}, version, debugMetadata, getWorkoutsInFolderName, unitSystem)
+		return encodeShaped(payload, args.IncludeFull, []string{"workouts"}, version, debugMetadata, getWorkoutsInFolderName, unitSystem, shapeCfg)
 	}
 }
 

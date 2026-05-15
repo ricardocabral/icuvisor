@@ -47,11 +47,12 @@ type linkActivityToEventWarning struct {
 	EventDate    string `json:"event_date,omitempty"`
 }
 
-func newLinkActivityToEventTool(client ActivityEventLinkClient, activityClient ActivityDetailsClient, eventClient EventByIDClient, version string, debugMetadata bool) Tool {
-	return coreTool(Tool{Name: linkActivityToEventName, Description: linkActivityToEventDescription, InputSchema: linkActivityToEventInputSchema(), OutputSchema: linkActivityToEventOutputSchema(), Requirement: RequirementWrite, Handler: linkActivityToEventHandler(client, activityClient, eventClient, version, debugMetadata)})
+func newLinkActivityToEventTool(client ActivityEventLinkClient, activityClient ActivityDetailsClient, eventClient EventByIDClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: linkActivityToEventName, Description: linkActivityToEventDescription, InputSchema: linkActivityToEventInputSchema(), OutputSchema: linkActivityToEventOutputSchema(), Requirement: RequirementWrite, Handler: linkActivityToEventHandler(client, activityClient, eventClient, version, debugMetadata, shapeCfg)})
 }
 
-func linkActivityToEventHandler(client ActivityEventLinkClient, activityClient ActivityDetailsClient, eventClient EventByIDClient, version string, debugMetadata bool) Handler {
+func linkActivityToEventHandler(client ActivityEventLinkClient, activityClient ActivityDetailsClient, eventClient EventByIDClient, version string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeLinkActivityToEventRequest(req.Arguments)
 		if err != nil {
@@ -75,7 +76,7 @@ func linkActivityToEventHandler(client ActivityEventLinkClient, activityClient A
 		if args.IncludeFull {
 			payload.Full = linked.Raw
 		}
-		return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, linkActivityToEventName, "")
+		return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, linkActivityToEventName, "", shapeCfg)
 	}
 }
 

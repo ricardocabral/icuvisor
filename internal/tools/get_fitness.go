@@ -207,47 +207,27 @@ type trainingSummaryMeta struct {
 	IncludeFull   bool   `json:"include_full"`
 }
 
-func newGetFitnessTool(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return coreTool(Tool{
-		Name:         getFitnessName,
-		Description:  getFitnessDescription,
-		InputSchema:  dateRangeInputSchema("local start date for fitness rows"),
-		OutputSchema: genericOutputSchema("Fitness rows with CTL, ATL, and TSB."),
-		Handler:      getFitnessHandler(client, profileClient, version, timezoneFallback, debugMetadata),
-	})
+func newGetFitnessTool(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: getFitnessName, Description: getFitnessDescription, InputSchema: dateRangeInputSchema("local start date for fitness rows"), OutputSchema: genericOutputSchema("Fitness rows with CTL, ATL, and TSB."), Handler: getFitnessHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func newGetBestEffortsTool(client BestEffortsClient, version string, debugMetadata bool) Tool {
-	return coreTool(Tool{
-		Name:         getBestEffortsName,
-		Description:  getBestEffortsDescription,
-		InputSchema:  bestEffortsInputSchema(),
-		OutputSchema: genericOutputSchema("Best efforts grouped by sport and bucket."),
-		Handler:      getBestEffortsHandler(client, version, debugMetadata),
-	})
+func newGetBestEffortsTool(client BestEffortsClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: getBestEffortsName, Description: getBestEffortsDescription, InputSchema: bestEffortsInputSchema(), OutputSchema: genericOutputSchema("Best efforts grouped by sport and bucket."), Handler: getBestEffortsHandler(client, version, debugMetadata, shapeCfg)})
 }
 
-func newGetPowerCurvesTool(client PowerCurvesClient, version string, debugMetadata bool) Tool {
-	return fullTool(Tool{
-		Name:         getPowerCurvesName,
-		Description:  getPowerCurvesDescription,
-		InputSchema:  powerCurvesInputSchema(),
-		OutputSchema: genericOutputSchema("Mean-maximal power curve bucket points."),
-		Handler:      getPowerCurvesHandler(client, version, debugMetadata),
-	})
+func newGetPowerCurvesTool(client PowerCurvesClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: getPowerCurvesName, Description: getPowerCurvesDescription, InputSchema: powerCurvesInputSchema(), OutputSchema: genericOutputSchema("Mean-maximal power curve bucket points."), Handler: getPowerCurvesHandler(client, version, debugMetadata, shapeCfg)})
 }
 
-func newGetTrainingSummaryTool(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return coreTool(Tool{
-		Name:         getTrainingSummaryName,
-		Description:  getTrainingSummaryDescription,
-		InputSchema:  dateRangeInputSchema("local start date for summary rows"),
-		OutputSchema: genericOutputSchema("Aggregated training summary."),
-		Handler:      getTrainingSummaryHandler(client, profileClient, version, timezoneFallback, debugMetadata),
-	})
+func newGetTrainingSummaryTool(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: getTrainingSummaryName, Description: getTrainingSummaryDescription, InputSchema: dateRangeInputSchema("local start date for summary rows"), OutputSchema: genericOutputSchema("Aggregated training summary."), Handler: getTrainingSummaryHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func getFitnessHandler(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getFitnessHandler(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeDateRangeRequest(req.Arguments)
 		if err != nil {
@@ -265,11 +245,11 @@ func getFitnessHandler(client FitnessClient, profileClient ProfileClient, versio
 			return Result{}, NewUserError(fetchFitnessMessage, err)
 		}
 		payload := fitnessResponse{Rows: shapeFitnessRows(rows, args.IncludeFull), Meta: fitnessMeta{ServerVersion: normalizeVersion(version), StartDate: args.StartDate, EndDate: args.EndDate, Timezone: timezone, Count: len(rows), IncludeFull: args.IncludeFull}}
-		return encodeShaped(payload, args.IncludeFull, []string{"fitness"}, version, debugMetadata, getFitnessName, unitSystem)
+		return encodeShaped(payload, args.IncludeFull, []string{"fitness"}, version, debugMetadata, getFitnessName, unitSystem, shapeCfg)
 	}
 }
 
-func getPowerCurvesHandler(client PowerCurvesClient, version string, debugMetadata bool) Handler {
+func getPowerCurvesHandler(client PowerCurvesClient, version string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodePowerCurvesRequest(req.Arguments)
 		if err != nil {
@@ -288,11 +268,11 @@ func getPowerCurvesHandler(client PowerCurvesClient, version string, debugMetada
 		if args.IncludeFull {
 			payload.Full = set.Raw
 		}
-		return encodeShaped(payload, args.IncludeFull, []string{"points"}, version, debugMetadata, getPowerCurvesName, response.UnitSystemMetric)
+		return encodeShaped(payload, args.IncludeFull, []string{"points"}, version, debugMetadata, getPowerCurvesName, response.UnitSystemMetric, shapeCfg)
 	}
 }
 
-func getBestEffortsHandler(client BestEffortsClient, version string, debugMetadata bool) Handler {
+func getBestEffortsHandler(client BestEffortsClient, version string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeBestEffortsRequest(req.Arguments)
 		if err != nil {
@@ -314,11 +294,11 @@ func getBestEffortsHandler(client BestEffortsClient, version string, debugMetada
 		if len(missing) == 0 {
 			payload.Meta.MissingBuckets = nil
 		}
-		return encodeShaped(payload, args.IncludeFull, []string{"sports"}, version, debugMetadata, getBestEffortsName, response.UnitSystemMetric)
+		return encodeShaped(payload, args.IncludeFull, []string{"sports"}, version, debugMetadata, getBestEffortsName, response.UnitSystemMetric, shapeCfg)
 	}
 }
 
-func getTrainingSummaryHandler(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getTrainingSummaryHandler(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeDateRangeRequest(req.Arguments)
 		if err != nil {
@@ -336,7 +316,7 @@ func getTrainingSummaryHandler(client FitnessClient, profileClient ProfileClient
 			return Result{}, NewUserError(fetchTrainingSummaryMessage, err)
 		}
 		payload := shapeTrainingSummary(rows, args, timezone, unitSystem, version)
-		return encodeShaped(payload, args.IncludeFull, []string{"sports"}, version, debugMetadata, getTrainingSummaryName, unitSystem)
+		return encodeShaped(payload, args.IncludeFull, []string{"sports"}, version, debugMetadata, getTrainingSummaryName, unitSystem, shapeCfg)
 	}
 }
 
@@ -668,8 +648,9 @@ func toolProfile(ctx context.Context, profileClient ProfileClient, timezoneFallb
 	return unitSystem, timezone, nil
 }
 
-func encodeShaped(payload any, includeFull bool, rowCollections []string, version string, debugMetadata bool, queryType string, unitSystem response.UnitSystem) (Result, error) {
-	shaped, err := response.Shape(payload, response.Options{IncludeFull: includeFull, RowCollections: rowCollections, ServerVersion: version, DebugMetadata: debugMetadata, QueryType: queryType, UnitSystem: unitSystem})
+func encodeShaped(payload any, includeFull bool, rowCollections []string, version string, debugMetadata bool, queryType string, unitSystem response.UnitSystem, shaping ...responseShaping) (Result, error) {
+	shapeCfg := responseShapingOrDefault(shaping)
+	shaped, err := response.Shape(payload, shapeCfg.options(includeFull, rowCollections, version, debugMetadata, queryType, unitSystem))
 	if err != nil {
 		return Result{}, err
 	}

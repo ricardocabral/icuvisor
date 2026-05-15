@@ -38,14 +38,7 @@ func TestEventsAndTrainingPlanRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
 	client := &fakeEventsTrainingPlanClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "UTC"}}}
-	registrar := &collectingRegistrar{}
-	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
-	}
-	if len(registrar.tools) != 5 {
-		t.Fatalf("registered tool count = %d, want profile + events + event_by_id + training_plan + advanced capabilities", len(registrar.tools))
-	}
-	eventsTool := findTool(t, registrar.tools, getEventsName)
+	eventsTool := newGetEventsTool(client, client, "test", "UTC", false)
 	if !strings.Contains(eventsTool.Description, "calendar events") {
 		t.Fatalf("events description = %q, want calendar events", eventsTool.Description)
 	}
@@ -55,7 +48,7 @@ func TestEventsAndTrainingPlanRegistrationMetadata(t *testing.T) {
 			t.Fatalf("get_events schema missing %s", name)
 		}
 	}
-	eventByIDTool := findTool(t, registrar.tools, getEventByIDName)
+	eventByIDTool := newGetEventByIDTool(client, client, "test", "UTC", false)
 	if !strings.Contains(eventByIDTool.Description, "structured unavailable") {
 		t.Fatalf("event by ID description = %q, want structured unavailable language", eventByIDTool.Description)
 	}
@@ -65,7 +58,7 @@ func TestEventsAndTrainingPlanRegistrationMetadata(t *testing.T) {
 			t.Fatalf("get_event_by_id schema missing %s", name)
 		}
 	}
-	planTool := findTool(t, registrar.tools, getTrainingPlanName)
+	planTool := newGetTrainingPlanTool(client, client, "test", "UTC", false)
 	if !strings.Contains(planTool.Description, "training-plan assignment") {
 		t.Fatalf("training plan description = %q, want assignment language", planTool.Description)
 	}

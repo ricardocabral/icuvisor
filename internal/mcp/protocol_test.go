@@ -30,14 +30,6 @@ func (c testProfileClient) GetAthleteProfile(context.Context) (intervals.Athlete
 	return c.profile, nil
 }
 
-type advancedProtocolClient struct {
-	testProfileClient
-}
-
-func (advancedProtocolClient) ListAthletePowerCurves(context.Context, intervals.CurveParams) (intervals.DataCurveSet, error) {
-	return intervals.DataCurveSet{}, nil
-}
-
 type capabilityRegistry struct{}
 
 func (capabilityRegistry) Register(ctx context.Context, registrar tools.Registrar) error {
@@ -622,7 +614,7 @@ func TestProtocolFiltersToolsByToolsetAndCapability(t *testing.T) {
 func TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry(t *testing.T) {
 	t.Parallel()
 
-	registry := tools.NewRegistryWithOptions(advancedProtocolClient{testProfileClient: testProfileClient{}}, tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC"})
+	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC"})
 	ctx, session, cleanup := connectTestClient(t, registry)
 	defer cleanup()
 
@@ -635,12 +627,16 @@ func TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry(t *testing.T
 		got = append(got, tool.Name)
 	}
 	slices.Sort(got)
-	want := []string{"get_athlete_profile", "icuvisor_list_advanced_capabilities"}
-	if strings.Join(got, ",") != strings.Join(want, ",") {
-		t.Fatalf("core tools/list = %v, want %v", got, want)
+	for _, wantName := range []string{"get_athlete_profile", "get_activities", "icuvisor_list_advanced_capabilities"} {
+		if !slices.Contains(got, wantName) {
+			t.Fatalf("core tools/list = %v, missing %s", got, wantName)
+		}
+	}
+	if slices.Contains(got, "get_power_curves") {
+		t.Fatalf("core tools/list = %v, should hide get_power_curves", got)
 	}
 
-	fullRegistry := tools.NewRegistryWithOptions(advancedProtocolClient{testProfileClient: testProfileClient{}}, tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Toolset: safety.ToolsetFull})
+	fullRegistry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Toolset: safety.ToolsetFull})
 	fullCtx, fullSession, fullCleanup := connectTestClientWithOptions(t, Options{Registry: fullRegistry, Toolset: safety.ToolsetFull})
 	defer fullCleanup()
 	fullResult, err := fullSession.ListTools(fullCtx, nil)
@@ -748,16 +744,15 @@ func TestProtocolCallToolDispatch(t *testing.T) {
 func TestProtocolGetAthleteProfileDispatch(t *testing.T) {
 	t.Parallel()
 
-	registry := tools.NewRegistry(testProfileClient{profile: intervals.AthleteWithSportSettings{
-		ID:                    "12345",
-		Name:                  "Example Athlete",
-		MeasurementPreference: "METRIC",
-		Timezone:              "America/Sao_Paulo",
-		SportSettings: []intervals.SportSettings{{
-			Types: []string{"Ride"},
-			FTP:   250,
-		}},
-	}}, "v0.1-test", "UTC")
+	client, closeServer := newProtocolIntervalsClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/athlete/i12345" {
+			t.Fatalf("request path = %s, want /athlete/i12345", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"id":"12345","name":"Example Athlete","measurement_preference":"METRIC","timezone":"America/Sao_Paulo","sportSettings":[{"types":["Ride"],"ftp":250}]}`)
+	}))
+	defer closeServer()
+	registry := tools.NewRegistry(client, "v0.1-test", "UTC")
 	ctx, session, cleanup := connectTestClient(t, registry)
 	defer cleanup()
 
@@ -770,9 +765,10 @@ func TestProtocolGetAthleteProfileDispatch(t *testing.T) {
 		gotNames = append(gotNames, tool.Name)
 	}
 	slices.Sort(gotNames)
-	wantNames := []string{"get_athlete_profile", "icuvisor_list_advanced_capabilities"}
-	if strings.Join(gotNames, ",") != strings.Join(wantNames, ",") {
-		t.Fatalf("tools/list = %v, want %v", gotNames, wantNames)
+	for _, wantName := range []string{"get_athlete_profile", "get_activities", "icuvisor_list_advanced_capabilities"} {
+		if !slices.Contains(gotNames, wantName) {
+			t.Fatalf("tools/list = %v, missing %s", gotNames, wantName)
+		}
 	}
 
 	result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: "get_athlete_profile", Arguments: map[string]any{}})

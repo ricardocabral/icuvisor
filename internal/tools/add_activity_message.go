@@ -42,11 +42,12 @@ type addActivityMessageMeta struct {
 	IncludeFull bool   `json:"include_full"`
 }
 
-func newAddActivityMessageTool(client ActivityMessageWriterClient, profileClient ProfileClient, version string, debugMetadata bool) Tool {
-	return coreTool(Tool{Name: addActivityMessageName, Description: addActivityMessageDescription, InputSchema: addActivityMessageInputSchema(), OutputSchema: addActivityMessageOutputSchema(), Requirement: RequirementWrite, Handler: addActivityMessageHandler(client, profileClient, version, debugMetadata)})
+func newAddActivityMessageTool(client ActivityMessageWriterClient, profileClient ProfileClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: addActivityMessageName, Description: addActivityMessageDescription, InputSchema: addActivityMessageInputSchema(), OutputSchema: addActivityMessageOutputSchema(), Requirement: RequirementWrite, Handler: addActivityMessageHandler(client, profileClient, version, debugMetadata, shapeCfg)})
 }
 
-func addActivityMessageHandler(client ActivityMessageWriterClient, profileClient ProfileClient, version string, debugMetadata bool) Handler {
+func addActivityMessageHandler(client ActivityMessageWriterClient, profileClient ProfileClient, version string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeAddActivityMessageRequest(req.Arguments)
 		if err != nil {
@@ -77,7 +78,7 @@ func addActivityMessageHandler(client ActivityMessageWriterClient, profileClient
 		if args.IncludeFull {
 			payload.Full = message.Raw
 		}
-		return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, addActivityMessageName, "")
+		return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, addActivityMessageName, "", shapeCfg)
 	}
 }
 

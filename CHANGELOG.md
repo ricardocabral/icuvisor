@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Threaded delete-mode and toolset response metadata through explicit response-shaping options instead of process-global state.
+- Refactored internal MCP tool registry wiring to depend directly on the typed intervals.icu client instead of a runtime assertion chain, preserving the public tool catalog and schemas.
+
 ### Added
 
 - Post-update schema-change notification metadata: every tool response now includes `_meta.catalog_hash`, and simulated catalog divergence emits `_meta.schema_changed` guidance to open a new conversation.

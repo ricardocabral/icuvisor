@@ -6,17 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ricardocabral/icuvisor/internal/intervals"
-	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 func TestListAdvancedCapabilitiesOutputFromCatalog(t *testing.T) {
-	response.SetToolset("core")
-	t.Cleanup(func() { response.SetToolset("core") })
-
 	registrar := &collectingRegistrar{}
-	client := staticCatalogPanicClient{}
+	client := newNoNetworkIntervalsClient(t)
 	if err := NewRegistryWithOptions(client, RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull)}).Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
@@ -70,11 +65,8 @@ func TestListAdvancedCapabilitiesOutputFromCatalog(t *testing.T) {
 }
 
 func TestListAdvancedCapabilitiesFullModeStatus(t *testing.T) {
-	response.SetToolset("full")
-	t.Cleanup(func() { response.SetToolset("core") })
-
 	registrar := &collectingRegistrar{}
-	if err := NewRegistryWithOptions(staticCatalogPanicClient{}, RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull}).Register(context.Background(), registrar); err != nil {
+	if err := NewRegistryWithOptions(newNoNetworkIntervalsClient(t), RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull}).Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
 	tool := findTool(t, registrar.tools, listAdvancedCapabilitiesName)
@@ -108,14 +100,6 @@ func TestListAdvancedCapabilitiesRejectsArguments(t *testing.T) {
 	if message, ok := PublicErrorMessage(err); !ok || !strings.Contains(message, "no arguments") {
 		t.Fatalf("Handler() error = %v, public=%q ok=%v", err, message, ok)
 	}
-}
-
-type staticCatalogPanicClient struct {
-	fullCatalogTierClient
-}
-
-func (staticCatalogPanicClient) GetAthleteProfile(context.Context) (intervals.AthleteWithSportSettings, error) {
-	panic("icuvisor_list_advanced_capabilities must not fetch athlete profile")
 }
 
 func advancedCapabilitiesResult(t *testing.T, result Result) listAdvancedCapabilitiesResponse {

@@ -2,12 +2,9 @@ package toolchecks
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strings"
 	"unicode"
-
-	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
 const DefaultConfusableThreshold = 0.58
@@ -33,13 +30,13 @@ type ConfusablePair struct {
 }
 
 func GenerateToolCatalog(ctx context.Context) ([]ToolInfo, error) {
-	registrar := &schemaRegistrar{}
-	registry := tools.NewRegistryWithOptions(schemaCatalogClient{}, tools.RegistryOptions{Version: "snapshot", TimezoneFallback: "UTC"})
-	if err := registry.Register(ctx, registrar); err != nil {
-		return nil, fmt.Errorf("registering tools: %w", err)
+	toolCatalog, err := generateSchemaCatalogTools(ctx)
+	if err != nil {
+		return nil, err
 	}
-	catalog := make([]ToolInfo, 0, len(registrar.tools))
-	for _, tool := range registrar.tools {
+
+	catalog := make([]ToolInfo, 0, len(toolCatalog))
+	for _, tool := range toolCatalog {
 		catalog = append(catalog, ToolInfo{Name: tool.Name, Description: tool.Description})
 	}
 	sort.Slice(catalog, func(i, j int) bool { return catalog[i].Name < catalog[j].Name })

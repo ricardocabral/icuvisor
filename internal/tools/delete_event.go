@@ -28,11 +28,12 @@ type deleteEventRequest struct {
 	EventID string `json:"event_id"`
 }
 
-func newDeleteEventTool(client EventDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: deleteEventName, Description: deleteEventDescription, InputSchema: deleteEventInputSchema(), OutputSchema: deleteEventOutputSchema(), Requirement: RequirementDelete, Handler: deleteEventHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newDeleteEventTool(client EventDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: deleteEventName, Description: deleteEventDescription, InputSchema: deleteEventInputSchema(), OutputSchema: deleteEventOutputSchema(), Requirement: RequirementDelete, Handler: deleteEventHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func deleteEventHandler(client EventDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func deleteEventHandler(client EventDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeDeleteEventRequest(req.Arguments)
 		if err != nil {
@@ -63,7 +64,7 @@ func deleteEventHandler(client EventDeleterClient, profileClient ProfileClient, 
 			return Result{}, NewUserError(deleteEventMessage, err)
 		}
 		payload := newDeleteResourceResponse(args.EventID, "event", deleteEventEndpoint, before)
-		return encodeShaped(payload, false, nil, version, debugMetadata, deleteEventName, unitSystem)
+		return encodeShaped(payload, false, nil, version, debugMetadata, deleteEventName, unitSystem, shapeCfg)
 	}
 }
 

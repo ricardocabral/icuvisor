@@ -31,9 +31,8 @@ func (f *fakeActivityReadClient) GetActivityIntervals(ctx context.Context, activ
 func TestActivityReadToolsRegistration(t *testing.T) {
 	t.Parallel()
 
-	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "UTC"}}}
 	registrar := &collectingRegistrar{}
-	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
+	if err := NewRegistry(newNoNetworkIntervalsClient(t), "test", "UTC").Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
 	findTool(t, registrar.tools, getActivityDetailsName)

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/config"
-	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
@@ -212,8 +211,6 @@ func TestDefaultStartServerLogsStartupVersion(t *testing.T) {
 	var logs bytes.Buffer
 	previous := slog.Default()
 	t.Cleanup(func() { slog.SetDefault(previous) })
-	response.SetToolset("core")
-	t.Cleanup(func() { response.SetToolset("core") })
 	slog.SetDefault(slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelInfo})))
 
 	err := defaultStartServer(context.Background(), ServerInfo{Version: "v7.8.9", Toolset: safety.ToolsetFull})
@@ -233,9 +230,6 @@ func TestDefaultStartServerLogsStartupVersion(t *testing.T) {
 		if strings.Contains(out, forbidden) {
 			t.Fatalf("startup log leaked tool name %q: %q", forbidden, out)
 		}
-	}
-	if got := response.Toolset(); got != "full" {
-		t.Fatalf("response toolset = %q, want full", got)
 	}
 }
 

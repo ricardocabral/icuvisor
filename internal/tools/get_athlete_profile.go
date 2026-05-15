@@ -44,17 +44,18 @@ type GetAthleteProfileSport = athleteprofile.Sport
 // GetAthleteProfileMeta contains response-shaping metadata.
 type GetAthleteProfileMeta = athleteprofile.Meta
 
-func newGetAthleteProfileTool(client ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
+func newGetAthleteProfileTool(client ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
 	return coreTool(Tool{
 		Name:         getAthleteProfileName,
 		Description:  getAthleteProfileDescription,
 		InputSchema:  getAthleteProfileInputSchema(),
 		OutputSchema: getAthleteProfileOutputSchema(),
-		Handler:      getAthleteProfileHandler(client, version, timezoneFallback, debugMetadata),
+		Handler:      getAthleteProfileHandler(client, version, timezoneFallback, debugMetadata, shapeCfg),
 	})
 }
 
-func getAthleteProfileHandler(client ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getAthleteProfileHandler(client ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		if err := ctx.Err(); err != nil {
 			return Result{}, err
@@ -76,7 +77,7 @@ func getAthleteProfileHandler(client ProfileClient, version string, timezoneFall
 			}
 			return Result{}, NewUserError(fetchAthleteProfileMessage, err)
 		}
-		shaped, err := shapeGetAthleteProfileResponse(profile, version, timezoneFallback, args.IncludeFull, debugMetadata)
+		shaped, err := shapeGetAthleteProfileResponse(profile, version, timezoneFallback, args.IncludeFull, debugMetadata, shapeCfg)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_athlete_profile response: %w", err)
 		}
@@ -111,8 +112,9 @@ func decodeGetAthleteProfileRequest(raw json.RawMessage) (GetAthleteProfileReque
 	return args, nil
 }
 
-func shapeGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, version string, timezoneFallback string, includeFull bool, debugMetadata bool) (any, error) {
-	return athleteprofile.Shape(profile, version, timezoneFallback, includeFull, debugMetadata)
+func shapeGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, version string, timezoneFallback string, includeFull bool, debugMetadata bool, shaping ...responseShaping) (any, error) {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return athleteprofile.Shape(profile, version, timezoneFallback, includeFull, debugMetadata, shapeCfg.options(false, nil, "", false, "", ""))
 }
 
 func newGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, version string, timezoneFallback string, includeFull bool) GetAthleteProfileResponse {

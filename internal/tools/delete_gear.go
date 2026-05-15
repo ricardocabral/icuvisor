@@ -27,11 +27,12 @@ type deleteGearRequest struct {
 	GearID string `json:"gear_id"`
 }
 
-func newDeleteGearTool(client GearDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: deleteGearName, Description: deleteGearDescription, InputSchema: deleteGearInputSchema(), OutputSchema: deleteGearOutputSchema(), Requirement: RequirementDelete, Handler: deleteGearHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newDeleteGearTool(client GearDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: deleteGearName, Description: deleteGearDescription, InputSchema: deleteGearInputSchema(), OutputSchema: deleteGearOutputSchema(), Requirement: RequirementDelete, Handler: deleteGearHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func deleteGearHandler(client GearDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func deleteGearHandler(client GearDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeDeleteGearRequest(req.Arguments)
 		if err != nil {
@@ -59,7 +60,7 @@ func deleteGearHandler(client GearDeleterClient, profileClient ProfileClient, ve
 			return Result{}, NewUserError(deleteGearMessage, err)
 		}
 		payload := newDeleteResourceResponse(args.GearID, "gear", deleteGearEndpoint, before)
-		return encodeShaped(payload, false, nil, version, debugMetadata, deleteGearName, unitSystem)
+		return encodeShaped(payload, false, nil, version, debugMetadata, deleteGearName, unitSystem, shapeCfg)
 	}
 }
 

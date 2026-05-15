@@ -120,17 +120,18 @@ type activitiesPageToken struct {
 	SkipIDsAtBoundary    []string `json:"skip_ids_at_boundary,omitempty"`
 }
 
-func newGetActivitiesTool(activityClient ActivitiesClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
+func newGetActivitiesTool(activityClient ActivitiesClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
 	return coreTool(Tool{
 		Name:         getActivitiesName,
 		Description:  getActivitiesDescription,
 		InputSchema:  getActivitiesInputSchema(),
 		OutputSchema: getActivitiesOutputSchema(),
-		Handler:      getActivitiesHandler(activityClient, profileClient, version, timezoneFallback, debugMetadata),
+		Handler:      getActivitiesHandler(activityClient, profileClient, version, timezoneFallback, debugMetadata, shapeCfg),
 	})
 }
 
-func getActivitiesHandler(activityClient ActivitiesClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getActivitiesHandler(activityClient ActivitiesClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		if err := ctx.Err(); err != nil {
 			return Result{}, err
@@ -164,7 +165,7 @@ func getActivitiesHandler(activityClient ActivitiesClient, profileClient Profile
 			}
 			return Result{}, NewUserError(fetchActivitiesMessage, err)
 		}
-		shaped, err := shapeGetActivitiesResponse(activities, args, nextToken, version, activityTimezoneFallback, debugMetadata, unitSystem)
+		shaped, err := shapeGetActivitiesResponse(activities, args, nextToken, version, activityTimezoneFallback, debugMetadata, unitSystem, shapeCfg)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activities response: %w", err)
 		}
@@ -516,13 +517,14 @@ func stringSet(values []string) map[string]bool {
 	return out
 }
 
-func shapeGetActivitiesResponse(activities []intervals.Activity, args GetActivitiesRequest, nextToken string, version string, timezoneFallback string, debugMetadata bool, unitSystem response.UnitSystem) (any, error) {
+func shapeGetActivitiesResponse(activities []intervals.Activity, args GetActivitiesRequest, nextToken string, version string, timezoneFallback string, debugMetadata bool, unitSystem response.UnitSystem, shaping ...responseShaping) (any, error) {
 	rows := make([]getActivitiesRow, 0, len(activities))
 	for _, activity := range activities {
 		rows = append(rows, activityRow(activity, args.IncludeFull, timezoneFallback, unitSystem))
 	}
 	payload := getActivitiesResponse{Activities: rows, Meta: getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull}}
-	return response.Shape(payload, response.Options{IncludeFull: args.IncludeFull, RowCollections: []string{"activities"}, ServerVersion: version, DebugMetadata: debugMetadata, QueryType: getActivitiesName, UnitSystem: unitSystem})
+	shapeCfg := responseShapingOrDefault(shaping)
+	return response.Shape(payload, shapeCfg.options(args.IncludeFull, []string{"activities"}, version, debugMetadata, getActivitiesName, unitSystem))
 }
 
 func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback string, unitSystem response.UnitSystem) getActivitiesRow {

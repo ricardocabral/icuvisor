@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
@@ -24,32 +26,52 @@ type RegistryOptions struct {
 }
 
 // NewRegistry creates the default tool registry.
-func NewRegistry(profileClient ProfileClient, version string, timezoneFallback ...string) Registry {
-	return NewRegistryWithOptions(profileClient, RegistryOptions{
+func NewRegistry(client *intervals.Client, version string, timezoneFallback ...string) Registry {
+	return NewRegistryWithOptions(client, RegistryOptions{
 		Version:          version,
 		TimezoneFallback: firstNonEmpty(timezoneFallback...),
 	})
 }
 
 // NewRegistryWithOptions creates the default registry with explicit response-shaping options.
-func NewRegistryWithOptions(profileClient ProfileClient, opts RegistryOptions) Registry {
+func NewRegistryWithOptions(client *intervals.Client, opts RegistryOptions) Registry {
+	capability := capabilityOrSafe(opts.Capability)
+	toolset := safety.ParseToolset(opts.Toolset.String())
 	return &defaultRegistry{
-		profileClient:    profileClient,
+		client:           client,
 		version:          normalizeVersion(opts.Version),
 		timezoneFallback: normalizeTimezoneFallback(opts.TimezoneFallback),
 		debugMetadata:    opts.DebugMetadata,
-		capability:       capabilityOrSafe(opts.Capability),
-		toolset:          safety.ParseToolset(string(opts.Toolset)),
+		capability:       capability,
+		deleteMode:       safety.ParseMode(capability.Mode()),
+		toolset:          toolset,
 	}
 }
 
 type defaultRegistry struct {
-	profileClient    ProfileClient
+	client           *intervals.Client
 	version          string
 	timezoneFallback string
 	debugMetadata    bool
 	capability       safety.Capability
+	deleteMode       safety.Mode
 	toolset          safety.Toolset
+}
+
+type responseShaping struct {
+	deleteMode safety.Mode
+	toolset    safety.Toolset
+}
+
+func responseShapingOrDefault(shaping []responseShaping) responseShaping {
+	if len(shaping) > 0 {
+		return responseShaping{deleteMode: safety.ParseMode(shaping[0].deleteMode.String()), toolset: safety.ParseToolset(shaping[0].toolset.String())}
+	}
+	return responseShaping{deleteMode: safety.ModeSafe, toolset: safety.ToolsetCore}
+}
+
+func (s responseShaping) options(includeFull bool, rowCollections []string, version string, debugMetadata bool, queryType string, unitSystem response.UnitSystem) response.Options {
+	return response.Options{IncludeFull: includeFull, RowCollections: rowCollections, ServerVersion: version, DebugMetadata: debugMetadata, QueryType: queryType, UnitSystem: unitSystem, DeleteMode: s.deleteMode, Toolset: s.toolset}
 }
 
 func capabilityOrSafe(capability safety.Capability) safety.Capability {
@@ -63,208 +85,135 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if r.profileClient == nil {
-		return fmt.Errorf("registering %s: missing profile client", getAthleteProfileName)
+	if r.client == nil {
+		return errors.New("registering tools: missing intervals client")
 	}
 	if registrar == nil {
-		return fmt.Errorf("registering tools: missing registrar")
+		return errors.New("registering tools: missing registrar")
 	}
 	collector := &catalogCollectingRegistrar{downstream: registrar}
 	registrar = collector
-	if err := registerTool(registrar, newGetAthleteProfileTool(r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
+	shaping := responseShaping{deleteMode: r.deleteMode, toolset: r.toolset}
+	add := func(tool Tool) error {
+		if err := registrar.AddTool(tool); err != nil {
+			return fmt.Errorf("registering %s: %w", tool.Name, err)
+		}
+		return nil
+	}
+	if err := add(newGetAthleteProfileTool(r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
 		return err
 	}
-	if fitnessClient, ok := r.profileClient.(FitnessClient); ok {
-		if err := registerTool(registrar, newGetFitnessTool(fitnessClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-		if err := registerTool(registrar, newGetTrainingSummaryTool(fitnessClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if wellnessClient, ok := r.profileClient.(WellnessClient); ok {
-		if err := registerTool(registrar, newGetWellnessDataTool(wellnessClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if wellnessWriterClient, ok := r.profileClient.(WellnessWriterClient); ok {
-		if err := registerTool(registrar, newUpdateWellnessTool(wellnessWriterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if sportSettingsWriterClient, ok := r.profileClient.(SportSettingsWriterClient); ok {
-		if err := registerTool(registrar, newUpdateSportSettingsTool(sportSettingsWriterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata, r.capability)); err != nil {
-			return err
-		}
-	}
-	if bestEffortsClient, ok := r.profileClient.(BestEffortsClient); ok {
-		if err := registerTool(registrar, newGetBestEffortsTool(bestEffortsClient, r.version, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if powerCurvesClient, ok := r.profileClient.(PowerCurvesClient); ok {
-		if err := registerTool(registrar, newGetPowerCurvesTool(powerCurvesClient, r.version, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if activityClient, ok := r.profileClient.(ActivitiesClient); ok {
-		if err := registerTool(registrar, newGetActivitiesTool(activityClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if eventsClient, ok := r.profileClient.(EventsClient); ok {
-		if err := registerTool(registrar, newGetEventsTool(eventsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if eventByIDClient, ok := r.profileClient.(EventByIDClient); ok {
-		if err := registerTool(registrar, newGetEventByIDTool(eventByIDClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if eventWriterClient, ok := r.profileClient.(EventWriterClient); ok {
-		if err := registerTool(registrar, newAddOrUpdateEventTool(eventWriterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if applyTrainingPlanClient, ok := r.profileClient.(ApplyTrainingPlanClient); ok {
-		if err := registerTool(registrar, newApplyTrainingPlanTool(applyTrainingPlanClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata, r.capability)); err != nil {
-			return err
-		}
-	}
-	if eventDeleterClient, ok := r.profileClient.(EventDeleterClient); ok {
-		if err := registerTool(registrar, newDeleteEventTool(eventDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if eventsByDateRangeDeleterClient, ok := r.profileClient.(EventsByDateRangeDeleterClient); ok {
-		if err := registerTool(registrar, newDeleteEventsByDateRangeTool(eventsByDateRangeDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if linkClient, ok := r.profileClient.(ActivityEventLinkClient); ok {
-		activityClient, _ := r.profileClient.(ActivityDetailsClient)
-		eventClient, _ := r.profileClient.(EventByIDClient)
-		if err := registerTool(registrar, newLinkActivityToEventTool(linkClient, activityClient, eventClient, r.version, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if trainingPlanClient, ok := r.profileClient.(TrainingPlanClient); ok {
-		if err := registerTool(registrar, newGetTrainingPlanTool(trainingPlanClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if workoutLibraryClient, ok := r.profileClient.(WorkoutLibraryClient); ok {
-		if err := registerTool(registrar, newGetWorkoutLibraryTool(workoutLibraryClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-		if err := registerTool(registrar, newGetWorkoutsInFolderTool(workoutLibraryClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if workoutCreatorClient, ok := r.profileClient.(WorkoutCreatorClient); ok {
-		if err := registerTool(registrar, newCreateWorkoutTool(workoutCreatorClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if workoutUpdaterClient, ok := r.profileClient.(WorkoutUpdaterClient); ok {
-		if err := registerTool(registrar, newUpdateWorkoutTool(workoutUpdaterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if workoutDeleterClient, ok := r.profileClient.(WorkoutDeleterClient); ok {
-		if err := registerTool(registrar, newDeleteWorkoutTool(workoutDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if sportSettingsDeleterClient, ok := r.profileClient.(SportSettingsDeleterClient); ok {
-		if err := registerTool(registrar, newDeleteSportSettingsTool(sportSettingsDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	var customItemsClient CustomItemsClient
-	if client, ok := r.profileClient.(CustomItemsClient); ok {
-		customItemsClient = client
-		if err := registerTool(registrar, newGetCustomItemsTool(customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-		if err := registerTool(registrar, newGetCustomItemByIDTool(customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if customItemCreatorClient, ok := r.profileClient.(CustomItemCreatorClient); ok {
-		if err := registerTool(registrar, newCreateCustomItemTool(customItemCreatorClient, customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if customItemUpdaterClient, ok := r.profileClient.(CustomItemUpdaterClient); ok {
-		if err := registerTool(registrar, newUpdateCustomItemTool(customItemUpdaterClient, customItemsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if customItemDeleterClient, ok := r.profileClient.(CustomItemDeleterClient); ok {
-		if err := registerTool(registrar, newDeleteCustomItemTool(customItemDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if detailsClient, ok := r.profileClient.(ActivityDetailsClient); ok {
-		if err := registerTool(registrar, newGetActivityDetailsTool(detailsClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if activityDeleterClient, ok := r.profileClient.(ActivityDeleterClient); ok {
-		if err := registerTool(registrar, newDeleteActivityTool(activityDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	var intervalsClient ActivityIntervalsClient
-	if client, ok := r.profileClient.(ActivityIntervalsClient); ok {
-		intervalsClient = client
-		detailsClient, _ := r.profileClient.(ActivityDetailsClient)
-		if err := registerTool(registrar, newGetActivityIntervalsTool(intervalsClient, detailsClient, r.version, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if streamsClient, ok := r.profileClient.(ActivityStreamsClient); ok {
-		if err := registerTool(registrar, newGetActivityStreamsTool(streamsClient, r.version, r.debugMetadata)); err != nil {
-			return err
-		}
-		if intervalsClient != nil {
-			if err := registerTool(registrar, newGetActivitySplitsTool(streamsClient, intervalsClient, r.profileClient, r.version, r.debugMetadata)); err != nil {
-				return err
-			}
-		}
-	}
-	if messagesClient, ok := r.profileClient.(ActivityMessagesClient); ok {
-		detailsClient, _ := r.profileClient.(ActivityDetailsClient)
-		if err := registerTool(registrar, newGetActivityMessagesTool(messagesClient, r.profileClient, detailsClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if messageWriterClient, ok := r.profileClient.(ActivityMessageWriterClient); ok {
-		if err := registerTool(registrar, newAddActivityMessageTool(messageWriterClient, r.profileClient, r.version, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if extendedClient, ok := r.profileClient.(ExtendedMetricsClient); ok {
-		if err := registerTool(registrar, newGetExtendedMetricsTool(extendedClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if gearDeleterClient, ok := r.profileClient.(GearDeleterClient); ok {
-		if err := registerTool(registrar, newDeleteGearTool(gearDeleterClient, r.profileClient, r.version, r.timezoneFallback, r.debugMetadata)); err != nil {
-			return err
-		}
-	}
-	if err := registerTool(collector.downstream, newListAdvancedCapabilitiesTool(collector.tools, r.toolset)); err != nil {
+	if err := add(newGetFitnessTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
 		return err
 	}
-	return nil
-}
-
-func registerTool(registrar Registrar, tool Tool) error {
-	if err := registrar.AddTool(tool); err != nil {
-		return fmt.Errorf("registering %s: %w", tool.Name, err)
+	if err := add(newGetTrainingSummaryTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetWellnessDataTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newUpdateWellnessTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newUpdateSportSettingsTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, r.capability, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetBestEffortsTool(r.client, r.version, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetPowerCurvesTool(r.client, r.version, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetActivitiesTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetEventsTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetEventByIDTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newAddOrUpdateEventTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newApplyTrainingPlanTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, r.capability, shaping)); err != nil {
+		return err
+	}
+	if err := add(newDeleteEventTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newDeleteEventsByDateRangeTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newLinkActivityToEventTool(r.client, r.client, r.client, r.version, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetTrainingPlanTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetWorkoutLibraryTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetWorkoutsInFolderTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newCreateWorkoutTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newUpdateWorkoutTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newDeleteWorkoutTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newDeleteSportSettingsTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetCustomItemsTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetCustomItemByIDTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newCreateCustomItemTool(r.client, r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newUpdateCustomItemTool(r.client, r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newDeleteCustomItemTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetActivityDetailsTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newDeleteActivityTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetActivityIntervalsTool(r.client, r.client, r.version, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetActivityStreamsTool(r.client, r.version, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetActivitySplitsTool(r.client, r.client, r.client, r.version, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetActivityMessagesTool(r.client, r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newAddActivityMessageTool(r.client, r.client, r.version, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newGetExtendedMetricsTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	if err := add(newDeleteGearTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
+		return err
+	}
+	advancedTool := newListAdvancedCapabilitiesTool(collector.tools, r.toolset, shaping)
+	if err := collector.downstream.AddTool(advancedTool); err != nil {
+		return fmt.Errorf("registering %s: %w", advancedTool.Name, err)
 	}
 	return nil
 }

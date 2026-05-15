@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
-	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
@@ -153,12 +152,9 @@ func TestUpdateSportSettingsSafeModeRejectsZonesBeforeWrite(t *testing.T) {
 }
 
 func TestUpdateSportSettingsFullModeAppliesZonesAndResponseMeta(t *testing.T) {
-	response.SetDeleteMode("full")
-	t.Cleanup(func() { response.SetDeleteMode("safe") })
-
 	client := newFakeSportSettingsClient(intervals.SportSettings{ID: 7, Types: []string{"Ride"}, FTP: 250})
 	client.setting = intervals.SportSettings{ID: 7, Type: "Ride", FTP: 280, PowerZones: []int{100, 200}, PowerZoneNames: []string{"Z1", "Z2"}}
-	tool := newUpdateSportSettingsTool(client, client, "v1.2.3", "UTC", false, safety.NewCapability(safety.ModeFull))
+	tool := newUpdateSportSettingsTool(client, client, "v1.2.3", "UTC", false, safety.NewCapability(safety.ModeFull), responseShaping{deleteMode: safety.ModeFull, toolset: safety.ToolsetCore})
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"sport":"Ride","effective_date":"2026-05-01","ftp":280,"zones":[{"kind":"power","boundaries":[100,200],"names":["Z1","Z2"]}]}`)})
 	if err != nil {
@@ -186,11 +182,7 @@ func TestUpdateSportSettingsRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
 	client := newFakeSportSettingsClient(intervals.SportSettings{ID: 7, Types: []string{"Ride"}})
-	registrar := &collectingRegistrar{}
-	if err := NewRegistryWithOptions(client, RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeSafe)}).Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
-	}
-	tool := findTool(t, registrar.tools, updateSportSettingsName)
+	tool := newUpdateSportSettingsTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
 	if tool.Requirement != RequirementWrite {
 		t.Fatalf("requirement = %q, want write", tool.Requirement)
 	}

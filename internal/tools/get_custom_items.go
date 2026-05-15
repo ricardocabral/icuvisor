@@ -52,11 +52,12 @@ type getCustomItemsMeta struct {
 	DefaultPayloadScope string         `json:"default_payload_scope"`
 }
 
-func newGetCustomItemsTool(client CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: getCustomItemsName, Description: getCustomItemsDescription, InputSchema: getCustomItemsInputSchema(), OutputSchema: getCustomItemsOutputSchema(), Handler: getCustomItemsHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newGetCustomItemsTool(client CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: getCustomItemsName, Description: getCustomItemsDescription, InputSchema: getCustomItemsInputSchema(), OutputSchema: getCustomItemsOutputSchema(), Handler: getCustomItemsHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func getCustomItemsHandler(client CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getCustomItemsHandler(client CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeGetCustomItemsRequest(req.Arguments)
 		if err != nil {
@@ -77,7 +78,7 @@ func getCustomItemsHandler(client CustomItemsClient, profileClient ProfileClient
 			return Result{}, NewUserError(fetchCustomItemsMessage, err)
 		}
 		payload := shapeGetCustomItemsResponse(items, args)
-		return encodeShaped(payload, false, []string{"custom_items"}, version, debugMetadata, getCustomItemsName, unitSystem)
+		return encodeShaped(payload, false, []string{"custom_items"}, version, debugMetadata, getCustomItemsName, unitSystem, shapeCfg)
 	}
 }
 

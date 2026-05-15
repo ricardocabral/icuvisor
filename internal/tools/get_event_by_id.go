@@ -58,18 +58,20 @@ type getEventByIDMeta struct {
 	Truncated    bool           `json:"truncated,omitempty"`
 }
 
-func newGetEventByIDTool(client EventByIDClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return newGetEventByIDToolWithClock(client, profileClient, version, timezoneFallback, debugMetadata, time.Now)
+func newGetEventByIDTool(client EventByIDClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return newGetEventByIDToolWithClock(client, profileClient, version, timezoneFallback, debugMetadata, time.Now, shapeCfg)
 }
 
-func newGetEventByIDToolWithClock(client EventByIDClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, now func() time.Time) Tool {
+func newGetEventByIDToolWithClock(client EventByIDClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, now func() time.Time, shaping ...responseShaping) Tool {
 	if now == nil {
 		now = time.Now
 	}
-	return coreTool(Tool{Name: getEventByIDName, Description: getEventByIDDescription, InputSchema: getEventByIDInputSchema(), OutputSchema: getEventByIDOutputSchema(), Handler: getEventByIDHandler(client, profileClient, version, timezoneFallback, debugMetadata, now)})
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: getEventByIDName, Description: getEventByIDDescription, InputSchema: getEventByIDInputSchema(), OutputSchema: getEventByIDOutputSchema(), Handler: getEventByIDHandler(client, profileClient, version, timezoneFallback, debugMetadata, now, shapeCfg)})
 }
 
-func getEventByIDHandler(client EventByIDClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, now func() time.Time) Handler {
+func getEventByIDHandler(client EventByIDClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, now func() time.Time, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeGetEventByIDRequest(req.Arguments)
 		if err != nil {
@@ -89,7 +91,7 @@ func getEventByIDHandler(client EventByIDClient, profileClient ProfileClient, ve
 			if shapeErr != nil {
 				return Result{}, fmt.Errorf("shaping get_event_by_id detail response: %w", shapeErr)
 			}
-			return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, getEventByIDName, unitSystem)
+			return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, getEventByIDName, unitSystem, shapeCfg)
 		}
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			return Result{}, err
@@ -114,7 +116,7 @@ func getEventByIDHandler(client EventByIDClient, profileClient ProfileClient, ve
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_event_by_id fallback response: %w", err)
 		}
-		return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, getEventByIDName, unitSystem)
+		return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, getEventByIDName, unitSystem, shapeCfg)
 	}
 }
 

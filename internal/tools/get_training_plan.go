@@ -59,11 +59,12 @@ type getTrainingPlanResponseMeta struct {
 	DefaultPayloadScope string `json:"default_payload_scope"`
 }
 
-func newGetTrainingPlanTool(client TrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: getTrainingPlanName, Description: getTrainingPlanDescription, InputSchema: getTrainingPlanInputSchema(), OutputSchema: getTrainingPlanOutputSchema(), Handler: getTrainingPlanHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newGetTrainingPlanTool(client TrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: getTrainingPlanName, Description: getTrainingPlanDescription, InputSchema: getTrainingPlanInputSchema(), OutputSchema: getTrainingPlanOutputSchema(), Handler: getTrainingPlanHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func getTrainingPlanHandler(client TrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getTrainingPlanHandler(client TrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeGetTrainingPlanRequest(req.Arguments)
 		if err != nil {
@@ -84,7 +85,7 @@ func getTrainingPlanHandler(client TrainingPlanClient, profileClient ProfileClie
 			return Result{}, NewUserError(fetchTrainingPlanMessage, err)
 		}
 		payload := shapeGetTrainingPlanResponse(plan, args.IncludeFull, timezoneName)
-		return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, getTrainingPlanName, unitSystem)
+		return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, getTrainingPlanName, unitSystem, shapeCfg)
 	}
 }
 

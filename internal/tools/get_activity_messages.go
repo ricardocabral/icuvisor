@@ -51,11 +51,12 @@ type activityMessageRow struct {
 	Full      map[string]any `json:"full,omitempty"`
 }
 
-func newGetActivityMessagesTool(client ActivityMessagesClient, profileClient ProfileClient, detailsClient ActivityDetailsClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return coreTool(Tool{Name: getActivityMessagesName, Description: getActivityMessagesDescription, InputSchema: activityMessagesInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityMessagesHandler(client, profileClient, detailsClient, version, timezoneFallback, debugMetadata)})
+func newGetActivityMessagesTool(client ActivityMessagesClient, profileClient ProfileClient, detailsClient ActivityDetailsClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: getActivityMessagesName, Description: getActivityMessagesDescription, InputSchema: activityMessagesInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityMessagesHandler(client, profileClient, detailsClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func getActivityMessagesHandler(client ActivityMessagesClient, profileClient ProfileClient, detailsClient ActivityDetailsClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getActivityMessagesHandler(client ActivityMessagesClient, profileClient ProfileClient, detailsClient ActivityDetailsClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		var args getActivityMessagesRequest
 		if err := decodeJSONArgs(req.Arguments, &args); err != nil || strings.TrimSpace(args.ActivityID) == "" {
@@ -93,13 +94,13 @@ func getActivityMessagesHandler(client ActivityMessagesClient, profileClient Pro
 				}
 				if activityErr == nil && isStravaBlocked(activity) {
 					payload := stravaUnavailableMessagesResponse(args.ActivityID, args.IncludeFull, version, limit, args.SinceID, activity.Raw)
-					return encodeActivityMessagesResponse(payload, args.IncludeFull, version, debugMetadata)
+					return encodeActivityMessagesResponse(payload, args.IncludeFull, version, debugMetadata, shapeCfg)
 				}
 			}
 			return Result{}, NewUserError(fetchActivityDetailsMessage, err)
 		}
 		payload := shapeActivityMessages(args.ActivityID, messages, profileTimezone(profile.Timezone, timezoneFallback), args.IncludeFull, version, limit, args.SinceID)
-		return encodeActivityMessagesResponse(payload, args.IncludeFull, version, debugMetadata)
+		return encodeActivityMessagesResponse(payload, args.IncludeFull, version, debugMetadata, shapeCfg)
 	}
 }
 
@@ -123,8 +124,9 @@ func stravaUnavailableMessagesResponse(activityID string, includeFull bool, vers
 	return out
 }
 
-func encodeActivityMessagesResponse(payload getActivityMessagesResponse, includeFull bool, version string, debugMetadata bool) (Result, error) {
-	shaped, err := response.Shape(payload, response.Options{IncludeFull: includeFull, RowCollections: []string{"messages"}, ServerVersion: version, DebugMetadata: debugMetadata, QueryType: getActivityMessagesName})
+func encodeActivityMessagesResponse(payload getActivityMessagesResponse, includeFull bool, version string, debugMetadata bool, shaping ...responseShaping) (Result, error) {
+	shapeCfg := responseShapingOrDefault(shaping)
+	shaped, err := response.Shape(payload, shapeCfg.options(includeFull, []string{"messages"}, version, debugMetadata, getActivityMessagesName, ""))
 	if err != nil {
 		return Result{}, err
 	}

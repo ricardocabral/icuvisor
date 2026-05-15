@@ -7,7 +7,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
@@ -38,15 +37,16 @@ type advancedCapabilitiesMeta struct {
 	Toolset        string `json:"toolset"`
 }
 
-func newListAdvancedCapabilitiesTool(catalog []Tool, activeToolset safety.Toolset) Tool {
+func newListAdvancedCapabilitiesTool(catalog []Tool, activeToolset safety.Toolset, shaping ...responseShaping) Tool {
 	capabilities := fullOnlyCapabilities(catalog)
+	shapeCfg := responseShapingOrDefault(shaping)
 	return coreTool(Tool{
 		Name:         listAdvancedCapabilitiesName,
 		Description:  listAdvancedCapabilitiesDescription,
 		InputSchema:  listAdvancedCapabilitiesInputSchema(),
 		OutputSchema: genericOutputSchema("Full-only icuvisor tools and instructions for enabling them."),
 		Requirement:  RequirementRead,
-		Handler:      listAdvancedCapabilitiesHandler(capabilities, activeToolset),
+		Handler:      listAdvancedCapabilitiesHandler(capabilities, activeToolset, shapeCfg),
 	})
 }
 
@@ -70,7 +70,7 @@ func fullOnlyCapabilities(catalog []Tool) []advancedCapabilityRow {
 	return rows
 }
 
-func listAdvancedCapabilitiesHandler(capabilities []advancedCapabilityRow, activeToolset safety.Toolset) Handler {
+func listAdvancedCapabilitiesHandler(capabilities []advancedCapabilityRow, activeToolset safety.Toolset, shapeCfg responseShaping) Handler {
 	toolset := safety.ParseToolset(string(activeToolset))
 	return func(ctx context.Context, req Request) (Result, error) {
 		if err := ctx.Err(); err != nil {
@@ -92,10 +92,10 @@ func listAdvancedCapabilitiesHandler(capabilities []advancedCapabilityRow, activ
 				Count:          len(capabilities),
 				Source:         "registered catalog metadata",
 				DeleteModeNote: "Tools with requirement=delete also require ICUVISOR_DELETE_MODE=full; write tools require delete mode safe or full.",
-				Toolset:        response.Toolset(),
+				Toolset:        toolset.String(),
 			},
 		}
-		return encodeShaped(response, false, nil, "", false, listAdvancedCapabilitiesName, "")
+		return encodeShaped(response, false, nil, "", false, listAdvancedCapabilitiesName, "", shapeCfg)
 	}
 }
 

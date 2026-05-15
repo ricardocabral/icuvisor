@@ -83,11 +83,12 @@ type dateRangeMeta struct {
 	Newest string `json:"newest"`
 }
 
-func newGetEventsTool(client EventsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return coreTool(Tool{Name: getEventsName, Description: getEventsDescription, InputSchema: getEventsInputSchema(), OutputSchema: getEventsOutputSchema(), Handler: getEventsHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newGetEventsTool(client EventsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: getEventsName, Description: getEventsDescription, InputSchema: getEventsInputSchema(), OutputSchema: getEventsOutputSchema(), Handler: getEventsHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func getEventsHandler(client EventsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getEventsHandler(client EventsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeGetEventsRequest(req.Arguments)
 		if err != nil {
@@ -111,7 +112,7 @@ func getEventsHandler(client EventsClient, profileClient ProfileClient, version 
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_events response: %w", err)
 		}
-		return encodeShaped(payload, args.IncludeFull, []string{"events"}, version, debugMetadata, getEventsName, unitSystem)
+		return encodeShaped(payload, args.IncludeFull, []string{"events"}, version, debugMetadata, getEventsName, unitSystem, shapeCfg)
 	}
 }
 

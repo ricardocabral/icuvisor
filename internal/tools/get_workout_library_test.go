@@ -31,18 +31,11 @@ func TestWorkoutLibraryRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
 	client := &fakeWorkoutLibraryClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "UTC"}}}
-	registrar := &collectingRegistrar{}
-	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
-	}
-	if len(registrar.tools) != 4 {
-		t.Fatalf("registered tool count = %d, want profile + workout library tools + advanced capabilities", len(registrar.tools))
-	}
-	libraryTool := findTool(t, registrar.tools, getWorkoutLibraryName)
+	libraryTool := newGetWorkoutLibraryTool(client, client, "test", "UTC", false)
 	if !strings.Contains(libraryTool.Description, "workout-library folders") {
 		t.Fatalf("library description = %q, want workout-library language", libraryTool.Description)
 	}
-	folderTool := findTool(t, registrar.tools, getWorkoutsInFolderName)
+	folderTool := newGetWorkoutsInFolderTool(client, client, "test", "UTC", false)
 	if !strings.Contains(folderTool.Description, "raw workout_doc") {
 		t.Fatalf("folder description = %q, want raw workout_doc language", folderTool.Description)
 	}

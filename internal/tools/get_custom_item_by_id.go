@@ -35,11 +35,12 @@ type getCustomItemByIDMeta struct {
 	DefaultPayloadScope string `json:"default_payload_scope"`
 }
 
-func newGetCustomItemByIDTool(client CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: getCustomItemByIDName, Description: getCustomItemByIDDescription, InputSchema: getCustomItemByIDInputSchema(), OutputSchema: getCustomItemByIDOutputSchema(), Handler: getCustomItemByIDHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newGetCustomItemByIDTool(client CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: getCustomItemByIDName, Description: getCustomItemByIDDescription, InputSchema: getCustomItemByIDInputSchema(), OutputSchema: getCustomItemByIDOutputSchema(), Handler: getCustomItemByIDHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func getCustomItemByIDHandler(client CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getCustomItemByIDHandler(client CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeGetCustomItemByIDRequest(req.Arguments)
 		if err != nil {
@@ -60,7 +61,7 @@ func getCustomItemByIDHandler(client CustomItemsClient, profileClient ProfileCli
 			return Result{}, NewUserError(fetchCustomItemByIDMessage, err)
 		}
 		payload := shapeGetCustomItemByIDResponse(item, args.ItemID)
-		return encodeShaped(payload, true, nil, version, debugMetadata, getCustomItemByIDName, unitSystem)
+		return encodeShaped(payload, true, nil, version, debugMetadata, getCustomItemByIDName, unitSystem, shapeCfg)
 	}
 }
 

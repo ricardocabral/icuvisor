@@ -16,6 +16,8 @@ var (
 	ErrRateLimited = errors.New("intervals.icu rate limited")
 	// ErrUpstream indicates intervals.icu returned a transient upstream error.
 	ErrUpstream = errors.New("intervals.icu upstream error")
+	// ErrResponseTooLarge indicates intervals.icu returned a response body above the client safety cap.
+	ErrResponseTooLarge = errors.New("intervals.icu response too large")
 )
 
 // Error describes a structured intervals.icu API error.

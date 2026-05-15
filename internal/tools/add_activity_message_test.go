@@ -84,11 +84,7 @@ func TestAddActivityMessageRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
 	client := &fakeActivityMessageWriterClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345"}}}
-	registrar := &collectingRegistrar{}
-	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
-	}
-	tool := findTool(t, registrar.tools, addActivityMessageName)
+	tool := newAddActivityMessageTool(client, client, "test", false)
 	if tool.Requirement != RequirementWrite {
 		t.Fatalf("requirement = %q, want write", tool.Requirement)
 	}

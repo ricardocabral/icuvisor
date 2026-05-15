@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -169,10 +170,257 @@ func TestDoJSONClosesResponseBody(t *testing.T) {
 	}
 }
 
+func TestDoJSONClosesResponseBodyAcrossPaths(t *testing.T) {
+	t.Parallel()
+
+	quickRetry := RetryConfig{MaxAttempts: 2, BaseDelay: time.Nanosecond, MaxDelay: time.Nanosecond}
+	tests := []struct {
+		name       string
+		ctx        func() (context.Context, context.CancelFunc)
+		retry      RetryConfig
+		respond    func(int32, *atomic.Int32) (*http.Response, error)
+		wantErr    error
+		wantClosed int32
+	}{
+		{
+			name:  "success",
+			retry: RetryConfig{MaxAttempts: 1},
+			respond: func(_ int32, closed *atomic.Int32) (*http.Response, error) {
+				return testResponse(http.StatusOK, `{"id":"i12345"}`, closed), nil
+			},
+			wantClosed: 1,
+		},
+		{
+			name:  "retry then success",
+			retry: quickRetry,
+			respond: func(attempt int32, closed *atomic.Int32) (*http.Response, error) {
+				if attempt == 1 {
+					return testResponse(http.StatusServiceUnavailable, `temporary`, closed), nil
+				}
+				return testResponse(http.StatusOK, `{"id":"i12345"}`, closed), nil
+			},
+			wantClosed: 2,
+		},
+		{
+			name:  "retry exhaustion",
+			retry: quickRetry,
+			respond: func(_ int32, closed *atomic.Int32) (*http.Response, error) {
+				return testResponse(http.StatusServiceUnavailable, `temporary`, closed), nil
+			},
+			wantErr:    ErrUpstream,
+			wantClosed: 2,
+		},
+		{
+			name:  "oversize",
+			retry: RetryConfig{MaxAttempts: 1},
+			respond: func(_ int32, closed *atomic.Int32) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header:     make(http.Header),
+					Body:       &countingReadCloser{Reader: io.LimitReader(zeroReader{}, maxResponseBodyBytes+1), closed: closed},
+				}, nil
+			},
+			wantErr:    ErrResponseTooLarge,
+			wantClosed: 1,
+		},
+		{
+			name:  "4xx",
+			retry: quickRetry,
+			respond: func(_ int32, closed *atomic.Int32) (*http.Response, error) {
+				return testResponse(http.StatusBadRequest, `bad request`, closed), nil
+			},
+			wantErr:    ErrUpstream,
+			wantClosed: 1,
+		},
+		{
+			name: "context canceled with response",
+			ctx: func() (context.Context, context.CancelFunc) {
+				ctx, cancel := context.WithCancel(context.Background())
+				cancel()
+				return ctx, func() {}
+			},
+			retry: quickRetry,
+			respond: func(_ int32, closed *atomic.Int32) (*http.Response, error) {
+				return testResponse(http.StatusServiceUnavailable, `temporary`, closed), nil
+			},
+			wantErr:    ErrUpstream,
+			wantClosed: 1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var attempts atomic.Int32
+			var closed atomic.Int32
+			httpClient := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+				return tc.respond(attempts.Add(1), &closed)
+			})}
+			client := newTestClient(t, "https://example.invalid", httpClient, tc.retry)
+			ctx := context.Background()
+			cancel := func() {}
+			if tc.ctx != nil {
+				ctx, cancel = tc.ctx()
+			}
+			defer cancel()
+
+			var got AthleteWithSportSettings
+			err := client.doJSON(ctx, &got, "athlete", client.athleteID)
+			if tc.wantErr == nil && err != nil {
+				t.Fatalf("doJSON() error = %v", err)
+			}
+			if tc.wantErr != nil && !errors.Is(err, tc.wantErr) {
+				t.Fatalf("doJSON() error = %v, want errors.Is %v", err, tc.wantErr)
+			}
+			if got := closed.Load(); got != tc.wantClosed {
+				t.Fatalf("closed bodies = %d, want %d", got, tc.wantClosed)
+			}
+		})
+	}
+}
+
+func TestDoJSONOversizeBodyReturnsSentinel(t *testing.T) {
+	t.Parallel()
+
+	var closed atomic.Int32
+	httpClient := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     make(http.Header),
+			Body:       &countingReadCloser{Reader: io.LimitReader(zeroReader{}, maxResponseBodyBytes+1), closed: &closed},
+		}, nil
+	})}
+	client := newTestClient(t, "https://example.invalid", httpClient, RetryConfig{MaxAttempts: 1})
+
+	var got AthleteWithSportSettings
+	err := client.doJSON(context.Background(), &got, "athlete", client.athleteID)
+	if !errors.Is(err, ErrResponseTooLarge) {
+		t.Fatalf("doJSON() error = %v, want ErrResponseTooLarge", err)
+	}
+	if got := closed.Load(); got != 1 {
+		t.Fatalf("closed bodies = %d, want 1", got)
+	}
+}
+
+func TestDoJSONRetriesRateLimitThenSucceeds(t *testing.T) {
+	t.Parallel()
+
+	var attempts int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		attempt := atomic.AddInt32(&attempts, 1)
+		if attempt == 1 {
+			w.Header().Set("Retry-After", "1")
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"i12345"}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 2, BaseDelay: time.Nanosecond, MaxDelay: time.Nanosecond})
+	var got AthleteWithSportSettings
+	if err := client.doJSON(context.Background(), &got, "athlete", client.athleteID); err != nil {
+		t.Fatalf("doJSON() error = %v", err)
+	}
+	if attempts != 2 {
+		t.Fatalf("attempts = %d, want 2", attempts)
+	}
+}
+
+func TestDoJSONRetriesServerErrorThenSucceeds(t *testing.T) {
+	t.Parallel()
+
+	var attempts int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		attempt := atomic.AddInt32(&attempts, 1)
+		if attempt == 1 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"i12345"}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 2, BaseDelay: time.Nanosecond, MaxDelay: time.Nanosecond})
+	var got AthleteWithSportSettings
+	if err := client.doJSON(context.Background(), &got, "athlete", client.athleteID); err != nil {
+		t.Fatalf("doJSON() error = %v", err)
+	}
+	if attempts != 2 {
+		t.Fatalf("attempts = %d, want 2", attempts)
+	}
+}
+
+func TestDoJSONDoesNotRetryBadRequest(t *testing.T) {
+	t.Parallel()
+
+	var attempts int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		atomic.AddInt32(&attempts, 1)
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":"bad"}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 3, BaseDelay: time.Nanosecond, MaxDelay: time.Nanosecond})
+	var got AthleteWithSportSettings
+	err := client.doJSON(context.Background(), &got, "athlete", client.athleteID)
+	if !errors.Is(err, ErrUpstream) {
+		t.Fatalf("doJSON() error = %v, want ErrUpstream", err)
+	}
+	if attempts != 1 {
+		t.Fatalf("attempts = %d, want 1", attempts)
+	}
+}
+
+func TestDoJSONRetryBudgetExhaustionReturnsLastStatus(t *testing.T) {
+	t.Parallel()
+
+	var attempts int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		atomic.AddInt32(&attempts, 1)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = w.Write([]byte(`temporary`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 2, BaseDelay: time.Nanosecond, MaxDelay: time.Nanosecond})
+	var got AthleteWithSportSettings
+	err := client.doJSON(context.Background(), &got, "athlete", client.athleteID)
+	if !errors.Is(err, ErrUpstream) || !strings.Contains(err.Error(), "HTTP 503") {
+		t.Fatalf("doJSON() error = %v, want wrapped HTTP 503 upstream error", err)
+	}
+	if attempts != 2 {
+		t.Fatalf("attempts = %d, want 2", attempts)
+	}
+}
+
+func TestRetryConfigWithDefaults(t *testing.T) {
+	t.Parallel()
+
+	zero := RetryConfig{}.WithDefaults()
+	if zero.MaxAttempts != defaultMaxAttempts || zero.BaseDelay != defaultBaseDelay || zero.MaxDelay != defaultMaxDelay || zero.Jitter != defaultJitter {
+		t.Fatalf("zero WithDefaults() = %+v, want package defaults", zero)
+	}
+
+	partial := RetryConfig{MaxAttempts: 5}.WithDefaults()
+	if partial.MaxAttempts != 5 || partial.BaseDelay != defaultBaseDelay || partial.MaxDelay != defaultMaxDelay || partial.Jitter != 0 {
+		t.Fatalf("partial WithDefaults() = %+v, want explicit max attempts, default delays, zero jitter", partial)
+	}
+
+	negativeJitter := RetryConfig{MaxAttempts: 5, Jitter: -1}.WithDefaults()
+	if negativeJitter.Jitter != 0 {
+		t.Fatalf("negative jitter WithDefaults() = %+v, want jitter clamped to 0", negativeJitter)
+	}
+}
+
 func TestSleepBeforeRetryHonorsContextCancellation(t *testing.T) {
 	t.Parallel()
 
-	client := &Client{retry: normalizeRetryConfig(RetryConfig{MaxAttempts: 3, BaseDelay: time.Hour, MaxDelay: time.Hour})}
+	client := &Client{retry: RetryConfig{MaxAttempts: 3, BaseDelay: time.Hour, MaxDelay: time.Hour}.WithDefaults()}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	err := client.sleepBeforeRetry(ctx, 1, 0)
@@ -195,6 +443,33 @@ type closeTrackingBody struct {
 func (b *closeTrackingBody) Close() error {
 	b.closed.Store(true)
 	return nil
+}
+
+func testResponse(statusCode int, body string, closed *atomic.Int32) *http.Response {
+	return &http.Response{
+		StatusCode: statusCode,
+		Header:     make(http.Header),
+		Body:       &countingReadCloser{Reader: strings.NewReader(body), closed: closed},
+	}
+}
+
+type countingReadCloser struct {
+	io.Reader
+	closed *atomic.Int32
+}
+
+func (b *countingReadCloser) Close() error {
+	b.closed.Add(1)
+	return nil
+}
+
+type zeroReader struct{}
+
+func (zeroReader) Read(p []byte) (int, error) {
+	for i := range p {
+		p[i] = 'x'
+	}
+	return len(p), nil
 }
 
 func newTestClient(t *testing.T, baseURL string, httpClient *http.Client, retry RetryConfig) *Client {

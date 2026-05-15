@@ -87,11 +87,12 @@ type applyTrainingPlanWorkout struct {
 	Day     int
 }
 
-func newApplyTrainingPlanTool(client ApplyTrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability) Tool {
-	return fullTool(Tool{Name: applyTrainingPlanName, Description: applyTrainingPlanDescription, InputSchema: applyTrainingPlanInputSchema(capabilityOrSafe(capability)), OutputSchema: applyTrainingPlanOutputSchema(), Requirement: RequirementWrite, Handler: applyTrainingPlanHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability))})
+func newApplyTrainingPlanTool(client ApplyTrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: applyTrainingPlanName, Description: applyTrainingPlanDescription, InputSchema: applyTrainingPlanInputSchema(capabilityOrSafe(capability)), OutputSchema: applyTrainingPlanOutputSchema(), Requirement: RequirementWrite, Handler: applyTrainingPlanHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability), shapeCfg)})
 }
 
-func applyTrainingPlanHandler(client ApplyTrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability) Handler {
+func applyTrainingPlanHandler(client ApplyTrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeApplyTrainingPlanRequest(req.Arguments, capabilityOrSafe(capability))
 		if err != nil {
@@ -115,7 +116,7 @@ func applyTrainingPlanHandler(client ApplyTrainingPlanClient, profileClient Prof
 			}
 			return Result{}, NewUserError(applyTrainingPlanMessage, err)
 		}
-		return encodeShaped(payload, false, []string{"proposed_events", "created_events"}, version, debugMetadata, applyTrainingPlanName, unitSystem)
+		return encodeShaped(payload, false, []string{"proposed_events", "created_events"}, version, debugMetadata, applyTrainingPlanName, unitSystem, shapeCfg)
 	}
 }
 

@@ -90,11 +90,12 @@ type updateSportSettingsMeta struct {
 	Units            map[string]string `json:"units,omitempty"`
 }
 
-func newUpdateSportSettingsTool(client SportSettingsWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability) Tool {
-	return fullTool(Tool{Name: updateSportSettingsName, Description: updateSportSettingsDescription, InputSchema: updateSportSettingsInputSchema(), OutputSchema: updateSportSettingsOutputSchema(), Requirement: RequirementWrite, Handler: updateSportSettingsHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability))})
+func newUpdateSportSettingsTool(client SportSettingsWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: updateSportSettingsName, Description: updateSportSettingsDescription, InputSchema: updateSportSettingsInputSchema(), OutputSchema: updateSportSettingsOutputSchema(), Requirement: RequirementWrite, Handler: updateSportSettingsHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability), shapeCfg)})
 }
 
-func updateSportSettingsHandler(client SportSettingsWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability) Handler {
+func updateSportSettingsHandler(client SportSettingsWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeUpdateSportSettingsRequest(req.Arguments)
 		if err != nil {
@@ -126,7 +127,7 @@ func updateSportSettingsHandler(client SportSettingsWriterClient, profileClient 
 			return Result{}, NewUserError(writeSportSettingsMessage, err)
 		}
 		payload := shapeUpdateSportSettingsResponse(args, params, updated, meta)
-		return encodeShaped(payload, false, nil, version, debugMetadata, updateSportSettingsName, profileUnitSystem(profile))
+		return encodeShaped(payload, false, nil, version, debugMetadata, updateSportSettingsName, profileUnitSystem(profile), shapeCfg)
 	}
 }
 

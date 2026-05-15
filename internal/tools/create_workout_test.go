@@ -151,11 +151,7 @@ func TestCreateWorkoutRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
 	client := &fakeWorkoutCreatorClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345", PreferredUnits: "metric", Timezone: "UTC"}}}
-	registrar := &collectingRegistrar{}
-	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
-	}
-	tool := findTool(t, registrar.tools, createWorkoutName)
+	tool := newCreateWorkoutTool(client, client, "test", "UTC", false)
 	if tool.Requirement != RequirementWrite {
 		t.Fatalf("requirement = %q, want write", tool.Requirement)
 	}

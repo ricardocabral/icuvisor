@@ -10,6 +10,8 @@ import (
 
 	"github.com/ricardocabral/icuvisor/internal/athleteprofile"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
+	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 const (
@@ -28,6 +30,8 @@ type athleteProfileOptions struct {
 	version          string
 	timezoneFallback string
 	debugMetadata    bool
+	deleteMode       safety.Mode
+	toolset          safety.Toolset
 	ttl              time.Duration
 	now              func() time.Time
 }
@@ -37,6 +41,8 @@ type athleteProfileReader struct {
 	version          string
 	timezoneFallback string
 	debugMetadata    bool
+	deleteMode       safety.Mode
+	toolset          safety.Toolset
 	ttl              time.Duration
 	now              func() time.Time
 
@@ -60,6 +66,8 @@ func AthleteProfileResource(client ProfileClient, opts ResourceOptions) Resource
 		version:          opts.Version,
 		timezoneFallback: opts.TimezoneFallback,
 		debugMetadata:    opts.DebugMetadata,
+		deleteMode:       safety.ParseMode(opts.DeleteMode.String()),
+		toolset:          safety.ParseToolset(opts.Toolset.String()),
 		ttl:              opts.AthleteProfileTTL,
 		now:              opts.Now,
 	})
@@ -87,6 +95,8 @@ func newAthleteProfileReader(opts athleteProfileOptions) *athleteProfileReader {
 		version:          athleteprofile.NormalizeVersion(opts.version),
 		timezoneFallback: athleteprofile.NormalizeTimezoneFallback(opts.timezoneFallback),
 		debugMetadata:    opts.debugMetadata,
+		deleteMode:       safety.ParseMode(opts.deleteMode.String()),
+		toolset:          safety.ParseToolset(opts.toolset.String()),
 		ttl:              ttl,
 		now:              now,
 	}
@@ -150,7 +160,7 @@ func (r *athleteProfileReader) refreshProfile(ctx context.Context) (Result, erro
 		}
 		return Result{}, fmt.Errorf("could not fetch athlete profile; check intervals.icu credentials and athlete ID: %w", err)
 	}
-	shaped, err := athleteprofile.Shape(profile, r.version, r.timezoneFallback, false, r.debugMetadata)
+	shaped, err := athleteprofile.Shape(profile, r.version, r.timezoneFallback, false, r.debugMetadata, response.Options{DeleteMode: r.deleteMode, Toolset: r.toolset})
 	if err != nil {
 		return Result{}, fmt.Errorf("shaping athlete profile resource: %w", err)
 	}

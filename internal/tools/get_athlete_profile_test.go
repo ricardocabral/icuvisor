@@ -53,15 +53,8 @@ func (f *fakeProfileClient) GetAthleteProfile(ctx context.Context) (intervals.At
 func TestGetAthleteProfileRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
-	registrar := &collectingRegistrar{}
 	client := &fakeProfileClient{}
-	if err := NewRegistry(client, "v0.1-test", "America/Sao_Paulo").Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
-	}
-	if len(registrar.tools) != 2 {
-		t.Fatalf("registered tool count = %d, want profile plus advanced capabilities", len(registrar.tools))
-	}
-	tool := findTool(t, registrar.tools, getAthleteProfileName)
+	tool := newGetAthleteProfileTool(client, "v0.1-test", "America/Sao_Paulo", false)
 	firstSentence, _, _ := strings.Cut(tool.Description, ".")
 	for _, want := range []string{"athlete profile", "FTP", "thresholds", "zones", "sport settings"} {
 		if !strings.Contains(firstSentence, want) {
@@ -110,7 +103,7 @@ func TestRegistryErrorNamesFailingTool(t *testing.T) {
 	t.Parallel()
 
 	wantErr := errors.New("boom")
-	err := NewRegistry(newFakeFitnessMetricsClient(t), "test", "UTC").Register(context.Background(), failingToolRegistrar{name: getFitnessName, err: wantErr})
+	err := NewRegistry(newNoNetworkIntervalsClient(t), "test", "UTC").Register(context.Background(), failingToolRegistrar{name: getFitnessName, err: wantErr})
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("Register() error = %v, want wrapped %v", err, wantErr)
 	}
@@ -445,11 +438,8 @@ func TestGetAthleteProfileDebugMetadataOptIn(t *testing.T) {
 	t.Parallel()
 
 	client := &fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "12345"}}
-	registrar := &collectingRegistrar{}
-	if err := NewRegistryWithOptions(client, RegistryOptions{Version: "test", TimezoneFallback: "UTC", DebugMetadata: true}).Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
-	}
-	result, err := registrar.tools[0].Handler(context.Background(), Request{Name: getAthleteProfileName, Arguments: json.RawMessage(`{}`)})
+	tool := newGetAthleteProfileTool(client, "test", "UTC", true)
+	result, err := tool.Handler(context.Background(), Request{Name: getAthleteProfileName, Arguments: json.RawMessage(`{}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
@@ -493,24 +483,13 @@ func TestGetAthleteProfileOmitsForbiddenDebugAndSecretFields(t *testing.T) {
 func newTestProfileTool(t *testing.T, version string, timezoneFallback string, profile intervals.AthleteWithSportSettings) (Tool, *fakeProfileClient) {
 	t.Helper()
 	client := &fakeProfileClient{profile: profile}
-	registrar := &collectingRegistrar{}
-	if err := NewRegistry(client, version, timezoneFallback).Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
-	}
-	if len(registrar.tools) != 2 {
-		t.Fatalf("registered tool count = %d, want profile plus advanced capabilities", len(registrar.tools))
-	}
-	return findTool(t, registrar.tools, getAthleteProfileName), client
+	return newGetAthleteProfileTool(client, version, timezoneFallback, false), client
 }
 
 func newTestProfileToolWithError(t *testing.T, err error) (Tool, *fakeProfileClient) {
 	t.Helper()
 	client := &fakeProfileClient{err: err}
-	registrar := &collectingRegistrar{}
-	if err := NewRegistry(client, "test", "UTC").Register(context.Background(), registrar); err != nil {
-		t.Fatalf("Register() error = %v", err)
-	}
-	return findTool(t, registrar.tools, getAthleteProfileName), client
+	return newGetAthleteProfileTool(client, "test", "UTC", false), client
 }
 
 func decodeProfileResult(t *testing.T, result Result) GetAthleteProfileResponse {

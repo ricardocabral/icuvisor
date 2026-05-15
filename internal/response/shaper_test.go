@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 func TestShapeNullStrippingPreservesNonNullZeroValues(t *testing.T) {
@@ -332,16 +334,29 @@ func TestShapeSchemaChangeMetadata(t *testing.T) {
 }
 
 func TestShapeAddsDeleteModeMetadata(t *testing.T) {
-	SetDeleteMode("full")
-	t.Cleanup(func() { SetDeleteMode("safe") })
-
-	got, err := Shape(map[string]any{"name": "athlete"}, Options{})
+	got, err := Shape(map[string]any{"name": "athlete"}, Options{DeleteMode: safety.ModeFull})
 	if err != nil {
 		t.Fatalf("Shape() error = %v", err)
 	}
 	meta := got.(map[string]any)["_meta"].(map[string]any)
 	if meta["delete_mode"] != "full" {
 		t.Fatalf("delete_mode = %v, want full", meta["delete_mode"])
+	}
+}
+
+func TestShapeUsesPerCallDeleteModeMetadata(t *testing.T) {
+	full, err := Shape(map[string]any{"name": "athlete"}, Options{DeleteMode: safety.ModeFull})
+	if err != nil {
+		t.Fatalf("Shape(full) error = %v", err)
+	}
+	none, err := Shape(map[string]any{"name": "athlete"}, Options{DeleteMode: safety.ModeNone})
+	if err != nil {
+		t.Fatalf("Shape(none) error = %v", err)
+	}
+	fullMeta := full.(map[string]any)["_meta"].(map[string]any)
+	noneMeta := none.(map[string]any)["_meta"].(map[string]any)
+	if fullMeta["delete_mode"] != "full" || noneMeta["delete_mode"] != "none" {
+		t.Fatalf("delete modes = full:%v none:%v, want full/none", fullMeta["delete_mode"], noneMeta["delete_mode"])
 	}
 }
 
@@ -358,10 +373,7 @@ func TestShapeAddsToolsetMetadata(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			SetToolset(tc.set)
-			t.Cleanup(func() { SetToolset("core") })
-
-			got, err := Shape(map[string]any{"name": "athlete"}, Options{})
+			got, err := Shape(map[string]any{"name": "athlete"}, Options{Toolset: safety.ParseToolset(tc.set)})
 			if err != nil {
 				t.Fatalf("Shape() error = %v", err)
 			}
@@ -374,16 +386,13 @@ func TestShapeAddsToolsetMetadata(t *testing.T) {
 }
 
 func TestShapeOverwritesStaleCallerToolsetMetadata(t *testing.T) {
-	SetToolset("full")
-	t.Cleanup(func() { SetToolset("core") })
-
 	got, err := Shape(map[string]any{
 		"name": "athlete",
 		"_meta": map[string]any{
 			"toolset": "core",
 			"count":   3,
 		},
-	}, Options{})
+	}, Options{Toolset: safety.ToolsetFull})
 	if err != nil {
 		t.Fatalf("Shape() error = %v", err)
 	}

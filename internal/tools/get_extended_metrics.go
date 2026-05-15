@@ -89,11 +89,12 @@ type extendedMetricsMeta struct {
 	UnavailableSources  []string          `json:"unavailable_sources,omitempty"`
 }
 
-func newGetExtendedMetricsTool(client ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: getExtendedMetricsName, Description: getExtendedMetricsDescription, InputSchema: extendedMetricsInputSchema(), OutputSchema: genericOutputSchema("Upstream-exposed extended metrics for one activity."), Handler: getExtendedMetricsHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newGetExtendedMetricsTool(client ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: getExtendedMetricsName, Description: getExtendedMetricsDescription, InputSchema: extendedMetricsInputSchema(), OutputSchema: genericOutputSchema("Upstream-exposed extended metrics for one activity."), Handler: getExtendedMetricsHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func getExtendedMetricsHandler(client ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getExtendedMetricsHandler(client ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeExtendedMetricsRequest(req.Arguments)
 		if err != nil {
@@ -112,7 +113,7 @@ func getExtendedMetricsHandler(client ExtendedMetricsClient, profileClient Profi
 		}
 		if isStravaBlocked(activity) {
 			payload := stravaUnavailableExtendedMetricsResponse(args.ActivityID, activity, args.IncludeFull, version)
-			return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, getExtendedMetricsName, unitSystem)
+			return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, getExtendedMetricsName, unitSystem, shapeCfg)
 		}
 		var unavailable []string
 		intervalsDTO, intervalsOK, err := optionalIntervals(ctx, client, args.ActivityID)
@@ -130,7 +131,7 @@ func getExtendedMetricsHandler(client ExtendedMetricsClient, profileClient Profi
 			unavailable = append(unavailable, "power_vs_hr")
 		}
 		payload := shapeExtendedMetrics(args.ActivityID, activity, intervalsDTO, intervalsOK, powerVsHR, powerVsHROK, args.IncludeFull, version, unavailable)
-		return encodeShaped(payload, args.IncludeFull, []string{"intervals"}, version, debugMetadata, getExtendedMetricsName, unitSystem)
+		return encodeShaped(payload, args.IncludeFull, []string{"intervals"}, version, debugMetadata, getExtendedMetricsName, unitSystem, shapeCfg)
 	}
 }
 

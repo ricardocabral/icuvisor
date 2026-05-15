@@ -43,11 +43,12 @@ type getWellnessDataMeta struct {
 	IncludeFull   bool     `json:"include_full"`
 }
 
-func newGetWellnessDataTool(client WellnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return coreTool(Tool{Name: getWellnessDataName, Description: getWellnessDataDescription, InputSchema: wellnessDataInputSchema(), OutputSchema: getWellnessDataOutputSchema(), Handler: getWellnessDataHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newGetWellnessDataTool(client WellnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: getWellnessDataName, Description: getWellnessDataDescription, InputSchema: wellnessDataInputSchema(), OutputSchema: getWellnessDataOutputSchema(), Handler: getWellnessDataHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func getWellnessDataHandler(client WellnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getWellnessDataHandler(client WellnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeGetWellnessDataRequest(req.Arguments)
 		if err != nil {
@@ -65,7 +66,7 @@ func getWellnessDataHandler(client WellnessClient, profileClient ProfileClient, 
 			return Result{}, NewUserError(fetchWellnessDataMessage, err)
 		}
 		payload := getWellnessDataResponse{Wellness: wellnessRows(rows, args.IncludeFull), Meta: getWellnessDataMeta{ServerVersion: normalizeVersion(version), Oldest: args.Oldest, Newest: args.Newest, Fields: args.Fields, IncludeFull: args.IncludeFull}}
-		return encodeShaped(payload, args.IncludeFull, []string{"wellness"}, version, debugMetadata, getWellnessDataName, unitSystem)
+		return encodeShaped(payload, args.IncludeFull, []string{"wellness"}, version, debugMetadata, getWellnessDataName, unitSystem, shapeCfg)
 	}
 }
 

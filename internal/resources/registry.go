@@ -3,6 +3,8 @@ package resources
 import (
 	"context"
 	"time"
+
+	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 // ResourceOptions configures the default MCP resource registry.
@@ -10,6 +12,8 @@ type ResourceOptions struct {
 	Version           string
 	TimezoneFallback  string
 	DebugMetadata     bool
+	DeleteMode        safety.Mode
+	Toolset           safety.Toolset
 	AthleteProfileTTL time.Duration
 	Now               func() time.Time
 }
