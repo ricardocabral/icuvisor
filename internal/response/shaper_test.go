@@ -466,6 +466,94 @@ func TestShapeDebugNullsDoNotLeakThroughMissingFields(t *testing.T) {
 	})
 }
 
+func TestShapeJSONConversionContract(t *testing.T) {
+	t.Run("json tags omitempty and ignored fields", func(t *testing.T) {
+		type input struct {
+			Renamed    string   `json:"renamed"`
+			Ignored    string   `json:"-"`
+			Empty      string   `json:"empty,omitempty"`
+			NilPointer *string  `json:"nil_pointer,omitempty"`
+			EmptySlice []string `json:"empty_slice,omitempty"`
+			KeepZero   int      `json:"keep_zero"`
+		}
+		got, err := Shape(input{Renamed: "kept", Ignored: "dropped"}, Options{})
+		if err != nil {
+			t.Fatalf("Shape() error = %v", err)
+		}
+		assertJSONEqual(t, got, map[string]any{"renamed": "kept", "keep_zero": float64(0), "_meta": map[string]any{"server_version": "dev"}})
+	})
+
+	t.Run("raw message decodes as json", func(t *testing.T) {
+		type input struct {
+			Raw json.RawMessage `json:"raw"`
+		}
+		got, err := Shape(input{Raw: json.RawMessage(`{"nested":null,"list":[1,null]}`)}, Options{})
+		if err != nil {
+			t.Fatalf("Shape() error = %v", err)
+		}
+		assertJSONEqual(t, got, map[string]any{"raw": map[string]any{"list": []any{float64(1), nil}}, "_meta": map[string]any{"fields_present": []any{"raw"}, "missing_fields": []any{"raw.nested"}, "server_version": "dev"}})
+	})
+
+	t.Run("text marshaler uses json representation", func(t *testing.T) {
+		type input struct {
+			Fetched time.Time `json:"fetched"`
+		}
+		fetched := time.Date(2026, 5, 15, 12, 30, 0, 0, time.UTC)
+		got, err := Shape(input{Fetched: fetched}, Options{})
+		if err != nil {
+			t.Fatalf("Shape() error = %v", err)
+		}
+		assertJSONEqual(t, got, map[string]any{"fetched": "2026-05-15T12:30:00Z", "_meta": map[string]any{"server_version": "dev"}})
+	})
+}
+
+func TestShapeDoesNotMutateCallerOwnedInput(t *testing.T) {
+	input := map[string]any{
+		"name":       "Tempo",
+		"fetched_at": "2026-05-15T12:00:00Z",
+		"full":       map[string]any{"raw_null": nil, "samples": []any{float64(1), nil}},
+	}
+	got, err := Shape(input, Options{IncludeFull: true})
+	if err != nil {
+		t.Fatalf("Shape() error = %v", err)
+	}
+	if _, ok := got.(map[string]any)["fetched_at"]; ok {
+		t.Fatalf("shaped output kept debug fetched_at: %#v", got)
+	}
+	if input["fetched_at"] != "2026-05-15T12:00:00Z" {
+		t.Fatalf("Shape mutated caller fetched_at: %#v", input)
+	}
+	full := input["full"].(map[string]any)
+	if _, ok := full["raw_null"]; !ok {
+		t.Fatalf("Shape mutated caller full map: %#v", full)
+	}
+}
+
+func TestShapeProvenanceDebugAndScaleWalkerContract(t *testing.T) {
+	input := map[string]any{
+		"feel":       float64(4),
+		"fetched_at": "2026-05-15T12:00:00Z",
+		"_meta": map[string]any{
+			"scales": map[string]any{"feel": "stale"},
+			"provenance": map[string]any{
+				"feel": map[string]any{"source": "manual", "fetched_at": "2026-05-15T11:00:00Z"},
+			},
+		},
+	}
+	got, err := Shape(input, Options{})
+	if err != nil {
+		t.Fatalf("Shape() error = %v", err)
+	}
+	assertJSONEqual(t, got, map[string]any{
+		"feel": float64(4),
+		"_meta": map[string]any{
+			"provenance":     map[string]any{"feel": map[string]any{"source": "manual", "fetched_at": "2026-05-15T11:00:00Z"}},
+			"scales":         map[string]any{"feel": "1-5 (athlete-reported feel)"},
+			"server_version": "dev",
+		},
+	})
+}
+
 func TestShapeIncludeFullNullConvention(t *testing.T) {
 	type row struct {
 		Keep *float64 `json:"keep"`

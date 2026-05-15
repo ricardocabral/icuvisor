@@ -1,9 +1,11 @@
 package response
 
 import (
+	"encoding"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -105,6 +107,192 @@ func Shape(value any, opts Options) (any, error) {
 }
 
 func marshalToJSONValue(value any) (any, error) {
+	out, err := toJSONValue(reflect.ValueOf(value))
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func toJSONValue(value reflect.Value) (any, error) {
+	if !value.IsValid() {
+		return nil, nil
+	}
+	if value.Kind() == reflect.Interface {
+		if value.IsNil() {
+			return nil, nil
+		}
+		return toJSONValue(value.Elem())
+	}
+	if value.Kind() == reflect.Pointer {
+		if value.IsNil() {
+			return nil, nil
+		}
+		if canInterface(value) {
+			if marshaled, ok, err := marshalSpecialValue(value.Interface()); ok || err != nil {
+				return marshaled, err
+			}
+		}
+		return toJSONValue(value.Elem())
+	}
+	if canInterface(value) {
+		if marshaled, ok, err := marshalSpecialValue(value.Interface()); ok || err != nil {
+			return marshaled, err
+		}
+	}
+	if value.Kind() == reflect.Slice && value.Type().Elem().Kind() == reflect.Uint8 {
+		if canInterface(value) {
+			return marshalJSONValue(value.Interface())
+		}
+	}
+	return reflectJSONValue(value)
+}
+
+func reflectJSONValue(value reflect.Value) (any, error) {
+	switch value.Kind() {
+	case reflect.Bool:
+		return value.Bool(), nil
+	case reflect.String:
+		return value.String(), nil
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return float64(value.Int()), nil
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return float64(value.Uint()), nil
+	case reflect.Float32, reflect.Float64:
+		return value.Convert(reflect.TypeOf(float64(0))).Float(), nil
+	case reflect.Map:
+		return mapToJSONValue(value)
+	case reflect.Slice, reflect.Array:
+		return sliceToJSONValue(value)
+	case reflect.Struct:
+		return structToJSONValue(value)
+	case reflect.Invalid:
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("marshaling response value: unsupported JSON value %s", value.Kind())
+	}
+}
+
+func mapToJSONValue(value reflect.Value) (any, error) {
+	if value.IsNil() {
+		return nil, nil
+	}
+	if value.Type().Key().Kind() != reflect.String {
+		if canInterface(value) {
+			return marshalJSONValue(value.Interface())
+		}
+		return nil, fmt.Errorf("marshaling response value: unsupported map key type %s", value.Type().Key())
+	}
+	out := make(map[string]any, value.Len())
+	iter := value.MapRange()
+	for iter.Next() {
+		item, err := toJSONValue(iter.Value())
+		if err != nil {
+			return nil, err
+		}
+		out[iter.Key().String()] = item
+	}
+	return out, nil
+}
+
+func sliceToJSONValue(value reflect.Value) (any, error) {
+	if value.Kind() == reflect.Slice && value.IsNil() {
+		return nil, nil
+	}
+	out := make([]any, value.Len())
+	for i := range value.Len() {
+		item, err := toJSONValue(value.Index(i))
+		if err != nil {
+			return nil, err
+		}
+		out[i] = item
+	}
+	return out, nil
+}
+
+func structToJSONValue(value reflect.Value) (any, error) {
+	out := make(map[string]any, value.NumField())
+	valueType := value.Type()
+	for i := range value.NumField() {
+		field := valueType.Field(i)
+		if field.PkgPath != "" {
+			continue
+		}
+		name, omitEmpty, skip, fallback := jsonField(field)
+		if skip {
+			continue
+		}
+		if fallback {
+			return marshalJSONValue(value.Interface())
+		}
+		fieldValue := value.Field(i)
+		if omitEmpty && isEmptyJSONValue(fieldValue) {
+			continue
+		}
+		item, err := toJSONValue(fieldValue)
+		if err != nil {
+			return nil, err
+		}
+		out[name] = item
+	}
+	return out, nil
+}
+
+func jsonField(field reflect.StructField) (name string, omitEmpty bool, skip bool, fallback bool) {
+	name = field.Name
+	tag := field.Tag.Get("json")
+	if tag == "-" {
+		return "", false, true, false
+	}
+	parts := strings.Split(tag, ",")
+	if parts[0] != "" {
+		name = parts[0]
+	} else if field.Anonymous {
+		return "", false, false, true
+	}
+	for _, option := range parts[1:] {
+		if option == "omitempty" {
+			omitEmpty = true
+		}
+	}
+	return name, omitEmpty, false, false
+}
+
+func isEmptyJSONValue(value reflect.Value) bool {
+	switch value.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
+		return value.Len() == 0
+	case reflect.Bool:
+		return !value.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return value.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return value.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return value.Float() == 0
+	case reflect.Interface, reflect.Pointer:
+		return value.IsNil()
+	default:
+		return false
+	}
+}
+
+func marshalSpecialValue(value any) (any, bool, error) {
+	if marshaler, ok := value.(json.Marshaler); ok {
+		out, err := marshalJSONValue(marshaler)
+		return out, true, err
+	}
+	if marshaler, ok := value.(encoding.TextMarshaler); ok {
+		text, err := marshaler.MarshalText()
+		if err != nil {
+			return nil, true, fmt.Errorf("marshaling response value: %w", err)
+		}
+		return string(text), true, nil
+	}
+	return nil, false, nil
+}
+
+func marshalJSONValue(value any) (any, error) {
 	data, err := json.Marshal(value)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling response value: %w", err)
@@ -114,6 +302,66 @@ func marshalToJSONValue(value any) (any, error) {
 		return nil, fmt.Errorf("unmarshaling response value: %w", err)
 	}
 	return out, nil
+}
+
+func canInterface(value reflect.Value) bool {
+	return value.IsValid() && value.CanInterface()
+}
+
+type jsonWalkContainer int
+
+const (
+	walkRoot jsonWalkContainer = iota
+	walkMapValue
+	walkSliceValue
+)
+
+type jsonWalkDecision struct {
+	Drop    bool
+	Stop    bool
+	Missing []string
+}
+
+type jsonWalkVisitor func(path string, value any, container jsonWalkContainer) jsonWalkDecision
+
+func walkJSON(value any, path string, container jsonWalkContainer, visitor jsonWalkVisitor) (any, []string, bool) {
+	decision := visitor(path, value, container)
+	if decision.Drop {
+		return nil, decision.Missing, true
+	}
+	if decision.Stop {
+		return value, decision.Missing, false
+	}
+	switch typed := value.(type) {
+	case map[string]any:
+		out := make(map[string]any, len(typed))
+		missing := append([]string(nil), decision.Missing...)
+		for key, item := range typed {
+			itemPath := joinPath(path, key)
+			walked, nestedMissing, dropped := walkJSON(item, itemPath, walkMapValue, visitor)
+			missing = append(missing, nestedMissing...)
+			if dropped {
+				continue
+			}
+			out[key] = walked
+		}
+		return out, missing, false
+	case []any:
+		out := make([]any, 0, len(typed))
+		missing := append([]string(nil), decision.Missing...)
+		for i, item := range typed {
+			walked, nestedMissing, dropped := walkJSON(item, indexPath(path, i), walkSliceValue, visitor)
+			missing = append(missing, nestedMissing...)
+			if dropped {
+				out = append(out, nil)
+				continue
+			}
+			out = append(out, walked)
+		}
+		return out, missing, false
+	default:
+		return value, decision.Missing, false
+	}
 }
 
 func shapeRoot(root map[string]any, opts Options) map[string]any {
@@ -173,7 +421,9 @@ func shapeWrapperRow(row map[string]any, opts Options) map[string]any {
 	if opts.DebugMetadata {
 		addDebugMetadata(out, opts)
 	} else {
-		dropDebugMetadata(out, "")
+		if dropped, ok := dropDebugMetadata(out, "").(map[string]any); ok {
+			out = dropped
+		}
 		missing = filterDebugMissing(missing)
 	}
 	if !opts.IncludeFull && len(missing) > 0 {
@@ -203,7 +453,9 @@ func shapeRow(row map[string]any, opts Options, includeCommonMeta bool) map[stri
 			addDebugMetadata(shaped, opts)
 		}
 	} else {
-		dropDebugMetadata(shaped, "")
+		if dropped, ok := dropDebugMetadata(shaped, "").(map[string]any); ok {
+			shaped = dropped
+		}
 		missing = filterDebugMissing(missing)
 	}
 	if !opts.IncludeFull && len(missing) > 0 {
@@ -268,21 +520,21 @@ func scalesForRow(row map[string]any) map[string]string {
 }
 
 func collectScaleLabels(value any, scales map[string]string) {
-	switch typed := value.(type) {
-	case map[string]any:
-		for key, item := range typed {
-			if label, ok := defaultScaleLabels[key]; ok && item != nil {
+	walkJSON(value, "", walkRoot, func(path string, item any, _ jsonWalkContainer) jsonWalkDecision {
+		if isMetaPath(path) {
+			return jsonWalkDecision{Stop: true}
+		}
+		row, ok := item.(map[string]any)
+		if !ok {
+			return jsonWalkDecision{}
+		}
+		for key, field := range row {
+			if label, ok := defaultScaleLabels[key]; ok && field != nil {
 				scales[key] = label
 			}
-			if key != "_meta" {
-				collectScaleLabels(item, scales)
-			}
 		}
-	case []any:
-		for _, item := range typed {
-			collectScaleLabels(item, scales)
-		}
-	}
+		return jsonWalkDecision{}
+	})
 }
 
 func addCommonMeta(row map[string]any, opts Options) {
@@ -338,41 +590,18 @@ func schemaChangeMessage(previousVersion, currentVersion string) string {
 }
 
 func stripNulls(value any, path string) (any, []string) {
-	switch typed := value.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(typed))
-		var missing []string
-		for key, item := range typed {
-			itemPath := joinPath(path, key)
-			if item == nil {
-				missing = append(missing, itemPath)
-				continue
-			}
-			stripped, nestedMissing := stripNulls(item, itemPath)
-			out[key] = stripped
-			missing = append(missing, nestedMissing...)
-		}
-		return out, missing
-	case []any:
-		out := make([]any, 0, len(typed))
-		var missing []string
-		for i, item := range typed {
-			itemPath := fmt.Sprintf("%s[%d]", path, i)
-			if path == "" {
-				itemPath = fmt.Sprintf("[%d]", i)
-			}
-			if item == nil {
-				out = append(out, nil)
-				continue
-			}
-			stripped, nestedMissing := stripNulls(item, itemPath)
-			out = append(out, stripped)
-			missing = append(missing, nestedMissing...)
-		}
-		return out, missing
-	default:
-		return value, nil
+	stripped, missing, _ := walkJSON(value, path, walkRoot, stripNullVisitor)
+	return stripped, missing
+}
+
+func stripNullVisitor(path string, value any, container jsonWalkContainer) jsonWalkDecision {
+	if value != nil {
+		return jsonWalkDecision{}
 	}
+	if container == walkMapValue {
+		return jsonWalkDecision{Drop: true, Missing: []string{path}}
+	}
+	return jsonWalkDecision{Stop: true}
 }
 
 func filterDebugMissing(missing []string) []string {
@@ -397,25 +626,16 @@ func isDebugPath(path string) bool {
 	return false
 }
 
-func dropDebugMetadata(value any, path string) {
-	switch typed := value.(type) {
-	case map[string]any:
-		if !isProvenancePath(path) {
-			delete(typed, "fetched_at")
-			delete(typed, "query_type")
-		}
-		for key, item := range typed {
-			dropDebugMetadata(item, joinPath(path, key))
-		}
-	case []any:
-		for i, item := range typed {
-			itemPath := fmt.Sprintf("%s[%d]", path, i)
-			if path == "" {
-				itemPath = fmt.Sprintf("[%d]", i)
-			}
-			dropDebugMetadata(item, itemPath)
-		}
+func dropDebugMetadata(value any, path string) any {
+	dropped, _, _ := walkJSON(value, path, walkRoot, dropDebugVisitor)
+	return dropped
+}
+
+func dropDebugVisitor(path string, _ any, _ jsonWalkContainer) jsonWalkDecision {
+	if path != "" && isDebugPath(path) {
+		return jsonWalkDecision{Drop: true}
 	}
+	return jsonWalkDecision{}
 }
 
 func isProvenancePath(path string) bool {
@@ -455,6 +675,17 @@ func joinPath(base string, key string) string {
 		return key
 	}
 	return base + "." + key
+}
+
+func indexPath(base string, index int) string {
+	if base == "" {
+		return fmt.Sprintf("[%d]", index)
+	}
+	return fmt.Sprintf("%s[%d]", base, index)
+}
+
+func isMetaPath(path string) bool {
+	return path == "_meta" || strings.Contains(path, "._meta")
 }
 
 func rowCollectionSet(rowCollections []string) map[string]bool {
