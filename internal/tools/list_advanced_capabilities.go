@@ -8,7 +8,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
@@ -93,7 +92,7 @@ func listAdvancedCapabilitiesHandler(capabilities []advancedCapabilityRow, activ
 				Count:          len(capabilities),
 				Source:         "registered catalog metadata",
 				DeleteModeNote: "Tools with requirement=delete also require ICUVISOR_DELETE_MODE=full; write tools require delete mode safe or full.",
-				Toolset:        response.Toolset(),
+				Toolset:        toolset.String(),
 			},
 		}
 		text, err := json.Marshal(response)

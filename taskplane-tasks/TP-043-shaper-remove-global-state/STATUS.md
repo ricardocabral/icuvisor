@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** S
 
@@ -23,12 +23,12 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Add fields to `Options`
-- [ ] Update `addCommonMeta`
-- [ ] Replace `list_advanced_capabilities` global toolset reader with captured toolset
-- [ ] Thread delete-mode/toolset through tool and athlete-profile resource shaping paths
-- [ ] Delete globals, `init()`, setters
-- [ ] Update call sites
+- [x] Add fields to `Options`
+- [x] Update `addCommonMeta`
+- [x] Replace `list_advanced_capabilities` global toolset reader with captured toolset
+- [x] Thread delete-mode/toolset through tool and athlete-profile resource shaping paths
+- [x] Delete globals, `init()`, setters
+- [x] Update call sites
 
 ### Step 3: Tests
 
@@ -60,3 +60,4 @@
 | 2026-05-15 14:22 | Step 1 started | Audit reads |
 | 2026-05-15 14:26 | Review R001 | code Step 1: UNKNOWN |
 | 2026-05-15 14:29 | Review R002 | code Step 1: UNKNOWN |
+| 2026-05-15 14:32 | Review R003 | plan Step 2: APPROVE |

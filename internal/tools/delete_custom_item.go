@@ -28,11 +28,12 @@ type deleteCustomItemRequest struct {
 	ItemID string `json:"item_id"`
 }
 
-func newDeleteCustomItemTool(client CustomItemDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: deleteCustomItemName, Description: deleteCustomItemDescription, InputSchema: deleteCustomItemInputSchema(), OutputSchema: deleteCustomItemOutputSchema(), Requirement: RequirementDelete, Handler: deleteCustomItemHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newDeleteCustomItemTool(client CustomItemDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: deleteCustomItemName, Description: deleteCustomItemDescription, InputSchema: deleteCustomItemInputSchema(), OutputSchema: deleteCustomItemOutputSchema(), Requirement: RequirementDelete, Handler: deleteCustomItemHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func deleteCustomItemHandler(client CustomItemDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func deleteCustomItemHandler(client CustomItemDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeDeleteCustomItemRequest(req.Arguments)
 		if err != nil {
@@ -63,7 +64,7 @@ func deleteCustomItemHandler(client CustomItemDeleterClient, profileClient Profi
 			return Result{}, NewUserError(deleteCustomItemMessage, err)
 		}
 		payload := newDeleteResourceResponse(args.ItemID, "custom_item", deleteCustomItemEndpoint, before)
-		return encodeShaped(payload, false, nil, version, debugMetadata, deleteCustomItemName, unitSystem)
+		return encodeShaped(payload, false, nil, version, debugMetadata, deleteCustomItemName, unitSystem, shapeCfg)
 	}
 }
 

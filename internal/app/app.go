@@ -189,8 +189,6 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 	}
 	deleteMode := safety.ParseMode(capability.Mode())
 	toolset := safety.ParseToolset(info.Toolset.String())
-	response.SetDeleteMode(deleteMode.String())
-	response.SetToolset(toolset.String())
 	safety.LogResolvedMode(logger, deleteMode)
 	safety.LogResolvedToolset(logger, toolset)
 	client, err := intervals.NewClient(intervals.Options{Config: info.Config, Version: info.Version})
@@ -208,6 +206,8 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 			Version:          info.Version,
 			TimezoneFallback: info.Config.Timezone,
 			DebugMetadata:    info.DebugMetadata,
+			DeleteMode:       deleteMode,
+			Toolset:          toolset,
 		}),
 		Registry: tools.NewRegistryWithOptions(client, tools.RegistryOptions{
 			Version:          info.Version,

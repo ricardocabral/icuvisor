@@ -38,11 +38,12 @@ type deleteWorkoutMeta struct {
 	SourceEndpoint string `json:"source_endpoint"`
 }
 
-func newDeleteWorkoutTool(client WorkoutDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: deleteWorkoutName, Description: deleteWorkoutDescription, InputSchema: deleteWorkoutInputSchema(), OutputSchema: deleteWorkoutOutputSchema(), Requirement: RequirementDelete, Handler: deleteWorkoutHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newDeleteWorkoutTool(client WorkoutDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: deleteWorkoutName, Description: deleteWorkoutDescription, InputSchema: deleteWorkoutInputSchema(), OutputSchema: deleteWorkoutOutputSchema(), Requirement: RequirementDelete, Handler: deleteWorkoutHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func deleteWorkoutHandler(client WorkoutDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func deleteWorkoutHandler(client WorkoutDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeDeleteWorkoutRequest(req.Arguments)
 		if err != nil {
@@ -62,7 +63,7 @@ func deleteWorkoutHandler(client WorkoutDeleterClient, profileClient ProfileClie
 			return Result{}, NewUserError(deleteWorkoutMessage, err)
 		}
 		payload := deleteWorkoutResponse{Deleted: deleteWorkoutDeleted{WorkoutID: args.WorkoutID, Status: "deleted"}, Meta: deleteWorkoutMeta{Operation: "delete", SourceEndpoint: workoutLibraryWorkoutsEndpoint}}
-		return encodeShaped(payload, false, nil, version, debugMetadata, deleteWorkoutName, unitSystem)
+		return encodeShaped(payload, false, nil, version, debugMetadata, deleteWorkoutName, unitSystem, shapeCfg)
 	}
 }
 

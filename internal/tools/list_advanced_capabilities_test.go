@@ -6,14 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 func TestListAdvancedCapabilitiesOutputFromCatalog(t *testing.T) {
-	response.SetToolset("core")
-	t.Cleanup(func() { response.SetToolset("core") })
-
 	registrar := &collectingRegistrar{}
 	client := newNoNetworkIntervalsClient(t)
 	if err := NewRegistryWithOptions(client, RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull)}).Register(context.Background(), registrar); err != nil {
@@ -69,9 +65,6 @@ func TestListAdvancedCapabilitiesOutputFromCatalog(t *testing.T) {
 }
 
 func TestListAdvancedCapabilitiesFullModeStatus(t *testing.T) {
-	response.SetToolset("full")
-	t.Cleanup(func() { response.SetToolset("core") })
-
 	registrar := &collectingRegistrar{}
 	if err := NewRegistryWithOptions(newNoNetworkIntervalsClient(t), RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull}).Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)

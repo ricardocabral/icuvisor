@@ -27,11 +27,12 @@ type deleteSportSettingsRequest struct {
 	SportSettingsID string `json:"sport_settings_id"`
 }
 
-func newDeleteSportSettingsTool(client SportSettingsDeleterClient, profileClient ProfileClient, version string, _ string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: deleteSportSettingsName, Description: deleteSportSettingsDescription, InputSchema: deleteSportSettingsInputSchema(), OutputSchema: deleteSportSettingsOutputSchema(), Requirement: RequirementDelete, Handler: deleteSportSettingsHandler(client, profileClient, version, debugMetadata)})
+func newDeleteSportSettingsTool(client SportSettingsDeleterClient, profileClient ProfileClient, version string, _ string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: deleteSportSettingsName, Description: deleteSportSettingsDescription, InputSchema: deleteSportSettingsInputSchema(), OutputSchema: deleteSportSettingsOutputSchema(), Requirement: RequirementDelete, Handler: deleteSportSettingsHandler(client, profileClient, version, debugMetadata, shapeCfg)})
 }
 
-func deleteSportSettingsHandler(client SportSettingsDeleterClient, profileClient ProfileClient, version string, debugMetadata bool) Handler {
+func deleteSportSettingsHandler(client SportSettingsDeleterClient, profileClient ProfileClient, version string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeDeleteSportSettingsRequest(req.Arguments)
 		if err != nil {
@@ -60,7 +61,7 @@ func deleteSportSettingsHandler(client SportSettingsDeleterClient, profileClient
 			return Result{}, NewUserError(deleteSportSettingsMessage, err)
 		}
 		payload := newDeleteResourceResponse(args.SportSettingsID, "sport_settings", deleteSportSettingsEndpoint, before)
-		return encodeShaped(payload, false, nil, version, debugMetadata, deleteSportSettingsName, unitSystem)
+		return encodeShaped(payload, false, nil, version, debugMetadata, deleteSportSettingsName, unitSystem, shapeCfg)
 	}
 }
 

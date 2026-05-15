@@ -7,21 +7,12 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 const EnvDebugMetadata = "ICUVISOR_DEBUG_METADATA"
-
-var processDeleteMode atomic.Value
-var processToolset atomic.Value
-
-func init() {
-	processDeleteMode.Store(safety.ModeSafe.String())
-	processToolset.Store(safety.ToolsetCore.String())
-}
 
 var defaultScaleLabels = map[string]string{
 	"feel":         "1-5 (athlete-reported feel)",
@@ -45,34 +36,8 @@ type Options struct {
 	QueryType      string
 	FetchedAt      time.Time
 	UnitSystem     UnitSystem
-}
-
-// SetDeleteMode stores the process-global delete mode reported in response metadata.
-func SetDeleteMode(mode string) {
-	processDeleteMode.Store(safety.ParseMode(mode).String())
-}
-
-// DeleteMode returns the process-global delete mode reported in response metadata.
-func DeleteMode() string {
-	mode, ok := processDeleteMode.Load().(string)
-	if !ok || strings.TrimSpace(mode) == "" {
-		return safety.ModeSafe.String()
-	}
-	return mode
-}
-
-// SetToolset stores the process-global toolset reported in response metadata.
-func SetToolset(toolset string) {
-	processToolset.Store(safety.ParseToolset(toolset).String())
-}
-
-// Toolset returns the process-global toolset reported in response metadata.
-func Toolset() string {
-	toolset, ok := processToolset.Load().(string)
-	if !ok || strings.TrimSpace(toolset) == "" {
-		return safety.ToolsetCore.String()
-	}
-	return safety.ParseToolset(toolset).String()
+	DeleteMode     safety.Mode
+	Toolset        safety.Toolset
 }
 
 // DebugMetadataFromEnv reads the debug metadata toggle for startup configuration.
@@ -298,8 +263,8 @@ func addCommonMeta(row map[string]any, opts Options) {
 		}
 	}
 	meta["server_version"] = normalizeVersion(opts.ServerVersion)
-	meta["delete_mode"] = DeleteMode()
-	meta["toolset"] = Toolset()
+	meta["delete_mode"] = opts.DeleteMode.String()
+	meta["toolset"] = opts.Toolset.String()
 	if opts.UnitSystem != "" {
 		meta["units"] = opts.UnitSystem.Metadata()
 	}

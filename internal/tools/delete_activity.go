@@ -28,11 +28,12 @@ type deleteActivityRequest struct {
 	ActivityID string `json:"activity_id"`
 }
 
-func newDeleteActivityTool(client ActivityDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: deleteActivityName, Description: deleteActivityDescription, InputSchema: deleteActivityInputSchema(), OutputSchema: deleteActivityOutputSchema(), Requirement: RequirementDelete, Handler: deleteActivityHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newDeleteActivityTool(client ActivityDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: deleteActivityName, Description: deleteActivityDescription, InputSchema: deleteActivityInputSchema(), OutputSchema: deleteActivityOutputSchema(), Requirement: RequirementDelete, Handler: deleteActivityHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func deleteActivityHandler(client ActivityDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func deleteActivityHandler(client ActivityDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeDeleteActivityRequest(req.Arguments)
 		if err != nil {
@@ -63,7 +64,7 @@ func deleteActivityHandler(client ActivityDeleterClient, profileClient ProfileCl
 			return Result{}, NewUserError(deleteActivityMessage, err)
 		}
 		payload := newDeleteResourceResponse(args.ActivityID, "activity", deleteActivityEndpoint, before)
-		return encodeShaped(payload, false, nil, version, debugMetadata, deleteActivityName, unitSystem)
+		return encodeShaped(payload, false, nil, version, debugMetadata, deleteActivityName, unitSystem, shapeCfg)
 	}
 }
 

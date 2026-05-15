@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
-	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
@@ -134,13 +133,10 @@ func TestApplyTrainingPlanReplaceExistingRequiresFullAndDeletesBeforeCreate(t *t
 		t.Fatal("Handler() error = nil, want replace_existing rejected outside full delete mode")
 	}
 
-	response.SetDeleteMode("full")
-	t.Cleanup(func() { response.SetDeleteMode("safe") })
-
 	fullClient := newApplyTrainingPlanTestClient(t)
 	fullClient.events = decodeToolEvents(t, `{"id":"evt-old","category":"WORKOUT","start_date_local":"2026-06-01"}`)
 	fullClient.created = decodeToolEvents(t, `{"id":"evt-new","category":"WORKOUT","type":"Ride","name":"Endurance","start_date_local":"2026-06-01"}`, `{"id":"evt-new-2","category":"WORKOUT","type":"Run","name":"Run","start_date_local":"2026-06-02"}`)
-	fullTool := newApplyTrainingPlanTool(fullClient, fullClient, "test", "UTC", false, safety.NewCapability(safety.ModeFull))
+	fullTool := newApplyTrainingPlanTool(fullClient, fullClient, "test", "UTC", false, safety.NewCapability(safety.ModeFull), responseShaping{deleteMode: safety.ModeFull, toolset: safety.ToolsetCore})
 
 	result, err := fullTool.Handler(context.Background(), Request{Name: fullTool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":false,"conflict_policy":"replace_existing"}`)})
 	if err != nil {

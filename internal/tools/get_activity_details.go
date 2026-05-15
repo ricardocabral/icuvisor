@@ -91,15 +91,17 @@ type activityIntervalGroup struct {
 	Full       map[string]any `json:"full,omitempty"`
 }
 
-func newGetActivityDetailsTool(client ActivityDetailsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return coreTool(Tool{Name: getActivityDetailsName, Description: getActivityDetailsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityDetailsHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newGetActivityDetailsTool(client ActivityDetailsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: getActivityDetailsName, Description: getActivityDetailsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityDetailsHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func newGetActivityIntervalsTool(client ActivityIntervalsClient, detailsClient ActivityDetailsClient, version string, debugMetadata bool) Tool {
-	return coreTool(Tool{Name: getActivityIntervalsName, Description: getActivityIntervalsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityIntervalsHandler(client, detailsClient, version, debugMetadata)})
+func newGetActivityIntervalsTool(client ActivityIntervalsClient, detailsClient ActivityDetailsClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: getActivityIntervalsName, Description: getActivityIntervalsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityIntervalsHandler(client, detailsClient, version, debugMetadata, shapeCfg)})
 }
 
-func getActivityDetailsHandler(client ActivityDetailsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getActivityDetailsHandler(client ActivityDetailsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeActivityReadRequest(req.Arguments)
 		if err != nil {
@@ -124,7 +126,7 @@ func getActivityDetailsHandler(client ActivityDetailsClient, profileClient Profi
 		}
 		unitSystem := profileUnitSystem(profile)
 		payload := getActivityDetailsResponse{Activity: activityRow(activity, args.IncludeFull, profileTimezone(profile.Timezone, timezoneFallback), unitSystem), Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull}}
-		shaped, err := response.Shape(payload, response.Options{IncludeFull: args.IncludeFull, ServerVersion: version, DebugMetadata: debugMetadata, QueryType: getActivityDetailsName, UnitSystem: unitSystem})
+		shaped, err := response.Shape(payload, shapeCfg.options(args.IncludeFull, nil, version, debugMetadata, getActivityDetailsName, unitSystem))
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activity_details response: %w", err)
 		}
@@ -136,7 +138,7 @@ func getActivityDetailsHandler(client ActivityDetailsClient, profileClient Profi
 	}
 }
 
-func getActivityIntervalsHandler(client ActivityIntervalsClient, detailsClient ActivityDetailsClient, version string, debugMetadata bool) Handler {
+func getActivityIntervalsHandler(client ActivityIntervalsClient, detailsClient ActivityDetailsClient, version string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeActivityReadRequest(req.Arguments)
 		if err != nil {
@@ -150,13 +152,13 @@ func getActivityIntervalsHandler(client ActivityIntervalsClient, detailsClient A
 			if isActivityReadFallbackCandidate(err) && detailsClient != nil {
 				activity, activityErr := detailsClient.GetActivity(ctx, args.ActivityID)
 				if activityErr == nil && isStravaBlocked(activity) {
-					return encodeActivityIntervalsResponse(stravaUnavailableIntervalsResponse(args.ActivityID, args.IncludeFull, version, activity.Raw), args.IncludeFull, version, debugMetadata)
+					return encodeActivityIntervalsResponse(stravaUnavailableIntervalsResponse(args.ActivityID, args.IncludeFull, version, activity.Raw), args.IncludeFull, version, debugMetadata, shapeCfg)
 				}
 			}
 			return Result{}, NewUserError(fetchActivityIntervalsMessage, err)
 		}
 		payload := shapeActivityIntervalsDTO(args.ActivityID, dto, args.IncludeFull, version)
-		return encodeActivityIntervalsResponse(payload, args.IncludeFull, version, debugMetadata)
+		return encodeActivityIntervalsResponse(payload, args.IncludeFull, version, debugMetadata, shapeCfg)
 	}
 }
 
@@ -209,8 +211,9 @@ func stravaUnavailableIntervalsResponse(activityID string, includeFull bool, ver
 	return out
 }
 
-func encodeActivityIntervalsResponse(payload getActivityIntervalsResponse, includeFull bool, version string, debugMetadata bool) (Result, error) {
-	shaped, err := response.Shape(payload, response.Options{IncludeFull: includeFull, RowCollections: []string{"intervals", "groups"}, ServerVersion: version, DebugMetadata: debugMetadata, QueryType: getActivityIntervalsName})
+func encodeActivityIntervalsResponse(payload getActivityIntervalsResponse, includeFull bool, version string, debugMetadata bool, shaping ...responseShaping) (Result, error) {
+	shapeCfg := responseShapingOrDefault(shaping)
+	shaped, err := response.Shape(payload, shapeCfg.options(includeFull, []string{"intervals", "groups"}, version, debugMetadata, getActivityIntervalsName, ""))
 	if err != nil {
 		return Result{}, fmt.Errorf("shaping get_activity_intervals response: %w", err)
 	}

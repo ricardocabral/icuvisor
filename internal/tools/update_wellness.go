@@ -97,11 +97,12 @@ type updateWellnessMeta struct {
 	IncludeFull        bool     `json:"include_full"`
 }
 
-func newUpdateWellnessTool(client WellnessWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return coreTool(Tool{Name: updateWellnessName, Description: updateWellnessDescription, InputSchema: updateWellnessInputSchema(), OutputSchema: updateWellnessOutputSchema(), Requirement: RequirementWrite, Handler: updateWellnessHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newUpdateWellnessTool(client WellnessWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: updateWellnessName, Description: updateWellnessDescription, InputSchema: updateWellnessInputSchema(), OutputSchema: updateWellnessOutputSchema(), Requirement: RequirementWrite, Handler: updateWellnessHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func updateWellnessHandler(client WellnessWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func updateWellnessHandler(client WellnessWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeUpdateWellnessRequest(req.Arguments)
 		if err != nil {
@@ -122,7 +123,7 @@ func updateWellnessHandler(client WellnessWriterClient, profileClient ProfileCli
 			}
 			return Result{}, NewUserError(writeWellnessMessage, err)
 		}
-		payload, err := shapeUpdateWellnessResponse(updated, meta, args.IncludeFull, version, debugMetadata, updateWellnessName, profileUnitSystem(profile))
+		payload, err := shapeUpdateWellnessResponse(updated, meta, args.IncludeFull, version, debugMetadata, updateWellnessName, profileUnitSystem(profile), shapeCfg)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping update_wellness response: %w", err)
 		}
@@ -303,8 +304,9 @@ func updateWellnessFieldsUpdated(args updateWellnessRequest) []string {
 	return fields
 }
 
-func shapeUpdateWellnessResponse(row intervals.Wellness, meta updateWellnessMeta, includeFull bool, version string, debugMetadata bool, queryType string, unitSystem response.UnitSystem) (updateWellnessResponse, error) {
-	shapedRow, err := response.Shape(wellnessRow(row, includeFull), response.Options{IncludeFull: includeFull, ServerVersion: version, DebugMetadata: debugMetadata, QueryType: queryType, UnitSystem: unitSystem})
+func shapeUpdateWellnessResponse(row intervals.Wellness, meta updateWellnessMeta, includeFull bool, version string, debugMetadata bool, queryType string, unitSystem response.UnitSystem, shaping ...responseShaping) (updateWellnessResponse, error) {
+	shapeCfg := responseShapingOrDefault(shaping)
+	shapedRow, err := response.Shape(wellnessRow(row, includeFull), shapeCfg.options(includeFull, nil, version, debugMetadata, queryType, unitSystem))
 	if err != nil {
 		return updateWellnessResponse{}, err
 	}

@@ -82,15 +82,17 @@ type activitySplitsMeta struct {
 	Units         map[string]string `json:"units,omitempty"`
 }
 
-func newGetActivityStreamsTool(client ActivityStreamsClient, version string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: getActivityStreamsName, Description: getActivityStreamsDescription, InputSchema: activityStreamsInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityStreamsHandler(client, version, debugMetadata)})
+func newGetActivityStreamsTool(client ActivityStreamsClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: getActivityStreamsName, Description: getActivityStreamsDescription, InputSchema: activityStreamsInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityStreamsHandler(client, version, debugMetadata, shapeCfg)})
 }
 
-func newGetActivitySplitsTool(streamsClient ActivityStreamsClient, intervalsClient ActivityIntervalsClient, profileClient ProfileClient, version string, debugMetadata bool) Tool {
-	return coreTool(Tool{Name: getActivitySplitsName, Description: getActivitySplitsDescription, InputSchema: activitySplitsInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivitySplitsHandler(streamsClient, intervalsClient, profileClient, version, debugMetadata)})
+func newGetActivitySplitsTool(streamsClient ActivityStreamsClient, intervalsClient ActivityIntervalsClient, profileClient ProfileClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: getActivitySplitsName, Description: getActivitySplitsDescription, InputSchema: activitySplitsInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivitySplitsHandler(streamsClient, intervalsClient, profileClient, version, debugMetadata, shapeCfg)})
 }
 
-func getActivityStreamsHandler(client ActivityStreamsClient, version string, debugMetadata bool) Handler {
+func getActivityStreamsHandler(client ActivityStreamsClient, version string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		var args getActivityStreamsRequest
 		if err := decodeJSONArgs(req.Arguments, &args); err != nil || strings.TrimSpace(args.ActivityID) == "" {
@@ -104,7 +106,7 @@ func getActivityStreamsHandler(client ActivityStreamsClient, version string, deb
 		}
 		samples := args.IncludeFull || len(args.Keys) > 0
 		payload := shapeActivityStreams(args.ActivityID, streamsRows, canonicalKeys, samples, args.IncludeFull, version, unknown)
-		shaped, err := response.Shape(payload, response.Options{IncludeFull: args.IncludeFull, ServerVersion: version, DebugMetadata: debugMetadata, QueryType: getActivityStreamsName})
+		shaped, err := response.Shape(payload, shapeCfg.options(args.IncludeFull, nil, version, debugMetadata, getActivityStreamsName, ""))
 		if err != nil {
 			return Result{}, err
 		}
@@ -113,7 +115,7 @@ func getActivityStreamsHandler(client ActivityStreamsClient, version string, deb
 	}
 }
 
-func getActivitySplitsHandler(streamsClient ActivityStreamsClient, intervalsClient ActivityIntervalsClient, profileClient ProfileClient, version string, debugMetadata bool) Handler {
+func getActivitySplitsHandler(streamsClient ActivityStreamsClient, intervalsClient ActivityIntervalsClient, profileClient ProfileClient, version string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		var args getActivitySplitsRequest
 		if err := decodeJSONArgs(req.Arguments, &args); err != nil || strings.TrimSpace(args.ActivityID) == "" {
@@ -136,7 +138,7 @@ func getActivitySplitsHandler(streamsClient ActivityStreamsClient, intervalsClie
 			source = "virtual_streams"
 		}
 		payload := getActivitySplitsResponse{ActivityID: args.ActivityID, SplitUnit: splitUnit, Source: source, Splits: splits, Meta: activitySplitsMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull, Algorithm: "manual intervals when available; otherwise interpolate distance/time stream samples, ignoring paused-segment semantics when moving samples are absent", Units: unitSystem.Metadata()}}
-		shaped, err := response.Shape(payload, response.Options{IncludeFull: args.IncludeFull, RowCollections: []string{"splits"}, ServerVersion: version, DebugMetadata: debugMetadata, QueryType: getActivitySplitsName, UnitSystem: unitSystem})
+		shaped, err := response.Shape(payload, shapeCfg.options(args.IncludeFull, []string{"splits"}, version, debugMetadata, getActivitySplitsName, unitSystem))
 		if err != nil {
 			return Result{}, err
 		}

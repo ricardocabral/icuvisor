@@ -32,11 +32,12 @@ type createCustomItemRequest struct {
 	Content     json.RawMessage `json:"content"`
 }
 
-func newCreateCustomItemTool(client CustomItemCreatorClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: createCustomItemName, Description: createCustomItemDescription, InputSchema: createCustomItemInputSchema(), OutputSchema: createCustomItemOutputSchema(), Requirement: RequirementWrite, Handler: createCustomItemHandler(client, readClient, profileClient, version, timezoneFallback, debugMetadata)})
+func newCreateCustomItemTool(client CustomItemCreatorClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: createCustomItemName, Description: createCustomItemDescription, InputSchema: createCustomItemInputSchema(), OutputSchema: createCustomItemOutputSchema(), Requirement: RequirementWrite, Handler: createCustomItemHandler(client, readClient, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func createCustomItemHandler(client CustomItemCreatorClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func createCustomItemHandler(client CustomItemCreatorClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeCreateCustomItemRequest(req.Arguments)
 		if err != nil {
@@ -61,7 +62,7 @@ func createCustomItemHandler(client CustomItemCreatorClient, readClient CustomIt
 			return Result{}, NewUserError(createCustomItemMessage, err)
 		}
 		payload := shapeCustomItemWriteResponse(item, "create", customItemsEndpoint, item.ID, args.ItemType, nil, schemaSourceCount)
-		return encodeShaped(payload, true, nil, version, debugMetadata, createCustomItemName, unitSystem)
+		return encodeShaped(payload, true, nil, version, debugMetadata, createCustomItemName, unitSystem, shapeCfg)
 	}
 }
 

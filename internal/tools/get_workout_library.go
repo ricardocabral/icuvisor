@@ -71,11 +71,12 @@ type getWorkoutLibraryMeta struct {
 	DefaultPayloadScope     string   `json:"default_payload_scope"`
 }
 
-func newGetWorkoutLibraryTool(client WorkoutLibraryClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: getWorkoutLibraryName, Description: getWorkoutLibraryDescription, InputSchema: getWorkoutLibraryInputSchema(), OutputSchema: getWorkoutLibraryOutputSchema(), Handler: getWorkoutLibraryHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newGetWorkoutLibraryTool(client WorkoutLibraryClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: getWorkoutLibraryName, Description: getWorkoutLibraryDescription, InputSchema: getWorkoutLibraryInputSchema(), OutputSchema: getWorkoutLibraryOutputSchema(), Handler: getWorkoutLibraryHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func getWorkoutLibraryHandler(client WorkoutLibraryClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func getWorkoutLibraryHandler(client WorkoutLibraryClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeGetWorkoutLibraryRequest(req.Arguments)
 		if err != nil {
@@ -106,7 +107,7 @@ func getWorkoutLibraryHandler(client WorkoutLibraryClient, profileClient Profile
 			}
 		}
 		payload := shapeGetWorkoutLibraryResponse(folders, workouts, args.IncludeTopLevelWorkouts)
-		return encodeShaped(payload, false, []string{"folders", "workouts"}, version, debugMetadata, getWorkoutLibraryName, unitSystem)
+		return encodeShaped(payload, false, []string{"folders", "workouts"}, version, debugMetadata, getWorkoutLibraryName, unitSystem, shapeCfg)
 	}
 }
 

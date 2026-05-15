@@ -55,11 +55,12 @@ type updateWorkoutMeta struct {
 	DefaultPayloadScope string   `json:"default_payload_scope"`
 }
 
-func newUpdateWorkoutTool(client WorkoutUpdaterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: updateWorkoutName, Description: updateWorkoutDescription, InputSchema: updateWorkoutInputSchema(), OutputSchema: updateWorkoutOutputSchema(), Requirement: RequirementWrite, Handler: updateWorkoutHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newUpdateWorkoutTool(client WorkoutUpdaterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: updateWorkoutName, Description: updateWorkoutDescription, InputSchema: updateWorkoutInputSchema(), OutputSchema: updateWorkoutOutputSchema(), Requirement: RequirementWrite, Handler: updateWorkoutHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func updateWorkoutHandler(client WorkoutUpdaterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func updateWorkoutHandler(client WorkoutUpdaterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeUpdateWorkoutRequest(req.Arguments)
 		if err != nil {
@@ -84,7 +85,7 @@ func updateWorkoutHandler(client WorkoutUpdaterClient, profileClient ProfileClie
 			return Result{}, NewUserError(updateWorkoutMessage, err)
 		}
 		payload := shapeUpdateWorkoutResponse(workout, args, uploaded)
-		return encodeShaped(payload, false, nil, version, debugMetadata, updateWorkoutName, unitSystem)
+		return encodeShaped(payload, false, nil, version, debugMetadata, updateWorkoutName, unitSystem, shapeCfg)
 	}
 }
 

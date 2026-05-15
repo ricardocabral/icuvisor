@@ -52,11 +52,12 @@ type deleteEventsByDateRangeResponseMeta struct {
 	Deleted        []map[string]any `json:"deleted"`
 }
 
-func newDeleteEventsByDateRangeTool(client EventsByDateRangeDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: deleteEventsByDateRangeName, Description: deleteEventsByDateRangeDescription, InputSchema: deleteEventsByDateRangeInputSchema(), OutputSchema: deleteEventsByDateRangeOutputSchema(), Requirement: RequirementDelete, Handler: deleteEventsByDateRangeHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+func newDeleteEventsByDateRangeTool(client EventsByDateRangeDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: deleteEventsByDateRangeName, Description: deleteEventsByDateRangeDescription, InputSchema: deleteEventsByDateRangeInputSchema(), OutputSchema: deleteEventsByDateRangeOutputSchema(), Requirement: RequirementDelete, Handler: deleteEventsByDateRangeHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func deleteEventsByDateRangeHandler(client EventsByDateRangeDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func deleteEventsByDateRangeHandler(client EventsByDateRangeDeleterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeDeleteEventsByDateRangeRequest(req.Arguments)
 		if err != nil {
@@ -90,7 +91,7 @@ func deleteEventsByDateRangeHandler(client EventsByDateRangeDeleterClient, profi
 			}
 		}
 		payload := deleteEventsByDateRangeResponse{DeletedIDs: ids, Status: "deleted", Meta: deleteEventsByDateRangeResponseMeta{Operation: "delete", ResourceType: "event", SourceEndpoint: deleteEventsByDateRangeEndpoint, DateRange: dateRangeMeta{Oldest: args.StartDate, Newest: args.EndDate}, Timezone: timezoneName, Category: args.Category, RangeCapDays: maxDeleteEventsByDateRangeDays, DeletedCount: len(ids), Deleted: before}}
-		return encodeShaped(payload, false, nil, version, debugMetadata, deleteEventsByDateRangeName, unitSystem)
+		return encodeShaped(payload, false, nil, version, debugMetadata, deleteEventsByDateRangeName, unitSystem, shapeCfg)
 	}
 }
 

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
 func TestShapeNullStrippingPreservesNonNullZeroValues(t *testing.T) {
@@ -278,10 +280,7 @@ func TestShapeRemovesStaleCallerSuppliedScales(t *testing.T) {
 }
 
 func TestShapeAddsDeleteModeMetadata(t *testing.T) {
-	SetDeleteMode("full")
-	t.Cleanup(func() { SetDeleteMode("safe") })
-
-	got, err := Shape(map[string]any{"name": "athlete"}, Options{})
+	got, err := Shape(map[string]any{"name": "athlete"}, Options{DeleteMode: safety.ModeFull})
 	if err != nil {
 		t.Fatalf("Shape() error = %v", err)
 	}
@@ -304,10 +303,7 @@ func TestShapeAddsToolsetMetadata(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			SetToolset(tc.set)
-			t.Cleanup(func() { SetToolset("core") })
-
-			got, err := Shape(map[string]any{"name": "athlete"}, Options{})
+			got, err := Shape(map[string]any{"name": "athlete"}, Options{Toolset: safety.ParseToolset(tc.set)})
 			if err != nil {
 				t.Fatalf("Shape() error = %v", err)
 			}
@@ -320,16 +316,13 @@ func TestShapeAddsToolsetMetadata(t *testing.T) {
 }
 
 func TestShapeOverwritesStaleCallerToolsetMetadata(t *testing.T) {
-	SetToolset("full")
-	t.Cleanup(func() { SetToolset("core") })
-
 	got, err := Shape(map[string]any{
 		"name": "athlete",
 		"_meta": map[string]any{
 			"toolset": "core",
 			"count":   3,
 		},
-	}, Options{})
+	}, Options{Toolset: safety.ToolsetFull})
 	if err != nil {
 		t.Fatalf("Shape() error = %v", err)
 	}

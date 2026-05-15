@@ -41,11 +41,12 @@ type updateCustomItemRequest struct {
 	contentProvided     bool
 }
 
-func newUpdateCustomItemTool(client CustomItemUpdaterClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: updateCustomItemName, Description: updateCustomItemDescription, InputSchema: updateCustomItemInputSchema(), OutputSchema: updateCustomItemOutputSchema(), Requirement: RequirementWrite, Handler: updateCustomItemHandler(client, readClient, profileClient, version, timezoneFallback, debugMetadata)})
+func newUpdateCustomItemTool(client CustomItemUpdaterClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: updateCustomItemName, Description: updateCustomItemDescription, InputSchema: updateCustomItemInputSchema(), OutputSchema: updateCustomItemOutputSchema(), Requirement: RequirementWrite, Handler: updateCustomItemHandler(client, readClient, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
-func updateCustomItemHandler(client CustomItemUpdaterClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {
+func updateCustomItemHandler(client CustomItemUpdaterClient, readClient CustomItemsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeUpdateCustomItemRequest(req.Arguments)
 		if err != nil {
@@ -70,7 +71,7 @@ func updateCustomItemHandler(client CustomItemUpdaterClient, readClient CustomIt
 			return Result{}, NewUserError(updateCustomItemMessage, err)
 		}
 		payload := shapeCustomItemWriteResponse(item, "update", customItemByIDEndpoint, args.ItemID, itemType, updateCustomItemFieldsUpdated(args), schemaSourceCount)
-		return encodeShaped(payload, true, nil, version, debugMetadata, updateCustomItemName, unitSystem)
+		return encodeShaped(payload, true, nil, version, debugMetadata, updateCustomItemName, unitSystem, shapeCfg)
 	}
 }
 
