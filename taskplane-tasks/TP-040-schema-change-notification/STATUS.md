@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** S
 
@@ -12,7 +12,7 @@
 
 ### Step 1: Catalog hash
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] SHA-256 over canonical sorted records for the exposed registered catalog after toolset/capability filtering, including name, tool description, input schema, and any advertised output schema
 - [x] Store catalog hash on `internal/mcp.Server` and expose `Server.CatalogHash() string` computed once from the actual tools passed to the SDK
@@ -58,3 +58,4 @@ _Add notes as work progresses._
 | 2026-05-15 14:37 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-05-15 14:40 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-15 14:47 | Review R003 | code Step 1: UNKNOWN |
+| 2026-05-15 14:52 | Review R004 | code Step 1: APPROVE |
