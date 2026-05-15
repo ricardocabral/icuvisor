@@ -1,6 +1,6 @@
 # TP-049-misc-go-hygiene-cleanups — Status
 
-**Current Step:** Step 4: Reformat long constructor lines (item 4)
+**Current Step:** Step 5: Fix registry error message (item 5)
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
@@ -42,16 +42,16 @@
 
 ### Step 4: Reformat long constructor lines (item 4)
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Wrap four `newXxxTool` calls in `internal/tools/get_fitness.go:210-224`
 - [x] `gofmt`/`goimports` clean
 - [x] `make build` / `test` / `lint`
-- [ ] Commit `TP-049 wrap long constructor lines in get_fitness`
+- [x] Commit `TP-049 wrap long constructor lines in get_fitness`
 
 ### Step 5: Fix registry error message (item 5)
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Check if TP-042 already fixed `internal/tools/registry.go:67-70` — note overlap here
 - [ ] If not fixed: replace hardcoded `getAthleteProfileName` with failing tool's name
