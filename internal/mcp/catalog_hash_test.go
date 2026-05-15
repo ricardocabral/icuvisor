@@ -70,7 +70,9 @@ func TestHashToolCatalogSensitivity(t *testing.T) {
 		{name: "argument renamed", tools: mutateTool(base, 0, func(tool *tools.Tool) { tool.InputSchema = schemaWithArgument("renamed", "alpha input") })},
 		{name: "argument description edited", tools: mutateTool(base, 0, func(tool *tools.Tool) { tool.InputSchema = schemaWithArgument("value", "updated alpha input") })},
 		{name: "tool description edited", tools: mutateTool(base, 0, func(tool *tools.Tool) { tool.Description = "Updated alpha tool." })},
-		{name: "output schema edited", tools: mutateTool(base, 0, func(tool *tools.Tool) { tool.OutputSchema = map[string]any{"type": "object", "description": "updated output"} })},
+		{name: "output schema edited", tools: mutateTool(base, 0, func(tool *tools.Tool) {
+			tool.OutputSchema = map[string]any{"type": "object", "description": "updated output"}
+		})},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

@@ -30,4 +30,3 @@ These do not require another plan review, but should be followed while coding:
 
 6. **Avoid an awkward runtime dependency on CI-only helpers.**
    Reusing `internal/toolchecks.CanonicalJSON` is acceptable only if it does not make `internal/mcp` depend on test/CI-oriented behavior in a confusing way. Otherwise, add a small local canonicalization helper in `internal/mcp` or move a shared helper to a neutral internal package.
-

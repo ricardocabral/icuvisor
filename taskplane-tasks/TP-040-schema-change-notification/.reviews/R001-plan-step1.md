@@ -45,4 +45,3 @@ Add tests that cover these repository-specific cases:
 
 - Avoid computing the hash from `toolchecks.GenerateSchemaSnapshots()` as-is: it uses a synthetic all-capabilities client and would not necessarily match the runtime catalog for the current `Toolset`/capability mode.
 - Logging the hash once at startup is acceptable later, but Step 1 should not add per-response logging.
-

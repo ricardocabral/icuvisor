@@ -48,8 +48,8 @@ type Options struct {
 
 // Server wraps the SDK server and selected transport.
 type Server struct {
-	server    *sdkmcp.Server
-	transport sdkmcp.Transport
+	server      *sdkmcp.Server
+	transport   sdkmcp.Transport
 	logger      *slog.Logger
 	version     string
 	catalogHash string

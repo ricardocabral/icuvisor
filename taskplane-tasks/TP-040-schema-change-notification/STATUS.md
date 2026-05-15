@@ -17,8 +17,8 @@
 - [x] SHA-256 over canonical sorted records for the exposed registered catalog after toolset/capability filtering, including name, tool description, input schema, and any advertised output schema
 - [x] Store catalog hash on `internal/mcp.Server` and expose `Server.CatalogHash() string` computed once from the actual tools passed to the SDK
 - [x] Determinism + sensitivity fixture tests (registration order, nested map order, filtering, add / remove / rename / description-edit, tool-description edit, output-schema edit if advertised)
-- [ ] R003: run gofmt on changed Go files so lint passes
-- [ ] R003: remove trailing whitespace from committed review artifacts
+- [x] R003: run gofmt on changed Go files so lint passes
+- [x] R003: remove trailing whitespace from committed review artifacts
 
 ### Step 2: `_meta` injector
 
