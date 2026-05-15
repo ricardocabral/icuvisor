@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 11
+**Review Counter:** 12
 **Iteration:** 2
 **Size:** M
 
@@ -42,7 +42,7 @@
 
 ### Step 3: Release workflow
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] GH Actions job on tag push reuses release preflight and publishes only after DMG packaging succeeds
 - [x] All Apple secrets via GH Actions secrets (named in SECURITY.md) with no secret values or placeholder secrets in git
@@ -111,3 +111,4 @@ _Add notes as work progresses._
 | 2026-05-15 18:15 | Review R009 | plan Step 2: APPROVE |
 | 2026-05-15 18:26 | Review R010 | code Step 2: APPROVE |
 | 2026-05-15 18:29 | Review R011 | plan Step 3: APPROVE |
+| 2026-05-15 18:33 | Review R012 | code Step 3: APPROVE |
