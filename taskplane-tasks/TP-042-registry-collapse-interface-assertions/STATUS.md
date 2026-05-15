@@ -1,10 +1,10 @@
 # TP-042-registry-collapse-interface-assertions — Status
 
-**Current Step:** Step 1: Map the current assertion chain
+**Current Step:** Step 2: Refactor `Register`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -26,12 +26,14 @@
 
 ### Step 2: Refactor `Register`
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Change `Register` signature to typed dep
-- [ ] Replace assertion blocks with direct constructor calls
-- [ ] Preserve delete-mode / toolset / capability gating
-- [ ] Fix hardcoded `getAthleteProfileName` error message
+- [ ] Change `NewRegistry` / `NewRegistryWithOptions` and `defaultRegistry` storage to direct `*intervals.Client` while preserving `Registry.Register(context.Context, Registrar) error`
+- [ ] Replace assertion blocks with direct constructor calls in the existing order, including optional collaborator and custom-item couplings
+- [ ] Add per-tool `AddTool` error wrapping that names the failing tool, including `icuvisor_list_advanced_capabilities`
+- [ ] Preserve delete-mode / toolset / capability gating via existing `Tool` metadata/downstream registrar behavior; do not add registry-side filtering
+- [ ] Migrate Step 2 call sites/tests enough to keep the tree buildable after constructor signature changes
+- [ ] Fix hardcoded `getAthleteProfileName` missing-client/registrar error messages
 
 ### Step 3: Collapse `schemaCatalogClient`
 
@@ -133,3 +135,4 @@ Special coupling/conditional semantics to preserve in refactor:
 | 2026-05-15 13:25 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-15 13:34 | Review R003 | code Step 1: UNKNOWN |
 | 2026-05-15 13:39 | Review R004 | code Step 1: APPROVE |
+| 2026-05-15 13:42 | Review R005 | plan Step 2: UNKNOWN |
