@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -13,7 +14,7 @@ import (
 func main() {
 	dir := flag.String("dir", toolchecks.DefaultSchemaSnapshotDir, "directory where per-tool JSON schema snapshots are written")
 	flag.Parse()
-	if err := toolchecks.WriteGeneratedSchemaSnapshots(*dir); err != nil {
+	if err := toolchecks.WriteGeneratedSchemaSnapshots(context.Background(), *dir); err != nil {
 		fmt.Fprintf(os.Stderr, "snapshot tool schemas: %v\n", err)
 		os.Exit(1)
 	}

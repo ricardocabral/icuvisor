@@ -40,10 +40,10 @@ type SchemaFailure struct {
 	Current  string
 }
 
-func GenerateSchemaSnapshots() (map[string]Snapshot, error) {
+func GenerateSchemaSnapshots(ctx context.Context) (map[string]Snapshot, error) {
 	registrar := &schemaRegistrar{}
 	registry := tools.NewRegistryWithOptions(schemaCatalogClient{}, tools.RegistryOptions{Version: "snapshot", TimezoneFallback: "UTC"})
-	if err := registry.Register(context.Background(), registrar); err != nil {
+	if err := registry.Register(ctx, registrar); err != nil {
 		return nil, fmt.Errorf("registering tools: %w", err)
 	}
 	out := make(map[string]Snapshot, len(registrar.tools))
@@ -61,8 +61,8 @@ func GenerateSchemaSnapshots() (map[string]Snapshot, error) {
 	return out, nil
 }
 
-func WriteGeneratedSchemaSnapshots(dir string) error {
-	generated, err := GenerateSchemaSnapshots()
+func WriteGeneratedSchemaSnapshots(ctx context.Context, dir string) error {
+	generated, err := GenerateSchemaSnapshots(ctx)
 	if err != nil {
 		return err
 	}

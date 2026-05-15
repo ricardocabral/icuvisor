@@ -1,6 +1,8 @@
 package toolchecks
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,7 +10,7 @@ import (
 )
 
 func TestGenerateSchemaSnapshotsIncludesWriteTools(t *testing.T) {
-	generated, err := GenerateSchemaSnapshots()
+	generated, err := GenerateSchemaSnapshots(t.Context())
 	if err != nil {
 		t.Fatalf("GenerateSchemaSnapshots() error = %v", err)
 	}
@@ -16,6 +18,16 @@ func TestGenerateSchemaSnapshotsIncludesWriteTools(t *testing.T) {
 		if _, ok := generated[name]; !ok {
 			t.Fatalf("generated snapshots missing %s; write tools must be represented in schema catalog", name)
 		}
+	}
+}
+
+func TestGenerateSchemaSnapshotsUsesCallerContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	_, err := GenerateSchemaSnapshots(ctx)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("GenerateSchemaSnapshots() error = %v, want context.Canceled", err)
 	}
 }
 

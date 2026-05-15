@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 2
 **Size:** S
 
@@ -23,10 +23,10 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Add `ctx context.Context` to `toolchecks.Register` (schema_stability + confusable_names)
-- [ ] Update registry call site to pass through `ctx`
-- [ ] Update tests
-- [ ] `make build` / `test` / `test-race` / `lint`
+- [x] Add `ctx context.Context` to `toolchecks.Register` (schema_stability + confusable_names)
+- [x] Update registry call site to pass through `ctx`
+- [x] Update tests
+- [x] `make build` / `test` / `test-race` / `lint`
 - [ ] Commit `TP-049 propagate ctx through toolchecks Register`
 
 ### Step 3: Move env read into config (item 3)
@@ -74,6 +74,8 @@
 
 _Record any deviations from the per-item plan here (e.g. helper name, where relocated `DebugMetadata` reader lives, whether item 5 overlapped with TP-042)._
 
+- Step 2 checks required renaming `apiKeyLocation` local in `internal/config/config.go` to avoid a gosec G101 false positive; behavior unchanged.
+
 ## Notes
 
 _Add notes as work progresses._
@@ -83,3 +85,5 @@ _Add notes as work progresses._
 | 2026-05-15 15:24 | Review R001 | plan Step 1: APPROVE |
 
 | 2026-05-15 16:33 | Worker iter 1 | done in 4266s, tools: 35 |
+| 2026-05-15 17:07 | Exit intercept reprompt | Supervisor provided instructions (683 chars) — reprompting worker |
+| 2026-05-15 17:09 | Review R002 | plan Step 2: APPROVE |

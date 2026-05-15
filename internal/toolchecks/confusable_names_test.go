@@ -1,6 +1,20 @@
 package toolchecks
 
-import "testing"
+import (
+	"context"
+	"errors"
+	"testing"
+)
+
+func TestGenerateToolCatalogUsesCallerContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	_, err := GenerateToolCatalog(ctx)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("GenerateToolCatalog() error = %v, want context.Canceled", err)
+	}
+}
 
 func TestCheckConfusableCatalog(t *testing.T) {
 	tests := []struct {

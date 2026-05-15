@@ -257,16 +257,16 @@ func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
 
 	apiKey := strings.TrimSpace(file.APIKey)
 	apiKeySource := APIKeySourceFile
-	apiKeyLocation := "config_json"
+	sourceLocation := "config_json"
 	if apiKey == "" {
 		apiKeySource = ""
-		apiKeyLocation = ""
+		sourceLocation = ""
 	}
 
 	return rawConfig{
 		apiKey:          apiKey,
 		apiKeySource:    apiKeySource,
-		apiKeyLocation:  apiKeyLocation,
+		apiKeyLocation:  sourceLocation,
 		athleteID:       strings.TrimSpace(file.AthleteID),
 		timezone:        strings.TrimSpace(file.Timezone),
 		apiBaseURL:      strings.TrimSpace(file.APIBaseURL),
