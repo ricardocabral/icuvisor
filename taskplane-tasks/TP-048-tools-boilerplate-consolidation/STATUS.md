@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 1
 **Size:** M
 
@@ -33,7 +33,7 @@
 
 ### Step 3: `get_activities.go` cleanups
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Confirm current `stringSet` callers and replace them behavior-preservingly before deleting the `internal/tools` helper
 - [x] Clarify acceptance grep evidence for `stringSet`: `internal/tools` should have no helper/callers; unrelated `internal/toolchecks/schema_stability.go` is out of scope
@@ -82,3 +82,4 @@ _Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
 | 2026-05-15 14:03 | Review R007 | code Step 2: APPROVE |
 | 2026-05-15 14:05 | Review R008 | plan Step 3: REVISE |
 | 2026-05-15 14:07 | Review R009 | plan Step 3: APPROVE |
+| 2026-05-15 14:11 | Review R010 | code Step 3: APPROVE |
