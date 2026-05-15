@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -22,11 +22,11 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] macOS / Windows / Linux backends, no CGO
-- [ ] Linux headless D-Bus degradation
-- [ ] No secret in logs (slog capture test)
-- [ ] Injectable go-keyring adapter seam with context checks and `OSKeychain()` constructor
-- [ ] Backend unit tests for success, not-found mapping, unexpected errors, context cancellation, and log redaction
+- [x] macOS / Windows / Linux backends, no CGO
+- [x] Linux headless D-Bus degradation
+- [x] No secret in logs (slog capture test)
+- [x] Injectable go-keyring adapter seam with context checks and `OSKeychain()` constructor
+- [x] Backend unit tests for success, not-found mapping, unexpected errors, context cancellation, and log redaction
 
 ### Step 3: Precedence chain in `internal/config`
 
@@ -82,3 +82,4 @@ _Add notes as work progresses._
 | 2026-05-15 13:47 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-15 13:50 | Review R003 | code Step 1: APPROVE |
 | 2026-05-15 13:53 | Review R004 | plan Step 2: REVISE |
+| 2026-05-15 13:55 | Review R005 | plan Step 2: APPROVE |
