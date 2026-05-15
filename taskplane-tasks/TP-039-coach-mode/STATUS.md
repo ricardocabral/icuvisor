@@ -38,12 +38,14 @@
 
 ### Step 3: Tool registry plumbing
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] `coach.Evaluator` third gate
 - [ ] Compose order: delete-mode → toolset-tier → coach-ACL (any deny is final)
 - [ ] Uniform optional `athlete_id` arg with consistent description
 - [ ] Per-request normalization + roster check
+- [ ] Context-scoped target routing strips `athlete_id` before strict tool decoders and makes intervals requests use the resolved athlete
+- [ ] Registry/request tests cover coach ACL filtering, wrong-roster rejection, single-athlete mismatch rejection, and delete/toolset/coach composition
 
 ### Step 4: `list_athletes` + `select_athlete`
 
