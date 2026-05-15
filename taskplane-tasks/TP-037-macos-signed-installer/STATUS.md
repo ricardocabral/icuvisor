@@ -1,6 +1,6 @@
 # TP-037-macos-signed-installer: macOS signed installer + manual client config docs — Status
 
-**Current Step:** Step 1: Apple Developer setup + bundle identity
+**Current Step:** Step 2: GoReleaser DMG + signing
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
@@ -26,12 +26,12 @@
 
 ### Step 2: GoReleaser DMG + signing
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Universal-2 binary (amd64 + arm64 via lipo)
-- [ ] `codesign --options runtime --timestamp`
-- [ ] DMG packaging
-- [ ] Notarize + staple
+- [ ] Universal-2 binary configured for darwin amd64 + arm64 via GoReleaser `universal_binaries`
+- [ ] Apple-native signing scaffold uses `codesign --options runtime --timestamp` with hard preflight gates
+- [ ] DMG packaging scaffold uses `hdiutil` with minimal `.app` + Applications symlink layout
+- [ ] Notarization/stapling scaffold uses `xcrun notarytool submit --wait` and `xcrun stapler`, with live execution operator-deferred until Apple credentials exist
 
 ### Step 3: Release workflow
 
