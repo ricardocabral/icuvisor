@@ -54,7 +54,7 @@
 
 ## Decisions
 
-- **Library choice:** TBD in Step 1. Default recommendation in PROMPT.md is stdlib `flag` (CLAUDE.md "stdlib first"); escalate to cobra/urfave only if the help template becomes unreadable.
+- **Library choice:** Retained the existing hand-rolled parser with stdlib-only help rendering; the current CLI surface is too small to justify cobra/urfave.
 
 ## Notes
 
