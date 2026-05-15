@@ -1,7 +1,7 @@
 # TP-035-cli-help-documentation: CLI help documentation — Status
 
 **Current Step:** Step 5: Verify
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-15
 **Review Level:** 1
 **Review Counter:** 4
@@ -45,10 +45,10 @@
 
 ### Step 5: Verify
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `make build`, `make test`, `make test-race`, `make lint`
-- [ ] Manual smoke of each help/error path
+- [x] `make build`, `make test`, `make test-race`, `make lint`
+- [x] Manual smoke of each help/error path
 
 ---
 
@@ -61,6 +61,8 @@
 - Step 1 env-var audit: `internal/config/config.go` defines `INTERVALS_ICU_API_KEY`, `INTERVALS_ICU_ATHLETE_ID`, `ICUVISOR_CONFIG`, `ICUVISOR_TIMEZONE`, `ICUVISOR_API_BASE_URL`, `ICUVISOR_HTTP_TIMEOUT`, `ICUVISOR_TRANSPORT`, `ICUVISOR_HTTP_BIND`, and `ICUVISOR_ENV_FILE`; `internal/safety` adds `ICUVISOR_DELETE_MODE` and `ICUVISOR_TOOLSET`; `internal/response` adds `ICUVISOR_DEBUG_METADATA`.
 - Library choice: stdlib/hand-rolled parser retained; current command surface is small and no CLI framework dependency is justified.
 - Exit-code design documented in `internal/app/testdata/help.golden`: 0 for success/help/version, 2 for CLI usage errors, 1 for runtime startup/config/server errors.
+- Verification: `make build` passed; `make test` initially hit a transient `internal/mcp TestProtocolTransportParity` shutdown timeout then passed on rerun; `make test-race` hit the same transient once then passed on rerun; `make lint` passed with 0 issues.
+- Manual smoke: `./bin/icuvisor --help`, `-h`, `help`, `version --help`, and `version` exited 0; `./bin/icuvisor --bogus` exited 2 with the usage hint; `./bin/icuvisor --help | head` showed normal help text and no `panic:` or wrapped error noise.
 
 | 2026-05-15 13:18 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 13:18 | Step 1 started | Help-text design |
