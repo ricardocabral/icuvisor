@@ -1,7 +1,7 @@
 # TP-048-tools-boilerplate-consolidation — Status
 
 **Current Step:** Step 5: Verify
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-15
 **Review Level:** 2
 **Review Counter:** 13
@@ -51,13 +51,13 @@
 
 ### Step 5: Verify
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Update `CHANGELOG.md` under `[Unreleased]` / `Changed`
-- [ ] `make build` / `test` / `test-race` / `lint`
-- [ ] Schema-stability snapshot byte-identical
-- [ ] Acceptance greps collapse as expected
-- [ ] Manual `list_tools` parity check
+- [x] Update `CHANGELOG.md` under `[Unreleased]` / `Changed`
+- [x] `make build` / `test` / `test-race` / `lint`
+- [x] Schema-stability snapshot byte-identical
+- [x] Acceptance greps collapse as expected
+- [x] Manual `list_tools` parity check
 
 ---
 
