@@ -17,7 +17,7 @@
 - [x] Threat model written (`athlete_id` cannot exfiltrate, escalate, or escape roster)
 - [ ] Coach-roster endpoint probed; path/auth/shape documented OR gap documented
 - [x] Writeup in `docs/threat-models/coach-mode.md`
-- [ ] R001 revision: mark authenticated coach-key roster probe as blocked/incomplete unless a real coach-scoped key is provided, and phrase config roster as a temporary fallback pending validation
+- [x] R001 revision: mark authenticated coach-key roster probe as blocked/incomplete unless a real coach-scoped key is provided, and phrase config roster as a temporary fallback pending validation
 
 ### Step 2: Config + feature flag
 

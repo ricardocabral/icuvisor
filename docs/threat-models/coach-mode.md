@@ -116,8 +116,10 @@ Unauthenticated probes are not sufficient to confirm coach-account behavior, but
 | `/api/v1/athlete/0/coached-athletes` | 404 | Not an exposed endpoint. |
 | `/api/v1/athlete/0/clients` | 404 | Not an exposed endpoint. |
 
-### Decision for TP-039 implementation
+### Temporary implementation fallback pending authenticated validation
 
-Because this environment has no real coach key, the upstream roster endpoint is not considered validated for v0.5 behavior. Implement `list_athletes` against the configured `coach.athletes[]` roster first with `_meta.source: "config"`. Keep the intervals client extensible for a later authenticated `GET /api/v1/athlete/0/athlete-summary` probe, but do not make coach mode depend on that upstream endpoint until a real coach account confirms auth, response shape, and whether the endpoint returns only athletes intentionally exposed to the coach.
+Because this environment has no real coach key, the upstream roster endpoint remains unvalidated for v0.5 behavior. The authenticated coach-key probe is incomplete, not passed. Until a real coach account confirms auth, response shape, pagination behavior, and whether the endpoint returns only athletes intentionally exposed to the coach, implement `list_athletes` against the configured `coach.athletes[]` roster with `_meta.source: "config"` as a temporary fallback.
+
+The intervals client may remain extensible for a later authenticated `GET /api/v1/athlete/0/athlete-summary` probe, but coach mode must not claim `_meta.source: "upstream"` or depend on that upstream endpoint until the blocked probe is completed.
 
 Pagination gap: the public spec for `athlete-summary` does not advertise pagination. If future authenticated testing returns large rosters or pagination metadata, update this document and the client contract before switching `_meta.source` to `"upstream"`.
