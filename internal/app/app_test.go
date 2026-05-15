@@ -140,6 +140,7 @@ func TestTopLevelHelpDocumentsRuntimeEnvVars(t *testing.T) {
 		safety.EnvDeleteMode,
 		safety.EnvToolset,
 		config.EnvDebugMetadata,
+		config.EnvCoachMode,
 	} {
 		if !strings.Contains(help, name) {
 			t.Fatalf("help fixture missing env var %s", name)
