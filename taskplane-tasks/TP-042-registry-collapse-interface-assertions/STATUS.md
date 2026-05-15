@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 
@@ -34,6 +34,8 @@
 - [x] Preserve delete-mode / toolset / capability gating via existing `Tool` metadata/downstream registrar behavior; do not add registry-side filtering
 - [x] Migrate Step 2 call sites/tests enough to keep the tree buildable after constructor signature changes
 - [x] Fix hardcoded `getAthleteProfileName` missing-client/registrar error messages
+- [ ] R007: Format changed Go files with gofmt/goimports-clean output
+- [ ] R007: Remove stale registry fake types no longer referenced by tests
 
 ### Step 3: Collapse `schemaCatalogClient`
 
@@ -137,3 +139,4 @@ Special coupling/conditional semantics to preserve in refactor:
 | 2026-05-15 13:39 | Review R004 | code Step 1: APPROVE |
 | 2026-05-15 13:42 | Review R005 | plan Step 2: UNKNOWN |
 | 2026-05-15 13:44 | Review R006 | plan Step 2: APPROVE |
+| 2026-05-15 14:00 | Review R007 | code Step 2: UNKNOWN |
