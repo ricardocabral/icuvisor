@@ -1,10 +1,10 @@
 # TP-047-shaper-tree-walker-consolidation — Status
 
-**Current Step:** Step 1: Snapshot pre-refactor output
+**Current Step:** Step 2: Pick the approach
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -23,11 +23,12 @@
 
 ### Step 2: Pick the approach
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Decide typed-shape vs single visitor walker
 - [ ] Justify in Decisions below (diff size, blast radius, `include_full` fit)
 - [ ] Sketch struct set or visitor signature
+- [ ] Address R005 plan details: specify marshal-round-trip replacement, package-boundary strategy, `include_full` handling, and provenance/debug predicate preservation before Step 3
 
 ### Step 3: Implement
 
@@ -70,6 +71,7 @@ _Record any narrow case where the marshal round-trip survives, with rationale._
 
 _Add notes as work progresses._
 
+| 2026-05-15 17:55 | Plan review R005 | Added Step 2 planning item to specify the exact marshal replacement, package-boundary strategy, include_full fit, and predicate preservation. |
 | 2026-05-15 17:49 | Code review R003 | Added blocking revision items: isolate catalog runtime state and use typed DTO inputs for activity/fitness snapshots so JSON tags and omitempty are locked. |
 | 2026-05-15 17:44 | Plan review R001 | Added blocking Step 1 plan items: deterministic named fixtures, automated regeneration/comparison, stable metadata setup, canonical JSON; using synthetic fixtures to avoid network/tool import cycles. |
 | 2026-05-15 17:43 | Task started | Runtime V2 lane-runner execution |
@@ -78,3 +80,4 @@ _Add notes as work progresses._
 | 2026-05-15 17:49 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-15 17:56 | Review R003 | code Step 1: REVISE |
 | 2026-05-15 18:00 | Review R004 | code Step 1: APPROVE |
+| 2026-05-15 18:03 | Review R005 | plan Step 2: REVISE |
