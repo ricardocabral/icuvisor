@@ -1,22 +1,31 @@
 # TP-041-v05-dogfood-validation: v0.5 dogfood prep (artifacts only) — Status
 
 **Current Step:** Step 1: Diagnostics subcommand
-**Status:** ⏳ Not started
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 0
-**Iteration:** 0
+**Review Counter:** 1
+**Iteration:** 1
 **Size:** M
 
 ---
 
 ### Step 1: Diagnostics subcommand
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
+
+Implementation plan (R001):
+- Add `internal/app/diagnostics.go` with `runDiagnosticsCommand(ctx, opts, args)` and a typed output model; dispatch `diagnostics` in `Run` before default server startup, route all command/help output through `opts.Stdout`, and accept the existing `--config`, `--env-file`, `--transport`, and `--http-bind` flags without starting the MCP server.
+- Load config with the normal loader/credential-store injection, but print only source labels (`env`, `keychain`, `file`, `unset`, or `error`) plus resolved transport and mode env-var values; never print config paths, athlete IDs, config dumps, API keys, or raw load errors that could contain secrets.
+- Expose a small reusable MCP helper that builds the registry with the same safety/toolset/coach gates and returns the catalog hash; diagnostics calls that helper only, without creating an intervals.icu client, starting transports, or making network requests.
+- Add a redacted recent-tool-call store that persists only `{timestamp_utc, name}` records under a local state path, with MCP middleware recording tool names after registration and diagnostics reading the last N; no arguments, payloads, athlete IDs, or credentials are stored.
+- Test success, diagnostics help, config flag passthrough, server bypass/no-network behavior, mode-dependent catalog hash, and secret redaction. The secret matcher will explicitly allow the expected 64-character catalog hash while rejecting fixture API keys, raw and normalized athlete IDs, bearer/key token patterns, and accidental secret-shaped strings elsewhere.
+- Update `internal/app/testdata/help.golden` (not the obsolete `help-fixture` path) and `CHANGELOG.md` in Step 1.
 
 - [ ] `icuvisor diagnostics` prints version, catalog hash, config source, mode env vars, OS/Go runtime, last-N tool-call names+timestamps
 - [ ] No-secret-leakage test (fixture-injected key, stdout grep)
 - [ ] TP-035 `--help` golden file updated
+- [ ] CHANGELOG.md records `icuvisor diagnostics` under Added
 
 ### Step 2: Docs
 
@@ -47,3 +56,7 @@
 ## Notes
 
 _Add notes as work progresses._
+
+| 2026-05-15 22:40 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-15 22:40 | Step 1 started | Diagnostics subcommand |
+| 2026-05-15 22:43 | Review R001 | plan Step 1: REVISE |
