@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 
@@ -19,7 +19,7 @@
 
 ### Step 2: Subcommand wiring
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] `setup` registered in TP-035 parser
 - [x] `--help` golden file updated
