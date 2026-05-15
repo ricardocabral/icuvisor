@@ -1,6 +1,6 @@
 # TP-049-misc-go-hygiene-cleanups — Status
 
-**Current Step:** Step 3: Move env read into config (item 3)
+**Current Step:** Step 4: Reformat long constructor lines (item 4)
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
@@ -31,18 +31,18 @@
 
 ### Step 3: Move env read into config (item 3)
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Resolve `DebugMetadata` in `config.Load`; store on `Config`
 - [x] `app.Run` reads from `Config`; no env access in `internal/app`
 - [x] Remove or relocate `response.DebugMetadataFromEnv`
 - [x] `grep -rn "os.Getenv\b" internal/ | grep -v "^internal/config/"` empty
 - [x] `make build` / `test` / `test-race` / `lint`
-- [ ] Commit `TP-049 move DebugMetadata env read into config`
+- [x] Commit `TP-049 move DebugMetadata env read into config`
 
 ### Step 4: Reformat long constructor lines (item 4)
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Wrap four `newXxxTool` calls in `internal/tools/get_fitness.go:210-224`
 - [ ] `gofmt`/`goimports` clean
