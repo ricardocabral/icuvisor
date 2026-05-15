@@ -1223,7 +1223,6 @@ func TestProtocolAthleteIDRejectionMessageIsEnumerationSafe(t *testing.T) {
 			t.Fatalf("CallTool(%v) error text = %q, want enumeration-safe message", args, text)
 		}
 	}
-
 }
 
 func TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry(t *testing.T) {

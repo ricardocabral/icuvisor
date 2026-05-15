@@ -1,7 +1,7 @@
 # TP-041-v05-dogfood-validation: v0.5 dogfood prep (artifacts only) — Status
 
-**Current Step:** Step 2: Docs
-**Status:** 🟡 In Progress
+**Current Step:** Step 3: Cross-check + verify
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-15
 **Review Level:** 2
 **Review Counter:** 7
@@ -53,11 +53,11 @@ Implementation plan (R005):
 
 ### Step 3: Cross-check + verify
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
-- [ ] `README.md` index links all seven docs in execution order
-- [ ] Cold-read of `checklist.md` is self-sufficient
-- [ ] `make test` / `make lint` / `make build` clean
+- [x] `README.md` index links all seven docs in execution order
+- [x] Cold-read of `checklist.md` is self-sufficient
+- [x] `make test` / `make lint` / `make build` clean
 
 ---
 
