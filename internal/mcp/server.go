@@ -50,8 +50,9 @@ type Options struct {
 type Server struct {
 	server    *sdkmcp.Server
 	transport sdkmcp.Transport
-	logger    *slog.Logger
-	version   string
+	logger      *slog.Logger
+	version     string
+	catalogHash string
 }
 
 // NewServer constructs an icuvisor MCP server.
@@ -77,10 +78,18 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	catalogHash, err := hashToolCatalog(nil)
+	if err != nil {
+		return nil, fmt.Errorf("hashing empty tool catalog: %w", err)
+	}
 	if opts.Registry != nil {
 		registrar := &safeRegistrar{server: sdkServer, logger: logger, capability: capabilityOrSafe(opts.Capability), toolset: toolsetOrCore(opts), names: make(map[string]struct{})}
 		if err := opts.Registry.Register(ctx, registrar); err != nil {
 			return nil, fmt.Errorf("registering tools: %w", err)
+		}
+		catalogHash, err = hashToolCatalog(registrar.registeredTools)
+		if err != nil {
+			return nil, fmt.Errorf("hashing tool catalog: %w", err)
 		}
 		logger.Info("tool registration complete", "registered_count", registrar.registeredCount, "skipped_toolset_count", registrar.skippedToolsetCount, "skipped_capability_count", registrar.skippedCapabilityCount)
 	}
@@ -99,7 +108,15 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 		logger.Info("prompt registration complete", "registered_count", registrar.registeredCount)
 	}
 
-	return &Server{server: sdkServer, transport: transport, logger: logger, version: version}, nil
+	return &Server{server: sdkServer, transport: transport, logger: logger, version: version, catalogHash: catalogHash}, nil
+}
+
+// CatalogHash reports the deterministic hash of the exposed tool catalog.
+func (s *Server) CatalogHash() string {
+	if s == nil {
+		return ""
+	}
+	return s.catalogHash
 }
 
 // Run serves one MCP session until the client disconnects or ctx is cancelled.
@@ -272,6 +289,7 @@ type safeRegistrar struct {
 	capability             safety.Capability
 	toolset                safety.Toolset
 	names                  map[string]struct{}
+	registeredTools        []tools.Tool
 	registeredCount        int
 	skippedToolsetCount    int
 	skippedCapabilityCount int
@@ -320,6 +338,7 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) (err error) {
 		}
 		return converted, nil
 	})
+	r.registeredTools = append(r.registeredTools, tool)
 	r.registeredCount++
 	return nil
 }
