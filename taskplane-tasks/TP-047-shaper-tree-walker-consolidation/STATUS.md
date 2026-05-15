@@ -1,7 +1,7 @@
 # TP-047-shaper-tree-walker-consolidation — Status
 
 **Current Step:** Step 6: Build / test / lint
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-15
 **Review Level:** 2
 **Review Counter:** 19
@@ -63,7 +63,7 @@
 
 ### Step 6: Build / test / lint
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Update `CHANGELOG.md` `[Unreleased]` Changed entry for internal shaper refactor with no user-visible output changes
 - [x] `make build` / `test` / `test-race` / `lint`
