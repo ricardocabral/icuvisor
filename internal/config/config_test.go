@@ -521,6 +521,60 @@ func TestValidateHTTPBindAddress(t *testing.T) {
 	}
 }
 
+func TestWriteStoresOnlyNonSecretFieldsAndRoundTrips(t *testing.T) {
+	t.Parallel()
+
+	path := t.TempDir() + "/icuvisor/config.json"
+	plainValue := strings.Join([]string{"must", "not", "write"}, "-")
+	err := Write(context.Background(), path, Config{APIKey: plainValue, AthleteID: "12345", Timezone: "Europe/Madrid", APIBaseURL: DefaultAPIBaseURL}, WriteOptions{})
+	if err != nil {
+		t.Fatalf("Write() error = %v", err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read written config: %v", err)
+	}
+	content := string(data)
+	if strings.Contains(content, "api_key") || strings.Contains(content, plainValue) {
+		t.Fatalf("written config leaked API key: %s", content)
+	}
+	if !strings.Contains(content, `"athlete_id": "i12345"`) || !strings.Contains(content, `"timezone": "Europe/Madrid"`) {
+		t.Fatalf("written config missing normalized fields: %s", content)
+	}
+	if strings.Contains(content, "api_base_url") {
+		t.Fatalf("default api_base_url should be omitted: %s", content)
+	}
+	loaded, err := Load(context.Background(), Options{Path: path, Env: map[string]string{}, CredentialStore: &fakeCredentialStore{value: "keychain-key"}})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if loaded.APIKey != "keychain-key" || loaded.AthleteID != "i12345" || loaded.Timezone != "Europe/Madrid" || loaded.APIBaseURL != DefaultAPIBaseURL {
+		t.Fatalf("loaded config = %+v", loaded)
+	}
+}
+
+func TestWriteRefusesClobberWithoutAllowOverwrite(t *testing.T) {
+	t.Parallel()
+
+	path := t.TempDir() + "/config.json"
+	if err := Write(context.Background(), path, Config{AthleteID: "12345", Timezone: "UTC"}, WriteOptions{}); err != nil {
+		t.Fatalf("initial Write() error = %v", err)
+	}
+	if err := Write(context.Background(), path, Config{AthleteID: "67890", Timezone: "UTC"}, WriteOptions{}); err == nil {
+		t.Fatal("second Write() error = nil, want clobber refusal")
+	}
+	if err := Write(context.Background(), path, Config{AthleteID: "67890", Timezone: "UTC"}, WriteOptions{AllowOverwrite: true}); err != nil {
+		t.Fatalf("overwrite Write() error = %v", err)
+	}
+	loaded, err := Load(context.Background(), Options{Path: path, Env: map[string]string{EnvAPIKey: "env-key"}})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if loaded.AthleteID != "i67890" {
+		t.Fatalf("AthleteID = %q, want i67890", loaded.AthleteID)
+	}
+}
+
 type fakeCredentialStore struct {
 	value string
 	err   error

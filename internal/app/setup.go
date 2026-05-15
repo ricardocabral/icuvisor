@@ -38,6 +38,9 @@ type SetupProfile struct {
 // SetupProfileFetcher verifies an API key and returns the authenticated athlete profile.
 type SetupProfileFetcher func(context.Context, string) (SetupProfile, error)
 
+// SetupConfigWriter writes non-secret setup config fields.
+type SetupConfigWriter func(context.Context, string, config.Config, config.WriteOptions) error
+
 // SetupOptions carries parsed setup flags and injectable dependencies.
 type SetupOptions struct {
 	ConfigPath string
@@ -49,6 +52,7 @@ type SetupOptions struct {
 	CredentialStore  credstore.Store
 	Prompter         SetupPrompter
 	ConfigExists     func(string) (bool, error)
+	ConfigWriter     SetupConfigWriter
 	ProfileFetcher   SetupProfileFetcher
 	TimezoneDetector func() string
 }
@@ -101,6 +105,7 @@ func runSetupCommand(ctx context.Context, opts Options, args []string) error {
 		CredentialStore:  store,
 		Prompter:         prompter,
 		ConfigExists:     opts.SetupConfigExists,
+		ConfigWriter:     opts.SetupConfigWriter,
 		ProfileFetcher:   opts.SetupProfileFetcher,
 		TimezoneDetector: opts.SetupTimezoneDetector,
 	})
@@ -127,6 +132,10 @@ func RunSetup(ctx context.Context, opts SetupOptions) error {
 	if configExists == nil {
 		configExists = fileExists
 	}
+	configWriter := opts.ConfigWriter
+	if configWriter == nil {
+		configWriter = config.Write
+	}
 	profileFetcher := opts.ProfileFetcher
 	if profileFetcher == nil {
 		profileFetcher = defaultSetupProfileFetcher
@@ -152,6 +161,7 @@ func RunSetup(ctx context.Context, opts SetupOptions) error {
 		return fmt.Errorf("read intervals.icu API key from OS keychain service %q account %q: %w", credstore.ServiceName, credstore.IntervalsAPIKeyAccount, err)
 	}
 
+	configOverwriteAllowed := opts.Force
 	exists, err := configExists(opts.ConfigPath)
 	if err != nil {
 		return fmt.Errorf("check config file %q: %w", opts.ConfigPath, err)
@@ -165,6 +175,7 @@ func RunSetup(ctx context.Context, opts SetupOptions) error {
 			_, _ = fmt.Fprintln(stdout, "Setup canceled; nothing changed.")
 			return nil
 		}
+		configOverwriteAllowed = true
 	}
 
 	secret, err := prompter.ReadSecret(ctx, "Paste your intervals.icu API key (from https://intervals.icu/settings):")
@@ -184,7 +195,34 @@ func RunSetup(ctx context.Context, opts SetupOptions) error {
 	if err != nil {
 		return err
 	}
-	_, _ = fmt.Fprintf(stdout, "Setup checks passed for athlete %s with timezone %s; writing continues in this setup flow.\n", profile.AthleteID, timezoneName)
+	if err := configWriter(ctx, opts.ConfigPath, config.Config{AthleteID: profile.AthleteID, Timezone: timezoneName, APIBaseURL: config.DefaultAPIBaseURL}, config.WriteOptions{AllowOverwrite: configOverwriteAllowed}); err != nil {
+		return fmt.Errorf("write non-secret config: %w", err)
+	}
+	if err := store.Set(ctx, credstore.IntervalsAPIKeyAccount, secret); err != nil {
+		return fmt.Errorf("store intervals.icu API key in OS keychain service %q account %q: %w", credstore.ServiceName, credstore.IntervalsAPIKeyAccount, err)
+	}
+	storedSecret, err := store.Get(ctx, credstore.IntervalsAPIKeyAccount)
+	if err != nil {
+		return fmt.Errorf("verify intervals.icu API key in OS keychain service %q account %q: %w", credstore.ServiceName, credstore.IntervalsAPIKeyAccount, err)
+	}
+	if storedSecret != secret {
+		return errors.New("stored API key verification failed")
+	}
+	_, _ = fmt.Fprintf(stdout, "Saved. Your key is in the OS keychain; athlete id %s + timezone %s are in %s.\n", profile.AthleteID, timezoneName, opts.ConfigPath)
+	if opts.Offline {
+		_, _ = fmt.Fprintln(stdout, "Offline setup skipped the final intervals.icu test connection. Run an icuvisor tool when online to verify the key.")
+	} else {
+		verifiedProfile, err := profileFetcher(ctx, storedSecret)
+		if err != nil {
+			return fmt.Errorf("final test connection failed: %w", err)
+		}
+		verifiedProfile, err = normalizeSetupProfile(verifiedProfile)
+		if err != nil {
+			return err
+		}
+		_, _ = fmt.Fprintf(stdout, "Test connection OK: %s%s.\n", profileNameForOutput(verifiedProfile), profileFTPForOutput(verifiedProfile))
+	}
+	_, _ = fmt.Fprintln(stdout, "Next: point Claude Desktop at icuvisor — see docs/clients/claude-desktop.md")
 	return nil
 }
 
@@ -217,21 +255,40 @@ func setupProfile(ctx context.Context, opts setupProfileOptions) (SetupProfile, 
 		}
 		return SetupProfile{}, fmt.Errorf("could not reach intervals.icu. Nothing was written. Re-run setup when online, or use --offline to store settings without verification: %w", err)
 	}
-	normalized, err := config.NormalizeAthleteID(profile.AthleteID)
+	profile, err = normalizeSetupProfile(profile)
 	if err != nil {
 		return SetupProfile{}, fmt.Errorf("normalizing autodetected athlete ID: %w", err)
 	}
-	profile.AthleteID = normalized
-	name := strings.TrimSpace(profile.DisplayName)
-	if name == "" {
-		name = normalized
-	}
 	if profile.FTP > 0 {
-		_, _ = fmt.Fprintf(opts.stdout, "Checking intervals.icu… connected as %q (athlete %s, FTP %d W).\n", name, normalized, profile.FTP)
+		_, _ = fmt.Fprintf(opts.stdout, "Checking intervals.icu… connected as %q (athlete %s, FTP %d W).\n", profileNameForOutput(profile), profile.AthleteID, profile.FTP)
 	} else {
-		_, _ = fmt.Fprintf(opts.stdout, "Checking intervals.icu… connected as %q (athlete %s).\n", name, normalized)
+		_, _ = fmt.Fprintf(opts.stdout, "Checking intervals.icu… connected as %q (athlete %s).\n", profileNameForOutput(profile), profile.AthleteID)
 	}
 	return profile, nil
+}
+
+func normalizeSetupProfile(profile SetupProfile) (SetupProfile, error) {
+	normalized, err := config.NormalizeAthleteID(profile.AthleteID)
+	if err != nil {
+		return SetupProfile{}, err
+	}
+	profile.AthleteID = normalized
+	return profile, nil
+}
+
+func profileNameForOutput(profile SetupProfile) string {
+	name := strings.TrimSpace(profile.DisplayName)
+	if name == "" {
+		return profile.AthleteID
+	}
+	return name
+}
+
+func profileFTPForOutput(profile SetupProfile) string {
+	if profile.FTP <= 0 {
+		return ""
+	}
+	return fmt.Sprintf(", FTP %d W", profile.FTP)
 }
 
 func setupTimezone(ctx context.Context, prompter SetupPrompter, stdout io.Writer, detector func() string, offline bool) (string, error) {

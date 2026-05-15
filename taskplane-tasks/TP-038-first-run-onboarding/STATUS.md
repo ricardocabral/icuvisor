@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 12
+**Review Counter:** 13
 **Iteration:** 1
 **Size:** M
 
@@ -41,9 +41,9 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Keychain `Set` + immediate `Get` round-trip verify
-- [ ] Non-secret fields → config file (no `api_key` ever written)
-- [ ] `--force` to clobber existing config
+- [x] Keychain `Set` + immediate `Get` round-trip verify
+- [x] Non-secret fields → config file (no `api_key` ever written)
+- [x] `--force` to clobber existing config
 
 ### Step 5: Tests + manual sweep
 
@@ -150,3 +150,4 @@ Plan review R003 requested a concrete CLI wiring plan before coding. Implement S
 | 2026-05-15 19:25 | Review R009 | code Step 3: REVISE |
 | 2026-05-15 19:39 | Review R011 | plan Step 4: REVISE |
 | 2026-05-15 19:41 | Review R012 | plan Step 4: REVISE |
+| 2026-05-15 19:44 | Review R013 | plan Step 4: APPROVE |

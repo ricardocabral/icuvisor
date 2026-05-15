@@ -33,6 +33,7 @@ type Options struct {
 	SetupCredentialStore  credstore.Store
 	SetupPrompter         SetupPrompter
 	SetupConfigExists     func(string) (bool, error)
+	SetupConfigWriter     SetupConfigWriter
 	SetupProfileFetcher   SetupProfileFetcher
 	SetupTimezoneDetector func() string
 }
