@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `--env-file` CLI flag and `ICUVISOR_ENV_FILE` environment variable for reading a custom local env file instead of the default `.env`; explicitly requested env-file paths must exist (the default `.env` remains silently skipped when absent).
 - KR5 benchmark harness, shared prompt set, redacted fixtures, and methodology/results documentation comparing icuvisor core/full against the hhopke and mvilanova Python reference servers.
 - MCP Prompts for curated training analysis, recovery check, weekly planning, race-week taper, and coach roster triage workflows.
 - MCP Resources for long-form reference content: `icuvisor://workout-syntax`, `icuvisor://event-categories`, `icuvisor://custom-item-schemas`, and a dynamic cached `icuvisor://athlete-profile`, with inline tool descriptions trimmed to point at resource URIs.

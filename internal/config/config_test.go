@@ -138,6 +138,47 @@ func TestLoadPrecedenceAndDefaults(t *testing.T) {
 	}
 }
 
+func TestLoadDotEnvExplicitMissingErrorsActionable(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	_, err := Load(context.Background(), Options{
+		DotEnvPath:     dir + "/missing.env",
+		DotEnvExplicit: true,
+		Env:            map[string]string{},
+	})
+	if err == nil {
+		t.Fatal("Load() error = nil, want error")
+	}
+	msg := err.Error()
+	for _, want := range []string{"env file", "not found", "--env-file", EnvDotEnvPath} {
+		if !strings.Contains(msg, want) {
+			t.Fatalf("error %q does not contain %q", msg, want)
+		}
+	}
+}
+
+func TestLoadDotEnvEnvVarOverridesDefaultPath(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	customPath := dir + "/custom.env"
+	writeFile(t, customPath, strings.Join([]string{
+		"INTERVALS_ICU_API_KEY=custom-key",
+		"INTERVALS_ICU_ATHLETE_ID=i777",
+	}, "\n"))
+
+	cfg, err := Load(context.Background(), Options{
+		Env: map[string]string{EnvDotEnvPath: customPath},
+	})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.APIKey != "custom-key" || cfg.AthleteID != "i777" {
+		t.Fatalf("Load() = api key %q athlete %q, want custom env-file values", cfg.APIKey, cfg.AthleteID)
+	}
+}
+
 func TestLoadDotEnvFillsAbsentValues(t *testing.T) {
 	t.Parallel()
 

@@ -115,7 +115,7 @@ export INTERVALS_ICU_ATHLETE_ID="i12345"
 ./bin/icuvisor version
 ```
 
-For local development, `icuvisor` can read a local untracked `.env` file containing `INTERVALS_ICU_API_KEY` and `INTERVALS_ICU_ATHLETE_ID`. Do not commit real API keys. For MCP client config, use process env vars or pass a JSON file with `--config /path/to/icuvisor.json` using fields `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout`.
+For local development, `icuvisor` can read a local untracked `.env` file containing `INTERVALS_ICU_API_KEY` and `INTERVALS_ICU_ATHLETE_ID`. Do not commit real API keys. To use a custom env-file path, pass `--env-file /path/to/custom.env` or set `ICUVISOR_ENV_FILE`; explicit paths must exist (unlike the default `.env`, which is silently skipped when absent). For MCP client config, use process env vars or pass a JSON file with `--config /path/to/icuvisor.json` using fields `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout`.
 
 ### MCP transport
 

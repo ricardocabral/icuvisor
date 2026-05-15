@@ -176,6 +176,16 @@ func TestRunDefaultPassesConfigFlags(t *testing.T) {
 			args: []string{"--transport=http", "--http-bind=192.168.1.20:8765"},
 			want: config.Options{Transport: "http", HTTPBindAddress: "192.168.1.20:8765"},
 		},
+		{
+			name: "separate env file",
+			args: []string{"--env-file", "/tmp/icuvisor.env"},
+			want: config.Options{DotEnvPath: "/tmp/icuvisor.env", DotEnvExplicit: true},
+		},
+		{
+			name: "inline env file",
+			args: []string{"--env-file=/tmp/icuvisor.env"},
+			want: config.Options{DotEnvPath: "/tmp/icuvisor.env", DotEnvExplicit: true},
+		},
 	}
 
 	for _, tc := range tests {
@@ -193,7 +203,7 @@ func TestRunDefaultPassesConfigFlags(t *testing.T) {
 			if err == nil {
 				t.Fatal("Run() error = nil, want loader error")
 			}
-			if got.Path != tc.want.Path || got.Transport != tc.want.Transport || got.HTTPBindAddress != tc.want.HTTPBindAddress {
+			if got.Path != tc.want.Path || got.Transport != tc.want.Transport || got.HTTPBindAddress != tc.want.HTTPBindAddress || got.DotEnvPath != tc.want.DotEnvPath || got.DotEnvExplicit != tc.want.DotEnvExplicit {
 				t.Fatalf("config options = %#v, want %#v", got, tc.want)
 			}
 		})
@@ -212,6 +222,7 @@ func TestRunFlagErrorsAreActionable(t *testing.T) {
 		{name: "missing config", args: []string{"--config"}, want: []string{"missing value", "--config"}},
 		{name: "empty transport", args: []string{"--transport="}, want: []string{"missing value", "--transport"}},
 		{name: "missing bind", args: []string{"--http-bind", "--transport"}, want: []string{"missing value", "--http-bind"}},
+		{name: "missing env file", args: []string{"--env-file"}, want: []string{"missing value", "--env-file"}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

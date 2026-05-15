@@ -26,6 +26,7 @@ const (
 	EnvHTTPTimeout = "ICUVISOR_HTTP_TIMEOUT"
 	EnvTransport   = "ICUVISOR_TRANSPORT"
 	EnvHTTPBind    = "ICUVISOR_HTTP_BIND"
+	EnvDotEnvPath  = "ICUVISOR_ENV_FILE"
 
 	DefaultAPIBaseURL      = "https://intervals.icu/api/v1"
 	DefaultTimezone        = "UTC"
@@ -66,6 +67,7 @@ type Config struct {
 type Options struct {
 	Path            string
 	DotEnvPath      string
+	DotEnvExplicit  bool
 	Env             map[string]string
 	Transport       string
 	HTTPBindAddress string
@@ -118,13 +120,23 @@ func Load(ctx context.Context, opts Options) (Config, error) {
 		raw.merge(fileRaw, false)
 	}
 
-	dotEnvPath := opts.DotEnvPath
+	dotEnvPath := strings.TrimSpace(opts.DotEnvPath)
+	explicitDotEnv := opts.DotEnvExplicit
+	if dotEnvPath == "" {
+		if envPath := strings.TrimSpace(env[EnvDotEnvPath]); envPath != "" {
+			dotEnvPath = envPath
+			explicitDotEnv = true
+		}
+	}
 	if dotEnvPath == "" {
 		dotEnvPath = ".env"
 	}
 	if dotEnv, err := readDotEnv(ctx, dotEnvPath); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return Config{}, err
+		}
+		if explicitDotEnv {
+			return Config{}, fmt.Errorf("env file %q not found; check --env-file path or %s", dotEnvPath, EnvDotEnvPath)
 		}
 	} else {
 		raw.merge(rawFromEnv(dotEnv), true)

@@ -111,8 +111,23 @@ func parseDefaultArgs(args []string) (config.Options, error) {
 				return config.Options{}, err
 			}
 			opts.HTTPBindAddress = value
+		case arg == "--env-file":
+			value, next, err := requireFlagValue(args, i, "--env-file", "/path/to/icuvisor.env")
+			if err != nil {
+				return config.Options{}, err
+			}
+			opts.DotEnvPath = value
+			opts.DotEnvExplicit = true
+			i = next
+		case strings.HasPrefix(arg, "--env-file="):
+			value, err := requireInlineFlagValue(arg, "--env-file", "/path/to/icuvisor.env")
+			if err != nil {
+				return config.Options{}, err
+			}
+			opts.DotEnvPath = value
+			opts.DotEnvExplicit = true
 		default:
-			return config.Options{}, fmt.Errorf("unknown command or flag %q (try: icuvisor version, --config, --transport, --http-bind)", arg)
+			return config.Options{}, fmt.Errorf("unknown command or flag %q (try: icuvisor version, --config, --env-file, --transport, --http-bind)", arg)
 		}
 	}
 	return opts, nil
