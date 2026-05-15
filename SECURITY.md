@@ -48,6 +48,26 @@ Out of scope:
 - Issues that require physical access to the user's machine or a compromised OS account.
 - Social engineering of maintainers.
 
+## Release signing and notarization
+
+Official macOS releases use a Developer ID Application certificate for the app bundle and Apple notarization for the DMG. Maintainers must provision the certificate in Apple Developer, export it as a password-protected `.p12`, and store only the following GitHub Actions secrets for release jobs:
+
+- `APPLE_TEAM_ID` — Apple Developer Team ID used for code signing and notarization metadata.
+- `APPLE_DEVELOPER_ID_P12_BASE64` — base64-encoded Developer ID Application `.p12` export.
+- `APPLE_DEVELOPER_ID_P12_PASSWORD` — password for the `.p12` import.
+- `APPLE_API_KEY_ID` — App Store Connect API key ID for `notarytool`.
+- `APPLE_API_KEY_ISSUER` — App Store Connect issuer UUID for `notarytool`.
+- `APPLE_API_KEY_BASE64` — base64-encoded App Store Connect API key (`.p8`).
+
+Do not commit certificate exports, `.p8` files, app-specific passwords, API keys, or decoded secret material. Release logs must not echo these values.
+
+Users can verify an installed app with:
+
+```sh
+codesign --verify --deep --strict /Applications/icuvisor.app
+spctl -a -v /Applications/icuvisor.app
+```
+
 ## Hardening notes for users
 
 - Your intervals.icu API key is stored in the OS keychain by default, not in plain text on disk. The OS account/session that can unlock your keychain is part of the trust boundary.
