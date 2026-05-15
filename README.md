@@ -119,19 +119,19 @@ make build
 
 ```bash
 # 1. Get an intervals.icu API key from https://intervals.icu/settings
-# 2. Store the key in your OS keychain (see "Getting an API key" below)
-# 3. Provide non-secret config via env or JSON
-export INTERVALS_ICU_ATHLETE_ID="i12345"
+# 2. Store the key in your OS keychain and write non-secret config
+/Applications/icuvisor.app/Contents/MacOS/icuvisor setup
+# 3. Confirm the installed binary runs
 /Applications/icuvisor.app/Contents/MacOS/icuvisor version
 ```
 
-If you built from source instead of installing the DMG, use `./bin/icuvisor version` in the final line.
+If you built from source instead of installing the DMG, use `./bin/icuvisor setup` and `./bin/icuvisor version` instead.
 
 ### Getting an API key
 
-Create an intervals.icu API key at <https://intervals.icu/settings>, then store it under service `icuvisor` and account `intervals-icu-api-key`. icuvisor reads that OS-keychain entry at startup when `INTERVALS_ICU_API_KEY` is not set.
+Create an intervals.icu API key at <https://intervals.icu/settings>, then run `icuvisor setup` to paste it into a masked prompt. Setup verifies the key, stores it under service `icuvisor` and account `intervals-icu-api-key`, autodetects your athlete ID/timezone, and writes only non-secret fields to the config file.
 
-Platform-native storage options:
+Manual platform-native storage remains available for advanced/headless setups:
 
 - **macOS Keychain:** open Keychain Access, choose **File > New Password Item**, set **Keychain Item Name** to `icuvisor`, **Account Name** to `intervals-icu-api-key`, paste the API key as the password, and save. CLI equivalent:
   ```bash

@@ -1,7 +1,7 @@
 # TP-038-first-run-onboarding: First-run onboarding subcommand — Status
 
-**Current Step:** Step 4: Write
-**Status:** 🟡 In Progress
+**Current Step:** Step 5: Tests + manual sweep
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-15
 **Review Level:** 2
 **Review Counter:** 14
@@ -47,11 +47,11 @@
 
 ### Step 5: Tests + manual sweep
 
-**Status:** ⏳ Not started
+**Status:** ✅ Complete
 
-- [ ] Faked stdin + credstore + intervals client
-- [ ] Happy / 401 / network / offline / overwrite paths
-- [ ] macOS manual sweep documented
+- [x] Faked stdin + credstore + intervals client
+- [x] Happy / 401 / network / offline / overwrite paths
+- [x] macOS manual sweep documented
 
 ---
 
@@ -113,6 +113,17 @@ Timezone (IANA name, for example Europe/Madrid):
 ```
 
 Masking decision: the implementation will use the standard `golang.org/x/term` `ReadPassword` path for API-key input. `go.mod` does not currently include `golang.org/x/term`; add it during the setup implementation rather than introducing a fancy prompt library.
+
+### Step 5 verification notes
+
+- `go test ./...` passed. Setup tests use a fake prompter/stdin abstraction, in-memory fake `credstore.Store`, and injected fake `SetupProfileFetcher` instead of network intervals.icu calls.
+- Coverage includes happy setup write + final-test fetch, 401/403 unauthorized mapping, network failure with offline guidance, offline setup, existing key/config cancellation prompts, `--force`, keychain set/get/mismatch failures, and config no-clobber/overwrite behavior.
+- macOS manual sweep recipe for a release candidate:
+  1. Install the signed DMG and run `/Applications/icuvisor.app/Contents/MacOS/icuvisor setup --config $(mktemp -d)/config.json`.
+  2. Paste a real intervals.icu API key at the masked prompt; confirm detected timezone or paste an IANA override.
+  3. Verify output says the key is in the OS keychain, config path contains athlete ID/timezone, and `Test connection OK` prints display name + FTP.
+  4. Confirm `security find-generic-password -s icuvisor -a intervals-icu-api-key` finds the credential, the config JSON has no `api_key`, and `icuvisor --config <path> --help`/Claude Desktop docs remain usable.
+  5. Re-run setup to verify existing-key/config prompts default to no, then rerun with `--force` to confirm config clobbering is explicit.
 
 ### Step 4 implementation plan
 

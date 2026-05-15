@@ -24,7 +24,17 @@ The app does not contain credentials. Your intervals.icu API key stays in the ma
 
 A properly signed and notarized release should not show the macOS "unidentified developer" warning. If macOS blocks the app, stop and verify the signature before overriding Gatekeeper.
 
-## Store the intervals.icu API key in Keychain
+## First-run setup
+
+Run the terminal setup flow after installing:
+
+```bash
+/Applications/icuvisor.app/Contents/MacOS/icuvisor setup
+```
+
+Setup asks for the intervals.icu API key with masked input, verifies it, stores it in Keychain under service `icuvisor` and account `intervals-icu-api-key`, autodetects your athlete ID/timezone, and writes only non-secret fields to the icuvisor config file. Use `--config /path/to/config.json` for a non-default config path, `--force` to overwrite an existing config file without the prompt, or `--offline` only when intervals.icu cannot be reached and you accept skipping verification.
+
+Manual Keychain storage is still available for advanced/headless setups:
 
 ```bash
 security add-generic-password -U \
