@@ -1,10 +1,10 @@
 # TP-035-cli-help-documentation: CLI help documentation — Status
 
-**Current Step:** Step 3: Tests
+**Current Step:** Step 4: Documentation
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** S
 
@@ -30,15 +30,15 @@
 
 ### Step 3: Tests
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Table-driven coverage of help flags / subcommand / errors
-- [ ] Golden-file fixture for `--help` output
-- [ ] Env-var names cross-checked against resolved config
+- [x] Table-driven coverage of help flags / subcommand / errors
+- [x] Golden-file fixture for `--help` output
+- [x] Env-var names cross-checked against resolved config
 
 ### Step 4: Documentation
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] README pointer to `--help`
 - [ ] CHANGELOG `[Unreleased]` entry
@@ -66,3 +66,4 @@
 | 2026-05-15 13:18 | Step 1 started | Help-text design |
 | 2026-05-15 13:21 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-15 13:25 | Review R002 | plan Step 2: APPROVE |
+| 2026-05-15 13:30 | Review R003 | plan Step 3: APPROVE |
