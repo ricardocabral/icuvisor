@@ -1,21 +1,22 @@
 # TP-040-schema-change-notification: Post-update schema-change notification — Status
 
 **Current Step:** Step 1: Catalog hash
-**Status:** ⏳ Not started
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 0
-**Iteration:** 0
+**Review Counter:** 1
+**Iteration:** 1
 **Size:** S
 
 ---
 
 ### Step 1: Catalog hash
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] SHA-256 over sorted `(name, schema-json)` pairs
-- [ ] Determinism + sensitivity fixture tests (add / remove / rename / description-edit)
+- [ ] SHA-256 over canonical sorted records for the exposed registered catalog after toolset/capability filtering, including name, tool description, input schema, and any advertised output schema
+- [ ] Store catalog hash on `internal/mcp.Server` and expose `Server.CatalogHash() string` computed once from the actual tools passed to the SDK
+- [ ] Determinism + sensitivity fixture tests (registration order, nested map order, filtering, add / remove / rename / description-edit, tool-description edit, output-schema edit if advertised)
 
 ### Step 2: `_meta` injector
 
@@ -49,3 +50,7 @@
 ## Notes
 
 _Add notes as work progresses._
+
+| 2026-05-15 14:35 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-15 14:35 | Step 1 started | Catalog hash |
+| 2026-05-15 14:37 | Review R001 | plan Step 1: UNKNOWN |
