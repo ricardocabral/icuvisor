@@ -43,7 +43,9 @@ go.work.sum
 
 # Taskplane runtime artifacts (machine-specific, do not commit)
 .pi/batch-state.json
+.pi/batch-state.json.bak-*
 .pi/batch-history.json
+.pi/batch-history.json.bak-*
 .pi/lane-state-*
 .pi/merge-result-*
 .pi/merge-request-*
