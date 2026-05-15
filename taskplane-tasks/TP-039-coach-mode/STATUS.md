@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 2
 **Size:** L
 
@@ -50,6 +50,9 @@
 - [x] Per-request normalization + roster check
 - [x] Context-scoped target routing strips `athlete_id` before strict tool decoders and makes intervals requests use the resolved athlete
 - [x] Registry/request tests cover coach ACL filtering, wrong-roster rejection, single-athlete mismatch rejection, and delete/toolset/coach composition
+- [ ] R011 revision: direct activity-ID tools must verify upstream activity ownership against the resolved target athlete before reads/writes/deletes
+- [ ] R011 revision: make `icuvisor_list_advanced_capabilities` derive coach filtering from the authoritative MCP gate, not duplicated app-only `CatalogFilter` wiring
+- [ ] R011 revision: preserve coach-mode-off catalog compatibility by gating `athlete_id` schema injection/stripping to effective coach mode
 
 ### Step 4: `list_athletes` + `select_athlete`
 
@@ -113,5 +116,7 @@
 | 2026-05-15 20:32 | Review R006 | code Step 2: REVISE |
 | 2026-05-15 20:37 | Review R007 | code Step 2: REVISE |
 | 2026-05-15 20:41 | Review R008 | code Step 2: APPROVE |
+| 2026-05-15 21:00 | Review R011 | code Step 3: revise activity-ID ownership checks, advanced-capabilities coach filtering source, and coach-mode-off catalog compatibility. |
 | 2026-05-15 20:45 | Review R009 | plan Step 3: REVISE |
 | 2026-05-15 20:47 | Review R010 | plan Step 3: APPROVE |
+| 2026-05-15 21:04 | Review R011 | code Step 3: REVISE |
