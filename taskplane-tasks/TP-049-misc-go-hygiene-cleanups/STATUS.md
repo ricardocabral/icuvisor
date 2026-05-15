@@ -1,6 +1,6 @@
 # TP-049-misc-go-hygiene-cleanups — Status
 
-**Current Step:** Step 1: Recover helper (item 1)
+**Current Step:** Step 2: Propagate `ctx` through toolchecks (item 2)
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
@@ -12,16 +12,16 @@
 
 ### Step 1: Recover helper (item 1)
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Add `withPanicRecovery` helper with doc comment
 - [x] Collapse three `defer recover()` blocks in `internal/mcp/server.go`
 - [x] `make build` / `test` / `test-race` / `lint`
-- [ ] Commit `TP-049 extract MCP panic-recovery helper`
+- [x] Commit `TP-049 extract MCP panic-recovery helper`
 
 ### Step 2: Propagate `ctx` through toolchecks (item 2)
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Add `ctx context.Context` to `toolchecks.Register` (schema_stability + confusable_names)
 - [ ] Update registry call site to pass through `ctx`
