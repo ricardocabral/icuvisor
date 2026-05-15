@@ -1,10 +1,10 @@
 # TP-041-v05-dogfood-validation: v0.5 dogfood prep (artifacts only) — Status
 
-**Current Step:** Step 1: Diagnostics subcommand
+**Current Step:** Step 2: Docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -31,8 +31,19 @@ Implementation plan (R001):
 
 ### Step 2: Docs
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
+Implementation plan (R005):
+- Create `docs/internal-beta/` with all seven outputs: `README.md`, `protocol.md`, `onboarding-playbook.md`, `measurement.md`, `exit-interview.md`, `findings.md`, and `checklist.md`; keep each under ~150 lines with checklists/tables instead of long prose and no beta execution or fabricated findings.
+- `README.md` will be an execution-order index linking the six runnable docs. `protocol.md` will contain recruitment copy, consent/privacy wording, eligibility filters, 5–10 cohort cap, 14-day time-box, and a clear non-execution boundary.
+- `onboarding-playbook.md` will cover DMG download/install, `icuvisor setup`, first-call verification, coach-mode variant referencing TP-039 roster/ACL behavior, troubleshooting via `icuvisor diagnostics`, and release/update exercise instructions only. It will link to `docs/install/macos.md`, `docs/clients/claude-desktop.md`, `docs/clients/claude-code.md`, and `docs/coach-mode.md` rather than duplicating JSON snippets.
+- `measurement.md` will define manual collection for KR1 and PRD §7.4 #6/#8/#12, including install-to-first-call timing, top tool-call names/timestamps/descriptions, mobile-need answer, willingness-to-recommend/demand signal, surprises, and blockers; it will explicitly avoid opt-in telemetry promises.
+- `exit-interview.md` will ask 8–12 questions about coach-mode usability, schema-change notification clarity, willingness to recommend, daily-use blockers, mobile need, and privacy comfort without asking for roster names, athlete IDs, or raw athlete data.
+- `findings.md` will contain only an empty header/table skeleton copied from `measurement.md`, and `checklist.md` will be a one-page Recruit → Onboard → Run → Synthesize flow with links and redaction reminders.
+- Consent wording will say the maintainer may receive install-to-first-call timing, top tool-call names/timestamps/descriptions, mobile-need answers, qualitative notes, blockers, and voluntarily shared diagnostics output; it will exclude raw training data, API keys, athlete IDs, payloads, tool arguments, screenshots with values, and transcripts, and include revocation instructions.
+- After drafting, do a local link/path sanity pass before Step 3; update STATUS immediately after each file is created.
+
+- [ ] `README.md` — execution-order index for all seven internal-beta docs
 - [ ] `protocol.md` — recruitment + consent + eligibility + 5–10 cap + 14-day time-box
 - [ ] `onboarding-playbook.md` — operator terminal recipe + coach variant + troubleshooting
 - [ ] `measurement.md` — KR1 / §7.4 #6/#8/#12 measurement procedure + table template
@@ -44,7 +55,7 @@ Implementation plan (R001):
 
 **Status:** ⏳ Not started
 
-- [ ] `README.md` index links all five docs in execution order
+- [ ] `README.md` index links all seven docs in execution order
 - [ ] Cold-read of `checklist.md` is self-sufficient
 - [ ] `make test` / `make lint` / `make build` clean
 
@@ -66,3 +77,4 @@ _Add notes as work progresses._
 | 2026-05-15 23:29 | Exit intercept reprompt | Supervisor provided instructions (681 chars) — reprompting worker |
 | 2026-05-15 23:35 | Review R003 | code Step 1: REVISE |
 | 2026-05-15 23:41 | Review R004 | code Step 1: APPROVE |
+| 2026-05-15 23:43 | Review R005 | plan Step 2: REVISE |
