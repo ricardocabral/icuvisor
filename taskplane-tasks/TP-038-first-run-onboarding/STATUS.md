@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -118,11 +118,14 @@ Plan review R003 requested a concrete CLI wiring plan before coding. Implement S
 
 - Add `internal/app/setup.go` with `RunSetup(ctx, SetupOptions)` and narrow injected dependencies for input/output streams, credential store, setup profile client, and config target path. The real runner can be simple in Step 2, but the interface must let app/parser tests avoid real prompts and keychain access.
 - Extend `internal/app.Options` with an injectable setup runner/dependency bundle. `Run` should dispatch `setup` before runtime config loading and before server startup so `icuvisor setup` does not require an existing config and cannot accidentally start the MCP server.
-- Support setup flags in command position: `icuvisor setup --config <path>`, `icuvisor setup --config=<path>`, `--offline`, `--force`, and `--help`. Do not add `--api-key` or any command-line secret input. Keep `icuvisor --config <path> setup` out of scope unless existing global parser support already provides it naturally; documented supported form remains `icuvisor <command> [flags]`.
-- Prefer setup-specific help because setup has its own flags. Update the top-level help and golden fixture so `setup` is listed, and add tests for `setup --help`.
-- Existing key handling: call `credstore.Store.Get(ctx, credstore.IntervalsAPIKeyAccount)`; on `credstore.ErrNotFound`, continue; on success, prompt `An API key is already stored. Overwrite? [y/N]` before reading a new key or writing. Default `no` aborts safely. `--force` does not silently overwrite credentials; it is reserved for config-file clobbering in Step 4.
+- Support setup flags in command position: `icuvisor setup --config <path>`, `icuvisor setup --config=<path>`, `--offline`, `--force`, and `--help`. Do not add `--api-key` or any command-line secret input. Keep `icuvisor --config <path> setup` unsupported because the current parser documents and implements `icuvisor <command> [flags]`; help/docs for setup must not imply pre-command global flags.
+- `icuvisor setup --help` must use setup-specific help, return exit 0, and bypass config loading, keychain access, prompt reads, and server startup. Update the top-level help and golden fixture so `setup` is listed, and add tests for `setup --help`.
+- Prompt abstraction: production setup uses `golang.org/x/term.ReadPassword` via a narrow `SecretReader`/`Prompter` dependency instead of reading secrets from args or a generic `io.Reader`; tests fake this dependency without a TTY. Returned errors and logs must not include the API key.
+- Existing key handling: call `credstore.Store.Get(ctx, credstore.IntervalsAPIKeyAccount)`; on `credstore.ErrNotFound`, continue; on success, prompt `An API key is already stored. Overwrite? [y/N]` before reading a new key or writing. Default `no` returns nil after printing `Setup canceled; nothing changed.`, preserving exit 0 as a user cancellation rather than a usage/runtime failure. `--force` does not silently overwrite credentials; it is reserved for config-file clobbering in Step 4.
+- Config target path precedence: `setup --config` wins; then `ICUVISOR_CONFIG`; then platform default `os.UserConfigDir()/icuvisor/config.json` exposed through a central `internal/config` helper if needed. Existence checks use `os.Stat` only and do not call `config.Load` or require valid JSON. If the file exists, prompt `A config file already exists at <path>. Overwrite? [y/N]`; default no returns nil with `Setup canceled; nothing changed.` and no key/config/server side effects. `--force` bypasses only this config-file prompt.
 - Resolve and pass the config target path without requiring the file to exist. If `internal/config` lacks a default path helper suitable for writes, add one before Step 4 uses it.
-- Parser/dispatch tests should cover config path propagation, setup bypassing server startup/config load, unknown setup flags returning usage errors, setup help, and existing-key default-no behavior.
+- Parser/dispatch tests should cover config path propagation, setup bypassing server startup/config load, unknown setup flags returning usage errors, setup-specific help, unsupported `icuvisor --config <path> setup`, existing-key default-no, existing-config default-no, and existing-config with `--force`.
 | 2026-05-15 18:51 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-15 18:54 | Review R002 | code Step 1: APPROVE |
 | 2026-05-15 18:56 | Review R003 | plan Step 2: UNKNOWN |
+| 2026-05-15 18:58 | Review R004 | plan Step 2: REVISE |
