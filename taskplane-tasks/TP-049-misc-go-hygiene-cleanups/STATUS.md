@@ -1,22 +1,22 @@
 # TP-049-misc-go-hygiene-cleanups — Status
 
 **Current Step:** Step 1: Recover helper (item 1)
-**Status:** ⏳ Not started
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 0
-**Iteration:** 0
+**Review Counter:** 1
+**Iteration:** 2
 **Size:** S
 
 ---
 
 ### Step 1: Recover helper (item 1)
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Add `withPanicRecovery` helper with doc comment
-- [ ] Collapse three `defer recover()` blocks in `internal/mcp/server.go`
-- [ ] `make build` / `test` / `test-race` / `lint`
+- [x] Add `withPanicRecovery` helper with doc comment
+- [x] Collapse three `defer recover()` blocks in `internal/mcp/server.go`
+- [x] `make build` / `test` / `test-race` / `lint`
 - [ ] Commit `TP-049 extract MCP panic-recovery helper`
 
 ### Step 2: Propagate `ctx` through toolchecks (item 2)
@@ -77,3 +77,9 @@ _Record any deviations from the per-item plan here (e.g. helper name, where relo
 ## Notes
 
 _Add notes as work progresses._
+
+| 2026-05-15 15:22 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-15 15:22 | Step 1 started | Recover helper (item 1) |
+| 2026-05-15 15:24 | Review R001 | plan Step 1: APPROVE |
+
+| 2026-05-15 16:33 | Worker iter 1 | done in 4266s, tools: 35 |
