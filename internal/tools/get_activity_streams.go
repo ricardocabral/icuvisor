@@ -166,7 +166,10 @@ func canonicalStreamKeys(keys []string) ([]string, []string) {
 }
 
 func shapeActivityStreams(activityID string, rows []intervals.ActivityStream, requested []string, samples bool, includeFull bool, version string, unknown []string) getActivityStreamsResponse {
-	requestedSet := stringSet(requested)
+	requestedSet := make(map[string]bool, len(requested))
+	for _, key := range requested {
+		requestedSet[key] = true
+	}
 	out := getActivityStreamsResponse{ActivityID: activityID, Streams: map[string]activityStreamRow{}, Meta: activityStreamsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, SamplesIncluded: samples, UnknownStreamKeys: unknown}}
 	for _, streamRow := range rows {
 		key, known := streams.CanonicalKey(firstNonEmpty(streamRow.Type, streamRow.Name))

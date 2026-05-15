@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -186,14 +187,7 @@ func decodeGetActivitiesRequest(raw json.RawMessage) (GetActivitiesRequest, *act
 	if err != nil {
 		return GetActivitiesRequest{}, nil, err
 	}
-	var supplied struct {
-		Oldest         *string `json:"oldest"`
-		Newest         *string `json:"newest"`
-		RouteID        *int64  `json:"route_id"`
-		IncludeUnnamed *bool   `json:"include_unnamed"`
-		PageSize       *int    `json:"page_size"`
-		IncludeFull    *bool   `json:"include_full"`
-	}
+	var supplied activitiesTokenArgs
 	if err := json.Unmarshal(trimmed, &supplied); err != nil {
 		return GetActivitiesRequest{}, nil, err
 	}
@@ -230,14 +224,16 @@ func normalizeActivitiesPageSize(pageSize int) int {
 	return pageSize
 }
 
-func validateActivitiesTokenArgs(args GetActivitiesRequest, token *activitiesPageToken, supplied struct {
+type activitiesTokenArgs struct {
 	Oldest         *string `json:"oldest"`
 	Newest         *string `json:"newest"`
 	RouteID        *int64  `json:"route_id"`
 	IncludeUnnamed *bool   `json:"include_unnamed"`
 	PageSize       *int    `json:"page_size"`
 	IncludeFull    *bool   `json:"include_full"`
-}) error {
+}
+
+func validateActivitiesTokenArgs(args GetActivitiesRequest, token *activitiesPageToken, supplied activitiesTokenArgs) error {
 	if token.Version != 1 {
 		return fmt.Errorf("unsupported token version %d", token.Version)
 	}
@@ -405,7 +401,10 @@ func activitiesAfterCursor(activities []intervals.Activity, cursor activitiesPag
 		return activities
 	}
 	out := make([]intervals.Activity, 0, len(activities))
-	skips := stringSet(cursor.SkipIDsAtBoundary)
+	skips := make(map[string]bool, len(cursor.SkipIDsAtBoundary))
+	for _, id := range cursor.SkipIDsAtBoundary {
+		skips[id] = true
+	}
 	for _, activity := range activities {
 		date := activitySortDate(activity)
 		if date > cursor.BeforeStartDateLocal {
@@ -486,7 +485,7 @@ func advanceCursorPast(cursor *activitiesPageToken, activity intervals.Activity)
 		cursor.SkipIDsAtBoundary = []string{activity.ID}
 		return true
 	}
-	if stringSet(cursor.SkipIDsAtBoundary)[activity.ID] {
+	if slices.Contains(cursor.SkipIDsAtBoundary, activity.ID) {
 		return false
 	}
 	cursor.BeforeID = activity.ID
@@ -499,14 +498,6 @@ func activitySortDate(activity intervals.Activity) string {
 		return value
 	}
 	return stringValue(activity.StartDate)
-}
-
-func stringSet(values []string) map[string]bool {
-	out := make(map[string]bool, len(values))
-	for _, value := range values {
-		out[value] = true
-	}
-	return out
 }
 
 func shapeGetActivitiesResponse(activities []intervals.Activity, args GetActivitiesRequest, nextToken string, version string, timezoneFallback string, debugMetadata bool, unitSystem response.UnitSystem) (any, error) {
