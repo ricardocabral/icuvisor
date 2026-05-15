@@ -1,6 +1,6 @@
 # TP-037-macos-signed-installer: macOS signed installer + manual client config docs — Status
 
-**Current Step:** Step 3: Release workflow
+**Current Step:** Step 4: Manual client config docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
@@ -50,12 +50,13 @@
 
 ### Step 4: Manual client config docs
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] `docs/clients/claude-desktop.md`
-- [ ] `docs/clients/claude-code.md`
-- [ ] Both: "API key in keychain, not in JSON" callout
-- [ ] Verify-the-connection recipe
+- [ ] `docs/clients/claude-desktop.md` installer-path config updated for `/Applications/icuvisor.app/Contents/MacOS/icuvisor`
+- [ ] `docs/clients/claude-code.md` project `.mcp.json` config added with installed app path
+- [ ] Both client docs include "API key in keychain, not in JSON" callout and non-secret env-only snippets
+- [ ] Verify-the-connection recipe included for both Claude clients
+- [ ] `docs/install/macos.md`, README Quickstart, CHANGELOG, and SECURITY/release checklist docs updated for the signed-DMG/operator-preflight flow
 
 ### Step 5: Verification
 
