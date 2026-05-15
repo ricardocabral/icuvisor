@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Internal Go hygiene cleanups: shared MCP SDK panic recovery, context propagation through tool-check registries, centralized debug-metadata config loading, wrapped long constructors, and clearer tool registration errors.
 - Config loading now resolves API keys in the order `INTERVALS_ICU_API_KEY` process env, OS keychain, plaintext `.env`/JSON legacy files, then error; plaintext file-sourced keys remain supported but emit a migration warning.
 
 [Unreleased]: https://github.com/ricardocabral/icuvisor/compare/HEAD...HEAD

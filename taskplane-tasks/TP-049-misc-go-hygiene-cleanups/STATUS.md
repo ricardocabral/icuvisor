@@ -1,7 +1,7 @@
 # TP-049-misc-go-hygiene-cleanups — Status
 
 **Current Step:** Step 6: Verify
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-15
 **Review Level:** 1
 **Review Counter:** 5
@@ -61,12 +61,12 @@
 
 ### Step 6: Verify
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `make build` / `test` / `test-race` / `lint` all green
-- [ ] No `os.Getenv` outside `internal/config/` (or justified)
-- [ ] No `context.Background()` in `internal/toolchecks/`
-- [ ] `git diff --stat` focused; no unrelated churn
+- [x] `make build` / `test` / `test-race` / `lint` all green
+- [x] No `os.Getenv` outside `internal/config/` (or justified)
+- [x] No `context.Background()` in `internal/toolchecks/`
+- [x] `git diff --stat` focused; no unrelated churn
 
 ---
 
