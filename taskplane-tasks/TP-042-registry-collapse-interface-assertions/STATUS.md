@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -20,6 +20,9 @@
 - [x] Inventory schema snapshot catalog membership versus full production registration and note parity risk
 - [x] Record special constructor coupling and conditional registration semantics (`customItemsClient`, splits, link activity optional clients)
 - [x] Decide direct-dep vs `Deps` struct with migration action for tests/toolchecks and no-network dummy-client rationale
+- [ ] R003: Correct `schemaCatalogClient` coverage for structurally satisfied `ApplyTrainingPlanClient`
+- [ ] R003: Add `GenerateToolCatalog`/confusable-name checker to toolchecks migration inventory
+- [ ] R003: Add MCP `TestProtocolGetAthleteProfileDispatch` registry fake migration plan
 
 ### Step 2: Refactor `Register`
 
@@ -127,3 +130,4 @@ Special coupling/conditional semantics to preserve in refactor:
 | 2026-05-15 13:18 | Step 1 started | Map the current assertion chain |
 | 2026-05-15 13:22 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-05-15 13:25 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-15 13:34 | Review R003 | code Step 1: UNKNOWN |
