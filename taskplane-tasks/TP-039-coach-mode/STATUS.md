@@ -1,22 +1,22 @@
 # TP-039-coach-mode: Coach mode + per-athlete tool ACLs — Status
 
 **Current Step:** Step 1: Threat-model review + endpoint probe
-**Status:** ⏳ Not started
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** L
 
 ---
 
 ### Step 1: Threat-model review + endpoint probe
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Threat model written (`athlete_id` cannot exfiltrate, escalate, or escape roster)
-- [ ] Coach-roster endpoint probed; path/auth/shape documented OR gap documented
-- [ ] Writeup in `docs/threat-models/coach-mode.md`
+- [x] Threat model written (`athlete_id` cannot exfiltrate, escalate, or escape roster)
+- [x] Coach-roster endpoint probed; path/auth/shape documented OR gap documented
+- [x] Writeup in `docs/threat-models/coach-mode.md`
 
 ### Step 2: Config + feature flag
 
@@ -68,4 +68,9 @@
 
 ## Notes
 
-_Add notes as work progresses._
+- Step 1 writeup lives at `docs/threat-models/coach-mode.md`.
+- Threat model conclusion: `athlete_id` is only a normalized target selector; it cannot exfiltrate credentials, bypass per-athlete ACLs, or escape the local roster if request-time roster checks remain authoritative and compose with delete-mode/toolset gates.
+- Endpoint probe conclusion: public OpenAPI documents `GET /api/v1/athlete/{id}/athlete-summary{ext}` as “Summary information for followed athletes” with `SummaryWithCats[]` fields including `athlete_id` and `athlete_name`, but no real coach key was available in the task environment, so TP-039 should implement `list_athletes` from config first (`_meta.source: "config"`) and leave upstream roster support for a later authenticated probe.
+
+| 2026-05-15 20:00 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-15 20:00 | Step 1 started | Threat-model review + endpoint probe |
