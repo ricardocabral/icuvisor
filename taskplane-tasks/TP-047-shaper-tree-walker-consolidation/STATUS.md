@@ -1,10 +1,10 @@
 # TP-047-shaper-tree-walker-consolidation — Status
 
-**Current Step:** Step 3: Implement
+**Current Step:** Step 4: Adjacent P2 cleanups
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 13
+**Review Counter:** 14
 **Iteration:** 1
 **Size:** M
 
@@ -47,10 +47,11 @@
 
 ### Step 4: Adjacent P2 cleanups
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Move `defaultScaleLabels` to `internal/response/scales.go`
 - [ ] Extract common helper shared by `shapeRow` / `shapeWrapperRow`
+- [ ] Address R014 plan note: helper only finalizes row metadata/debug/scale/common meta; wrapper traversal, RowCollections, and wrapper-specific null handling stay outside; nested row collections call helper with common/debug disabled
 
 ### Step 5: Verify byte-identical output
 
@@ -86,6 +87,7 @@
 
 _Add notes as work progresses._
 
+| 2026-05-15 18:31 | Plan review R014 | Added Step 4 helper-boundary planning item for shapeRow/shapeWrapperRow extraction. |
 | 2026-05-15 18:23 | Code review R012 | Added blocking revision items: preserve duplicate-field/string-tag struct semantics and detect cycles with wrapped JSON errors. |
 | 2026-05-15 18:18 | Code review R011 | Added blocking revision item: preserve `json.Number` as a JSON number and reject invalid numbers. |
 | 2026-05-15 18:13 | Code review R010 | Added blocking revision items: restore JSON float error/float32 behavior and preserve provenance query_type while tightening _meta segment matching. |
@@ -107,3 +109,4 @@ _Add notes as work progresses._
 | 2026-05-15 18:29 | Review R010 | code Step 3: REVISE |
 | 2026-05-15 18:37 | Review R011 | code Step 3: REVISE |
 | 2026-05-15 18:42 | Review R012 | code Step 3: REVISE |
+| 2026-05-15 18:59 | Review R014 | plan Step 4: REVISE |
