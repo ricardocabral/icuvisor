@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** S
 
@@ -22,7 +22,7 @@
 
 ### Step 2: `_meta` injector
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Add concurrency-safe runtime catalog metadata in `internal/response`, set by `internal/mcp.NewServer` after `Server.CatalogHash()` is computed, with test reset/set hooks, a deterministic no-server default catalog hash for direct tool tests, and no hash in tool descriptions or schemas
 - [x] `catalog_hash` on every response via response-owned `_meta`, overwriting any caller-provided schema-change keys to prevent spoofed metadata
@@ -64,3 +64,4 @@ _Add notes as work progresses._
 | 2026-05-15 14:57 | Review R005 | plan Step 2: REVISE |
 | 2026-05-15 15:00 | Review R006 | plan Step 2: REVISE |
 | 2026-05-15 15:02 | Review R007 | plan Step 2: APPROVE |
+| 2026-05-15 15:13 | Review R008 | code Step 2: APPROVE |
