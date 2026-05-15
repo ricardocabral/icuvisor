@@ -1,7 +1,7 @@
 # TP-044-activities-fetch-page-refactor: `fetchActivitiesPage` pagination driver refactor — Status
 
 **Current Step:** Step 4: Verify
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-15
 **Review Level:** 1
 **Review Counter:** 3
@@ -38,20 +38,22 @@
 
 ### Step 4: Verify
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `make build`, `make test`, `make test-race`, `make lint`
-- [ ] Diff review: function shorter, shallower, lower complexity
-- [ ] Manual smoke against a live account (if available) — same tokens, same page contents
+- [x] `make build`, `make test`, `make test-race`, `make lint`
+- [x] Diff review: function shorter, shallower, lower complexity
+- [x] Manual smoke against a live account (if available) — same tokens, same page contents
 
 ---
 
 ## Decisions
 
-- **State struct shape:** TBD in Step 2. Default sketch in PROMPT.md: `pageCursor` owns the upstream cursor + the "advanced this iteration" / "full window" flags, replacing `lastFullWindow`, `cursorAdvanced`, `advanced`.
-- **Driver signature:** TBD in Step 2. Plain function returning the next page's candidates plus a "done" signal; no generic abstraction.
+- **State struct shape:** `pageCursor` owns the opaque token payload, fetch limit/count, full-window state, overall cursor advancement, and per-iteration advancement.
+- **Driver signature:** `iteratePages(ctx, client, args, *pageCursor)` returns the next candidate slice plus a done signal; it remains unexported and scoped to `internal/tools/get_activities.go`.
 
 ## Notes
+
+- Step 4 manual live-account smoke skipped: no `ICUVISOR_API_KEY` or `INTERVALS_API_KEY` present in the worker environment.
 
 _Add notes as work progresses._
 
