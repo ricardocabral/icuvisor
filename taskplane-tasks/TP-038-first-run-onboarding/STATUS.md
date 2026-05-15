@@ -1,10 +1,10 @@
 # TP-038-first-run-onboarding: First-run onboarding subcommand — Status
 
-**Current Step:** Step 2: Subcommand wiring
+**Current Step:** Step 3: Autodetect + verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -29,12 +29,12 @@
 
 ### Step 3: Autodetect + verify
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Profile fetch → athlete_id normalize + display name + FTP
-- [ ] Timezone: `time.Local` → IANA validated
-- [ ] 401/403: no writes, named error + fix URL
-- [ ] `--offline` override
+- [x] Profile fetch → athlete_id normalize + display name + FTP
+- [x] Timezone: `time.Local` → IANA validated
+- [x] 401/403: no writes, named error + fix URL
+- [x] `--offline` override
 
 ### Step 4: Write
 
@@ -132,3 +132,4 @@ Plan review R003 requested a concrete CLI wiring plan before coding. Implement S
 | 2026-05-15 18:58 | Review R004 | plan Step 2: REVISE |
 | 2026-05-15 19:00 | Review R005 | plan Step 2: APPROVE |
 | 2026-05-15 19:09 | Review R006 | code Step 2: REVISE |
+| 2026-05-15 19:15 | Review R008 | plan Step 3: APPROVE |

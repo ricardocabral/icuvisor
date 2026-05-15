@@ -8,21 +8,35 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"golang.org/x/term"
 
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/credstore"
+	"github.com/ricardocabral/icuvisor/internal/intervals"
 )
 
 // SetupRunner executes the interactive setup subcommand.
 type SetupRunner func(context.Context, SetupOptions) error
 
-// SetupPrompter reads setup confirmations and masked secrets.
+// SetupPrompter reads setup confirmations, free-form answers, and masked secrets.
 type SetupPrompter interface {
 	Confirm(ctx context.Context, prompt string, defaultYes bool) (bool, error)
+	ReadLine(ctx context.Context, prompt string) (string, error)
 	ReadSecret(ctx context.Context, prompt string) (string, error)
 }
+
+// SetupProfile contains the autodetected athlete fields setup needs.
+type SetupProfile struct {
+	AthleteID    string
+	DisplayName  string
+	FTP          int
+	TimezoneName string
+}
+
+// SetupProfileFetcher verifies an API key and returns the authenticated athlete profile.
+type SetupProfileFetcher func(context.Context, string) (SetupProfile, error)
 
 // SetupOptions carries parsed setup flags and injectable dependencies.
 type SetupOptions struct {
@@ -32,9 +46,11 @@ type SetupOptions struct {
 	Stdout     io.Writer
 	Stderr     io.Writer
 
-	CredentialStore credstore.Store
-	Prompter        SetupPrompter
-	ConfigExists    func(string) (bool, error)
+	CredentialStore  credstore.Store
+	Prompter         SetupPrompter
+	ConfigExists     func(string) (bool, error)
+	ProfileFetcher   SetupProfileFetcher
+	TimezoneDetector func() string
 }
 
 type setupArgs struct {
@@ -77,14 +93,16 @@ func runSetupCommand(ctx context.Context, opts Options, args []string) error {
 		prompter = newTerminalPrompter(opts.Stdin, stdout)
 	}
 	return runner(ctx, SetupOptions{
-		ConfigPath:      path,
-		Offline:         parsed.offline,
-		Force:           parsed.force,
-		Stdout:          stdout,
-		Stderr:          stderr,
-		CredentialStore: store,
-		Prompter:        prompter,
-		ConfigExists:    opts.SetupConfigExists,
+		ConfigPath:       path,
+		Offline:          parsed.offline,
+		Force:            parsed.force,
+		Stdout:           stdout,
+		Stderr:           stderr,
+		CredentialStore:  store,
+		Prompter:         prompter,
+		ConfigExists:     opts.SetupConfigExists,
+		ProfileFetcher:   opts.SetupProfileFetcher,
+		TimezoneDetector: opts.SetupTimezoneDetector,
 	})
 }
 
@@ -108,6 +126,14 @@ func RunSetup(ctx context.Context, opts SetupOptions) error {
 	configExists := opts.ConfigExists
 	if configExists == nil {
 		configExists = fileExists
+	}
+	profileFetcher := opts.ProfileFetcher
+	if profileFetcher == nil {
+		profileFetcher = defaultSetupProfileFetcher
+	}
+	timezoneDetector := opts.TimezoneDetector
+	if timezoneDetector == nil {
+		timezoneDetector = detectLocalTimezone
 	}
 
 	_, _ = fmt.Fprintln(stdout, "Welcome to icuvisor.")
@@ -145,11 +171,150 @@ func RunSetup(ctx context.Context, opts SetupOptions) error {
 	if err != nil {
 		return fmt.Errorf("read intervals.icu API key: %w", err)
 	}
-	if strings.TrimSpace(secret) == "" {
+	secret = strings.TrimSpace(secret)
+	if secret == "" {
 		return newSetupUsageError("missing intervals.icu API key")
 	}
-	_, _ = fmt.Fprintln(stdout, "Setup checks passed; connection verification and writing continue in this setup flow.")
+
+	profile, err := setupProfile(ctx, setupProfileOptions{offline: opts.Offline, secret: secret, fetcher: profileFetcher, prompter: prompter, stdout: stdout})
+	if err != nil {
+		return err
+	}
+	timezoneName, err := setupTimezone(ctx, prompter, stdout, timezoneDetector, opts.Offline)
+	if err != nil {
+		return err
+	}
+	_, _ = fmt.Fprintf(stdout, "Setup checks passed for athlete %s with timezone %s; writing continues in this setup flow.\n", profile.AthleteID, timezoneName)
 	return nil
+}
+
+type setupProfileOptions struct {
+	offline  bool
+	secret   string
+	fetcher  SetupProfileFetcher
+	prompter SetupPrompter
+	stdout   io.Writer
+}
+
+func setupProfile(ctx context.Context, opts setupProfileOptions) (SetupProfile, error) {
+	if opts.offline {
+		_, _ = fmt.Fprintln(opts.stdout, "Offline setup skips intervals.icu verification. Your API key will be stored, but icuvisor cannot confirm it works until you run a tool.")
+		athleteID, err := opts.prompter.ReadLine(ctx, "Athlete ID (accepts 12345 or i12345):")
+		if err != nil {
+			return SetupProfile{}, fmt.Errorf("read athlete ID: %w", err)
+		}
+		normalized, err := config.NormalizeAthleteID(athleteID)
+		if err != nil {
+			return SetupProfile{}, err
+		}
+		return SetupProfile{AthleteID: normalized}, nil
+	}
+
+	profile, err := opts.fetcher(ctx, opts.secret)
+	if err != nil {
+		if errors.Is(err, intervals.ErrUnauthorized) {
+			return SetupProfile{}, errors.New("API key not accepted by intervals.icu. Double-check the key on https://intervals.icu/settings.")
+		}
+		return SetupProfile{}, fmt.Errorf("could not reach intervals.icu. Nothing was written. Re-run setup when online, or use --offline to store settings without verification: %w", err)
+	}
+	normalized, err := config.NormalizeAthleteID(profile.AthleteID)
+	if err != nil {
+		return SetupProfile{}, fmt.Errorf("normalizing autodetected athlete ID: %w", err)
+	}
+	profile.AthleteID = normalized
+	name := strings.TrimSpace(profile.DisplayName)
+	if name == "" {
+		name = normalized
+	}
+	if profile.FTP > 0 {
+		_, _ = fmt.Fprintf(opts.stdout, "Checking intervals.icu… connected as %q (athlete %s, FTP %d W).\n", name, normalized, profile.FTP)
+	} else {
+		_, _ = fmt.Fprintf(opts.stdout, "Checking intervals.icu… connected as %q (athlete %s).\n", name, normalized)
+	}
+	return profile, nil
+}
+
+func setupTimezone(ctx context.Context, prompter SetupPrompter, stdout io.Writer, detector func() string, offline bool) (string, error) {
+	if offline {
+		answer, err := prompter.ReadLine(ctx, "Timezone (IANA name, for example Europe/Madrid):")
+		if err != nil {
+			return "", fmt.Errorf("read timezone: %w", err)
+		}
+		return validateTimezone(answer)
+	}
+
+	detected := strings.TrimSpace(detector())
+	if detected == "" {
+		detected = config.DefaultTimezone
+	}
+	if _, err := time.LoadLocation(detected); err != nil {
+		detected = config.DefaultTimezone
+	}
+	useDetected, err := prompter.Confirm(ctx, fmt.Sprintf("Detected timezone: %s. Use this? [Y/n]", detected), true)
+	if err != nil {
+		return "", fmt.Errorf("confirm timezone: %w", err)
+	}
+	if useDetected {
+		return detected, nil
+	}
+	answer, err := prompter.ReadLine(ctx, "Timezone (IANA name, for example Europe/Madrid):")
+	if err != nil {
+		return "", fmt.Errorf("read timezone: %w", err)
+	}
+	timezoneName, err := validateTimezone(answer)
+	if err != nil {
+		return "", err
+	}
+	_, _ = fmt.Fprintf(stdout, "Using timezone: %s.\n", timezoneName)
+	return timezoneName, nil
+}
+
+func validateTimezone(value string) (string, error) {
+	timezoneName := strings.TrimSpace(value)
+	if _, err := time.LoadLocation(timezoneName); err != nil {
+		return "", fmt.Errorf("invalid timezone %q; use an IANA timezone like Europe/Madrid", timezoneName)
+	}
+	return timezoneName, nil
+}
+
+func defaultSetupProfileFetcher(ctx context.Context, apiKey string) (SetupProfile, error) {
+	client, err := intervals.NewClient(intervals.Options{Config: config.Config{APIKey: apiKey, AthleteID: "0", APIBaseURL: config.DefaultAPIBaseURL, HTTPTimeout: config.DefaultHTTPTimeout}})
+	if err != nil {
+		return SetupProfile{}, err
+	}
+	profile, err := client.GetAuthenticatedAthleteProfile(ctx)
+	if err != nil {
+		return SetupProfile{}, err
+	}
+	return setupProfileFromIntervals(profile), nil
+}
+
+func setupProfileFromIntervals(profile intervals.AthleteWithSportSettings) SetupProfile {
+	return SetupProfile{AthleteID: profile.ID, DisplayName: displayName(profile), FTP: profileFTP(profile), TimezoneName: profile.Timezone}
+}
+
+func displayName(profile intervals.AthleteWithSportSettings) string {
+	if strings.TrimSpace(profile.Name) != "" {
+		return strings.TrimSpace(profile.Name)
+	}
+	return strings.TrimSpace(strings.Join([]string{strings.TrimSpace(profile.FirstName), strings.TrimSpace(profile.LastName)}, " "))
+}
+
+func profileFTP(profile intervals.AthleteWithSportSettings) int {
+	for _, sport := range profile.SportSettings {
+		if sport.FTP > 0 {
+			return sport.FTP
+		}
+	}
+	return 0
+}
+
+func detectLocalTimezone() string {
+	name := time.Local.String()
+	if name == "Local" {
+		return config.DefaultTimezone
+	}
+	return name
 }
 
 func parseSetupArgs(args []string) (setupArgs, error) {
@@ -270,6 +435,19 @@ func (p *terminalPrompter) Confirm(ctx context.Context, prompt string, defaultYe
 			_, _ = fmt.Fprintln(p.out, "Please answer y or n.")
 		}
 	}
+}
+
+func (p *terminalPrompter) ReadLine(ctx context.Context, prompt string) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+	_, _ = fmt.Fprintln(p.out, prompt)
+	_, _ = fmt.Fprint(p.out, "> ")
+	answer, err := p.reader.ReadString('\n')
+	if err != nil && !errors.Is(err, io.EOF) {
+		return "", err
+	}
+	return strings.TrimSpace(answer), nil
 }
 
 func (p *terminalPrompter) ReadSecret(ctx context.Context, prompt string) (string, error) {

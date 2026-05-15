@@ -29,10 +29,12 @@ type Options struct {
 	LoadConfig  func(context.Context, config.Options) (config.Config, error)
 	StartServer func(context.Context, ServerInfo) error
 
-	SetupRunner          SetupRunner
-	SetupCredentialStore credstore.Store
-	SetupPrompter        SetupPrompter
-	SetupConfigExists    func(string) (bool, error)
+	SetupRunner           SetupRunner
+	SetupCredentialStore  credstore.Store
+	SetupPrompter         SetupPrompter
+	SetupConfigExists     func(string) (bool, error)
+	SetupProfileFetcher   SetupProfileFetcher
+	SetupTimezoneDetector func() string
 }
 
 // ServerInfo carries process metadata needed by lower layers.

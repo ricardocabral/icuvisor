@@ -147,6 +147,32 @@ func TestGetAthleteProfileDecodesFixture(t *testing.T) {
 	}
 }
 
+func TestGetAuthenticatedAthleteProfileUsesZeroProfilePath(t *testing.T) {
+	t.Parallel()
+
+	fixture, err := os.ReadFile("testdata/athlete_profile.json")
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got, want := r.URL.Path, "/athlete/0/profile"; got != want {
+			t.Fatalf("path = %q, want %q", got, want)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(fixture)
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	got, err := client.GetAuthenticatedAthleteProfile(context.Background())
+	if err != nil {
+		t.Fatalf("GetAuthenticatedAthleteProfile() error = %v", err)
+	}
+	if got.ID != "i12345" || got.Timezone != "America/Sao_Paulo" {
+		t.Fatalf("profile = %+v", got)
+	}
+}
+
 func TestDoJSONClosesResponseBody(t *testing.T) {
 	t.Parallel()
 
