@@ -1,10 +1,10 @@
 # TP-048-tools-boilerplate-consolidation — Status
 
-**Current Step:** Step 3: `get_activities.go` cleanups
+**Current Step:** Step 4: `Requirement` enum
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 1
 **Size:** M
 
@@ -41,11 +41,12 @@
 
 ### Step 4: `Requirement` enum
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Choose `int`+`iota` vs typed `string` (record decision below)
 - [ ] Convert constants in `internal/tools/registry.go:286-293`
-- [ ] Update all call sites
+- [ ] Update all call sites, including `internal/mcp` and `internal/safety` references from `grep -rn "Requirement" internal/`
+- [ ] Preserve zero-value/default read behavior without raw string comparisons
 - [ ] Preserve wire format if serialised
 
 ### Step 5: Verify
@@ -61,7 +62,7 @@
 
 ## Decisions
 
-_Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
+- Step 4 decision: keep `type Requirement string` with exact wire values (`"read"`, `"write"`, `"delete"`) because requirements are serialized by `list_advanced_capabilities`; improve typed/default handling without switching to `int`/`iota`.
 
 ## Notes
 
@@ -69,6 +70,7 @@ _Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
 - Step 2 plan review R004: remove the old unexported `decodeStrict` instead of wrapping it; preserve `decodeGetActivitiesRequest`, `decodeActivityReadRequest`, and raw-field precheck error ordering; use `TextResult` for exact constructions where payloads are JSON-marshalable by construction.
 - Step 2 plan review R005: old `decodeStrict(raw, &args)` callers currently reject empty/whitespace as `arguments must be a JSON object`; audit those callers and add minimal prechecks before `DecodeStrict[T]` unless a wrapper already explicitly allowed empty input.
 - Step 3 plan review R008: `stringSet` still has callers in `get_activities.go` and `get_activity_streams.go`; remove the helper only after replacing those callers, and scope acceptance to `internal/tools` because `internal/toolchecks/schema_stability.go` has an unrelated helper.
+- Step 4 plan review R011: typed string is already the safe enum shape; preserve serialized values and default empty-as-read behavior while auditing `internal/` references.
 
 
 | 2026-05-15 13:33 | Task started | Runtime V2 lane-runner execution |
@@ -83,3 +85,4 @@ _Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
 | 2026-05-15 14:05 | Review R008 | plan Step 3: REVISE |
 | 2026-05-15 14:07 | Review R009 | plan Step 3: APPROVE |
 | 2026-05-15 14:11 | Review R010 | code Step 3: APPROVE |
+| 2026-05-15 14:14 | Review R011 | plan Step 4: REVISE |
