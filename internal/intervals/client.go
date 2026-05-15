@@ -2,6 +2,7 @@
 package intervals
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -22,6 +23,9 @@ const (
 	defaultBaseDelay   = 200 * time.Millisecond
 	defaultMaxDelay    = 2 * time.Second
 	defaultJitter      = 0.2
+
+	// maxResponseBodyBytes keeps successful JSON responses bounded to avoid unbounded upstream allocations.
+	maxResponseBodyBytes = 32 << 20
 )
 
 // Options configures a Client.
@@ -116,19 +120,22 @@ func (c *Client) doJSON(ctx context.Context, out any, pathParts ...string) error
 	return c.doJSONQuery(ctx, out, nil, pathParts...)
 }
 
+func (c *Client) do(ctx context.Context, query url.Values, pathParts ...string) (*http.Response, error) {
+	req, err := c.newRequest(ctx, http.MethodGet, pathParts...)
+	if err != nil {
+		return nil, err
+	}
+	if len(query) > 0 {
+		req.URL.RawQuery = query.Encode()
+	}
+	return c.httpClient.Do(req)
+}
+
 func (c *Client) doJSONQuery(ctx context.Context, out any, query url.Values, pathParts ...string) error {
 	for attempt := 1; ; attempt++ {
-		req, err := c.newRequest(ctx, http.MethodGet, pathParts...)
-		if err == nil && len(query) > 0 {
-			req.URL.RawQuery = query.Encode()
-		}
+		resp, err := c.do(ctx, query, pathParts...)
 		if err != nil {
-			return err
-		}
-
-		resp, err := c.httpClient.Do(req)
-		if err != nil {
-			if c.shouldRetryTransport(ctx, attempt) {
+			if ctx.Err() == nil && attempt < c.retry.MaxAttempts && shouldRetry(nil, err) {
 				if sleepErr := c.sleepBeforeRetry(ctx, attempt, 0); sleepErr != nil {
 					return sleepErr
 				}
@@ -142,7 +149,7 @@ func (c *Client) doJSONQuery(ctx context.Context, out any, query url.Values, pat
 			apiErr := errorForStatus(resp.StatusCode, retryAfter)
 			_, _ = io.Copy(io.Discard, resp.Body)
 			closeErr := resp.Body.Close()
-			if c.shouldRetryStatus(resp.StatusCode, attempt) {
+			if ctx.Err() == nil && attempt < c.retry.MaxAttempts && shouldRetry(resp, nil) {
 				if sleepErr := c.sleepBeforeRetry(ctx, attempt, retryAfter); sleepErr != nil {
 					return sleepErr
 				}
@@ -154,12 +161,30 @@ func (c *Client) doJSONQuery(ctx context.Context, out any, query url.Values, pat
 			return fmt.Errorf("calling intervals.icu: %w", apiErr)
 		}
 
-		defer resp.Body.Close()
-		if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
+		body, readErr := readBody(resp.Body)
+		closeErr := resp.Body.Close()
+		if readErr != nil {
+			return fmt.Errorf("reading intervals.icu response: %w", readErr)
+		}
+		if closeErr != nil {
+			return fmt.Errorf("closing intervals.icu response: %w", closeErr)
+		}
+		if err := json.NewDecoder(bytes.NewReader(body)).Decode(out); err != nil {
 			return fmt.Errorf("decoding intervals.icu response: %w", err)
 		}
 		return nil
 	}
+}
+
+func readBody(r io.Reader) ([]byte, error) {
+	body, err := io.ReadAll(io.LimitReader(r, maxResponseBodyBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("reading intervals.icu response body: %w", err)
+	}
+	if len(body) > maxResponseBodyBytes {
+		return nil, ErrResponseTooLarge
+	}
+	return body, nil
 }
 
 func normalizeRetryConfig(cfg RetryConfig) RetryConfig {
@@ -180,6 +205,16 @@ func normalizeRetryConfig(cfg RetryConfig) RetryConfig {
 		cfg.Jitter = defaultJitter
 	}
 	return cfg
+}
+
+func shouldRetry(resp *http.Response, err error) bool {
+	if err != nil {
+		return true
+	}
+	if resp == nil {
+		return false
+	}
+	return resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= http.StatusInternalServerError
 }
 
 func (c *Client) shouldRetryTransport(ctx context.Context, attempt int) bool {

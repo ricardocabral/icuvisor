@@ -1,10 +1,10 @@
 # TP-045-intervals-client-dojsonquery-hardening — Status
 
-**Current Step:** Step 1: Sketch the new function boundaries
+**Current Step:** Step 2: Implement the split
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -21,13 +21,13 @@
 
 ### Step 2: Implement the split
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] `do(ctx) (*http.Response, error)` — single attempt, caller owns body close
-- [ ] `readBody(io.Reader) ([]byte, error)` — `io.LimitReader` + sentinel for oversize
-- [ ] `shouldRetry(*http.Response, error) bool` — classification only
-- [ ] Outer retry wrapper — no `defer` inside the loop
-- [ ] JSON decode from bounded buffer, not raw `resp.Body`
+- [x] `do(ctx) (*http.Response, error)` — single attempt, caller owns body close
+- [x] `readBody(io.Reader) ([]byte, error)` — `io.LimitReader` + sentinel for oversize
+- [x] `shouldRetry(*http.Response, error) bool` — classification only
+- [x] Outer retry wrapper — no `defer` inside the loop
+- [x] JSON decode from bounded buffer, not raw `resp.Body`
 
 ### Step 3: Replace `normalizeRetryConfig`
 
@@ -77,3 +77,4 @@ _Add notes as work progresses._
 | 2026-05-15 15:01 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-05-15 15:04 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-15 15:06 | Review R003 | code Step 1: APPROVE |
+| 2026-05-15 15:08 | Review R004 | plan Step 2: APPROVE |
