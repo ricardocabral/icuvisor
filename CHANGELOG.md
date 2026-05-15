@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- CLI help via `icuvisor --help`, `-h`, `help`, and `version --help`, documenting commands, flags, environment variables, examples, and exit codes.
 - `--env-file` CLI flag and `ICUVISOR_ENV_FILE` environment variable for reading a custom local env file instead of the default `.env`; explicitly requested env-file paths must exist (the default `.env` remains silently skipped when absent).
 - KR5 benchmark harness, shared prompt set, redacted fixtures, and methodology/results documentation comparing icuvisor core/full against the hhopke and mvilanova Python reference servers.
 - MCP Prompts for curated training analysis, recovery check, weekly planning, race-week taper, and coach roster triage workflows.

@@ -1,10 +1,10 @@
 # TP-035-cli-help-documentation: CLI help documentation — Status
 
-**Current Step:** Step 4: Documentation
+**Current Step:** Step 5: Verify
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** S
 
@@ -38,14 +38,14 @@
 
 ### Step 4: Documentation
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] README pointer to `--help`
-- [ ] CHANGELOG `[Unreleased]` entry
+- [x] README pointer to `--help`
+- [x] CHANGELOG `[Unreleased]` entry
 
 ### Step 5: Verify
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] `make build`, `make test`, `make test-race`, `make lint`
 - [ ] Manual smoke of each help/error path
@@ -67,3 +67,4 @@
 | 2026-05-15 13:21 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-15 13:25 | Review R002 | plan Step 2: APPROVE |
 | 2026-05-15 13:30 | Review R003 | plan Step 3: APPROVE |
+| 2026-05-15 13:33 | Review R004 | plan Step 4: APPROVE |

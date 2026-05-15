@@ -117,6 +117,8 @@ export INTERVALS_ICU_ATHLETE_ID="i12345"
 
 For local development, `icuvisor` can read a local untracked `.env` file containing `INTERVALS_ICU_API_KEY` and `INTERVALS_ICU_ATHLETE_ID`. Do not commit real API keys. To use a custom env-file path, pass `--env-file /path/to/custom.env` or set `ICUVISOR_ENV_FILE`; explicit paths must exist (unlike the default `.env`, which is silently skipped when absent). For MCP client config, use process env vars or pass a JSON file with `--config /path/to/icuvisor.json` using fields `api_key`, `athlete_id`, `timezone`, `api_base_url`, and `http_timeout`.
 
+Run `./bin/icuvisor --help` to list the current CLI flags, environment variables, examples, and exit codes.
+
 ### MCP transport
 
 `stdio` is the default MCP transport. Streamable HTTP is opt-in with `ICUVISOR_TRANSPORT=http` or `--transport http`; when enabled without a bind override it listens only on `127.0.0.1:8765` and serves MCP at `/mcp`.
