@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -12,7 +12,7 @@
 
 ### Step 1: Snapshot pre-refactor output
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Lock deterministic fixture plan: `get_activities_terse.golden.json`, `get_activities_full.golden.json`, `get_fitness.golden.json`, `get_events_wrapper.golden.json`, `wellness_provenance.golden.json`; each uses synthetic DTO input, stable `response.Options`, reset catalog metadata, and canonical indented JSON bytes
 - [x] Add automated golden snapshot test/generator that maps each case to its input, exact shaping options, fixture path, and comparison command without hitting the network
@@ -77,3 +77,4 @@ _Add notes as work progresses._
 | 2026-05-15 17:47 | Review R001 | plan Step 1: REVISE |
 | 2026-05-15 17:49 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-15 17:56 | Review R003 | code Step 1: REVISE |
+| 2026-05-15 18:00 | Review R004 | code Step 1: APPROVE |
