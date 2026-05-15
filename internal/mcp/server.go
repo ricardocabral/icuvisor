@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -9,22 +10,28 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 
+	"github.com/ricardocabral/icuvisor/internal/coach"
 	"github.com/ricardocabral/icuvisor/internal/config"
+	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/prompts"
 	"github.com/ricardocabral/icuvisor/internal/resources"
 	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
+	"github.com/ricardocabral/icuvisor/internal/toolcatalog"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
 const genericToolErrorMessage = "tool failed; try again or check icuvisor logs"
 const genericResourceErrorMessage = "resource read failed; try again or check icuvisor logs"
+const invalidTargetAthleteMessage = "invalid athlete_id; use a configured target athlete"
+const athleteIDArgumentDescription = "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345."
 
 // StreamableHTTPPath is the local HTTP path serving the MCP Streamable HTTP endpoint.
 const StreamableHTTPPath = "/mcp"
@@ -84,7 +91,7 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 		return nil, fmt.Errorf("hashing empty tool catalog: %w", err)
 	}
 	if opts.Registry != nil {
-		registrar := &safeRegistrar{server: sdkServer, logger: logger, capability: capabilityOrSafe(opts.Capability), toolset: toolsetOrCore(opts), names: make(map[string]struct{})}
+		registrar := &safeRegistrar{server: sdkServer, logger: logger, config: opts.Config, coachEvaluator: coach.NewEvaluator(opts.Config.CoachModeEnabled(), opts.Config.Coach), capability: capabilityOrSafe(opts.Capability), toolset: toolsetOrCore(opts), names: make(map[string]struct{})}
 		if err := opts.Registry.Register(ctx, registrar); err != nil {
 			return nil, fmt.Errorf("registering tools: %w", err)
 		}
@@ -92,7 +99,7 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 		if err != nil {
 			return nil, fmt.Errorf("hashing tool catalog: %w", err)
 		}
-		logger.Info("tool registration complete", "registered_count", registrar.registeredCount, "skipped_toolset_count", registrar.skippedToolsetCount, "skipped_capability_count", registrar.skippedCapabilityCount)
+		logger.Info("tool registration complete", "registered_count", registrar.registeredCount, "skipped_toolset_count", registrar.skippedToolsetCount, "skipped_capability_count", registrar.skippedCapabilityCount, "skipped_coach_count", registrar.skippedCoachCount)
 	}
 	if opts.ResourceRegistry != nil {
 		registrar := &safeResourceRegistrar{server: sdkServer, logger: logger, uris: make(map[string]struct{})}
@@ -297,6 +304,8 @@ func newSDKServer(version string, logger *slog.Logger) (server *sdkmcp.Server, e
 type safeRegistrar struct {
 	server                 *sdkmcp.Server
 	logger                 *slog.Logger
+	config                 config.Config
+	coachEvaluator         coach.Evaluator
 	capability             safety.Capability
 	toolset                safety.Toolset
 	names                  map[string]struct{}
@@ -304,22 +313,25 @@ type safeRegistrar struct {
 	registeredCount        int
 	skippedToolsetCount    int
 	skippedCapabilityCount int
+	skippedCoachCount      int
 }
 
 func (r *safeRegistrar) AddTool(tool tools.Tool) error {
+	tool = r.prepareTool(tool)
 	if err := r.validateTool(tool); err != nil {
 		return err
 	}
 	r.names[tool.Name] = struct{}{}
-	skippedByToolset := !r.toolsetAllows(tool)
-	skippedByCapability := !r.capabilityAllows(tool)
-	if skippedByToolset {
-		r.skippedToolsetCount++
-	}
-	if skippedByCapability {
+	if !r.capabilityAllows(tool) {
 		r.skippedCapabilityCount++
+		return nil
 	}
-	if skippedByToolset || skippedByCapability {
+	if !r.toolsetAllows(tool) {
+		r.skippedToolsetCount++
+		return nil
+	}
+	if !r.coachAllows(tool) {
+		r.skippedCoachCount++
 		return nil
 	}
 
@@ -330,9 +342,13 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) error {
 			InputSchema:  tool.InputSchema,
 			OutputSchema: tool.OutputSchema,
 		}, func(ctx context.Context, req *sdkmcp.CallToolRequest) (*sdkmcp.CallToolResult, error) {
-			result, err := tool.Handler(ctx, tools.Request{
+			callCtx, arguments, err := r.resolveToolTarget(ctx, tool.Name, req.Params.Arguments)
+			if err != nil {
+				return toolErrorResult(publicToolErrorMessage(err)), nil
+			}
+			result, err := tool.Handler(callCtx, tools.Request{
 				Name:      req.Params.Name,
-				Arguments: req.Params.Arguments,
+				Arguments: arguments,
 			})
 			if err != nil {
 				r.logger.Error("tool handler failed", "tool", tool.Name, "error", err)
@@ -349,6 +365,114 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) error {
 		r.registeredCount++
 		return nil
 	})
+}
+
+func (r *safeRegistrar) prepareTool(tool tools.Tool) tools.Tool {
+	if !toolcatalog.IsAthleteScopedTool(tool.Name) {
+		return tool
+	}
+	tool.InputSchema = schemaWithAthleteID(tool.InputSchema)
+	return tool
+}
+
+func (r *safeRegistrar) coachAllows(tool tools.Tool) bool {
+	athleteID := r.config.Coach.DefaultAthleteID
+	if athleteID == "" {
+		athleteID = r.config.AthleteID
+	}
+	allowed, _ := r.coachEvaluator.Evaluate(athleteID, tool.Name)
+	return allowed
+}
+
+func (r *safeRegistrar) resolveToolTarget(ctx context.Context, toolName string, raw json.RawMessage) (context.Context, json.RawMessage, error) {
+	if !toolcatalog.IsAthleteScopedTool(toolName) {
+		return ctx, raw, nil
+	}
+	arguments, suppliedAthleteID, err := stripAthleteID(raw)
+	if err != nil {
+		return ctx, nil, tools.NewUserError(invalidTargetAthleteMessage, err)
+	}
+	targetAthleteID, err := r.resolveAthleteID(suppliedAthleteID)
+	if err != nil {
+		return ctx, nil, tools.NewUserError(invalidTargetAthleteMessage, err)
+	}
+	if err := r.coachEvaluator.MustEvaluate(targetAthleteID, toolName); err != nil {
+		return ctx, nil, tools.NewUserError(invalidTargetAthleteMessage, err)
+	}
+	return intervals.WithTargetAthleteID(ctx, targetAthleteID), arguments, nil
+}
+
+func (r *safeRegistrar) resolveAthleteID(suppliedAthleteID string) (string, error) {
+	if r.config.CoachModeEnabled() {
+		targetAthleteID := strings.TrimSpace(suppliedAthleteID)
+		if targetAthleteID == "" {
+			targetAthleteID = r.config.Coach.DefaultAthleteID
+		}
+		normalized, err := config.NormalizeAthleteID(targetAthleteID)
+		if err != nil || !r.coachEvaluator.HasAthlete(normalized) {
+			return "", errors.New("invalid target athlete")
+		}
+		return normalized, nil
+	}
+	configured := r.config.AthleteID
+	targetAthleteID := strings.TrimSpace(suppliedAthleteID)
+	if targetAthleteID == "" {
+		return configured, nil
+	}
+	normalized, err := config.NormalizeAthleteID(targetAthleteID)
+	if err != nil || normalized != configured {
+		return "", errors.New("invalid target athlete")
+	}
+	return normalized, nil
+}
+
+func schemaWithAthleteID(schema any) any {
+	asMap, ok := schema.(map[string]any)
+	if !ok {
+		return schema
+	}
+	out := make(map[string]any, len(asMap))
+	for key, value := range asMap {
+		out[key] = value
+	}
+	properties, _ := asMap["properties"].(map[string]any)
+	copiedProperties := make(map[string]any, len(properties)+1)
+	for key, value := range properties {
+		copiedProperties[key] = value
+	}
+	copiedProperties["athlete_id"] = map[string]any{"type": "string", "description": athleteIDArgumentDescription}
+	out["properties"] = copiedProperties
+	return out
+}
+
+func stripAthleteID(raw json.RawMessage) (json.RawMessage, string, error) {
+	trimmed := strings.TrimSpace(string(raw))
+	if trimmed == "" || trimmed == "null" {
+		return raw, "", nil
+	}
+	if !strings.HasPrefix(trimmed, "{") {
+		return nil, "", errors.New("arguments must be an object")
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return nil, "", err
+	}
+	athleteRaw, ok := fields["athlete_id"]
+	if !ok {
+		return raw, "", nil
+	}
+	delete(fields, "athlete_id")
+	var athleteID string
+	if len(athleteRaw) > 0 && strings.TrimSpace(string(athleteRaw)) != "null" {
+		if err := json.Unmarshal(athleteRaw, &athleteID); err != nil {
+			return nil, "", err
+		}
+	}
+	cleaned, err := json.Marshal(fields)
+	if err != nil {
+		return nil, "", err
+	}
+	return cleaned, athleteID, nil
 }
 
 func (r *safeRegistrar) toolsetAllows(tool tools.Tool) bool {

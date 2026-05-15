@@ -45,6 +45,33 @@ func TestDoJSONSetsAuthUserAgentPathAndDecodes(t *testing.T) {
 	}
 }
 
+func TestDoJSONUsesContextTargetAthleteWithoutMutatingClient(t *testing.T) {
+	t.Parallel()
+
+	paths := make(chan string, 2)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths <- r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"ok"}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	var got map[string]any
+	if err := client.doJSON(WithTargetAthleteID(context.Background(), "i67890"), &got, "athlete", client.athleteID); err != nil {
+		t.Fatalf("doJSON() with target error = %v", err)
+	}
+	if err := client.doJSON(context.Background(), &got, "athlete", client.athleteID); err != nil {
+		t.Fatalf("doJSON() default error = %v", err)
+	}
+	if first := <-paths; first != "/athlete/i67890" {
+		t.Fatalf("first path = %q, want target athlete", first)
+	}
+	if second := <-paths; second != "/athlete/i12345" {
+		t.Fatalf("second path = %q, want original configured athlete", second)
+	}
+}
+
 func TestSportSettingsDecodesPaceUnitsVerbatim(t *testing.T) {
 	t.Parallel()
 

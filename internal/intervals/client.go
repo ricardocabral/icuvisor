@@ -136,6 +136,7 @@ func (c *Client) GetAuthenticatedAthleteProfile(ctx context.Context) (AthleteWit
 }
 
 func (c *Client) newRequest(ctx context.Context, method string, pathParts ...string) (*http.Request, error) {
+	pathParts = c.resolvePathAthleteID(ctx, pathParts)
 	requestURL := c.baseURL.JoinPath(pathParts...)
 	req, err := http.NewRequestWithContext(ctx, method, requestURL.String(), nil)
 	if err != nil {
@@ -144,6 +145,21 @@ func (c *Client) newRequest(ctx context.Context, method string, pathParts ...str
 	req.SetBasicAuth(basicAuthUsername, c.apiKey)
 	req.Header.Set("User-Agent", c.userAgent)
 	return req, nil
+}
+
+func (c *Client) resolvePathAthleteID(ctx context.Context, pathParts []string) []string {
+	targetAthleteID, ok := targetAthleteIDFromContext(ctx)
+	if !ok {
+		return pathParts
+	}
+	for i := 0; i+1 < len(pathParts); i++ {
+		if pathParts[i] == "athlete" && pathParts[i+1] == c.athleteID {
+			out := append([]string(nil), pathParts...)
+			out[i+1] = targetAthleteID
+			return out
+		}
+	}
+	return pathParts
 }
 
 func (c *Client) doJSON(ctx context.Context, out any, pathParts ...string) error {

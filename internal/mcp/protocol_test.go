@@ -15,10 +15,13 @@ import (
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/ricardocabral/icuvisor/internal/coach"
+	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	promptscatalog "github.com/ricardocabral/icuvisor/internal/prompts"
 	"github.com/ricardocabral/icuvisor/internal/resources"
 	"github.com/ricardocabral/icuvisor/internal/safety"
+	"github.com/ricardocabral/icuvisor/internal/toolcatalog"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
@@ -611,6 +614,172 @@ func TestProtocolFiltersToolsByToolsetAndCapability(t *testing.T) {
 	}
 }
 
+type coachACLTestRegistry struct{}
+
+func (coachACLTestRegistry) Register(ctx context.Context, registrar tools.Registrar) error {
+	registered := []tools.Tool{
+		coachACLTestTool(toolcatalog.GetAthleteProfile, safety.ToolsetCore, tools.RequirementRead),
+		coachACLTestTool(toolcatalog.AddOrUpdateEvent, safety.ToolsetCore, tools.RequirementWrite),
+		coachACLTestTool(toolcatalog.DeleteEvent, safety.ToolsetCore, tools.RequirementDelete),
+		coachACLTestTool(toolcatalog.GetPowerCurves, safety.ToolsetFull, tools.RequirementRead),
+	}
+	for _, tool := range registered {
+		if err := registrar.AddTool(tool); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func coachACLTestTool(name string, toolset safety.Toolset, requirement tools.Requirement) tools.Tool {
+	return tools.Tool{
+		Name:        name,
+		Description: "Coach ACL test tool.",
+		InputSchema: map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{}},
+		Toolset:     toolset,
+		Requirement: requirement,
+		Handler: func(ctx context.Context, req tools.Request) (tools.Result, error) {
+			var args map[string]any
+			if err := json.Unmarshal(req.Arguments, &args); err != nil {
+				return tools.Result{}, err
+			}
+			if _, ok := args["athlete_id"]; ok {
+				return tools.Result{}, errors.New("athlete_id reached strict handler")
+			}
+			target, _ := intervals.TargetAthleteIDFromContext(ctx)
+			return tools.TextResult(map[string]any{"target_athlete_id": target}), nil
+		},
+	}
+}
+
+func coachACLTestConfig() config.Config {
+	return config.Config{
+		AthleteID: "i111",
+		CoachMode: coach.ModeOn,
+		Coach: coach.Config{
+			DefaultAthleteID: "i111",
+			Athletes: []coach.Athlete{
+				{ID: "i111", AllowedTools: []string{toolcatalog.GetAthleteProfile}, DeniedTools: []string{toolcatalog.GetPowerCurves}},
+				{ID: "i222", AllowedTools: []string{"get_*"}},
+			},
+		},
+	}
+}
+
+func TestProtocolCoachACLFiltersCatalogAndResolvesAthleteID(t *testing.T) {
+	t.Parallel()
+
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: coachACLTestConfig(), Registry: coachACLTestRegistry{}, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	defer cleanup()
+
+	result, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools() error = %v", err)
+	}
+	names := make([]string, 0, len(result.Tools))
+	var profileSchema map[string]any
+	for _, tool := range result.Tools {
+		names = append(names, tool.Name)
+		if tool.Name == toolcatalog.GetAthleteProfile {
+			profileSchema, _ = tool.InputSchema.(map[string]any)
+		}
+	}
+	if !slices.Contains(names, toolcatalog.GetAthleteProfile) {
+		t.Fatalf("tools/list = %v, missing allowed profile tool", names)
+	}
+	for _, denied := range []string{toolcatalog.AddOrUpdateEvent, toolcatalog.DeleteEvent, toolcatalog.GetPowerCurves} {
+		if slices.Contains(names, denied) {
+			t.Fatalf("tools/list = %v, leaked denied tool %s", names, denied)
+		}
+	}
+	props, _ := profileSchema["properties"].(map[string]any)
+	if _, ok := props["athlete_id"]; !ok {
+		t.Fatalf("get_athlete_profile schema = %#v, missing athlete_id", profileSchema)
+	}
+
+	call, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: map[string]any{"athlete_id": "222"}})
+	if err != nil {
+		t.Fatalf("CallTool() error = %v", err)
+	}
+	if call.IsError {
+		t.Fatalf("CallTool() IsError = true, content = %#v", call.Content)
+	}
+	text := call.Content[0].(*sdkmcp.TextContent).Text
+	if !strings.Contains(text, `"target_athlete_id":"i222"`) {
+		t.Fatalf("CallTool() text = %s, want target i222", text)
+	}
+}
+
+func TestProtocolAthleteScopedSchemasExposeUniformAthleteID(t *testing.T) {
+	t.Parallel()
+
+	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Registry: registry, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	defer cleanup()
+
+	result, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools() error = %v", err)
+	}
+	seen := map[string]struct{}{}
+	for _, tool := range result.Tools {
+		schema, _ := tool.InputSchema.(map[string]any)
+		props, _ := schema["properties"].(map[string]any)
+		_, hasAthleteID := props["athlete_id"]
+		if toolcatalog.IsAthleteScopedTool(tool.Name) {
+			seen[tool.Name] = struct{}{}
+			if !hasAthleteID {
+				t.Fatalf("%s schema missing athlete_id: %#v", tool.Name, schema)
+			}
+			arg, _ := props["athlete_id"].(map[string]any)
+			if arg["description"] != athleteIDArgumentDescription {
+				t.Fatalf("%s athlete_id description = %#v, want %q", tool.Name, arg["description"], athleteIDArgumentDescription)
+			}
+		} else if hasAthleteID {
+			t.Fatalf("non-athlete tool %s unexpectedly has athlete_id", tool.Name)
+		}
+	}
+	for _, name := range toolcatalog.AthleteScopedToolNames() {
+		if _, ok := seen[name]; !ok {
+			t.Fatalf("athlete-scoped tool %s was not registered in full catalog", name)
+		}
+	}
+}
+
+func TestProtocolAthleteIDRejectionMessageIsEnumerationSafe(t *testing.T) {
+	t.Parallel()
+
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: coachACLTestConfig(), Registry: coachACLTestRegistry{}, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	defer cleanup()
+
+	for _, args := range []map[string]any{
+		{"athlete_id": "not-an-id"},
+		{"athlete_id": "999"},
+	} {
+		result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: args})
+		if err != nil {
+			t.Fatalf("CallTool() protocol error = %v", err)
+		}
+		if !result.IsError {
+			t.Fatalf("CallTool(%v) IsError = false, want true", args)
+		}
+		text := result.Content[0].(*sdkmcp.TextContent).Text
+		if text != invalidTargetAthleteMessage {
+			t.Fatalf("CallTool(%v) error text = %q, want enumeration-safe message", args, text)
+		}
+	}
+
+	singleCtx, singleSession, singleCleanup := connectTestClientWithOptions(t, Options{Config: config.Config{AthleteID: "i111"}, Registry: coachACLTestRegistry{}, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	defer singleCleanup()
+	singleResult, err := singleSession.CallTool(singleCtx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: map[string]any{"athlete_id": "222"}})
+	if err != nil {
+		t.Fatalf("single CallTool() protocol error = %v", err)
+	}
+	if !singleResult.IsError || singleResult.Content[0].(*sdkmcp.TextContent).Text != invalidTargetAthleteMessage {
+		t.Fatalf("single mismatch result = %#v, want enumeration-safe error", singleResult)
+	}
+}
+
 func TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry(t *testing.T) {
 	t.Parallel()
 
@@ -651,6 +820,35 @@ func TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry(t *testing.T
 		if !slices.Contains(fullNames, wantName) {
 			t.Fatalf("full tools/list = %v, missing %s", fullNames, wantName)
 		}
+	}
+}
+
+func TestProtocolAdvancedCapabilitiesUsesCoachFilteredCatalog(t *testing.T) {
+	t.Parallel()
+
+	cfg := coachACLTestConfig()
+	evaluator := coach.NewEvaluator(true, cfg.Coach)
+	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{
+		Version:          "test",
+		TimezoneFallback: "UTC",
+		CatalogFilter: func(tool tools.Tool) bool {
+			allowed, _ := evaluator.Evaluate(cfg.Coach.DefaultAthleteID, tool.Name)
+			return allowed
+		},
+	})
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: registry})
+	defer cleanup()
+
+	result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.ICUvisorListAdvancedCapabilities, Arguments: map[string]any{}})
+	if err != nil {
+		t.Fatalf("CallTool(advanced) error = %v", err)
+	}
+	if result.IsError {
+		t.Fatalf("CallTool(advanced) IsError = true, content = %#v", result.Content)
+	}
+	text := result.Content[0].(*sdkmcp.TextContent).Text
+	if strings.Contains(text, toolcatalog.GetPowerCurves) {
+		t.Fatalf("advanced capabilities leaked coach-denied tool: %s", text)
 	}
 }
 

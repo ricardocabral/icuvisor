@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 2
 **Size:** L
 
@@ -40,16 +40,16 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] R009 plan revision: compose all three gates in `internal/mcp.safeRegistrar` so coach-denied tools are absent from SDK tools/list, catalog hash inputs, and skip counts
-- [ ] R009 plan revision: filter `icuvisor_list_advanced_capabilities` against the active-athlete coach ACL so denied tools are not leaked through capability discovery
-- [ ] R009 plan revision: use concurrency-safe context-scoped athlete routing, bind `get_activities` continuation tokens to the resolved athlete, and use one enumeration-safe public target error
-- [ ] R009 plan revision: central wrapper adds/removes `athlete_id` for every athlete-scoped tool and tests schema/wrapper drift; resources are gated/routed or explicitly deferred with rationale
-- [ ] `coach.Evaluator` third gate
-- [ ] Compose order: delete-mode → toolset-tier → coach-ACL (any deny is final)
-- [ ] Uniform optional `athlete_id` arg with consistent description
-- [ ] Per-request normalization + roster check
-- [ ] Context-scoped target routing strips `athlete_id` before strict tool decoders and makes intervals requests use the resolved athlete
-- [ ] Registry/request tests cover coach ACL filtering, wrong-roster rejection, single-athlete mismatch rejection, and delete/toolset/coach composition
+- [x] R009 plan revision: compose all three gates in `internal/mcp.safeRegistrar` so coach-denied tools are absent from SDK tools/list, catalog hash inputs, and skip counts
+- [x] R009 plan revision: filter `icuvisor_list_advanced_capabilities` against the active-athlete coach ACL so denied tools are not leaked through capability discovery
+- [x] R009 plan revision: use concurrency-safe context-scoped athlete routing, bind `get_activities` continuation tokens to the resolved athlete, and use one enumeration-safe public target error
+- [x] R009 plan revision: central wrapper adds/removes `athlete_id` for every athlete-scoped tool and tests schema/wrapper drift; resources are gated/routed or explicitly deferred with rationale
+- [x] `coach.Evaluator` third gate
+- [x] Compose order: delete-mode → toolset-tier → coach-ACL (any deny is final)
+- [x] Uniform optional `athlete_id` arg with consistent description
+- [x] Per-request normalization + roster check
+- [x] Context-scoped target routing strips `athlete_id` before strict tool decoders and makes intervals requests use the resolved athlete
+- [x] Registry/request tests cover coach ACL filtering, wrong-roster rejection, single-athlete mismatch rejection, and delete/toolset/coach composition
 
 ### Step 4: `list_athletes` + `select_athlete`
 
@@ -94,6 +94,7 @@
 - Supervisor steering on 2026-05-15 explicitly treats the authenticated black-box coach-roster probe as an external/operator-deferred validation gate; Step 1 is complete on the documented-gap/fallback basis, not because upstream roster discovery was locally proven.
 - Step 2 plan decisions from R003/R004: config parsing stays cycle-free by validating ACL patterns against an `internal/toolcatalog` package rather than importing `internal/tools`; `internal/toolcatalog` owns exported canonical tool-name constants consumed by registry/config to avoid drift. `allowed_tools` is the positive allow list, `denied_tools` is an explicit veto, and deny patterns override allow patterns (`denied_tools: ["*"]` means deny all, not read-only). Config owns athlete-ID normalization and constructs normalized `internal/coach` values; coach does not import config. Any present coach stanza is validated for typo defense even when mode is `off`, while runtime behavior remains single-athlete because effective coach mode is off.
 - Step 3 plan decisions from R009: the actual exposed-catalog gate lives in `internal/mcp.safeRegistrar` after delete-mode and toolset checks, not only in `internal/tools`; `icuvisor_list_advanced_capabilities` must consume a coach-filtered catalog; intervals routing must use context/per-call state, never mutate the shared client; pagination tokens must include the resolved canonical athlete; and malformed/unknown/mismatch targets must share one public error.
+- Step 3 resource-bypass decision: `icuvisor://athlete-profile` is disabled while coach mode is enabled until a later task adds per-session resource target selection/ACL routing, preventing a resource read from bypassing a denied `get_athlete_profile` tool.
 
 | 2026-05-15 20:00 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 20:00 | Step 1 started | Threat-model review + endpoint probe |
@@ -113,3 +114,4 @@
 | 2026-05-15 20:37 | Review R007 | code Step 2: REVISE |
 | 2026-05-15 20:41 | Review R008 | code Step 2: APPROVE |
 | 2026-05-15 20:45 | Review R009 | plan Step 3: REVISE |
+| 2026-05-15 20:47 | Review R010 | plan Step 3: APPROVE |

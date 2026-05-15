@@ -24,6 +24,7 @@ type RegistryOptions struct {
 	DebugMetadata    bool
 	Capability       safety.Capability
 	Toolset          safety.Toolset
+	CatalogFilter    func(Tool) bool
 }
 
 // NewRegistry creates the default tool registry.
@@ -46,6 +47,7 @@ func NewRegistryWithOptions(client *intervals.Client, opts RegistryOptions) Regi
 		capability:       capability,
 		deleteMode:       safety.ParseMode(capability.Mode()),
 		toolset:          toolset,
+		catalogFilter:    opts.CatalogFilter,
 	}
 }
 
@@ -57,6 +59,7 @@ type defaultRegistry struct {
 	capability       safety.Capability
 	deleteMode       safety.Mode
 	toolset          safety.Toolset
+	catalogFilter    func(Tool) bool
 }
 
 type responseShaping struct {
@@ -215,7 +218,7 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	if err := add(newDeleteGearTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
 		return err
 	}
-	advancedTool := newListAdvancedCapabilitiesTool(collector.tools, r.toolset, shaping)
+	advancedTool := newListAdvancedCapabilitiesTool(filteredCatalog(collector.tools, r.catalogFilter), r.toolset, shaping)
 	if !toolcatalog.IsKnownTool(advancedTool.Name) {
 		return fmt.Errorf("registering %s: not present in shared tool catalog", advancedTool.Name)
 	}
@@ -223,6 +226,19 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 		return fmt.Errorf("registering %s: %w", advancedTool.Name, err)
 	}
 	return nil
+}
+
+func filteredCatalog(catalog []Tool, filter func(Tool) bool) []Tool {
+	if filter == nil {
+		return catalog
+	}
+	out := make([]Tool, 0, len(catalog))
+	for _, tool := range catalog {
+		if filter(tool) {
+			out = append(out, tool)
+		}
+	}
+	return out
 }
 
 type catalogCollectingRegistrar struct {
