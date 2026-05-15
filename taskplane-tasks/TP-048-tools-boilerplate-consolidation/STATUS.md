@@ -73,7 +73,6 @@
 - Step 3 plan review R008: `stringSet` still has callers in `get_activities.go` and `get_activity_streams.go`; remove the helper only after replacing those callers, and scope acceptance to `internal/tools` because `internal/toolchecks/schema_stability.go` has an unrelated helper.
 - Step 4 plan review R011: typed string is already the safe enum shape; preserve serialized values and default empty-as-read behavior while auditing `internal/` references.
 
-
 | 2026-05-15 13:33 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 13:33 | Step 1 started | Helpers + tests |
 | 2026-05-15 13:37 | Review R001 | plan Step 1: UNKNOWN |
@@ -89,3 +88,6 @@
 | 2026-05-15 14:14 | Review R011 | plan Step 4: REVISE |
 | 2026-05-15 14:16 | Review R012 | plan Step 4: APPROVE |
 | 2026-05-15 14:20 | Review R013 | code Step 4: APPROVE |
+
+| 2026-05-15 14:25 | Worker iter 1 | done in 3069s, tools: 177 |
+| 2026-05-15 14:25 | Task complete | .DONE created |
