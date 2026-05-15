@@ -1,6 +1,6 @@
 # TP-036-os-keychain-credential-storage: OS keychain credential storage — Status
 
-**Current Step:** Step 5: Documentation
+**Current Step:** Step 4: Tests + manual sweep
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
@@ -41,7 +41,7 @@
 
 ### Step 4: Tests + manual sweep
 
-**Status:** 🟨 In Progress
+**Status:** 🚧 Blocked
 
 - [x] Table-driven precedence tests
 - [x] Headless-D-Bus degradation test
