@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -158,8 +160,21 @@ func reflectJSONValue(value reflect.Value) (any, error) {
 		return float64(value.Int()), nil
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		return float64(value.Uint()), nil
-	case reflect.Float32, reflect.Float64:
-		return value.Convert(reflect.TypeOf(float64(0))).Float(), nil
+	case reflect.Float32:
+		floatValue := value.Float()
+		if math.IsNaN(floatValue) || math.IsInf(floatValue, 0) {
+			return nil, unsupportedFloatError(floatValue, 32)
+		}
+		if canInterface(value) {
+			return marshalJSONValue(value.Interface())
+		}
+		return float64(float32(floatValue)), nil
+	case reflect.Float64:
+		floatValue := value.Float()
+		if math.IsNaN(floatValue) || math.IsInf(floatValue, 0) {
+			return nil, unsupportedFloatError(floatValue, 64)
+		}
+		return floatValue, nil
 	case reflect.Map:
 		return mapToJSONValue(value)
 	case reflect.Slice, reflect.Array:
@@ -171,6 +186,10 @@ func reflectJSONValue(value reflect.Value) (any, error) {
 	default:
 		return nil, fmt.Errorf("marshaling response value: unsupported JSON value %s", value.Kind())
 	}
+}
+
+func unsupportedFloatError(value float64, bitSize int) error {
+	return fmt.Errorf("marshaling response value: json: unsupported value: %s", strconv.FormatFloat(value, 'g', -1, bitSize))
 }
 
 func mapToJSONValue(value reflect.Value) (any, error) {
@@ -632,7 +651,7 @@ func dropDebugMetadata(value any, path string) any {
 }
 
 func dropDebugVisitor(path string, _ any, _ jsonWalkContainer) jsonWalkDecision {
-	if path != "" && isDebugPath(path) {
+	if path != "" && isDebugPath(path) && !isProvenancePath(path) {
 		return jsonWalkDecision{Drop: true}
 	}
 	return jsonWalkDecision{}
@@ -685,7 +704,12 @@ func indexPath(base string, index int) string {
 }
 
 func isMetaPath(path string) bool {
-	return path == "_meta" || strings.Contains(path, "._meta")
+	for _, part := range strings.Split(path, ".") {
+		if part == "_meta" || strings.HasPrefix(part, "_meta[") {
+			return true
+		}
+	}
+	return false
 }
 
 func rowCollectionSet(rowCollections []string) map[string]bool {

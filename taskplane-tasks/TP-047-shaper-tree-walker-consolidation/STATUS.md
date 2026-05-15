@@ -39,8 +39,8 @@
 - [x] Remove marshal round-trip from `marshalToJSONValue` on happy path
 - [x] Collapse five near-duplicate recursive walkers
 - [x] Preserve every existing path predicate's semantics
-- [ ] Fix R010 float conversion semantics: reject NaN/Inf early with wrapped errors and preserve float32 JSON byte behavior via narrow fallback, with regression tests
-- [ ] Fix R010 provenance debug semantics so `_meta.provenance.<field>.query_type` is preserved and make `_meta` path matching segment-exact, with regression tests
+- [x] Fix R010 float conversion semantics: reject NaN/Inf early with wrapped errors and preserve float32 JSON byte behavior via narrow fallback, with regression tests
+- [x] Fix R010 provenance debug semantics so `_meta.provenance.<field>.query_type` is preserved and make `_meta` path matching segment-exact, with regression tests
 
 ### Step 4: Adjacent P2 cleanups
 

@@ -3,6 +3,7 @@ package response
 import (
 	"bytes"
 	"encoding/json"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
@@ -505,6 +506,34 @@ func TestShapeJSONConversionContract(t *testing.T) {
 		}
 		assertJSONEqual(t, got, map[string]any{"fetched": "2026-05-15T12:30:00Z", "_meta": map[string]any{"server_version": "dev"}})
 	})
+
+	t.Run("non finite floats fail before shaping", func(t *testing.T) {
+		type input struct {
+			Value float64 `json:"value"`
+		}
+		for _, value := range []float64{math.NaN(), math.Inf(1)} {
+			if _, err := Shape(input{Value: value}, Options{}); err == nil {
+				t.Fatalf("Shape(%v) error = nil, want unsupported value", value)
+			}
+		}
+	})
+
+	t.Run("float32 preserves encoding json byte shape", func(t *testing.T) {
+		type input struct {
+			Value float32 `json:"value"`
+		}
+		got, err := Shape(input{Value: float32(1.0 / 3.0)}, Options{})
+		if err != nil {
+			t.Fatalf("Shape() error = %v", err)
+		}
+		gotJSON, err := json.Marshal(got)
+		if err != nil {
+			t.Fatalf("marshal shaped: %v", err)
+		}
+		if !bytes.Contains(gotJSON, []byte(`"value":0.33333334`)) {
+			t.Fatalf("float32 JSON = %s, want encoding/json float32 precision", gotJSON)
+		}
+	})
 }
 
 func TestShapeDoesNotMutateCallerOwnedInput(t *testing.T) {
@@ -533,10 +562,11 @@ func TestShapeProvenanceDebugAndScaleWalkerContract(t *testing.T) {
 	input := map[string]any{
 		"feel":       float64(4),
 		"fetched_at": "2026-05-15T12:00:00Z",
+		"_metadata":  map[string]any{"sleepScore": float64(82)},
 		"_meta": map[string]any{
 			"scales": map[string]any{"feel": "stale"},
 			"provenance": map[string]any{
-				"feel": map[string]any{"source": "manual", "fetched_at": "2026-05-15T11:00:00Z"},
+				"feel": map[string]any{"source": "manual", "fetched_at": "2026-05-15T11:00:00Z", "query_type": "bridge"},
 			},
 		},
 	}
@@ -545,10 +575,14 @@ func TestShapeProvenanceDebugAndScaleWalkerContract(t *testing.T) {
 		t.Fatalf("Shape() error = %v", err)
 	}
 	assertJSONEqual(t, got, map[string]any{
-		"feel": float64(4),
+		"feel":      float64(4),
+		"_metadata": map[string]any{"sleepScore": float64(82)},
 		"_meta": map[string]any{
-			"provenance":     map[string]any{"feel": map[string]any{"source": "manual", "fetched_at": "2026-05-15T11:00:00Z"}},
-			"scales":         map[string]any{"feel": "1-5 (athlete-reported feel)"},
+			"provenance": map[string]any{"feel": map[string]any{"source": "manual", "fetched_at": "2026-05-15T11:00:00Z", "query_type": "bridge"}},
+			"scales": map[string]any{
+				"feel":       "1-5 (athlete-reported feel)",
+				"sleepScore": "0-100 (device-imported nightly score)",
+			},
 			"server_version": "dev",
 		},
 	})
