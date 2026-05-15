@@ -42,7 +42,7 @@ type catalogSnapshot struct {
 }
 
 var responseOwnedMetaKeys = map[string]struct{}{
-	"server_version":         {},
+	"server_version":        {},
 	"catalog_hash":          {},
 	"schema_changed":        {},
 	"schema_change_message": {},
