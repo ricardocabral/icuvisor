@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 11
+**Review Counter:** 12
 **Iteration:** 1
 **Size:** M
 
@@ -119,12 +119,13 @@ Masking decision: the implementation will use the standard `golang.org/x/term` `
 Plan review R011 requires the write plan before coding. Implement Step 4 as follows:
 
 - Preserve no-write guarantees: existing key/config prompts still happen before reading the new key; online verification must finish successfully before any write; 401/403 and network failures without `--offline` return before config/keychain writes.
-- After successful verification/offline collection, write order is: validate normalized athlete ID + timezone; write non-secret config atomically; call `CredentialStore.Set(ctx, credstore.IntervalsAPIKeyAccount, secret)`; call `CredentialStore.Get(ctx, credstore.IntervalsAPIKeyAccount)` and require an exact secret match; only then print saved/final-test output. If config write succeeds but keychain set/get fails, return a non-secret error and do not claim success.
+- After successful verification/offline collection, write order is: validate normalized athlete ID + timezone; write non-secret config atomically; call `CredentialStore.Set(ctx, credstore.IntervalsAPIKeyAccount, secret)`; call `CredentialStore.Get(ctx, credstore.IntervalsAPIKeyAccount)` and require an exact secret match; for online setup, call the injected/default profile fetcher again with the stored/retrieved secret as the final typed-client test; only then print saved/final-test output. If config write succeeds but keychain set/get/final verification fails, return a non-secret error and do not claim success.
 - Use `credstore.IntervalsAPIKeyAccount` for both `Set` and `Get`. Error wrapping may name the keychain service/account but must never include the API key. A round-trip mismatch is an error like `stored API key verification failed` with no actual/expected values.
-- Add `internal/config.Write(ctx, path, Config, options...)` (or equivalent) using a dedicated file/write struct that cannot emit `api_key`. It writes only `athlete_id`, `timezone`, and `api_base_url` when non-default/non-empty. Validate/normalize athlete ID and timezone before writing. Add a round-trip test using `config.Load` plus a fake credential store.
-- Enforce no clobber at the write point as well as the earlier prompt: parent dirs created `0700`; temp file contains no secrets; rename atomically; no-clobber uses exclusive create/link/rename semantics unless `--force` is true. Config file mode should be private (`0600`).
-- Replace the placeholder output with the UX script saved message: key stored in OS keychain, athlete id/timezone in the config path, final `Test connection OK: <name>, FTP <n> W` for online setup, and the Claude Desktop docs pointer. Offline mode should clearly say verification was skipped instead of claiming test success.
-- Tests: happy write path; JSON lacks `api_key`; keychain `Set` failure; keychain `Get` failure; round-trip mismatch; existing config with and without `--force`; config write failure; offline write path; existing 401/network failures still produce no writes; config round-trip with fake credential store.
+- Add `internal/config.Write(ctx, path, Config, WriteOptions{AllowOverwrite bool})` using a dedicated file/write struct that cannot emit `api_key`. It writes only `athlete_id`, `timezone`, and `api_base_url` when non-default/non-empty. Validate/normalize athlete ID and timezone before writing. Add a round-trip test using `config.Load` plus a fake credential store.
+- Config overwrite semantics: the pre-secret prompt can authorize an overwrite. Track `configOverwriteAllowed` when the athlete answers yes to `A config file already exists...Overwrite? [y/N]`, and set it automatically when `--force` bypasses the prompt. Pass that value as `WriteOptions.AllowOverwrite`. If the file did not exist during preflight but appears before the write, `AllowOverwrite` remains false and the writer fails without clobbering (race guard). Default-no cancels before reading the secret. Tests should cover existing config default-no, existing config yes without `--force`, existing config with `--force`, and race-created config without authorization.
+- Enforce no clobber at the write point as well as the earlier prompt: parent dirs created `0700`; temp file contains no secrets; rename atomically; no-clobber uses exclusive create/link/rename semantics unless `WriteOptions.AllowOverwrite` is true. Config file mode should be private (`0600`).
+- Replace the placeholder output with the UX script saved message: key stored in OS keychain, athlete id/timezone in the config path, final online verification call `Test connection OK: <name>, FTP <n> W` after the keychain round-trip, and the Claude Desktop docs pointer. Offline mode should clearly say verification was skipped instead of claiming test success.
+- Tests: happy write path with the second final-test fetch; JSON lacks `api_key`; keychain `Set` failure; keychain `Get` failure; round-trip mismatch; existing config default-no / prompt-yes / `--force` / race-created no-clobber; config write failure; offline write path; existing 401/network failures still produce no writes; config round-trip with fake credential store.
 
 ### Step 2 implementation plan
 
@@ -148,3 +149,4 @@ Plan review R003 requested a concrete CLI wiring plan before coding. Implement S
 | 2026-05-15 19:15 | Review R008 | plan Step 3: APPROVE |
 | 2026-05-15 19:25 | Review R009 | code Step 3: REVISE |
 | 2026-05-15 19:39 | Review R011 | plan Step 4: REVISE |
+| 2026-05-15 19:41 | Review R012 | plan Step 4: REVISE |
