@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/ricardocabral/icuvisor/internal/coach"
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/credstore"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
@@ -274,19 +275,22 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 	if err != nil {
 		return err
 	}
+	selectionStore := coach.NewSelectionStore(info.Config.Coach.DefaultAthleteID)
 	server, err := mcpserver.NewServer(ctx, mcpserver.Options{
 		Config:         info.Config,
 		Version:        info.Version,
 		Logger:         logger,
 		Capability:     capability,
 		Toolset:        toolset,
+		SelectionStore: selectionStore,
 		PromptRegistry: prompts.NewRegistry(),
 		ResourceRegistry: resources.NewRegistryWithOptions(client, resources.ResourceOptions{
-			Version:          info.Version,
-			TimezoneFallback: info.Config.Timezone,
-			DebugMetadata:    info.DebugMetadata,
-			DeleteMode:       deleteMode,
-			Toolset:          toolset,
+			Version:               info.Version,
+			TimezoneFallback:      info.Config.Timezone,
+			DebugMetadata:         info.DebugMetadata,
+			DeleteMode:            deleteMode,
+			Toolset:               toolset,
+			DisableAthleteProfile: info.Config.CoachModeEnabled(),
 		}),
 		Registry: tools.NewRegistryWithOptions(client, tools.RegistryOptions{
 			Version:          info.Version,
@@ -294,6 +298,8 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 			DebugMetadata:    info.DebugMetadata,
 			Capability:       capability,
 			Toolset:          toolset,
+			CoachModeEnabled: info.Config.CoachModeEnabled(),
+			CoachConfig:      info.Config.Coach,
 		}),
 	})
 	if err != nil {

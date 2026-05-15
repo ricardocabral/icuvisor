@@ -127,6 +127,8 @@ make build
 
 If you built from source instead of installing the DMG, use `./bin/icuvisor setup` and `./bin/icuvisor version` instead.
 
+For multi-athlete coach setups, see [`docs/coach-mode.md`](docs/coach-mode.md) for the feature flag, roster config, per-athlete ACLs, and catalog-cache caveat.
+
 ### Getting an API key
 
 Create an intervals.icu API key at <https://intervals.icu/settings>, then run `icuvisor setup` to paste it into a masked prompt. Setup verifies the key, stores it under service `icuvisor` and account `intervals-icu-api-key`, autodetects your athlete ID/timezone, and writes only non-secret fields to the config file.

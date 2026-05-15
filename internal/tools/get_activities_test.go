@@ -175,7 +175,7 @@ func TestFetchActivitiesPageBoundaryGoldenFixtures(t *testing.T) {
 				token = parsed
 			}
 
-			activities, nextToken, err := fetchActivitiesPage(context.Background(), client, tc.args, token)
+			activities, nextToken, err := fetchActivitiesPage(context.Background(), client, tc.args, token, "")
 			if err != nil {
 				t.Fatalf("fetchActivitiesPage() error = %v", err)
 			}
@@ -186,6 +186,29 @@ func TestFetchActivitiesPageBoundaryGoldenFixtures(t *testing.T) {
 				t.Fatalf("next token = %q, want %q", nextToken, tc.wantToken)
 			}
 		})
+	}
+}
+
+func TestFetchActivitiesPageTokenBindsAthlete(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"a2","name":"Second","type":"Run","start_date_local":"2026-01-02T07:00:00","distance":1000,"moving_time":300}`,
+		`{"id":"a1","name":"First","type":"Run","start_date_local":"2026-01-01T07:00:00","distance":1000,"moving_time":300}`,
+	}, "metric")
+	_, nextToken, err := fetchActivitiesPage(context.Background(), client, GetActivitiesRequest{Oldest: "2026-01-01", PageSize: 1}, nil, "i222")
+	if err != nil {
+		t.Fatalf("fetchActivitiesPage() error = %v", err)
+	}
+	if nextToken == "" {
+		t.Fatal("next token = empty, want token")
+	}
+	parsed, err := parseActivitiesPageToken(nextToken)
+	if err != nil {
+		t.Fatalf("parseActivitiesPageToken() error = %v", err)
+	}
+	if parsed.AthleteID != "i222" {
+		t.Fatalf("token athlete_id = %q, want i222", parsed.AthleteID)
 	}
 }
 

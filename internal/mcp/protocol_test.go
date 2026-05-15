@@ -10,15 +10,19 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/ricardocabral/icuvisor/internal/coach"
+	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	promptscatalog "github.com/ricardocabral/icuvisor/internal/prompts"
 	"github.com/ricardocabral/icuvisor/internal/resources"
 	"github.com/ricardocabral/icuvisor/internal/safety"
+	"github.com/ricardocabral/icuvisor/internal/toolcatalog"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
@@ -611,6 +615,617 @@ func TestProtocolFiltersToolsByToolsetAndCapability(t *testing.T) {
 	}
 }
 
+type coachACLTestRegistry struct{}
+
+func (coachACLTestRegistry) Register(ctx context.Context, registrar tools.Registrar) error {
+	registered := []tools.Tool{
+		coachACLTestTool(toolcatalog.GetAthleteProfile, safety.ToolsetCore, tools.RequirementRead),
+		coachACLTestTool(toolcatalog.AddOrUpdateEvent, safety.ToolsetCore, tools.RequirementWrite),
+		coachACLTestTool(toolcatalog.DeleteEvent, safety.ToolsetCore, tools.RequirementDelete),
+		coachACLTestTool(toolcatalog.GetPowerCurves, safety.ToolsetFull, tools.RequirementRead),
+	}
+	for _, tool := range registered {
+		if err := registrar.AddTool(tool); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func coachACLTestTool(name string, toolset safety.Toolset, requirement tools.Requirement) tools.Tool {
+	return tools.Tool{
+		Name:        name,
+		Description: "Coach ACL test tool.",
+		InputSchema: map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{}},
+		Toolset:     toolset,
+		Requirement: requirement,
+		Handler: func(ctx context.Context, req tools.Request) (tools.Result, error) {
+			var args map[string]any
+			if err := json.Unmarshal(req.Arguments, &args); err != nil {
+				return tools.Result{}, err
+			}
+			if _, ok := args["athlete_id"]; ok {
+				return tools.Result{}, errors.New("athlete_id reached strict handler")
+			}
+			target, _ := intervals.TargetAthleteIDFromContext(ctx)
+			return tools.TextResult(map[string]any{"target_athlete_id": target}), nil
+		},
+	}
+}
+
+func coachACLTestConfig() config.Config {
+	return config.Config{
+		AthleteID: "i111",
+		CoachMode: coach.ModeOn,
+		Coach: coach.Config{
+			DefaultAthleteID: "i111",
+			Athletes: []coach.Athlete{
+				{ID: "i111", AllowedTools: []string{toolcatalog.GetAthleteProfile}, DeniedTools: []string{toolcatalog.GetPowerCurves}},
+				{ID: "i222", AllowedTools: []string{"get_*"}},
+			},
+		},
+	}
+}
+
+func TestProtocolCoachACLFiltersCatalogAndResolvesAthleteID(t *testing.T) {
+	t.Parallel()
+
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: coachACLTestConfig(), Registry: coachACLTestRegistry{}, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	defer cleanup()
+
+	result, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools() error = %v", err)
+	}
+	names := make([]string, 0, len(result.Tools))
+	var profileSchema map[string]any
+	for _, tool := range result.Tools {
+		names = append(names, tool.Name)
+		if tool.Name == toolcatalog.GetAthleteProfile {
+			profileSchema, _ = tool.InputSchema.(map[string]any)
+		}
+	}
+	if !slices.Contains(names, toolcatalog.GetAthleteProfile) {
+		t.Fatalf("tools/list = %v, missing allowed profile tool", names)
+	}
+	for _, denied := range []string{toolcatalog.AddOrUpdateEvent, toolcatalog.DeleteEvent, toolcatalog.GetPowerCurves} {
+		if slices.Contains(names, denied) {
+			t.Fatalf("tools/list = %v, leaked denied tool %s", names, denied)
+		}
+	}
+	props, _ := profileSchema["properties"].(map[string]any)
+	if _, ok := props["athlete_id"]; !ok {
+		t.Fatalf("get_athlete_profile schema = %#v, missing athlete_id", profileSchema)
+	}
+
+	call, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: map[string]any{"athlete_id": "222"}})
+	if err != nil {
+		t.Fatalf("CallTool() error = %v", err)
+	}
+	if call.IsError {
+		t.Fatalf("CallTool() IsError = true, content = %#v", call.Content)
+	}
+	text := call.Content[0].(*sdkmcp.TextContent).Text
+	if !strings.Contains(text, `"target_athlete_id":"i222"`) {
+		t.Fatalf("CallTool() text = %s, want target i222", text)
+	}
+}
+
+func TestProtocolAthleteScopedSchemasExposeUniformAthleteID(t *testing.T) {
+	t.Parallel()
+
+	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	cfg := config.Config{AthleteID: "i111", CoachMode: coach.ModeOn, Coach: coach.Config{DefaultAthleteID: "i111", Athletes: []coach.Athlete{{ID: "i111", AllowedTools: []string{"*"}}}}}
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: registry, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	defer cleanup()
+
+	result, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools() error = %v", err)
+	}
+	seen := map[string]struct{}{}
+	for _, tool := range result.Tools {
+		schema, _ := tool.InputSchema.(map[string]any)
+		props, _ := schema["properties"].(map[string]any)
+		_, hasAthleteID := props["athlete_id"]
+		if toolcatalog.IsAthleteScopedTool(tool.Name) {
+			seen[tool.Name] = struct{}{}
+			if !hasAthleteID {
+				t.Fatalf("%s schema missing athlete_id: %#v", tool.Name, schema)
+			}
+			arg, _ := props["athlete_id"].(map[string]any)
+			if arg["description"] != athleteIDArgumentDescription {
+				t.Fatalf("%s athlete_id description = %#v, want %q", tool.Name, arg["description"], athleteIDArgumentDescription)
+			}
+		} else if hasAthleteID {
+			t.Fatalf("non-athlete tool %s unexpectedly has athlete_id", tool.Name)
+		}
+	}
+	for _, name := range toolcatalog.AthleteScopedToolNames() {
+		if _, ok := seen[name]; !ok {
+			t.Fatalf("athlete-scoped tool %s was not registered in full catalog", name)
+		}
+	}
+}
+
+func TestProtocolCoachToolsAbsentWhenCoachModeOff(t *testing.T) {
+	t.Parallel()
+
+	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC"})
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Registry: registry})
+	defer cleanup()
+
+	result, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools() error = %v", err)
+	}
+	for _, forbidden := range []string{toolcatalog.ListAthletes, toolcatalog.SelectAthlete} {
+		if hasTool(result.Tools, forbidden) {
+			t.Fatalf("coach mode off tools/list exposed %s", forbidden)
+		}
+		if _, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: forbidden, Arguments: map[string]any{}}); err == nil || !strings.Contains(err.Error(), "unknown tool") {
+			t.Fatalf("CallTool(%s) error = %v, want unknown tool", forbidden, err)
+		}
+	}
+}
+
+func TestProtocolSelectAthleteUpdatesVisibleCatalogAndListAthletes(t *testing.T) {
+	t.Parallel()
+
+	cfg := coachACLTestConfig()
+	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull, CoachModeEnabled: true, CoachConfig: cfg.Coach})
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: registry, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	defer cleanup()
+
+	initial, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("initial ListTools() error = %v", err)
+	}
+	if hasTool(initial.Tools, toolcatalog.GetPowerCurves) {
+		t.Fatalf("initial tools/list leaked second-athlete tool %s", toolcatalog.GetPowerCurves)
+	}
+	if !hasTool(initial.Tools, toolcatalog.ListAthletes) || !hasTool(initial.Tools, toolcatalog.SelectAthlete) {
+		t.Fatalf("initial tools/list missing coach tools: %#v", initial.Tools)
+	}
+
+	listResult, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.ListAthletes, Arguments: map[string]any{}})
+	if err != nil || listResult.IsError {
+		t.Fatalf("list_athletes result = %#v err=%v", listResult, err)
+	}
+	var listParsed struct {
+		Meta struct {
+			Source          string `json:"source"`
+			ActiveAthleteID string `json:"active_athlete_id"`
+		} `json:"_meta"`
+	}
+	if err := json.Unmarshal([]byte(listResult.Content[0].(*sdkmcp.TextContent).Text), &listParsed); err != nil {
+		t.Fatalf("unmarshal list_athletes: %v", err)
+	}
+	if listParsed.Meta.Source != "config" || listParsed.Meta.ActiveAthleteID != "i111" {
+		t.Fatalf("list_athletes _meta = %#v, want config source and active i111", listParsed.Meta)
+	}
+
+	selectResult, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.SelectAthlete, Arguments: map[string]any{"athlete_id": "222"}})
+	if err != nil || selectResult.IsError {
+		t.Fatalf("select_athlete result = %#v err=%v", selectResult, err)
+	}
+	var selectParsed struct {
+		PreviousAthleteID string   `json:"previous_athlete_id"`
+		NewAthleteID      string   `json:"new_athlete_id"`
+		AllowedTools      []string `json:"allowed_tools"`
+		Meta              struct {
+			RequiresNewConversation bool `json:"requires_new_conversation"`
+		} `json:"_meta"`
+	}
+	if err := json.Unmarshal([]byte(selectResult.Content[0].(*sdkmcp.TextContent).Text), &selectParsed); err != nil {
+		t.Fatalf("unmarshal select_athlete: %v", err)
+	}
+	if selectParsed.PreviousAthleteID != "i111" || selectParsed.NewAthleteID != "i222" || !selectParsed.Meta.RequiresNewConversation {
+		t.Fatalf("select_athlete response = %#v, want previous/new and requires_new_conversation", selectParsed)
+	}
+
+	after, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("after ListTools() error = %v", err)
+	}
+	requireSameStrings(t, "select_athlete.allowed_tools", selectParsed.AllowedTools, toolNamesFromList(after.Tools))
+	if !hasTool(after.Tools, toolcatalog.GetPowerCurves) {
+		t.Fatalf("after tools/list = %#v, missing selected-athlete full read tool", after.Tools)
+	}
+}
+
+func hasTool(tools []*sdkmcp.Tool, name string) bool {
+	for _, tool := range tools {
+		if tool.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func toolNamesFromList(tools []*sdkmcp.Tool) []string {
+	names := make([]string, 0, len(tools))
+	for _, tool := range tools {
+		names = append(names, tool.Name)
+	}
+	slices.Sort(names)
+	return names
+}
+
+func requireSameStrings(t *testing.T, label string, got []string, want []string) {
+	t.Helper()
+	got = append([]string(nil), got...)
+	want = append([]string(nil), want...)
+	slices.Sort(got)
+	slices.Sort(want)
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Fatalf("%s = %v, want %v", label, got, want)
+	}
+}
+
+func advancedCapabilityNames(t *testing.T, result *sdkmcp.CallToolResult) []string {
+	t.Helper()
+	var parsed struct {
+		AdvancedCapabilities []struct {
+			Name string `json:"name"`
+		} `json:"advanced_capabilities"`
+		Meta struct {
+			Count int `json:"count"`
+		} `json:"_meta"`
+	}
+	if err := json.Unmarshal([]byte(result.Content[0].(*sdkmcp.TextContent).Text), &parsed); err != nil {
+		t.Fatalf("unmarshal advanced capabilities: %v", err)
+	}
+	if parsed.Meta.Count != len(parsed.AdvancedCapabilities) {
+		t.Fatalf("advanced capabilities count = %d, want %d rows", parsed.Meta.Count, len(parsed.AdvancedCapabilities))
+	}
+	names := make([]string, 0, len(parsed.AdvancedCapabilities))
+	for _, row := range parsed.AdvancedCapabilities {
+		names = append(names, row.Name)
+	}
+	slices.Sort(names)
+	return names
+}
+
+func TestProtocolGateCompositionTruthTable(t *testing.T) {
+	t.Parallel()
+
+	type representativeTool struct {
+		name        string
+		toolset     safety.Toolset
+		requirement tools.Requirement
+	}
+	representatives := []representativeTool{
+		{name: toolcatalog.DeleteEvent, toolset: safety.ToolsetCore, requirement: tools.RequirementDelete},
+		{name: toolcatalog.GetAthleteProfile, toolset: safety.ToolsetCore, requirement: tools.RequirementRead},
+		{name: toolcatalog.AddOrUpdateEvent, toolset: safety.ToolsetCore, requirement: tools.RequirementWrite},
+		{name: toolcatalog.GetPowerCurves, toolset: safety.ToolsetFull, requirement: tools.RequirementRead},
+	}
+
+	for _, representative := range representatives {
+		for _, mode := range []safety.Mode{safety.ModeNone, safety.ModeSafe, safety.ModeFull} {
+			for _, toolset := range []safety.Toolset{safety.ToolsetCore, safety.ToolsetFull} {
+				for _, coachAllows := range []bool{false, true} {
+					coachLabel := "coach-deny"
+					if coachAllows {
+						coachLabel = "coach-allow"
+					}
+					t.Run(representative.name+"/delete-mode-"+mode.String()+"/toolset-"+toolset.String()+"/"+coachLabel, func(t *testing.T) {
+						t.Parallel()
+
+						activeAthlete := coach.Athlete{ID: "i111", AllowedTools: []string{representative.name}}
+						if !coachAllows {
+							activeAthlete.DeniedTools = []string{representative.name}
+						}
+						cfg := config.Config{
+							AthleteID: "i111",
+							CoachMode: coach.ModeOn,
+							Coach:     coach.Config{DefaultAthleteID: "i111", Athletes: []coach.Athlete{activeAthlete, {ID: "i222", AllowedTools: []string{representative.name}}}},
+						}
+						registry := registryFunc(func(_ context.Context, registrar tools.Registrar) error {
+							return registrar.AddTool(coachACLTestTool(representative.name, representative.toolset, representative.requirement))
+						})
+						ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: registry, Capability: safety.NewCapability(mode), Toolset: toolset})
+						defer cleanup()
+
+						result, err := session.ListTools(ctx, nil)
+						if err != nil {
+							t.Fatalf("ListTools() error = %v", err)
+						}
+						capabilityAllows := representative.requirement == tools.RequirementRead || representative.requirement == tools.RequirementWrite && mode != safety.ModeNone || representative.requirement == tools.RequirementDelete && mode == safety.ModeFull
+						toolsetAllows := representative.toolset == safety.ToolsetCore || toolset == safety.ToolsetFull
+						wantVisible := capabilityAllows && toolsetAllows && coachAllows
+						if got := hasTool(result.Tools, representative.name); got != wantVisible {
+							t.Fatalf("tools/list visibility for %s = %t, want %t", representative.name, got, wantVisible)
+						}
+
+						call, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: representative.name, Arguments: map[string]any{}})
+						switch {
+						case wantVisible:
+							if err != nil || call.IsError {
+								t.Fatalf("CallTool(%s) = %#v err=%v, want success", representative.name, call, err)
+							}
+							if text := call.Content[0].(*sdkmcp.TextContent).Text; !strings.Contains(text, `"target_athlete_id":"i111"`) {
+								t.Fatalf("CallTool(%s) text = %s, want default target i111", representative.name, text)
+							}
+						case !capabilityAllows || !toolsetAllows:
+							if err == nil || !strings.Contains(err.Error(), "unknown tool") {
+								t.Fatalf("CallTool(%s) error = %v, want unknown tool from registration gate", representative.name, err)
+							}
+						default:
+							if err != nil {
+								t.Fatalf("CallTool(%s) protocol error = %v", representative.name, err)
+							}
+							if !call.IsError {
+								t.Fatalf("CallTool(%s) IsError = false, want coach ACL veto", representative.name)
+							}
+							if text := call.Content[0].(*sdkmcp.TextContent).Text; text != invalidTargetAthleteMessage {
+								t.Fatalf("CallTool(%s) error text = %q, want %q", representative.name, text, invalidTargetAthleteMessage)
+							}
+						}
+					})
+				}
+			}
+		}
+	}
+}
+
+func TestProtocolVisibleCatalogMetadataMatchesToolsListAndSessionsAreIsolated(t *testing.T) {
+	cfg := coachACLTestConfig()
+	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull, CoachModeEnabled: true, CoachConfig: cfg.Coach})
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("net.Listen() error = %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	server, err := NewServer(ctx, Options{Version: "test", Config: cfg, Registry: registry, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	if err != nil {
+		listener.Close()
+		t.Fatalf("NewServer() error = %v", err)
+	}
+	runDone := make(chan error, 1)
+	go func() { runDone <- server.ServeStreamableHTTP(ctx, listener) }()
+	endpoint := "http://" + listener.Addr().String() + StreamableHTTPPath
+	connect := func(name string) *sdkmcp.ClientSession {
+		t.Helper()
+		client := sdkmcp.NewClient(&sdkmcp.Implementation{Name: name, Version: "test"}, nil)
+		session, err := client.Connect(ctx, &sdkmcp.StreamableClientTransport{Endpoint: endpoint, HTTPClient: &http.Client{Timeout: 2 * time.Second}, MaxRetries: -1, DisableStandaloneSSE: true}, nil)
+		if err != nil {
+			t.Fatalf("%s Connect() error = %v", name, err)
+		}
+		return session
+	}
+	sessionA := connect("icuvisor-test-client-a")
+	sessionB := connect("icuvisor-test-client-b")
+	defer func() {
+		sessionB.Close()
+		sessionA.Close()
+		cancel()
+		waitForServerRun(t, runDone)
+	}()
+
+	initialB, err := sessionB.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("session B initial ListTools() error = %v", err)
+	}
+	if hasTool(initialB.Tools, toolcatalog.GetPowerCurves) {
+		t.Fatalf("session B initial tools/list leaked %s", toolcatalog.GetPowerCurves)
+	}
+
+	selectedA, err := sessionA.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.SelectAthlete, Arguments: map[string]any{"athlete_id": "222"}})
+	if err != nil || selectedA.IsError {
+		t.Fatalf("session A select_athlete = %#v err=%v", selectedA, err)
+	}
+	var selected struct {
+		AllowedTools []string `json:"allowed_tools"`
+	}
+	if err := json.Unmarshal([]byte(selectedA.Content[0].(*sdkmcp.TextContent).Text), &selected); err != nil {
+		t.Fatalf("unmarshal select_athlete: %v", err)
+	}
+	afterA, err := sessionA.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("session A after ListTools() error = %v", err)
+	}
+	requireSameStrings(t, "select_athlete.allowed_tools", selected.AllowedTools, toolNamesFromList(afterA.Tools))
+	if !hasTool(afterA.Tools, toolcatalog.GetPowerCurves) {
+		t.Fatalf("session A tools/list missing %s after selecting i222", toolcatalog.GetPowerCurves)
+	}
+
+	afterB, err := sessionB.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("session B after ListTools() error = %v", err)
+	}
+	requireSameStrings(t, "session B tools/list", toolNamesFromList(afterB.Tools), toolNamesFromList(initialB.Tools))
+	if hasTool(afterB.Tools, toolcatalog.GetPowerCurves) {
+		t.Fatalf("session B tools/list changed after session A selection: %#v", afterB.Tools)
+	}
+}
+
+func TestProtocolSelectAthleteMetadataUsesPostGateCatalog(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		mode      safety.Mode
+		toolset   safety.Toolset
+		athletes  []coach.Athlete
+		wantNew   bool
+		forbidden string
+	}{
+		{name: "delete hidden by mode", mode: safety.ModeSafe, toolset: safety.ToolsetFull, athletes: []coach.Athlete{{ID: "i111", AllowedTools: []string{toolcatalog.GetAthleteProfile, toolcatalog.DeleteEvent}}, {ID: "i222", AllowedTools: []string{toolcatalog.GetAthleteProfile}}}, wantNew: false, forbidden: toolcatalog.DeleteEvent},
+		{name: "full hidden by core", mode: safety.ModeFull, toolset: safety.ToolsetCore, athletes: []coach.Athlete{{ID: "i111", AllowedTools: []string{toolcatalog.GetAthleteProfile, toolcatalog.GetPowerCurves}}, {ID: "i222", AllowedTools: []string{toolcatalog.GetAthleteProfile}}}, wantNew: false, forbidden: toolcatalog.GetPowerCurves},
+		{name: "visible core read changes", mode: safety.ModeFull, toolset: safety.ToolsetFull, athletes: []coach.Athlete{{ID: "i111", AllowedTools: []string{toolcatalog.GetAthleteProfile}}, {ID: "i222", AllowedTools: []string{"get_*"}}}, wantNew: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := config.Config{AthleteID: "i111", CoachMode: coach.ModeOn, Coach: coach.Config{DefaultAthleteID: "i111", Athletes: tc.athletes}}
+			registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(tc.mode), Toolset: tc.toolset, CoachModeEnabled: true, CoachConfig: cfg.Coach})
+			ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: registry, Capability: safety.NewCapability(tc.mode), Toolset: tc.toolset})
+			defer cleanup()
+
+			result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.SelectAthlete, Arguments: map[string]any{"athlete_id": "222"}})
+			if err != nil || result.IsError {
+				t.Fatalf("select_athlete result = %#v err=%v", result, err)
+			}
+			var parsed struct {
+				AllowedTools []string `json:"allowed_tools"`
+				Meta         struct {
+					RequiresNewConversation bool `json:"requires_new_conversation"`
+				} `json:"_meta"`
+			}
+			if err := json.Unmarshal([]byte(result.Content[0].(*sdkmcp.TextContent).Text), &parsed); err != nil {
+				t.Fatalf("unmarshal select_athlete: %v", err)
+			}
+			if parsed.Meta.RequiresNewConversation != tc.wantNew {
+				t.Fatalf("requires_new_conversation = %t, want %t; tools=%v", parsed.Meta.RequiresNewConversation, tc.wantNew, parsed.AllowedTools)
+			}
+			if tc.forbidden != "" && slices.Contains(parsed.AllowedTools, tc.forbidden) {
+				t.Fatalf("allowed_tools = %v, should not include hidden %s", parsed.AllowedTools, tc.forbidden)
+			}
+		})
+	}
+}
+
+func TestProtocolCoachModeEndToEndRoutesSelectedDefaultAndOverrideTargets(t *testing.T) {
+	cfg := config.Config{
+		AthleteID: "i111",
+		CoachMode: coach.ModeOn,
+		Coach: coach.Config{
+			DefaultAthleteID: "i111",
+			Athletes: []coach.Athlete{
+				{ID: "i111", Label: "Full access athlete", AllowedTools: []string{"*"}},
+				{ID: "i222", Label: "Read only athlete", AllowedTools: []string{"get_*"}},
+			},
+		},
+	}
+	var upstreamRequests atomic.Int64
+	client, closeServer := newProtocolIntervalsClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		upstreamRequests.Add(1)
+		if r.Method != http.MethodGet || (r.URL.Path != "/athlete/i111" && r.URL.Path != "/athlete/i222") {
+			t.Fatalf("unexpected intervals request %s %s", r.Method, r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/athlete/i111":
+			_, _ = io.WriteString(w, `{"id":"111","name":"Full Athlete","measurement_preference":"METRIC","timezone":"UTC","sportSettings":[{"types":["Ride"],"ftp":300}]}`)
+		case "/athlete/i222":
+			_, _ = io.WriteString(w, `{"id":"222","name":"Read Only Athlete","measurement_preference":"METRIC","timezone":"UTC","sportSettings":[{"types":["Ride"],"ftp":200}]}`)
+		}
+	}))
+	defer closeServer()
+
+	registry := tools.NewRegistryWithOptions(client, tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull, CoachModeEnabled: true, CoachConfig: cfg.Coach})
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: registry, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	defer cleanup()
+
+	initial, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("initial ListTools() error = %v", err)
+	}
+	for _, want := range []string{toolcatalog.GetAthleteProfile, toolcatalog.AddOrUpdateEvent, toolcatalog.DeleteEvent, toolcatalog.SelectAthlete, toolcatalog.ListAthletes} {
+		if !hasTool(initial.Tools, want) {
+			t.Fatalf("initial tools/list missing %s", want)
+		}
+	}
+
+	profile, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: map[string]any{}})
+	if err != nil || profile.IsError {
+		t.Fatalf("default get_athlete_profile = %#v err=%v", profile, err)
+	}
+	if text := profile.Content[0].(*sdkmcp.TextContent).Text; !strings.Contains(text, `"athlete_id":"i111"`) || !strings.Contains(text, `"ftp_watts":300`) {
+		t.Fatalf("default profile text = %s, want i111 route", text)
+	}
+
+	selected, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.SelectAthlete, Arguments: map[string]any{"athlete_id": "222"}})
+	if err != nil || selected.IsError {
+		t.Fatalf("select_athlete = %#v err=%v", selected, err)
+	}
+	selectedText := selected.Content[0].(*sdkmcp.TextContent).Text
+	if !strings.Contains(selectedText, `"new_athlete_id":"i222"`) || !strings.Contains(selectedText, `"requires_new_conversation":true`) {
+		t.Fatalf("select_athlete text = %s, want selected i222 with catalog caveat", selectedText)
+	}
+
+	afterSelect, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("after-select ListTools() error = %v", err)
+	}
+	if !hasTool(afterSelect.Tools, toolcatalog.GetAthleteProfile) {
+		t.Fatalf("read-only tools/list missing %s", toolcatalog.GetAthleteProfile)
+	}
+	for _, forbidden := range []string{toolcatalog.AddOrUpdateEvent, toolcatalog.DeleteEvent} {
+		if hasTool(afterSelect.Tools, forbidden) {
+			t.Fatalf("read-only tools/list exposed %s", forbidden)
+		}
+	}
+
+	readOnlyProfile, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: map[string]any{}})
+	if err != nil || readOnlyProfile.IsError {
+		t.Fatalf("selected get_athlete_profile = %#v err=%v", readOnlyProfile, err)
+	}
+	if text := readOnlyProfile.Content[0].(*sdkmcp.TextContent).Text; !strings.Contains(text, `"athlete_id":"i222"`) || !strings.Contains(text, `"ftp_watts":200`) {
+		t.Fatalf("selected profile text = %s, want i222 route", text)
+	}
+
+	overrideProfile, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: map[string]any{"athlete_id": "111"}})
+	if err != nil || overrideProfile.IsError {
+		t.Fatalf("override get_athlete_profile = %#v err=%v", overrideProfile, err)
+	}
+	if text := overrideProfile.Content[0].(*sdkmcp.TextContent).Text; !strings.Contains(text, `"athlete_id":"i111"`) || !strings.Contains(text, `"ftp_watts":300`) {
+		t.Fatalf("override profile text = %s, want i111 route", text)
+	}
+
+	beforeDenied := upstreamRequests.Load()
+	for _, denied := range []struct {
+		name string
+		args map[string]any
+	}{
+		{name: toolcatalog.AddOrUpdateEvent, args: map[string]any{"date": "2026-05-15", "category": "NOTE", "name": "Denied write"}},
+		{name: toolcatalog.DeleteEvent, args: map[string]any{"event_id": "e-denied"}},
+	} {
+		result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: denied.name, Arguments: denied.args})
+		if err != nil {
+			t.Fatalf("CallTool(%s) protocol error = %v", denied.name, err)
+		}
+		if !result.IsError {
+			t.Fatalf("CallTool(%s) IsError = false, want read-only coach ACL denial", denied.name)
+		}
+		if text := result.Content[0].(*sdkmcp.TextContent).Text; text != invalidTargetAthleteMessage {
+			t.Fatalf("CallTool(%s) error text = %q, want %q", denied.name, text, invalidTargetAthleteMessage)
+		}
+	}
+	if afterDenied := upstreamRequests.Load(); afterDenied != beforeDenied {
+		t.Fatalf("denied write/delete upstream requests = %d after denial, want unchanged %d", afterDenied, beforeDenied)
+	}
+}
+
+func TestProtocolAthleteIDRejectionMessageIsEnumerationSafe(t *testing.T) {
+	t.Parallel()
+
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: coachACLTestConfig(), Registry: coachACLTestRegistry{}, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	defer cleanup()
+
+	for _, args := range []map[string]any{
+		{"athlete_id": "not-an-id"},
+		{"athlete_id": "999"},
+	} {
+		result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: args})
+		if err != nil {
+			t.Fatalf("CallTool() protocol error = %v", err)
+		}
+		if !result.IsError {
+			t.Fatalf("CallTool(%v) IsError = false, want true", args)
+		}
+		text := result.Content[0].(*sdkmcp.TextContent).Text
+		if text != invalidTargetAthleteMessage {
+			t.Fatalf("CallTool(%v) error text = %q, want enumeration-safe message", args, text)
+		}
+	}
+
+}
+
 func TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry(t *testing.T) {
 	t.Parallel()
 
@@ -651,6 +1266,81 @@ func TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry(t *testing.T
 		if !slices.Contains(fullNames, wantName) {
 			t.Fatalf("full tools/list = %v, missing %s", fullNames, wantName)
 		}
+	}
+}
+
+func TestProtocolAdvancedCapabilitiesUsesCoachFilteredCatalog(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		mode          safety.Mode
+		toolset       safety.Toolset
+		activeAllowed []string
+		wantTools     []string
+		wantAdvanced  []string
+	}{
+		{
+			name:          "safe core hides delete rows but advertises full read rows",
+			mode:          safety.ModeSafe,
+			toolset:       safety.ToolsetCore,
+			activeAllowed: []string{"*"},
+			wantTools:     []string{toolcatalog.GetAthleteProfile, toolcatalog.ICUvisorListAdvancedCapabilities},
+			wantAdvanced:  []string{toolcatalog.GetPowerCurves},
+		},
+		{
+			name:          "full core advertises post-capability full rows hidden by toolset",
+			mode:          safety.ModeFull,
+			toolset:       safety.ToolsetCore,
+			activeAllowed: []string{"*"},
+			wantTools:     []string{toolcatalog.GetAthleteProfile, toolcatalog.ICUvisorListAdvancedCapabilities},
+			wantAdvanced:  []string{toolcatalog.DeleteEvent, toolcatalog.GetPowerCurves},
+		},
+		{
+			name:          "full full keeps advanced rows aligned with active athlete ACL",
+			mode:          safety.ModeFull,
+			toolset:       safety.ToolsetFull,
+			activeAllowed: []string{toolcatalog.GetAthleteProfile, toolcatalog.GetPowerCurves},
+			wantTools:     []string{toolcatalog.GetAthleteProfile, toolcatalog.GetPowerCurves, toolcatalog.ICUvisorListAdvancedCapabilities},
+			wantAdvanced:  []string{toolcatalog.GetPowerCurves},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := config.Config{AthleteID: "i111", CoachMode: coach.ModeOn, Coach: coach.Config{DefaultAthleteID: "i111", Athletes: []coach.Athlete{{ID: "i111", AllowedTools: tc.activeAllowed}, {ID: "i222", AllowedTools: []string{"*"}}}}}
+			registry := registryFunc(func(_ context.Context, registrar tools.Registrar) error {
+				for _, tool := range []tools.Tool{
+					coachACLTestTool(toolcatalog.GetAthleteProfile, safety.ToolsetCore, tools.RequirementRead),
+					coachACLTestTool(toolcatalog.GetPowerCurves, safety.ToolsetFull, tools.RequirementRead),
+					coachACLTestTool(toolcatalog.DeleteEvent, safety.ToolsetFull, tools.RequirementDelete),
+					coachACLTestTool(toolcatalog.ICUvisorListAdvancedCapabilities, safety.ToolsetCore, tools.RequirementRead),
+				} {
+					if err := registrar.AddTool(tool); err != nil {
+						return err
+					}
+				}
+				return nil
+			})
+			ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: registry, Capability: safety.NewCapability(tc.mode), Toolset: tc.toolset})
+			defer cleanup()
+
+			listed, err := session.ListTools(ctx, nil)
+			if err != nil {
+				t.Fatalf("ListTools() error = %v", err)
+			}
+			requireSameStrings(t, "tools/list", toolNamesFromList(listed.Tools), tc.wantTools)
+
+			result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.ICUvisorListAdvancedCapabilities, Arguments: map[string]any{}})
+			if err != nil {
+				t.Fatalf("CallTool(advanced) error = %v", err)
+			}
+			if result.IsError {
+				t.Fatalf("CallTool(advanced) IsError = true, content = %#v", result.Content)
+			}
+			requireSameStrings(t, "advanced_capabilities names", advancedCapabilityNames(t, result), tc.wantAdvanced)
+		})
 	}
 }
 

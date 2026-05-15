@@ -45,6 +45,123 @@ func TestDoJSONSetsAuthUserAgentPathAndDecodes(t *testing.T) {
 	}
 }
 
+func TestDoJSONUsesContextTargetAthleteWithoutMutatingClient(t *testing.T) {
+	t.Parallel()
+
+	paths := make(chan string, 2)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths <- r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"ok"}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	var got map[string]any
+	if err := client.doJSON(WithTargetAthleteID(context.Background(), "i67890"), &got, "athlete", client.athleteID); err != nil {
+		t.Fatalf("doJSON() with target error = %v", err)
+	}
+	if err := client.doJSON(context.Background(), &got, "athlete", client.athleteID); err != nil {
+		t.Fatalf("doJSON() default error = %v", err)
+	}
+	if first := <-paths; first != "/athlete/i67890" {
+		t.Fatalf("first path = %q, want target athlete", first)
+	}
+	if second := <-paths; second != "/athlete/i12345" {
+		t.Fatalf("second path = %q, want original configured athlete", second)
+	}
+}
+
+func TestActivityIDEndpointsRequireResolvedTargetOwnership(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		call func(context.Context, *Client) error
+	}{
+		{name: "get activity", call: func(ctx context.Context, c *Client) error { _, err := c.GetActivity(ctx, "a1"); return err }},
+		{name: "streams", call: func(ctx context.Context, c *Client) error {
+			_, err := c.GetActivityStreams(ctx, ActivityStreamsParams{ActivityID: "a1"})
+			return err
+		}},
+		{name: "add message", call: func(ctx context.Context, c *Client) error {
+			_, err := c.AddActivityMessage(ctx, AddActivityMessageParams{ActivityID: "a1", Content: "nice"})
+			return err
+		}},
+		{name: "link event", call: func(ctx context.Context, c *Client) error {
+			_, err := c.LinkActivityToEvent(ctx, LinkActivityToEventParams{ActivityID: "a1", EventID: "42"})
+			return err
+		}},
+		{name: "delete activity", call: func(ctx context.Context, c *Client) error { return c.DeleteActivity(ctx, "a1") }},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == http.MethodGet && r.URL.Path == "/activity/a1" {
+					_, _ = w.Write([]byte(`{"id":"a1","icu_athlete_id":"i222"}`))
+					return
+				}
+				switch {
+				case r.Method == http.MethodGet && r.URL.Path == "/athlete/i222/events/42":
+					_, _ = w.Write([]byte(`{"id":"42"}`))
+				case r.Method == http.MethodGet && r.URL.Path == "/activity/a1/streams":
+					_, _ = w.Write([]byte(`[]`))
+				case r.Method == http.MethodPost && r.URL.Path == "/activity/a1/messages":
+					_, _ = w.Write([]byte(`{"id":1}`))
+				case r.Method == http.MethodPut && r.URL.Path == "/activity/a1":
+					_, _ = w.Write([]byte(`{"id":"a1","icu_athlete_id":"i222"}`))
+				case r.Method == http.MethodDelete && r.URL.Path == "/activity/a1":
+					w.WriteHeader(http.StatusNoContent)
+				default:
+					t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+				}
+			}))
+			defer server.Close()
+
+			client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+			if err := tc.call(WithTargetAthleteID(context.Background(), "i222"), client); err != nil {
+				t.Fatalf("matching target call error = %v", err)
+			}
+			if err := tc.call(WithTargetAthleteID(context.Background(), "i333"), client); !errors.Is(err, ErrTargetAthleteMismatch) {
+				t.Fatalf("mismatched target error = %v, want ErrTargetAthleteMismatch", err)
+			}
+		})
+	}
+}
+
+func TestLinkActivityToEventPreflightsTargetEventBeforeWrite(t *testing.T) {
+	t.Parallel()
+
+	var sawPUT atomic.Bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/activity/a1":
+			_, _ = w.Write([]byte(`{"id":"a1","icu_athlete_id":"i222"}`))
+		case r.Method == http.MethodGet && r.URL.Path == "/athlete/i222/events/404":
+			w.WriteHeader(http.StatusNotFound)
+		case r.Method == http.MethodPut && r.URL.Path == "/activity/a1":
+			sawPUT.Store(true)
+			_, _ = w.Write([]byte(`{"id":"a1","icu_athlete_id":"i222"}`))
+		default:
+			t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())
+		}
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	_, err := client.LinkActivityToEvent(WithTargetAthleteID(context.Background(), "i222"), LinkActivityToEventParams{ActivityID: "a1", EventID: "404"})
+	if err == nil {
+		t.Fatal("LinkActivityToEvent() error = nil, want event preflight failure")
+	}
+	if sawPUT.Load() {
+		t.Fatal("LinkActivityToEvent() sent PUT after event preflight failed")
+	}
+}
+
 func TestSportSettingsDecodesPaceUnitsVerbatim(t *testing.T) {
 	t.Parallel()
 

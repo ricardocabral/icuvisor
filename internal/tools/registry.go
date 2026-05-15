@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ricardocabral/icuvisor/internal/coach"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
+	"github.com/ricardocabral/icuvisor/internal/toolcatalog"
 )
 
 // Registry registers the MCP tools exposed by icuvisor.
@@ -23,6 +25,9 @@ type RegistryOptions struct {
 	DebugMetadata    bool
 	Capability       safety.Capability
 	Toolset          safety.Toolset
+	CoachModeEnabled bool
+	CoachConfig      coach.Config
+	CatalogFilter    func(Tool) bool
 }
 
 // NewRegistry creates the default tool registry.
@@ -45,6 +50,9 @@ func NewRegistryWithOptions(client *intervals.Client, opts RegistryOptions) Regi
 		capability:       capability,
 		deleteMode:       safety.ParseMode(capability.Mode()),
 		toolset:          toolset,
+		coachModeEnabled: opts.CoachModeEnabled,
+		coachConfig:      opts.CoachConfig,
+		catalogFilter:    opts.CatalogFilter,
 	}
 }
 
@@ -56,6 +64,9 @@ type defaultRegistry struct {
 	capability       safety.Capability
 	deleteMode       safety.Mode
 	toolset          safety.Toolset
+	coachModeEnabled bool
+	coachConfig      coach.Config
+	catalogFilter    func(Tool) bool
 }
 
 type responseShaping struct {
@@ -95,6 +106,9 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	registrar = collector
 	shaping := responseShaping{deleteMode: r.deleteMode, toolset: r.toolset}
 	add := func(tool Tool) error {
+		if !toolcatalog.IsKnownTool(tool.Name) {
+			return fmt.Errorf("registering %s: not present in shared tool catalog", tool.Name)
+		}
 		if err := registrar.AddTool(tool); err != nil {
 			return fmt.Errorf("registering %s: %w", tool.Name, err)
 		}
@@ -211,11 +225,35 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	if err := add(newDeleteGearTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
 		return err
 	}
-	advancedTool := newListAdvancedCapabilitiesTool(collector.tools, r.toolset, shaping)
+	if r.coachModeEnabled {
+		if err := add(newListAthletesTool(r.coachConfig)); err != nil {
+			return err
+		}
+		if err := add(newSelectAthleteTool(r.coachConfig)); err != nil {
+			return err
+		}
+	}
+	advancedTool := newListAdvancedCapabilitiesTool(filteredCatalog(collector.tools, r.catalogFilter), r.toolset, shaping)
+	if !toolcatalog.IsKnownTool(advancedTool.Name) {
+		return fmt.Errorf("registering %s: not present in shared tool catalog", advancedTool.Name)
+	}
 	if err := collector.downstream.AddTool(advancedTool); err != nil {
 		return fmt.Errorf("registering %s: %w", advancedTool.Name, err)
 	}
 	return nil
+}
+
+func filteredCatalog(catalog []Tool, filter func(Tool) bool) []Tool {
+	if filter == nil {
+		return catalog
+	}
+	out := make([]Tool, 0, len(catalog))
+	for _, tool := range catalog {
+		if filter(tool) {
+			out = append(out, tool)
+		}
+	}
+	return out
 }
 
 type catalogCollectingRegistrar struct {

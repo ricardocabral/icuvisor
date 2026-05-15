@@ -16,6 +16,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/ricardocabral/icuvisor/internal/coach"
 	"github.com/ricardocabral/icuvisor/internal/credstore"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
@@ -31,6 +32,7 @@ const (
 	EnvHTTPBind      = "ICUVISOR_HTTP_BIND"
 	EnvDotEnvPath    = "ICUVISOR_ENV_FILE"
 	EnvDebugMetadata = "ICUVISOR_DEBUG_METADATA"
+	EnvCoachMode     = "ICUVISOR_COACH_MODE"
 
 	DefaultAPIBaseURL      = "https://intervals.icu/api/v1"
 	DefaultTimezone        = "UTC"
@@ -67,6 +69,8 @@ type Config struct {
 	DeleteMode      safety.Mode    `json:"-"`
 	Toolset         safety.Toolset `json:"-"`
 	DebugMetadata   bool           `json:"-"`
+	CoachMode       coach.Mode     `json:"-"`
+	Coach           coach.Config   `json:"coach,omitempty"`
 }
 
 // APIKeySource identifies where the loaded API key came from.
@@ -90,13 +94,14 @@ type Options struct {
 }
 
 type fileConfig struct {
-	APIKey          string `json:"api_key"`
-	AthleteID       string `json:"athlete_id"`
-	Timezone        string `json:"timezone"`
-	APIBaseURL      string `json:"api_base_url"`
-	HTTPTimeout     string `json:"http_timeout"`
-	Transport       string `json:"transport"`
-	HTTPBindAddress string `json:"http_bind"`
+	APIKey          string        `json:"api_key"`
+	AthleteID       string        `json:"athlete_id"`
+	Timezone        string        `json:"timezone"`
+	APIBaseURL      string        `json:"api_base_url"`
+	HTTPTimeout     string        `json:"http_timeout"`
+	Transport       string        `json:"transport"`
+	HTTPBindAddress string        `json:"http_bind"`
+	Coach           *coach.Config `json:"coach"`
 }
 
 type writeFileConfig struct {
@@ -123,6 +128,8 @@ type rawConfig struct {
 	deleteMode      string
 	toolset         string
 	debugMetadata   string
+	coachMode       string
+	coach           *coach.Config
 }
 
 // DefaultPath returns the platform default icuvisor config path.
@@ -330,7 +337,17 @@ func (c Config) String() string {
 	if c.AthleteID != "" {
 		athleteID = "<set>"
 	}
-	return fmt.Sprintf("api_key=%s api_key_source=%s athlete_id=%s timezone=%q api_base_url=%q http_timeout=%s transport=%s http_bind=%q delete_mode=%s toolset=%s", apiKey, apiKeySource, athleteID, c.Timezone, c.APIBaseURL, c.HTTPTimeout, c.Transport, c.HTTPBindAddress, c.DeleteMode, c.Toolset)
+	return fmt.Sprintf("api_key=%s api_key_source=%s athlete_id=%s timezone=%q api_base_url=%q http_timeout=%s transport=%s http_bind=%q delete_mode=%s toolset=%s coach_mode=%s coach_enabled=%t coach_athletes=%d", apiKey, apiKeySource, athleteID, c.Timezone, c.APIBaseURL, c.HTTPTimeout, c.Transport, c.HTTPBindAddress, c.DeleteMode, c.Toolset, c.CoachMode, c.CoachModeEnabled(), len(c.Coach.Athletes))
+}
+
+// EffectiveCoachMode resolves auto against the parsed coach roster.
+func (c Config) EffectiveCoachMode() coach.Mode {
+	return coach.EffectiveMode(c.CoachMode, c.Coach)
+}
+
+// CoachModeEnabled reports whether coach mode is effectively on.
+func (c Config) CoachModeEnabled() bool {
+	return c.EffectiveCoachMode() == coach.ModeOn
 }
 
 func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
@@ -352,7 +369,7 @@ func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
 	decoder := json.NewDecoder(strings.NewReader(string(data)))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&file); err != nil {
-		return rawConfig{}, fmt.Errorf("invalid config JSON in %q; expected fields api_key, athlete_id, timezone, api_base_url, http_timeout, transport, http_bind: %w", path, err)
+		return rawConfig{}, fmt.Errorf("invalid config JSON in %q; expected fields api_key, athlete_id, timezone, api_base_url, http_timeout, transport, http_bind, coach: %w", path, err)
 	}
 
 	apiKey := strings.TrimSpace(file.APIKey)
@@ -373,6 +390,7 @@ func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
 		httpTimeout:     strings.TrimSpace(file.HTTPTimeout),
 		transport:       strings.TrimSpace(file.Transport),
 		httpBindAddress: strings.TrimSpace(file.HTTPBindAddress),
+		coach:           file.Coach,
 	}, nil
 }
 
@@ -454,6 +472,7 @@ func rawFromEnv(env map[string]string, apiKeySource APIKeySource, apiKeyLocation
 		deleteMode:      strings.TrimSpace(env[safety.EnvDeleteMode]),
 		toolset:         strings.TrimSpace(env[safety.EnvToolset]),
 		debugMetadata:   strings.TrimSpace(env[EnvDebugMetadata]),
+		coachMode:       strings.TrimSpace(env[EnvCoachMode]),
 	}
 }
 
@@ -490,6 +509,12 @@ func (r *rawConfig) merge(next rawConfig, absentOnly bool) {
 	if shouldSet(r.debugMetadata, next.debugMetadata, absentOnly) {
 		r.debugMetadata = next.debugMetadata
 	}
+	if shouldSet(r.coachMode, next.coachMode, absentOnly) {
+		r.coachMode = next.coachMode
+	}
+	if next.coach != nil && (!absentOnly || r.coach == nil) {
+		r.coach = next.coach
+	}
 }
 
 func shouldSet(current, next string, absentOnly bool) bool {
@@ -512,9 +537,27 @@ func validate(raw rawConfig) (Config, error) {
 		return Config{}, fmt.Errorf("missing intervals.icu API key; set %s, store it in OS keychain service %q account %q, or set legacy api_key in config JSON/.env", EnvAPIKey, credstore.ServiceName, credstore.IntervalsAPIKeyAccount)
 	}
 
-	athleteID, err := NormalizeAthleteID(raw.athleteID)
+	coachMode, err := coach.ParseMode(raw.coachMode)
 	if err != nil {
 		return Config{}, err
+	}
+	var rawCoach coach.Config
+	if raw.coach != nil {
+		rawCoach = *raw.coach
+	}
+	coachConfig, err := coach.ValidateConfig(rawCoach, coachMode, NormalizeAthleteID)
+	if err != nil {
+		return Config{}, err
+	}
+
+	var athleteID string
+	if coach.EffectiveMode(coachMode, coachConfig) == coach.ModeOn {
+		athleteID = coachConfig.DefaultAthleteID
+	} else {
+		athleteID, err = NormalizeAthleteID(raw.athleteID)
+		if err != nil {
+			return Config{}, err
+		}
 	}
 
 	timezone := raw.timezone
@@ -572,6 +615,8 @@ func validate(raw rawConfig) (Config, error) {
 		DeleteMode:      safety.ParseMode(raw.deleteMode),
 		Toolset:         safety.ParseToolset(raw.toolset),
 		DebugMetadata:   ParseDebugMetadata(raw.debugMetadata),
+		CoachMode:       coachMode,
+		Coach:           coachConfig,
 	}, nil
 }
 
@@ -637,7 +682,7 @@ func splitHTTPBindAddress(value string) (string, string, error) {
 
 func recognizedEnvKey(key string) bool {
 	switch key {
-	case EnvAPIKey, EnvAthleteID, EnvConfigPath, EnvTimezone, EnvAPIBaseURL, EnvHTTPTimeout, EnvTransport, EnvHTTPBind, safety.EnvDeleteMode, safety.EnvToolset:
+	case EnvAPIKey, EnvAthleteID, EnvConfigPath, EnvTimezone, EnvAPIBaseURL, EnvHTTPTimeout, EnvTransport, EnvHTTPBind, EnvCoachMode, safety.EnvDeleteMode, safety.EnvToolset:
 		return true
 	default:
 		return false

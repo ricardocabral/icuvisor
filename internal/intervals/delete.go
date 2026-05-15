@@ -55,6 +55,9 @@ func (c *Client) DeleteActivity(ctx context.Context, activityID string) error {
 	if activityID == "" {
 		return fmt.Errorf("deleting activity: activity ID is required")
 	}
+	if err := c.ensureActivityIDTarget(ctx, activityID); err != nil {
+		return fmt.Errorf("deleting activity %s: %w", activityID, err)
+	}
 	if err := c.doNoJSON(ctx, "activity", activityID); err != nil {
 		return fmt.Errorf("deleting activity %s: %w", activityID, err)
 	}

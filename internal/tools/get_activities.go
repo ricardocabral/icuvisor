@@ -114,6 +114,7 @@ type activitiesPageToken struct {
 	IncludeUnnamed       bool     `json:"include_unnamed"`
 	IncludeFull          bool     `json:"include_full"`
 	PageSize             int      `json:"page_size"`
+	AthleteID            string   `json:"athlete_id,omitempty"`
 	Fields               []string `json:"fields,omitempty"`
 	BeforeStartDateLocal string   `json:"before_start_date_local,omitempty"`
 	BeforeID             string   `json:"before_id,omitempty"`
@@ -155,7 +156,11 @@ func getActivitiesHandler(activityClient ActivitiesClient, profileClient Profile
 		}
 		unitSystem := profileUnitSystem(profile)
 		activityTimezoneFallback := profileTimezone(profile.Timezone, timezoneFallback)
-		activities, nextToken, err := fetchActivitiesPage(ctx, activityClient, args, token)
+		targetAthleteID, _ := intervals.TargetAthleteIDFromContext(ctx)
+		if token != nil && token.AthleteID != targetAthleteID {
+			return Result{}, NewUserError(invalidGetActivitiesArgumentsMessage, errors.New("next_page_token athlete does not match resolved athlete"))
+		}
+		activities, nextToken, err := fetchActivitiesPage(ctx, activityClient, args, token, targetAthleteID)
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
@@ -282,8 +287,8 @@ func encodeActivitiesPageToken(token activitiesPageToken) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(data), nil
 }
 
-func fetchActivitiesPage(ctx context.Context, client ActivitiesClient, args GetActivitiesRequest, token *activitiesPageToken) ([]intervals.Activity, string, error) {
-	cursor := newPageCursor(args, token)
+func fetchActivitiesPage(ctx context.Context, client ActivitiesClient, args GetActivitiesRequest, token *activitiesPageToken, targetAthleteID string) ([]intervals.Activity, string, error) {
+	cursor := newPageCursor(args, token, targetAthleteID)
 	page := make([]intervals.Activity, 0, args.PageSize)
 	for {
 		candidates, done, err := iteratePages(ctx, client, args, &cursor)
@@ -377,9 +382,9 @@ type pageCursor struct {
 	advancedThisIteration bool
 }
 
-func newPageCursor(args GetActivitiesRequest, token *activitiesPageToken) pageCursor {
+func newPageCursor(args GetActivitiesRequest, token *activitiesPageToken, targetAthleteID string) pageCursor {
 	cursor := pageCursor{
-		token:      activitiesPageToken{Version: 1, Oldest: args.Oldest, Newest: args.Newest, RouteID: args.RouteID, IncludeUnnamed: args.IncludeUnnamed, IncludeFull: args.IncludeFull, PageSize: args.PageSize},
+		token:      activitiesPageToken{Version: 1, Oldest: args.Oldest, Newest: args.Newest, RouteID: args.RouteID, IncludeUnnamed: args.IncludeUnnamed, IncludeFull: args.IncludeFull, PageSize: args.PageSize, AthleteID: targetAthleteID},
 		fetchLimit: min(args.PageSize*2+1, maxActivityFetchLimit),
 	}
 	if !args.IncludeFull {
