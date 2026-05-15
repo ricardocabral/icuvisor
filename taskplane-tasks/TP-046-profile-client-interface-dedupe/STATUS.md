@@ -23,9 +23,10 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Create shared interface in chosen home (default: `internal/clients/profile.go`)
-- [ ] Remove the two duplicate declarations
-- [ ] Update imports in both consumers
+- [ ] Create shared interface in chosen home (default: `internal/clients/profile.go`) with compile-time producer assertion
+- [ ] Remove the two duplicate declarations while preserving a deliberate `tools.ProfileClient` compatibility alias for internal tools consumers
+- [ ] Update resource consumer imports to use the shared interface
+- [ ] Record placement decision in `STATUS.md` and add `CHANGELOG.md` `[Unreleased]` entry
 
 ### Step 3: Tests
 
