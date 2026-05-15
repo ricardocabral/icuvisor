@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ricardocabral/icuvisor/internal/coach"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
@@ -24,6 +25,8 @@ type RegistryOptions struct {
 	DebugMetadata    bool
 	Capability       safety.Capability
 	Toolset          safety.Toolset
+	CoachModeEnabled bool
+	CoachConfig      coach.Config
 	CatalogFilter    func(Tool) bool
 }
 
@@ -47,6 +50,8 @@ func NewRegistryWithOptions(client *intervals.Client, opts RegistryOptions) Regi
 		capability:       capability,
 		deleteMode:       safety.ParseMode(capability.Mode()),
 		toolset:          toolset,
+		coachModeEnabled: opts.CoachModeEnabled,
+		coachConfig:      opts.CoachConfig,
 		catalogFilter:    opts.CatalogFilter,
 	}
 }
@@ -59,6 +64,8 @@ type defaultRegistry struct {
 	capability       safety.Capability
 	deleteMode       safety.Mode
 	toolset          safety.Toolset
+	coachModeEnabled bool
+	coachConfig      coach.Config
 	catalogFilter    func(Tool) bool
 }
 
@@ -217,6 +224,14 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	}
 	if err := add(newDeleteGearTool(r.client, r.client, r.version, r.timezoneFallback, r.debugMetadata, shaping)); err != nil {
 		return err
+	}
+	if r.coachModeEnabled {
+		if err := add(newListAthletesTool(r.coachConfig)); err != nil {
+			return err
+		}
+		if err := add(newSelectAthleteTool(r.coachConfig)); err != nil {
+			return err
+		}
 	}
 	advancedTool := newListAdvancedCapabilitiesTool(filteredCatalog(collector.tools, r.catalogFilter), r.toolset, shaping)
 	if !toolcatalog.IsKnownTool(advancedTool.Name) {

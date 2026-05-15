@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 14
+**Review Counter:** 15
 **Iteration:** 2
 **Size:** L
 
@@ -59,13 +59,13 @@
 
 **Status:** ⏳ Not started
 
-- [ ] R014 plan revision: coach mode registers the union of tools allowed by at least one roster athlete, then filters `tools/list`, advanced capabilities, and select responses through one active-athlete visibility helper
-- [ ] R014 plan revision: session selection store uses SDK session IDs when available, process fallback when not, initializes to `coach.default_athlete_id`, and feeds the Step 3 target resolver
-- [ ] R014 plan revision: register `list_athletes`/`select_athlete` only in effective coach mode, keep `list_athletes` config-backed only, and return enumeration-safe credential-free errors
-- [ ] R014 plan revision: `select_athlete` response includes previous/new selection, allowed tools, `_meta.scope`, and `_meta.requires_new_conversation` computed by visible-catalog diff
-- [ ] `list_athletes` (`_meta.source: "config" | "upstream"`)
-- [ ] `select_athlete` session/process-scoped state
-- [ ] `requires_new_conversation` `_meta` flag
+- [x] R014 plan revision: coach mode registers the union of tools allowed by at least one roster athlete, then filters `tools/list`, advanced capabilities, and select responses through one active-athlete visibility helper
+- [x] R014 plan revision: session selection store uses SDK session IDs when available, process fallback when not, initializes to `coach.default_athlete_id`, and feeds the Step 3 target resolver
+- [x] R014 plan revision: register `list_athletes`/`select_athlete` only in effective coach mode, keep `list_athletes` config-backed only, and return enumeration-safe credential-free errors
+- [x] R014 plan revision: `select_athlete` response includes previous/new selection, allowed tools, `_meta.scope`, and `_meta.requires_new_conversation` computed by visible-catalog diff
+- [x] `list_athletes` (`_meta.source: "config" | "upstream"`)
+- [x] `select_athlete` session/process-scoped state
+- [x] `requires_new_conversation` `_meta` flag
 
 ### Step 5: Catalog-cache caveat + Tests
 
@@ -105,6 +105,7 @@
 - Step 3 resource-bypass decision: `icuvisor://athlete-profile` is disabled while coach mode is enabled until a later task adds per-session resource target selection/ACL routing, preventing a resource read from bypassing a denied `get_athlete_profile` tool.
 - R011 compatibility decision: `athlete_id` schema injection and stripping are active only when coach mode is effectively on; coach-mode-off tool schemas and strict-decoder behavior remain unchanged.
 - Step 4 plan decisions from R014: effective coach mode must register the union of athlete-scoped tools allowed by at least one roster athlete (after delete-mode/toolset), then filter `tools/list` and tool calls by the active session athlete. `list_athletes` remains config-backed (`_meta.source: "config"`) until the operator-deferred upstream roster probe is validated.
+- Step 4 implementation uses `coach.SelectionStore` keyed by SDK session ID, with documented process fallback when the SDK session ID is empty (stdio/in-memory transports).
 
 | 2026-05-15 20:00 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 20:00 | Step 1 started | Threat-model review + endpoint probe |
@@ -131,3 +132,4 @@
 | 2026-05-15 21:18 | Review R012 | code Step 3: REVISE |
 | 2026-05-15 21:26 | Review R013 | code Step 3: APPROVE |
 | 2026-05-15 21:31 | Review R014 | plan Step 4: REVISE |
+| 2026-05-15 21:35 | Review R015 | plan Step 4: APPROVE |

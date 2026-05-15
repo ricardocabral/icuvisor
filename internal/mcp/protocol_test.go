@@ -747,6 +747,81 @@ func TestProtocolAthleteScopedSchemasExposeUniformAthleteID(t *testing.T) {
 	}
 }
 
+func TestProtocolCoachToolsAbsentWhenCoachModeOff(t *testing.T) {
+	t.Parallel()
+
+	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC"})
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Registry: registry})
+	defer cleanup()
+
+	result, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools() error = %v", err)
+	}
+	for _, forbidden := range []string{toolcatalog.ListAthletes, toolcatalog.SelectAthlete} {
+		if hasTool(result.Tools, forbidden) {
+			t.Fatalf("coach mode off tools/list exposed %s", forbidden)
+		}
+		if _, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: forbidden, Arguments: map[string]any{}}); err == nil || !strings.Contains(err.Error(), "unknown tool") {
+			t.Fatalf("CallTool(%s) error = %v, want unknown tool", forbidden, err)
+		}
+	}
+}
+
+func TestProtocolSelectAthleteUpdatesVisibleCatalogAndListAthletes(t *testing.T) {
+	t.Parallel()
+
+	cfg := coachACLTestConfig()
+	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull, CoachModeEnabled: true, CoachConfig: cfg.Coach})
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: registry, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	defer cleanup()
+
+	initial, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("initial ListTools() error = %v", err)
+	}
+	if hasTool(initial.Tools, toolcatalog.GetPowerCurves) {
+		t.Fatalf("initial tools/list leaked second-athlete tool %s", toolcatalog.GetPowerCurves)
+	}
+	if !hasTool(initial.Tools, toolcatalog.ListAthletes) || !hasTool(initial.Tools, toolcatalog.SelectAthlete) {
+		t.Fatalf("initial tools/list missing coach tools: %#v", initial.Tools)
+	}
+
+	listResult, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.ListAthletes, Arguments: map[string]any{}})
+	if err != nil || listResult.IsError {
+		t.Fatalf("list_athletes result = %#v err=%v", listResult, err)
+	}
+	if text := listResult.Content[0].(*sdkmcp.TextContent).Text; !strings.Contains(text, `"source":"config"`) || !strings.Contains(text, `"active_athlete_id":"i111"`) {
+		t.Fatalf("list_athletes text = %s, want config source and active i111", text)
+	}
+
+	selectResult, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.SelectAthlete, Arguments: map[string]any{"athlete_id": "222"}})
+	if err != nil || selectResult.IsError {
+		t.Fatalf("select_athlete result = %#v err=%v", selectResult, err)
+	}
+	selectText := selectResult.Content[0].(*sdkmcp.TextContent).Text
+	if !strings.Contains(selectText, `"previous_athlete_id":"i111"`) || !strings.Contains(selectText, `"new_athlete_id":"i222"`) || !strings.Contains(selectText, `"requires_new_conversation":true`) {
+		t.Fatalf("select_athlete text = %s, want previous/new and requires_new_conversation", selectText)
+	}
+
+	after, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("after ListTools() error = %v", err)
+	}
+	if !hasTool(after.Tools, toolcatalog.GetPowerCurves) {
+		t.Fatalf("after tools/list = %#v, missing selected-athlete full read tool", after.Tools)
+	}
+}
+
+func hasTool(tools []*sdkmcp.Tool, name string) bool {
+	for _, tool := range tools {
+		if tool.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 func TestProtocolAthleteIDRejectionMessageIsEnumerationSafe(t *testing.T) {
 	t.Parallel()
 

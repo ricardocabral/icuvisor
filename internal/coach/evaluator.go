@@ -51,6 +51,19 @@ func (e Evaluator) Evaluate(athleteID, toolName string) (bool, string) {
 	return true, "allowed"
 }
 
+// AllowedForAny reports whether any roster athlete allows toolName.
+func (e Evaluator) AllowedForAny(toolName string) bool {
+	if !e.enabled || !toolcatalog.IsAthleteScopedTool(toolName) {
+		return true
+	}
+	for athleteID := range e.roster {
+		if allowed, _ := e.Evaluate(athleteID, toolName); allowed {
+			return true
+		}
+	}
+	return false
+}
+
 // MustEvaluate returns an error when Evaluate denies the tool.
 func (e Evaluator) MustEvaluate(athleteID, toolName string) error {
 	allowed, reason := e.Evaluate(athleteID, toolName)

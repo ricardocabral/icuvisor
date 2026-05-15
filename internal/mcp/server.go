@@ -53,6 +53,7 @@ type Options struct {
 	Capability       safety.Capability
 	Toolset          safety.Toolset
 	Transport        sdkmcp.Transport
+	SelectionStore   *coach.SelectionStore
 }
 
 // Server wraps the SDK server and selected transport.
@@ -91,14 +92,21 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("hashing empty tool catalog: %w", err)
 	}
+	selectionStore := opts.SelectionStore
+	if selectionStore == nil {
+		selectionStore = coach.NewSelectionStore(opts.Config.Coach.DefaultAthleteID)
+	}
 	if opts.Registry != nil {
-		registrar := &safeRegistrar{server: sdkServer, logger: logger, config: opts.Config, coachEvaluator: coach.NewEvaluator(opts.Config.CoachModeEnabled(), opts.Config.Coach), capability: capabilityOrSafe(opts.Capability), toolset: toolsetOrCore(opts), names: make(map[string]struct{})}
+		registrar := &safeRegistrar{server: sdkServer, logger: logger, config: opts.Config, coachEvaluator: coach.NewEvaluator(opts.Config.CoachModeEnabled(), opts.Config.Coach), selectionStore: selectionStore, capability: capabilityOrSafe(opts.Capability), toolset: toolsetOrCore(opts), names: make(map[string]struct{})}
 		if err := opts.Registry.Register(ctx, registrar); err != nil {
 			return nil, fmt.Errorf("registering tools: %w", err)
 		}
 		catalogHash, err = hashToolCatalog(registrar.registeredTools)
 		if err != nil {
 			return nil, fmt.Errorf("hashing tool catalog: %w", err)
+		}
+		if opts.Config.CoachModeEnabled() {
+			sdkServer.AddReceivingMiddleware(registrar.visibilityMiddleware())
 		}
 		logger.Info("tool registration complete", "registered_count", registrar.registeredCount, "skipped_toolset_count", registrar.skippedToolsetCount, "skipped_capability_count", registrar.skippedCapabilityCount, "skipped_coach_count", registrar.skippedCoachCount)
 	}
@@ -307,6 +315,7 @@ type safeRegistrar struct {
 	logger                 *slog.Logger
 	config                 config.Config
 	coachEvaluator         coach.Evaluator
+	selectionStore         *coach.SelectionStore
 	capability             safety.Capability
 	toolset                safety.Toolset
 	names                  map[string]struct{}
@@ -350,7 +359,8 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) error {
 			InputSchema:  tool.InputSchema,
 			OutputSchema: tool.OutputSchema,
 		}, func(ctx context.Context, req *sdkmcp.CallToolRequest) (*sdkmcp.CallToolResult, error) {
-			callCtx, arguments, err := r.resolveToolTarget(ctx, tool.Name, req.Params.Arguments)
+			callCtx := r.withSelection(ctx, req.Session)
+			callCtx, arguments, err := r.resolveToolTarget(callCtx, tool.Name, req.Params.Arguments)
 			if err != nil {
 				return toolErrorResult(publicToolErrorMessage(err)), nil
 			}
@@ -375,6 +385,42 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) error {
 	})
 }
 
+func (r *safeRegistrar) visibilityMiddleware() sdkmcp.Middleware {
+	return func(next sdkmcp.MethodHandler) sdkmcp.MethodHandler {
+		return func(ctx context.Context, method string, req sdkmcp.Request) (sdkmcp.Result, error) {
+			result, err := next(ctx, method, req)
+			if err != nil || method != "tools/list" {
+				return result, err
+			}
+			toolsResult, ok := result.(*sdkmcp.ListToolsResult)
+			if !ok {
+				return result, err
+			}
+			selectionCtx := r.withSelection(ctx, req.GetSession().(*sdkmcp.ServerSession))
+			athleteID := r.config.Coach.DefaultAthleteID
+			if selection, ok := coach.SelectionContextFromContext(selectionCtx); ok && selection.Store != nil {
+				athleteID = selection.Store.Selected(selection.Key)
+			}
+			filtered := toolsResult.Tools[:0]
+			for _, tool := range toolsResult.Tools {
+				if r.visibleForAthlete(athleteID, tool.Name) {
+					filtered = append(filtered, tool)
+				}
+			}
+			toolsResult.Tools = filtered
+			return toolsResult, nil
+		}
+	}
+}
+
+func (r *safeRegistrar) visibleForAthlete(athleteID string, toolName string) bool {
+	if toolName == toolcatalog.ListAthletes || toolName == toolcatalog.SelectAthlete || toolName == toolcatalog.ICUvisorListAdvancedCapabilities {
+		return true
+	}
+	allowed, _ := r.coachEvaluator.Evaluate(athleteID, toolName)
+	return allowed
+}
+
 func (r *safeRegistrar) prepareTool(tool tools.Tool) tools.Tool {
 	if !r.config.CoachModeEnabled() || !toolcatalog.IsAthleteScopedTool(tool.Name) {
 		return tool
@@ -384,12 +430,19 @@ func (r *safeRegistrar) prepareTool(tool tools.Tool) tools.Tool {
 }
 
 func (r *safeRegistrar) coachAllows(tool tools.Tool) bool {
-	athleteID := r.config.Coach.DefaultAthleteID
-	if athleteID == "" {
-		athleteID = r.config.AthleteID
+	return r.coachEvaluator.AllowedForAny(tool.Name)
+}
+
+func (r *safeRegistrar) withSelection(ctx context.Context, session *sdkmcp.ServerSession) context.Context {
+	if r.selectionStore == nil {
+		return ctx
 	}
-	allowed, _ := r.coachEvaluator.Evaluate(athleteID, tool.Name)
-	return allowed
+	sessionID := ""
+	if session != nil {
+		sessionID = session.ID()
+	}
+	key, scope := r.selectionStore.Key(sessionID)
+	return coach.WithSelectionContext(ctx, coach.SelectionContext{Store: r.selectionStore, Key: key, Scope: scope})
 }
 
 func (r *safeRegistrar) resolveToolTarget(ctx context.Context, toolName string, raw json.RawMessage) (context.Context, json.RawMessage, error) {
@@ -400,7 +453,7 @@ func (r *safeRegistrar) resolveToolTarget(ctx context.Context, toolName string, 
 	if err != nil {
 		return ctx, nil, tools.NewUserError(invalidTargetAthleteMessage, err)
 	}
-	targetAthleteID, err := r.resolveAthleteID(suppliedAthleteID)
+	targetAthleteID, err := r.resolveAthleteID(ctx, suppliedAthleteID)
 	if err != nil {
 		return ctx, nil, tools.NewUserError(invalidTargetAthleteMessage, err)
 	}
@@ -410,11 +463,14 @@ func (r *safeRegistrar) resolveToolTarget(ctx context.Context, toolName string, 
 	return intervals.WithTargetAthleteID(ctx, targetAthleteID), arguments, nil
 }
 
-func (r *safeRegistrar) resolveAthleteID(suppliedAthleteID string) (string, error) {
+func (r *safeRegistrar) resolveAthleteID(ctx context.Context, suppliedAthleteID string) (string, error) {
 	if r.config.CoachModeEnabled() {
 		targetAthleteID := strings.TrimSpace(suppliedAthleteID)
 		if targetAthleteID == "" {
 			targetAthleteID = r.config.Coach.DefaultAthleteID
+			if selection, ok := coach.SelectionContextFromContext(ctx); ok && selection.Store != nil {
+				targetAthleteID = selection.Store.Selected(selection.Key)
+			}
 		}
 		normalized, err := config.NormalizeAthleteID(targetAthleteID)
 		if err != nil || !r.coachEvaluator.HasAthlete(normalized) {
@@ -494,9 +550,13 @@ func (r *safeRegistrar) coachFilteredAdvancedCapabilitiesHandler() tools.Handler
 		if trimmed != "" && trimmed != "{}" && trimmed != "null" {
 			return tools.Result{}, tools.NewUserError("invalid icuvisor_list_advanced_capabilities arguments; no arguments are supported", nil)
 		}
+		athleteID := r.config.Coach.DefaultAthleteID
+		if selection, ok := coach.SelectionContextFromContext(ctx); ok && selection.Store != nil {
+			athleteID = selection.Store.Selected(selection.Key)
+		}
 		rows := make([]map[string]any, 0, len(catalog))
 		for _, tool := range catalog {
-			if tool.Name == toolcatalog.ICUvisorListAdvancedCapabilities || tool.EffectiveToolset() != safety.ToolsetFull {
+			if tool.Name == toolcatalog.ICUvisorListAdvancedCapabilities || tool.EffectiveToolset() != safety.ToolsetFull || !r.visibleForAthlete(athleteID, tool.Name) {
 				continue
 			}
 			rows = append(rows, map[string]any{"name": tool.Name, "summary": firstSentence(tool.Description), "requirement": toolRequirement(tool)})
