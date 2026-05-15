@@ -6,6 +6,7 @@ Usage:
 
 Commands:
   (no command)  Run the MCP server (stdio transport by default).
+  diagnostics  Print redacted local diagnostics and exit.
   setup         Store intervals.icu credentials and write non-secret config.
   version       Print the icuvisor version and exit.
   help          Print this help and exit.
@@ -30,9 +31,11 @@ Environment variables:
   ICUVISOR_DELETE_MODE       Write/delete registration mode: safe, full, or none. Default: safe.
   ICUVISOR_TOOLSET           Tool catalog tier: core or full. Default: core.
   ICUVISOR_DEBUG_METADATA    Include debug metadata in MCP responses when set to true. Default: false.
+  ICUVISOR_COACH_MODE        Coach-mode feature flag: off, on, or auto. Default: off.
 
 Examples:
   icuvisor
+  icuvisor diagnostics
   icuvisor setup
   icuvisor setup --config /path/to/icuvisor.json
   ICUVISOR_TRANSPORT=http icuvisor

@@ -30,6 +30,8 @@ type Options struct {
 	LoadConfig  func(context.Context, config.Options) (config.Config, error)
 	StartServer func(context.Context, ServerInfo) error
 
+	DiagnosticsRecentToolCallsPath string
+
 	SetupRunner           SetupRunner
 	SetupCredentialStore  credstore.Store
 	SetupPrompter         SetupPrompter
@@ -78,9 +80,15 @@ func Run(ctx context.Context, opts Options) error {
 	if len(args) > 0 && args[0] == "setup" {
 		return runSetupCommand(ctx, opts, args[1:])
 	}
+	if len(args) > 0 && args[0] == "diagnostics" {
+		return runDiagnosticsCommand(ctx, opts, args[1:])
+	}
 	if helpRequested(args) {
 		if hasCommand(args, "version") {
 			return writeVersionHelp(stdout)
+		}
+		if hasCommand(args, "diagnostics") {
+			return writeDiagnosticsHelp(stdout)
 		}
 		return writeTopLevelHelp(stdout)
 	}
@@ -276,14 +284,19 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 		return err
 	}
 	selectionStore := coach.NewSelectionStore(info.Config.Coach.DefaultAthleteID)
+	recentToolCalls, recentErr := defaultRecentToolCallRecorder()
+	if recentErr != nil {
+		logger.Warn("diagnostics recent-tool-call recorder unavailable", "error", recentErr)
+	}
 	server, err := mcpserver.NewServer(ctx, mcpserver.Options{
-		Config:         info.Config,
-		Version:        info.Version,
-		Logger:         logger,
-		Capability:     capability,
-		Toolset:        toolset,
-		SelectionStore: selectionStore,
-		PromptRegistry: prompts.NewRegistry(),
+		Config:                 info.Config,
+		Version:                info.Version,
+		Logger:                 logger,
+		Capability:             capability,
+		Toolset:                toolset,
+		SelectionStore:         selectionStore,
+		RecentToolCallRecorder: recentToolCalls,
+		PromptRegistry:         prompts.NewRegistry(),
 		ResourceRegistry: resources.NewRegistryWithOptions(client, resources.ResourceOptions{
 			Version:               info.Version,
 			TimezoneFallback:      info.Config.Timezone,

@@ -251,7 +251,7 @@ func setupProfile(ctx context.Context, opts setupProfileOptions) (SetupProfile, 
 	profile, err := opts.fetcher(ctx, opts.secret)
 	if err != nil {
 		if errors.Is(err, intervals.ErrUnauthorized) {
-			return SetupProfile{}, errors.New("API key not accepted by intervals.icu. Double-check the key on https://intervals.icu/settings.")
+			return SetupProfile{}, errors.New("API key not accepted by intervals.icu; double-check the key on https://intervals.icu/settings")
 		}
 		return SetupProfile{}, fmt.Errorf("could not reach intervals.icu. Nothing was written. Re-run setup when online, or use --offline to store settings without verification: %w", err)
 	}

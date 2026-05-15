@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `icuvisor diagnostics` for redacted local troubleshooting output, including version, active catalog hash, config source, resolved modes, runtime, and recent tool-call names/timestamps.
 - Coach mode behind `ICUVISOR_COACH_MODE` for config-backed multi-athlete rosters, including `list_athletes`, `select_athlete`, per-athlete tool ACLs, uniform `athlete_id` routing, and catalog-cache guidance.
 - First-run `icuvisor setup` onboarding command that prompts for the intervals.icu API key with masked input, verifies the profile, writes the key to the OS keychain, and stores non-secret athlete ID/timezone config.
 - macOS signed-DMG release scaffolding with a universal app bundle, Apple-native signing/notarization workflow gates, release-operator preflight docs, and manual Claude Desktop / Claude Code installed-app configuration guides.

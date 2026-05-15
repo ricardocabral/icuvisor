@@ -17,6 +17,7 @@ Usage:
 
 Commands:
   (no command)  Run the MCP server (stdio transport by default).
+  diagnostics  Print redacted local diagnostics and exit.
   setup         Store intervals.icu credentials and write non-secret config.
   version       Print the icuvisor version and exit.
   help          Print this help and exit.
@@ -41,9 +42,11 @@ Environment variables:
   %[15]s       Write/delete registration mode: safe, full, or none. Default: %[16]s.
   %[17]s           Tool catalog tier: core or full. Default: %[18]s.
   %[19]s    Include debug metadata in MCP responses when set to true. Default: false.
+  %[20]s        Coach-mode feature flag: off, on, or auto. Default: off.
 
 Examples:
   icuvisor
+  icuvisor diagnostics
   icuvisor setup
   icuvisor setup --config /path/to/icuvisor.json
   ICUVISOR_TRANSPORT=http icuvisor
@@ -60,7 +63,7 @@ For deeper documentation, see README.md and docs/prd/PRD-icuvisor.md.
 		config.EnvAPIKey, config.EnvAthleteID, config.EnvTimezone, config.DefaultTimezone,
 		config.EnvAPIBaseURL, config.DefaultAPIBaseURL, config.EnvHTTPTimeout, config.DefaultHTTPTimeout,
 		config.EnvTransport, config.EnvHTTPBind, safety.EnvDeleteMode, safety.ModeSafe,
-		safety.EnvToolset, safety.ToolsetCore, config.EnvDebugMetadata)
+		safety.EnvToolset, safety.ToolsetCore, config.EnvDebugMetadata, config.EnvCoachMode)
 	if err != nil {
 		return fmt.Errorf("writing help: %w", err)
 	}
@@ -90,6 +93,34 @@ Exit codes:
 `, config.EnvConfigPath)
 	if err != nil {
 		return fmt.Errorf("writing setup help: %w", err)
+	}
+	return nil
+}
+
+func writeDiagnosticsHelp(w io.Writer) error {
+	_, err := fmt.Fprintf(w, `Print redacted local diagnostics and exit.
+
+Usage:
+  icuvisor diagnostics [flags]
+
+Flags:
+  --config <path>        JSON config file path. Can also be set with %[1]s.
+  --env-file <path>      Env-file path to load before process env. Can also be set with %[2]s.
+  --transport <name>     MCP transport: stdio or http. Default: %[3]s.
+  --http-bind <addr>     HTTP bind address for --transport http. Default: %[4]s.
+  -h, --help             Print this help and exit.
+
+Notes:
+  Diagnostics prints source labels and recent tool names/timestamps only; it never prints API keys, athlete IDs, tool arguments, or payloads.
+  Diagnostics does not start the MCP server.
+
+Exit codes:
+  0  Success, including help output.
+  2  Usage error, such as an unknown flag or missing flag value.
+  1  Runtime error while loading config or computing diagnostics.
+`, config.EnvConfigPath, config.EnvDotEnvPath, config.TransportStdio, config.DefaultHTTPBindAddress)
+	if err != nil {
+		return fmt.Errorf("writing diagnostics help: %w", err)
 	}
 	return nil
 }

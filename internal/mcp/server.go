@@ -20,6 +20,7 @@ import (
 
 	"github.com/ricardocabral/icuvisor/internal/coach"
 	"github.com/ricardocabral/icuvisor/internal/config"
+	"github.com/ricardocabral/icuvisor/internal/diagnostics"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/prompts"
 	"github.com/ricardocabral/icuvisor/internal/resources"
@@ -44,16 +45,17 @@ var snakeCaseToolName = regexp.MustCompile(`^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$`)
 
 // Options contains dependencies for constructing the MCP server.
 type Options struct {
-	Config           config.Config
-	Version          string
-	Logger           *slog.Logger
-	Registry         tools.Registry
-	ResourceRegistry resources.Registry
-	PromptRegistry   prompts.Registry
-	Capability       safety.Capability
-	Toolset          safety.Toolset
-	Transport        sdkmcp.Transport
-	SelectionStore   *coach.SelectionStore
+	Config                 config.Config
+	Version                string
+	Logger                 *slog.Logger
+	Registry               tools.Registry
+	ResourceRegistry       resources.Registry
+	PromptRegistry         prompts.Registry
+	Capability             safety.Capability
+	Toolset                safety.Toolset
+	Transport              sdkmcp.Transport
+	SelectionStore         *coach.SelectionStore
+	RecentToolCallRecorder diagnostics.RecentToolCallRecorder
 }
 
 // Server wraps the SDK server and selected transport.
@@ -97,7 +99,7 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 		selectionStore = coach.NewSelectionStore(opts.Config.Coach.DefaultAthleteID)
 	}
 	if opts.Registry != nil {
-		registrar := &safeRegistrar{server: sdkServer, logger: logger, config: opts.Config, coachEvaluator: coach.NewEvaluator(opts.Config.CoachModeEnabled(), opts.Config.Coach), selectionStore: selectionStore, capability: capabilityOrSafe(opts.Capability), toolset: toolsetOrCore(opts), names: make(map[string]struct{})}
+		registrar := &safeRegistrar{server: sdkServer, logger: logger, config: opts.Config, coachEvaluator: coach.NewEvaluator(opts.Config.CoachModeEnabled(), opts.Config.Coach), selectionStore: selectionStore, capability: capabilityOrSafe(opts.Capability), toolset: toolsetOrCore(opts), names: make(map[string]struct{}), recentToolCalls: opts.RecentToolCallRecorder}
 		if err := opts.Registry.Register(ctx, registrar); err != nil {
 			return nil, fmt.Errorf("registering tools: %w", err)
 		}
@@ -325,6 +327,7 @@ type safeRegistrar struct {
 	skippedToolsetCount    int
 	skippedCapabilityCount int
 	skippedCoachCount      int
+	recentToolCalls        diagnostics.RecentToolCallRecorder
 }
 
 func (r *safeRegistrar) AddTool(tool tools.Tool) error {
@@ -353,12 +356,22 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) error {
 	}
 
 	return withPanicRecovery(fmt.Sprintf("registering tool %q", tool.Name), func() error {
+		if r.server == nil {
+			r.registeredTools = append(r.registeredTools, tool)
+			r.registeredCount++
+			return nil
+		}
 		r.server.AddTool(&sdkmcp.Tool{
 			Name:         tool.Name,
 			Description:  tool.Description,
 			InputSchema:  tool.InputSchema,
 			OutputSchema: tool.OutputSchema,
 		}, func(ctx context.Context, req *sdkmcp.CallToolRequest) (*sdkmcp.CallToolResult, error) {
+			if r.recentToolCalls != nil {
+				if err := r.recentToolCalls.RecordToolCall(ctx, tool.Name, time.Now().UTC()); err != nil {
+					r.logger.Warn("recording diagnostics tool call failed", "tool", tool.Name, "error", err)
+				}
+			}
 			callCtx := r.withSelection(ctx, req.Session)
 			callCtx, arguments, err := r.resolveToolTarget(callCtx, tool.Name, req.Params.Arguments)
 			if err != nil {
