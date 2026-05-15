@@ -1,22 +1,25 @@
 # TP-037-macos-signed-installer: macOS signed installer + manual client config docs — Status
 
 **Current Step:** Step 1: Apple Developer setup + bundle identity
-**Status:** ⏳ Not started
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 0
-**Iteration:** 0
+**Review Counter:** 1
+**Iteration:** 1
 **Size:** M
 
 ---
 
 ### Step 1: Apple Developer setup + bundle identity
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] Developer ID cert enrolled, `.p12` exportable for CI
 - [ ] Bundle identifier locked (proposed `dev.icuvisor.icuvisor`)
 - [ ] App-as-headless-in-.app, LSUIElement=true
+- [ ] R001 plan: record only non-secret Apple signing metadata requirements/TBDs and secret-handling boundaries
+- [ ] R001 plan: confirm final bundle identifier rationale and TP-036 keychain interaction
+- [ ] R001 plan: document headless `.app` launch behavior and Info.plist version-substitution plan
 
 ### Step 2: GoReleaser DMG + signing
 
@@ -63,3 +66,9 @@
 ## Notes
 
 _Add notes as work progresses._
+
+- R001 plan review requested explicit Step 1 planning before implementation; suggested later Step 2/3 attention to existing Homebrew publishing configuration.
+
+| 2026-05-15 17:43 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-15 17:43 | Step 1 started | Apple Developer setup + bundle identity |
+| 2026-05-15 17:46 | Review R001 | plan Step 1: REVISE |
