@@ -104,22 +104,38 @@ The current intervals client uses Basic Auth with username `API_KEY` and the con
 
 Unauthenticated probes are not sufficient to confirm coach-account behavior, but they help distinguish documented paths from guesses:
 
-| Candidate path | Observed status | Interpretation |
-| --- | ---: | --- |
-| `/api/v1/athlete/0/athlete-summary` | 401 | Documented followed-athlete summary endpoint exists and requires authentication. |
-| `/api/v1/athlete/0/athlete-summary.json` | 401 | Documented endpoint also accepts an `.json` extension form. |
-| `/api/v1/athlete/i0/athlete-summary` | 403 | `0` has special authenticated-user behavior; canonical `i0` is not equivalent. |
-| `/api/v1/athlete/0/followers` | 401 | Path exists but is not documented as the roster summary endpoint in the OpenAPI result. |
-| `/api/v1/athletes` | 401 | Path exists but is not documented as the roster summary endpoint in the OpenAPI result. |
-| `/api/v1/coaches/athletes` | 401 | Path exists but is not documented as the roster summary endpoint in the OpenAPI result. |
-| `/api/v1/athlete/0/athletes` | 404 | Not an exposed endpoint. |
-| `/api/v1/athlete/0/coached-athletes` | 404 | Not an exposed endpoint. |
-| `/api/v1/athlete/0/clients` | 404 | Not an exposed endpoint. |
+| Candidate path                           | Observed status | Interpretation                                                                          |
+| ---------------------------------------- | --------------: | --------------------------------------------------------------------------------------- |
+| `/api/v1/athlete/0/athlete-summary`      |             401 | Documented followed-athlete summary endpoint exists and requires authentication.        |
+| `/api/v1/athlete/0/athlete-summary.json` |             401 | Documented endpoint also accepts an `.json` extension form.                             |
+| `/api/v1/athlete/i0/athlete-summary`     |             403 | `0` has special authenticated-user behavior; canonical `i0` is not equivalent.          |
+| `/api/v1/athlete/0/followers`            |             401 | Path exists but is not documented as the roster summary endpoint in the OpenAPI result. |
+| `/api/v1/athletes`                       |             401 | Path exists but is not documented as the roster summary endpoint in the OpenAPI result. |
+| `/api/v1/coaches/athletes`               |             401 | Path exists but is not documented as the roster summary endpoint in the OpenAPI result. |
+| `/api/v1/athlete/0/athletes`             |             404 | Not an exposed endpoint.                                                                |
+| `/api/v1/athlete/0/coached-athletes`     |             404 | Not an exposed endpoint.                                                                |
+| `/api/v1/athlete/0/clients`              |             404 | Not an exposed endpoint.                                                                |
 
 ### Temporary implementation fallback pending authenticated validation
 
 Because this environment has no real coach key, the upstream roster endpoint remains unvalidated for v0.5 behavior. The authenticated coach-key probe is incomplete, not passed. Until a real coach account confirms auth, response shape, pagination behavior, and whether the endpoint returns only athletes intentionally exposed to the coach, implement `list_athletes` against the configured `coach.athletes[]` roster with `_meta.source: "config"` as a temporary fallback.
 
 The intervals client may remain extensible for a later authenticated `GET /api/v1/athlete/0/athlete-summary` probe, but coach mode must not claim `_meta.source: "upstream"` or depend on that upstream endpoint until the blocked probe is completed.
+
+Future maintainer probe requirements:
+
+1. Obtain a real coach-scoped intervals.icu API key through the normal local credential flow. Do not paste it into a prompt, commit it, or pass it through an MCP tool argument.
+2. Export it only in the local shell used for probing, for example `export INTERVALS_ICU_API_KEY='<redacted coach key>'`.
+3. Run authenticated clean-room probes such as:
+
+   ```sh
+   curl -sS -u "API_KEY:${INTERVALS_ICU_API_KEY}" \
+     'https://intervals.icu/api/v1/athlete/0/athlete-summary' | jq '.[0] | keys'
+
+   curl -i -sS -u "API_KEY:${INTERVALS_ICU_API_KEY}" \
+     'https://intervals.icu/api/v1/athlete/0/athlete-summary.json'
+   ```
+
+4. Record the exact path, auth style, response shape, roster filtering semantics, and any pagination or rate-limit headers before enabling `_meta.source: "upstream"`.
 
 Pagination gap: the public spec for `athlete-summary` does not advertise pagination. If future authenticated testing returns large rosters or pagination metadata, update this document and the client contract before switching `_meta.source` to `"upstream"`.
