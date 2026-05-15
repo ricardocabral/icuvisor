@@ -1,10 +1,10 @@
 # TP-039-coach-mode: Coach mode + per-athlete tool ACLs — Status
 
-**Current Step:** Step 2: Config + feature flag
+**Current Step:** Step 3: Tool registry plumbing
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 2
 **Size:** L
 
@@ -21,7 +21,7 @@
 
 ### Step 2: Config + feature flag
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] R003 plan revision: cycle-free ACL validation uses an `internal/toolcatalog` name/pattern boundary and `internal/coach` normalized config types
 - [x] R003 plan revision: define feature-flag state machine (`off` default, invalid fail, `auto` non-empty roster, `on` requires roster, `.env` support)
@@ -104,3 +104,4 @@
 | 2026-05-15 20:21 | Review R005 | plan Step 2: APPROVE |
 | 2026-05-15 20:32 | Review R006 | code Step 2: REVISE |
 | 2026-05-15 20:37 | Review R007 | code Step 2: REVISE |
+| 2026-05-15 20:41 | Review R008 | code Step 2: APPROVE |
