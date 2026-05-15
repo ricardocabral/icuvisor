@@ -14,10 +14,10 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Map current `doJSONQuery` into `do` / `readBody` / `shouldRetry` / outer loop
-- [ ] Agree on body-size cap default (recommendation: 32 MiB)
-- [ ] Confirm existing retry policy parameters and re-plumb unchanged
-- [ ] Address R001 plan review by recording helper signatures, body lifecycle rules, retry budget split, oversize sentinel, and `RetryConfig` semantics
+- [x] Map current `doJSONQuery` into `do` / `readBody` / `shouldRetry` / outer loop
+- [x] Agree on body-size cap default (recommendation: 32 MiB)
+- [x] Confirm existing retry policy parameters and re-plumb unchanged
+- [x] Address R001 plan review by recording helper signatures, body lifecycle rules, retry budget split, oversize sentinel, and `RetryConfig` semantics
 
 ### Step 2: Implement the split
 
@@ -61,7 +61,12 @@
 
 ## Decisions
 
-_Record body-size cap default (recommendation 32 MiB) and whether it is configurable via `RetryConfig` / client config or a package constant — settle in Step 1._
+- Helper split: keep public `doJSON` / `doJSONQuery` signatures unchanged. `doJSONQuery` owns the retry loop and passes each attempt to `do(ctx, query, pathParts...) (*http.Response, error)`, where `do` builds a GET request through `newRequest`, applies optional `url.Values`, sends it with the shared `*http.Client`, and returns a response whose body the caller owns. `readBody(io.Reader) ([]byte, error)` performs only bounded reads. `shouldRetry(*http.Response, error) bool` is classification-only: transport errors, 429, and >=500 are retryable; attempt budget, context state, `Retry-After`, sleeps, and body draining/closing remain in the outer loop.
+- Body cap: use a package-level constant `maxResponseBodyBytes = 32 << 20` (32 MiB), matching the task recommendation and keeping config surface unchanged. `readBody` reads with `io.LimitReader(r, maxResponseBodyBytes+1)` and returns an exported sentinel `ErrResponseTooLarge` (defined with the other intervals errors) when the cap is exceeded, wrapped by the caller for context.
+- Retry policy: preserve the hand-rolled policy; `go.mod` has no retry dependency to retain. Defaults remain max attempts `3`, base delay `200ms`, max delay `2s`, and default jitter `0.2` only for an entirely zero `RetryConfig`; partial configs keep explicit zero jitter unless they set `Jitter`. Retryable statuses remain HTTP `429` and `>=500`; transport errors retry only while `ctx.Err() == nil` and attempts remain. `Retry-After` seconds / HTTP-date handling remains capped by `MaxDelay`, and exponential backoff remains `BaseDelay << (attempt-1)` plus the existing jitter calculation.
+- Body lifecycle: every non-nil `resp.Body` is drained as needed and closed in the same retry-loop iteration before any `continue` or `return`; no `defer resp.Body.Close()` inside the loop. Status-body close errors remain returned when no retry happens. Success-body close errors will be returned before bounded JSON decode, so decoding happens only after the bounded buffer is read and the response body is closed.
+- Defaults constructor: replace `normalizeRetryConfig` with `RetryConfig.WithDefaults`. It can compute an explicit `allFieldsUnset` boolean from individual fields before filling defaults, but must not compare the whole struct to `RetryConfig{}`; this preserves zero-config default jitter and partial-config zero-jitter semantics.
+
 
 ## Notes
 
