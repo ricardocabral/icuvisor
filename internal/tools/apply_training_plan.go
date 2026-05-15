@@ -121,9 +121,14 @@ func applyTrainingPlanHandler(client ApplyTrainingPlanClient, profileClient Prof
 
 func decodeApplyTrainingPlanRequest(raw json.RawMessage, capability safety.Capability) (applyTrainingPlanRequest, error) {
 	var args applyTrainingPlanRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[applyTrainingPlanRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.PlanID = strings.TrimSpace(args.PlanID)
 	args.StartDate = strings.TrimSpace(args.StartDate)
 	args.ConflictPolicy = strings.TrimSpace(args.ConflictPolicy)

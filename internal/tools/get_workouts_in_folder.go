@@ -83,9 +83,14 @@ func getWorkoutsInFolderHandler(client WorkoutLibraryClient, profileClient Profi
 
 func decodeGetWorkoutsInFolderRequest(raw json.RawMessage) (getWorkoutsInFolderRequest, error) {
 	var args getWorkoutsInFolderRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[getWorkoutsInFolderRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.FolderID = strings.TrimSpace(args.FolderID)
 	if args.FolderID == "" {
 		return args, errors.New("folder_id is required")

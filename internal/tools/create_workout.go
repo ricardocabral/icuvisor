@@ -82,9 +82,14 @@ func createWorkoutHandler(client WorkoutCreatorClient, profileClient ProfileClie
 
 func decodeCreateWorkoutRequest(raw json.RawMessage) (createWorkoutRequest, error) {
 	var args createWorkoutRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[createWorkoutRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.Name = strings.TrimSpace(args.Name)
 	args.FolderID = strings.TrimSpace(args.FolderID)
 	args.Sport = strings.TrimSpace(args.Sport)

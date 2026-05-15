@@ -126,11 +126,10 @@ func updateWellnessHandler(client WellnessWriterClient, profileClient ProfileCli
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping update_wellness response: %w", err)
 		}
-		text, err := json.Marshal(payload)
-		if err != nil {
+		if _, err := json.Marshal(payload); err != nil {
 			return Result{}, fmt.Errorf("encoding update_wellness response: %w", err)
 		}
-		return Result{Content: []Content{{Type: ContentTypeText, Text: string(text)}}, StructuredContent: payload}, nil
+		return TextResult(payload), nil
 	}
 }
 
@@ -139,9 +138,14 @@ func decodeUpdateWellnessRequest(raw json.RawMessage) (updateWellnessRequest, er
 		return updateWellnessRequest{}, err
 	}
 	var args updateWellnessRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[updateWellnessRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.Date = strings.TrimSpace(args.Date)
 	if !validDate(args.Date) {
 		return args, errors.New("date must be athlete-local YYYY-MM-DD")

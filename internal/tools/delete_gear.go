@@ -65,9 +65,14 @@ func deleteGearHandler(client GearDeleterClient, profileClient ProfileClient, ve
 
 func decodeDeleteGearRequest(raw json.RawMessage) (deleteGearRequest, error) {
 	var args deleteGearRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[deleteGearRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.GearID = strings.TrimSpace(args.GearID)
 	if args.GearID == "" {
 		return args, errors.New("gear_id is required")

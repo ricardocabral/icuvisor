@@ -96,11 +96,10 @@ func listAdvancedCapabilitiesHandler(capabilities []advancedCapabilityRow, activ
 				Toolset:        response.Toolset(),
 			},
 		}
-		text, err := json.Marshal(response)
-		if err != nil {
+		if _, err := json.Marshal(response); err != nil {
 			return Result{}, err
 		}
-		return Result{Content: []Content{{Type: ContentTypeText, Text: string(text)}}, StructuredContent: response}, nil
+		return TextResult(response), nil
 	}
 }
 

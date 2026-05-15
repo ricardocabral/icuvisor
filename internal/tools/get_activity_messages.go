@@ -2,7 +2,6 @@ package tools
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"strings"
 	"time"
@@ -128,8 +127,7 @@ func encodeActivityMessagesResponse(payload getActivityMessagesResponse, include
 	if err != nil {
 		return Result{}, err
 	}
-	text, _ := json.Marshal(shaped)
-	return Result{Content: []Content{{Type: ContentTypeText, Text: string(text)}}, StructuredContent: shaped}, nil
+	return TextResult(shaped), nil
 }
 
 func normalizeActivityMessagesLimit(limit int) (int, error) {

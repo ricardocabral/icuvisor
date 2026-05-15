@@ -117,9 +117,14 @@ func getEventsHandler(client EventsClient, profileClient ProfileClient, version 
 
 func decodeGetEventsRequest(raw json.RawMessage) (getEventsRequest, error) {
 	var args getEventsRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[getEventsRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.Oldest = strings.TrimSpace(args.Oldest)
 	args.Newest = strings.TrimSpace(args.Newest)
 	args.Category = strings.TrimSpace(args.Category)

@@ -90,9 +90,14 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 
 func decodeAddOrUpdateEventRequest(raw json.RawMessage) (addOrUpdateEventRequest, error) {
 	var args addOrUpdateEventRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[addOrUpdateEventRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.Date = strings.TrimSpace(args.Date)
 	args.EventID = strings.TrimSpace(args.EventID)
 	args.Category = strings.TrimSpace(args.Category)

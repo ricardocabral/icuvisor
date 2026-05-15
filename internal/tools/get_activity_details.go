@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
@@ -128,11 +127,10 @@ func getActivityDetailsHandler(client ActivityDetailsClient, profileClient Profi
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activity_details response: %w", err)
 		}
-		text, err := json.Marshal(shaped)
-		if err != nil {
+		if _, err := json.Marshal(shaped); err != nil {
 			return Result{}, fmt.Errorf("encoding get_activity_details response: %w", err)
 		}
-		return Result{Content: []Content{{Type: ContentTypeText, Text: string(text)}}, StructuredContent: shaped}, nil
+		return TextResult(shaped), nil
 	}
 }
 
@@ -165,14 +163,9 @@ func decodeActivityReadRequest(raw json.RawMessage) (activityReadRequest, error)
 	if len(trimmed) == 0 || trimmed[0] != '{' {
 		return activityReadRequest{}, errors.New("arguments must be a JSON object")
 	}
-	decoder := json.NewDecoder(bytes.NewReader(trimmed))
-	decoder.DisallowUnknownFields()
-	var args activityReadRequest
-	if err := decoder.Decode(&args); err != nil {
+	args, err := DecodeStrict[activityReadRequest](trimmed)
+	if err != nil {
 		return activityReadRequest{}, err
-	}
-	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
-		return activityReadRequest{}, errors.New("unexpected trailing JSON")
 	}
 	args.ActivityID = strings.TrimSpace(args.ActivityID)
 	if args.ActivityID == "" {
@@ -214,11 +207,10 @@ func encodeActivityIntervalsResponse(payload getActivityIntervalsResponse, inclu
 	if err != nil {
 		return Result{}, fmt.Errorf("shaping get_activity_intervals response: %w", err)
 	}
-	text, err := json.Marshal(shaped)
-	if err != nil {
+	if _, err := json.Marshal(shaped); err != nil {
 		return Result{}, fmt.Errorf("encoding get_activity_intervals response: %w", err)
 	}
-	return Result{Content: []Content{{Type: ContentTypeText, Text: string(text)}}, StructuredContent: shaped}, nil
+	return TextResult(shaped), nil
 }
 
 func isActivityReadFallbackCandidate(err error) bool {

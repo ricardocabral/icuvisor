@@ -126,11 +126,10 @@ func updateSportSettingsHandler(client SportSettingsWriterClient, profileClient 
 			return Result{}, NewUserError(writeSportSettingsMessage, err)
 		}
 		payload := shapeUpdateSportSettingsResponse(args, params, updated, meta)
-		text, err := json.Marshal(payload)
-		if err != nil {
+		if _, err := json.Marshal(payload); err != nil {
 			return Result{}, fmt.Errorf("encoding update_sport_settings response: %w", err)
 		}
-		return Result{Content: []Content{{Type: ContentTypeText, Text: string(text)}}, StructuredContent: payload}, nil
+		return TextResult(payload), nil
 	}
 }
 
@@ -140,9 +139,14 @@ func decodeUpdateSportSettingsRequest(raw json.RawMessage) (updateSportSettingsR
 		return updateSportSettingsRequest{}, err
 	}
 	var args updateSportSettingsRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[updateSportSettingsRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.zonesProvided = zonesProvided
 	args.Sport = canonicalSport(args.Sport)
 	args.EffectiveDate = strings.TrimSpace(args.EffectiveDate)

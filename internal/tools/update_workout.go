@@ -94,9 +94,14 @@ func decodeUpdateWorkoutRequest(raw json.RawMessage) (updateWorkoutRequest, erro
 		return updateWorkoutRequest{}, err
 	}
 	var args updateWorkoutRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[updateWorkoutRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.WorkoutID = strings.TrimSpace(args.WorkoutID)
 	args.Name = strings.TrimSpace(args.Name)
 	args.FolderID = strings.TrimSpace(args.FolderID)

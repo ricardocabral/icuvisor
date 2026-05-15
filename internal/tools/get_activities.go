@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"math"
 	"sort"
 	"strings"
@@ -168,11 +167,10 @@ func getActivitiesHandler(activityClient ActivitiesClient, profileClient Profile
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activities response: %w", err)
 		}
-		text, err := json.Marshal(shaped)
-		if err != nil {
+		if _, err := json.Marshal(shaped); err != nil {
 			return Result{}, fmt.Errorf("encoding get_activities response: %w", err)
 		}
-		return Result{Content: []Content{{Type: ContentTypeText, Text: string(text)}}, StructuredContent: shaped}, nil
+		return TextResult(shaped), nil
 	}
 }
 
@@ -184,14 +182,9 @@ func decodeGetActivitiesRequest(raw json.RawMessage) (GetActivitiesRequest, *act
 	if trimmed[0] != '{' {
 		return GetActivitiesRequest{}, nil, errors.New("arguments must be a JSON object")
 	}
-	decoder := json.NewDecoder(bytes.NewReader(trimmed))
-	decoder.DisallowUnknownFields()
-	var args GetActivitiesRequest
-	if err := decoder.Decode(&args); err != nil {
+	args, err := DecodeStrict[GetActivitiesRequest](trimmed)
+	if err != nil {
 		return GetActivitiesRequest{}, nil, err
-	}
-	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
-		return GetActivitiesRequest{}, nil, errors.New("unexpected trailing JSON")
 	}
 	var supplied struct {
 		Oldest         *string `json:"oldest"`

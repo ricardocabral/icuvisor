@@ -136,9 +136,14 @@ func getExtendedMetricsHandler(client ExtendedMetricsClient, profileClient Profi
 
 func decodeExtendedMetricsRequest(raw json.RawMessage) (extendedMetricsRequest, error) {
 	var args extendedMetricsRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[extendedMetricsRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.ActivityID = strings.TrimSpace(args.ActivityID)
 	if args.ActivityID == "" {
 		return args, errors.New("activity_id is required")

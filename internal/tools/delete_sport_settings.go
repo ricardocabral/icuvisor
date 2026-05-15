@@ -66,9 +66,14 @@ func deleteSportSettingsHandler(client SportSettingsDeleterClient, profileClient
 
 func decodeDeleteSportSettingsRequest(raw json.RawMessage) (deleteSportSettingsRequest, error) {
 	var args deleteSportSettingsRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[deleteSportSettingsRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.SportSettingsID = strings.TrimSpace(args.SportSettingsID)
 	if args.SportSettingsID == "" {
 		return args, errors.New("sport_settings_id is required")

@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -24,12 +24,12 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Audit package-local `decodeStrict(raw, &args)` callers and preserve their existing empty/whitespace `arguments must be a JSON object` behavior with minimal prechecks where required
-- [ ] Replace package-local `decodeStrict(raw, &args)` callers with `DecodeStrict[T](raw)` and remove the old helper when unused
-- [ ] Replace decode boilerplate in every `internal/tools/<tool>.go` with `DecodeStrict`, preserving bespoke empty-input/raw-field validation ordering
-- [ ] Replace exact-match `Result{…}` boilerplate with `TextResult`, limiting checked `json.Marshal` sites to JSON-marshalable-by-construction payloads
-- [ ] Run targeted `go test ./internal/tools` and acceptance greps for `DisallowUnknownFields`, `decodeStrict(`, and `ContentTypeText`
-- [ ] Commit per logical batch (reads / writes / wellness / etc.)
+- [x] Audit package-local `decodeStrict(raw, &args)` callers and preserve their existing empty/whitespace `arguments must be a JSON object` behavior with minimal prechecks where required
+- [x] Replace package-local `decodeStrict(raw, &args)` callers with `DecodeStrict[T](raw)` and remove the old helper when unused
+- [x] Replace decode boilerplate in every `internal/tools/<tool>.go` with `DecodeStrict`, preserving bespoke empty-input/raw-field validation ordering
+- [x] Replace exact-match `Result{…}` boilerplate with `TextResult`, limiting checked `json.Marshal` sites to JSON-marshalable-by-construction payloads
+- [x] Run targeted `go test ./internal/tools` and acceptance greps for `DisallowUnknownFields`, `decodeStrict(`, and `ContentTypeText`
+- [x] Commit per logical batch (reads / writes / wellness / etc.)
 
 ### Step 3: `get_activities.go` cleanups
 
@@ -76,3 +76,4 @@ _Record `Requirement` enum shape (`int`+`iota` vs typed `string`) in Step 4._
 | 2026-05-15 13:46 | Review R003 | code Step 1: APPROVE |
 | 2026-05-15 13:50 | Review R004 | plan Step 2: REVISE |
 | 2026-05-15 13:53 | Review R005 | plan Step 2: REVISE |
+| 2026-05-15 13:55 | Review R006 | plan Step 2: APPROVE |

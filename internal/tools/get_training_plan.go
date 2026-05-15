@@ -93,9 +93,11 @@ func decodeGetTrainingPlanRequest(raw json.RawMessage) (getTrainingPlanRequest, 
 	if len(strings.TrimSpace(string(raw))) == 0 {
 		return args, nil
 	}
-	if err := decodeStrict(raw, &args); err != nil {
+	decoded, err := DecodeStrict[getTrainingPlanRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	return args, nil
 }
 

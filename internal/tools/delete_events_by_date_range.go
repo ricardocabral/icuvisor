@@ -96,9 +96,14 @@ func deleteEventsByDateRangeHandler(client EventsByDateRangeDeleterClient, profi
 
 func decodeDeleteEventsByDateRangeRequest(raw json.RawMessage) (deleteEventsByDateRangeRequest, error) {
 	var args deleteEventsByDateRangeRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[deleteEventsByDateRangeRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.StartDate = strings.TrimSpace(args.StartDate)
 	args.EndDate = strings.TrimSpace(args.EndDate)
 	args.Category = strings.TrimSpace(args.Category)

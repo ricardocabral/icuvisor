@@ -69,9 +69,14 @@ func deleteEventHandler(client EventDeleterClient, profileClient ProfileClient, 
 
 func decodeDeleteEventRequest(raw json.RawMessage) (deleteEventRequest, error) {
 	var args deleteEventRequest
-	if err := decodeStrict(raw, &args); err != nil {
+	if strings.TrimSpace(string(raw)) == "" {
+		return args, errors.New("arguments must be a JSON object")
+	}
+	decoded, err := DecodeStrict[deleteEventRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	args.EventID = strings.TrimSpace(args.EventID)
 	if args.EventID == "" {
 		return args, errors.New("event_id is required")

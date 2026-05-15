@@ -115,9 +115,11 @@ func decodeGetWorkoutLibraryRequest(raw json.RawMessage) (getWorkoutLibraryReque
 	if len(strings.TrimSpace(string(raw))) == 0 {
 		return args, nil
 	}
-	if err := decodeStrict(raw, &args); err != nil {
+	decoded, err := DecodeStrict[getWorkoutLibraryRequest](raw)
+	if err != nil {
 		return args, err
 	}
+	args = decoded
 	return args, nil
 }
 
