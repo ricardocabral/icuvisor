@@ -208,19 +208,43 @@ type trainingSummaryMeta struct {
 }
 
 func newGetFitnessTool(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return coreTool(Tool{Name: getFitnessName, Description: getFitnessDescription, InputSchema: dateRangeInputSchema("local start date for fitness rows"), OutputSchema: genericOutputSchema("Fitness rows with CTL, ATL, and TSB."), Handler: getFitnessHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+	return coreTool(Tool{
+		Name:         getFitnessName,
+		Description:  getFitnessDescription,
+		InputSchema:  dateRangeInputSchema("local start date for fitness rows"),
+		OutputSchema: genericOutputSchema("Fitness rows with CTL, ATL, and TSB."),
+		Handler:      getFitnessHandler(client, profileClient, version, timezoneFallback, debugMetadata),
+	})
 }
 
 func newGetBestEffortsTool(client BestEffortsClient, version string, debugMetadata bool) Tool {
-	return coreTool(Tool{Name: getBestEffortsName, Description: getBestEffortsDescription, InputSchema: bestEffortsInputSchema(), OutputSchema: genericOutputSchema("Best efforts grouped by sport and bucket."), Handler: getBestEffortsHandler(client, version, debugMetadata)})
+	return coreTool(Tool{
+		Name:         getBestEffortsName,
+		Description:  getBestEffortsDescription,
+		InputSchema:  bestEffortsInputSchema(),
+		OutputSchema: genericOutputSchema("Best efforts grouped by sport and bucket."),
+		Handler:      getBestEffortsHandler(client, version, debugMetadata),
+	})
 }
 
 func newGetPowerCurvesTool(client PowerCurvesClient, version string, debugMetadata bool) Tool {
-	return fullTool(Tool{Name: getPowerCurvesName, Description: getPowerCurvesDescription, InputSchema: powerCurvesInputSchema(), OutputSchema: genericOutputSchema("Mean-maximal power curve bucket points."), Handler: getPowerCurvesHandler(client, version, debugMetadata)})
+	return fullTool(Tool{
+		Name:         getPowerCurvesName,
+		Description:  getPowerCurvesDescription,
+		InputSchema:  powerCurvesInputSchema(),
+		OutputSchema: genericOutputSchema("Mean-maximal power curve bucket points."),
+		Handler:      getPowerCurvesHandler(client, version, debugMetadata),
+	})
 }
 
 func newGetTrainingSummaryTool(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Tool {
-	return coreTool(Tool{Name: getTrainingSummaryName, Description: getTrainingSummaryDescription, InputSchema: dateRangeInputSchema("local start date for summary rows"), OutputSchema: genericOutputSchema("Aggregated training summary."), Handler: getTrainingSummaryHandler(client, profileClient, version, timezoneFallback, debugMetadata)})
+	return coreTool(Tool{
+		Name:         getTrainingSummaryName,
+		Description:  getTrainingSummaryDescription,
+		InputSchema:  dateRangeInputSchema("local start date for summary rows"),
+		OutputSchema: genericOutputSchema("Aggregated training summary."),
+		Handler:      getTrainingSummaryHandler(client, profileClient, version, timezoneFallback, debugMetadata),
+	})
 }
 
 func getFitnessHandler(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool) Handler {

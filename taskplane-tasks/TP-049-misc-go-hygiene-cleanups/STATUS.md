@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 1
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 2
 **Size:** S
 
@@ -44,9 +44,9 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Wrap four `newXxxTool` calls in `internal/tools/get_fitness.go:210-224`
-- [ ] `gofmt`/`goimports` clean
-- [ ] `make build` / `test` / `lint`
+- [x] Wrap four `newXxxTool` calls in `internal/tools/get_fitness.go:210-224`
+- [x] `gofmt`/`goimports` clean
+- [x] `make build` / `test` / `lint`
 - [ ] Commit `TP-049 wrap long constructor lines in get_fitness`
 
 ### Step 5: Fix registry error message (item 5)
@@ -89,3 +89,4 @@ _Add notes as work progresses._
 | 2026-05-15 17:07 | Exit intercept reprompt | Supervisor provided instructions (683 chars) — reprompting worker |
 | 2026-05-15 17:09 | Review R002 | plan Step 2: APPROVE |
 | 2026-05-15 17:15 | Review R003 | plan Step 3: APPROVE |
+| 2026-05-15 17:22 | Review R004 | plan Step 4: APPROVE |
