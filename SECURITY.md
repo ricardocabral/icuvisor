@@ -4,11 +4,11 @@
 
 icuvisor is pre-1.0. Until the first stable release, only the latest tagged release and `main` receive fixes.
 
-| Version | Supported |
-|---------|-----------|
-| `main`  | yes       |
-| latest tag | yes    |
-| older tags | no     |
+| Version    | Supported |
+| ---------- | --------- |
+| `main`     | yes       |
+| latest tag | yes       |
+| older tags | no        |
 
 ## Reporting a vulnerability
 
@@ -60,6 +60,13 @@ Official macOS releases use a Developer ID Application certificate for the app b
 - `APPLE_API_KEY_BASE64` — base64-encoded App Store Connect API key (`.p8`).
 
 Do not commit certificate exports, `.p8` files, app-specific passwords, API keys, or decoded secret material. Release logs must not echo these values.
+
+Before cutting a signed macOS release, the release operator must complete this preflight gate and record the non-secret results in the release notes or task status:
+
+- `security find-identity -v -p codesigning` on the release runner/keychain shows a valid `Developer ID Application` identity for the project.
+- Apple Team ID, Developer ID Application common name, and certificate expiration date are known to the release operator.
+- GitHub Actions secrets exist by name for `APPLE_TEAM_ID`, `APPLE_DEVELOPER_ID_P12_BASE64`, `APPLE_DEVELOPER_ID_P12_PASSWORD`, `APPLE_API_KEY_ID`, `APPLE_API_KEY_ISSUER`, and `APPLE_API_KEY_BASE64`.
+- No secret values, decoded `.p12`, decoded `.p8`, or placeholder secret material are committed to git.
 
 Users can verify an installed app with:
 

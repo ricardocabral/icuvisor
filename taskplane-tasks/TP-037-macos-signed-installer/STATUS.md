@@ -5,7 +5,7 @@
 **Last Updated:** 2026-05-15
 **Review Level:** 3
 **Review Counter:** 2
-**Iteration:** 1
+**Iteration:** 2
 **Size:** M
 
 ---
@@ -14,7 +14,7 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Developer ID cert enrolled, `.p12` exportable for CI
+- [x] Maintainer preflight documented; live Developer ID certificate enrollment and `.p12` export validation deferred to release operator
 - [x] Bundle identifier locked (proposed `dev.icuvisor.icuvisor`)
 - [x] App-as-headless-in-.app, LSUIElement=true
 - [x] R001 plan: record only non-secret Apple signing metadata requirements/TBDs and secret-handling boundaries
@@ -69,7 +69,7 @@
 
 ## Blockers
 
-- Step 1 Developer ID certificate verification is blocked on maintainer-owned Apple Developer/GitHub setup. Local `security find-identity -v -p codesigning` returned `0 valid identities found`; no Apple Team ID, Developer ID Application common name, certificate expiration, or GitHub secret presence is available in the repository. Per R002, do not check the Developer ID certificate item complete until those non-secret facts are supplied.
+- Operator-deferred Apple Developer preflight (not a repository implementation blocker): local `security find-identity -v -p codesigning` => `0 valid identities found`. Required non-secret maintainer inputs before a live signed/notarized release: Apple Team ID, Developer ID Application common name, certificate expiration date, and GitHub Actions secret presence by name only for `APPLE_TEAM_ID`, `APPLE_DEVELOPER_ID_P12_BASE64`, `APPLE_DEVELOPER_ID_P12_PASSWORD`, `APPLE_API_KEY_ID`, `APPLE_API_KEY_ISSUER`, and `APPLE_API_KEY_BASE64`.
 
 ## Notes
 
@@ -78,8 +78,12 @@ _Add notes as work progresses._
 - R001 plan review requested explicit Step 1 planning before implementation; suggested later Step 2/3 attention to existing Homebrew publishing configuration.
 - R002 plan review approved implementation but requires real Apple Team ID, Developer ID Application common name, certificate expiration date, and GitHub secret presence before checking the Developer ID certificate item complete.
 - Step 1 plist validation: `plutil -lint build/macos/Info.plist` passed.
+- Steering accepted for Step 1: live Apple Developer certificate validation is maintainer-owned and deferred to release operator; SECURITY.md now carries the hard preflight gate and no secret or placeholder secret material is committed.
 
 | 2026-05-15 17:43 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 17:43 | Step 1 started | Apple Developer setup + bundle identity |
 | 2026-05-15 17:46 | Review R001 | plan Step 1: REVISE |
 | 2026-05-15 17:49 | Review R002 | plan Step 1: APPROVE |
+
+| 2026-05-15 17:52 | Agent escalate | TP-037 Step 1 is blocked on maintainer-owned Apple Developer setup. The plan reviewer explicitly said not to mark `Developer ID cert enrolled, .p12 exportable for CI` complete until real non-secret me |
+| 2026-05-15 17:52 | Worker iter 1 | done in 536s, tools: 47 |
