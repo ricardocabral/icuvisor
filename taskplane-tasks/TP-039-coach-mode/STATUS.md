@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 2
 **Size:** L
 
@@ -26,6 +26,9 @@
 - [ ] R003 plan revision: cycle-free ACL validation uses an `internal/toolcatalog` name/pattern boundary and `internal/coach` normalized config types
 - [ ] R003 plan revision: define feature-flag state machine (`off` default, invalid fail, `auto` non-empty roster, `on` requires roster, `.env` support)
 - [ ] R003 plan revision: enforce roster validation matrix (ID normalization, duplicates, default selection, deny-overrides-allow ACL semantics, redacted String/log output)
+- [ ] R004 plan revision: make `internal/toolcatalog` the shared catalog contract via exported canonical tool-name constants and registry/config consumers
+- [ ] R004 plan revision: keep dependency direction `config -> coach -> toolcatalog`, with config-owned athlete-ID normalization and no `coach -> config` import
+- [ ] R004 plan revision: validate any present coach stanza even when mode is `off`; omit single-athlete default by filling it; empty `allowed_tools` means deny-all; docs/examples must not use `denied_tools: ["*"]` for read-only
 - [ ] `ICUVISOR_COACH_MODE=on|off|auto`
 - [ ] `coach.athletes[]` schema with `allowed_tools` / `denied_tools` / `default_athlete_id`
 - [ ] Unknown tool names fail loudly
@@ -80,7 +83,7 @@
 - Threat model conclusion: `athlete_id` is only a normalized target selector; it cannot exfiltrate credentials, bypass per-athlete ACLs, or escape the local roster if request-time roster checks remain authoritative and compose with delete-mode/toolset gates.
 - Endpoint probe conclusion: public OpenAPI documents `GET /api/v1/athlete/{id}/athlete-summary{ext}` as “Summary information for followed athletes” with `SummaryWithCats[]` fields including `athlete_id` and `athlete_name`, but no real coach key was available in the task environment, so TP-039 should implement `list_athletes` from config first (`_meta.source: "config"`) and leave upstream roster support for a later authenticated probe.
 - Supervisor steering on 2026-05-15 explicitly treats the authenticated black-box coach-roster probe as an external/operator-deferred validation gate; Step 1 is complete on the documented-gap/fallback basis, not because upstream roster discovery was locally proven.
-- Step 2 plan decisions from R003: config parsing stays cycle-free by validating ACL patterns against an `internal/toolcatalog` package rather than importing `internal/tools`; `allowed_tools` is the positive allow list, `denied_tools` is an explicit veto, and deny patterns override allow patterns (`denied_tools: ["*"]` means deny all, not read-only).
+- Step 2 plan decisions from R003/R004: config parsing stays cycle-free by validating ACL patterns against an `internal/toolcatalog` package rather than importing `internal/tools`; `internal/toolcatalog` owns exported canonical tool-name constants consumed by registry/config to avoid drift. `allowed_tools` is the positive allow list, `denied_tools` is an explicit veto, and deny patterns override allow patterns (`denied_tools: ["*"]` means deny all, not read-only). Config owns athlete-ID normalization and constructs normalized `internal/coach` values; coach does not import config. Any present coach stanza is validated for typo defense even when mode is `off`, while runtime behavior remains single-athlete because effective coach mode is off.
 
 | 2026-05-15 20:00 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 20:00 | Step 1 started | Threat-model review + endpoint probe |
@@ -92,3 +95,4 @@
 | 2026-05-15 20:10 | Review R002 | code Step 1: reviewer repeated R001 objection; superseded by supervisor steering to treat gap as complete for TP-039 v0.5. |
 | 2026-05-15 20:12 | Review R002 | code Step 1: UNKNOWN |
 | 2026-05-15 20:15 | Review R003 | plan Step 2: REVISE |
+| 2026-05-15 20:19 | Review R004 | plan Step 2: REVISE |
