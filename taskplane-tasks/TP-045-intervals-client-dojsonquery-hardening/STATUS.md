@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 1
 **Size:** M
 
@@ -39,7 +39,7 @@
 
 ### Step 4: Tests
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Body-close accounting across all paths (success, retry-then-success, exhaustion, oversize, 4xx, ctx-cancel)
 - [x] Oversize body trips `io.LimitReader` and returns sentinel
@@ -82,3 +82,4 @@ _Add notes as work progresses._
 | 2026-05-15 15:17 | Review R006 | plan Step 3: APPROVE |
 | 2026-05-15 15:21 | Review R007 | code Step 3: APPROVE |
 | 2026-05-15 15:23 | Review R008 | plan Step 4: APPROVE |
+| 2026-05-15 15:29 | Review R009 | code Step 4: APPROVE |
