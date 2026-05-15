@@ -9,6 +9,7 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
+	"github.com/ricardocabral/icuvisor/internal/toolcatalog"
 )
 
 // Registry registers the MCP tools exposed by icuvisor.
@@ -95,6 +96,9 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	registrar = collector
 	shaping := responseShaping{deleteMode: r.deleteMode, toolset: r.toolset}
 	add := func(tool Tool) error {
+		if !toolcatalog.IsKnownTool(tool.Name) {
+			return fmt.Errorf("registering %s: not present in shared tool catalog", tool.Name)
+		}
 		if err := registrar.AddTool(tool); err != nil {
 			return fmt.Errorf("registering %s: %w", tool.Name, err)
 		}
@@ -212,6 +216,9 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 		return err
 	}
 	advancedTool := newListAdvancedCapabilitiesTool(collector.tools, r.toolset, shaping)
+	if !toolcatalog.IsKnownTool(advancedTool.Name) {
+		return fmt.Errorf("registering %s: not present in shared tool catalog", advancedTool.Name)
+	}
 	if err := collector.downstream.AddTool(advancedTool); err != nil {
 		return fmt.Errorf("registering %s: %w", advancedTool.Name, err)
 	}

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ricardocabral/icuvisor/internal/safety"
+	"github.com/ricardocabral/icuvisor/internal/toolcatalog"
 )
 
 func TestRegistryWithIntervalsClientRegistersFullCatalog(t *testing.T) {
@@ -22,46 +23,7 @@ func TestRegistryWithIntervalsClientRegistersFullCatalog(t *testing.T) {
 		t.Fatalf("Register() error = %v", err)
 	}
 
-	wantNames := []string{
-		addActivityMessageName,
-		addOrUpdateEventName,
-		applyTrainingPlanName,
-		createCustomItemName,
-		createWorkoutName,
-		deleteActivityName,
-		deleteCustomItemName,
-		deleteEventName,
-		deleteEventsByDateRangeName,
-		deleteGearName,
-		deleteSportSettingsName,
-		deleteWorkoutName,
-		getActivitiesName,
-		getActivityDetailsName,
-		getActivityIntervalsName,
-		getActivityMessagesName,
-		getActivitySplitsName,
-		getActivityStreamsName,
-		getAthleteProfileName,
-		getBestEffortsName,
-		getCustomItemByIDName,
-		getCustomItemsName,
-		getEventByIDName,
-		getEventsName,
-		getExtendedMetricsName,
-		getFitnessName,
-		getPowerCurvesName,
-		getTrainingPlanName,
-		getTrainingSummaryName,
-		getWellnessDataName,
-		getWorkoutLibraryName,
-		getWorkoutsInFolderName,
-		linkActivityToEventName,
-		listAdvancedCapabilitiesName,
-		updateCustomItemName,
-		updateSportSettingsName,
-		updateWellnessName,
-		updateWorkoutName,
-	}
+	wantNames := append(toolcatalog.AthleteScopedToolNames(), toolcatalog.ICUvisorListAdvancedCapabilities)
 	slices.Sort(wantNames)
 
 	gotNames := make([]string, 0, len(registrar.tools))

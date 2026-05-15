@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ricardocabral/icuvisor/internal/coach"
 	"github.com/ricardocabral/icuvisor/internal/credstore"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
@@ -287,6 +288,123 @@ func TestLoadToolsetFromDotEnvAndInvalidEnvFallback(t *testing.T) {
 	}
 	if cfg.Toolset != safety.ToolsetCore {
 		t.Fatalf("Toolset = %q, want invalid env fallback core", cfg.Toolset)
+	}
+}
+
+func TestLoadCoachModeFromEnvAndDotEnv(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	dotEnvPath := dir + "/.env"
+	writeFile(t, dotEnvPath, strings.Join([]string{
+		"INTERVALS_ICU_API_KEY=dotenv-key",
+		"INTERVALS_ICU_ATHLETE_ID=i444",
+		"ICUVISOR_COACH_MODE=auto",
+	}, "\n"))
+
+	cfg, err := Load(context.Background(), Options{DotEnvPath: dotEnvPath, Env: map[string]string{}})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.CoachMode != coach.ModeAuto || cfg.CoachModeEnabled() {
+		t.Fatalf("CoachMode = %q enabled=%t, want auto disabled with empty roster", cfg.CoachMode, cfg.CoachModeEnabled())
+	}
+
+	cfg, err = Load(context.Background(), Options{DotEnvPath: dotEnvPath, Env: map[string]string{
+		EnvAPIKey:     "env-key",
+		EnvAthleteID:  "12345",
+		EnvCoachMode:  " ON ",
+		EnvConfigPath: "",
+	}})
+	if err == nil {
+		t.Fatal("Load() with coach mode on and empty roster error = nil, want error")
+	}
+	if !strings.Contains(err.Error(), "coach mode is on") {
+		t.Fatalf("error = %q, want coach mode roster error", err)
+	}
+
+	_, err = Load(context.Background(), Options{Env: map[string]string{
+		EnvAPIKey:     "env-key",
+		EnvAthleteID:  "12345",
+		EnvCoachMode:  "maybe",
+		EnvConfigPath: "",
+	}})
+	if err == nil || !strings.Contains(err.Error(), "invalid coach mode") {
+		t.Fatalf("Load() invalid coach mode error = %v, want invalid coach mode", err)
+	}
+}
+
+func TestLoadCoachConfigSchemaAndValidation(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	configPath := dir + "/config.json"
+	writeFile(t, configPath, `{
+		"api_key": "json-key",
+		"athlete_id": "111",
+		"coach": {
+			"athletes": [
+				{"id": "222", "label": " Jane ", "allowed_tools": ["get_*", "get_*"], "denied_tools": ["delete_event"]},
+				{"id": "i333", "allowed_tools": ["*"], "denied_tools": []}
+			],
+			"default_athlete_id": "333"
+		}
+	}`)
+
+	cfg, err := Load(context.Background(), Options{Path: configPath, Env: map[string]string{EnvCoachMode: "auto"}})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.CoachMode != coach.ModeAuto || !cfg.CoachModeEnabled() {
+		t.Fatalf("CoachMode = %q enabled=%t, want auto enabled", cfg.CoachMode, cfg.CoachModeEnabled())
+	}
+	if cfg.Coach.DefaultAthleteID != "i333" {
+		t.Fatalf("DefaultAthleteID = %q, want i333", cfg.Coach.DefaultAthleteID)
+	}
+	if len(cfg.Coach.Athletes) != 2 || cfg.Coach.Athletes[0].ID != "i222" || cfg.Coach.Athletes[0].Label != "Jane" {
+		t.Fatalf("Coach athletes = %#v, want normalized roster", cfg.Coach.Athletes)
+	}
+	if got := cfg.Coach.Athletes[0].AllowedTools; len(got) != 1 || got[0] != "get_*" {
+		t.Fatalf("AllowedTools = %#v, want deduped get_*", got)
+	}
+}
+
+func TestLoadCoachConfigValidationErrors(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		json    string
+		env     map[string]string
+		wantErr string
+	}{
+		{name: "unknown json field", json: `{"api_key":"k","athlete_id":"1","coach":{"athletes":[],"typo":true}}`, wantErr: "unknown field"},
+		{name: "duplicate normalized athlete", json: `{"api_key":"k","athlete_id":"1","coach":{"athletes":[{"id":"2"},{"id":"i2"}]}}`, wantErr: "duplicate coach athlete id"},
+		{name: "default outside roster", json: `{"api_key":"k","athlete_id":"1","coach":{"athletes":[{"id":"2"}],"default_athlete_id":"3"}}`, wantErr: "coach.default_athlete_id"},
+		{name: "unknown exact tool", json: `{"api_key":"k","athlete_id":"1","coach":{"athletes":[{"id":"2","allowed_tools":["get_athlete_profiel"]}]}}`, wantErr: "unknown athlete-scoped tool"},
+		{name: "unknown wildcard", json: `{"api_key":"k","athlete_id":"1","coach":{"athletes":[{"id":"2","allowed_tools":["bogus_*"]}]}}`, wantErr: "matches no athlete-scoped tools"},
+		{name: "off still validates stanza", json: `{"api_key":"k","athlete_id":"1","coach":{"athletes":[{"id":"2","denied_tools":["select_athlete"]}]}}`, env: map[string]string{EnvCoachMode: "off"}, wantErr: "unknown athlete-scoped tool"},
+		{name: "on multiple athletes needs default", json: `{"api_key":"k","athlete_id":"1","coach":{"athletes":[{"id":"2"},{"id":"3"}]}}`, env: map[string]string{EnvCoachMode: "on"}, wantErr: "default_athlete_id is required"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			dir := t.TempDir()
+			path := dir + "/config.json"
+			writeFile(t, path, tc.json)
+			env := tc.env
+			if env == nil {
+				env = map[string]string{}
+			}
+			_, err := Load(context.Background(), Options{Path: path, DotEnvPath: dir + "/missing.env", Env: env})
+			if err == nil {
+				t.Fatal("Load() error = nil, want error")
+			}
+			if !strings.Contains(err.Error(), tc.wantErr) {
+				t.Fatalf("error = %q, want %q", err, tc.wantErr)
+			}
+		})
 	}
 }
 
@@ -729,12 +847,16 @@ func TestConfigStringRedactsSecret(t *testing.T) {
 		Timezone:     "UTC",
 		APIBaseURL:   DefaultAPIBaseURL,
 		HTTPTimeout:  DefaultHTTPTimeout,
+		CoachMode:    coach.ModeAuto,
+		Coach: coach.Config{Athletes: []coach.Athlete{
+			{ID: "i222", Label: "Jane"},
+		}},
 	}
 	got := cfg.String()
-	if strings.Contains(got, testCredential) || strings.Contains(got, "i12345") {
+	if strings.Contains(got, testCredential) || strings.Contains(got, "i12345") || strings.Contains(got, "i222") || strings.Contains(got, "Jane") {
 		t.Fatalf("Config.String() leaked sensitive data: %q", got)
 	}
-	for _, want := range []string{"api_key=<redacted>", "api_key_source=keychain", "athlete_id=<set>", "UTC", "toolset=core"} {
+	for _, want := range []string{"api_key=<redacted>", "api_key_source=keychain", "athlete_id=<set>", "UTC", "toolset=core", "coach_mode=auto", "coach_enabled=true", "coach_athletes=1"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("Config.String() = %q, want %q", got, want)
 		}

@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 2
 **Size:** L
 
@@ -23,15 +23,15 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] R003 plan revision: cycle-free ACL validation uses an `internal/toolcatalog` name/pattern boundary and `internal/coach` normalized config types
-- [ ] R003 plan revision: define feature-flag state machine (`off` default, invalid fail, `auto` non-empty roster, `on` requires roster, `.env` support)
-- [ ] R003 plan revision: enforce roster validation matrix (ID normalization, duplicates, default selection, deny-overrides-allow ACL semantics, redacted String/log output)
-- [ ] R004 plan revision: make `internal/toolcatalog` the shared catalog contract via exported canonical tool-name constants and registry/config consumers
-- [ ] R004 plan revision: keep dependency direction `config -> coach -> toolcatalog`, with config-owned athlete-ID normalization and no `coach -> config` import
-- [ ] R004 plan revision: validate any present coach stanza even when mode is `off`; omit single-athlete default by filling it; empty `allowed_tools` means deny-all; docs/examples must not use `denied_tools: ["*"]` for read-only
-- [ ] `ICUVISOR_COACH_MODE=on|off|auto`
-- [ ] `coach.athletes[]` schema with `allowed_tools` / `denied_tools` / `default_athlete_id`
-- [ ] Unknown tool names fail loudly
+- [x] R003 plan revision: cycle-free ACL validation uses an `internal/toolcatalog` name/pattern boundary and `internal/coach` normalized config types
+- [x] R003 plan revision: define feature-flag state machine (`off` default, invalid fail, `auto` non-empty roster, `on` requires roster, `.env` support)
+- [x] R003 plan revision: enforce roster validation matrix (ID normalization, duplicates, default selection, deny-overrides-allow ACL semantics, redacted String/log output)
+- [x] R004 plan revision: make `internal/toolcatalog` the shared catalog contract via exported canonical tool-name constants and registry/config consumers
+- [x] R004 plan revision: keep dependency direction `config -> coach -> toolcatalog`, with config-owned athlete-ID normalization and no `coach -> config` import
+- [x] R004 plan revision: validate any present coach stanza even when mode is `off`; omit single-athlete default by filling it; empty `allowed_tools` means deny-all; docs/examples must not use `denied_tools: ["*"]` for read-only
+- [x] `ICUVISOR_COACH_MODE=on|off|auto`
+- [x] `coach.athletes[]` schema with `allowed_tools` / `denied_tools` / `default_athlete_id`
+- [x] Unknown tool names fail loudly
 
 ### Step 3: Tool registry plumbing
 
@@ -96,3 +96,4 @@
 | 2026-05-15 20:12 | Review R002 | code Step 1: UNKNOWN |
 | 2026-05-15 20:15 | Review R003 | plan Step 2: REVISE |
 | 2026-05-15 20:19 | Review R004 | plan Step 2: REVISE |
+| 2026-05-15 20:21 | Review R005 | plan Step 2: APPROVE |
