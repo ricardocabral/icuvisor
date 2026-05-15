@@ -16,8 +16,8 @@
 
 - [x] Grep all readers/writers
 - [x] Decide `Options` construction site
-- [ ] Add `list_advanced_capabilities` response.Toolset reader to audit/plan
-- [ ] Add athlete-profile resource path to `Options` construction decision
+- [x] Add `list_advanced_capabilities` response.Toolset reader to audit/plan
+- [x] Add athlete-profile resource path to `Options` construction decision
 
 ### Step 2: Refactor
 
@@ -47,12 +47,12 @@
 
 ## Decisions
 
-- 2026-05-15: `response.Options` should be assembled at each existing `response.Shape` call from per-tool configuration threaded out of `tools.NewRegistryWithOptions`; `internal/app/app.go` already resolves `deleteMode` and `toolset` and should pass them into `tools.RegistryOptions` instead of writing response globals. Zero-value `response.Options` should preserve safe/core defaults for direct/test callers.
+- 2026-05-15: `response.Options` should be assembled at each existing `response.Shape` call from per-tool/resource configuration. `internal/app/app.go` already resolves `deleteMode` and `toolset` and should pass them into both `tools.RegistryOptions` and `resources.ResourceOptions` instead of writing response globals; `athleteprofile.Shape` needs those values because it is shared by `get_athlete_profile` and the `icuvisor://athlete-profile` resource. Zero-value `response.Options` should preserve safe/core defaults for direct/test callers.
 
 ## Notes
 
-- Step 1 grep found globals/setters in `internal/response/shaper.go`, app startup writes in `internal/app/app.go`, and tests in `internal/{response,tools,app}` relying on `SetDeleteMode`/`SetToolset`.
-- Current `response.Shape` call sites are limited to `internal/athleteprofile/profile.go` and tools helpers in `get_activity_messages.go`, `get_activity_streams.go`, `get_fitness.go`, `update_wellness.go`, `get_activity_details.go`, and `get_activities.go`.
+- Step 1 grep found globals/setters in `internal/response/shaper.go`, app startup writes in `internal/app/app.go`, tests in `internal/{response,tools,app}` relying on `SetDeleteMode`/`SetToolset`, and a non-`Shape` reader in `internal/tools/list_advanced_capabilities.go` via `response.Toolset()` that should use its captured `activeToolset` instead.
+- Current `response.Shape` call sites are limited to `internal/athleteprofile/profile.go` (shared by tool and resource) and tools helpers in `get_activity_messages.go`, `get_activity_streams.go`, `get_fitness.go`, `update_wellness.go`, `get_activity_details.go`, and `get_activities.go`.
 
 | 2026-05-15 14:22 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 14:22 | Step 1 started | Audit reads |
