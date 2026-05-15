@@ -534,6 +534,26 @@ func TestShapeJSONConversionContract(t *testing.T) {
 			t.Fatalf("float32 JSON = %s, want encoding/json float32 precision", gotJSON)
 		}
 	})
+
+	t.Run("json number preserves number semantics", func(t *testing.T) {
+		type input struct {
+			Value json.Number `json:"value"`
+		}
+		got, err := Shape(input{Value: json.Number("8.5")}, Options{})
+		if err != nil {
+			t.Fatalf("Shape(valid json.Number) error = %v", err)
+		}
+		gotJSON, err := json.Marshal(got)
+		if err != nil {
+			t.Fatalf("marshal shaped: %v", err)
+		}
+		if bytes.Contains(gotJSON, []byte(`"value":"8.5"`)) || !bytes.Contains(gotJSON, []byte(`"value":8.5`)) {
+			t.Fatalf("json.Number JSON = %s, want numeric value", gotJSON)
+		}
+		if _, err := Shape(input{Value: json.Number("bad")}, Options{}); err == nil {
+			t.Fatal("Shape(invalid json.Number) error = nil, want invalid number error")
+		}
+	})
 }
 
 func TestShapeDoesNotMutateCallerOwnedInput(t *testing.T) {

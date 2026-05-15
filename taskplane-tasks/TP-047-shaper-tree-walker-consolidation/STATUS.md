@@ -41,7 +41,7 @@
 - [x] Preserve every existing path predicate's semantics
 - [x] Fix R010 float conversion semantics: reject NaN/Inf early with wrapped errors and preserve float32 JSON byte behavior via narrow fallback, with regression tests
 - [x] Fix R010 provenance debug semantics so `_meta.provenance.<field>.query_type` is preserved and make `_meta` path matching segment-exact, with regression tests
-- [ ] Fix R011 `json.Number` semantics by routing valid/invalid numbers through the narrow JSON fallback with regression tests
+- [x] Fix R011 `json.Number` semantics by routing valid/invalid numbers through the narrow JSON fallback with regression tests
 
 ### Step 4: Adjacent P2 cleanups
 

@@ -297,6 +297,10 @@ func isEmptyJSONValue(value reflect.Value) bool {
 }
 
 func marshalSpecialValue(value any) (any, bool, error) {
+	if number, ok := value.(json.Number); ok {
+		out, err := marshalJSONValue(number)
+		return out, true, err
+	}
 	if marshaler, ok := value.(json.Marshaler); ok {
 		out, err := marshalJSONValue(marshaler)
 		return out, true, err
