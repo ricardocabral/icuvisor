@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -43,13 +43,13 @@ Implementation plan (R005):
 - Consent wording will say the maintainer may receive install-to-first-call timing, top tool-call names/timestamps/descriptions, mobile-need answers, qualitative notes, blockers, and voluntarily shared diagnostics output; it will exclude raw training data, API keys, athlete IDs, payloads, tool arguments, screenshots with values, and transcripts, and include revocation instructions.
 - After drafting, do a local link/path sanity pass before Step 3; update STATUS immediately after each file is created.
 
-- [ ] `README.md` — execution-order index for all seven internal-beta docs
-- [ ] `protocol.md` — recruitment + consent + eligibility + 5–10 cap + 14-day time-box
-- [ ] `onboarding-playbook.md` — operator terminal recipe + coach variant + troubleshooting
-- [ ] `measurement.md` — KR1 / §7.4 #6/#8/#12 measurement procedure + table template
-- [ ] `exit-interview.md` — 8–12 question end-of-beta script
-- [ ] `findings.md` — empty template only
-- [ ] `checklist.md` — single-page operator checklist
+- [x] `README.md` — execution-order index for all seven internal-beta docs
+- [x] `protocol.md` — recruitment + consent + eligibility + 5–10 cap + 14-day time-box
+- [x] `onboarding-playbook.md` — operator terminal recipe + coach variant + troubleshooting
+- [x] `measurement.md` — KR1 / §7.4 #6/#8/#12 measurement procedure + table template
+- [x] `exit-interview.md` — 8–12 question end-of-beta script
+- [x] `findings.md` — empty template only
+- [x] `checklist.md` — single-page operator checklist
 
 ### Step 3: Cross-check + verify
 
@@ -78,3 +78,4 @@ _Add notes as work progresses._
 | 2026-05-15 23:35 | Review R003 | code Step 1: REVISE |
 | 2026-05-15 23:41 | Review R004 | code Step 1: APPROVE |
 | 2026-05-15 23:43 | Review R005 | plan Step 2: REVISE |
+| 2026-05-15 23:45 | Review R006 | plan Step 2: APPROVE |
