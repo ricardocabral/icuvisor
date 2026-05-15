@@ -1,8 +1,8 @@
 # General — Context
 
-**Last Updated:** 2026-05-13
+**Last Updated:** 2026-05-14
 **Status:** Active
-**Next Task ID:** TP-030
+**Next Task ID:** TP-035
 
 ---
 
@@ -43,6 +43,20 @@ Scaffolded 2026-05-13 from PRD §7.2.C / §7.2.D / §7.4 and ROADMAP.md v0.3.
 | TP-027 | `input_examples` on complex write tools (catalog invariant)                    | TP-020…TP-024, TP-026       |
 | TP-028 | Adversarial safety test suite (safe-mode hardening, tool-not-found surrender)  | TP-018, TP-020…TP-026       |
 | TP-029 | v0.3 dogfood (dedicated test-athlete account, write-path validation)           | TP-018…TP-028               |
+
+---
+
+## v0.4 — Token efficiency and MCP primitives (TP-030 … TP-034)
+
+Scaffolded 2026-05-14 from PRD §7.2.E / §7.2.G / §7.3 / §6 KR5 and ROADMAP.md v0.4.
+
+| ID     | Title                                                                       | Depends on                             |
+| ------ | --------------------------------------------------------------------------- | -------------------------------------- |
+| TP-030 | `ICUVISOR_TOOLSET` tiers (`core`/`full`) + `list_advanced_capabilities`     | TP-018                                 |
+| TP-031 | MCP Resources (workout-syntax, event-categories, custom-item-schemas, profile) | TP-019, TP-013, TP-012, TP-004      |
+| TP-032 | MCP Prompts (training analysis, recovery, planning, taper, coach triage)    | TP-031, TP-010, TP-011, TP-012         |
+| TP-033 | Streamable HTTP transport (loopback-bound by default)                       | TP-003                                 |
+| TP-034 | KR5 benchmark harness (token efficiency vs Python references)               | TP-030, TP-031, TP-032, TP-033, TP-029 |
 
 ---
 
