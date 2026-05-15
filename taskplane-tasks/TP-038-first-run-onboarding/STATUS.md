@@ -1,10 +1,10 @@
 # TP-038-first-run-onboarding: First-run onboarding subcommand — Status
 
-**Current Step:** Step 1: UX script
+**Current Step:** Step 2: Subcommand wiring
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -19,7 +19,7 @@
 
 ### Step 2: Subcommand wiring
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] `setup` registered in TP-035 parser
 - [ ] `--help` golden file updated
@@ -111,5 +111,18 @@ Timezone (IANA name, for example Europe/Madrid):
 ```
 
 Masking decision: the implementation will use the standard `golang.org/x/term` `ReadPassword` path for API-key input. `go.mod` does not currently include `golang.org/x/term`; add it during the setup implementation rather than introducing a fancy prompt library.
+
+### Step 2 implementation plan
+
+Plan review R003 requested a concrete CLI wiring plan before coding. Implement Step 2 as follows:
+
+- Add `internal/app/setup.go` with `RunSetup(ctx, SetupOptions)` and narrow injected dependencies for input/output streams, credential store, setup profile client, and config target path. The real runner can be simple in Step 2, but the interface must let app/parser tests avoid real prompts and keychain access.
+- Extend `internal/app.Options` with an injectable setup runner/dependency bundle. `Run` should dispatch `setup` before runtime config loading and before server startup so `icuvisor setup` does not require an existing config and cannot accidentally start the MCP server.
+- Support setup flags in command position: `icuvisor setup --config <path>`, `icuvisor setup --config=<path>`, `--offline`, `--force`, and `--help`. Do not add `--api-key` or any command-line secret input. Keep `icuvisor --config <path> setup` out of scope unless existing global parser support already provides it naturally; documented supported form remains `icuvisor <command> [flags]`.
+- Prefer setup-specific help because setup has its own flags. Update the top-level help and golden fixture so `setup` is listed, and add tests for `setup --help`.
+- Existing key handling: call `credstore.Store.Get(ctx, credstore.IntervalsAPIKeyAccount)`; on `credstore.ErrNotFound`, continue; on success, prompt `An API key is already stored. Overwrite? [y/N]` before reading a new key or writing. Default `no` aborts safely. `--force` does not silently overwrite credentials; it is reserved for config-file clobbering in Step 4.
+- Resolve and pass the config target path without requiring the file to exist. If `internal/config` lacks a default path helper suitable for writes, add one before Step 4 uses it.
+- Parser/dispatch tests should cover config path propagation, setup bypassing server startup/config load, unknown setup flags returning usage errors, setup help, and existing-key default-no behavior.
 | 2026-05-15 18:51 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-15 18:54 | Review R002 | code Step 1: APPROVE |
+| 2026-05-15 18:56 | Review R003 | plan Step 2: UNKNOWN |
