@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 17
+**Review Counter:** 18
 **Iteration:** 1
 **Size:** M
 
@@ -58,8 +58,8 @@
 **Status:** 🟨 In Progress
 
 - [x] Address R017 plan: verify goldens only in non-update mode with `env -u UPDATE_RESPONSE_GOLDENS go test ./internal/response -run '^TestShapeGoldenSnapshots$' -count=1`, then require `git diff --exit-code -- internal/response/testdata`
-- [ ] Re-run snapshot fixtures; diff must be empty
-- [ ] If diff non-empty, stop and resolve
+- [x] Re-run snapshot fixtures; diff must be empty
+- [x] If diff non-empty, stop and resolve
 
 ### Step 6: Build / test / lint
 
@@ -117,3 +117,4 @@ _Add notes as work progresses._
 | 2026-05-15 19:01 | Review R015 | plan Step 4: APPROVE |
 | 2026-05-15 19:05 | Review R016 | code Step 4: APPROVE |
 | 2026-05-15 19:07 | Review R017 | plan Step 5: REVISE |
+| 2026-05-15 19:09 | Review R018 | plan Step 5: APPROVE |
