@@ -1,10 +1,10 @@
 # TP-042-registry-collapse-interface-assertions — Status
 
-**Current Step:** Step 3: Collapse `schemaCatalogClient`
+**Current Step:** Step 4: Tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 1
 **Size:** M
 
@@ -46,11 +46,11 @@
 
 ### Step 4: Tests
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] `make test` + `make test-race`
-- [ ] Schema-stability snapshot unchanged
-- [ ] Add regression guard test for full registration
+- [x] `make test` + `make test-race`
+- [x] Schema-stability snapshot unchanged
+- [x] Add regression guard test for full registration
 
 ### Step 5: Verify
 
@@ -143,3 +143,4 @@ Special coupling/conditional semantics to preserve in refactor:
 | 2026-05-15 14:07 | Review R008 | code Step 2: APPROVE |
 | 2026-05-15 14:09 | Review R009 | plan Step 3: APPROVE |
 | 2026-05-15 14:12 | Review R010 | code Step 3: APPROVE |
+| 2026-05-15 14:15 | Review R011 | plan Step 4: APPROVE |
