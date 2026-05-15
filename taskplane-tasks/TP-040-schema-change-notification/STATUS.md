@@ -1,6 +1,6 @@
 # TP-040-schema-change-notification: Post-update schema-change notification — Status
 
-**Current Step:** Step 3: Tests
+**Current Step:** Step 4: Documentation
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
@@ -40,9 +40,10 @@
 
 ### Step 4: Documentation
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
 - [ ] `docs/post-update.md`
+- [ ] README one-line pointer under updating/post-install guidance
 - [ ] CHANGELOG `[Unreleased]`
 
 ---
