@@ -1,10 +1,10 @@
 # TP-040-schema-change-notification: Post-update schema-change notification — Status
 
-**Current Step:** Step 1: Catalog hash
+**Current Step:** Step 2: `_meta` injector
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** S
 
@@ -22,11 +22,13 @@
 
 ### Step 2: `_meta` injector
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] `catalog_hash` on every response via response `_meta`, supplied from the runtime catalog hash computed by `internal/mcp.Server`
-- [ ] First-seen hash/version tracking with documented per-process fallback caveat because no SDK session handle is available at the response shaper boundary
-- [ ] `schema_changed` block populated on divergence with previous/current versions, previous/current hashes, and a testable `schema_change_message` template
+- [ ] Add concurrency-safe runtime catalog metadata in `internal/response`, set by `internal/mcp.NewServer` after `Server.CatalogHash()` is computed, with test reset/set hooks and no hash in tool descriptions or schemas
+- [ ] `catalog_hash` on every response via response-owned `_meta`, overwriting any caller-provided schema-change keys to prevent spoofed metadata
+- [ ] Audit and convert direct JSON response paths (`list_advanced_capabilities`, `update_sport_settings`) so every tool response uses the common metadata injector consistently
+- [ ] First-seen hash/version tracking with an atomic/mutex-protected current snapshot and documented per-process fallback caveat because no SDK session handle is available at the response shaper boundary
+- [ ] `schema_changed` block populated on divergence with previous/current versions, previous/current hashes, and a testable `schemaChangeMessage(previousVersion, currentVersion)` template
 
 ### Step 3: Tests
 
@@ -59,3 +61,4 @@ _Add notes as work progresses._
 | 2026-05-15 14:40 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-15 14:47 | Review R003 | code Step 1: UNKNOWN |
 | 2026-05-15 14:52 | Review R004 | code Step 1: APPROVE |
+| 2026-05-15 14:57 | Review R005 | plan Step 2: REVISE |
