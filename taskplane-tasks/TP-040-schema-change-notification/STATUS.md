@@ -24,9 +24,9 @@
 
 **Status:** ⏳ Not started
 
-- [ ] `catalog_hash` on every response
-- [ ] First-seen-per-session tracking (per-process fallback caveat)
-- [ ] `schema_changed` block populated on divergence
+- [ ] `catalog_hash` on every response via response `_meta`, supplied from the runtime catalog hash computed by `internal/mcp.Server`
+- [ ] First-seen hash/version tracking with documented per-process fallback caveat because no SDK session handle is available at the response shaper boundary
+- [ ] `schema_changed` block populated on divergence with previous/current versions, previous/current hashes, and a testable `schema_change_message` template
 
 ### Step 3: Tests
 
