@@ -3,8 +3,8 @@
 **Issue:** v0.2 — read path
 **Review Level:** 1
 **Status:** ✅ Complete
-**Iteration:** 1
-**Current Step:** Step 5: Sign-off
+**Iteration:** 2
+**Current Step:** Complete
 **Last Updated:** 2026-05-15
 **State:** Complete under operator-approved invited-athlete deferral; no outreach or fabricated participant data
 
@@ -67,8 +67,8 @@ Revised triage completed under operator-approved deferral: issue #11 covers acti
 
 ## Blockers
 
-| Date       | Blocker                                                                                                                                                                                             | Attempts                                                                                                                                                                                                                                                                                                                    | Current Impact                                                                                                                                                                                                                             |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Date       | Blocker                                                                                                                                                                                             | Attempts                                                                                                                                                                                                                                                                                                                    | Current Impact                                                                                                                                                                                       |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-05-12 | Step 3 invited-athlete recruitment requires external human outreach and participant consent; the worker cannot recruit forum athletes, access private contacts, or post on the maintainer's behalf. | Created the participant protocol, run instructions, consent/privacy note, redacted findings template, coverage/fallback rules, and local measurement/cleanup instructions in `docs/dogfood/v0.2-findings.md`; plan re-review returned APPROVE. Did not attempt unauthenticated forum posting or impersonate the maintainer. | Resolved for this batch by 2026-05-15 operator-approved acceptance change: external invited-athlete validation is deferred to maintainer follow-up, with no outreach or fabricated participant data. |
 
 ## Discoveries
@@ -153,3 +153,9 @@ Revised triage completed under operator-approved deferral: issue #11 covers acti
 | 2026-05-15 09:53 | Review R001 | code Step 5: REVISE |
 | 2026-05-15 09:55 | Review R001 | code Step 5: APPROVE |
 | 2026-05-15 09:57 | Review R001 | code Step 5: APPROVE |
+| 2026-05-15 10:00 | Exit intercept timeout | Supervisor did not respond within 60s — closing session |
+| 2026-05-15 10:00 | Agent reply | Received operator-approved acceptance change for TP-016. I will complete by documenting the invited-athlete deferral, using solo findings/issues #11/#12 for triage, updating ROADMAP/STATUS/docs, runni |
+| 2026-05-15 10:00 | Worker iter 1 | done in 1059s, tools: 65 |
+| 2026-05-15 10:00 | No progress | Iteration 1: 0 new checkboxes (1/3 stall limit) |
+| 2026-05-15 10:00 | Step 1 started | Assemble the prompt set |
+| 2026-05-15 | Resume correction | STATUS.md and `.DONE` already mark TP-016 complete; current step reset to Complete so the orchestrator does not restart finished checkboxes. |
