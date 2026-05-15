@@ -1,10 +1,10 @@
 # TP-045-intervals-client-dojsonquery-hardening — Status
 
-**Current Step:** Step 3: Replace `normalizeRetryConfig`
+**Current Step:** Step 4: Tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -39,15 +39,15 @@
 
 ### Step 4: Tests
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] Body-close accounting across all paths (success, retry-then-success, exhaustion, oversize, 4xx, ctx-cancel)
-- [ ] Oversize body trips `io.LimitReader` and returns sentinel
-- [ ] 429 retry path
-- [ ] 5xx retry path
-- [ ] 4xx no-retry path
-- [ ] Retry budget exhaustion
-- [ ] `RetryConfig.WithDefaults` behaviour (zero / partial)
+- [x] Body-close accounting across all paths (success, retry-then-success, exhaustion, oversize, 4xx, ctx-cancel)
+- [x] Oversize body trips `io.LimitReader` and returns sentinel
+- [x] 429 retry path
+- [x] 5xx retry path
+- [x] 4xx no-retry path
+- [x] Retry budget exhaustion
+- [x] `RetryConfig.WithDefaults` behaviour (zero / partial)
 
 ### Step 5: Verify
 
@@ -81,3 +81,4 @@ _Add notes as work progresses._
 | 2026-05-15 15:13 | Review R005 | code Step 2: APPROVE |
 | 2026-05-15 15:17 | Review R006 | plan Step 3: APPROVE |
 | 2026-05-15 15:21 | Review R007 | code Step 3: APPROVE |
+| 2026-05-15 15:23 | Review R008 | plan Step 4: APPROVE |
