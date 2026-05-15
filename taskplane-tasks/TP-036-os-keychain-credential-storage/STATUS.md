@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -15,8 +15,8 @@
 **Status:** 🟨 In Progress
 
 - [x] Pick library (zalando/go-keyring vs 99designs/keyring); record rationale
-- [ ] Define `Store` interface + canonical service/account names
-- [ ] Decide `ErrNotFound` sentinel + wrapped-error semantics
+- [x] Define `Store` interface + canonical service/account names
+- [x] Decide `ErrNotFound` sentinel + wrapped-error semantics
 
 ### Step 2: Backends
 
@@ -72,3 +72,4 @@ _Add notes as work progresses._
 | 2026-05-15 13:39 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 13:39 | Step 1 started | Backend selection and contract |
 | 2026-05-15 13:43 | Review R001 | plan Step 1: UNKNOWN |
+| 2026-05-15 13:47 | Review R002 | plan Step 1: APPROVE |
