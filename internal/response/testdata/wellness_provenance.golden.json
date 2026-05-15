@@ -1,0 +1,38 @@
+{
+  "_meta": {
+    "catalog_hash": "golden-catalog-hash",
+    "delete_mode": "safe",
+    "include_full": false,
+    "scales": {
+      "feel": "1-5 (athlete-reported feel)"
+    },
+    "server_version": "v0.4.0",
+    "stale": false,
+    "toolset": "core",
+    "units": {
+      "distance": "km",
+      "pace": "min/km",
+      "speed": "km/h",
+      "system": "metric"
+    }
+  },
+  "wellness": [
+    {
+      "_meta": {
+        "provenance": {
+          "readiness": {
+            "fetched_at": "2026-05-15T08:30:00Z",
+            "native_scale": "1-6",
+            "source": "polar"
+          }
+        },
+        "scales": {
+          "feel": "1-5 (athlete-reported feel)"
+        }
+      },
+      "date": "2026-05-15",
+      "feel": 4,
+      "readiness": 72
+    }
+  ]
+}

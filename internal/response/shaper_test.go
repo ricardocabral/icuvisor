@@ -1,7 +1,12 @@
 package response
 
 import (
+	"bytes"
 	"encoding/json"
+	"math"
+	"os"
+	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -463,6 +468,181 @@ func TestShapeDebugNullsDoNotLeakThroughMissingFields(t *testing.T) {
 	})
 }
 
+func TestShapeJSONConversionContract(t *testing.T) {
+	t.Run("json tags omitempty and ignored fields", func(t *testing.T) {
+		type input struct {
+			Renamed    string   `json:"renamed"`
+			Ignored    string   `json:"-"`
+			Empty      string   `json:"empty,omitempty"`
+			NilPointer *string  `json:"nil_pointer,omitempty"`
+			EmptySlice []string `json:"empty_slice,omitempty"`
+			KeepZero   int      `json:"keep_zero"`
+		}
+		got, err := Shape(input{Renamed: "kept", Ignored: "dropped"}, Options{})
+		if err != nil {
+			t.Fatalf("Shape() error = %v", err)
+		}
+		assertJSONEqual(t, got, map[string]any{"renamed": "kept", "keep_zero": float64(0), "_meta": map[string]any{"server_version": "dev"}})
+	})
+
+	t.Run("raw message decodes as json", func(t *testing.T) {
+		type input struct {
+			Raw json.RawMessage `json:"raw"`
+		}
+		got, err := Shape(input{Raw: json.RawMessage(`{"nested":null,"list":[1,null]}`)}, Options{})
+		if err != nil {
+			t.Fatalf("Shape() error = %v", err)
+		}
+		assertJSONEqual(t, got, map[string]any{"raw": map[string]any{"list": []any{float64(1), nil}}, "_meta": map[string]any{"fields_present": []any{"raw"}, "missing_fields": []any{"raw.nested"}, "server_version": "dev"}})
+	})
+
+	t.Run("text marshaler uses json representation", func(t *testing.T) {
+		type input struct {
+			Fetched time.Time `json:"fetched"`
+		}
+		fetched := time.Date(2026, 5, 15, 12, 30, 0, 0, time.UTC)
+		got, err := Shape(input{Fetched: fetched}, Options{})
+		if err != nil {
+			t.Fatalf("Shape() error = %v", err)
+		}
+		assertJSONEqual(t, got, map[string]any{"fetched": "2026-05-15T12:30:00Z", "_meta": map[string]any{"server_version": "dev"}})
+	})
+
+	t.Run("non finite floats fail before shaping", func(t *testing.T) {
+		type input struct {
+			Value float64 `json:"value"`
+		}
+		for _, value := range []float64{math.NaN(), math.Inf(1)} {
+			if _, err := Shape(input{Value: value}, Options{}); err == nil {
+				t.Fatalf("Shape(%v) error = nil, want unsupported value", value)
+			}
+		}
+	})
+
+	t.Run("float32 preserves encoding json byte shape", func(t *testing.T) {
+		type input struct {
+			Value float32 `json:"value"`
+		}
+		got, err := Shape(input{Value: float32(1.0 / 3.0)}, Options{})
+		if err != nil {
+			t.Fatalf("Shape() error = %v", err)
+		}
+		gotJSON, err := json.Marshal(got)
+		if err != nil {
+			t.Fatalf("marshal shaped: %v", err)
+		}
+		if !bytes.Contains(gotJSON, []byte(`"value":0.33333334`)) {
+			t.Fatalf("float32 JSON = %s, want encoding/json float32 precision", gotJSON)
+		}
+	})
+
+	t.Run("json number preserves number semantics", func(t *testing.T) {
+		type input struct {
+			Value json.Number `json:"value"`
+		}
+		got, err := Shape(input{Value: json.Number("8.5")}, Options{})
+		if err != nil {
+			t.Fatalf("Shape(valid json.Number) error = %v", err)
+		}
+		gotJSON, err := json.Marshal(got)
+		if err != nil {
+			t.Fatalf("marshal shaped: %v", err)
+		}
+		if bytes.Contains(gotJSON, []byte(`"value":"8.5"`)) || !bytes.Contains(gotJSON, []byte(`"value":8.5`)) {
+			t.Fatalf("json.Number JSON = %s, want numeric value", gotJSON)
+		}
+		if _, err := Shape(input{Value: json.Number("bad")}, Options{}); err == nil {
+			t.Fatal("Shape(invalid json.Number) error = nil, want invalid number error")
+		}
+	})
+
+	t.Run("duplicate json field names use encoding json dominance", func(t *testing.T) {
+		inputType := reflect.StructOf([]reflect.StructField{
+			{Name: "A", Type: reflect.TypeOf(0), Tag: `json:"x"`},
+			{Name: "B", Type: reflect.TypeOf(0), Tag: `json:"x"`},
+		})
+		input := reflect.New(inputType).Elem()
+		input.Field(0).SetInt(1)
+		input.Field(1).SetInt(2)
+		got, err := Shape(input.Interface(), Options{})
+		if err != nil {
+			t.Fatalf("Shape() error = %v", err)
+		}
+		assertJSONEqual(t, got, map[string]any{"_meta": map[string]any{"server_version": "dev"}})
+	})
+
+	t.Run("string tag option uses encoding json representation", func(t *testing.T) {
+		type input struct {
+			Count int `json:"count,string"`
+		}
+		got, err := Shape(input{Count: 7}, Options{})
+		if err != nil {
+			t.Fatalf("Shape() error = %v", err)
+		}
+		assertJSONEqual(t, got, map[string]any{"count": "7", "_meta": map[string]any{"server_version": "dev"}})
+	})
+
+	t.Run("cycles fail with wrapped json error", func(t *testing.T) {
+		input := map[string]any{}
+		input["self"] = input
+		if _, err := Shape(input, Options{}); err == nil {
+			t.Fatal("Shape(cycle) error = nil, want wrapped cycle error")
+		}
+	})
+}
+
+func TestShapeDoesNotMutateCallerOwnedInput(t *testing.T) {
+	input := map[string]any{
+		"name":       "Tempo",
+		"fetched_at": "2026-05-15T12:00:00Z",
+		"full":       map[string]any{"raw_null": nil, "samples": []any{float64(1), nil}},
+	}
+	got, err := Shape(input, Options{IncludeFull: true})
+	if err != nil {
+		t.Fatalf("Shape() error = %v", err)
+	}
+	if _, ok := got.(map[string]any)["fetched_at"]; ok {
+		t.Fatalf("shaped output kept debug fetched_at: %#v", got)
+	}
+	if input["fetched_at"] != "2026-05-15T12:00:00Z" {
+		t.Fatalf("Shape mutated caller fetched_at: %#v", input)
+	}
+	full := input["full"].(map[string]any)
+	if _, ok := full["raw_null"]; !ok {
+		t.Fatalf("Shape mutated caller full map: %#v", full)
+	}
+}
+
+func TestShapeProvenanceDebugAndScaleWalkerContract(t *testing.T) {
+	input := map[string]any{
+		"feel":       float64(4),
+		"fetched_at": "2026-05-15T12:00:00Z",
+		"_metadata":  map[string]any{"sleepScore": float64(82)},
+		"_meta": map[string]any{
+			"scales": map[string]any{"feel": "stale"},
+			"provenance": map[string]any{
+				"feel": map[string]any{"source": "manual", "fetched_at": "2026-05-15T11:00:00Z", "query_type": "bridge"},
+			},
+		},
+	}
+	got, err := Shape(input, Options{})
+	if err != nil {
+		t.Fatalf("Shape() error = %v", err)
+	}
+	assertJSONEqual(t, got, map[string]any{
+		"feel":      float64(4),
+		"_metadata": map[string]any{"sleepScore": float64(82)},
+		"_meta": map[string]any{
+			"provenance": map[string]any{"feel": map[string]any{"source": "manual", "fetched_at": "2026-05-15T11:00:00Z", "query_type": "bridge"}},
+			"scales": map[string]any{
+				"feel":       "1-5 (athlete-reported feel)",
+				"sleepScore": "0-100 (device-imported nightly score)",
+			},
+			"server_version": "dev",
+		},
+	})
+}
+
 func TestShapeIncludeFullNullConvention(t *testing.T) {
 	type row struct {
 		Keep *float64 `json:"keep"`
@@ -476,6 +656,207 @@ func TestShapeIncludeFullNullConvention(t *testing.T) {
 		"keep":  nil,
 		"_meta": map[string]any{"server_version": "dev"},
 	})
+}
+
+func BenchmarkShapeLargeIncludeFull(b *testing.B) {
+	payload := map[string]any{"activities": make([]any, 0, 250), "_meta": map[string]any{"include_full": true}}
+	for i := 0; i < 250; i++ {
+		payload["activities"] = append(payload["activities"].([]any), map[string]any{
+			"activity_id":           i,
+			"name":                  "Long include_full activity",
+			"fetched_at":            "2026-05-15T12:00:00Z",
+			"icu_training_load":     nil,
+			"power_stream":          []any{180, 190, nil, 205, 210, 215},
+			"heart_rate_stream":     []any{120, 125, nil, 130, 135, 140},
+			"nested_debug_metadata": map[string]any{"query_type": "debug", "keep": true},
+		})
+	}
+	opts := Options{IncludeFull: true, RowCollections: []string{"activities"}, ServerVersion: "bench"}
+	b.ReportAllocs()
+	for b.Loop() {
+		if _, err := Shape(payload, opts); err != nil {
+			b.Fatalf("Shape() error = %v", err)
+		}
+	}
+}
+
+func TestShapeGoldenSnapshots(t *testing.T) {
+	t.Cleanup(resetRuntimeCatalogMetadataForTest)
+	for _, tc := range goldenSnapshotCases() {
+		t.Run(tc.name, func(t *testing.T) {
+			resetRuntimeCatalogMetadataForTest()
+			t.Cleanup(resetRuntimeCatalogMetadataForTest)
+			setRuntimeCatalogMetadataForTest("v0.4.0", "golden-catalog-hash")
+			got, err := Shape(tc.input, tc.opts)
+			if err != nil {
+				t.Fatalf("Shape() error = %v", err)
+			}
+			gotJSON := canonicalGoldenJSON(t, got)
+			path := filepath.Join("testdata", tc.fixture)
+			if os.Getenv("UPDATE_RESPONSE_GOLDENS") == "1" {
+				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+					t.Fatalf("create testdata dir: %v", err)
+				}
+				if err := os.WriteFile(path, gotJSON, 0o644); err != nil {
+					t.Fatalf("write golden %s: %v", path, err)
+				}
+				return
+			}
+			wantJSON, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatalf("read golden %s: %v", path, err)
+			}
+			if !bytes.Equal(gotJSON, wantJSON) {
+				t.Fatalf("golden mismatch for %s; run UPDATE_RESPONSE_GOLDENS=1 go test ./internal/response -run TestShapeGoldenSnapshots\n--- got ---\n%s--- want ---\n%s", tc.fixture, gotJSON, wantJSON)
+			}
+		})
+	}
+}
+
+type goldenSnapshotCase struct {
+	name    string
+	fixture string
+	input   any
+	opts    Options
+}
+
+type snapshotActivitiesResponse struct {
+	Activities []snapshotActivityRow  `json:"activities"`
+	Meta       snapshotActivitiesMeta `json:"_meta"`
+}
+
+type snapshotActivityRow struct {
+	ActivityID        string               `json:"activity_id,omitempty"`
+	Name              string               `json:"name,omitempty"`
+	Sport             string               `json:"sport,omitempty"`
+	DistanceKM        *float64             `json:"distance_km,omitempty"`
+	MovingTimeSeconds int                  `json:"moving_time_seconds,omitempty"`
+	Full              map[string]any       `json:"full,omitempty"`
+	Unavailable       *snapshotUnavailable `json:"unavailable,omitempty"`
+}
+
+type snapshotUnavailable struct {
+	Reason     string `json:"reason"`
+	Workaround string `json:"workaround"`
+}
+
+type snapshotActivitiesMeta struct {
+	PageSize      int    `json:"page_size"`
+	NextPageToken string `json:"next_page_token,omitempty"`
+	MoreAvailable bool   `json:"more_available"`
+	IncludeFull   bool   `json:"include_full"`
+}
+
+type snapshotFitnessResponse struct {
+	Rows []snapshotFitnessRow `json:"fitness"`
+	Meta snapshotFitnessMeta  `json:"_meta"`
+}
+
+type snapshotFitnessRow struct {
+	Date string   `json:"date"`
+	CTL  *float64 `json:"ctl,omitempty"`
+	ATL  *float64 `json:"atl,omitempty"`
+	TSB  *float64 `json:"tsb,omitempty"`
+}
+
+type snapshotFitnessMeta struct {
+	ServerVersion string   `json:"server_version"`
+	StartDate     string   `json:"start_date"`
+	EndDate       string   `json:"end_date"`
+	Timezone      string   `json:"timezone"`
+	Count         int      `json:"count"`
+	IncludeFull   bool     `json:"include_full"`
+	SourceTools   []string `json:"source_tools,omitempty"`
+}
+
+func goldenSnapshotCases() []goldenSnapshotCase {
+	baseOpts := func(includeFull bool, rowCollections ...string) Options {
+		return Options{
+			IncludeFull:    includeFull,
+			RowCollections: rowCollections,
+			ServerVersion:  "v0.4.0",
+			FetchedAt:      time.Date(2026, 5, 15, 17, 45, 0, 0, time.UTC),
+			UnitSystem:     UnitSystemMetric,
+			DeleteMode:     safety.ModeSafe,
+			Toolset:        safety.ToolsetCore,
+		}
+	}
+	distanceKM := 42.2
+	ctl := 51.2
+	atl := 56.7
+	tsb := -4.8
+	return []goldenSnapshotCase{
+		{
+			name:    "get activities terse",
+			fixture: "get_activities_terse.golden.json",
+			input: snapshotActivitiesResponse{
+				Activities: []snapshotActivityRow{
+					{ActivityID: "a1", Name: "Tempo Ride", Sport: "Ride", DistanceKM: &distanceKM, MovingTimeSeconds: 5400},
+					{ActivityID: "a2", Sport: "Run", MovingTimeSeconds: 1800, Unavailable: &snapshotUnavailable{Reason: "strava_tos", Workaround: "connect device directly"}},
+				},
+				Meta: snapshotActivitiesMeta{PageSize: 2, MoreAvailable: false, IncludeFull: false},
+			},
+			opts: baseOpts(false, "activities"),
+		},
+		{
+			name:    "get activities include full",
+			fixture: "get_activities_full.golden.json",
+			input: snapshotActivitiesResponse{
+				Activities: []snapshotActivityRow{
+					{ActivityID: "a1", Name: "Tempo Ride", Sport: "Ride", Full: map[string]any{"icu_training_load": nil, "power_stream": []any{220.0, nil, 235.0}}},
+				},
+				Meta: snapshotActivitiesMeta{PageSize: 1, MoreAvailable: false, IncludeFull: true},
+			},
+			opts: baseOpts(true, "activities"),
+		},
+		{
+			name:    "get fitness",
+			fixture: "get_fitness.golden.json",
+			input: snapshotFitnessResponse{
+				Rows: []snapshotFitnessRow{
+					{Date: "2026-05-14", CTL: &ctl, TSB: &tsb},
+					{Date: "2026-05-15", ATL: &atl},
+				},
+				Meta: snapshotFitnessMeta{ServerVersion: "stale", StartDate: "2026-05-14", EndDate: "2026-05-15", Timezone: "UTC", Count: 2, IncludeFull: false, SourceTools: []string{"get_fitness"}},
+			},
+			opts: baseOpts(false, "fitness"),
+		},
+		{
+			name:    "get events wrapper",
+			fixture: "get_events_wrapper.golden.json",
+			input: map[string]any{
+				"events": []any{
+					map[string]any{"event_id": "e1", "name": "Endurance", "target_load": 75, "description": nil},
+				},
+				"workouts": []any{
+					map[string]any{"workout_id": "w1", "name": "3x tempo", "steps": []any{map[string]any{"duration_seconds": 600, "target": nil}}},
+				},
+				"warnings": []any{nil, "library folder skipped"},
+				"_meta":    map[string]any{"operation": "apply_training_plan", "events_created": 1},
+			},
+			opts: baseOpts(false, "events", "workouts"),
+		},
+		{
+			name:    "wellness provenance",
+			fixture: "wellness_provenance.golden.json",
+			input: map[string]any{
+				"wellness": []any{
+					map[string]any{"date": "2026-05-15", "readiness": 72, "feel": 4, "fetched_at": "2026-05-15T09:00:00Z", "query_type": "wellness", "_meta": map[string]any{"provenance": map[string]any{"readiness": map[string]any{"source": "polar", "native_scale": "1-6", "fetched_at": "2026-05-15T08:30:00Z"}}}},
+				},
+				"_meta": map[string]any{"include_full": false, "stale": false},
+			},
+			opts: baseOpts(false, "wellness"),
+		},
+	}
+}
+
+func canonicalGoldenJSON(t *testing.T, value any) []byte {
+	t.Helper()
+	data, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		t.Fatalf("marshal golden: %v", err)
+	}
+	return append(data, '\n')
 }
 
 func assertJSONEqual(t *testing.T, got any, want any) {

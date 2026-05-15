@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refactored internal response shaping to avoid the full response marshal/unmarshal round-trip on normal tool DTOs and consolidate tree walking, with no user-visible output changes.
 - Threaded delete-mode and toolset response metadata through explicit response-shaping options instead of process-global state.
 - Refactored internal MCP tool registry wiring to depend directly on the typed intervals.icu client instead of a runtime assertion chain, preserving the public tool catalog and schemas.
 - Refactored the internal `get_activities` pagination driver around explicit cursor state while preserving response shape and opaque page tokens.

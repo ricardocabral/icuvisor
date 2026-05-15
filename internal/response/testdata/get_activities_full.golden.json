@@ -1,0 +1,32 @@
+{
+  "_meta": {
+    "catalog_hash": "golden-catalog-hash",
+    "delete_mode": "safe",
+    "include_full": true,
+    "more_available": false,
+    "page_size": 1,
+    "server_version": "v0.4.0",
+    "toolset": "core",
+    "units": {
+      "distance": "km",
+      "pace": "min/km",
+      "speed": "km/h",
+      "system": "metric"
+    }
+  },
+  "activities": [
+    {
+      "activity_id": "a1",
+      "full": {
+        "icu_training_load": null,
+        "power_stream": [
+          220,
+          null,
+          235
+        ]
+      },
+      "name": "Tempo Ride",
+      "sport": "Ride"
+    }
+  ]
+}
