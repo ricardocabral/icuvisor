@@ -59,9 +59,10 @@ func (s *SelectionStore) Select(key string, athleteID string) string {
 
 // SelectionContext exposes session selection state to SDK-agnostic tools.
 type SelectionContext struct {
-	Store *SelectionStore
-	Key   string
-	Scope string
+	Store        *SelectionStore
+	Key          string
+	Scope        string
+	VisibleTools func(athleteID string) []string
 }
 
 // WithSelectionContext stores selection context for a tool call.

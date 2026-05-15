@@ -55,10 +55,14 @@ func selectAthleteHandler(evaluator coach.Evaluator) Handler {
 		if !ok || selection.Store == nil {
 			return Result{}, NewUserError("select_athlete session state is unavailable", nil)
 		}
+		visibleTools := visibleToolsForAthlete
+		if selection.VisibleTools != nil {
+			visibleTools = func(_ coach.Evaluator, athleteID string) []string { return selection.VisibleTools(athleteID) }
+		}
 		previous := selection.Store.Selected(selection.Key)
-		previousTools := visibleToolsForAthlete(evaluator, previous)
+		previousTools := visibleTools(evaluator, previous)
 		selection.Store.Select(selection.Key, normalized)
-		newTools := visibleToolsForAthlete(evaluator, normalized)
+		newTools := visibleTools(evaluator, normalized)
 		return TextResult(selectAthleteResponse{PreviousAthleteID: previous, NewAthleteID: normalized, AllowedTools: newTools, Meta: selectAthleteMeta{Scope: selection.Scope, RequiresNewConversation: !slices.Equal(previousTools, newTools)}}), nil
 	}
 }

@@ -413,6 +413,17 @@ func (r *safeRegistrar) visibilityMiddleware() sdkmcp.Middleware {
 	}
 }
 
+func (r *safeRegistrar) visibleToolNamesForAthlete(athleteID string) []string {
+	out := make([]string, 0, len(r.registeredTools))
+	for _, tool := range r.registeredTools {
+		if r.visibleForAthlete(athleteID, tool.Name) {
+			out = append(out, tool.Name)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
 func (r *safeRegistrar) visibleForAthlete(athleteID string, toolName string) bool {
 	if toolName == toolcatalog.ListAthletes || toolName == toolcatalog.SelectAthlete || toolName == toolcatalog.ICUvisorListAdvancedCapabilities {
 		return true
@@ -442,7 +453,7 @@ func (r *safeRegistrar) withSelection(ctx context.Context, session *sdkmcp.Serve
 		sessionID = session.ID()
 	}
 	key, scope := r.selectionStore.Key(sessionID)
-	return coach.WithSelectionContext(ctx, coach.SelectionContext{Store: r.selectionStore, Key: key, Scope: scope})
+	return coach.WithSelectionContext(ctx, coach.SelectionContext{Store: r.selectionStore, Key: key, Scope: scope, VisibleTools: r.visibleToolNamesForAthlete})
 }
 
 func (r *safeRegistrar) resolveToolTarget(ctx context.Context, toolName string, raw json.RawMessage) (context.Context, json.RawMessage, error) {

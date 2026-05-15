@@ -4,8 +4,8 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 18
-**Iteration:** 2
+**Review Counter:** 19
+**Iteration:** 3
 **Size:** L
 
 ---
@@ -69,18 +69,18 @@
 
 ### Step 5: Catalog-cache caveat + Tests
 
-**Status:** ⏳ Not started
+**Status:** 🟨 In Progress
 
-- [ ] R017 plan revision: derive `select_athlete.allowed_tools` and `requires_new_conversation` from the authoritative post-gate visible catalog, not coach evaluator alone
-- [ ] R017 plan revision: document the catalog-cache caveat in `docs/coach-mode.md` now, including new conversation/reconnect guidance and TP-040 future notifications
-- [ ] R017 plan revision: protocol truth-table tests assert catalog exposure and call-time vetoes for delete-mode, toolset, and coach ACL gates
-- [ ] R017 plan revision: end-to-end fake intervals coverage proves selected/default/override routing and read-only athlete write/delete denial with enumeration-safe errors
-- [ ] R018 plan revision: implement/select metadata through an `internal/mcp.safeRegistrar.visibleToolNamesForAthlete` helper over post-registration tools and inject it into `select_athlete` context
-- [ ] R018 plan revision: add hidden-gate metadata regressions for delete-mode-hidden `delete_event`, core-toolset-hidden full tools, and visible core-read changes
-- [ ] R018 plan revision: structured JSON tests compare exact visible tool sets across `tools/list`, `select_athlete.allowed_tools`, and `icuvisor_list_advanced_capabilities`, plus two-session isolation
-- [ ] §7.4 #7 caveat documented
-- [ ] Composition truth-table coverage
-- [ ] End-to-end with faked intervals client
+- [x] R017 plan revision: derive `select_athlete.allowed_tools` and `requires_new_conversation` from the authoritative post-gate visible catalog, not coach evaluator alone
+- [x] R017 plan revision: document the catalog-cache caveat in `docs/coach-mode.md` now, including new conversation/reconnect guidance and TP-040 future notifications
+- [x] R017 plan revision: protocol truth-table tests assert catalog exposure and call-time vetoes for delete-mode, toolset, and coach ACL gates
+- [x] R017 plan revision: end-to-end fake intervals coverage proves selected/default/override routing and read-only athlete write/delete denial with enumeration-safe errors
+- [x] R018 plan revision: implement/select metadata through an `internal/mcp.safeRegistrar.visibleToolNamesForAthlete` helper over post-registration tools and inject it into `select_athlete` context
+- [x] R018 plan revision: add hidden-gate metadata regressions for delete-mode-hidden `delete_event`, core-toolset-hidden full tools, and visible core-read changes
+- [x] R018 plan revision: structured JSON tests compare exact visible tool sets across `tools/list`, `select_athlete.allowed_tools`, and `icuvisor_list_advanced_capabilities`, plus two-session isolation
+- [x] §7.4 #7 caveat documented
+- [x] Composition truth-table coverage
+- [x] End-to-end with faked intervals client
 
 ### Step 6: Documentation
 
@@ -144,3 +144,8 @@
 | 2026-05-15 21:49 | Review R016 | code Step 4: APPROVE |
 | 2026-05-15 21:52 | Review R017 | plan Step 5: REVISE |
 | 2026-05-15 21:55 | Review R018 | plan Step 5: REVISE |
+| 2026-05-15 21:58 | Review R019 | plan Step 5: APPROVE |
+
+| 2026-05-15 22:13 | Agent reply | Acknowledged. I documented the authenticated roster probe as an operator-deferred validation gap, kept upstream roster support unproven/deferred, and am proceeding with config-backed roster behavior f |
+| 2026-05-15 22:13 | Worker iter 2 | killed (wall-clock timeout) in 7472s, tools: 364 |
+| 2026-05-15 22:13 | Step 5 started | Catalog-cache caveat + Tests |
