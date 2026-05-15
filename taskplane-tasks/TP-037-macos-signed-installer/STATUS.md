@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 3
-**Review Counter:** 13
+**Review Counter:** 14
 **Iteration:** 2
 **Size:** M
 
@@ -50,7 +50,7 @@
 
 ### Step 4: Manual client config docs
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] `docs/clients/claude-desktop.md` installer-path config updated for `/Applications/icuvisor.app/Contents/MacOS/icuvisor`
 - [x] `docs/clients/claude-code.md` project `.mcp.json` config added with installed app path
@@ -115,3 +115,4 @@ _Add notes as work progresses._
 | 2026-05-15 18:29 | Review R011 | plan Step 3: APPROVE |
 | 2026-05-15 18:33 | Review R012 | code Step 3: APPROVE |
 | 2026-05-15 18:38 | Review R013 | plan Step 4: APPROVE |
+| 2026-05-15 18:45 | Review R014 | code Step 4: APPROVE |
