@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 2
 **Size:** L
 
@@ -34,6 +34,7 @@
 - [x] Unknown tool names fail loudly
 - [x] R006 revision: allow coach-mode `on`/effective `auto` configs to omit top-level `athlete_id` by resolving `Config.AthleteID` from `coach.default_athlete_id`
 - [x] R006 revision: add explicit registered-catalog drift test against `toolcatalog.AthleteScopedToolNames()` so ACL validation and registry cannot diverge silently
+- [ ] R007 revision: when coach mode is effectively on, `Config.AthleteID` must always resolve to `coach.default_athlete_id` regardless of legacy top-level `athlete_id`, with regression coverage
 
 ### Step 3: Tool registry plumbing
 
@@ -96,8 +97,10 @@
 | 2026-05-15 20:09 | Steering | Authenticated coach-roster probe is operator-deferred; proceed with config-backed roster and mark Step 1 complete on documented-gap/fallback basis. |
 | 2026-05-15 20:10 | Review R002 | code Step 1: reviewer repeated R001 objection; superseded by supervisor steering to treat gap as complete for TP-039 v0.5. |
 | 2026-05-15 20:25 | Review R006 | code Step 2: revise coach-mode configs without top-level athlete_id and strengthen registry/toolcatalog drift test. |
+| 2026-05-15 20:31 | Review R007 | code Step 2: revise enabled coach mode so coach.default_athlete_id wins over legacy top-level athlete_id. |
 | 2026-05-15 20:12 | Review R002 | code Step 1: UNKNOWN |
 | 2026-05-15 20:15 | Review R003 | plan Step 2: REVISE |
 | 2026-05-15 20:19 | Review R004 | plan Step 2: REVISE |
 | 2026-05-15 20:21 | Review R005 | plan Step 2: APPROVE |
 | 2026-05-15 20:32 | Review R006 | code Step 2: REVISE |
+| 2026-05-15 20:37 | Review R007 | code Step 2: REVISE |
