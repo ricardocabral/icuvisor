@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -12,7 +12,7 @@
 
 ### Step 1: Sketch the new function boundaries
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Map current `doJSONQuery` into `do` / `readBody` / `shouldRetry` / outer loop
 - [x] Agree on body-size cap default (recommendation: 32 MiB)
@@ -75,3 +75,5 @@ _Add notes as work progresses._
 | 2026-05-15 14:58 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-15 14:58 | Step 1 started | Sketch the new function boundaries |
 | 2026-05-15 15:01 | Review R001 | plan Step 1: UNKNOWN |
+| 2026-05-15 15:04 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-15 15:06 | Review R003 | code Step 1: APPROVE |
