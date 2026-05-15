@@ -118,3 +118,9 @@ _Add notes as work progresses._
 | 2026-05-15 18:33 | Review R012 | code Step 3: APPROVE |
 | 2026-05-15 18:38 | Review R013 | plan Step 4: APPROVE |
 | 2026-05-15 18:45 | Review R014 | code Step 4: APPROVE |
+
+| 2026-05-15 18:48 | Agent reply | Acknowledged. I will treat Apple Developer enrollment as maintainer-owned external validation, document the preflight gate/evidence, avoid secrets/placeholders, and continue with dry-run/scaffoldable  |
+| 2026-05-15 18:48 | Agent reply | Acknowledged. I will not wait for Apple metadata/keys, and will document maintainer/operator checklists and exact deferred verification commands while keeping secrets out of git. |
+| 2026-05-15 18:48 | Agent reply | Acknowledged the updated operator guidance: Apple assets remain unavailable; TP-037 will document maintainer checklists and defer live notarization/Gatekeeper checks to release preflight commands whil |
+| 2026-05-15 18:48 | Worker iter 2 | done in 3389s, tools: 185 |
+| 2026-05-15 18:48 | Task complete | .DONE created |

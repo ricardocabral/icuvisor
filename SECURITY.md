@@ -75,6 +75,7 @@ Before cutting a signed macOS release, the release operator must complete this p
    ```
 
    The output must include a valid `Developer ID Application` identity for icuvisor. Current TP-037 local dry-run evidence was `0 valid identities found`, so live signing/notarization remains an operator-deferred release preflight until the assets exist.
+
 7. Run the tag release workflow with a `v*` tag. After the workflow uploads the DMG, verify the downloaded artifact:
 
    ```sh
