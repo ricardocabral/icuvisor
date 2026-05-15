@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-15
 **Review Level:** 4
-**Review Counter:** 20
+**Review Counter:** 21
 **Iteration:** 3
 **Size:** L
 
@@ -69,7 +69,7 @@
 
 ### Step 5: Catalog-cache caveat + Tests
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] R017 plan revision: derive `select_athlete.allowed_tools` and `requires_new_conversation` from the authoritative post-gate visible catalog, not coach evaluator alone
 - [x] R017 plan revision: document the catalog-cache caveat in `docs/coach-mode.md` now, including new conversation/reconnect guidance and TP-040 future notifications
@@ -152,3 +152,4 @@
 | 2026-05-15 22:13 | Worker iter 2 | killed (wall-clock timeout) in 7472s, tools: 364 |
 | 2026-05-15 22:13 | Step 5 started | Catalog-cache caveat + Tests |
 | 2026-05-15 22:25 | Review R020 | code Step 5: REVISE |
+| 2026-05-15 22:35 | Review R021 | code Step 5: APPROVE |
