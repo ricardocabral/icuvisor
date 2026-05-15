@@ -18,6 +18,8 @@ var (
 	ErrUpstream = errors.New("intervals.icu upstream error")
 	// ErrResponseTooLarge indicates intervals.icu returned a response body above the client safety cap.
 	ErrResponseTooLarge = errors.New("intervals.icu response too large")
+	// ErrTargetAthleteMismatch indicates an object response is not owned by the request target athlete.
+	ErrTargetAthleteMismatch = errors.New("intervals.icu target athlete mismatch")
 )
 
 // Error describes a structured intervals.icu API error.

@@ -118,8 +118,14 @@ func (c *Client) LinkActivityToEvent(ctx context.Context, params LinkActivityToE
 	if err != nil {
 		return Activity{}, fmt.Errorf("linking activity %s to event: %w", activityID, err)
 	}
+	if err := c.ensureActivityIDTarget(ctx, activityID); err != nil {
+		return Activity{}, fmt.Errorf("linking activity %s to event %s: %w", activityID, params.EventID, err)
+	}
 	var activity Activity
 	if err := c.doJSONBody(ctx, http.MethodPut, linkActivityToEventPayload{PairedEventID: eventID}, &activity, "activity", activityID); err != nil {
+		return Activity{}, fmt.Errorf("linking activity %s to event %s: %w", activityID, params.EventID, err)
+	}
+	if err := c.ensureActivityTarget(ctx, activity); err != nil {
 		return Activity{}, fmt.Errorf("linking activity %s to event %s: %w", activityID, params.EventID, err)
 	}
 	return activity, nil

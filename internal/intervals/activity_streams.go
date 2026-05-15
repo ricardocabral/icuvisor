@@ -58,6 +58,9 @@ func (c *Client) GetActivityStreams(ctx context.Context, params ActivityStreamsP
 	if params.IncludeDefaults {
 		query.Set("includeDefaults", "true")
 	}
+	if err := c.ensureActivityIDTarget(ctx, activityID); err != nil {
+		return nil, fmt.Errorf("getting activity %s streams: %w", activityID, err)
+	}
 	var streams []ActivityStream
 	if err := c.doJSONQuery(ctx, &streams, query, "activity", activityID, "streams"); err != nil {
 		return nil, fmt.Errorf("getting activity %s streams: %w", activityID, err)

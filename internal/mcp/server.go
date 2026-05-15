@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -310,6 +311,7 @@ type safeRegistrar struct {
 	toolset                safety.Toolset
 	names                  map[string]struct{}
 	registeredTools        []tools.Tool
+	coachVisibleCatalog    []tools.Tool
 	registeredCount        int
 	skippedToolsetCount    int
 	skippedCapabilityCount int
@@ -322,6 +324,12 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) error {
 		return err
 	}
 	r.names[tool.Name] = struct{}{}
+	if tool.Name != toolcatalog.ICUvisorListAdvancedCapabilities && r.coachAllows(tool) {
+		r.coachVisibleCatalog = append(r.coachVisibleCatalog, tool)
+	}
+	if tool.Name == toolcatalog.ICUvisorListAdvancedCapabilities && r.config.CoachModeEnabled() {
+		tool.Handler = r.coachFilteredAdvancedCapabilitiesHandler()
+	}
 	if !r.capabilityAllows(tool) {
 		r.skippedCapabilityCount++
 		return nil
@@ -368,7 +376,7 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) error {
 }
 
 func (r *safeRegistrar) prepareTool(tool tools.Tool) tools.Tool {
-	if !toolcatalog.IsAthleteScopedTool(tool.Name) {
+	if !r.config.CoachModeEnabled() || !toolcatalog.IsAthleteScopedTool(tool.Name) {
 		return tool
 	}
 	tool.InputSchema = schemaWithAthleteID(tool.InputSchema)
@@ -385,7 +393,7 @@ func (r *safeRegistrar) coachAllows(tool tools.Tool) bool {
 }
 
 func (r *safeRegistrar) resolveToolTarget(ctx context.Context, toolName string, raw json.RawMessage) (context.Context, json.RawMessage, error) {
-	if !toolcatalog.IsAthleteScopedTool(toolName) {
+	if !r.config.CoachModeEnabled() || !toolcatalog.IsAthleteScopedTool(toolName) {
 		return ctx, raw, nil
 	}
 	arguments, suppliedAthleteID, err := stripAthleteID(raw)
@@ -473,6 +481,62 @@ func stripAthleteID(raw json.RawMessage) (json.RawMessage, string, error) {
 		return nil, "", err
 	}
 	return cleaned, athleteID, nil
+}
+
+func (r *safeRegistrar) coachFilteredAdvancedCapabilitiesHandler() tools.Handler {
+	catalog := append([]tools.Tool(nil), r.coachVisibleCatalog...)
+	toolset := safety.ParseToolset(string(r.toolset))
+	return func(ctx context.Context, req tools.Request) (tools.Result, error) {
+		if err := ctx.Err(); err != nil {
+			return tools.Result{}, err
+		}
+		trimmed := strings.TrimSpace(string(req.Arguments))
+		if trimmed != "" && trimmed != "{}" && trimmed != "null" {
+			return tools.Result{}, tools.NewUserError("invalid icuvisor_list_advanced_capabilities arguments; no arguments are supported", nil)
+		}
+		rows := make([]map[string]any, 0, len(catalog))
+		for _, tool := range catalog {
+			if tool.Name == toolcatalog.ICUvisorListAdvancedCapabilities || tool.EffectiveToolset() != safety.ToolsetFull {
+				continue
+			}
+			rows = append(rows, map[string]any{"name": tool.Name, "summary": firstSentence(tool.Description), "requirement": toolRequirement(tool)})
+		}
+		sort.Slice(rows, func(i, j int) bool { return rows[i]["name"].(string) < rows[j]["name"].(string) })
+		status := "The default core toolset is active; full-only tools are hidden from tools/list."
+		if toolset == safety.ToolsetFull {
+			status = "The full toolset is already enabled; these full-only tools should already be visible when delete-mode also allows them."
+		}
+		return tools.TextResult(map[string]any{
+			"current_toolset":       toolset.String(),
+			"status":                status,
+			"enable_instruction":    "Set ICUVISOR_TOOLSET=full in the MCP client/server environment and restart icuvisor to enable the full icuvisor toolset.",
+			"advanced_capabilities": rows,
+			"_meta": map[string]any{
+				"count":            len(rows),
+				"source":           "registered catalog metadata",
+				"delete_mode_note": "Tools with requirement=delete also require ICUVISOR_DELETE_MODE=full; write tools require delete mode safe or full.",
+				"toolset":          toolset.String(),
+			},
+		}), nil
+	}
+}
+
+func firstSentence(description string) string {
+	description = strings.Join(strings.Fields(description), " ")
+	if idx := strings.Index(description, "."); idx >= 0 {
+		return strings.TrimSpace(description[:idx+1])
+	}
+	return description
+}
+
+func toolRequirement(tool tools.Tool) string {
+	if tool.RequiresDelete() {
+		return string(tools.RequirementDelete)
+	}
+	if tool.RequiresWrite() {
+		return string(tools.RequirementWrite)
+	}
+	return string(tools.RequirementRead)
 }
 
 func (r *safeRegistrar) toolsetAllows(tool tools.Tool) bool {

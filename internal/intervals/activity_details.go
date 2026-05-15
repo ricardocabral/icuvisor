@@ -20,6 +20,9 @@ func (c *Client) GetActivity(ctx context.Context, activityID string) (Activity, 
 	if err := c.doJSONQuery(ctx, &activity, query, "activity", activityID); err != nil {
 		return Activity{}, fmt.Errorf("getting activity %s: %w", activityID, err)
 	}
+	if err := c.ensureActivityTarget(ctx, activity); err != nil {
+		return Activity{}, fmt.Errorf("getting activity %s: %w", activityID, err)
+	}
 	return activity, nil
 }
 
@@ -129,6 +132,9 @@ func (c *Client) GetActivityIntervals(ctx context.Context, activityID string) (I
 	activityID = strings.TrimSpace(activityID)
 	if activityID == "" {
 		return IntervalsDTO{}, fmt.Errorf("getting activity intervals: activity ID is required")
+	}
+	if err := c.ensureActivityIDTarget(ctx, activityID); err != nil {
+		return IntervalsDTO{}, fmt.Errorf("getting activity %s intervals: %w", activityID, err)
 	}
 	var intervals IntervalsDTO
 	if err := c.doJSON(ctx, &intervals, "activity", activityID, "intervals"); err != nil {

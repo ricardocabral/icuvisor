@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/ricardocabral/icuvisor/internal/coach"
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/credstore"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
@@ -275,11 +274,6 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 	if err != nil {
 		return err
 	}
-	coachEvaluator := coach.NewEvaluator(info.Config.CoachModeEnabled(), info.Config.Coach)
-	coachDefaultAthleteID := info.Config.Coach.DefaultAthleteID
-	if coachDefaultAthleteID == "" {
-		coachDefaultAthleteID = info.Config.AthleteID
-	}
 	server, err := mcpserver.NewServer(ctx, mcpserver.Options{
 		Config:         info.Config,
 		Version:        info.Version,
@@ -301,10 +295,6 @@ func defaultStartServer(ctx context.Context, info ServerInfo) error {
 			DebugMetadata:    info.DebugMetadata,
 			Capability:       capability,
 			Toolset:          toolset,
-			CatalogFilter: func(tool tools.Tool) bool {
-				allowed, _ := coachEvaluator.Evaluate(coachDefaultAthleteID, tool.Name)
-				return allowed
-			},
 		}),
 	})
 	if err != nil {

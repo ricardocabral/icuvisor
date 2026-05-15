@@ -92,6 +92,9 @@ func (c *Client) AddActivityMessage(ctx context.Context, params AddActivityMessa
 	if content == "" {
 		return NewActivityMessage{}, fmt.Errorf("adding activity %s message: content is required", activityID)
 	}
+	if err := c.ensureActivityIDTarget(ctx, activityID); err != nil {
+		return NewActivityMessage{}, fmt.Errorf("adding activity %s message: %w", activityID, err)
+	}
 	var message NewActivityMessage
 	if err := c.doJSONBody(ctx, http.MethodPost, addActivityMessagePayload{Content: params.Content}, &message, "activity", activityID, "messages"); err != nil {
 		return NewActivityMessage{}, fmt.Errorf("adding activity %s message: %w", activityID, err)
@@ -110,6 +113,9 @@ func (c *Client) GetActivityMessages(ctx context.Context, params ActivityMessage
 	}
 	if params.Limit > 0 {
 		query.Set("limit", strconv.Itoa(params.Limit))
+	}
+	if err := c.ensureActivityIDTarget(ctx, activityID); err != nil {
+		return nil, fmt.Errorf("getting activity %s messages: %w", activityID, err)
 	}
 	var messages []ActivityMessage
 	if err := c.doJSONQuery(ctx, &messages, query, "activity", activityID, "messages"); err != nil {

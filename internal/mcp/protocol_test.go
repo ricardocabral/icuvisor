@@ -714,7 +714,8 @@ func TestProtocolAthleteScopedSchemasExposeUniformAthleteID(t *testing.T) {
 	t.Parallel()
 
 	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
-	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Registry: registry, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	cfg := config.Config{AthleteID: "i111", CoachMode: coach.ModeOn, Coach: coach.Config{DefaultAthleteID: "i111", Athletes: []coach.Athlete{{ID: "i111", AllowedTools: []string{"*"}}}}}
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: registry, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
 	defer cleanup()
 
 	result, err := session.ListTools(ctx, nil)
@@ -769,15 +770,6 @@ func TestProtocolAthleteIDRejectionMessageIsEnumerationSafe(t *testing.T) {
 		}
 	}
 
-	singleCtx, singleSession, singleCleanup := connectTestClientWithOptions(t, Options{Config: config.Config{AthleteID: "i111"}, Registry: coachACLTestRegistry{}, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
-	defer singleCleanup()
-	singleResult, err := singleSession.CallTool(singleCtx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: map[string]any{"athlete_id": "222"}})
-	if err != nil {
-		t.Fatalf("single CallTool() protocol error = %v", err)
-	}
-	if !singleResult.IsError || singleResult.Content[0].(*sdkmcp.TextContent).Text != invalidTargetAthleteMessage {
-		t.Fatalf("single mismatch result = %#v, want enumeration-safe error", singleResult)
-	}
 }
 
 func TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry(t *testing.T) {
@@ -827,15 +819,7 @@ func TestProtocolAdvancedCapabilitiesUsesCoachFilteredCatalog(t *testing.T) {
 	t.Parallel()
 
 	cfg := coachACLTestConfig()
-	evaluator := coach.NewEvaluator(true, cfg.Coach)
-	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{
-		Version:          "test",
-		TimezoneFallback: "UTC",
-		CatalogFilter: func(tool tools.Tool) bool {
-			allowed, _ := evaluator.Evaluate(cfg.Coach.DefaultAthleteID, tool.Name)
-			return allowed
-		},
-	})
+	registry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC"})
 	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: registry})
 	defer cleanup()
 

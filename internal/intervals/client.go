@@ -147,6 +147,32 @@ func (c *Client) newRequest(ctx context.Context, method string, pathParts ...str
 	return req, nil
 }
 
+func (c *Client) ensureActivityTarget(ctx context.Context, activity Activity) error {
+	targetAthleteID, ok := targetAthleteIDFromContext(ctx)
+	if !ok {
+		return nil
+	}
+	if activity.ICUAthleteID == nil {
+		return ErrTargetAthleteMismatch
+	}
+	activityAthleteID, err := config.NormalizeAthleteID(*activity.ICUAthleteID)
+	if err != nil || activityAthleteID != targetAthleteID {
+		return ErrTargetAthleteMismatch
+	}
+	return nil
+}
+
+func (c *Client) ensureActivityIDTarget(ctx context.Context, activityID string) error {
+	if _, ok := targetAthleteIDFromContext(ctx); !ok {
+		return nil
+	}
+	activity, err := c.GetActivity(ctx, activityID)
+	if err != nil {
+		return err
+	}
+	return c.ensureActivityTarget(ctx, activity)
+}
+
 func (c *Client) resolvePathAthleteID(ctx context.Context, pathParts []string) []string {
 	targetAthleteID, ok := targetAthleteIDFromContext(ctx)
 	if !ok {
