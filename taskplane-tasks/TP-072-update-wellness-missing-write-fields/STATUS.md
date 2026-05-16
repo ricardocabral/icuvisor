@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-16
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 **Closes:** GitHub #8
@@ -12,11 +12,11 @@
 ---
 
 ### Step 1: Add fields to client write struct + payload
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Verify read-side wellness JSON tags for `spO2`, `vo2max`, `abdomen`, `respiration`, and `menstrualPhase`.
-- [ ] Add missing fields to `WriteWellnessParams`.
-- [ ] Extend `writeWellnessBody` to include the new sparse payload keys.
+- [x] Verify read-side wellness JSON tags for `spO2`, `vo2max`, `abdomen`, `respiration`, and `menstrualPhase`.
+- [x] Add missing fields to `WriteWellnessParams`.
+- [x] Extend `writeWellnessBody` to include the new sparse payload keys.
 
 ### Step 2: Expose fields in the tool
 **Status:** ⏳ Pending
@@ -32,3 +32,4 @@
 
 | 2026-05-16 20:44 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-16 20:44 | Step 1 started | Add fields to client write struct + payload |
+| 2026-05-16 20:46 | Review R001 | plan Step 1: APPROVE |

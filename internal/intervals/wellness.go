@@ -30,12 +30,17 @@ type WriteWellnessParams struct {
 	BodyFat      *float64
 	Systolic     *int
 	Diastolic    *int
-	BloodGlucose *float64
-	Lactate      *float64
-	RestingHR    *int
-	HRV          *float64
-	Injury       *string
-	Locked       *bool
+	BloodGlucose   *float64
+	Lactate        *float64
+	SpO2           *float64
+	VO2Max         *float64
+	Abdomen        *float64
+	Respiration    *float64
+	MenstrualPhase *string
+	RestingHR      *int
+	HRV            *float64
+	Injury         *string
+	Locked         *bool
 }
 
 // Wellness contains typed intervals.icu wellness fields while preserving raw upstream fields.
@@ -167,6 +172,11 @@ func writeWellnessBody(params WriteWellnessParams) (map[string]any, error) {
 	setSparse(body, "diastolic", params.Diastolic)
 	setSparse(body, "bloodGlucose", params.BloodGlucose)
 	setSparse(body, "lactate", params.Lactate)
+	setSparse(body, "spO2", params.SpO2)
+	setSparse(body, "vo2max", params.VO2Max)
+	setSparse(body, "abdomen", params.Abdomen)
+	setSparse(body, "respiration", params.Respiration)
+	setSparse(body, "menstrualPhase", params.MenstrualPhase)
 	setSparse(body, "restingHR", params.RestingHR)
 	setSparse(body, "hrv", params.HRV)
 	setSparse(body, "injury", params.Injury)
