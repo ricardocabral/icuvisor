@@ -1,6 +1,6 @@
 # TP-072-update-wellness-missing-write-fields — Status
 
-**Current Step:** Step 3: Tests
+**Current Step:** Step 4: Build, lint, manual smoke
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-16
 **Review Level:** 1
@@ -34,7 +34,10 @@
 - [x] Add a combined-fields test that writes all five new fields at once.
 
 ### Step 4: Build, lint, manual smoke
-**Status:** ⏳ Pending
+**Status:** 🟨 In Progress
+
+- [ ] Run `make build`, `make test`, `make test-race`, and `make lint` successfully.
+- [ ] Decide and document whether the optional `.env-dev` manual smoke was run.
 
 ### Step 5: Close the GitHub issue
 **Status:** ⏳ Pending
