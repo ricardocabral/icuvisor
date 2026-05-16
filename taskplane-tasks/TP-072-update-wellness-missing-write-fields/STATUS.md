@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-16
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** S
 **Closes:** GitHub #8
@@ -28,10 +28,10 @@
 - [x] Include the new fields in the `fields_updated` echo.
 
 ### Step 3: Tests
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Add table-driven coverage for each new field asserting outbound body keys, `fields_updated`, and validation failures.
-- [ ] Add a combined-fields test that writes all five new fields at once.
+- [x] Add table-driven coverage for each new field asserting outbound body keys, `fields_updated`, and validation failures.
+- [x] Add a combined-fields test that writes all five new fields at once.
 
 ### Step 4: Build, lint, manual smoke
 **Status:** ⏳ Pending
@@ -43,3 +43,4 @@
 | 2026-05-16 20:44 | Step 1 started | Add fields to client write struct + payload |
 | 2026-05-16 20:46 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-16 20:50 | Review R002 | plan Step 2: APPROVE |
+| 2026-05-16 20:54 | Review R003 | plan Step 3: APPROVE |

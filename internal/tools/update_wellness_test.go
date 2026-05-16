@@ -68,6 +68,11 @@ func TestUpdateWellnessRejectsOutOfRangeAndReadOnlyArgumentsBeforeWrite(t *testi
 		`{"date":"2026-05-01","feel":6}`,
 		`{"date":"2026-05-01","sleepQuality":5}`,
 		`{"date":"2026-05-01","bodyFat":-1}`,
+		`{"date":"2026-05-01","spO2":200}`,
+		`{"date":"2026-05-01","vo2max":-1}`,
+		`{"date":"2026-05-01","abdomen":-1}`,
+		`{"date":"2026-05-01","respiration":-1}`,
+		`{"date":"2026-05-01","menstrualPhase":""}`,
 		`{"date":"2026-05-01","sleepScore":88}`,
 		`{"date":"2026-05-01","_native":{"polar":{"sleep_score":90}}}`,
 	} {
@@ -77,6 +82,74 @@ func TestUpdateWellnessRejectsOutOfRangeAndReadOnlyArgumentsBeforeWrite(t *testi
 	}
 	if len(client.calls) != 0 {
 		t.Fatalf("write calls = %#v, want none after validation failures", client.calls)
+	}
+}
+
+func TestUpdateWellnessNewFieldsRoundTripToParamsAndFieldsUpdated(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		raw       string
+		field     string
+		wantParam func(intervals.WriteWellnessParams) bool
+	}{
+		{name: "spO2", raw: `{"date":"2026-05-01","spO2":97}`, field: "spO2", wantParam: func(p intervals.WriteWellnessParams) bool { return p.SpO2 != nil && *p.SpO2 == 97 }},
+		{name: "vo2max", raw: `{"date":"2026-05-01","vo2max":52.5}`, field: "vo2max", wantParam: func(p intervals.WriteWellnessParams) bool { return p.VO2Max != nil && *p.VO2Max == 52.5 }},
+		{name: "abdomen", raw: `{"date":"2026-05-01","abdomen":81.2}`, field: "abdomen", wantParam: func(p intervals.WriteWellnessParams) bool { return p.Abdomen != nil && *p.Abdomen == 81.2 }},
+		{name: "respiration", raw: `{"date":"2026-05-01","respiration":13.5}`, field: "respiration", wantParam: func(p intervals.WriteWellnessParams) bool { return p.Respiration != nil && *p.Respiration == 13.5 }},
+		{name: "menstrualPhase", raw: `{"date":"2026-05-01","menstrualPhase":"luteal"}`, field: "menstrualPhase", wantParam: func(p intervals.WriteWellnessParams) bool { return p.MenstrualPhase != nil && *p.MenstrualPhase == "luteal" }},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &fakeWellnessWriterClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric", Timezone: "UTC"}},
+				row:               decodeWellnessRow(t, `{"id":"2026-05-01"}`),
+			}
+			tool := newUpdateWellnessTool(client, client, "test", "UTC", false)
+
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.raw)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			if len(client.calls) != 1 || !tc.wantParam(client.calls[0]) {
+				t.Fatalf("write calls = %#v, want %s update", client.calls, tc.field)
+			}
+			meta := resultMap(t, result)["_meta"].(map[string]any)
+			if !containsAny(meta["fields_updated"].([]any), tc.field) {
+				t.Fatalf("fields_updated = %#v, want %s", meta["fields_updated"], tc.field)
+			}
+		})
+	}
+}
+
+func TestUpdateWellnessWritesAllNewFieldsTogether(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric", Timezone: "UTC"}},
+		row:               decodeWellnessRow(t, `{"id":"2026-05-01"}`),
+	}
+	tool := newUpdateWellnessTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-05-01","spO2":98,"vo2max":54.1,"abdomen":80.2,"respiration":12.5,"menstrualPhase":"follicular"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 {
+		t.Fatalf("write calls = %d, want 1", len(client.calls))
+	}
+	call := client.calls[0]
+	if call.SpO2 == nil || *call.SpO2 != 98 || call.VO2Max == nil || *call.VO2Max != 54.1 || call.Abdomen == nil || *call.Abdomen != 80.2 || call.Respiration == nil || *call.Respiration != 12.5 || call.MenstrualPhase == nil || *call.MenstrualPhase != "follicular" {
+		t.Fatalf("write call = %#v, want all new fields", call)
+	}
+	fields := resultMap(t, result)["_meta"].(map[string]any)["fields_updated"].([]any)
+	for _, field := range []string{"spO2", "vo2max", "abdomen", "respiration", "menstrualPhase"} {
+		if !containsAny(fields, field) {
+			t.Fatalf("fields_updated = %#v, want %s", fields, field)
+		}
 	}
 }
 

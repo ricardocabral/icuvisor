@@ -141,6 +141,47 @@ func TestUpdateWellnessSendsSparseBody(t *testing.T) {
 	}
 }
 
+func TestUpdateWellnessSendsNewWritableFields(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		key    string
+		params WriteWellnessParams
+		want   any
+	}{
+		{name: "spO2", key: "spO2", params: WriteWellnessParams{SpO2: float64Ptr(97)}, want: float64(97)},
+		{name: "vo2max", key: "vo2max", params: WriteWellnessParams{VO2Max: float64Ptr(52.5)}, want: float64(52.5)},
+		{name: "abdomen", key: "abdomen", params: WriteWellnessParams{Abdomen: float64Ptr(81.2)}, want: float64(81.2)},
+		{name: "respiration", key: "respiration", params: WriteWellnessParams{Respiration: float64Ptr(13.5)}, want: float64(13.5)},
+		{name: "menstrualPhase", key: "menstrualPhase", params: WriteWellnessParams{MenstrualPhase: stringPtr("luteal")}, want: "luteal"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				var body map[string]any
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					t.Fatalf("decode request body: %v", err)
+				}
+				if got := body[tc.key]; got != tc.want || len(body) != 1 {
+					t.Fatalf("body = %#v, want sparse %s=%#v update", body, tc.key, tc.want)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"id":"2026-05-01"}`))
+			}))
+			defer server.Close()
+
+			client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+			tc.params.Date = "2026-05-01"
+			if _, err := client.UpdateWellness(context.Background(), tc.params); err != nil {
+				t.Fatalf("UpdateWellness() error = %v", err)
+			}
+		})
+	}
+}
+
 func TestListWellnessRequiresOldest(t *testing.T) {
 	t.Parallel()
 
@@ -167,6 +208,14 @@ func TestListWellnessWrapsHTTPError(t *testing.T) {
 	if !strings.Contains(err.Error(), "listing wellness") {
 		t.Fatalf("ListWellness() error = %q, want operation context", err.Error())
 	}
+}
+
+func float64Ptr(value float64) *float64 {
+	return &value
+}
+
+func stringPtr(value string) *string {
+	return &value
 }
 
 func containsString(values []string, want string) bool {
