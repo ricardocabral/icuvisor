@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `update_wellness` now accepts spO2, vo2max, abdomen, respiration, and menstrualPhase per PRD §7.2.C.
+
 ### Changed
 
 - Refactored internal response shaping to avoid the full response marshal/unmarshal round-trip on normal tool DTOs and consolidate tree walking, with no user-visible output changes.

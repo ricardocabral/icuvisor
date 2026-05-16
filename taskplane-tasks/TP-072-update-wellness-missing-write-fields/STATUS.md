@@ -43,8 +43,9 @@
 ### Step 5: Close the GitHub issue
 **Status:** 🟨 In Progress
 
-- [ ] Update `CHANGELOG.md` under `[Unreleased] → Fixed` with the missing `update_wellness` fields.
-- [ ] Update `STATUS.md` with final delivery notes.
+- [x] Update `CHANGELOG.md` under `[Unreleased] → Fixed` with the missing `update_wellness` fields.
+- [x] Update `STATUS.md` with final delivery notes.
+  - Delivery notes: added five missing wellness write fields end-to-end; validation covers `spO2`, non-negative numeric fields, and non-empty `menstrualPhase`; `make build`, `make test`, `make test-race`, and `make lint` passed.
 - [ ] Commit final documentation/status changes with a conventional commit referencing TP-072 and #8.
 - [ ] Push or document why push/PR handoff and post-merge issue closure cannot be completed from this lane.
 
