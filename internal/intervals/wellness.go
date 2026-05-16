@@ -18,18 +18,18 @@ type WellnessParams struct {
 
 // WriteWellnessParams contains sparse writable wellness fields for one local date.
 type WriteWellnessParams struct {
-	Date         string
-	Feel         *int
-	Fatigue      *int
-	Mood         *int
-	SleepQuality *int
-	Motivation   *int
-	Soreness     *int
-	Stress       *int
-	Weight       *float64
-	BodyFat      *float64
-	Systolic     *int
-	Diastolic    *int
+	Date           string
+	Feel           *int
+	Fatigue        *int
+	Mood           *int
+	SleepQuality   *int
+	Motivation     *int
+	Soreness       *int
+	Stress         *int
+	Weight         *float64
+	BodyFat        *float64
+	Systolic       *int
+	Diastolic      *int
 	BloodGlucose   *float64
 	Lactate        *float64
 	SpO2           *float64

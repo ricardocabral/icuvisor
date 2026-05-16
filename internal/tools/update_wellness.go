@@ -66,18 +66,18 @@ type WellnessWriterClient interface {
 }
 
 type updateWellnessRequest struct {
-	Date         string   `json:"date"`
-	Feel         *int     `json:"feel,omitempty"`
-	Fatigue      *int     `json:"fatigue,omitempty"`
-	Mood         *int     `json:"mood,omitempty"`
-	SleepQuality *int     `json:"sleepQuality,omitempty"`
-	Motivation   *int     `json:"motivation,omitempty"`
-	Soreness     *int     `json:"soreness,omitempty"`
-	Stress       *int     `json:"stress,omitempty"`
-	Weight       *float64 `json:"weight,omitempty"`
-	BodyFat      *float64 `json:"bodyFat,omitempty"`
-	Systolic     *int     `json:"systolic,omitempty"`
-	Diastolic    *int     `json:"diastolic,omitempty"`
+	Date           string   `json:"date"`
+	Feel           *int     `json:"feel,omitempty"`
+	Fatigue        *int     `json:"fatigue,omitempty"`
+	Mood           *int     `json:"mood,omitempty"`
+	SleepQuality   *int     `json:"sleepQuality,omitempty"`
+	Motivation     *int     `json:"motivation,omitempty"`
+	Soreness       *int     `json:"soreness,omitempty"`
+	Stress         *int     `json:"stress,omitempty"`
+	Weight         *float64 `json:"weight,omitempty"`
+	BodyFat        *float64 `json:"bodyFat,omitempty"`
+	Systolic       *int     `json:"systolic,omitempty"`
+	Diastolic      *int     `json:"diastolic,omitempty"`
 	BloodGlucose   *float64 `json:"bloodGlucose,omitempty"`
 	Lactate        *float64 `json:"lactate,omitempty"`
 	SpO2           *float64 `json:"spO2,omitempty"`
@@ -88,8 +88,8 @@ type updateWellnessRequest struct {
 	RestingHR      *int     `json:"restingHR,omitempty"`
 	HRV            *float64 `json:"hrv,omitempty"`
 	Injury         *string  `json:"injury,omitempty"`
-	Locked       *bool    `json:"locked,omitempty"`
-	IncludeFull  bool     `json:"include_full,omitempty"`
+	Locked         *bool    `json:"locked,omitempty"`
+	IncludeFull    bool     `json:"include_full,omitempty"`
 }
 
 type updateWellnessResponse struct {
@@ -275,17 +275,17 @@ func validateFloatRange(field string, value *float64, min float64, max float64) 
 
 func wellnessWriteParams(args updateWellnessRequest, profile intervals.AthleteWithSportSettings, timezoneFallback string) (intervals.WriteWellnessParams, updateWellnessMeta) {
 	params := intervals.WriteWellnessParams{
-		Date:         args.Date,
-		Feel:         args.Feel,
-		Fatigue:      args.Fatigue,
-		Mood:         args.Mood,
-		SleepQuality: args.SleepQuality,
-		Motivation:   args.Motivation,
-		Soreness:     args.Soreness,
-		Stress:       args.Stress,
-		BodyFat:      args.BodyFat,
-		Systolic:     args.Systolic,
-		Diastolic:    args.Diastolic,
+		Date:           args.Date,
+		Feel:           args.Feel,
+		Fatigue:        args.Fatigue,
+		Mood:           args.Mood,
+		SleepQuality:   args.SleepQuality,
+		Motivation:     args.Motivation,
+		Soreness:       args.Soreness,
+		Stress:         args.Stress,
+		BodyFat:        args.BodyFat,
+		Systolic:       args.Systolic,
+		Diastolic:      args.Diastolic,
 		BloodGlucose:   args.BloodGlucose,
 		Lactate:        args.Lactate,
 		SpO2:           args.SpO2,
@@ -365,14 +365,14 @@ func updateWellnessInputSchema() map[string]any {
 	scales := response.RegisteredScaleLabels()
 	examples := updateWellnessInputExamples()
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"date"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
-		"date":         map[string]any{"type": "string", "description": "Required athlete-local wellness date as YYYY-MM-DD."},
-		"feel":         scaleSchema(scales, "feel", 5),
-		"fatigue":      scaleSchema(scales, "fatigue", 5),
-		"mood":         scaleSchema(scales, "mood", 5),
-		"sleepQuality": scaleSchema(scales, "sleepQuality", 4),
-		"motivation":   scaleSchema(scales, "motivation", 5),
-		"soreness":     scaleSchema(scales, "soreness", 5),
-		"stress":       scaleSchema(scales, "stress", 5),
+		"date":           map[string]any{"type": "string", "description": "Required athlete-local wellness date as YYYY-MM-DD."},
+		"feel":           scaleSchema(scales, "feel", 5),
+		"fatigue":        scaleSchema(scales, "fatigue", 5),
+		"mood":           scaleSchema(scales, "mood", 5),
+		"sleepQuality":   scaleSchema(scales, "sleepQuality", 4),
+		"motivation":     scaleSchema(scales, "motivation", 5),
+		"soreness":       scaleSchema(scales, "soreness", 5),
+		"stress":         scaleSchema(scales, "stress", 5),
 		"weight":         map[string]any{"type": "number", "minimum": 0, "description": "Manual body weight in the athlete's preferred weight unit from get_athlete_profile (_meta.units / units.weight); converted to upstream kg at the API boundary."},
 		"bodyFat":        map[string]any{"type": "number", "minimum": 0, "maximum": 100, "description": "Manual body fat percentage, 0-100%."},
 		"abdomen":        map[string]any{"type": "number", "minimum": 0, "description": "Manual abdomen circumference in cm."},
@@ -387,8 +387,8 @@ func updateWellnessInputSchema() map[string]any {
 		"respiration":    map[string]any{"type": "number", "minimum": 0, "description": "respiration: breaths per minute."},
 		"menstrualPhase": map[string]any{"type": "string", "description": "Menstrual phase as accepted by intervals.icu; free-text string until the upstream enum contract is verified."},
 		"injury":         map[string]any{"type": "string", "description": "Optional free-text injury or limitation note. Preserved verbatim."},
-		"locked":       map[string]any{"type": "boolean", "description": "When true, ask upstream to lock the wellness row against device-sync overwrites."},
-		"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, include the raw upstream wellness row under wellness.full and keep null fields."},
+		"locked":         map[string]any{"type": "boolean", "description": "When true, ask upstream to lock the wellness row against device-sync overwrites."},
+		"include_full":   map[string]any{"type": "boolean", "default": false, "description": "When true, include the raw upstream wellness row under wellness.full and keep null fields."},
 	}}
 }
 

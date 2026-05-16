@@ -98,7 +98,9 @@ func TestUpdateWellnessNewFieldsRoundTripToParamsAndFieldsUpdated(t *testing.T) 
 		{name: "vo2max", raw: `{"date":"2026-05-01","vo2max":52.5}`, field: "vo2max", wantParam: func(p intervals.WriteWellnessParams) bool { return p.VO2Max != nil && *p.VO2Max == 52.5 }},
 		{name: "abdomen", raw: `{"date":"2026-05-01","abdomen":81.2}`, field: "abdomen", wantParam: func(p intervals.WriteWellnessParams) bool { return p.Abdomen != nil && *p.Abdomen == 81.2 }},
 		{name: "respiration", raw: `{"date":"2026-05-01","respiration":13.5}`, field: "respiration", wantParam: func(p intervals.WriteWellnessParams) bool { return p.Respiration != nil && *p.Respiration == 13.5 }},
-		{name: "menstrualPhase", raw: `{"date":"2026-05-01","menstrualPhase":"luteal"}`, field: "menstrualPhase", wantParam: func(p intervals.WriteWellnessParams) bool { return p.MenstrualPhase != nil && *p.MenstrualPhase == "luteal" }},
+		{name: "menstrualPhase", raw: `{"date":"2026-05-01","menstrualPhase":"luteal"}`, field: "menstrualPhase", wantParam: func(p intervals.WriteWellnessParams) bool {
+			return p.MenstrualPhase != nil && *p.MenstrualPhase == "luteal"
+		}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
