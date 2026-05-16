@@ -1,6 +1,6 @@
 # TP-072-update-wellness-missing-write-fields — Status
 
-**Current Step:** Step 2: Expose fields in the tool
+**Current Step:** Step 3: Tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-16
 **Review Level:** 1
@@ -28,7 +28,10 @@
 - [x] Include the new fields in the `fields_updated` echo.
 
 ### Step 3: Tests
-**Status:** ⏳ Pending
+**Status:** 🟨 In Progress
+
+- [ ] Add table-driven coverage for each new field asserting outbound body keys, `fields_updated`, and validation failures.
+- [ ] Add a combined-fields test that writes all five new fields at once.
 
 ### Step 4: Build, lint, manual smoke
 **Status:** ⏳ Pending
