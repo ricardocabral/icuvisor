@@ -1,7 +1,7 @@
 # TP-072-update-wellness-missing-write-fields — Status
 
 **Current Step:** Step 5: Close the GitHub issue
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-16
 **Review Level:** 1
 **Review Counter:** 4
@@ -41,13 +41,14 @@
   - Manual smoke not run: skipped optional live `.env-dev` write to avoid mutating athlete data in this automated lane; unit/integration tests cover request schema, payload mapping, validation, and response metadata.
 
 ### Step 5: Close the GitHub issue
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Update `CHANGELOG.md` under `[Unreleased] → Fixed` with the missing `update_wellness` fields.
 - [x] Update `STATUS.md` with final delivery notes.
   - Delivery notes: added five missing wellness write fields end-to-end; validation covers `spO2`, non-negative numeric fields, and non-empty `menstrualPhase`; `make build`, `make test`, `make test-race`, and `make lint` passed.
-- [ ] Commit final documentation/status changes with a conventional commit referencing TP-072 and #8.
-- [ ] Push or document why push/PR handoff and post-merge issue closure cannot be completed from this lane.
+- [x] Commit final documentation/status changes with a conventional commit referencing TP-072 and #8.
+- [x] Push or document why push/PR handoff and post-merge issue closure cannot be completed from this lane.
+  - Pushed branch `task/jusbrasil-lane-2-20260516T174422` and opened PR https://github.com/ricardocabral/icuvisor/pull/14 with `Closes #8`; post-merge issue auto-close verification remains pending merge.
 
 | 2026-05-16 20:44 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-16 20:44 | Step 1 started | Add fields to client write struct + payload |
