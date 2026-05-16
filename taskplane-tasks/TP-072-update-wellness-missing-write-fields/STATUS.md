@@ -1,6 +1,6 @@
 # TP-072-update-wellness-missing-write-fields — Status
 
-**Current Step:** Step 1: Add fields to client write struct + payload
+**Current Step:** Step 2: Expose fields in the tool
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-16
 **Review Level:** 1
@@ -19,7 +19,13 @@
 - [x] Extend `writeWellnessBody` to include the new sparse payload keys.
 
 ### Step 2: Expose fields in the tool
-**Status:** ⏳ Pending
+**Status:** 🟨 In Progress
+
+- [ ] Extend `updateWellnessRequest` with the five new fields.
+- [ ] Extend `updateWellnessInputSchema` with documented properties for the new fields.
+- [ ] Add handler validation for numeric ranges and non-empty `menstrualPhase`.
+- [ ] Map the new request fields into `WriteWellnessParams`.
+- [ ] Include the new fields in the `fields_updated` echo.
 
 ### Step 3: Tests
 **Status:** ⏳ Pending
