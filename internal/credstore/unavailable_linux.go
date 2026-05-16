@@ -32,7 +32,7 @@ func isKeychainUnavailable(err error) bool {
 	message := strings.ToLower(err.Error())
 	unavailableFragments := []string{
 		"couldn't determine address of session bus",
-		"cannot autolaunch dbus without x11 $display",
+		"cannot autolaunch d-bus without x11 $display",
 		"dbus-launch",
 		"no such file or directory",
 		"the name org.freedesktop.secrets was not provided",
