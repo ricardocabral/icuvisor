@@ -1,6 +1,6 @@
 # TP-072-update-wellness-missing-write-fields — Status
 
-**Current Step:** Step 4: Build, lint, manual smoke
+**Current Step:** Step 5: Close the GitHub issue
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-16
 **Review Level:** 1
@@ -41,7 +41,12 @@
   - Manual smoke not run: skipped optional live `.env-dev` write to avoid mutating athlete data in this automated lane; unit/integration tests cover request schema, payload mapping, validation, and response metadata.
 
 ### Step 5: Close the GitHub issue
-**Status:** ⏳ Pending
+**Status:** 🟨 In Progress
+
+- [ ] Update `CHANGELOG.md` under `[Unreleased] → Fixed` with the missing `update_wellness` fields.
+- [ ] Update `STATUS.md` with final delivery notes.
+- [ ] Commit final documentation/status changes with a conventional commit referencing TP-072 and #8.
+- [ ] Push or document why push/PR handoff and post-merge issue closure cannot be completed from this lane.
 
 | 2026-05-16 20:44 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-16 20:44 | Step 1 started | Add fields to client write struct + payload |
