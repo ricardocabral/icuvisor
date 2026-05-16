@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-16
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 **Closes:** GitHub #8
@@ -19,13 +19,13 @@
 - [x] Extend `writeWellnessBody` to include the new sparse payload keys.
 
 ### Step 2: Expose fields in the tool
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Extend `updateWellnessRequest` with the five new fields.
-- [ ] Extend `updateWellnessInputSchema` with documented properties for the new fields.
-- [ ] Add handler validation for numeric ranges and non-empty `menstrualPhase`.
-- [ ] Map the new request fields into `WriteWellnessParams`.
-- [ ] Include the new fields in the `fields_updated` echo.
+- [x] Extend `updateWellnessRequest` with the five new fields.
+- [x] Extend `updateWellnessInputSchema` with documented properties for the new fields.
+- [x] Add handler validation for numeric ranges and non-empty `menstrualPhase`.
+- [x] Map the new request fields into `WriteWellnessParams`.
+- [x] Include the new fields in the `fields_updated` echo.
 
 ### Step 3: Tests
 **Status:** ⏳ Pending
@@ -39,3 +39,4 @@
 | 2026-05-16 20:44 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-16 20:44 | Step 1 started | Add fields to client write struct + payload |
 | 2026-05-16 20:46 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-16 20:50 | Review R002 | plan Step 2: APPROVE |

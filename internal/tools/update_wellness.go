@@ -34,16 +34,21 @@ var updateWellnessSubjectiveScaleFields = []string{
 var updateWellnessMeasurementFields = []string{
 	"weight",
 	"bodyFat",
+	"abdomen",
 	"systolic",
 	"diastolic",
 	"bloodGlucose",
 	"lactate",
+	"spO2",
+	"vo2max",
 	"restingHR",
 	"hrv",
+	"respiration",
 }
 
 var updateWellnessFreeTextFields = []string{
 	"injury",
+	"menstrualPhase",
 }
 
 var updateWellnessFlagFields = []string{
@@ -73,11 +78,16 @@ type updateWellnessRequest struct {
 	BodyFat      *float64 `json:"bodyFat,omitempty"`
 	Systolic     *int     `json:"systolic,omitempty"`
 	Diastolic    *int     `json:"diastolic,omitempty"`
-	BloodGlucose *float64 `json:"bloodGlucose,omitempty"`
-	Lactate      *float64 `json:"lactate,omitempty"`
-	RestingHR    *int     `json:"restingHR,omitempty"`
-	HRV          *float64 `json:"hrv,omitempty"`
-	Injury       *string  `json:"injury,omitempty"`
+	BloodGlucose   *float64 `json:"bloodGlucose,omitempty"`
+	Lactate        *float64 `json:"lactate,omitempty"`
+	SpO2           *float64 `json:"spO2,omitempty"`
+	VO2Max         *float64 `json:"vo2max,omitempty"`
+	Abdomen        *float64 `json:"abdomen,omitempty"`
+	Respiration    *float64 `json:"respiration,omitempty"`
+	MenstrualPhase *string  `json:"menstrualPhase,omitempty"`
+	RestingHR      *int     `json:"restingHR,omitempty"`
+	HRV            *float64 `json:"hrv,omitempty"`
+	Injury         *string  `json:"injury,omitempty"`
 	Locked       *bool    `json:"locked,omitempty"`
 	IncludeFull  bool     `json:"include_full,omitempty"`
 }
@@ -200,16 +210,25 @@ func validateUpdateWellnessRanges(args updateWellnessRequest) error {
 		"bodyFat":      args.BodyFat,
 		"bloodGlucose": args.BloodGlucose,
 		"lactate":      args.Lactate,
+		"vo2max":       args.VO2Max,
+		"abdomen":      args.Abdomen,
+		"respiration":  args.Respiration,
 		"hrv":          args.HRV,
 	} {
 		if err := validateFloatMin(field, value, 0); err != nil {
 			return err
 		}
 	}
+	if err := validateFloatRange("spO2", args.SpO2, 0, 100); err != nil {
+		return err
+	}
 	for field, value := range map[string]*int{"systolic": args.Systolic, "diastolic": args.Diastolic, "restingHR": args.RestingHR} {
 		if err := validateIntMin(field, value, 0); err != nil {
 			return err
 		}
+	}
+	if args.MenstrualPhase != nil && strings.TrimSpace(*args.MenstrualPhase) == "" {
+		return errors.New("menstrualPhase must be non-empty")
 	}
 	return nil
 }
@@ -244,6 +263,16 @@ func validateFloatMin(field string, value *float64, min float64) error {
 	return nil
 }
 
+func validateFloatRange(field string, value *float64, min float64, max float64) error {
+	if value == nil {
+		return nil
+	}
+	if *value < min || *value > max {
+		return fmt.Errorf("%s must be %g-%g", field, min, max)
+	}
+	return nil
+}
+
 func wellnessWriteParams(args updateWellnessRequest, profile intervals.AthleteWithSportSettings, timezoneFallback string) (intervals.WriteWellnessParams, updateWellnessMeta) {
 	params := intervals.WriteWellnessParams{
 		Date:         args.Date,
@@ -257,12 +286,17 @@ func wellnessWriteParams(args updateWellnessRequest, profile intervals.AthleteWi
 		BodyFat:      args.BodyFat,
 		Systolic:     args.Systolic,
 		Diastolic:    args.Diastolic,
-		BloodGlucose: args.BloodGlucose,
-		Lactate:      args.Lactate,
-		RestingHR:    args.RestingHR,
-		HRV:          args.HRV,
-		Injury:       args.Injury,
-		Locked:       args.Locked,
+		BloodGlucose:   args.BloodGlucose,
+		Lactate:        args.Lactate,
+		SpO2:           args.SpO2,
+		VO2Max:         args.VO2Max,
+		Abdomen:        args.Abdomen,
+		Respiration:    args.Respiration,
+		MenstrualPhase: args.MenstrualPhase,
+		RestingHR:      args.RestingHR,
+		HRV:            args.HRV,
+		Injury:         args.Injury,
+		Locked:         args.Locked,
 	}
 	meta := updateWellnessMeta{Date: args.Date, Timezone: profileTimezone(profile.Timezone, timezoneFallback), FieldsUpdated: updateWellnessFieldsUpdated(args), IncludeFull: args.IncludeFull}
 	if args.Weight != nil {
@@ -298,6 +332,11 @@ func updateWellnessFieldsUpdated(args updateWellnessRequest) []string {
 	add("diastolic", args.Diastolic != nil)
 	add("bloodGlucose", args.BloodGlucose != nil)
 	add("lactate", args.Lactate != nil)
+	add("spO2", args.SpO2 != nil)
+	add("vo2max", args.VO2Max != nil)
+	add("abdomen", args.Abdomen != nil)
+	add("respiration", args.Respiration != nil)
+	add("menstrualPhase", args.MenstrualPhase != nil)
 	add("restingHR", args.RestingHR != nil)
 	add("hrv", args.HRV != nil)
 	add("injury", args.Injury != nil)
@@ -334,15 +373,20 @@ func updateWellnessInputSchema() map[string]any {
 		"motivation":   scaleSchema(scales, "motivation", 5),
 		"soreness":     scaleSchema(scales, "soreness", 5),
 		"stress":       scaleSchema(scales, "stress", 5),
-		"weight":       map[string]any{"type": "number", "minimum": 0, "description": "Manual body weight in the athlete's preferred weight unit from get_athlete_profile (_meta.units / units.weight); converted to upstream kg at the API boundary."},
-		"bodyFat":      map[string]any{"type": "number", "minimum": 0, "maximum": 100, "description": "Manual body fat percentage, 0-100%."},
-		"systolic":     map[string]any{"type": "integer", "minimum": 0, "description": "Manual systolic blood pressure in mmHg."},
-		"diastolic":    map[string]any{"type": "integer", "minimum": 0, "description": "Manual diastolic blood pressure in mmHg."},
-		"bloodGlucose": map[string]any{"type": "number", "minimum": 0, "description": "Manual blood glucose in the upstream intervals.icu wellness unit."},
-		"lactate":      map[string]any{"type": "number", "minimum": 0, "description": "Manual blood lactate in mmol/L."},
-		"restingHR":    map[string]any{"type": "integer", "minimum": 0, "description": "Manual resting heart rate in bpm."},
-		"hrv":          map[string]any{"type": "number", "minimum": 0, "description": "Manual HRV in milliseconds rMSSD."},
-		"injury":       map[string]any{"type": "string", "description": "Optional free-text injury or limitation note. Preserved verbatim."},
+		"weight":         map[string]any{"type": "number", "minimum": 0, "description": "Manual body weight in the athlete's preferred weight unit from get_athlete_profile (_meta.units / units.weight); converted to upstream kg at the API boundary."},
+		"bodyFat":        map[string]any{"type": "number", "minimum": 0, "maximum": 100, "description": "Manual body fat percentage, 0-100%."},
+		"abdomen":        map[string]any{"type": "number", "minimum": 0, "description": "Manual abdomen circumference in cm."},
+		"systolic":       map[string]any{"type": "integer", "minimum": 0, "description": "Manual systolic blood pressure in mmHg."},
+		"diastolic":      map[string]any{"type": "integer", "minimum": 0, "description": "Manual diastolic blood pressure in mmHg."},
+		"bloodGlucose":   map[string]any{"type": "number", "minimum": 0, "description": "Manual blood glucose in the upstream intervals.icu wellness unit."},
+		"lactate":        map[string]any{"type": "number", "minimum": 0, "description": "Manual blood lactate in mmol/L."},
+		"spO2":           map[string]any{"type": "number", "minimum": 0, "maximum": 100, "description": "spO2: blood oxygen saturation percentage 0-100."},
+		"vo2max":         map[string]any{"type": "number", "minimum": 0, "description": "vo2max: ml/kg/min."},
+		"restingHR":      map[string]any{"type": "integer", "minimum": 0, "description": "Manual resting heart rate in bpm."},
+		"hrv":            map[string]any{"type": "number", "minimum": 0, "description": "Manual HRV in milliseconds rMSSD."},
+		"respiration":    map[string]any{"type": "number", "minimum": 0, "description": "respiration: breaths per minute."},
+		"menstrualPhase": map[string]any{"type": "string", "description": "Menstrual phase as accepted by intervals.icu; free-text string until the upstream enum contract is verified."},
+		"injury":         map[string]any{"type": "string", "description": "Optional free-text injury or limitation note. Preserved verbatim."},
 		"locked":       map[string]any{"type": "boolean", "description": "When true, ask upstream to lock the wellness row against device-sync overwrites."},
 		"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, include the raw upstream wellness row under wellness.full and keep null fields."},
 	}}
