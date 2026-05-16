@@ -60,12 +60,14 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 
 **Goal:** validate KR5 (token efficiency) with measured deltas vs both Python references on a shared prompt set. Land the MCP primitives that move long-form content out of the per-session budget.
 
-- [ ] `ICUVISOR_TOOLSET` env var with `core` (default, ~17 tools) and `full` tiers.
-- [ ] `icuvisor_list_advanced_capabilities` tool lives in `core` for discoverability when an advanced prompt arrives.
-- [ ] MCP Resources: `icuvisor://workout-syntax`, `icuvisor://event-categories`, `icuvisor://custom-item-schemas`, `icuvisor://athlete-profile`. Long-form schema content moves out of inline tool descriptions.
-- [ ] MCP Prompts: training analysis, recovery check, weekly planning, race-week taper, coach roster triage.
-- [ ] Streamable HTTP transport (localhost-bound by default).
-- [ ] Benchmark harness: run a shared prompt set against icuvisor, `hhopke/intervals-icu-mcp`, and `mvilanova/intervals-mcp-server`; record per-session description tokens and median per-call response bytes. KR5 targets confirmed or recalibrated.
+**Taskplane progress:** TP-030 through TP-034 completed on 2026-05-14. v0.4 implementation is complete; KR5 is partially confirmed in `docs/kr5-benchmark.md` — response-byte targets pass, while the description-token target missed by 58 tokens / 0.53 percentage points and is tracked as `TP-034-KR5-DESC-001`.
+
+- [x] `ICUVISOR_TOOLSET` env var with `core` (default, ~17 tools) and `full` tiers.
+- [x] `icuvisor_list_advanced_capabilities` tool lives in `core` for discoverability when an advanced prompt arrives.
+- [x] MCP Resources: `icuvisor://workout-syntax`, `icuvisor://event-categories`, `icuvisor://custom-item-schemas`, `icuvisor://athlete-profile`. Long-form schema content moves out of inline tool descriptions.
+- [x] MCP Prompts: training analysis, recovery check, weekly planning, race-week taper, coach roster triage.
+- [x] Streamable HTTP transport (localhost-bound by default).
+- [x] Benchmark harness: run a shared prompt set against icuvisor, `hhopke/intervals-icu-mcp`, and `mvilanova/intervals-mcp-server`; record per-session description tokens and median per-call response bytes. KR5 response-byte targets are confirmed; the description-token gap is documented for follow-up.
 
 ## v0.5 — Internal beta
 

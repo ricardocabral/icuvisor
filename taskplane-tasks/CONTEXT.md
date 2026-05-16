@@ -1,8 +1,8 @@
 # General — Context
 
-**Last Updated:** 2026-05-14
+**Last Updated:** 2026-05-15
 **Status:** Active
-**Next Task ID:** TP-035
+**Next Task ID:** TP-050
 
 ---
 
@@ -57,6 +57,38 @@ Scaffolded 2026-05-14 from PRD §7.2.E / §7.2.G / §7.3 / §6 KR5 and ROADMAP.m
 | TP-032 | MCP Prompts (training analysis, recovery, planning, taper, coach triage)    | TP-031, TP-010, TP-011, TP-012         |
 | TP-033 | Streamable HTTP transport (loopback-bound by default)                       | TP-003                                 |
 | TP-034 | KR5 benchmark harness (token efficiency vs Python references)               | TP-030, TP-031, TP-032, TP-033, TP-029 |
+
+---
+
+## v0.5 — Internal beta (TP-036 … TP-041)
+
+Scaffolded 2026-05-15 from PRD §7.1 / §7.2.A / §7.2.H / §7.4 #5–#12 and ROADMAP.md v0.5.
+
+| ID     | Title                                                                       | Depends on                             |
+| ------ | --------------------------------------------------------------------------- | -------------------------------------- |
+| TP-036 | OS keychain credential storage (macOS / Windows / libsecret)                | TP-007                                 |
+| TP-037 | macOS signed installer + manual Claude Desktop / Code config docs           | TP-036                                 |
+| TP-038 | First-run onboarding subcommand (`icuvisor setup`)                          | TP-036, TP-004, TP-035                 |
+| TP-039 | Coach mode + per-athlete tool ACLs (feature-flagged)                        | TP-018, TP-030, TP-002, TP-007, TP-038 |
+| TP-040 | Post-update schema-change notification (catalog hash in `_meta`)            | TP-015, TP-007                         |
+| TP-041 | v0.5 dogfood (5–10 forum-recruited athletes incl. ≥1 coach)                 | TP-036…TP-040, TP-029                  |
+
+---
+
+## Maintenance — Go code audit cleanup (TP-042 … TP-049)
+
+Scaffolded 2026-05-15 from the Go code audit dated 2026-05-15. No version-milestone dependency; land opportunistically before v0.5 dogfood (TP-041).
+
+| ID     | Title                                                                                | Depends on |
+| ------ | ------------------------------------------------------------------------------------ | ---------- |
+| TP-042 | Collapse `internal/tools/registry.go` interface-assertion sprawl (audit P0)          | —          |
+| TP-043 | Remove process-global state from `internal/response/shaper.go` (audit P1)            | —          |
+| TP-044 | Refactor `fetchActivitiesPage` complexity in `internal/tools/get_activities.go` (P1) | —          |
+| TP-045 | Harden `internal/intervals/client.go` `doJSONQuery` (retry split, LimitReader) (P1)  | —          |
+| TP-046 | Deduplicate `ProfileClient` interface across tools/resources (P1)                    | —          |
+| TP-047 | Consolidate `internal/response/shaper.go` tree-walker + drop marshal round-trip (P1) | TP-043     |
+| TP-048 | `internal/tools/` boilerplate helpers (`DecodeStrict`, `TextResult`) + dead code (P2)| —          |
+| TP-049 | Misc Go hygiene cleanups (recover helper, ctx propagation, env in `config`) (P2)     | —          |
 
 ---
 
