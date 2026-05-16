@@ -1,0 +1,12 @@
+* text=auto eol=lf
+
+*.go      text eol=lf
+*.md      text eol=lf
+*.json    text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.sh      text eol=lf
+
+testdata/** text eol=lf
+*.golden    text eol=lf
+*.golden.json text eol=lf

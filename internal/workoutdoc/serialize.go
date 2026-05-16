@@ -210,13 +210,13 @@ func formatDuration(seconds int) string {
 	remaining %= 60
 	var b strings.Builder
 	if hours > 0 {
-		b.WriteString(fmt.Sprintf("%dh", hours))
+		fmt.Fprintf(&b, "%dh", hours)
 	}
 	if minutes > 0 {
-		b.WriteString(fmt.Sprintf("%dm", minutes))
+		fmt.Fprintf(&b, "%dm", minutes)
 	}
 	if remaining > 0 || b.Len() == 0 {
-		b.WriteString(fmt.Sprintf("%ds", remaining))
+		fmt.Fprintf(&b, "%ds", remaining)
 	}
 	return b.String()
 }
