@@ -59,6 +59,11 @@
     }
   ],
   "properties": {
+    "abdomen": {
+      "description": "Manual abdomen circumference in cm.",
+      "minimum": 0,
+      "type": "number"
+    },
     "bloodGlucose": {
       "description": "Manual blood glucose in the upstream intervals.icu wellness unit.",
       "minimum": 0,
@@ -114,6 +119,10 @@
       "description": "When true, ask upstream to lock the wellness row against device-sync overwrites.",
       "type": "boolean"
     },
+    "menstrualPhase": {
+      "description": "Menstrual phase as accepted by intervals.icu; free-text string until the upstream enum contract is verified.",
+      "type": "string"
+    },
     "mood": {
       "description": "1-5 (athlete-reported mood); mood scale.",
       "maximum": 5,
@@ -125,6 +134,11 @@
       "maximum": 5,
       "minimum": 1,
       "type": "integer"
+    },
+    "respiration": {
+      "description": "respiration: breaths per minute.",
+      "minimum": 0,
+      "type": "number"
     },
     "restingHR": {
       "description": "Manual resting heart rate in bpm.",
@@ -143,6 +157,12 @@
       "minimum": 1,
       "type": "integer"
     },
+    "spO2": {
+      "description": "spO2: blood oxygen saturation percentage 0-100.",
+      "maximum": 100,
+      "minimum": 0,
+      "type": "number"
+    },
     "stress": {
       "description": "1-5 (athlete-reported stress); stress scale.",
       "maximum": 5,
@@ -153,6 +173,11 @@
       "description": "Manual systolic blood pressure in mmHg.",
       "minimum": 0,
       "type": "integer"
+    },
+    "vo2max": {
+      "description": "vo2max: ml/kg/min.",
+      "minimum": 0,
+      "type": "number"
     },
     "weight": {
       "description": "Manual body weight in the athlete's preferred weight unit from get_athlete_profile (_meta.units / units.weight); converted to upstream kg at the API boundary.",
