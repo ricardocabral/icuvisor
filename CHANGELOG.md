@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `icuvisor setup` always prompts for the athlete ID and requires the `i` prefix (for example `i12345`). intervals.icu does not expose the ID through the API, so the previous `/athlete/0/profile` autodetect could silently succeed with an empty ID; the API key and athlete ID are now verified together against `/athlete/{id}`.
+- The server loads the platform default config (`os.UserConfigDir()/icuvisor/config.json`) when neither `--config` nor `ICUVISOR_CONFIG` is set, so a fresh `icuvisor setup` works without needing an env file or explicit `--config` path.
+- Startup logs drop the noisy "env file not found" line on healthy runs, log when the API key was loaded from the OS keychain, and include the active athlete ID and key source on the "server starting" line.
+
 ## [0.0.1] - 2026-05-18
 
 ### Added

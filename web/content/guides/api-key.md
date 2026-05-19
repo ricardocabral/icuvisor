@@ -25,13 +25,13 @@ If you built from source, run:
 ./bin/icuvisor setup
 ```
 
-Setup asks for the API key with masked input, verifies it with intervals.icu, stores it in the OS keychain, autodetects your athlete ID/timezone, and writes only non-secret config fields.
+Setup asks for the API key with masked input and your athlete ID, verifies the pair against intervals.icu, stores the key in the OS keychain, autodetects your timezone, and writes only non-secret config fields. Athlete IDs always start with `i` (for example `i12345`); intervals.icu does not expose the ID via the API, so it cannot be autodetected.
 
 Useful setup flags are documented in the [CLI reference]({{< relref "../reference/cli" >}}):
 
 - `--config /path/to/config.json` writes a specific non-secret config file.
 - `--force` overwrites an existing config file without the overwrite prompt.
-- `--offline` skips intervals.icu verification when you are offline and accepts manual athlete ID/timezone prompts.
+- `--offline` skips intervals.icu verification when you are offline and accepts a manual timezone prompt.
 
 ## 3. Configure your MCP client with non-secrets only
 

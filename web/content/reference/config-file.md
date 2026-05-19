@@ -5,6 +5,8 @@ description: "JSON fields accepted by icuvisor config files."
 
 Most users can run [`icuvisor setup`]({{< relref "cli#commands" >}}) and let icuvisor write non-secret configuration. Use this reference when you maintain a JSON config by hand or when an MCP client points icuvisor at a config file with `--config` or `ICUVISOR_CONFIG`.
 
+When neither flag is set, icuvisor also loads the platform default config path if the file exists: `$XDG_CONFIG_HOME/icuvisor/config.json` on Linux, `~/Library/Application Support/icuvisor/config.json` on macOS, and `%AppData%\icuvisor\config.json` on Windows. This is the same path `icuvisor setup` writes by default.
+
 Keep API keys in the OS keychain whenever possible. The legacy `api_key` JSON field still exists for compatibility, but plaintext config keys emit a warning and should not be committed, synced, or backed up.
 
 ## Example

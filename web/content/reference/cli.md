@@ -21,7 +21,7 @@ Use this page when you need the exact command-line surface. The full output belo
 
 | Flag                 | Description                                                                                                                                       |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--config <path>`    | JSON config file path. Equivalent environment variable: `ICUVISOR_CONFIG`.                                                                        |
+| `--config <path>`    | JSON config file path. Equivalent environment variable: `ICUVISOR_CONFIG`. When both are omitted, icuvisor also loads the default user config (`~/Library/Application Support/icuvisor/config.json` on macOS, `$XDG_CONFIG_HOME/icuvisor/config.json` on Linux, `%AppData%\icuvisor\config.json` on Windows) if that file exists. |
 | `--env-file <path>`  | Env-file path loaded before process environment. Equivalent environment variable: `ICUVISOR_ENV_FILE`. If omitted, `.env` is loaded when present. |
 | `--transport <name>` | MCP transport: `stdio` or `http`. Default: `stdio`.                                                                                               |
 | `--http-bind <addr>` | HTTP bind address for `--transport http`. Default: `127.0.0.1:8765`.                                                                              |
@@ -35,7 +35,7 @@ Use this page when you need the exact command-line surface. The full output belo
 | -------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
 | `INTERVALS_ICU_API_KEY`    | none                           | intervals.icu API key. This overrides keychain lookup and legacy plaintext file keys. Prefer the OS keychain for normal use. |
 | `INTERVALS_ICU_ATHLETE_ID` | none                           | Athlete ID with or without the leading `i`, for example `12345` or `i12345`.                                                 |
-| `ICUVISOR_CONFIG`          | none                           | JSON config file path used when `--config` is omitted.                                                                       |
+| `ICUVISOR_CONFIG`          | user config dir if present     | JSON config file path used when `--config` is omitted. When both are unset, icuvisor falls back to the default user config path described under `--config` above. |
 | `ICUVISOR_ENV_FILE`        | `.env` when present            | Env-file path used when `--env-file` is omitted. Explicit env-file paths must exist.                                         |
 | `ICUVISOR_TIMEZONE`        | `UTC`                          | Athlete timezone as an IANA name, such as `Europe/London` or `America/Sao_Paulo`.                                            |
 | `ICUVISOR_API_BASE_URL`    | `https://intervals.icu/api/v1` | intervals.icu API base URL. Most users should not change this.                                                               |
