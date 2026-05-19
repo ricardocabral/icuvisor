@@ -10,7 +10,7 @@ icuvisor runs locally on your computer as a single binary. Install it first, the
 | Platform          | Status                                | Start here                                                                                 |
 | ----------------- | ------------------------------------- | ------------------------------------------------------------------------------------------ |
 | macOS             | Signed DMG for the beta release line. | [Install on macOS]({{< relref "macos" >}})                                                 |
-| Windows           | Installer planned for v1.0.           | [Windows status]({{< relref "windows" >}})                                                 |
+| Windows           | Unsigned MSI from CI; signed at v1.0. | [Install on Windows]({{< relref "windows" >}})                                             |
 | Linux             | Packages planned for v1.0.            | [Linux status]({{< relref "linux" >}})                                                     |
 | Build from source | Developer/power-user path.            | [Build from source on GitHub](https://github.com/ricardocabral/icuvisor#build-from-source) |
 
