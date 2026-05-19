@@ -118,6 +118,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SCOOP_BUCKET_PAT: ${{ secrets.SCOOP_BUCKET_PAT }}
+          HOMEBREW_TAP_PAT: ${{ secrets.HOMEBREW_TAP_PAT }}
 
       - name: Build, sign, notarize, and staple macOS DMG
         shell: bash
@@ -266,6 +267,7 @@ jobs:
             --pattern 'icuvisor_*_linux_*.tar.gz' \
             --pattern 'icuvisor_*_windows_*.zip' \
             --pattern 'icuvisor_*_windows_*.msi' \
+            --pattern 'icuvisor_*_macos_universal.tar.gz' \
             --pattern 'icuvisor_*_macos_universal.dmg'
 
       - name: Regenerate SHA256SUMS for promoted artifacts
@@ -277,6 +279,7 @@ jobs:
             icuvisor_*_linux_*.tar.gz \
             icuvisor_*_windows_*.zip \
             icuvisor_*_windows_*.msi \
+            icuvisor_*_macos_universal.tar.gz \
             icuvisor_*_macos_universal.dmg \
             > SHA256SUMS.txt
           cat SHA256SUMS.txt

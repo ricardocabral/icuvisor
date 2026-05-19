@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Homebrew install path: releases now produce a `darwin_universal` tarball and publish a Homebrew formula to the [`ricardocabral/homebrew-icuvisor`](https://github.com/ricardocabral/homebrew-icuvisor) tap. Install with `brew install ricardocabral/icuvisor/icuvisor`. The macOS tarball binary is not yet codesigned independently of the DMG, so first run may require dismissing Gatekeeper; signing the tarball binary is tracked as a follow-up.
+
 ## [0.0.2] - 2026-05-19
 
 ### Changed

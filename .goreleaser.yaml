@@ -49,6 +49,14 @@ archives:
       - LICENSE
       - README.md
       - CHANGELOG.md
+  - id: darwin-universal
+    ids: [icuvisor-darwin-universal]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_macos_universal"
+    formats: [tar.gz]
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
 
 checksum:
   name_template: SHA256SUMS.txt
@@ -80,6 +88,32 @@ changelog:
       - "^chore:"
       - Merge pull request
       - Merge branch
+
+brews:
+  - name: icuvisor
+    ids: [darwin-universal, default]
+    homepage: "https://icuvisor.dev"
+    description: "MCP server connecting intervals.icu training data to AI assistants."
+    license: MIT
+    commit_author:
+      name: icuvisor-bot
+      email: bot@icuvisor.dev
+    commit_msg_template: "chore(icuvisor): update to {{ .Tag }}"
+    directory: Formula
+    repository:
+      owner: ricardocabral
+      name: homebrew-icuvisor
+      branch: main
+      token: "{{ if index .Env \"HOMEBREW_TAP_PAT\" }}{{ .Env.HOMEBREW_TAP_PAT }}{{ end }}"
+    install: |
+      bin.install "icuvisor"
+    test: |
+      assert_match version.to_s, shell_output("#{bin}/icuvisor version")
+    caveats: |
+      Run `icuvisor setup` once to store your intervals.icu API key in the
+      system keychain, then point your MCP client at `icuvisor serve`.
+    # Skip when no tap PAT is configured, or for prereleases.
+    skip_upload: '{{ if not (index .Env "HOMEBREW_TAP_PAT") }}true{{ else }}auto{{ end }}'
 
 scoops:
   - name: icuvisor
