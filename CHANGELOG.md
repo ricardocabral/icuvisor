@@ -7,24 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- 
-
-### Changed
-
-- 
-
-### Fixed
-
-- 
+## [0.0.1] - 2026-05-18
 
 ### Added
 
-- 
+- Initial public release.
 
-### Changed
-
-- 
-
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/HEAD...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/ricardocabral/icuvisor/releases/tag/v0.0.1
