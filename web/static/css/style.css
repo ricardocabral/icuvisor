@@ -37,6 +37,7 @@ html,
 body {
 	margin: 0;
 	padding: 0;
+	overflow-x: clip;
 	background: var(--surface);
 	color: var(--text);
 	font-family:
@@ -80,6 +81,8 @@ pre,
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	gap: var(--s-3);
+	flex-wrap: wrap;
 	padding: var(--s-4) 0 var(--s-6);
 }
 .brand {
@@ -115,7 +118,23 @@ pre,
 	display: flex;
 	gap: var(--s-6);
 	align-items: center;
+	flex-wrap: wrap;
 	font-size: var(--t-14);
+}
+@media (max-width: 640px) {
+	.site-header {
+		justify-content: flex-start;
+	}
+	.nav {
+		gap: var(--s-4);
+		row-gap: var(--s-2);
+		width: 100%;
+		order: 2;
+		justify-content: flex-start;
+	}
+	.nav .btn {
+		margin-left: auto;
+	}
 }
 .nav a {
 	text-decoration: none;
@@ -162,6 +181,7 @@ pre,
 	flex-direction: column;
 	gap: var(--s-3);
 	min-height: 0;
+	min-width: 0;
 }
 .card h2 {
 	margin: 0;
@@ -231,6 +251,17 @@ pre,
 	}
 	.row-2 {
 		grid-row: auto;
+	}
+}
+@media (max-width: 640px) {
+	.container {
+		padding: var(--s-4) var(--s-3);
+	}
+	.card {
+		padding: var(--s-4);
+	}
+	.hero {
+		padding: var(--s-6) var(--s-4);
 	}
 }
 
@@ -383,6 +414,13 @@ pre.code .s {
 .tool-list-group dt {
 	font-family: "JetBrains Mono", ui-monospace, monospace;
 	font-size: var(--t-13);
+	min-width: 0;
+}
+.tool-list-group dt code,
+.tool-list-group .tool-rest,
+.tool-list-group .tool-verb {
+	overflow-wrap: anywhere;
+	word-break: break-word;
 }
 .tool-list-group dt a.tool-link {
 	display: inline-flex;
@@ -501,9 +539,30 @@ pre.code .s {
 }
 .page-card h1 {
 	margin: 0;
-	font-size: clamp(30px, 4vw, 44px);
-	line-height: 1.1;
+	font-size: clamp(28px, 5vw, 44px);
+	line-height: 1.15;
 	letter-spacing: -0.02em;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+.page-card h2,
+.page-card h3,
+.page-card h4 {
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+.page-card p,
+.page-card li {
+	overflow-wrap: anywhere;
+}
+.page-card code {
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+.page-card table {
+	display: block;
+	max-width: 100%;
+	overflow-x: auto;
 }
 .page-card > p {
 	max-width: 72ch;
