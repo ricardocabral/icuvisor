@@ -48,6 +48,14 @@ Out of scope:
 - Issues that require physical access to the user's machine or a compromised OS account.
 - Social engineering of maintainers.
 
+## Hardening notes for users
+
+- Your intervals.icu API key is stored in the OS keychain by default, not in plain text on disk. The OS account/session that can unlock your keychain is part of the trust boundary.
+- `INTERVALS_ICU_API_KEY` remains available for headless servers and CI, and legacy `.env`/JSON `api_key` files remain available for compatibility, but plaintext file credentials are discouraged because they can leak through backups, shell history, or accidental commits. icuvisor warns when it uses a plaintext file-sourced API key.
+- Startup diagnostics and `Config.String()` redact the API key value and report only the credential source (`env`, `keychain`, or `file`).
+- The MCP HTTP transport binds to `127.0.0.1` by default. Do not expose it to a public interface unless you understand the risks.
+- icuvisor only contacts `intervals.icu` and (if auto-update is enabled) `releases.icuvisor.dev`. Verify network activity against this expectation.
+
 ## Release signing and notarization
 
 Official macOS releases use a Developer ID Application certificate for the app bundle and Apple notarization for the DMG. Maintainers must provision the certificate in Apple Developer, export it as a password-protected `.p12`, and store only the following GitHub Actions secrets for release jobs:
@@ -93,10 +101,3 @@ codesign --verify --deep --strict /Applications/icuvisor.app
 spctl -a -v /Applications/icuvisor.app
 ```
 
-## Hardening notes for users
-
-- Your intervals.icu API key is stored in the OS keychain by default, not in plain text on disk. The OS account/session that can unlock your keychain is part of the trust boundary.
-- `INTERVALS_ICU_API_KEY` remains available for headless servers and CI, and legacy `.env`/JSON `api_key` files remain available for compatibility, but plaintext file credentials are discouraged because they can leak through backups, shell history, or accidental commits. icuvisor warns when it uses a plaintext file-sourced API key.
-- Startup diagnostics and `Config.String()` redact the API key value and report only the credential source (`env`, `keychain`, or `file`).
-- The MCP HTTP transport binds to `127.0.0.1` by default. Do not expose it to a public interface unless you understand the risks.
-- icuvisor only contacts `intervals.icu` and (if auto-update is enabled) `releases.icuvisor.dev`. Verify network activity against this expectation.
