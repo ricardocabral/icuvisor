@@ -30,7 +30,7 @@ func TestActivityGearIDDecodesFromListAndDetailFixtures(t *testing.T) {
 	defer server.Close()
 
 	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
-	activities, err := client.ListActivities(context.Background(), ListActivitiesParams{Oldest: "2026-05-20", Fields: []string{"id", "gear_id"}})
+	activities, err := client.ListActivities(context.Background(), ListActivitiesParams{Oldest: "2026-05-20", Fields: []string{"id", "gear_id", "calories"}})
 	if err != nil {
 		t.Fatalf("ListActivities() error = %v", err)
 	}

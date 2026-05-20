@@ -57,9 +57,16 @@ func TestWellnessNutritionFixtureDecodesTypedFields(t *testing.T) {
 	if got.KcalConsumed == nil || *got.KcalConsumed != 2400 {
 		t.Fatalf("KcalConsumed = %#v, want 2400", got.KcalConsumed)
 	}
-	for name, value := range map[string]*float64{"carbohydrates": got.Carbohydrates, "protein": got.Protein, "fatTotal": got.FatTotal} {
-		if value == nil || *value <= 0 {
-			t.Fatalf("%s = %#v, want positive grams from fixture", name, value)
+	for name, tc := range map[string]struct {
+		got  *float64
+		want float64
+	}{
+		"carbohydrates": {got: got.Carbohydrates, want: 320.5},
+		"protein":       {got: got.Protein, want: 132.25},
+		"fatTotal":      {got: got.FatTotal, want: 78.75},
+	} {
+		if tc.got == nil || *tc.got != tc.want {
+			t.Fatalf("%s = %#v, want %v", name, tc.got, tc.want)
 		}
 	}
 }
