@@ -61,10 +61,11 @@ type getActivityIntervalsUnavailableResponse struct {
 }
 
 type activityReadMeta struct {
-	ServerVersion string `json:"server_version"`
-	IncludeFull   bool   `json:"include_full"`
-	Limit         int    `json:"limit,omitempty"`
-	SinceID       int64  `json:"since_id,omitempty"`
+	ServerVersion  string            `json:"server_version"`
+	IncludeFull    bool              `json:"include_full"`
+	Limit          int               `json:"limit,omitempty"`
+	SinceID        int64             `json:"since_id,omitempty"`
+	FieldSemantics map[string]string `json:"field_semantics,omitempty"`
 }
 
 type activityIntervalRow struct {
@@ -138,7 +139,8 @@ func getActivityDetailsHandler(client ActivityDetailsClient, profileClient Profi
 		if err != nil {
 			return Result{}, err
 		}
-		payload := getActivityDetailsResponse{Activity: activityRow(activity, args.IncludeFull, profileTimezone(profile.Timezone, timezoneFallback), unitSystem, gearResolutions[activity.ID]), Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull}}
+		row := activityRow(activity, args.IncludeFull, profileTimezone(profile.Timezone, timezoneFallback), unitSystem, gearResolutions[activity.ID])
+		payload := getActivityDetailsResponse{Activity: row, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull, FieldSemantics: activityFieldSemantics([]getActivitiesRow{row})}}
 		shaped, err := response.Shape(payload, shapeCfg.options(args.IncludeFull, nil, version, debugMetadata, getActivityDetailsName, unitSystem))
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activity_details response: %w", err)

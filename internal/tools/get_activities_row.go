@@ -15,7 +15,7 @@ func shapeGetActivitiesResponse(activities []intervals.Activity, gearResolutions
 	for _, activity := range activities {
 		rows = append(rows, activityRow(activity, args.IncludeFull, timezoneFallback, unitSystem, gearResolutions[activity.ID]))
 	}
-	payload := getActivitiesResponse{Activities: rows, Meta: getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull}}
+	payload := getActivitiesResponse{Activities: rows, Meta: getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull, FieldSemantics: activityFieldSemantics(rows)}}
 	shapeCfg := responseShapingOrDefault(shaping)
 	return response.Shape(payload, shapeCfg.options(args.IncludeFull, []string{"activities"}, version, debugMetadata, getActivitiesName, unitSystem))
 }
@@ -37,7 +37,7 @@ func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback
 	row.AverageHeartRateBPM = intValue(activity.AverageHeartRate)
 	row.MaxHeartRateBPM = intValue(activity.MaxHeartRate)
 	row.AverageCadenceRPM = activity.AverageCadence
-	row.CaloriesBurned = intValue(activity.Calories)
+	row.CaloriesBurned = activity.Calories
 	row.DeviceName = stringValue(activity.DeviceName)
 	row.HasStreams = len(activity.StreamTypes) > 0
 	if activity.TotalElevationGain != nil {
@@ -129,6 +129,15 @@ func intValue(value *int) int {
 		return 0
 	}
 	return *value
+}
+
+func activityFieldSemantics(rows []getActivitiesRow) map[string]string {
+	for _, row := range rows {
+		if row.CaloriesBurned != nil {
+			return map[string]string{"calories_burned": "Active/exercise calories burned from upstream activity calories."}
+		}
+	}
+	return nil
 }
 
 func stringValue(value *string) string {

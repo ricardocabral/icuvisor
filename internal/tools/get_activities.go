@@ -75,7 +75,7 @@ type getActivitiesRow struct {
 	AverageHeartRateBPM int                `json:"average_heart_rate_bpm,omitempty"`
 	MaxHeartRateBPM     int                `json:"max_heart_rate_bpm,omitempty"`
 	AverageCadenceRPM   *float64           `json:"average_cadence_rpm,omitempty"`
-	CaloriesBurned      int                `json:"calories_burned,omitempty"`
+	CaloriesBurned      *int               `json:"calories_burned,omitempty"`
 	DeviceName          string             `json:"device_name,omitempty"`
 	GearID              string             `json:"gear_id,omitempty"`
 	GearName            string             `json:"gear_name,omitempty"`
@@ -92,10 +92,11 @@ type unavailableReason struct {
 }
 
 type getActivitiesMeta struct {
-	PageSize      int    `json:"page_size"`
-	NextPageToken string `json:"next_page_token,omitempty"`
-	MoreAvailable bool   `json:"more_available"`
-	IncludeFull   bool   `json:"include_full"`
+	PageSize       int               `json:"page_size"`
+	NextPageToken  string            `json:"next_page_token,omitempty"`
+	MoreAvailable  bool              `json:"more_available"`
+	IncludeFull    bool              `json:"include_full"`
+	FieldSemantics map[string]string `json:"field_semantics,omitempty"`
 }
 
 var errActivitiesPaginationBoundary = errors.New("activity pagination boundary exceeded")

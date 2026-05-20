@@ -127,7 +127,8 @@ func wellnessRow(row intervals.Wellness, includeFull bool) map[string]any {
 	setWellnessField(out, "hrvSDNN", row.HRVSDNN)
 	setWellnessField(out, "menstrualPhase", row.MenstrualPhase)
 	setWellnessField(out, "menstrualPhasePredicted", row.MenstrualPhasePredicted)
-	setWellnessField(out, "kcalConsumed", row.KcalConsumed)
+	deleteLegacyWellnessNutritionKeys(out)
+	setWellnessField(out, "calories_intake", row.KcalConsumed)
 	setWellnessField(out, "sleepSecs", row.SleepSecs)
 	setWellnessField(out, "sleepScore", row.SleepScore)
 	setWellnessField(out, "sleepQuality", row.SleepQuality)
@@ -156,9 +157,9 @@ func wellnessRow(row intervals.Wellness, includeFull bool) map[string]any {
 	setWellnessField(out, "comments", row.Comments)
 	setWellnessField(out, "steps", row.Steps)
 	setWellnessField(out, "respiration", row.Respiration)
-	setWellnessField(out, "carbohydrates", row.Carbohydrates)
-	setWellnessField(out, "protein", row.Protein)
-	setWellnessField(out, "fatTotal", row.FatTotal)
+	setWellnessField(out, "carbs_g", row.Carbohydrates)
+	setWellnessField(out, "protein_g", row.Protein)
+	setWellnessField(out, "fat_g", row.FatTotal)
 	setWellnessField(out, "locked", row.Locked)
 	setWellnessField(out, "tempWeight", row.TempWeight)
 	setWellnessField(out, "tempRestingHR", row.TempRestingHR)
@@ -166,6 +167,7 @@ func wellnessRow(row intervals.Wellness, includeFull bool) map[string]any {
 		out["_native"] = cloneNestedJSONMap(row.Native)
 	}
 	addWellnessMeta(out, row)
+	addWellnessNutritionFieldSemantics(out)
 	if includeFull {
 		out["full"] = cloneJSONMap(row.Raw)
 	}
@@ -176,6 +178,39 @@ func setWellnessField[T any](out map[string]any, key string, value *T) {
 	if value != nil {
 		out[key] = *value
 	}
+}
+
+func deleteLegacyWellnessNutritionKeys(out map[string]any) {
+	for _, key := range []string{"kcalConsumed", "carbohydrates", "protein", "fatTotal"} {
+		delete(out, key)
+	}
+}
+
+func addWellnessNutritionFieldSemantics(out map[string]any) {
+	semantics := map[string]string{}
+	for _, field := range []string{"calories_intake", "carbs_g", "protein_g", "fat_g"} {
+		if _, ok := out[field]; ok {
+			semantics[field] = wellnessNutritionFieldSemantics[field]
+		}
+	}
+	if len(semantics) == 0 {
+		return
+	}
+	meta := map[string]any{}
+	if existing, ok := out["_meta"].(map[string]any); ok {
+		for key, value := range existing {
+			meta[key] = value
+		}
+	}
+	meta["field_semantics"] = semantics
+	out["_meta"] = meta
+}
+
+var wellnessNutritionFieldSemantics = map[string]string{
+	"calories_intake": "Consumed calories from upstream wellness kcalConsumed.",
+	"carbs_g":         "Carbohydrates consumed in grams from upstream wellness carbohydrates.",
+	"protein_g":       "Protein consumed in grams from upstream wellness protein.",
+	"fat_g":           "Fat consumed in grams from upstream wellness fatTotal.",
 }
 
 func addWellnessMeta(out map[string]any, row intervals.Wellness) {
