@@ -63,9 +63,9 @@ func MissingSegmentStreamKey(err error) string {
 }
 
 type SegmentBounds struct {
-	Axis  string
-	Start float64
-	End   float64
+	Axis  string  `json:"axis"`
+	Start float64 `json:"start"`
+	End   float64 `json:"end"`
 }
 
 type SegmentStatsInput struct {
@@ -178,9 +178,9 @@ func ComputeActivitySegmentStats(input SegmentStatsInput) (SegmentStatsResult, e
 	case SegmentStatMean, SegmentStatMedian, SegmentStatP90:
 		return computeScalarSegmentStat(result, stat, metric, streams[metric], indices), nil
 	case SegmentStatDrift:
-		return computeDrift(result, streams[SegmentAxisTimeSeconds], streams[SegmentMetricHeartRate], indices), nil
+		return computeDrift(result, streams[SegmentAxisTimeSeconds], streams[SegmentMetricHeartRate], indices, bounds), nil
 	case SegmentStatDecoupling:
-		return computeDecoupling(result, streams[SegmentAxisTimeSeconds], streams[SegmentMetricHeartRate], streams[SegmentMetricWatts], indices), nil
+		return computeDecoupling(result, streams[SegmentAxisTimeSeconds], streams[SegmentMetricHeartRate], streams[SegmentMetricWatts], indices, bounds), nil
 	case SegmentStatNP:
 		return computeNP(result, streams[SegmentAxisTimeSeconds], streams[SegmentMetricWatts], indices), nil
 	case SegmentStatIF:
@@ -219,8 +219,8 @@ func computeScalarSegmentStat(result SegmentStatsResult, stat string, metric str
 	return result
 }
 
-func computeDrift(result SegmentStatsResult, times []float64, heartRate []float64, indices []int) SegmentStatsResult {
-	first, second := splitHalfPairs(times, indices, func(idx int) (float64, bool) {
+func computeDrift(result SegmentStatsResult, times []float64, heartRate []float64, indices []int, bounds SegmentBounds) SegmentStatsResult {
+	first, second := splitHalfPairs(times, indices, bounds, func(idx int) (float64, bool) {
 		value := heartRate[idx]
 		return value, finite(value)
 	})
@@ -246,8 +246,8 @@ func computeDrift(result SegmentStatsResult, times []float64, heartRate []float6
 	return result
 }
 
-func computeDecoupling(result SegmentStatsResult, times []float64, heartRate []float64, watts []float64, indices []int) SegmentStatsResult {
-	first, second := splitHalfIndices(times, indices, func(idx int) bool {
+func computeDecoupling(result SegmentStatsResult, times []float64, heartRate []float64, watts []float64, indices []int, bounds SegmentBounds) SegmentStatsResult {
+	first, second := splitHalfIndices(times, indices, bounds, func(idx int) bool {
 		return finite(heartRate[idx]) && finite(watts[idx])
 	})
 	result.N = len(first) + len(second)
@@ -364,12 +364,11 @@ func segmentIndices(axis []float64, bounds SegmentBounds) ([]int, error) {
 	return indices, nil
 }
 
-func splitHalfPairs(times []float64, indices []int, valueAt func(int) (float64, bool)) ([]float64, []float64) {
+func splitHalfPairs(times []float64, indices []int, bounds SegmentBounds, valueAt func(int) (float64, bool)) ([]float64, []float64) {
 	if len(indices) == 0 {
 		return nil, nil
 	}
-	start := times[indices[0]]
-	end := times[indices[len(indices)-1]]
+	start, end := splitHalfTimeEndpoints(times, indices, bounds)
 	mid := start + (end-start)/2
 	first := []float64{}
 	second := []float64{}
@@ -387,12 +386,11 @@ func splitHalfPairs(times []float64, indices []int, valueAt func(int) (float64, 
 	return first, second
 }
 
-func splitHalfIndices(times []float64, indices []int, valid func(int) bool) ([]int, []int) {
+func splitHalfIndices(times []float64, indices []int, bounds SegmentBounds, valid func(int) bool) ([]int, []int) {
 	if len(indices) == 0 {
 		return nil, nil
 	}
-	start := times[indices[0]]
-	end := times[indices[len(indices)-1]]
+	start, end := splitHalfTimeEndpoints(times, indices, bounds)
 	mid := start + (end-start)/2
 	first := []int{}
 	second := []int{}
@@ -407,6 +405,13 @@ func splitHalfIndices(times []float64, indices []int, valid func(int) bool) ([]i
 		}
 	}
 	return first, second
+}
+
+func splitHalfTimeEndpoints(times []float64, indices []int, bounds SegmentBounds) (float64, float64) {
+	if bounds.Axis == SegmentAxisTimeSeconds {
+		return bounds.Start, bounds.End
+	}
+	return times[indices[0]], times[indices[len(indices)-1]]
 }
 
 func pairedMeans(indices []int, heartRate []float64, watts []float64) (float64, float64) {

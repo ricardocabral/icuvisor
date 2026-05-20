@@ -139,6 +139,23 @@ func TestComputeActivitySegmentStatsDriftInsufficientSample(t *testing.T) {
 	}
 }
 
+func TestComputeActivitySegmentStatsDriftSplitsByRequestedTimeBounds(t *testing.T) {
+	got, err := ComputeActivitySegmentStats(SegmentStatsInput{
+		Stat:   SegmentStatDrift,
+		Bounds: SegmentBounds{Axis: SegmentAxisTimeSeconds, Start: 30, End: 90},
+		Streams: map[string][]float64{
+			SegmentAxisTimeSeconds: {0, 40, 50, 55, 60, 65, 100},
+			SegmentMetricHeartRate: {90, 100, 100, 100, 200, 200, 210},
+		},
+	})
+	if err != nil {
+		t.Fatalf("ComputeActivitySegmentStats() error = %v", err)
+	}
+	if got.Value == nil || *got.Value != 100 {
+		t.Fatalf("Value = %v, want 100 when split at requested midpoint 60s", got.Value)
+	}
+}
+
 func TestComputeActivitySegmentStatsDecoupling(t *testing.T) {
 	got, err := ComputeActivitySegmentStats(SegmentStatsInput{
 		Stat:   SegmentStatDecoupling,

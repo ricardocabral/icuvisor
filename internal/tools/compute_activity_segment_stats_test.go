@@ -100,6 +100,13 @@ func TestComputeActivitySegmentStatsHandlerAlignsInsufficientMeta(t *testing.T) 
 	if body["insufficient_sample"] != true {
 		t.Fatalf("result.insufficient_sample = %#v, want true", body["insufficient_sample"])
 	}
+	segment := body["segment"].(map[string]any)
+	if _, ok := segment["axis"]; !ok {
+		t.Fatalf("segment = %#v, want snake_case json fields", segment)
+	}
+	if _, ok := segment["Axis"]; ok {
+		t.Fatalf("segment = %#v, must not expose Go field names", segment)
+	}
 }
 
 func TestComputeActivitySegmentStatsHandlerFullDecouplingAudit(t *testing.T) {
