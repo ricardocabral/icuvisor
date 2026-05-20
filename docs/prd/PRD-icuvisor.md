@@ -169,7 +169,7 @@ Wireframes will be produced separately; this PRD specifies behavior only.
 - **Single Go binary**, cross-compiled for macOS (arm64 + amd64, universal), Windows (amd64 + arm64), Linux (amd64 + arm64).
 - **Signed and notarized** on macOS; Authenticode-signed on Windows.
 - **Installers**: `.dmg`, `.msi`, `.deb`, `.rpm`, plus Homebrew tap, Scoop bucket, Winget manifest.
-- **DXT bundle** for Claude Desktop's one-click extension install where supported.
+- **MCPB bundle** (formerly DXT) for Claude Desktop's one-click extension install where supported.
 - **Auto-update** with signed-release verification.
 - **Reproducible builds** via GoReleaser + GitHub Actions.
 
