@@ -127,3 +127,40 @@ func TestLoadWarnsForLegacyFileAPIKeyWithoutLeakingValue(t *testing.T) {
 		t.Fatalf("logs leaked credential: %q", gotLogs)
 	}
 }
+func TestLoadAcceptsSupportedCredentialReference(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	configPath := dir + "/config.json"
+	writeFile(t, configPath, `{
+		"credential_ref": {"type":"keychain", "service":"icuvisor", "account":"intervals-icu-api-key"},
+		"athlete_id": "i12345"
+	}`)
+
+	cfg, err := Load(context.Background(), Options{Path: configPath, Env: map[string]string{}, CredentialStore: &fakeCredentialStore{value: "keychain-key"}})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.CredentialRef != DefaultCredentialReference() {
+		t.Fatalf("CredentialRef = %#v, want %#v", cfg.CredentialRef, DefaultCredentialReference())
+	}
+	if cfg.APIKey != "keychain-key" || cfg.APIKeySource != APIKeySourceKeychain {
+		t.Fatalf("API key/source = %q/%q, want keychain", cfg.APIKey, cfg.APIKeySource)
+	}
+}
+
+func TestLoadRejectsUnsupportedCredentialReference(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	configPath := dir + "/config.json"
+	writeFile(t, configPath, `{
+		"credential_ref": {"type":"keychain", "service":"icuvisor", "account":"other-account"},
+		"athlete_id": "i12345"
+	}`)
+
+	_, err := Load(context.Background(), Options{Path: configPath, Env: map[string]string{EnvAPIKey: "env-key"}})
+	if err == nil || !strings.Contains(err.Error(), "unsupported credential_ref") || !strings.Contains(err.Error(), "intervals-icu-api-key") {
+		t.Fatalf("Load() error = %v, want supported credential_ref guidance", err)
+	}
+}

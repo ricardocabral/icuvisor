@@ -140,8 +140,9 @@ func TestRunSetupKeychainWriteFailuresDoNotClaimSuccess(t *testing.T) {
 			t.Parallel()
 
 			var stdout bytes.Buffer
+			configPath := t.TempDir() + "/config.json"
 			err := RunSetup(context.Background(), SetupOptions{
-				ConfigPath:      t.TempDir() + "/config.json",
+				ConfigPath:      configPath,
 				Stdout:          &stdout,
 				CredentialStore: tc.store,
 				Prompter:        &fakeSetupPrompter{confirms: []bool{true}, lines: []string{"i12345"}, secrets: []string{"api-key"}},
@@ -156,6 +157,9 @@ func TestRunSetupKeychainWriteFailuresDoNotClaimSuccess(t *testing.T) {
 			}
 			if strings.Contains(stdout.String(), "Test connection OK") {
 				t.Fatalf("stdout claimed success after failure: %q", stdout.String())
+			}
+			if _, statErr := os.Stat(configPath); !errors.Is(statErr, os.ErrNotExist) {
+				t.Fatalf("config file exists after keychain failure: stat error = %v", statErr)
 			}
 		})
 	}

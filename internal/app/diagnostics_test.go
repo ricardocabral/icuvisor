@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/config"
+	"github.com/ricardocabral/icuvisor/internal/credstore"
 	diagnosticsdata "github.com/ricardocabral/icuvisor/internal/diagnostics"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
@@ -145,6 +146,46 @@ func TestRunDiagnosticsDefaultLoaderSuppressesPathLogs(t *testing.T) {
 	if logs.Len() != 0 {
 		t.Fatalf("diagnostics emitted default logger output: %s", logs.String())
 	}
+}
+
+func TestRunSetupGeneratedConfigFeedsDiagnosticsWithoutLeakingSecret(t *testing.T) {
+	t.Parallel()
+
+	secret := "super-secret-diagnostics-token"
+	configPath := t.TempDir() + "/config.json"
+	store := &fakeSetupStore{getErr: credstore.ErrNotFound}
+	if err := RunSetup(context.Background(), SetupOptions{
+		ConfigPath:      configPath,
+		CredentialStore: store,
+		Prompter:        &fakeSetupPrompter{confirms: []bool{true}, lines: []string{"i12345"}, secrets: []string{secret}},
+		ConfigExists:    func(string) (bool, error) { return false, nil },
+		ProfileFetcher: func(context.Context, string, string) (SetupProfile, error) {
+			return SetupProfile{AthleteID: "i12345", DisplayName: "Jane Doe"}, nil
+		},
+		TimezoneDetector: func() string { return "UTC" },
+	}); err != nil {
+		t.Fatalf("RunSetup() error = %v", err)
+	}
+
+	var stdout bytes.Buffer
+	err := Run(context.Background(), Options{
+		Version: "v0.5.0-test",
+		Args:    []string{"diagnostics", "--config", configPath},
+		Stdout:  &stdout,
+		LoadConfig: func(ctx context.Context, opts config.Options) (config.Config, error) {
+			opts.Env = map[string]string{}
+			opts.CredentialStore = store
+			return loadDiagnosticsConfig(ctx, opts)
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run() diagnostics error = %v", err)
+	}
+	out := stdout.String()
+	if !strings.Contains(out, "config_source: keychain") {
+		t.Fatalf("diagnostics output = %q, want keychain source", out)
+	}
+	assertDiagnosticsNoSecrets(t, out, secret, "i12345")
 }
 
 func TestRunDiagnosticsHelpAndFlagErrors(t *testing.T) {
