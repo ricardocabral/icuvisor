@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Write-tool echo responses now strip upstream null keys by default, including custom-item create/update responses, while preserving meaningful zero, false, and empty-string values.
 - `icuvisor setup` now writes a non-secret `credential_ref` to generated config files so users and docs can see the OS keychain service/account while the API key remains outside JSON. Setup stores and verifies the keychain credential before writing the config file, so keychain failures do not leave a fresh onboarding config behind.
 
 ## [0.0.2] - 2026-05-19
