@@ -20,7 +20,6 @@ const (
 	getActivityIntervalsDescription     = "Get analyzed intervals for one activity by activity_id. Interval units are normalized to the canonical intervals.icu unit enum and raw interval payloads require include_full."
 	invalidActivityReadArgumentsMessage = "invalid activity read arguments; provide activity_id and optional include_full"
 	fetchActivityDetailsMessage         = "could not fetch activity details; check activity_id and intervals.icu credentials"
-	fetchActivityIntervalsMessage       = "could not fetch activity intervals; check activity_id and intervals.icu credentials"
 )
 
 // ActivityDetailsClient retrieves a single intervals.icu activity.
