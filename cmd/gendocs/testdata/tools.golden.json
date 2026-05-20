@@ -240,6 +240,14 @@
     "anchor": "get_athlete_profile"
   },
   {
+    "name": "get_gear_list",
+    "group": "settings",
+    "tier": "full",
+    "safety": "read",
+    "summary": "List the athlete's intervals.icu gear with IDs and human-readable names for resolving activity gear_id fields.",
+    "anchor": "get_gear_list"
+  },
+  {
     "name": "update_sport_settings",
     "group": "settings",
     "tier": "full",
