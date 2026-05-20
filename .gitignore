@@ -66,7 +66,6 @@ go.work.sum
 .pi/agents/task-*.md
 .worktrees/
 .taskplane-tasks/
-taskplane-tasks/
 
 # Pi project-local packages (if using pi install -l)
 .pi/npm/
