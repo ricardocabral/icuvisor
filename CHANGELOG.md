@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added shared analyzer response scaffolding so planned analyzer tools consistently emit mandatory `_meta.method`, `_meta.source_tools`, `_meta.n`, `_meta.missing_days`, `_meta.missing_action`, and `_meta.insufficient_sample` fields.
 - `icuvisor://analysis-formulas` MCP Resource documents canonical analyzer formula refs for HR drift, Pw:HR decoupling, polarization index, EF, VI, and z-score.
 - `get_hr_curves` and `get_pace_curves` expose upstream-computed heart-rate and pace curves as full-toolset siblings to `get_power_curves`, with terse/default buckets, raw `include_full` payloads, and athlete-preferred pace units.
 - Added NOTE-category examples for `add_or_update_event` so assistants and users can discover nutrition plans, travel logistics, daily reminders, and coach annotations without a separate note tool.

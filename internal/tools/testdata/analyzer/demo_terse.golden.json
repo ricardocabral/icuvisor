@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "catalog_hash": "dev-catalog-hash",
+    "delete_mode": "safe",
+    "formula_ref": "icuvisor://analysis-formulas#z_score",
+    "insufficient_sample": false,
+    "method": "z_score",
+    "missing_action": "skip",
+    "missing_days": 2,
+    "n": 7,
+    "server_version": "test",
+    "source_tools": [
+      "get_wellness_data"
+    ],
+    "toolset": "core"
+  },
+  "result": {
+    "score": 1.25,
+    "summary": "demo"
+  }
+}
