@@ -72,6 +72,14 @@
     "anchor": "get_extended_metrics"
   },
   {
+    "name": "compute_activity_segment_stats",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Compute deterministic stats over one activity segment from canonical raw streams as the analyzer-family raw-stream exception.",
+    "anchor": "compute_activity_segment_stats"
+  },
+  {
     "name": "list_athletes",
     "group": "coach",
     "tier": "core",
