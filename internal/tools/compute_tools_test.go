@@ -181,6 +181,9 @@ func TestComputeLoadBalanceUsesLoadPriorityIndependentOfMetric(t *testing.T) {
 	if load := resultMap["training_load_total"]; load != float64(91) {
 		t.Fatalf("training_load_total = %v, want power_load fallback 91", load)
 	}
+	if client.intervalCalls != 0 {
+		t.Fatalf("interval calls = %d, want no raw-stream fallback", client.intervalCalls)
+	}
 }
 
 func TestComputeBaselineWellnessZScoreIncludesFormulaAndInterpretation(t *testing.T) {
@@ -373,8 +376,8 @@ func TestComputeCompliancePairingDeltasAndBreakdowns(t *testing.T) {
 		eventFixture("evt-conflict", "Workout", "2026-05-02", intPtr(1800), map[string]any{"activity_id": "act-linked"}, false),
 	}
 	client.activities = []intervals.Activity{
-		activityWithTime("act-targetless", "Run", "2026-05-01T07:00:00", 3600, map[string]any{"paired_event_id": "evt-targetless"}),
-		activityWithTime("act-ride-closer", "Ride", "2026-05-01T07:05:00", 3590, nil),
+		activityWithTime("act-targetless", "Run", "2026-05-01T07:00:00", 3500, map[string]any{"paired_event_id": "evt-targetless"}),
+		activityWithTime("act-ride-closer", "Ride", "2026-05-01T07:05:00", 3600, nil),
 		activityWithTime("act-linked", "Run", "2026-05-02T07:00:00", 1980, nil),
 	}
 	tool := newComputeComplianceRateTool(client, client, client, client, "test", "UTC", false)
@@ -389,8 +392,8 @@ func TestComputeCompliancePairingDeltasAndBreakdowns(t *testing.T) {
 		t.Fatalf("result counts = %v", resultMap)
 	}
 	assertFloatEqual(t, resultMap["compliance_rate"], 0.6667)
-	assertFloatEqual(t, resultMap["mean_delta_percent"], 5)
-	assertFloatEqual(t, resultMap["mean_delta_seconds"], 90)
+	assertFloatEqual(t, resultMap["mean_delta_percent"], 3.6111)
+	assertFloatEqual(t, resultMap["mean_delta_seconds"], 40)
 	if resultMap["delta_sample_count"] != float64(2) {
 		t.Fatalf("delta_sample_count = %v, want completed denominator 2", resultMap["delta_sample_count"])
 	}
