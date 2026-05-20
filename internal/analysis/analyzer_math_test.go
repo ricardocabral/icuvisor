@@ -50,6 +50,14 @@ func TestComputeTrendWeeklySlopeSkipsInvalidValues(t *testing.T) {
 	}
 }
 
+func TestComputeTrendDailySlopeUsesDenseIndexesAfterInvalidValues(t *testing.T) {
+	samples := []NumericSample{{Date: "2026-05-01", Value: 100}, {Date: "2026-05-02", Value: math.NaN()}, {Date: "2026-05-03", Value: 120}, {Date: "2026-05-04", Value: 140}}
+	got, _ := ComputeTrend(TrendInput{Metric: "ctl", Samples: samples, RollingWindow: 2, MinSamples: 3, BaselineMinSamples: 7, SampleGrain: SampleGrainDaily})
+	if got.N != 3 || got.Slope == nil || *got.Slope != 20 {
+		t.Fatalf("daily trend = %#v, want n=3 and dense-index slope 20 after invalid samples are skipped", got)
+	}
+}
+
 func TestComputeDistributionQuantilesHistogramAndMissing(t *testing.T) {
 	samples := []NumericSample{{Value: 1}, {Value: 2}, {Value: 3}, {Value: 4}, {Value: 5}}
 	got := ComputeDistribution(DistributionInput{Metric: "hrv", Unit: "ms", Samples: samples, Buckets: []float64{2, 4}, Quantiles: []float64{0.25, 0.5, 0.75}, SampleGrain: SampleGrainDaily})
