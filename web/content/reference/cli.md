@@ -12,7 +12,7 @@ Use this page when you need the exact command-line surface. The full output belo
 | Command                                           | What it does                                                                                                                                      |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `icuvisor`                                        | Starts the MCP server. The default transport is stdio.                                                                                            |
-| `icuvisor setup`                                  | Stores the intervals.icu API key in the OS keychain and writes non-secret config. Setup has its own `--config`, `--offline`, and `--force` flags. |
+| `icuvisor setup`                                  | Stores the intervals.icu API key in the OS keychain and writes non-secret config, including `credential_ref` metadata for that keychain location. Setup has its own `--config`, `--offline`, and `--force` flags. |
 | `icuvisor diagnostics`                            | Prints redacted local diagnostics and exits. It does not start the MCP server.                                                                    |
 | `icuvisor version`                                | Prints the version and exits.                                                                                                                     |
 | `icuvisor help`, `icuvisor --help`, `icuvisor -h` | Prints help and exits.                                                                                                                            |

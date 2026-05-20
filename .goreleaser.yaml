@@ -111,7 +111,7 @@ brews:
       assert_match version.to_s, shell_output("#{bin}/icuvisor version")
     caveats: |
       Run `icuvisor setup` once to store your intervals.icu API key in the
-      system keychain, then point your MCP client at `icuvisor serve`.
+      system keychain, then point your MCP client at the `icuvisor` binary.
     # Skip when no tap PAT is configured, or for prereleases.
     skip_upload: '{{ if not (index .Env "HOMEBREW_TAP_PAT") }}true{{ else }}auto{{ end }}'
 
