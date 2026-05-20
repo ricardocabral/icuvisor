@@ -87,10 +87,6 @@ func TestCatalogMatchesRegistryAndPRDRegisteredTools(t *testing.T) {
 	}
 
 	analyzerGhosts := []string{
-		"analyze_trend",
-		"analyze_distribution",
-		"analyze_correlation",
-		"analyze_efforts_delta",
 		"compute_zone_time",
 		"compute_load_balance",
 		"compute_baseline",

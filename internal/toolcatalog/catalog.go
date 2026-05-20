@@ -9,6 +9,10 @@ import (
 const (
 	AddActivityMessage               = "add_activity_message"
 	AddOrUpdateEvent                 = "add_or_update_event"
+	AnalyzeCorrelation               = "analyze_correlation"
+	AnalyzeDistribution              = "analyze_distribution"
+	AnalyzeEffortsDelta              = "analyze_efforts_delta"
+	AnalyzeTrend                     = "analyze_trend"
 	ApplyTrainingPlan                = "apply_training_plan"
 	ComputeActivitySegmentStats      = "compute_activity_segment_stats"
 	CreateCustomItem                 = "create_custom_item"
@@ -58,6 +62,10 @@ const (
 var athleteScopedToolNames = []string{
 	AddActivityMessage,
 	AddOrUpdateEvent,
+	AnalyzeCorrelation,
+	AnalyzeDistribution,
+	AnalyzeEffortsDelta,
+	AnalyzeTrend,
 	ApplyTrainingPlan,
 	ComputeActivitySegmentStats,
 	CreateCustomItem,

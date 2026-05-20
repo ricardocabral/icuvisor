@@ -69,6 +69,10 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 	tools = append(tools,
 		newGetAthleteProfileTool(client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetFitnessTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newAnalyzeTrendTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newAnalyzeDistributionTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newAnalyzeCorrelationTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newAnalyzeEffortsDeltaTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetFitnessProjectionTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetTrainingSummaryTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetWellnessDataTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -136,7 +140,7 @@ func toolCatalogGroup(name string) string {
 		return "wellness"
 	case getActivitiesName, getActivityDetailsName, getActivityIntervalsName, getActivityStreamsName, getActivitySplitsName, getActivityHistogramName, getActivityMessagesName, addActivityMessageName, getExtendedMetricsName, deleteActivityName:
 		return "activities"
-	case computeActivitySegmentStatsName:
+	case computeActivitySegmentStatsName, analyzeTrendName, analyzeDistributionName, analyzeCorrelationName, analyzeEffortsDeltaName:
 		return "analyzers"
 	case getEventsName, getEventByIDName, addOrUpdateEventName, deleteEventName, deleteEventsByDateRangeName, linkActivityToEventName:
 		return "events"

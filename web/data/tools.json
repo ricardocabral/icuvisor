@@ -80,6 +80,38 @@
     "anchor": "get_extended_metrics"
   },
   {
+    "name": "analyze_correlation",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks whether two analysis metrics are correlated or lagged together; do not fetch rows and reduce them in chat.",
+    "anchor": "analyze_correlation"
+  },
+  {
+    "name": "analyze_distribution",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks for an analysis metric's distribution, histogram, quantiles, or outliers; do not fetch rows and reduce them in chat.",
+    "anchor": "analyze_distribution"
+  },
+  {
+    "name": "analyze_efforts_delta",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks whether best-effort power, heart-rate, or pace buckets changed versus baseline; do not fetch rows and reduce them in chat.",
+    "anchor": "analyze_efforts_delta"
+  },
+  {
+    "name": "analyze_trend",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks whether an analysis metric is trending up/down or changing versus baseline; do not fetch rows and reduce them in chat.",
+    "anchor": "analyze_trend"
+  },
+  {
     "name": "compute_activity_segment_stats",
     "group": "analyzers",
     "tier": "full",

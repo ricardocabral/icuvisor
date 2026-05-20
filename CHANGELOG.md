@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `analyze_trend`, `analyze_distribution`, `analyze_correlation`, and `analyze_efforts_delta` are registered in the full toolset to compute deterministic analyzer reductions with mandatory `_meta`, closed `analysis_metric` validation, terse-by-default responses, and unit-explicit best-efforts deltas.
 - `get_activity_histogram` summarizes one activity's power, heart-rate, or pace distribution into terse bucketed seconds/percentages using configured zones when available and fixed-width stream buckets otherwise.
 - `compute_activity_segment_stats` is registered in the full toolset as the analyzer-family raw-stream exception, computing segment mean/median/p90, drift, Pw:HR decoupling, NP, and IF from canonical activity streams with mandatory analyzer `_meta`.
 - `get_fitness_projection` simulates deterministic CTL/ATL/TSB scenarios from current fitness with horizon, ramp, recovery-week, and optional planned-load assumptions documented in analyzer `_meta`.

@@ -23,6 +23,10 @@ type catalogToolSpec struct {
 var v03ToolCatalog = []catalogToolSpec{
 	{name: "add_activity_message", requirement: tools.RequirementWrite},
 	{name: "add_or_update_event", requirement: tools.RequirementWrite},
+	{name: "analyze_correlation", requirement: tools.RequirementRead},
+	{name: "analyze_distribution", requirement: tools.RequirementRead},
+	{name: "analyze_efforts_delta", requirement: tools.RequirementRead},
+	{name: "analyze_trend", requirement: tools.RequirementRead},
 	{name: "apply_training_plan", requirement: tools.RequirementWrite},
 	{name: "compute_activity_segment_stats", requirement: tools.RequirementRead},
 	{name: "create_custom_item", requirement: tools.RequirementWrite},
