@@ -2,6 +2,8 @@ package resources
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -10,13 +12,18 @@ import (
 func TestAnalysisFormulasMarkdownGolden(t *testing.T) {
 	t.Parallel()
 
+	const wantSHA256 = "92904b4d2165d5d153d894b2c62de4d54d7cd487a1ed4f5238b345c1c7b328d2"
+
 	got := AnalysisFormulasMarkdown()
 	want, err := os.ReadFile("testdata/analysis_formulas.md")
 	if err != nil {
 		t.Fatalf("read golden: %v", err)
 	}
 	if got != string(want) {
-		t.Fatalf("AnalysisFormulasMarkdown() mismatch with testdata/analysis_formulas.md")
+		t.Fatalf("AnalysisFormulasMarkdown() mismatch with testdata/analysis_formulas.md; canonical formula changes are breaking definition-drift events and require product review before updating the golden")
+	}
+	if gotHash := fmt.Sprintf("%x", sha256.Sum256([]byte(got))); gotHash != wantSHA256 {
+		t.Fatalf("AnalysisFormulasMarkdown() sha256 = %s, want %s; formula refs/text drifted", gotHash, wantSHA256)
 	}
 }
 

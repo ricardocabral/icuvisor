@@ -23,6 +23,7 @@ type analysisFormulaEntry struct {
 	paragraph string
 }
 
+// analysisFormulaEntries is a public formula contract: changing refs or formula text is a breaking definition-drift event, not a routine refactor.
 var analysisFormulaEntries = []analysisFormulaEntry{
 	{
 		ref:       AnalysisFormulaRefHRDrift,

@@ -83,6 +83,10 @@ go run ./scripts/snapshot_tool_schemas.go
 
 Snapshots use canonical JSON: two-space indentation, sorted object keys from Go's JSON encoder, and one trailing newline. When a PR adds a new optional argument to an existing stable tool, regenerate and commit the updated snapshot. Do not remove or rename an existing stable-tool argument in place; ship a new tool name instead so cached clients do not call a mismatched schema. New tools add new snapshot files and may evolve until they are declared stable.
 
+### Analyzer formula drift
+
+The `icuvisor://analysis-formulas` resource and analyzer `_meta.formula_ref` outputs are public contracts. Changing a canonical formula ref, formula text, or pinned analyzer output is a breaking definition-drift event that needs an explicit product decision and an update to the golden fixtures in `internal/resources/testdata/analysis_formulas.md` and `testdata/analysis/`.
+
 ### Tool-name confusability
 
 Tool descriptions in the same prefix/domain cluster must have distinguishing first sentences. CI compares normalized first sentences within each cluster using token Jaccard similarity and fails pairs at or above `0.58`. If the check fails, rewrite one first sentence to make the access pattern and payload shape obvious to an LLM reading only that sentence; do not rename the tool.
