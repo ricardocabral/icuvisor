@@ -99,6 +99,9 @@ func ParseMetric(input string) (Metric, error) {
 	if metric, ok := aliasToMetric[normalized]; ok {
 		return metric, nil
 	}
+	if looksLikeExpression(normalized) {
+		return "", InvalidMetricError{Input: input, Hint: "expressions are not supported; choose a supported metric"}
+	}
 	return "", InvalidMetricError{Input: input, Hint: unknownMetricHint(normalized)}
 }
 
@@ -311,7 +314,8 @@ func normalizeAliasKey(input string) string {
 
 func looksLikeExpression(input string) bool {
 	trimmed := strings.TrimSpace(input)
-	if strings.Contains(trimmed, "_per_") || strings.Contains(strings.ToLower(trimmed), " per ") {
+	lower := strings.ToLower(trimmed)
+	if strings.Contains(lower, "_per_") || strings.Contains(lower, " per ") {
 		return true
 	}
 	return strings.ContainsAny(trimmed, "+*/^=<>():,|[]{}") || strings.Contains(trimmed, " - ")
