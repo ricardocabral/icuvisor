@@ -71,7 +71,7 @@ func updateCustomItemHandler(client CustomItemUpdaterClient, readClient CustomIt
 			return Result{}, NewUserError(updateCustomItemMessage, err)
 		}
 		payload := shapeCustomItemWriteResponse(item, "update", customItemByIDEndpoint, args.ItemID, itemType, updateCustomItemFieldsUpdated(args), schemaSourceCount, schemaSource)
-		return encodeShaped(payload, true, nil, version, debugMetadata, updateCustomItemName, unitSystem, shapeCfg)
+		return encodeShaped(payload, false, nil, version, debugMetadata, updateCustomItemName, unitSystem, shapeCfg)
 	}
 }
 

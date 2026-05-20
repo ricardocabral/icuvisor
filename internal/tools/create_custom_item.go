@@ -62,7 +62,7 @@ func createCustomItemHandler(client CustomItemCreatorClient, readClient CustomIt
 			return Result{}, NewUserError(createCustomItemMessage, err)
 		}
 		payload := shapeCustomItemWriteResponse(item, "create", customItemsEndpoint, item.ID, args.ItemType, nil, schemaSourceCount, schemaSource)
-		return encodeShaped(payload, true, nil, version, debugMetadata, createCustomItemName, unitSystem, shapeCfg)
+		return encodeShaped(payload, false, nil, version, debugMetadata, createCustomItemName, unitSystem, shapeCfg)
 	}
 }
 
