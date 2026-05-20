@@ -37,7 +37,7 @@ func resolveActivityGear(ctx context.Context, client GearListClient, cache *gear
 	}
 	cacheKey, err := gearCacheKey(ctx)
 	if err != nil {
-		return unavailableGearResolutions(activities), nil
+		return nil, err
 	}
 	result, err := cache.get(ctx, cacheKey, false, client.ListGear)
 	if err != nil {

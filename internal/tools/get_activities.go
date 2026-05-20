@@ -100,10 +100,6 @@ type getActivitiesMeta struct {
 
 var errActivitiesPaginationBoundary = errors.New("activity pagination boundary exceeded")
 
-func newGetActivitiesTool(activityClient ActivitiesClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
-	return newGetActivitiesToolWithGear(activityClient, profileClient, nil, nil, version, timezoneFallback, debugMetadata, shaping...)
-}
-
 func newGetActivitiesToolWithGear(activityClient ActivitiesClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
 	return coreTool(Tool{
