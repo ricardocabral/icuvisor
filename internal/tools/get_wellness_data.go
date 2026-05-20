@@ -28,7 +28,6 @@ var wellnessSleepScoreNativeScales = map[string]string{
 var wellnessReadinessNativeScales = map[string]string{
 	"garmin": "0-100 Garmin Body Battery",
 	"oura":   "0-100 Oura readiness score",
-	"polar":  "1-6 Polar nightly_recharge_status",
 	"whoop":  "0-100 WHOOP recovery score",
 }
 
@@ -254,7 +253,7 @@ func wellnessProvenanceEntry(row intervals.Wellness, field string) (map[string]a
 	fetchedAt, fetchedTime, hasFetchedTime := wellnessFetchedAt(row.Raw, source)
 	entry := map[string]any{
 		"source":       source,
-		"native_scale": wellnessNativeScale(field, source),
+		"native_scale": wellnessNativeScale(row, field, source),
 		"fetched_at":   fetchedAt,
 	}
 	return entry, hasFetchedTime && wellnessFetchedAtIsStale(row, fetchedTime)
@@ -320,7 +319,7 @@ func hasNativeField(row intervals.Wellness, source string, field string) bool {
 	return ok
 }
 
-func wellnessNativeScale(field string, source string) string {
+func wellnessNativeScale(row intervals.Wellness, field string, source string) string {
 	switch field {
 	case "sleepScore":
 		if label, ok := wellnessSleepScoreNativeScales[source]; ok {
@@ -332,10 +331,7 @@ func wellnessNativeScale(field string, source string) string {
 	case "avgSleepingHR", "restingHR":
 		return "bpm"
 	case "readiness":
-		if label, ok := wellnessReadinessNativeScales[source]; ok {
-			return label
-		}
-		return "unknown"
+		return wellnessReadinessNativeScale(row, source)
 	case "hrv":
 		return "ms rMSSD"
 	case "hrvSDNN":
@@ -353,6 +349,22 @@ func wellnessNativeScale(field string, source string) string {
 	default:
 		return "unknown"
 	}
+}
+
+func wellnessReadinessNativeScale(row intervals.Wellness, source string) string {
+	if source == "polar" {
+		if hasNativeField(row, "polar", "nightly_recharge_status") {
+			return "1-6 Polar nightly_recharge_status"
+		}
+		if hasNativeField(row, "polar", "ans_charge") {
+			return "-10 to +10 Polar ans_charge"
+		}
+		return "unknown"
+	}
+	if label, ok := wellnessReadinessNativeScales[source]; ok {
+		return label
+	}
+	return "unknown"
 }
 
 func wellnessFetchedAt(raw map[string]any, source string) (string, time.Time, bool) {

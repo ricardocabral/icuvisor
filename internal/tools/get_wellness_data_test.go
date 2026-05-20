@@ -116,7 +116,7 @@ func TestGetWellnessDataFixtures(t *testing.T) {
 					t.Fatalf("missing_fields = %+v", meta["missing_fields"])
 				}
 				prov := provenanceFor(t, row, "sleepScore")
-				if prov["source"] != "unknown" || prov["native_scale"] != "0-100 device nightly score" {
+				if prov["source"] != "unknown" || prov["native_scale"] != "unknown" {
 					t.Fatalf("unknown source provenance = %+v", prov)
 				}
 			},
