@@ -93,10 +93,10 @@ func TestCatalogIncludesFullAnalyzers(t *testing.T) {
 	descriptors := descriptorNameSet(Catalog())
 	cases := map[string]string{
 		computeActivitySegmentStatsName: "raw-stream exception",
-		analyzeTrendName:                "deterministic trend statistics",
-		analyzeDistributionName:         "deterministic distribution statistics",
-		analyzeCorrelationName:          "deterministic correlation statistics",
-		analyzeEffortsDeltaName:         "deterministic current-vs-baseline best-effort deltas",
+		analyzeTrendName:                "Use when the prompt asks whether an analysis metric is trending up/down",
+		analyzeDistributionName:         "Use when the prompt asks for an analysis metric's distribution",
+		analyzeCorrelationName:          "Use when the prompt asks whether two analysis metrics are correlated",
+		analyzeEffortsDeltaName:         "Use when the prompt asks whether best-effort power",
 		computeZoneTimeName:             "Use this when the user asks for time in power, heart-rate, or pace zones",
 		computeLoadBalanceName:          "Use this when the user asks whether training distribution is polarized",
 		computeBaselineName:             "Use this when the user asks whether a metric is high, low, suppressed, elevated, or unusual",
