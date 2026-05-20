@@ -47,8 +47,26 @@ func TestAddActivityMessageSuccessAppendsFreeText(t *testing.T) {
 		t.Fatalf("meta = %#v, want append-only and normalized athlete ID", meta)
 	}
 	full := out["full"].(map[string]any)
-	if full["extra"] != nil {
-		t.Fatalf("full = %#v, want raw upstream response preserving null", full)
+	assertKeyPresentNil(t, full, "extra")
+}
+
+func TestAddActivityMessageDefaultOmitsRawSparsePayload(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityMessageWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345"}},
+		message:           decodeNewActivityMessage(t, `{"id":42,"new_chat":{"id":7},"extra":null}`),
+	}
+	tool := newAddActivityMessageTool(client, client, "test", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","message":"body"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	assertKeyAbsent(t, out, "full")
+	if out["activity_id"] != "a1" || out["message_id"] != float64(42) || out["status"] != "appended" {
+		t.Fatalf("response = %#v, want terse append confirmation", out)
 	}
 }
 

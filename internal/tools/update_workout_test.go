@@ -97,6 +97,28 @@ func TestUpdateWorkoutSwapWorkoutDocSerializesGoldenDSL(t *testing.T) {
 	}
 }
 
+func TestUpdateWorkoutStripsSparseNullsAndPreservesFalseZero(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWorkoutUpdaterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		workout:           decodeToolWorkouts(t, `{"id":"w-sparse","name":"Sparse","type":"Ride","description":null,"target":null,"indoor":false,"distance":0}`)[0],
+	}
+	tool := newUpdateWorkoutTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"workout_id":"w-sparse","name":"Sparse"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	row := resultMap(t, result)["workout"].(map[string]any)
+	assertKeyAbsent(t, row, "description")
+	assertKeyAbsent(t, row, "target")
+	assertKeyAbsent(t, row, "full")
+	if row["indoor"] != false || row["distance_meters"] != float64(0) {
+		t.Fatalf("workout row = %#v, want indoor=false and distance_meters=0 preserved", row)
+	}
+}
+
 func TestUpdateWorkoutAppendTagSendsReplacementTagList(t *testing.T) {
 	t.Parallel()
 

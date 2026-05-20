@@ -102,6 +102,28 @@ func TestCreateWorkoutWithFreeTextOnlyPreservesDescription(t *testing.T) {
 	}
 }
 
+func TestCreateWorkoutStripsSparseNullsAndPreservesFalseZero(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWorkoutCreatorClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		workout:           decodeToolWorkouts(t, `{"id":"w-sparse","name":"Sparse","type":"Ride","folder_id":"f-20","description":null,"target":null,"indoor":false,"distance":0}`)[0],
+	}
+	tool := newCreateWorkoutTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"name":"Sparse","folder_id":"f-20","sport":"Ride"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	row := resultMap(t, result)["workout"].(map[string]any)
+	assertKeyAbsent(t, row, "description")
+	assertKeyAbsent(t, row, "target")
+	assertKeyAbsent(t, row, "full")
+	if row["indoor"] != false || row["distance_meters"] != float64(0) {
+		t.Fatalf("workout row = %#v, want indoor=false and distance_meters=0 preserved", row)
+	}
+}
+
 func TestCreateWorkoutGoldenFixtureRoundTripFromWorkoutDocSerializer(t *testing.T) {
 	t.Parallel()
 

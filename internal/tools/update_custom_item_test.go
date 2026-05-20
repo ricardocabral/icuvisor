@@ -50,6 +50,31 @@ func TestUpdateCustomItemUpdatesSingleSparseField(t *testing.T) {
 	}
 }
 
+func TestUpdateCustomItemDefaultStripsSparseNullsAndPreservesMapValues(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeCustomItemsClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		updatedItem:       decodeToolCustomItem(t, `{"id":9,"type":"FITNESS_CHART","name":"Sparse","description":"","image":null,"index":0,"hide_script":false,"content":{"series":[{"field":"ctl","label":null}],"layout":{"height":240,"note":null}}}`),
+	}
+	tool := newUpdateCustomItemTool(client, client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"item_id":"9","name":"Sparse"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	item := resultMap(t, result)["custom_item"].(map[string]any)
+	assertKeyAbsent(t, item, "image")
+	if item["description"] != "" || item["index"] != float64(0) || item["hide_script"] != false {
+		t.Fatalf("custom_item = %#v, want empty description, index=0, hide_script=false preserved", item)
+	}
+	content := item["content"].(map[string]any)
+	layout := content["layout"].(map[string]any)
+	assertKeyAbsent(t, layout, "note")
+	series := content["series"].([]any)[0].(map[string]any)
+	assertKeyAbsent(t, series, "label")
+}
+
 func TestUpdateCustomItemMergesContentPatchAndRejectsSchemaViolation(t *testing.T) {
 	t.Parallel()
 

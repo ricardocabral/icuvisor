@@ -70,6 +70,35 @@ func TestAddOrUpdateEventCreatePreservesFreeTextTagsAndReadShape(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateEventStripsSparseNullsAndPreservesRawFull(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		event:             decodeToolEvents(t, `{"id":"evt-sparse","category":"WORKOUT","type":"Ride","name":"Sparse","start_date_local":"2026-06-03","load_target":0,"distance":0,"notes":null}`)[0],
+	}
+	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-06-03","category":"WORKOUT","type":"Ride","name":"Sparse"}`)})
+	if err != nil {
+		t.Fatalf("Handler() default error = %v", err)
+	}
+	row := resultMap(t, result)["event"].(map[string]any)
+	assertKeyAbsent(t, row, "notes")
+	assertKeyAbsent(t, row, "full")
+	if row["load_target"] != float64(0) || row["distance_meters"] != float64(0) {
+		t.Fatalf("event row = %#v, want zero load_target and distance_meters preserved", row)
+	}
+
+	fullResult, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-06-03","category":"WORKOUT","type":"Ride","name":"Sparse","include_full":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() include_full error = %v", err)
+	}
+	fullRow := resultMap(t, fullResult)["event"].(map[string]any)
+	full := fullRow["full"].(map[string]any)
+	assertKeyPresentNil(t, full, "notes")
+}
+
 func TestAddOrUpdateEventUpdateUsesEventID(t *testing.T) {
 	t.Parallel()
 

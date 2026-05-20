@@ -55,6 +55,34 @@ func TestCreateCustomItemCreatesPerReadableSchema(t *testing.T) {
 	}
 }
 
+func TestCreateCustomItemDefaultStripsSparseNullsAndPreservesMapValues(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeCustomItemsClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		items: decodeToolCustomItems(t,
+			`{"id":1,"type":"FITNESS_CHART","name":"Schema","content":{"series":[{"field":"ctl","color":"blue"}],"layout":{"height":240}}}`,
+		),
+		createdItem: decodeToolCustomItem(t, `{"id":9,"type":"FITNESS_CHART","name":"Sparse","description":"","image":null,"index":0,"hide_script":false,"content":{"series":[{"field":"atl","color":"red","label":null}],"layout":{"height":260,"note":null}}}`),
+	}
+	tool := newCreateCustomItemTool(client, client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"item_type":"FITNESS_CHART","name":"Sparse","description":"","index":0,"hide_script":false,"content":{"series":[{"field":"atl","color":"red"}],"layout":{"height":260}}}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	item := resultMap(t, result)["custom_item"].(map[string]any)
+	assertKeyAbsent(t, item, "image")
+	if item["description"] != "" || item["index"] != float64(0) || item["hide_script"] != false {
+		t.Fatalf("custom_item = %#v, want empty description, index=0, hide_script=false preserved", item)
+	}
+	content := item["content"].(map[string]any)
+	layout := content["layout"].(map[string]any)
+	assertKeyAbsent(t, layout, "note")
+	series := content["series"].([]any)[0].(map[string]any)
+	assertKeyAbsent(t, series, "label")
+}
+
 func TestCreateCustomItemFetchesDetailWhenListOmitsContentSchema(t *testing.T) {
 	t.Parallel()
 

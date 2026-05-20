@@ -267,9 +267,10 @@ func TestUpdateWellnessResponseUsesWellnessReadShape(t *testing.T) {
 		t.Fatalf("Handler() error = %v", err)
 	}
 	row := resultMap(t, result)["wellness"].(map[string]any)
-	if row["injury"] != "left knee" || row["weight"] != nil {
-		t.Fatalf("wellness row = %#v, want injury text and stripped null weight", row)
+	if row["injury"] != "left knee" || row["locked"] != false {
+		t.Fatalf("wellness row = %#v, want injury text and locked=false preserved", row)
 	}
+	assertKeyAbsent(t, row, "weight")
 	meta := row["_meta"].(map[string]any)
 	scales := meta["scales"].(map[string]any)
 	if scales["feel"] == "" || scales["sleepScore"] == "" || scales["injury"] != nil {
@@ -284,6 +285,30 @@ func TestUpdateWellnessResponseUsesWellnessReadShape(t *testing.T) {
 	prov := meta["provenance"].(map[string]any)["sleepScore"].(map[string]any)
 	if prov["source"] != "polar" || prov["native_scale"] != "1-100 Polar sleep_score" {
 		t.Fatalf("sleepScore provenance = %#v", prov)
+	}
+}
+
+func TestUpdateWellnessIncludeFullPreservesRawNullKeys(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric", Timezone: "UTC"}},
+		row:               decodeWellnessRow(t, `{"id":"2026-05-01","injury":"left knee","weight":null,"locked":false}`),
+	}
+	tool := newUpdateWellnessTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-05-01","injury":"left knee","include_full":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	row := resultMap(t, result)["wellness"].(map[string]any)
+	full := row["full"].(map[string]any)
+	assertKeyPresentNil(t, full, "weight")
+	if row["locked"] != false {
+		t.Fatalf("wellness row = %#v, want locked=false preserved", row)
+	}
+	if _, ok := row["_meta"].(map[string]any); !ok {
+		t.Fatalf("wellness row = %#v, want nested row metadata preserved", row)
 	}
 }
 
