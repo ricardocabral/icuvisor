@@ -45,7 +45,7 @@ func TestAnalysisFormulasMarkdownPinsRequiredFormulaRefs(t *testing.T) {
 		{
 			ref:      AnalysisFormulasURI + "#polarization_index",
 			formula:  "log10((low_share / moderate_share) * (high_share / moderate_share) * 100)",
-			boundary: "moderate share is zero",
+			boundary: "high share is zero",
 			citation: "Seiler",
 		},
 		{

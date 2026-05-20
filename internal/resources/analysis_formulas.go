@@ -30,7 +30,7 @@ var analysisFormulaEntries = []analysisFormulaEntry{
 	{
 		fragment:  "polarization_index",
 		label:     "Polarization index",
-		paragraph: "Polarization index uses a three-bucket intensity distribution with low = time in Z1+Z2, moderate = time in Z3, and high = time in Z4+; for nonzero moderate and high shares, calculate `log10((low_share / moderate_share) * (high_share / moderate_share) * 100)` from fractional shares. Require total bucketed time above zero, return an explicit saturated/undefined state rather than dividing by zero when moderate share is zero, and expose bucket shares for polarized/pyramidal/threshold classification. Sources: Stephen Seiler public work on three-zone endurance intensity distribution, and Treff et al., \"The Polarization-Index: a simple calculation to distinguish polarized from non-polarized training intensity distributions\" (Frontiers in Physiology, 2017).",
+		paragraph: "Polarization index uses a three-bucket intensity distribution with low = time in Z1+Z2, moderate = time in Z3, and high = time in Z4+; for nonzero moderate and high shares, calculate `log10((low_share / moderate_share) * (high_share / moderate_share) * 100)` from fractional shares. Require total bucketed time above zero, return an explicit saturated/undefined state rather than dividing by zero when moderate share is zero, and treat PI as undefined for polarized classification when high share is zero so bucket shares drive a non-polarized label. Sources: Stephen Seiler public work on three-zone endurance intensity distribution, and Treff et al., \"The Polarization-Index: a simple calculation to distinguish polarized from non-polarized training intensity distributions\" (Frontiers in Physiology, 2017).",
 	},
 	{
 		fragment:  "efficiency_factor",
