@@ -88,6 +88,40 @@ func TestGetActivitiesRegistrationMetadata(t *testing.T) {
 	}
 }
 
+func TestGetActivitiesCaloriesBurnedSemanticsAndNullStripping(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"zero","name":"Recovery Ride","type":"Ride","start_date_local":"2026-01-03T07:00:00","calories":0}`,
+		`{"id":"absent","name":"Untyped Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00"}`,
+	}, "metric")
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	payload := resultMap(t, result)
+	rows := payload["activities"].([]any)
+	zero := rows[0].(map[string]any)
+	if zero["calories_burned"] != float64(0) {
+		t.Fatalf("zero calories row = %#v, want present calories_burned=0", zero)
+	}
+	for _, key := range []string{"calories", "calories_intake", "calories_total", "carbs_g", "protein_g", "fat_g"} {
+		if _, ok := zero[key]; ok {
+			t.Fatalf("zero calories row emitted unsupported/ambiguous %s: %#v", key, zero)
+		}
+	}
+	absent := rows[1].(map[string]any)
+	if _, ok := absent["calories_burned"]; ok {
+		t.Fatalf("absent calories row emitted calories_burned: %#v", absent)
+	}
+	semantics := payload["_meta"].(map[string]any)["field_semantics"].(map[string]any)
+	if !strings.Contains(semantics["calories_burned"].(string), "Active/exercise calories") {
+		t.Fatalf("field_semantics = %#v, want active calories label", semantics)
+	}
+}
+
 func TestGetActivitiesResolvesGearNames(t *testing.T) {
 	t.Parallel()
 

@@ -53,6 +53,31 @@ func TestActivityReadToolsRegistration(t *testing.T) {
 	findTool(t, registrar.tools, getActivityMessagesName)
 }
 
+func TestGetActivityDetailsCaloriesBurnedSemantics(t *testing.T) {
+	t.Parallel()
+
+	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","calories":450}`)
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
+	tool := newGetActivityDetailsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	payload := resultMap(t, result)
+	activityMap := payload["activity"].(map[string]any)
+	if activityMap["calories_burned"] != float64(450) {
+		t.Fatalf("activity = %#v, want calories_burned", activityMap)
+	}
+	if _, ok := activityMap["calories"]; ok {
+		t.Fatalf("activity = %#v, want no ambiguous calories key", activityMap)
+	}
+	semantics := payload["_meta"].(map[string]any)["field_semantics"].(map[string]any)
+	if !strings.Contains(semantics["calories_burned"].(string), "Active/exercise calories") {
+		t.Fatalf("field_semantics = %#v, want active calories label", semantics)
+	}
+}
+
 func TestGetActivityDetailsShapesTerseFullAndStravaUnavailable(t *testing.T) {
 	t.Parallel()
 
