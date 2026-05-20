@@ -68,6 +68,9 @@ func computeActivitySegmentStatsHandler(client ActivityStreamsClient, version st
 		}
 		input.Streams, err = canonicalActivitySegmentStreams(rows, requiredKeys)
 		if err != nil {
+			if errors.Is(err, analysis.ErrMissingSegmentStream) {
+				return Result{}, NewUserError(missingActivitySegmentStreamMessage(err), err)
+			}
 			return Result{}, NewUserError(computeActivitySegmentStatsMessage, err)
 		}
 		computed, err := analysis.ComputeActivitySegmentStats(input)
@@ -117,6 +120,14 @@ func activitySegmentBounds(args computeActivitySegmentStatsRequest) (analysis.Se
 	return analysis.SegmentBounds{Axis: analysis.SegmentAxisDistanceMeter, Start: *args.StartDistanceM, End: *args.EndDistanceM}, nil
 }
 
+func missingActivitySegmentStreamMessage(err error) string {
+	key := analysis.MissingSegmentStreamKey(err)
+	if key == "" {
+		return "missing required activity stream for compute_activity_segment_stats"
+	}
+	return "missing required activity stream for compute_activity_segment_stats: " + key
+}
+
 func canonicalActivitySegmentStreams(rows []intervals.ActivityStream, required []string) (map[string][]float64, error) {
 	requiredSet := make(map[string]struct{}, len(required))
 	for _, key := range required {
@@ -132,7 +143,7 @@ func canonicalActivitySegmentStreams(rows []intervals.ActivityStream, required [
 	}
 	for _, key := range required {
 		if len(out[key]) == 0 {
-			return nil, fmt.Errorf("%w: %s", analysis.ErrMissingSegmentStream, key)
+			return nil, analysis.MissingSegmentStreamError{Key: key}
 		}
 	}
 	return out, nil

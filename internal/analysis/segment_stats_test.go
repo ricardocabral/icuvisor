@@ -23,6 +23,22 @@ func TestRequiredSegmentStreamKeysUsesCanonicalKeys(t *testing.T) {
 	}
 }
 
+func TestRequiredSegmentStreamKeysScalarDistanceOmitsTime(t *testing.T) {
+	keys, err := RequiredSegmentStreamKeys(SegmentStatMean, SegmentMetricWatts, SegmentAxisDistanceMeter)
+	if err != nil {
+		t.Fatalf("RequiredSegmentStreamKeys() error = %v", err)
+	}
+	want := []string{"distance", "watts"}
+	if len(keys) != len(want) {
+		t.Fatalf("keys = %#v, want %#v", keys, want)
+	}
+	for i := range want {
+		if keys[i] != want[i] {
+			t.Fatalf("keys = %#v, want %#v", keys, want)
+		}
+	}
+}
+
 func TestRequiredSegmentStreamKeysRejectsIncompatibleMetric(t *testing.T) {
 	_, err := RequiredSegmentStreamKeys(SegmentStatDrift, SegmentMetricHeartRate, SegmentAxisTimeSeconds)
 	if !errors.Is(err, ErrInvalidSegmentStatsInput) {
@@ -70,6 +86,24 @@ func TestComputeActivitySegmentStatsDistanceSliceP90NearestRank(t *testing.T) {
 	}
 	if got.Segment.Axis != SegmentAxisDistanceMeter || got.N != 5 {
 		t.Fatalf("segment/n = %#v/%d, want distance/5", got.Segment, got.N)
+	}
+}
+
+func TestComputeActivitySegmentStatsInCoverageNoSamplesIsInsufficient(t *testing.T) {
+	got, err := ComputeActivitySegmentStats(SegmentStatsInput{
+		Stat:   SegmentStatMean,
+		Metric: SegmentMetricWatts,
+		Bounds: SegmentBounds{Axis: SegmentAxisTimeSeconds, Start: 5, End: 6},
+		Streams: map[string][]float64{
+			SegmentAxisTimeSeconds: {0, 10, 20},
+			SegmentMetricWatts:     {100, 200, 300},
+		},
+	})
+	if err != nil {
+		t.Fatalf("ComputeActivitySegmentStats() error = %v", err)
+	}
+	if !got.InsufficientSample || got.N != 0 || got.Value != nil {
+		t.Fatalf("result = %#v, want insufficient n=0 without value", got)
 	}
 }
 

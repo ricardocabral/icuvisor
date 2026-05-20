@@ -42,6 +42,26 @@ var (
 	ErrSegmentOutOfRange        = errors.New("activity segment range outside stream coverage")
 )
 
+type MissingSegmentStreamError struct {
+	Key string
+}
+
+func (e MissingSegmentStreamError) Error() string {
+	return "missing required activity stream: " + e.Key
+}
+
+func (e MissingSegmentStreamError) Is(target error) bool {
+	return target == ErrMissingSegmentStream
+}
+
+func MissingSegmentStreamKey(err error) string {
+	var missing MissingSegmentStreamError
+	if errors.As(err, &missing) {
+		return missing.Key
+	}
+	return ""
+}
+
 type SegmentBounds struct {
 	Axis  string
 	Start float64
@@ -88,9 +108,6 @@ func RequiredSegmentStreamKeys(stat string, metric string, axis string) ([]strin
 		return nil, fmt.Errorf("%w: segment axis must be time or distance", ErrInvalidSegmentStatsInput)
 	}
 	keys := []string{axis}
-	if axis == SegmentAxisDistanceMeter {
-		keys = append(keys, SegmentAxisTimeSeconds)
-	}
 	switch stat {
 	case SegmentStatMean, SegmentStatMedian, SegmentStatP90:
 		if !validSegmentMetric(metric) {
@@ -101,17 +118,17 @@ func RequiredSegmentStreamKeys(stat string, metric string, axis string) ([]strin
 		if metric != "" {
 			return nil, fmt.Errorf("%w: metric is not accepted for drift", ErrInvalidSegmentStatsInput)
 		}
-		keys = append(keys, SegmentMetricHeartRate)
+		keys = append(keys, SegmentAxisTimeSeconds, SegmentMetricHeartRate)
 	case SegmentStatDecoupling:
 		if metric != "" {
 			return nil, fmt.Errorf("%w: metric is not accepted for decoupling", ErrInvalidSegmentStatsInput)
 		}
-		keys = append(keys, SegmentMetricHeartRate, SegmentMetricWatts)
+		keys = append(keys, SegmentAxisTimeSeconds, SegmentMetricHeartRate, SegmentMetricWatts)
 	case SegmentStatNP, SegmentStatIF:
 		if metric != "" {
 			return nil, fmt.Errorf("%w: metric is not accepted for %s", ErrInvalidSegmentStatsInput, stat)
 		}
-		keys = append(keys, SegmentMetricWatts)
+		keys = append(keys, SegmentAxisTimeSeconds, SegmentMetricWatts)
 	default:
 		return nil, fmt.Errorf("%w: unsupported segment stat %q", ErrInvalidSegmentStatsInput, stat)
 	}
@@ -308,7 +325,7 @@ func requiredStreams(streams map[string][]float64, keys []string) (map[string][]
 	for _, key := range keys {
 		values, ok := streams[key]
 		if !ok || len(values) == 0 {
-			return nil, fmt.Errorf("%w: %s", ErrMissingSegmentStream, key)
+			return nil, MissingSegmentStreamError{Key: key}
 		}
 		if expectedLen == 0 {
 			expectedLen = len(values)
@@ -341,7 +358,7 @@ func segmentIndices(axis []float64, bounds SegmentBounds) ([]int, error) {
 			indices = append(indices, i)
 		}
 	}
-	if math.IsInf(minAxis, 0) || bounds.Start < minAxis || bounds.End > maxAxis || len(indices) == 0 {
+	if math.IsInf(minAxis, 0) || bounds.Start < minAxis || bounds.End > maxAxis {
 		return nil, fmt.Errorf("%w: %.3f..%.3f outside %.3f..%.3f", ErrSegmentOutOfRange, bounds.Start, bounds.End, minAxis, maxAxis)
 	}
 	return indices, nil

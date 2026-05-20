@@ -21,6 +21,21 @@ func (c *segmentStatsStreamsClient) GetActivityStreams(_ context.Context, params
 	return c.rows, nil
 }
 
+func TestComputeActivitySegmentStatsHandlerScalarDistanceOmitsTimeFetch(t *testing.T) {
+	client := &segmentStatsStreamsClient{rows: []intervals.ActivityStream{
+		{Type: "distance", Data: []float64{0, 100, 200, 300}},
+		{Type: "watts", Data: []float64{100, 200, 300, 400}},
+	}}
+	handler := computeActivitySegmentStatsHandler(client, "test", false, responseShaping{})
+	_, err := handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"a1","stat":"mean","metric":"watts","start_distance_m":100,"end_distance_m":300}`)})
+	if err != nil {
+		t.Fatalf("handler error = %v", err)
+	}
+	if got := strings.Join(client.params.Types, ","); got != "distance,watts" {
+		t.Fatalf("requested types = %q, want distance,watts", got)
+	}
+}
+
 func TestComputeActivitySegmentStatsHandlerDoesNotFetchInvalidArgs(t *testing.T) {
 	client := &segmentStatsStreamsClient{}
 	handler := computeActivitySegmentStatsHandler(client, "test", false, responseShaping{})
@@ -30,6 +45,15 @@ func TestComputeActivitySegmentStatsHandlerDoesNotFetchInvalidArgs(t *testing.T)
 	}
 	if client.called {
 		t.Fatalf("GetActivityStreams called for locally invalid arguments")
+	}
+}
+
+func TestComputeActivitySegmentStatsHandlerMissingStreamMessageIncludesKey(t *testing.T) {
+	client := &segmentStatsStreamsClient{rows: []intervals.ActivityStream{{Type: "time", Data: []float64{0, 10, 20}}}}
+	handler := computeActivitySegmentStatsHandler(client, "test", false, responseShaping{})
+	_, err := handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"a1","stat":"mean","metric":"watts","start_seconds":0,"end_seconds":20}`)})
+	if err == nil || !strings.Contains(err.Error(), "missing required activity stream for compute_activity_segment_stats: watts") {
+		t.Fatalf("handler error = %v, want missing watts public message", err)
 	}
 }
 
