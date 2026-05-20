@@ -119,11 +119,11 @@ Aggregate analyzer response-token reduction is 85.83% (`2,266 → 321`) and LLM-
 
 Per-candidate net savings are computed from paired prompt rows using response tokens, then subtracting that candidate tool's incremental catalog-description tokens measured with the same canonical catalog payload and tokenizer conventions. A candidate `meets` if net savings are positive and the enabled row has no LLM-visible raw-stream pull.
 
-| Candidate | Prompt | Enabled response tokens | Disabled response tokens | Gross response-token savings | Candidate catalog tokens | Net savings | Raw stream pulls | TP-098 gate |
-| --------- | ------ | ----------------------: | -----------------------: | ---------------------------: | -----------------------: | ----------: | ---------------: | ---------- |
-| `analyze_trend` | `KR5-A01` | 48 | 502 | 454 | 308 | 146 | `1 → 0` | Meets |
-| `compute_zone_time` | `KR5-A02` | 50 | 253 | 203 | 176 | 27 | `1 → 0` | Meets |
-| `compute_baseline` | `KR5-A03` | 49 | 502 | 453 | 237 | 216 | `0 → 0` | Meets |
+| Candidate | Prompt | Enabled response tokens | Disabled response tokens | Gross response-token savings | Incremental catalog tokens | Net savings | Raw stream pulls | TP-098 gate |
+| --------- | ------ | ----------------------: | -----------------------: | ---------------------------: | -------------------------: | ----------: | ---------------: | ---------- |
+| `analyze_trend` | `KR5-A01` | 48 | 502 | 454 | 305 | 149 | `1 → 0` | Meets |
+| `compute_zone_time` | `KR5-A02` | 50 | 253 | 203 | 173 | 30 | `1 → 0` | Meets |
+| `compute_baseline` | `KR5-A03` | 49 | 502 | 453 | 234 | 219 | `0 → 0` | Meets |
 
 These results provide positive fixture evidence for TP-098's benchmark-gated core-promotion candidates. TP-100 does not promote the tools; it records evidence for TP-098 to decide placement.
 
