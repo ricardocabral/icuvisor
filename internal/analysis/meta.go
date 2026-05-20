@@ -27,6 +27,8 @@ type AnalyzerMeta struct {
 	MissingAction      string         `json:"missing_action"`
 	InsufficientSample bool           `json:"insufficient_sample"`
 	FormulaRef         string         `json:"formula_ref,omitempty"`
+	Assumptions        map[string]any `json:"assumptions,omitempty"`
+	Boundaries         []string       `json:"boundaries,omitempty"`
 	IntervalSource     IntervalSource `json:"interval_source,omitempty"`
 	AutoLapSuspected   *bool          `json:"auto_lap_suspected,omitempty"`
 }
@@ -40,6 +42,8 @@ type AnalyzerMetaInput struct {
 	MissingAction    string
 	MinSamples       int
 	FormulaRef       string
+	Assumptions      map[string]any
+	Boundaries       []string
 	IntervalSource   IntervalSource
 	AutoLapSuspected *bool
 }
@@ -88,6 +92,8 @@ func NewAnalyzerMeta(input AnalyzerMetaInput) AnalyzerMeta {
 		MissingAction:      missingAction,
 		InsufficientSample: InsufficientSample(n, input.MinSamples),
 		FormulaRef:         strings.TrimSpace(input.FormulaRef),
+		Assumptions:        copyStringAnyMap(input.Assumptions),
+		Boundaries:         trimStringSlice(input.Boundaries),
 		IntervalSource:     input.IntervalSource,
 		AutoLapSuspected:   input.AutoLapSuspected,
 	}
@@ -115,6 +121,31 @@ func NormalizeSourceTools(sourceTools []string) []string {
 // InsufficientSample reports whether a usable sample count misses a minimum.
 func InsufficientSample(n int, minN int) bool {
 	return minN > 0 && n < minN
+}
+
+func trimStringSlice(values []string) []string {
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		trimmed := strings.TrimSpace(value)
+		if trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
+}
+
+func copyStringAnyMap(values map[string]any) map[string]any {
+	if len(values) == 0 {
+		return nil
+	}
+	out := make(map[string]any, len(values))
+	for key, value := range values {
+		trimmed := strings.TrimSpace(key)
+		if trimmed != "" {
+			out[trimmed] = value
+		}
+	}
+	return out
 }
 
 func boolPointer(value bool) *bool {
