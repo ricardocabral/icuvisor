@@ -353,6 +353,43 @@ def mode_names_for_prompt(prompt_set: dict[str, Any], prompt: dict[str, Any]) ->
     return modes
 
 
+def prompt_applies_to_server(prompt: dict[str, Any], server_id: str) -> bool:
+    scope = prompt.get("server_scope")
+    if scope is None:
+        return True
+    if not isinstance(scope, list) or not all(isinstance(item, str) for item in scope):
+        raise BenchmarkError("server_scope must be a list of server IDs when present")
+    return server_id in scope
+
+
+def source_tool_counts(rows: list[dict[str, Any]] | None) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows or []:
+        counts[row["tool"]] = counts.get(row["tool"], 0) + row.get("count", 1)
+    return counts
+
+
+def expected_source_tools_for_prompt(prompt: dict[str, Any]) -> dict[str, dict[str, dict[str, int]]]:
+    raw = prompt.get("expected_source_tools_by_mode", {})
+    if not isinstance(raw, dict):
+        raise BenchmarkError("expected_source_tools_by_mode must be an object")
+    normalized: dict[str, dict[str, dict[str, int]]] = {}
+    for mode, tools in raw.items():
+        if not isinstance(mode, str) or not isinstance(tools, dict):
+            raise BenchmarkError(
+                "expected_source_tools_by_mode must map mode strings to tool objects"
+            )
+        normalized[mode] = {}
+        for called_tool, source_rows in tools.items():
+            if not isinstance(called_tool, str):
+                raise BenchmarkError(
+                    "expected_source_tools_by_mode called tool keys must be strings"
+                )
+            normalized_rows = normalize_source_tool_usage(source_rows) or []
+            normalized[mode][called_tool] = source_tool_counts(normalized_rows)
+    return normalized
+
+
 def is_analyzer_tool(tool_name: str) -> bool:
     return tool_name.startswith(ANALYZER_TOOL_PREFIXES) or tool_name in ANALYZER_DIRECT_TOOLS
 
@@ -400,6 +437,8 @@ def validate_measurement(
     prompt_by_id = {prompt["id"]: prompt for prompt in prompt_set["prompts"]}
     prompt_intents: dict[tuple[str, str, str], int] = {}
     for prompt in prompt_set["prompts"]:
+        if not prompt_applies_to_server(prompt, measurement.server_id):
+            continue
         for mode in mode_names_for_prompt(prompt_set, prompt):
             for intent in prompt.get("required_intents", []):
                 prompt_intents[(prompt["id"], intent, mode)] = 0
@@ -420,6 +459,11 @@ def validate_measurement(
         key = (call.prompt_id, call.intent, call.mode)
         if key in prompt_intents:
             prompt_intents[key] += 1
+        prompt = prompt_by_id.get(call.prompt_id)
+        if prompt is not None and not prompt_applies_to_server(prompt, measurement.server_id):
+            raise BenchmarkError(
+                f"{measurement.server_id} has call for scoped-out prompt {call.prompt_id}"
+            )
         calls_by_prompt_mode.setdefault((call.prompt_id, call.mode), set()).add(call.tool)
         if call.tool.startswith("unavailable:"):
             if not call.result or call.result.get("isError") is not True:
@@ -439,6 +483,8 @@ def validate_measurement(
                 f"{measurement.server_id} disabled analyzer mode calls {call.tool!r}"
             )
     for prompt in prompt_set["prompts"]:
+        if not prompt_applies_to_server(prompt, measurement.server_id):
+            continue
         expected_by_mode = prompt.get("expected_tools_by_mode", {})
         if not isinstance(expected_by_mode, dict):
             raise BenchmarkError("expected_tools_by_mode must be an object when present")
@@ -455,6 +501,19 @@ def validate_measurement(
                 raise BenchmarkError(
                     f"{measurement.server_id} {prompt['id']} mode {mode} missing "
                     f"expected tools: {', '.join(missing_expected)}"
+                )
+        expected_sources = expected_source_tools_for_prompt(prompt)
+        for call in measurement.calls:
+            if call.prompt_id != prompt["id"] or call.tool.startswith("unavailable:"):
+                continue
+            expected_for_call = expected_sources.get(call.mode, {}).get(call.tool)
+            if expected_for_call is None:
+                continue
+            actual = source_tool_counts(call.source_tool_usage)
+            if actual != expected_for_call:
+                raise BenchmarkError(
+                    f"{measurement.server_id} {prompt['id']} mode {call.mode} "
+                    f"tool {call.tool} source_tool_usage {actual} != {expected_for_call}"
                 )
     missing = [
         f"{prompt_id}:{intent}:{mode}"
