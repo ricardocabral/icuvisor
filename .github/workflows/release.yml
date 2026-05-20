@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  ICUVISOR_MCPB_CLI_PACKAGE: "@anthropic-ai/mcpb@2.1.2"
+
 jobs:
   preflight:
     name: Release preflight
@@ -22,6 +25,11 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Verify go.mod is tidy
         run: |
@@ -44,6 +52,9 @@ jobs:
           version: latest
           args: check
 
+      - name: Validate MCPB manifest
+        run: npx --yes "$ICUVISOR_MCPB_CLI_PACKAGE" validate packaging/mcpb/manifest.json
+
   release:
     name: Build signed macOS DMG and draft release
     runs-on: macos-latest
@@ -65,6 +76,11 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Import Developer ID certificate
         shell: bash
@@ -119,6 +135,40 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SCOOP_BUCKET_PAT: ${{ secrets.SCOOP_BUCKET_PAT }}
           HOMEBREW_TAP_PAT: ${{ secrets.HOMEBREW_TAP_PAT }}
+
+      - name: Package signed macOS MCPB
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          binary_path="$(find dist -path '*_darwin_all/icuvisor' -type f | sort | head -n 1)"
+          if [ -z "$binary_path" ]; then
+            echo "error: universal darwin binary not found under dist" >&2
+            exit 1
+          fi
+
+          identity="${APPLE_DEVELOPER_IDENTITY:-}"
+          if [ -z "$identity" ]; then
+            identity="$(security find-identity -v -p codesigning | awk -F'\"' '/Developer ID Application/ { print $2; exit }')"
+          fi
+          if [ -z "$identity" ]; then
+            echo "error: no Developer ID Application signing identity found" >&2
+            security find-identity -v -p codesigning >&2 || true
+            exit 1
+          fi
+
+          codesign --force --options runtime --timestamp --sign "$identity" "$binary_path"
+          codesign --verify --strict --verbose=2 "$binary_path"
+
+          ICUVISOR_MCPB_BINARY="$binary_path" \
+          ICUVISOR_MCPB_VERSION="$version" \
+          ICUVISOR_MCPB_PLATFORM=darwin \
+          ICUVISOR_MCPB_OUTPUT="dist/icuvisor_${version}_darwin_universal.mcpb" \
+            scripts/package_mcpb.sh
+
+          gh release upload "$GITHUB_REF_NAME" "dist/icuvisor_${version}_darwin_universal.mcpb" --clobber
 
       - name: Build, sign, notarize, and staple macOS DMG
         shell: bash
@@ -268,7 +318,8 @@ jobs:
             --pattern 'icuvisor_*_windows_*.zip' \
             --pattern 'icuvisor_*_windows_*.msi' \
             --pattern 'icuvisor_*_macos_universal.tar.gz' \
-            --pattern 'icuvisor_*_macos_universal.dmg'
+            --pattern 'icuvisor_*_macos_universal.dmg' \
+            --pattern 'icuvisor_*_darwin_universal.mcpb'
 
       - name: Regenerate SHA256SUMS for promoted artifacts
         shell: bash
@@ -281,6 +332,7 @@ jobs:
             icuvisor_*_windows_*.msi \
             icuvisor_*_macos_universal.tar.gz \
             icuvisor_*_macos_universal.dmg \
+            icuvisor_*_darwin_universal.mcpb \
             > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
