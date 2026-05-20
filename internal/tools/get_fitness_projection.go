@@ -1,11 +1,16 @@
 package tools
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
+
+	"github.com/ricardocabral/icuvisor/internal/analysis"
+	"github.com/ricardocabral/icuvisor/internal/intervals"
 )
 
 const (
@@ -50,6 +55,162 @@ type fitnessProjectionRequest struct {
 type fitnessProjectionPlannedLoad struct {
 	Date         string  `json:"date"`
 	TrainingLoad float64 `json:"training_load"`
+}
+
+type fitnessProjectionSummary struct {
+	StartDate        string  `json:"start_date"`
+	EndDate          string  `json:"end_date"`
+	StartCTL         float64 `json:"start_ctl"`
+	StartATL         float64 `json:"start_atl"`
+	StartTSB         float64 `json:"start_tsb"`
+	EndCTL           float64 `json:"end_ctl"`
+	EndATL           float64 `json:"end_atl"`
+	EndTSB           float64 `json:"end_tsb"`
+	CTLChange        float64 `json:"ctl_change"`
+	ATLChange        float64 `json:"atl_change"`
+	TSBChange        float64 `json:"tsb_change"`
+	AverageDailyLoad float64 `json:"average_daily_load"`
+	TotalLoad        float64 `json:"total_load"`
+	MinTSB           float64 `json:"min_tsb"`
+	MaxCTL           float64 `json:"max_ctl"`
+}
+
+type fitnessProjectionPoint struct {
+	Date               string  `json:"date"`
+	Day                int     `json:"day"`
+	TrainingLoad       float64 `json:"training_load,omitempty"`
+	TrainingLoadSource string  `json:"training_load_source"`
+	CTL                float64 `json:"ctl"`
+	ATL                float64 `json:"atl"`
+	TSB                float64 `json:"tsb"`
+}
+
+func newGetFitnessProjectionTool(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: getFitnessProjectionName, Description: getFitnessProjectionDescription, InputSchema: fitnessProjectionInputSchema(), OutputSchema: genericOutputSchema("Deterministic CTL/ATL/TSB projection summary with optional full curve series."), Handler: getFitnessProjectionHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
+}
+
+func getFitnessProjectionHandler(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
+	return func(ctx context.Context, req Request) (Result, error) {
+		args, err := decodeFitnessProjectionRequest(req.Arguments)
+		if err != nil {
+			return Result{}, NewUserError(invalidFitnessProjectionMessage, err)
+		}
+		unitSystem, _, err := toolProfile(ctx, profileClient, timezoneFallback)
+		if err != nil {
+			return Result{}, NewUserError(fetchFitnessProjectionMessage, err)
+		}
+		rows, err := client.ListAthleteSummary(ctx, intervals.AthleteSummaryParams{Start: args.StartDate, End: args.StartDate})
+		if err != nil {
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return Result{}, err
+			}
+			return Result{}, NewUserError(fetchFitnessProjectionMessage, err)
+		}
+		seed, ok := currentFitnessProjectionSeed(rows, args.StartDate)
+		if !ok {
+			return Result{}, NewUserError("insufficient current fitness data; start_date must have CTL, ATL, and TSB values from get_fitness", nil)
+		}
+		projection, err := analysis.ProjectFitness(analysis.FitnessProjectionInput{
+			StartDate:           args.StartDate,
+			StartCTL:            seed.ctl,
+			StartATL:            seed.atl,
+			StartTSB:            seed.tsb,
+			HorizonDays:         args.resolvedHorizonDays,
+			WeeklyRampPct:       args.resolvedWeeklyRampPct,
+			RecoveryWeekCadence: args.resolvedRecoveryCadence,
+			RecoveryWeekLoadPct: args.resolvedRecoveryLoadPct,
+			PlannedDailyLoads:   analysisProjectionPlannedLoads(args.PlannedDailyLoads),
+		})
+		if err != nil {
+			return Result{}, NewUserError(invalidFitnessProjectionMessage, err)
+		}
+		input := analyzerResponseInput{
+			Result: shapeFitnessProjectionSummary(projection),
+			Series: shapeFitnessProjectionPoints(projection.Points),
+			Meta: analysis.AnalyzerMetaInput{
+				Method:      fitnessProjectionModel,
+				SourceTools: []string{getFitnessName},
+				N:           1,
+				MinSamples:  1,
+				Assumptions: fitnessProjectionAssumptions(args),
+				Boundaries:  fitnessProjectionBoundaries(),
+			},
+		}
+		return encodeAnalyzerResponse(input, args.IncludeFull, version, debugMetadata, getFitnessProjectionName, unitSystem, shapeCfg)
+	}
+}
+
+type fitnessProjectionSeed struct {
+	ctl float64
+	atl float64
+	tsb float64
+}
+
+func currentFitnessProjectionSeed(rows []intervals.SummaryWithCats, startDate string) (fitnessProjectionSeed, bool) {
+	for _, row := range rows {
+		if row.Date != startDate {
+			continue
+		}
+		if !summaryHasNumericFitness(row.Raw, "fitness") || !summaryHasNumericFitness(row.Raw, "fatigue") || !summaryHasNumericFitness(row.Raw, "form") {
+			return fitnessProjectionSeed{}, false
+		}
+		return fitnessProjectionSeed{ctl: row.Fitness, atl: row.Fatigue, tsb: row.Form}, true
+	}
+	return fitnessProjectionSeed{}, false
+}
+
+func summaryHasNumericFitness(raw map[string]any, key string) bool {
+	value, ok := raw[key]
+	if !ok || value == nil {
+		return false
+	}
+	number, ok := value.(float64)
+	return ok && !math.IsNaN(number) && !math.IsInf(number, 0)
+}
+
+func analysisProjectionPlannedLoads(loads []fitnessProjectionPlannedLoad) []analysis.FitnessProjectionPlannedLoad {
+	out := make([]analysis.FitnessProjectionPlannedLoad, 0, len(loads))
+	for _, load := range loads {
+		out = append(out, analysis.FitnessProjectionPlannedLoad{Date: strings.TrimSpace(load.Date), TrainingLoad: load.TrainingLoad})
+	}
+	return out
+}
+
+func shapeFitnessProjectionSummary(projection analysis.FitnessProjectionResult) fitnessProjectionSummary {
+	return fitnessProjectionSummary{
+		StartDate:        projection.StartDate,
+		EndDate:          projection.EndDate,
+		StartCTL:         round(projection.StartCTL, 3),
+		StartATL:         round(projection.StartATL, 3),
+		StartTSB:         round(projection.StartTSB, 3),
+		EndCTL:           round(projection.EndCTL, 3),
+		EndATL:           round(projection.EndATL, 3),
+		EndTSB:           round(projection.EndTSB, 3),
+		CTLChange:        round(projection.CTLChange, 3),
+		ATLChange:        round(projection.ATLChange, 3),
+		TSBChange:        round(projection.TSBChange, 3),
+		AverageDailyLoad: round(projection.AverageDailyLoad, 3),
+		TotalLoad:        round(projection.TotalLoad, 3),
+		MinTSB:           round(projection.MinTSB, 3),
+		MaxCTL:           round(projection.MaxCTL, 3),
+	}
+}
+
+func shapeFitnessProjectionPoints(points []analysis.FitnessProjectionPoint) []fitnessProjectionPoint {
+	out := make([]fitnessProjectionPoint, 0, len(points))
+	for _, point := range points {
+		out = append(out, fitnessProjectionPoint{
+			Date:               point.Date,
+			Day:                point.Day,
+			TrainingLoad:       round(point.TrainingLoad, 3),
+			TrainingLoadSource: point.TrainingLoadSource,
+			CTL:                round(point.CTL, 3),
+			ATL:                round(point.ATL, 3),
+			TSB:                round(point.TSB, 3),
+		})
+	}
+	return out
 }
 
 func decodeFitnessProjectionRequest(raw json.RawMessage) (fitnessProjectionRequest, error) {
