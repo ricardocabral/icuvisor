@@ -52,7 +52,7 @@ func loadAnalyzerSeries(ctx context.Context, clients analyzerClients, metric ana
 		series.Assumptions["scale_label"] = selection.Source.ScaleLabel
 	}
 	switch selection.Source.Family {
-	case analysis.SourceFitnessDaily, analysis.SourceTrainingSummary:
+	case analysis.SourceFitnessDaily, analysis.SourceTrainingSummary, analysis.SourceDerivedWeekly:
 		if clients.fitness == nil {
 			return series, errors.New("missing fitness client")
 		}
@@ -202,7 +202,7 @@ func weeklySummarySamples(rows []intervals.SummaryWithCats, metric analysis.Metr
 	}
 	samples := []analysis.NumericSample{}
 	missingDays := 0
-	for start := window.Start; !start.After(window.End); start = start.AddDate(0, 0, 7) {
+	for bucketIndex, start := 0, window.Start; !start.After(window.End); bucketIndex, start = bucketIndex+1, start.AddDate(0, 0, 7) {
 		end := start.AddDate(0, 0, 6)
 		if end.After(window.End) {
 			end = window.End
@@ -222,7 +222,7 @@ func weeklySummarySamples(rows []intervals.SummaryWithCats, metric analysis.Metr
 		}
 		if seen {
 			key := start.Format(time.DateOnly) + "/" + end.Format(time.DateOnly)
-			samples = append(samples, analysis.NumericSample{Key: key, Date: start.Format(time.DateOnly), Value: sum})
+			samples = append(samples, analysis.NumericSample{Key: key, Date: start.Format(time.DateOnly), Bucket: bucketIndex, Value: sum})
 		}
 	}
 	return samples, missingDays

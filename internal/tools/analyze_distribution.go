@@ -18,7 +18,7 @@ const (
 type analyzeDistributionRequest struct {
 	Metric      string                `json:"metric"`
 	Window      analyzerWindowRequest `json:"window"`
-	BucketCount int                   `json:"bucket_count,omitempty"`
+	BucketCount *int                  `json:"bucket_count,omitempty"`
 	Buckets     []float64             `json:"buckets,omitempty"`
 	Quantiles   []float64             `json:"quantiles,omitempty"`
 	Sport       string                `json:"sport,omitempty"`
@@ -37,14 +37,26 @@ func analyzeDistributionHandler(clients analyzerClients, profileClient ProfileCl
 		if err != nil {
 			return Result{}, NewUserError(invalidAnalyzeDistributionArgs, err)
 		}
-		if args.BucketCount == 0 {
-			args.BucketCount = 10
+		bucketCount := 0
+		if len(args.Buckets) > 0 {
+			if args.BucketCount != nil {
+				return Result{}, NewUserError(invalidAnalyzeDistributionArgs, fmt.Errorf("bucket_count and buckets are mutually exclusive"))
+			}
+		} else if args.BucketCount == nil {
+			bucketCount = 10
+		} else {
+			bucketCount = *args.BucketCount
 		}
-		if args.BucketCount < 2 || args.BucketCount > 50 {
+		if len(args.Buckets) == 0 && (bucketCount < 2 || bucketCount > 50) {
 			return Result{}, NewUserError(invalidAnalyzeDistributionArgs, fmt.Errorf("bucket_count must be 2..50"))
 		}
 		if len(args.Quantiles) == 0 {
 			args.Quantiles = []float64{0.25, 0.5, 0.75}
+		}
+		for _, quantile := range args.Quantiles {
+			if quantile < 0 || quantile > 1 {
+				return Result{}, NewUserError(invalidAnalyzeDistributionArgs, fmt.Errorf("quantiles must be between 0 and 1"))
+			}
 		}
 		metric, err := parseMetricArgument(args.Metric)
 		if err != nil {
@@ -74,9 +86,13 @@ func analyzeDistributionHandler(clients analyzerClients, profileClient ProfileCl
 		if actualGrain == string(analysis.SampleGrainWeekly) {
 			grain = analysis.SampleGrainWeekly
 		}
-		result := analysis.ComputeDistribution(analysis.DistributionInput{Metric: string(metric), Unit: series.Unit, Samples: series.Samples, BucketCount: args.BucketCount, Buckets: sortedFloatCopy(args.Buckets), Quantiles: args.Quantiles, SampleGrain: grain})
+		result := analysis.ComputeDistribution(analysis.DistributionInput{Metric: string(metric), Unit: series.Unit, Samples: series.Samples, BucketCount: bucketCount, Buckets: sortedFloatCopy(args.Buckets), Quantiles: args.Quantiles, SampleGrain: grain})
 		assumptions := analyzerMetaAssumptions(series.Assumptions, window.Window, args.IncludeFull)
-		assumptions["bucket_count"] = args.BucketCount
+		if len(args.Buckets) == 0 {
+			assumptions["bucket_count"] = bucketCount
+		} else {
+			assumptions["bucket_boundaries"] = sortedFloatCopy(args.Buckets)
+		}
 		return encodeAnalyzerResponse(analyzerResponseInput{Result: result, Series: series.Samples, Meta: analysis.AnalyzerMetaInput{Method: "distribution_histogram_quantiles", SourceTools: series.SourceTools, N: result.Stats.N, MissingDays: series.MissingDays, MinSamples: 3, Assumptions: assumptions}}, args.IncludeFull, version, debugMetadata, analyzeDistributionName, unitSystem, shapeCfg)
 	}
 }

@@ -276,6 +276,12 @@ func aggregateActivityDay(date string, rows []intervals.Activity, metric analysi
 		assumptions["aggregation"] = "sum"
 		return analysis.NumericSample{Key: date, Date: date, Value: sum}, n > 0, assumptions
 	}
+	if metric == "pace_seconds_per_km" || metric == "pace_seconds_per_mile" {
+		return aggregateActivityPace(date, rows, metric)
+	}
+	if metric == "average_speed_kmh" || metric == "average_speed_mph" {
+		return aggregateActivitySpeed(date, rows, metric)
+	}
 	if metric == "max_speed_kmh" || metric == "max_speed_mph" || metric == "max_heart_rate_bpm" {
 		var maxValue float64
 		var ok bool
@@ -289,6 +295,51 @@ func aggregateActivityDay(date string, rows []intervals.Activity, metric analysi
 		return analysis.NumericSample{Key: date, Date: date, Value: maxValue}, ok, assumptions
 	}
 	return weightedActivityMean(date, rows, metric, unitSystem)
+}
+
+func aggregateActivityPace(date string, rows []intervals.Activity, metric analysis.Metric) (analysis.NumericSample, bool, map[string]any) {
+	assumptions := map[string]any{"sample_grain": string(analysis.SampleGrainDaily), "aggregation": "total_moving_time_per_total_distance"}
+	var movingSeconds float64
+	var distanceMeters float64
+	for _, row := range rows {
+		distance := firstFloat(row.ICUDistance, row.Distance)
+		if distance == nil || *distance <= 0 || row.MovingTime == nil || *row.MovingTime <= 0 {
+			continue
+		}
+		distanceMeters += *distance
+		movingSeconds += float64(*row.MovingTime)
+	}
+	if movingSeconds <= 0 || distanceMeters <= 0 {
+		return analysis.NumericSample{}, false, assumptions
+	}
+	metersPerUnit := 1000.0
+	if metric == "pace_seconds_per_mile" {
+		metersPerUnit = 1609.344
+	}
+	return analysis.NumericSample{Key: date, Date: date, Value: movingSeconds / (distanceMeters / metersPerUnit)}, true, assumptions
+}
+
+func aggregateActivitySpeed(date string, rows []intervals.Activity, metric analysis.Metric) (analysis.NumericSample, bool, map[string]any) {
+	assumptions := map[string]any{"sample_grain": string(analysis.SampleGrainDaily), "aggregation": "total_distance_per_total_moving_time"}
+	var movingSeconds float64
+	var distanceMeters float64
+	for _, row := range rows {
+		distance := firstFloat(row.ICUDistance, row.Distance)
+		if distance == nil || *distance <= 0 || row.MovingTime == nil || *row.MovingTime <= 0 {
+			continue
+		}
+		distanceMeters += *distance
+		movingSeconds += float64(*row.MovingTime)
+	}
+	if movingSeconds <= 0 || distanceMeters <= 0 {
+		return analysis.NumericSample{}, false, assumptions
+	}
+	speedMS := distanceMeters / movingSeconds
+	unitSystem := response.UnitSystemMetric
+	if metric == "average_speed_mph" {
+		unitSystem = response.UnitSystemImperial
+	}
+	return analysis.NumericSample{Key: date, Date: date, Value: response.ToPreferred(speedMS, units.UnitMS, unitSystem).Value}, true, assumptions
 }
 
 func weightedActivityMean(date string, rows []intervals.Activity, metric analysis.Metric, unitSystem response.UnitSystem) (analysis.NumericSample, bool, map[string]any) {

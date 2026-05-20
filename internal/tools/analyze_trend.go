@@ -81,6 +81,9 @@ func analyzeTrendHandler(clients analyzerClients, profileClient ProfileClient, v
 		}
 		baselineSeries, err := loadAnalyzerSeries(ctx, clients, metric, baseline, grain, args.Sport, unitSystem, true)
 		if err != nil {
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return Result{}, err
+			}
 			return Result{}, NewUserError(fetchAnalyzeTrendMsg, err)
 		}
 		minSamples := analysis.MinBaselineSamples

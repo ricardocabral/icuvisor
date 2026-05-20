@@ -49,8 +49,8 @@ func ComputeCorrelation(input CorrelationInput) CorrelationResult {
 	if method == "" {
 		method = CorrelationPearson
 	}
-	result := CorrelationResult{MetricX: input.MetricX, MetricY: input.MetricY, Method: method, LagDays: input.LagDays, N: len(input.Pairs), RegressionMethod: "raw_ols"}
 	xs, ys := pairValues(input.Pairs)
+	result := CorrelationResult{MetricX: input.MetricX, MetricY: input.MetricY, Method: method, LagDays: input.LagDays, N: len(xs), RegressionMethod: "raw_ols"}
 	if slope, intercept, ok := ols(xs, ys); ok {
 		result.Slope = roundPtr(slope)
 		result.Intercept = roundPtr(intercept)

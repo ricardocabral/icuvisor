@@ -55,7 +55,7 @@ func ComputeTrend(input TrendInput) (TrendResult, []TrendPoint) {
 		}
 	}
 	if len(values) >= input.MinSamples {
-		if slope, ok := olsSlope(values); ok {
+		if slope, ok := trendSlope(input.Samples, input.SampleGrain); ok {
 			result.Slope = roundPtr(slope)
 			result.TrendDirection = trendDirection(slope)
 		} else {
@@ -102,14 +102,28 @@ func rollingSeries(samples []NumericSample, window int) []TrendPoint {
 	return series
 }
 
-func olsSlope(values []float64) (float64, bool) {
-	n := float64(len(values))
-	if n < 2 {
+func trendSlope(samples []NumericSample, grain SampleGrain) (float64, bool) {
+	values := Values(samples)
+	xs := make([]float64, len(values))
+	for i := range values {
+		xs[i] = float64(i)
+	}
+	if grain == SampleGrainWeekly {
+		for i, sample := range samples {
+			xs[i] = float64(sample.Bucket)
+		}
+	}
+	return olsSlopeXY(xs, values)
+}
+
+func olsSlopeXY(xs []float64, values []float64) (float64, bool) {
+	if len(xs) != len(values) || len(values) < 2 {
 		return 0, false
 	}
+	n := float64(len(values))
 	var sumX, sumY, sumXX, sumXY float64
 	for i, y := range values {
-		x := float64(i)
+		x := xs[i]
 		sumX += x
 		sumY += y
 		sumXX += x * x

@@ -89,6 +89,9 @@ func analyzeCorrelationHandler(clients analyzerClients, profileClient ProfileCli
 		}
 		ySeries, err := loadAnalyzerSeries(ctx, clients, metricY, yWindow, grain, args.Sport, unitSystem, false)
 		if err != nil {
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return Result{}, err
+			}
 			return Result{}, NewUserError(fetchAnalyzeCorrelationMsg, err)
 		}
 		var pairs []analysis.PairedSample
