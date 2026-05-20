@@ -245,7 +245,7 @@ func collectWellnessBaseline(ctx context.Context, args computeBaselineRequest, s
 		if window == "" {
 			continue
 		}
-		value, ok := wellnessMetricValue(row, source.Field)
+		value, ok := baselineWellnessMetricValue(row, source.Field)
 		if ok {
 			addBaselineSample(&out, window, date, "", value, source.Tool)
 			if window == "baseline" {
@@ -287,7 +287,7 @@ func collectActivityBaseline(ctx context.Context, args computeBaselineRequest, s
 		if window == "" {
 			continue
 		}
-		value, ok := activityMetricValue(activity, source.Field)
+		value, ok := baselineActivityMetricValue(activity, source.Field)
 		if !ok && source.Tool == getExtendedMetricsName && extendedClient != nil && activity.ID != "" {
 			detail, derr := extendedClient.GetActivity(ctx, activity.ID)
 			if derr == nil {
@@ -331,7 +331,7 @@ func sampleWindow(date string, args computeBaselineRequest) string {
 
 func summaryMetricValueForSport(row intervals.SummaryWithCats, metric analysis.Metric, field string, sport string) (float64, bool) {
 	if strings.TrimSpace(sport) == "" {
-		return summaryMetricValue(row, metric, field)
+		return baselineSummaryMetricValue(row, metric, field)
 	}
 	for _, category := range row.ByCategory {
 		if !sameFold(sport, category.Category) {
@@ -381,7 +381,7 @@ func isoWeekKey(date string) string {
 	return fmt.Sprintf("%04d-W%02d", year, week)
 }
 
-func summaryMetricValue(row intervals.SummaryWithCats, metric analysis.Metric, field string) (float64, bool) {
+func baselineSummaryMetricValue(row intervals.SummaryWithCats, metric analysis.Metric, field string) (float64, bool) {
 	switch metric {
 	case "ctl":
 		return row.Fitness, true
@@ -412,10 +412,10 @@ func summaryMetricValue(row intervals.SummaryWithCats, metric analysis.Metric, f
 	}
 	return rawNumber(row.Raw, field)
 }
-func wellnessMetricValue(row intervals.Wellness, field string) (float64, bool) {
+func baselineWellnessMetricValue(row intervals.Wellness, field string) (float64, bool) {
 	return rawNumber(row.Raw, field)
 }
-func activityMetricValue(activity intervals.Activity, field string) (float64, bool) {
+func baselineActivityMetricValue(activity intervals.Activity, field string) (float64, bool) {
 	switch field {
 	case "moving_time_seconds":
 		if activity.MovingTime != nil {
