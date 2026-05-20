@@ -15,20 +15,22 @@ import (
 )
 
 type fileConfig struct {
-	APIKey          string        `json:"api_key"`
-	AthleteID       string        `json:"athlete_id"`
-	Timezone        string        `json:"timezone"`
-	APIBaseURL      string        `json:"api_base_url"`
-	HTTPTimeout     string        `json:"http_timeout"`
-	Transport       string        `json:"transport"`
-	HTTPBindAddress string        `json:"http_bind"`
-	Coach           *coach.Config `json:"coach"`
+	APIKey          string              `json:"api_key"`
+	CredentialRef   CredentialReference `json:"credential_ref"`
+	AthleteID       string              `json:"athlete_id"`
+	Timezone        string              `json:"timezone"`
+	APIBaseURL      string              `json:"api_base_url"`
+	HTTPTimeout     string              `json:"http_timeout"`
+	Transport       string              `json:"transport"`
+	HTTPBindAddress string              `json:"http_bind"`
+	Coach           *coach.Config       `json:"coach"`
 }
 
 type rawConfig struct {
 	apiKey          string
 	apiKeySource    APIKeySource
 	apiKeyLocation  string
+	credentialRef   CredentialReference
 	athleteID       string
 	timezone        string
 	apiBaseURL      string
@@ -138,7 +140,7 @@ func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
 	decoder := json.NewDecoder(strings.NewReader(string(data)))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&file); err != nil {
-		return rawConfig{}, fmt.Errorf("invalid config JSON in %q; expected fields api_key, athlete_id, timezone, api_base_url, http_timeout, transport, http_bind, coach: %w", path, err)
+		return rawConfig{}, fmt.Errorf("invalid config JSON in %q; expected fields api_key, credential_ref, athlete_id, timezone, api_base_url, http_timeout, transport, http_bind, coach: %w", path, err)
 	}
 
 	apiKey := strings.TrimSpace(file.APIKey)
@@ -153,6 +155,7 @@ func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
 		apiKey:          apiKey,
 		apiKeySource:    apiKeySource,
 		apiKeyLocation:  sourceLocation,
+		credentialRef:   file.CredentialRef,
 		athleteID:       strings.TrimSpace(file.AthleteID),
 		timezone:        strings.TrimSpace(file.Timezone),
 		apiBaseURL:      strings.TrimSpace(file.APIBaseURL),
@@ -196,6 +199,9 @@ func rawFromEnv(env map[string]string, apiKeySource APIKeySource, apiKeyLocation
 }
 
 func (r *rawConfig) merge(next rawConfig, absentOnly bool) {
+	if !next.credentialRef.empty() && (!absentOnly || r.credentialRef.empty()) {
+		r.credentialRef = next.credentialRef
+	}
 	if shouldSet(r.apiKey, next.apiKey, absentOnly) {
 		r.apiKey = next.apiKey
 		r.apiKeySource = next.apiKeySource

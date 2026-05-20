@@ -52,7 +52,8 @@ func TestRunSetupWritesConfigAndVerifiesKeychainRoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	configPath := dir + "/config.json"
 	store := &fakeSetupStore{getErr: credstore.ErrNotFound}
-	prompter := &fakeSetupPrompter{confirms: []bool{true}, lines: []string{"i12345"}, secrets: []string{"api-key"}}
+	secret := "super-secret-token"
+	prompter := &fakeSetupPrompter{confirms: []bool{true}, lines: []string{"i12345"}, secrets: []string{secret}}
 	fetchCalls := 0
 	var gotAthleteIDs []string
 	var stdout bytes.Buffer
@@ -75,21 +76,26 @@ func TestRunSetupWritesConfigAndVerifiesKeychainRoundTrip(t *testing.T) {
 	if fetchCalls != 2 {
 		t.Fatalf("profile fetch calls = %d, want pre-write and final test", fetchCalls)
 	}
-	if len(store.sets) != 1 || store.sets[0] != "api-key" {
-		t.Fatalf("store sets = %v, want api-key", store.sets)
+	if len(store.sets) != 1 || store.sets[0] != secret {
+		t.Fatalf("store sets = %v, want %q", store.sets, secret)
 	}
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		t.Fatalf("read config: %v", err)
 	}
-	if strings.Contains(string(data), "api_key") || strings.Contains(string(data), "api-key") {
+	if strings.Contains(string(data), "api_key") || strings.Contains(string(data), secret) {
 		t.Fatalf("config leaked API key: %s", data)
+	}
+	for _, want := range []string{`"credential_ref"`, `"type": "keychain"`, `"service": "icuvisor"`, `"account": "intervals-icu-api-key"`} {
+		if !strings.Contains(string(data), want) {
+			t.Fatalf("config missing credential reference %q: %s", want, data)
+		}
 	}
 	cfg, err := config.Load(context.Background(), config.Options{Path: configPath, Env: map[string]string{}, CredentialStore: store})
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
-	if cfg.APIKey != "api-key" || cfg.AthleteID != "i12345" || cfg.Timezone != "Europe/Madrid" || cfg.APIBaseURL != config.DefaultAPIBaseURL {
+	if cfg.APIKey != secret || cfg.AthleteID != "i12345" || cfg.Timezone != "Europe/Madrid" || cfg.APIBaseURL != config.DefaultAPIBaseURL {
 		t.Fatalf("loaded config = %+v", cfg)
 	}
 	if got, want := prompter.secretPrompts, []string{"Paste your intervals.icu API key (from https://intervals.icu/settings):"}; !slices.Equal(got, want) {

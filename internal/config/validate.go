@@ -17,6 +17,10 @@ func validate(raw rawConfig) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	credentialRef, err := validateCredentialReference(raw.credentialRef)
+	if err != nil {
+		return Config{}, err
+	}
 	coachMode, err := validateCoachMode(raw)
 	if err != nil {
 		return Config{}, err
@@ -49,7 +53,7 @@ func validate(raw rawConfig) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	return buildConfig(raw, apiKey, athleteID, loc, baseURL, timeout, transport, httpBindAddress, coachMode, coachConfig), nil
+	return buildConfig(raw, apiKey, credentialRef, athleteID, loc, baseURL, timeout, transport, httpBindAddress, coachMode, coachConfig), nil
 }
 
 func validateAPIKey(raw rawConfig) (string, error) {
@@ -58,6 +62,20 @@ func validateAPIKey(raw rawConfig) (string, error) {
 		return "", fmt.Errorf("missing intervals.icu API key; set %s, store it in OS keychain service %q account %q, or set legacy api_key in config JSON/.env", EnvAPIKey, credstore.ServiceName, credstore.IntervalsAPIKeyAccount)
 	}
 	return apiKey, nil
+}
+
+func validateCredentialReference(ref CredentialReference) (CredentialReference, error) {
+	if ref.empty() {
+		return CredentialReference{}, nil
+	}
+	expected := DefaultCredentialReference()
+	ref.Type = strings.TrimSpace(ref.Type)
+	ref.Service = strings.TrimSpace(ref.Service)
+	ref.Account = strings.TrimSpace(ref.Account)
+	if ref != expected {
+		return CredentialReference{}, fmt.Errorf("unsupported credential_ref; use type %q with OS keychain service %q account %q", expected.Type, expected.Service, expected.Account)
+	}
+	return ref, nil
 }
 
 func validateCoachMode(raw rawConfig) (coach.Mode, error) {
@@ -134,10 +152,11 @@ func validateHTTPBind(raw rawConfig) (string, error) {
 	return NormalizeHTTPBindAddress(httpBindAddress)
 }
 
-func buildConfig(raw rawConfig, apiKey, athleteID string, loc *time.Location, baseURL string, timeout time.Duration, transport Transport, httpBindAddress string, coachMode coach.Mode, coachConfig coach.Config) Config {
+func buildConfig(raw rawConfig, apiKey string, credentialRef CredentialReference, athleteID string, loc *time.Location, baseURL string, timeout time.Duration, transport Transport, httpBindAddress string, coachMode coach.Mode, coachConfig coach.Config) Config {
 	return Config{
 		APIKey:          apiKey,
 		APIKeySource:    raw.apiKeySource,
+		CredentialRef:   credentialRef,
 		AthleteID:       athleteID,
 		Timezone:        loc.String(),
 		APIBaseURL:      strings.TrimRight(baseURL, "/"),

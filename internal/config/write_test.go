@@ -27,6 +27,11 @@ func TestWriteStoresOnlyNonSecretFieldsAndRoundTrips(t *testing.T) {
 	if !strings.Contains(content, `"athlete_id": "i12345"`) || !strings.Contains(content, `"timezone": "Europe/Madrid"`) {
 		t.Fatalf("written config missing normalized fields: %s", content)
 	}
+	for _, want := range []string{`"credential_ref"`, `"type": "keychain"`, `"service": "icuvisor"`, `"account": "intervals-icu-api-key"`} {
+		if !strings.Contains(content, want) {
+			t.Fatalf("written config missing credential reference %q: %s", want, content)
+		}
+	}
 	if strings.Contains(content, "api_base_url") {
 		t.Fatalf("default api_base_url should be omitted: %s", content)
 	}
@@ -61,7 +66,7 @@ func TestLoadWriteReloadRoundTripBytes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read written config: %v", err)
 	}
-	expected := "{\n  \"athlete_id\": \"i12345\",\n  \"timezone\": \"Europe/Madrid\",\n  \"api_base_url\": \"https://example.test/api\"\n}\n"
+	expected := "{\n  \"credential_ref\": {\n    \"type\": \"keychain\",\n    \"service\": \"icuvisor\",\n    \"account\": \"intervals-icu-api-key\"\n  },\n  \"athlete_id\": \"i12345\",\n  \"timezone\": \"Europe/Madrid\",\n  \"api_base_url\": \"https://example.test/api\"\n}\n"
 	if string(written) != expected {
 		t.Fatalf("written config bytes mismatch:\n got %q\nwant %q", string(written), expected)
 	}
