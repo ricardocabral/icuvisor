@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- KR5 benchmark harness/report now compares analyzer-enabled versus analyzer-disabled fixture modes with v2 response-token metrics, source-tool usage validation, raw-stream pull counts, and TP-098 core-promotion evidence without promoting tools in this change.
 - `analyze_trend`, `analyze_distribution`, `analyze_correlation`, and `analyze_efforts_delta` are registered in the full toolset to compute deterministic analyzer reductions with mandatory `_meta`, closed `analysis_metric` validation, terse-by-default responses, and unit-explicit best-efforts deltas.
 - `compute_zone_time`, `compute_load_balance`, `compute_baseline`, and `compute_compliance_rate` are registered in the full toolset as deterministic analyzer-family compute tools using existing read outputs, mandatory analyzer `_meta`, explicit missing/insufficient signals, and activation hints that tell assistants not to roll their own row/stream reductions.
 - `get_activity_histogram` summarizes one activity's power, heart-rate, or pace distribution into terse bucketed seconds/percentages using configured zones when available and fixed-width stream buckets otherwise.
