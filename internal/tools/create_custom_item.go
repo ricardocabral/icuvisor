@@ -191,5 +191,5 @@ func createCustomItemInputExamples() []map[string]any {
 }
 
 func createCustomItemOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Create confirmation containing the same full custom_item read shape as get_custom_item_by_id, with content preserved verbatim and schema-validation metadata."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Create confirmation containing a custom_item detail shape with null keys stripped by default, non-null content fields preserved, and schema-validation metadata."}
 }
