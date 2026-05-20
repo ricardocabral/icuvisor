@@ -1,0 +1,156 @@
+{
+  "$schema": "https://github.com/modelcontextprotocol/mcpb/raw/main/dist/mcpb-manifest.schema.json",
+  "manifest_version": "0.3",
+  "name": "icuvisor",
+  "display_name": "icuvisor",
+  "version": "0.0.0",
+  "description": "Connect Claude Desktop to intervals.icu training data through the local icuvisor MCP server.",
+  "long_description": "icuvisor is a local-first MCP server for intervals.icu athletes and coaches. The Desktop Extension bundles the signed icuvisor binary, runs it over stdio, and lets Claude Desktop collect configuration without manual JSON edits. API keys are marked sensitive in user_config so Claude Desktop stores them in the operating-system secret vault and passes them only at launch time. Tools are terse by default, with optional full payloads for heavier reads.",
+  "author": {
+    "name": "icuvisor maintainers",
+    "url": "https://github.com/ricardocabral/icuvisor"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ricardocabral/icuvisor.git"
+  },
+  "homepage": "https://icuvisor.dev",
+  "documentation": "https://icuvisor.dev/connect/claude-desktop/",
+  "support": "https://github.com/ricardocabral/icuvisor/issues",
+  "icon": "assets/icon.png",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "claude-desktop",
+    "intervals.icu",
+    "training",
+    "cycling",
+    "running"
+  ],
+  "privacy_policies": [
+    "https://intervals.icu/privacy",
+    "https://github.com/ricardocabral/icuvisor/blob/main/SECURITY.md"
+  ],
+  "server": {
+    "type": "binary",
+    "entry_point": "server/icuvisor",
+    "mcp_config": {
+      "command": "${__dirname}/server/icuvisor",
+      "args": [],
+      "env": {
+        "INTERVALS_ICU_API_KEY": "${user_config.api_key}",
+        "INTERVALS_ICU_ATHLETE_ID": "${user_config.athlete_id}",
+        "ICUVISOR_TIMEZONE": "${user_config.timezone}",
+        "ICUVISOR_TOOLSET": "${user_config.toolset}",
+        "ICUVISOR_TRANSPORT": "stdio"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "get_athlete_profile",
+      "description": "Read the configured intervals.icu athlete profile and preferences."
+    },
+    {
+      "name": "get_activities",
+      "description": "List recent activities with terse summaries and pagination."
+    },
+    {
+      "name": "get_activity_details",
+      "description": "Fetch detailed data for one activity when a summary is not enough."
+    },
+    {
+      "name": "get_fitness",
+      "description": "Read current fitness metrics such as CTL, ATL, and TSB."
+    },
+    {
+      "name": "get_wellness_data",
+      "description": "Read wellness rows with scale metadata for sleep, feel, fatigue, and related fields."
+    },
+    {
+      "name": "get_events",
+      "description": "List calendar events, workouts, races, and notes."
+    },
+    {
+      "name": "add_or_update_event",
+      "description": "Create or update a calendar event, workout, race, or note."
+    },
+    {
+      "name": "update_wellness",
+      "description": "Update athlete-entered wellness fields for a date."
+    },
+    {
+      "name": "list_advanced_capabilities",
+      "description": "Explain which advanced tools are hidden by the default core toolset and how to enable them."
+    }
+  ],
+  "tools_generated": true,
+  "prompts": [
+    {
+      "name": "training_analysis",
+      "description": "Guide a training-load, trend, and best-effort analysis.",
+      "arguments": ["start_date", "end_date"],
+      "text": "Use icuvisor's registered training_analysis MCP prompt for a terse training-load, trend, and best-effort readout over the requested date window."
+    },
+    {
+      "name": "recovery_check",
+      "description": "Guide a recovery-focused read of wellness and recent training.",
+      "arguments": ["date", "lookback_days"],
+      "text": "Use icuvisor's registered recovery_check MCP prompt to combine wellness, recent training, and athlete-profile context before making recovery suggestions."
+    },
+    {
+      "name": "weekly_planning",
+      "description": "Guide a practical weekly training-plan discussion.",
+      "arguments": ["week_start"],
+      "text": "Use icuvisor's registered weekly_planning MCP prompt to review the athlete calendar and recent load before suggesting a practical week."
+    },
+    {
+      "name": "race_week_taper",
+      "description": "Guide a race-week taper review using the athlete calendar and profile.",
+      "arguments": ["race_date", "race_name"],
+      "text": "Use icuvisor's registered race_week_taper MCP prompt for the requested race date and optional race name."
+    },
+    {
+      "name": "coach_roster_triage",
+      "description": "Guide a coach-mode roster triage for one athlete.",
+      "arguments": ["athlete_id", "start_date", "end_date"],
+      "text": "Use icuvisor's registered coach_roster_triage MCP prompt for the selected athlete and date window."
+    }
+  ],
+  "prompts_generated": true,
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": [
+      "darwin"
+    ]
+  },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "intervals.icu API key",
+      "description": "Your intervals.icu API key. Claude Desktop stores this sensitive value in the operating-system secret vault and passes it to icuvisor at launch.",
+      "sensitive": true,
+      "required": true
+    },
+    "athlete_id": {
+      "type": "string",
+      "title": "Athlete ID",
+      "description": "Your intervals.icu athlete ID from the profile URL, with or without the leading i (for example i12345 or 12345). This is not a credential.",
+      "required": true
+    },
+    "timezone": {
+      "type": "string",
+      "title": "Timezone",
+      "description": "IANA timezone used for athlete-local dates, such as America/Los_Angeles or Europe/Lisbon.",
+      "required": false,
+      "default": "UTC"
+    },
+    "toolset": {
+      "type": "string",
+      "title": "Toolset",
+      "description": "Use core for the terse default catalog or full to expose advanced tools. Delete tools remain hidden in this extension package.",
+      "required": false,
+      "default": "core"
+    }
+  }
+}
