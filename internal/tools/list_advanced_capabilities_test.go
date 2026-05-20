@@ -51,6 +51,15 @@ func TestListAdvancedCapabilitiesOutputFromCatalog(t *testing.T) {
 			t.Fatalf("summary for %s is not one line: %q", row.Name, row.Summary)
 		}
 	}
+	for _, name := range fullOnlyAnalyzerFamilyNames(registrar.tools) {
+		row, ok := rows[name]
+		if !ok {
+			t.Fatalf("advanced capabilities missing full-only analyzer-family tool %s: %#v", name, rows)
+		}
+		if row.Summary == "" || !strings.HasPrefix(row.Summary, "Use when the prompt asks ") || !strings.Contains(row.Summary, "do not fetch") {
+			t.Fatalf("%s summary = %q, want clear analyzer activation hint", name, row.Summary)
+		}
+	}
 	if _, ok := rows[getPowerCurvesName]; !ok {
 		t.Fatalf("advanced capabilities missing %s: %#v", getPowerCurvesName, rows)
 	}
@@ -69,6 +78,20 @@ func TestListAdvancedCapabilitiesOutputFromCatalog(t *testing.T) {
 			t.Fatalf("advanced capabilities included %s: %#v", excluded, rows[excluded])
 		}
 	}
+}
+
+func fullOnlyAnalyzerFamilyNames(catalog []Tool) []string {
+	analyzerFamily := make(map[string]struct{}, len(analyzerFamilyCatalogNames()))
+	for _, name := range analyzerFamilyCatalogNames() {
+		analyzerFamily[name] = struct{}{}
+	}
+	var names []string
+	for _, tool := range catalog {
+		if _, ok := analyzerFamily[tool.Name]; ok && tool.EffectiveToolset() == safety.ToolsetFull {
+			names = append(names, tool.Name)
+		}
+	}
+	return names
 }
 
 func TestListAdvancedCapabilitiesFullModeStatus(t *testing.T) {
