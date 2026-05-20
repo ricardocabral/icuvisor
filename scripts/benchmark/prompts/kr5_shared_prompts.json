@@ -13,82 +13,435 @@
     {
       "id": "KR5-01",
       "forum_shape": "recent training review",
-      "source_prompt_ids": ["v0.2:CJ-01", "v0.2:T-02", "v0.2:T-03", "v0.2:T-06"],
+      "source_prompt_ids": [
+        "v0.2:CJ-01",
+        "v0.2:T-02",
+        "v0.2:T-03",
+        "v0.2:T-06"
+      ],
       "prd_anchor": "PRD §6 Job 1; PRD §7.4 #8",
-      "required_intents": ["athlete_profile", "recent_activities", "fitness_trend", "training_summary"],
+      "required_intents": [
+        "athlete_profile",
+        "recent_activities",
+        "fitness_trend",
+        "training_summary"
+      ],
       "prompt": "Review my last 14 days of training. Summarize load, intensity, notable workouts, and recovery risk, then recommend what I should do for the next 48 hours. Do not invent unavailable metrics."
     },
     {
       "id": "KR5-02",
       "forum_shape": "recovery and wellness check",
-      "source_prompt_ids": ["v0.2:CJ-03", "v0.2:A-03"],
+      "source_prompt_ids": [
+        "v0.2:CJ-03",
+        "v0.2:A-03"
+      ],
       "prd_anchor": "PRD §6 Job 4; PRD §7.4 #8",
-      "required_intents": ["wellness_window", "fitness_trend", "recent_activities"],
+      "required_intents": [
+        "wellness_window",
+        "fitness_trend",
+        "recent_activities"
+      ],
       "prompt": "Look at my last 21 days of wellness and recent training. Explain sleep, HRV, resting heart rate, fatigue, and whether I appear ready to train today. Keep subjective scale labels separate."
     },
     {
       "id": "KR5-03",
       "forum_shape": "weekly planning",
-      "source_prompt_ids": ["v0.2:CJ-02", "v0.2:T-13", "v0.2:T-15"],
+      "source_prompt_ids": [
+        "v0.2:CJ-02",
+        "v0.2:T-13",
+        "v0.2:T-15"
+      ],
       "prd_anchor": "PRD §6 Job 2; PRD §7.4 #8",
-      "required_intents": ["calendar_window", "recent_activities", "training_summary", "training_plan"],
+      "required_intents": [
+        "calendar_window",
+        "recent_activities",
+        "training_summary",
+        "training_plan"
+      ],
       "prompt": "Compare my completed training this week with the next 14 days of planned work. Identify conflicts, missing easy days, and one practical adjustment without changing my calendar."
     },
     {
       "id": "KR5-04",
       "forum_shape": "race-week taper",
-      "source_prompt_ids": ["v0.2:CJ-02", "internal prompt:race_week_taper"],
+      "source_prompt_ids": [
+        "v0.2:CJ-02",
+        "internal prompt:race_week_taper"
+      ],
       "prd_anchor": "PRD §6 Job 2; PRD §7.4 #8",
-      "required_intents": ["athlete_profile", "fitness_trend", "calendar_window", "wellness_window"],
+      "required_intents": [
+        "athlete_profile",
+        "fitness_trend",
+        "calendar_window",
+        "wellness_window"
+      ],
       "prompt": "I have a race on [RACE_DATE]. Review my fitness trend, wellness, and planned sessions around race week, then suggest a taper outline. Do not write or delete events."
     },
     {
       "id": "KR5-05",
       "forum_shape": "activity detail explanation",
-      "source_prompt_ids": ["v0.2:T-06", "v0.2:T-07", "v0.2:T-11"],
+      "source_prompt_ids": [
+        "v0.2:T-06",
+        "v0.2:T-07",
+        "v0.2:T-11"
+      ],
       "prd_anchor": "PRD §6 Job 1; PRD §7.2.C Activities",
-      "required_intents": ["recent_activities", "activity_detail", "activity_messages"],
+      "required_intents": [
+        "recent_activities",
+        "activity_detail",
+        "activity_messages"
+      ],
       "prompt": "Using [ACTIVITY_ID] from my recent activities, explain what happened in that workout: sport, local start time, duration, distance, load, source/device, and any notes without quoting private text verbatim."
     },
     {
       "id": "KR5-06",
       "forum_shape": "intervals and splits",
-      "source_prompt_ids": ["v0.2:T-08", "v0.2:T-10"],
+      "source_prompt_ids": [
+        "v0.2:T-08",
+        "v0.2:T-10"
+      ],
       "prd_anchor": "PRD §7.2.C Activities; PRD §7.4 #8",
-      "required_intents": ["activity_intervals", "activity_splits"],
+      "required_intents": [
+        "activity_intervals",
+        "activity_splits"
+      ],
       "prompt": "For [ACTIVITY_ID], summarize intervals or laps and per-km or per-mile splits in my preferred units. If either data source is unavailable, say so rather than filling in missing values."
     },
     {
       "id": "KR5-07",
       "forum_shape": "best efforts and curves",
-      "source_prompt_ids": ["v0.2:T-04", "v0.2:T-05"],
+      "source_prompt_ids": [
+        "v0.2:T-04",
+        "v0.2:T-05"
+      ],
       "prd_anchor": "PRD §7.2.C Fitness; PRD §7.4 #8",
-      "required_intents": ["best_efforts", "power_curves"],
+      "required_intents": [
+        "best_efforts",
+        "power_curves"
+      ],
       "prompt": "What are my recent best efforts and curve signals? Compare short, threshold, and endurance durations where the data exists, and state units clearly."
     },
     {
       "id": "KR5-08",
       "forum_shape": "custom fields and extended metrics",
-      "source_prompt_ids": ["v0.2:T-12", "v0.2:T-18", "v0.2:T-19"],
+      "source_prompt_ids": [
+        "v0.2:T-12",
+        "v0.2:T-18",
+        "v0.2:T-19"
+      ],
       "prd_anchor": "PRD §7.2.C Activities; PRD §7.4 #4; PRD §7.4 #8",
-      "required_intents": ["activity_detail", "extended_metrics"],
+      "required_intents": [
+        "activity_detail",
+        "extended_metrics"
+      ],
       "prompt": "For [ACTIVITY_ID], tell me which advanced metrics are actually available, such as decoupling, IF, VI, zone distribution, RPE, feel, compliance, or device name. Do not compute fields the server does not expose."
     },
     {
       "id": "KR5-09",
       "forum_shape": "workout library and non-destructive note",
-      "source_prompt_ids": ["v0.2:T-16", "v0.2:T-17", "v0.3:W-01", "v0.3:W-05"],
+      "source_prompt_ids": [
+        "v0.2:T-16",
+        "v0.2:T-17",
+        "v0.3:W-01",
+        "v0.3:W-05"
+      ],
       "prd_anchor": "PRD §6 Job 2; PRD §7.2.C Events/Workout library",
-      "required_intents": ["workout_library", "calendar_window", "non_destructive_note_preview"],
+      "required_intents": [
+        "workout_library",
+        "calendar_window",
+        "non_destructive_note_preview"
+      ],
       "prompt": "Find a workout-library option or planned event that could fit next week and draft a short non-destructive note I could add. Do not delete anything or overwrite an existing workout."
     },
     {
       "id": "KR5-10",
       "forum_shape": "coach-style weekly triage",
-      "source_prompt_ids": ["v0.2:CJ-04", "internal prompt:coach_roster_triage"],
+      "source_prompt_ids": [
+        "v0.2:CJ-04",
+        "internal prompt:coach_roster_triage"
+      ],
       "prd_anchor": "PRD §6 coach use case; PRD §7.4 #8",
-      "required_intents": ["athlete_profile", "recent_activities", "calendar_window", "wellness_window", "fitness_trend"],
+      "required_intents": [
+        "athlete_profile",
+        "recent_activities",
+        "calendar_window",
+        "wellness_window",
+        "fitness_trend"
+      ],
       "prompt": "Triage [ATHLETE] for this week as a coach: recent activities, upcoming planned work, fitness trend, wellness red flags, and one concise coaching note. Be explicit about data you cannot access."
+    },
+    {
+      "id": "KR5-A01",
+      "forum_shape": "analyzer trend",
+      "source_prompt_ids": [
+        "v0.6:analyzer:trend"
+      ],
+      "prd_anchor": "ROADMAP v0.6 analyzer core-promotion evidence; TP-098 analyze_trend",
+      "server_scope": [
+        "icuvisor-analyzer-family"
+      ],
+      "benchmark_modes": [
+        "analyzers_enabled",
+        "analyzers_disabled"
+      ],
+      "required_intents": [
+        "trend_analysis"
+      ],
+      "expected_tools_by_mode": {
+        "analyzers_enabled": [
+          "analyze_trend"
+        ],
+        "analyzers_disabled": [
+          "get_activities",
+          "get_activity_streams"
+        ]
+      },
+      "expected_source_tools_by_mode": {
+        "analyzers_enabled": {
+          "analyze_trend": [
+            {
+              "tool": "get_activities",
+              "count": 1
+            }
+          ]
+        },
+        "analyzers_disabled": {
+          "get_activities": [
+            {
+              "tool": "get_activities",
+              "count": 1
+            }
+          ],
+          "get_activity_streams": [
+            {
+              "tool": "get_activity_streams",
+              "count": 1
+            }
+          ]
+        }
+      },
+      "prompt": "Over the last 28 days, analyze my training-load trend and call out whether the direction is meaningfully rising, falling, or stable. Use the same metric definition in both benchmark modes and do not invent missing samples."
+    },
+    {
+      "id": "KR5-A02",
+      "forum_shape": "zone-time distribution",
+      "source_prompt_ids": [
+        "v0.6:analyzer:zone-time"
+      ],
+      "prd_anchor": "ROADMAP v0.6 analyzer core-promotion evidence; TP-098 compute_zone_time",
+      "server_scope": [
+        "icuvisor-analyzer-family"
+      ],
+      "benchmark_modes": [
+        "analyzers_enabled",
+        "analyzers_disabled"
+      ],
+      "required_intents": [
+        "zone_time_distribution"
+      ],
+      "expected_tools_by_mode": {
+        "analyzers_enabled": [
+          "compute_zone_time"
+        ],
+        "analyzers_disabled": [
+          "get_activity_streams"
+        ]
+      },
+      "expected_source_tools_by_mode": {
+        "analyzers_enabled": {
+          "compute_zone_time": [
+            {
+              "tool": "get_training_summary",
+              "count": 1
+            }
+          ]
+        },
+        "analyzers_disabled": {
+          "get_activity_streams": [
+            {
+              "tool": "get_activity_streams",
+              "count": 1
+            }
+          ]
+        }
+      },
+      "prompt": "For the last four weeks, summarize my power-zone time distribution and the low/moderate/high balance. Keep the zone definitions consistent across benchmark modes and avoid returning raw stream samples."
+    },
+    {
+      "id": "KR5-A03",
+      "forum_shape": "baseline comparison",
+      "source_prompt_ids": [
+        "v0.6:analyzer:baseline"
+      ],
+      "prd_anchor": "ROADMAP v0.6 analyzer core-promotion evidence; TP-098 compute_baseline",
+      "server_scope": [
+        "icuvisor-analyzer-family"
+      ],
+      "benchmark_modes": [
+        "analyzers_enabled",
+        "analyzers_disabled"
+      ],
+      "required_intents": [
+        "baseline_analysis"
+      ],
+      "expected_tools_by_mode": {
+        "analyzers_enabled": [
+          "compute_baseline"
+        ],
+        "analyzers_disabled": [
+          "get_activities",
+          "get_fitness"
+        ]
+      },
+      "expected_source_tools_by_mode": {
+        "analyzers_enabled": {
+          "compute_baseline": [
+            {
+              "tool": "get_activities",
+              "count": 1
+            }
+          ]
+        },
+        "analyzers_disabled": {
+          "get_activities": [
+            {
+              "tool": "get_activities",
+              "count": 1
+            }
+          ],
+          "get_fitness": [
+            {
+              "tool": "get_fitness",
+              "count": 1
+            }
+          ]
+        }
+      },
+      "prompt": "Compare my current seven-day training load against the prior six-week baseline. Explain the z-score direction and whether the current block is unusually high, typical, or low without changing the formula between modes."
+    },
+    {
+      "id": "KR5-A04",
+      "forum_shape": "correlation and compliance",
+      "source_prompt_ids": [
+        "v0.6:analyzer:correlation",
+        "v0.6:analyzer:compliance"
+      ],
+      "prd_anchor": "ROADMAP v0.6 analyzer family evidence",
+      "server_scope": [
+        "icuvisor-analyzer-family"
+      ],
+      "benchmark_modes": [
+        "analyzers_enabled",
+        "analyzers_disabled"
+      ],
+      "required_intents": [
+        "correlation_analysis",
+        "compliance_rate"
+      ],
+      "expected_tools_by_mode": {
+        "analyzers_enabled": [
+          "analyze_correlation",
+          "compute_compliance_rate"
+        ],
+        "analyzers_disabled": [
+          "get_wellness_data",
+          "get_events",
+          "get_activities"
+        ]
+      },
+      "expected_source_tools_by_mode": {
+        "analyzers_enabled": {
+          "analyze_correlation": [
+            {
+              "tool": "get_wellness_data",
+              "count": 1
+            },
+            {
+              "tool": "get_activities",
+              "count": 1
+            }
+          ],
+          "compute_compliance_rate": [
+            {
+              "tool": "get_events",
+              "count": 1
+            },
+            {
+              "tool": "get_activities",
+              "count": 1
+            }
+          ]
+        },
+        "analyzers_disabled": {
+          "get_wellness_data": [
+            {
+              "tool": "get_wellness_data",
+              "count": 1
+            }
+          ],
+          "get_events": [
+            {
+              "tool": "get_events",
+              "count": 1
+            }
+          ],
+          "get_activities": [
+            {
+              "tool": "get_activities",
+              "count": 1
+            }
+          ]
+        }
+      },
+      "prompt": "Check whether sleep duration and training load moved together over the last month, then summarize workout-compliance rate for the same period. State when correlation is weak and do not infer causation."
+    },
+    {
+      "id": "KR5-A05",
+      "forum_shape": "single-activity histogram",
+      "source_prompt_ids": [
+        "v0.6:analyzer:activity-histogram"
+      ],
+      "prd_anchor": "ROADMAP v0.6 analyzer family evidence; TP-092 get_activity_histogram",
+      "server_scope": [
+        "icuvisor-analyzer-family"
+      ],
+      "benchmark_modes": [
+        "analyzers_enabled",
+        "analyzers_disabled"
+      ],
+      "required_intents": [
+        "activity_histogram"
+      ],
+      "expected_tools_by_mode": {
+        "analyzers_enabled": [
+          "get_activity_histogram"
+        ],
+        "analyzers_disabled": [
+          "get_activity_streams"
+        ]
+      },
+      "expected_source_tools_by_mode": {
+        "analyzers_enabled": {
+          "get_activity_histogram": [
+            {
+              "tool": "get_activity_streams",
+              "count": 1
+            },
+            {
+              "tool": "get_activity_details",
+              "count": 1
+            }
+          ]
+        },
+        "analyzers_disabled": {
+          "get_activity_streams": [
+            {
+              "tool": "get_activity_streams",
+              "count": 1
+            }
+          ]
+        }
+      },
+      "prompt": "For [ACTIVITY_ID], summarize heart-rate time-in-zone as a compact histogram. Do not return raw samples unless the benchmark mode lacks the histogram analyzer."
     }
   ]
 }

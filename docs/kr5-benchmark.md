@@ -4,12 +4,13 @@ This document defines the repeatable benchmark for PRD KR5: token efficiency ver
 
 ## Scope
 
-The benchmark compares four catalog surfaces:
+The benchmark compares four historical KR5 catalog surfaces plus one scoped analyzer-family fixture:
 
 1. `icuvisor-core` — icuvisor with `ICUVISOR_TOOLSET=core`; this is the headline KR5 surface.
 2. `icuvisor-full` — icuvisor with `ICUVISOR_TOOLSET=full`.
 3. `hhopke-intervals-icu-mcp` — the default `hhopke/intervals-icu-mcp` tool surface.
 4. `mvilanova-intervals-mcp-server` — the default `mvilanova/intervals-mcp-server` tool surface, measured only as a black box.
+5. `icuvisor-analyzer-family` — deterministic synthetic fixture for analyzer-enabled versus analyzer-disabled call plans. Its `analyzers_enabled` and `analyzers_disabled` modes share byte-identical non-analyzer catalog payloads; enabled mode adds the analyzer family only.
 
 ## Metrics
 
@@ -25,24 +26,28 @@ The array is sorted by tool name and serialized as canonical compact UTF-8 JSON.
 
 The pinned tokenizer is `cl100k_base` via `tiktoken==0.12.0`. The tokenizer package is MIT-licensed and is used only by the benchmark script, not by the shipped icuvisor binary. The result file records the tokenizer name and package version. If `tiktoken` is unavailable, the harness exits with installation guidance unless explicitly run with `--allow-approx-tokenizer` for smoke testing; approximate-tokenizer output is not accepted for KR5 results.
 
-### Median per-call response bytes
+### Per-call response bytes, response tokens, and raw-stream pulls
 
-For each shared prompt scenario, the harness executes the pinned MCP tool-call plan for each server. In live mode, every `tools/call` MCP `result` object is serialized as canonical compact UTF-8 JSON and measured in bytes. In fixture mode, redacted call fixtures may carry `redaction_audit.raw_response_bytes` inside the redacted content; when present, the harness counts that audited raw byte value, removes only the audit metadata, validates `redaction_audit.redacted_response_bytes` against the committed redacted MCP result, and validates that redacted bytes are within ±1% of raw. Calls without an audit field, including explicit unavailable/error results, are measured from their canonical MCP result JSON. The median is recorded as a JSON number; even-sized call sets may produce `.5` byte medians.
+For each shared prompt scenario, the harness executes the pinned MCP tool-call plan for each server. In live mode, every `tools/call` MCP `result` object is serialized as canonical compact UTF-8 JSON and measured in bytes and tokens. In fixture mode, redacted call fixtures may carry `redaction_audit.raw_response_bytes` inside the redacted content; when present, the harness counts that audited raw byte value, removes only the audit metadata, validates `redaction_audit.redacted_response_bytes` against the committed redacted MCP result, and validates that redacted bytes are within ±1% of raw. Response-token metrics strip benchmark-only `redaction_audit` metadata before tokenization. Calls without an audit field, including explicit unavailable/error results, are measured from their canonical MCP result JSON. Medians are recorded as JSON numbers; even-sized call sets may produce `.5` medians.
 
-Only response bytes are counted; benchmark-only redaction padding/audit wrappers, transport framing, logs, latency, and the user's final natural-language answer are excluded.
+Only response payloads are counted; benchmark-only redaction padding/audit wrappers, transport framing, logs, latency, and the user's final natural-language answer are excluded.
+
+For analyzer modes, the harness also records LLM-visible `raw_stream_pull_count`: the count of call-plan rows whose top-level tool is `get_activity_streams` or a configured reference alias. Internal analyzer `_meta.source_tools` entries remain separate evidence and do not count as LLM-visible raw-stream pulls.
 
 ## Shared prompt set and call-plan rules
 
-The prompt set is pinned in `scripts/benchmark/prompts/kr5_shared_prompts.json` with version `kr5-forum-prompts-v1`. It extends the TP-016 v0.2 read dogfood prompts and TP-029 v0.3 safety/write prompts into ten forum-shaped scenarios: recent training review, recovery, weekly planning, race taper, activity detail, intervals/splits, wellness scales, calendar/workout-library, non-destructive note/message, and safe destructive-tool refusal.
+The prompt set is pinned in `scripts/benchmark/prompts/kr5_shared_prompts.json` with version `kr5-forum-prompts-v1`. It extends the TP-016 v0.2 read dogfood prompts and TP-029 v0.3 safety/write prompts into ten forum-shaped historical scenarios, plus five analyzer-family scenarios scoped to `icuvisor-analyzer-family`: trend, zone-time distribution, baseline, correlation/compliance, and single-activity histogram.
 
 Prompt text is vendor-neutral. It does not mention icuvisor, resources, toolset tiers, or server-specific tool names. Server-specific tool mappings live in the benchmark fixture/live configuration, not in the prompt text.
 
 To avoid cherry-picking, call plans are fixed before measurement and follow these rules:
 
 - Each prompt declares one or more abstract `required_intents` such as `recent_activities`, `fitness_trend`, or `wellness_window`.
-- Every server maps each required intent to the minimum documented/default MCP tool call needed to answer that intent on that server.
+- Prompts may declare `server_scope`; scoped analyzer prompts apply only to the analyzer fixture and are not missing coverage for legacy/reference fixtures.
+- Every applicable server maps each required intent to the minimum documented/default MCP tool call needed to answer that intent on that server.
 - If a server requires multiple calls to satisfy one intent, all calls count toward the response-byte median.
 - If a server lacks an equivalent tool, the harness records an explicit unavailable/error call result rather than dropping the prompt.
+- Analyzer prompts declare expected top-level tools and expected source-tool usage by mode. The enabled and disabled modes use the same prompt text; only tool availability and fixed call-plan rows differ.
 - Prompt text and intent lists are reviewed before any server metrics are inspected.
 
 ## Frozen account snapshot
@@ -75,14 +80,14 @@ python3 scripts/benchmark/kr5_benchmark.py \
   --prompt-set scripts/benchmark/prompts/kr5_shared_prompts.json \
   --fixture-dir scripts/benchmark/testdata/fixtures \
   --output scripts/benchmark/results/kr5-results.json \
-  --generated-at 2026-05-14T20:00:00Z
+  --generated-at 2026-05-20T00:00:00Z
 ```
 
 Live mode uses the same harness with `--mode live --config <config.json>`. Start from `scripts/benchmark/benchmark-config.example.json`, provide commands and environment outside the repository, and never commit secrets. When a live server lacks a required intent, set that call's `tool` to `unavailable:<intent>` in the private config so the harness records an explicit `isError=true` unavailable result instead of attempting `tools/call`.
 
 ## Current results
 
-Committed fixture result: `scripts/benchmark/results/kr5-results.json`, generated from `kr5-forum-prompts-v1` at `2026-05-14T20:00:00Z`.
+Committed fixture result: `scripts/benchmark/results/kr5-results.json`, schema `kr5-benchmark-result-v2`, generated from `kr5-forum-prompts-v1` at `2026-05-20T00:00:00Z` with 15 prompts. The historical KR5 comparison below uses each server's `default` mode.
 
 | Server                           | Version                                                                               | Tools | Description tokens | Median response bytes |
 | -------------------------------- | ------------------------------------------------------------------------------------- | ----: | -----------------: | --------------------: |
@@ -99,8 +104,31 @@ Headline KR5 deltas use `icuvisor-core`:
 | Median response bytes   | hhopke                 |   ≥40% |             52.68% | Pass   |
 | Median response bytes   | mvilanova              |   ≥40% |             40.80% | Pass   |
 
+## Analyzer-family comparison
+
+The analyzer fixture is a deterministic call-plan benchmark, not an autonomous model tool-selection test. It compares identical analyzer prompt text across two modes: `analyzers_enabled` exposes the analyzer-family catalog, while `analyzers_disabled` exposes the same non-analyzer catalog and uses fetch-and-reduce call rows.
+
+| Mode | Tools | Description tokens | Calls | Response tokens | Median response tokens | Median response bytes | Raw stream pulls |
+| ---- | ----: | -----------------: | ----: | --------------: | ---------------------: | --------------------: | ---------------: |
+| `analyzers_disabled` | 38 | 9,490 | 9 | 2,266 | 251 | 1,357 | 3 |
+| `analyzers_enabled` | 49 | 12,063 | 6 | 321 | 53 | 216 | 0 |
+
+Aggregate analyzer response-token reduction is 85.83% (`2,266 → 321`) and LLM-visible raw-stream pulls drop from 3 to 0. The enabled rows for the roadmap trend, zone-time distribution, and correlation/compliance shapes make zero top-level raw-stream calls; internal analyzer source-tool evidence is recorded separately in `source_tool_usage`.
+
+### TP-098 core-promotion evidence
+
+Per-candidate net savings are computed from paired prompt rows using response tokens, then subtracting that candidate tool's incremental catalog-description tokens measured with the same canonical catalog payload and tokenizer conventions. A candidate `meets` if net savings are positive and the enabled row has no LLM-visible raw-stream pull.
+
+| Candidate | Prompt | Enabled response tokens | Disabled response tokens | Gross response-token savings | Incremental catalog tokens | Net savings | Raw stream pulls | TP-098 gate |
+| --------- | ------ | ----------------------: | -----------------------: | ---------------------------: | -------------------------: | ----------: | ---------------: | ---------- |
+| `analyze_trend` | `KR5-A01` | 48 | 502 | 454 | 305 | 149 | `1 → 0` | Meets |
+| `compute_zone_time` | `KR5-A02` | 50 | 253 | 203 | 173 | 30 | `1 → 0` | Meets |
+| `compute_baseline` | `KR5-A03` | 49 | 502 | 453 | 234 | 219 | `0 → 0` | Meets |
+
+These results provide positive fixture evidence for TP-098's benchmark-gated core-promotion candidates. TP-100 does not promote the tools; it records evidence for TP-098 to decide placement.
+
 ## KR5 verdict
 
-KR5 is **partially confirmed** on the committed frozen snapshot. The response-byte target is confirmed against both Python references. The description-token target is not confirmed: `icuvisor-core` is 4,396 tokens versus a ≤4,338-token threshold for a 60% reduction against hhopke's 10,845-token surface, a gap of 58 tokens or 0.53 percentage points.
+KR5 remains **partially confirmed** on the committed frozen snapshot. The response-byte target is confirmed against both Python references. The description-token target is not confirmed: `icuvisor-core` is 4,396 tokens versus a ≤4,338-token threshold for a 60% reduction against hhopke's 10,845-token surface, a gap of 58 tokens or 0.53 percentage points.
 
 Gap `TP-034-KR5-DESC-001`: trim at least 60 `icuvisor-core` catalog tokens without weakening tool-selection clarity, then rerun this benchmark. If follow-up measurement shows those 60 tokens cannot be removed without materially degrading tool choice, propose recalibrating KR5's description-token target from ≥60% to ≥59% while keeping the ≥40% response-byte target unchanged.
