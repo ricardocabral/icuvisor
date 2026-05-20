@@ -9,7 +9,7 @@
       "planned_daily_load_count": 0,
       "planned_load_override_behavior": "planned_daily_loads replace modeled load on matching dates only",
       "recovery_week_cadence": 4,
-      "recovery_week_load_pct": 50,
+      "recovery_week_load_pct": 0,
       "weekly_ramp_pct": 5
     },
     "boundaries": [
@@ -39,21 +39,21 @@
     }
   },
   "result": {
-    "atl_change": -25.478,
-    "average_daily_load": 65.298,
-    "ctl_change": -3.248,
-    "end_atl": 52.522,
-    "end_ctl": 66.752,
+    "atl_change": -52.222,
+    "average_daily_load": 55.169,
+    "ctl_change": -9.537,
+    "end_atl": 25.778,
+    "end_ctl": 60.463,
     "end_date": "2026-05-29",
-    "end_tsb": 14.23,
+    "end_tsb": 34.685,
     "max_ctl": 71.573,
     "min_tsb": -8,
     "start_atl": 78,
     "start_ctl": 70,
     "start_date": "2026-05-01",
     "start_tsb": -8,
-    "total_load": 1828.343,
-    "tsb_change": 22.23
+    "total_load": 1544.725,
+    "tsb_change": 42.685
   },
   "series": [
     {
@@ -61,6 +61,7 @@
       "ctl": 70,
       "date": "2026-05-01",
       "day": 0,
+      "training_load": 0,
       "training_load_source": "current_fitness",
       "tsb": -8
     },
@@ -254,67 +255,67 @@
       "tsb": -4.263
     },
     {
-      "atl": 70.79,
-      "ctl": 70.833,
+      "atl": 65.002,
+      "ctl": 69.869,
       "date": "2026-05-23",
       "day": 22,
-      "training_load": 40.517,
+      "training_load": 0,
       "training_load_source": "modeled_recovery_week",
-      "tsb": 0.043
+      "tsb": 4.867
     },
     {
-      "atl": 66.465,
-      "ctl": 70.111,
+      "atl": 55.716,
+      "ctl": 68.205,
       "date": "2026-05-24",
       "day": 23,
-      "training_load": 40.517,
+      "training_load": 0,
       "training_load_source": "modeled_recovery_week",
-      "tsb": 3.646
+      "tsb": 12.489
     },
     {
-      "atl": 62.758,
-      "ctl": 69.407,
+      "atl": 47.757,
+      "ctl": 66.581,
       "date": "2026-05-25",
       "day": 24,
-      "training_load": 40.517,
+      "training_load": 0,
       "training_load_source": "modeled_recovery_week",
-      "tsb": 6.648
+      "tsb": 18.825
     },
     {
-      "atl": 59.581,
-      "ctl": 68.719,
+      "atl": 40.934,
+      "ctl": 64.996,
       "date": "2026-05-26",
       "day": 25,
-      "training_load": 40.517,
+      "training_load": 0,
       "training_load_source": "modeled_recovery_week",
-      "tsb": 9.138
+      "tsb": 24.062
     },
     {
-      "atl": 56.858,
-      "ctl": 68.047,
+      "atl": 35.086,
+      "ctl": 63.448,
       "date": "2026-05-27",
       "day": 26,
-      "training_load": 40.517,
+      "training_load": 0,
       "training_load_source": "modeled_recovery_week",
-      "tsb": 11.19
+      "tsb": 28.362
     },
     {
-      "atl": 54.523,
-      "ctl": 67.392,
+      "atl": 30.074,
+      "ctl": 61.938,
       "date": "2026-05-28",
       "day": 27,
-      "training_load": 40.517,
+      "training_load": 0,
       "training_load_source": "modeled_recovery_week",
-      "tsb": 12.869
+      "tsb": 31.864
     },
     {
-      "atl": 52.522,
-      "ctl": 66.752,
+      "atl": 25.778,
+      "ctl": 60.463,
       "date": "2026-05-29",
       "day": 28,
-      "training_load": 40.517,
+      "training_load": 0,
       "training_load_source": "modeled_recovery_week",
-      "tsb": 14.23
+      "tsb": 34.685
     }
   ]
 }

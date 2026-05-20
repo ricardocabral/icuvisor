@@ -16,7 +16,7 @@ import (
 const (
 	getFitnessProjectionName        = "get_fitness_projection"
 	getFitnessProjectionDescription = "Project CTL, ATL, and TSB forward from a current fitness row using deterministic load assumptions: weekly ramp %, optional recovery-week cadence, horizon, and optional explicit planned daily loads. Returns the curve only with include_full:true."
-	invalidFitnessProjectionMessage = "invalid fitness projection arguments; provide start_date plus exactly one horizon_date or horizon_days, bounded ramp/recovery settings, and no free-form physiology model"
+	invalidFitnessProjectionMessage = "invalid fitness projection arguments; provide start_date with optional horizon_date or horizon_days, bounded ramp/recovery settings, and no free-form physiology model"
 	fetchFitnessProjectionMessage   = "could not fetch current fitness data; check intervals.icu credentials, athlete ID, and start date"
 
 	fitnessProjectionModel = "deterministic_ctl_atl_tsb"
@@ -29,7 +29,7 @@ const (
 	minProjectionWeeklyRampPct           = -50
 	maxProjectionWeeklyRampPct           = 50
 	defaultProjectionRecoveryWeekCadence = 4
-	minProjectionRecoveryWeekCadence     = 2
+	minProjectionRecoveryWeekCadence     = 1
 	maxProjectionRecoveryWeekCadence     = 12
 	defaultProjectionRecoveryLoadPct     = 60
 	maxProjectionRecoveryLoadPct         = 100
@@ -78,7 +78,7 @@ type fitnessProjectionSummary struct {
 type fitnessProjectionPoint struct {
 	Date               string  `json:"date"`
 	Day                int     `json:"day"`
-	TrainingLoad       float64 `json:"training_load,omitempty"`
+	TrainingLoad       float64 `json:"training_load"`
 	TrainingLoadSource string  `json:"training_load_source"`
 	CTL                float64 `json:"ctl"`
 	ATL                float64 `json:"atl"`

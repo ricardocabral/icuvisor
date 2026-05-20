@@ -192,6 +192,14 @@
     "anchor": "get_fitness"
   },
   {
+    "name": "get_fitness_projection",
+    "group": "fitness",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Project CTL, ATL, and TSB forward from a current fitness row using deterministic load assumptions: weekly ramp %, optional recovery-week cadence, horizon, and optional explicit planned daily loads.",
+    "anchor": "get_fitness_projection"
+  },
+  {
     "name": "get_hr_curves",
     "group": "fitness",
     "tier": "full",

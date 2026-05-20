@@ -40,7 +40,7 @@ func TestGetFitnessProjectionRecoveryWeekFullGolden(t *testing.T) {
 
 	client := newFakeFitnessMetricsClient(t)
 	tool := newGetFitnessProjectionTool(client, client, "test", "UTC", false)
-	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"2026-05-01","horizon_days":28,"weekly_ramp_pct":5,"recovery_week_cadence":4,"recovery_week_load_pct":50,"include_full":true}`)})
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"2026-05-01","horizon_days":28,"weekly_ramp_pct":5,"recovery_week_cadence":4,"recovery_week_load_pct":0,"include_full":true}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
@@ -49,16 +49,38 @@ func TestGetFitnessProjectionRecoveryWeekFullGolden(t *testing.T) {
 	if len(series) != 29 {
 		t.Fatalf("series length = %d, want start point plus 28 projected days", len(series))
 	}
-	foundRecovery := false
+	foundRecoveryZero := false
 	for _, rawPoint := range series {
 		point := rawPoint.(map[string]any)
 		if point["training_load_source"] == "modeled_recovery_week" {
-			foundRecovery = true
-			break
+			load, exists := point["training_load"]
+			if !exists {
+				t.Fatalf("recovery point omitted explicit zero training_load: %#v", point)
+			}
+			if load == float64(0) {
+				foundRecoveryZero = true
+				break
+			}
 		}
 	}
-	if !foundRecovery {
-		t.Fatal("full projection series did not include a modeled_recovery_week point")
+	if !foundRecoveryZero {
+		t.Fatal("full projection series did not include a modeled_recovery_week point with explicit zero training_load")
+	}
+}
+
+func TestGetFitnessProjectionDefaultsOmittedHorizonAndAllowsCadenceOne(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeFitnessMetricsClient(t)
+	tool := newGetFitnessProjectionTool(client, client, "test", "UTC", false)
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"2026-05-01","recovery_week_cadence":1}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := analyzerMap(t, analyzerMap(t, result.StructuredContent)["_meta"])
+	assumptions := analyzerMap(t, meta["assumptions"])
+	if assumptions["horizon_days"] != float64(defaultProjectionHorizonDays) || assumptions["recovery_week_cadence"] != float64(1) {
+		t.Fatalf("assumptions = %#v, want default horizon and cadence 1 accepted", assumptions)
 	}
 }
 
