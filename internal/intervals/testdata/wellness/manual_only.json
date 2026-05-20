@@ -9,5 +9,9 @@
   "motivation": 4,
   "injury": 1,
   "weight": 70.5,
+  "kcalConsumed": 2400,
+  "carbohydrates": 320.5,
+  "protein": 132.25,
+  "fatTotal": 78.75,
   "comments": "manual wellness row"
 }
