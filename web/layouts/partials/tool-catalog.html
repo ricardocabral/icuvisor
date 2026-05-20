@@ -1,8 +1,9 @@
 {{ $tools := site.Data.tools }}
 {{ if not $tools }}{{ errorf "web/data/tools.json is missing or empty; run make docs-tools" }}{{ end }}
-{{ $groups := slice "activities" "coach" "custom-items" "events" "fitness" "meta" "settings" "wellness" "workout-library" }}
+{{ $groups := slice "activities" "analyzers" "coach" "custom-items" "events" "fitness" "meta" "settings" "wellness" "workout-library" }}
 {{ $labels := dict
   "activities" "Activities"
+  "analyzers" "Analyzers"
   "coach" "Coach mode"
   "custom-items" "Custom items"
   "events" "Events"

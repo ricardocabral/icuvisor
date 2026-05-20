@@ -12,7 +12,7 @@ import (
 
 const (
 	analyzeEffortsDeltaName        = "analyze_efforts_delta"
-	analyzeEffortsDeltaDescription = "Use when the prompt asks whether best-effort power, heart-rate, or pace buckets changed versus baseline; do not fetch rows and reduce them in chat. Compares current and baseline curve buckets with unit-explicit deltas."
+	analyzeEffortsDeltaDescription = "Use when the prompt asks whether best-effort power, heart-rate, or pace buckets changed versus baseline; do not fetch get_* rows or streams and reduce them in chat. Compares current and baseline curve buckets with unit-explicit deltas."
 	invalidAnalyzeEffortsDeltaArgs = "invalid analyze_efforts_delta arguments; provide sport, effort_family, current_window, optional baseline_window, and matching duration/distance buckets"
 	fetchAnalyzeEffortsDeltaMsg    = "could not analyze efforts delta; check credentials, sport, date range, and buckets"
 )

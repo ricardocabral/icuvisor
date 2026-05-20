@@ -46,6 +46,22 @@ func TestCheckConfusableCatalog(t *testing.T) {
 			},
 			wantOK: false,
 		},
+		{
+			name: "analyzer family participates",
+			catalog: []ToolInfo{
+				{Name: "compute_zone_time", Description: "Use when the prompt asks for analyzer stats over a date window."},
+				{Name: "compute_load_balance", Description: "Use when the prompt asks for analyzer stats over a date window."},
+			},
+			wantOK: false,
+		},
+		{
+			name: "specific analyzer prompts pass",
+			catalog: []ToolInfo{
+				{Name: "compute_zone_time", Description: "Use when the prompt asks for time in power, heart-rate, or pace zones over a date window."},
+				{Name: "compute_load_balance", Description: "Use when the prompt asks whether training distribution is polarized, pyramidal, threshold-heavy, or balanced across low/moderate/high intensity."},
+			},
+			wantOK: true,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

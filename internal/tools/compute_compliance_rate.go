@@ -14,7 +14,7 @@ import (
 
 const (
 	computeComplianceRateName                = "compute_compliance_rate"
-	computeComplianceRateDescription         = "Use this when the user asks how well completed activities matched scheduled workouts, targets, sport, or event type. Do not pull/fetch rows or streams and reduce manually; this tool pairs events to activities, returns compliance rates and mean target deltas, and surfaces auto-lap caution when interval evidence is unsafe."
+	computeComplianceRateDescription         = "Use when the prompt asks how well completed activities matched scheduled workouts, targets, sport, or event type; do not fetch get_* rows or streams and reduce them in chat. Pairs events to activities, returns compliance rates and mean target deltas, and surfaces auto-lap caution when interval evidence is unsafe."
 	invalidComputeComplianceArgumentsMessage = "invalid compute_compliance_rate arguments; provide valid dates, target_metric time/distance/load, and tolerance_percent 0..100"
 	fetchComputeComplianceMessage            = "could not compute compliance rate; check intervals.icu credentials, athlete ID, and date range"
 )

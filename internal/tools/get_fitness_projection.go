@@ -15,7 +15,7 @@ import (
 
 const (
 	getFitnessProjectionName        = "get_fitness_projection"
-	getFitnessProjectionDescription = "Project CTL, ATL, and TSB forward from a current fitness row using deterministic load assumptions: weekly ramp %, optional recovery-week cadence, horizon, and optional explicit planned daily loads. Returns the curve only with include_full:true."
+	getFitnessProjectionDescription = "Use when the prompt asks to project CTL, ATL, or TSB forward; do not fetch get_fitness rows and model the curve in chat. Projects from the current fitness row using deterministic load assumptions: weekly ramp %, optional recovery-week cadence, horizon, and optional explicit planned daily loads. Returns the curve only with include_full:true."
 	invalidFitnessProjectionMessage = "invalid fitness projection arguments; provide start_date with optional horizon_date or horizon_days, bounded ramp/recovery settings, and no free-form physiology model"
 	fetchFitnessProjectionMessage   = "could not fetch current fitness data; check intervals.icu credentials, athlete ID, and start date"
 

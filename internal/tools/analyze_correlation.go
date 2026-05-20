@@ -10,7 +10,7 @@ import (
 
 const (
 	analyzeCorrelationName        = "analyze_correlation"
-	analyzeCorrelationDescription = "Use when the prompt asks whether two analysis metrics are correlated or lagged together; do not fetch rows and reduce them in chat. Computes Pearson or Spearman correlation plus OLS slope/intercept with paired-sample metadata."
+	analyzeCorrelationDescription = "Use when the prompt asks whether two analysis metrics are correlated or lagged together; do not fetch get_* rows or streams and reduce them in chat. Computes Pearson or Spearman correlation plus OLS slope/intercept with paired-sample metadata."
 	invalidAnalyzeCorrelationArgs = "invalid analyze_correlation arguments; provide metric_x, metric_y, window, optional method, pairing_grain, lag_days, sport, and include_full"
 	fetchAnalyzeCorrelationMsg    = "could not analyze correlation; check credentials, date range, metrics, and sport filter"
 )

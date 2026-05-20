@@ -92,27 +92,67 @@ func TestCatalogIncludesFullAnalyzers(t *testing.T) {
 
 	descriptors := descriptorNameSet(Catalog())
 	cases := map[string]string{
-		computeActivitySegmentStatsName: "raw-stream exception",
-		analyzeTrendName:                "trending up/down or changing versus baseline",
-		analyzeDistributionName:         "distribution, histogram, quantiles, or outliers",
-		analyzeCorrelationName:          "correlated or lagged together",
-		analyzeEffortsDeltaName:         "best-effort power, heart-rate, or pace buckets changed versus baseline",
-		computeZoneTimeName:             "Use this when the user asks for time in power, heart-rate, or pace zones",
-		computeLoadBalanceName:          "Use this when the user asks whether training distribution is polarized",
-		computeBaselineName:             "Use this when the user asks whether a metric is high, low, suppressed, elevated, or unusual",
-		computeComplianceRateName:       "Use this when the user asks how well completed activities matched scheduled workouts",
+		computeActivitySegmentStatsName: "Use when the prompt asks for an average, maximum, normalized power, or zone-time statistic over one explicit activity segment as the analyzer-family raw-stream exception",
+		analyzeTrendName:                "Use when the prompt asks whether an analysis metric is trending up, trending down, or changing versus baseline",
+		analyzeDistributionName:         "Use when the prompt asks for an analysis metric's distribution, histogram, quantiles, or outliers",
+		analyzeCorrelationName:          "Use when the prompt asks whether two analysis metrics are correlated or lagged together",
+		analyzeEffortsDeltaName:         "Use when the prompt asks whether best-effort power, heart-rate, or pace buckets changed versus baseline",
+		getFitnessProjectionName:        "Use when the prompt asks to project CTL, ATL, or TSB forward",
+		computeZoneTimeName:             "Use when the prompt asks for time in power, heart-rate, or pace zones over a date window",
+		computeLoadBalanceName:          "Use when the prompt asks whether training distribution is polarized, pyramidal, threshold-heavy, or balanced across low/moderate/high intensity",
+		computeBaselineName:             "Use when the prompt asks whether a metric is high, low, suppressed, elevated, or unusual versus a baseline window",
+		computeComplianceRateName:       "Use when the prompt asks how well completed activities matched scheduled workouts, targets, sport, or event type",
 	}
 	for name, summaryNeedle := range cases {
 		descriptor, exists := descriptors[name]
 		if !exists {
 			t.Fatalf("Catalog() missing %q", name)
 		}
-		if descriptor.Group != "analyzers" || descriptor.Tier != string(safety.ToolsetFull) {
-			t.Fatalf("descriptor = %#v, want analyzers/full", descriptor)
+		wantGroup := "analyzers"
+		if name == getFitnessProjectionName {
+			wantGroup = "fitness"
+		}
+		if descriptor.Group != wantGroup || descriptor.Tier != string(safety.ToolsetFull) {
+			t.Fatalf("descriptor = %#v, want %s/full", descriptor, wantGroup)
 		}
 		if !strings.Contains(descriptor.Summary, summaryNeedle) {
 			t.Fatalf("summary for %s = %q, want %q", name, descriptor.Summary, summaryNeedle)
 		}
+	}
+}
+
+func TestCatalogAnalyzerActivationHints(t *testing.T) {
+	t.Parallel()
+
+	descriptors := descriptorNameSet(Catalog())
+	for _, name := range analyzerFamilyCatalogNames() {
+		descriptor, exists := descriptors[name]
+		if !exists {
+			t.Fatalf("Catalog() missing analyzer-family tool %q", name)
+		}
+		if !strings.HasPrefix(descriptor.Summary, "Use when the prompt asks ") {
+			t.Fatalf("summary for %s = %q, want concrete prompt-shape activation hint", name, descriptor.Summary)
+		}
+		avoidance := strings.Contains(descriptor.Summary, "do not fetch get_") && (strings.Contains(descriptor.Summary, "reduce them in chat") || strings.Contains(descriptor.Summary, "bin them in chat") || strings.Contains(descriptor.Summary, "model the curve in chat"))
+		if !avoidance {
+			t.Fatalf("summary for %s = %q, want explicit get_* row/stream avoidance language", name, descriptor.Summary)
+		}
+	}
+}
+
+func analyzerFamilyCatalogNames() []string {
+	return []string{
+		analyzeTrendName,
+		analyzeDistributionName,
+		analyzeCorrelationName,
+		analyzeEffortsDeltaName,
+		computeZoneTimeName,
+		computeLoadBalanceName,
+		computeBaselineName,
+		computeComplianceRateName,
+		computeActivitySegmentStatsName,
+		getActivityHistogramName,
+		getFitnessProjectionName,
 	}
 }
 

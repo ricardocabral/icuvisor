@@ -15,7 +15,7 @@ import (
 
 const (
 	getActivityHistogramName        = "get_activity_histogram"
-	getActivityHistogramDescription = "Summarize a single activity's power, heart-rate, or pace distribution into terse time-in-bucket histogram rows. Use this instead of pulling get_activity_streams and binning raw samples manually."
+	getActivityHistogramDescription = "Use when the prompt asks for a single activity's power, heart-rate, or pace distribution; do not fetch get_activity_streams samples and bin them in chat. Summarizes terse time-in-bucket histogram rows."
 	invalidActivityHistogramMessage = "invalid get_activity_histogram arguments; provide activity_id and metric"
 )
 

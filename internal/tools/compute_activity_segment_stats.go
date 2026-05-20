@@ -14,7 +14,7 @@ import (
 
 const (
 	computeActivitySegmentStatsName        = "compute_activity_segment_stats"
-	computeActivitySegmentStatsDescription = "Compute deterministic stats over one activity segment from canonical raw streams as the analyzer-family raw-stream exception. Terse mode returns only the computed stat and analyzer _meta."
+	computeActivitySegmentStatsDescription = "Use when the prompt asks for an average, maximum, normalized power, or zone-time statistic over one explicit activity segment as the analyzer-family raw-stream exception; do not fetch get_activity_streams samples and reduce them in chat. Computes deterministic stats from canonical raw streams."
 	invalidActivitySegmentStatsMessage     = "invalid compute_activity_segment_stats arguments; provide activity_id, one stat, exactly one time or distance range, and required metric or ftp_watts only when applicable"
 	computeActivitySegmentStatsMessage     = "could not compute activity segment stats"
 )

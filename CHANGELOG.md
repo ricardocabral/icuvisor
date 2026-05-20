@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - KR5 benchmark harness/report now compares analyzer-enabled versus analyzer-disabled fixture modes with v2 response-token metrics, source-tool usage validation, raw-stream pull counts, and TP-098 core-promotion evidence without promoting tools in this change.
+- Documented the upstream coverage gap for precomputed per-activity zone-time fields after auditing the v0.2 fixture corpus with a reproducible local script.
 - `analyze_trend`, `analyze_distribution`, `analyze_correlation`, and `analyze_efforts_delta` are registered in the full toolset to compute deterministic analyzer reductions with mandatory `_meta`, closed `analysis_metric` validation, terse-by-default responses, and unit-explicit best-efforts deltas.
 - `compute_zone_time`, `compute_load_balance`, `compute_baseline`, and `compute_compliance_rate` are registered in the full toolset as deterministic analyzer-family compute tools using existing read outputs, mandatory analyzer `_meta`, explicit missing/insufficient signals, and activation hints that tell assistants not to roll their own row/stream reductions.
 - `get_activity_histogram` summarizes one activity's power, heart-rate, or pace distribution into terse bucketed seconds/percentages using configured zones when available and fixed-width stream buckets otherwise.
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Analyzer-family tool descriptions now lead with concrete activation prompts and explicitly tell assistants not to fetch raw `get_*` rows or streams and reduce them in chat.
 - Strava-blocked activity responses now point users to the intervals.icu Connections page and Download old data action for the native device provider, naming Garmin/Wahoo/etc. when explicit payload evidence is available.
 - `get_wellness_data` provenance now reports provider-native sleep/readiness `native_scale` labels for Garmin, WHOOP, Oura, and Polar, while unresolved sources report `unknown` instead of a guessed device scale.
 - Write-tool echo responses now strip upstream null keys by default, including custom-item create/update responses, while preserving meaningful zero, false, and empty-string values.

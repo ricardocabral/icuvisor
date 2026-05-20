@@ -147,6 +147,8 @@ var confusableStopWords = map[string]struct{}{
 
 func toolCluster(name string) string {
 	switch {
+	case strings.HasPrefix(name, "analyze_") || strings.HasPrefix(name, "compute_") || name == "get_activity_histogram" || name == "get_fitness_projection":
+		return "analyzers"
 	case name == "get_activities" || strings.HasPrefix(name, "get_activity_") || name == "get_extended_metrics":
 		return "activity"
 	case strings.HasPrefix(name, "get_event") || name == "get_training_plan":

@@ -10,7 +10,7 @@ import (
 
 const (
 	analyzeDistributionName        = "analyze_distribution"
-	analyzeDistributionDescription = "Use when the prompt asks for an analysis metric's distribution, histogram, quantiles, or outliers; do not fetch rows and reduce them in chat. Computes deterministic stats and buckets with analyzer missing-sample metadata."
+	analyzeDistributionDescription = "Use when the prompt asks for an analysis metric's distribution, histogram, quantiles, or outliers; do not fetch get_* rows or streams and reduce them in chat. Computes deterministic stats and buckets with analyzer missing-sample metadata."
 	invalidAnalyzeDistributionArgs = "invalid analyze_distribution arguments; provide metric, window, optional bucket_count or buckets, quantiles, sport, and include_full"
 	fetchAnalyzeDistributionMsg    = "could not analyze distribution; check credentials, date range, metric, and sport filter"
 )
