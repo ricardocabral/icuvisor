@@ -1,0 +1,54 @@
+{{- if (site.Params.search.enable | default true) -}}
+<link rel="stylesheet" href="{{ "pagefind/pagefind-ui.css" | relURL }}" />
+{{- end }}
+<style>
+  :root {
+    --primary-hue: 22deg;
+    --primary-saturation: 89%;
+    --primary-lightness: 62%;
+    --pagefind-ui-primary: #111827;
+    --pagefind-ui-text: #111827;
+    --pagefind-ui-background: #ffffff;
+    --pagefind-ui-border: rgba(17, 24, 39, 0.16);
+    --pagefind-ui-tag: #fad4c0;
+    --pagefind-ui-border-radius: 0.75rem;
+  }
+  .dark {
+    --primary-hue: 207deg;
+    --primary-saturation: 35%;
+    --primary-lightness: 63%;
+    --pagefind-ui-primary: #f9fafb;
+    --pagefind-ui-text: #f9fafb;
+    --pagefind-ui-background: #111827;
+    --pagefind-ui-border: rgba(249, 250, 251, 0.16);
+    --pagefind-ui-tag: #80a1c1;
+  }
+  .icuvisor-pagefind-search .pagefind-ui__form::before,
+  .icuvisor-pagefind-search .pagefind-ui__search-clear {
+    top: 0.65rem;
+  }
+  .icuvisor-pagefind-search .pagefind-ui__search-input {
+    border: 0;
+    min-height: 2.5rem;
+    padding: 0.5rem 2.25rem;
+    font-size: 0.875rem;
+    background: rgba(0, 0, 0, 0.05);
+  }
+  .dark .icuvisor-pagefind-search .pagefind-ui__search-input {
+    background: rgba(249, 250, 251, 0.1);
+  }
+  .icuvisor-pagefind-search .pagefind-ui__drawer {
+    position: absolute;
+    z-index: 30;
+    width: min(32rem, calc(100vw - 2rem));
+    right: 0;
+    margin-top: 0.5rem;
+    max-height: min(70vh, 32rem);
+    overflow: auto;
+    border: 1px solid var(--pagefind-ui-border);
+    border-radius: 0.75rem;
+    background: var(--pagefind-ui-background);
+    box-shadow: 0 16px 40px rgba(17, 24, 39, 0.16);
+    padding: 0.75rem;
+  }
+</style>

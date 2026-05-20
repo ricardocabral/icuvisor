@@ -2,7 +2,7 @@ baseURL = "https://icuvisor.app/"
 locale = "en-us"
 title = "icuvisor — Talk to your intervals.icu data"
 enableRobotsTXT = true
-disableKinds = ["taxonomy", "term", "RSS", "sitemap"]
+disableKinds = ["taxonomy", "term", "RSS"]
 
 [params]
 description = "Open-source MCP server that connects intervals.icu training data to Claude, ChatGPT, Cursor, and other AI assistants. One signed Go binary. No SaaS."
@@ -19,6 +19,31 @@ featuredTools = [
   "get_workout_library",
 ]
 
+[params.navbar]
+width = "wide"
+displayTitle = true
+displayLogo = true
+
+[params.navbar.logo]
+path = "favicon-32.png"
+dark = "favicon-32.png"
+width = 32
+height = 32
+
+[params.theme]
+default = "system"
+displayToggle = true
+
+[params.search]
+enable = true
+type = "pagefind"
+
+[params.footer]
+enable = true
+width = "wide"
+displayPoweredBy = false
+displayCopyright = false
+
 [markup]
 [markup.goldmark]
 [markup.goldmark.renderer]
@@ -29,6 +54,41 @@ home = ["HTML"]
 
 [minify]
 disableHTML = false
+
+[menu]
+  [[menu.main]]
+    name = "Install"
+    pageRef = "/install"
+    weight = 10
+  [[menu.main]]
+    name = "Connect"
+    pageRef = "/connect"
+    weight = 20
+  [[menu.main]]
+    name = "Tutorials"
+    pageRef = "/tutorials"
+    weight = 30
+  [[menu.main]]
+    name = "Guides"
+    pageRef = "/guides"
+    weight = 40
+  [[menu.main]]
+    name = "Reference"
+    pageRef = "/reference"
+    weight = 50
+  [[menu.main]]
+    name = "Explain"
+    pageRef = "/explain"
+    weight = 60
+  [[menu.main]]
+    name = "Search"
+    weight = 70
+    [menu.main.params]
+      type = "search"
+  [[menu.main]]
+    name = "GitHub"
+    url = "https://github.com/ricardocabral/icuvisor"
+    weight = 80
 
 [module]
   [[module.imports]]
