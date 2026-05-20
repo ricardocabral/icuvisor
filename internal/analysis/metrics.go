@@ -131,7 +131,7 @@ func MetricSources(metric Metric) []MetricSource {
 
 // MetricSchemaDescription returns concise schema prose for analysis_metric inputs.
 func MetricSchemaDescription() string {
-	return "analysis_metric enum; choose one canonical value such as ctl, atl, tsb, weekly_tss, hrv, sleep_secs, if, or vi. Aliases are accepted by the server, but schemas enumerate canonical values only. Expressions such as ctl/atl are not supported."
+	return "analysis_metric enum; choose one canonical value such as ctl, atl, tsb, weekly_tss, hrv, sleep_secs, if, or vi. Safe aliases are accepted by the server, but schemas enumerate canonical values only. Expressions such as ctl/atl are not supported."
 }
 
 // MetricSchemaProperty returns a JSON Schema property for analysis_metric.
