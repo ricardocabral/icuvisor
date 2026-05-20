@@ -73,6 +73,7 @@ func analyzeTrendHandler(clients analyzerClients, profileClient ProfileClient, v
 			return Result{}, NewUserError(fetchAnalyzeTrendMsg, err)
 		}
 		grain := analysis.SampleGrain(currentSeries.Assumptions["sample_grain"].(string))
+		effectiveRollingDays := rolling
 		if grain == analysis.SampleGrainWeekly {
 			if rolling%7 != 0 {
 				return Result{}, NewUserError(invalidAnalyzeTrendArgs, fmt.Errorf("rolling_window_days must be a multiple of 7 for weekly metrics"))
@@ -93,7 +94,7 @@ func analyzeTrendHandler(clients analyzerClients, profileClient ProfileClient, v
 		trend, points := analysis.ComputeTrend(analysis.TrendInput{Metric: string(metric), Unit: currentSeries.Unit, Samples: currentSeries.Samples, BaselineSamples: baselineSeries.Samples, RollingWindow: rolling, MinSamples: minSamples, BaselineMinSamples: minSamples, SampleGrain: grain})
 		assumptions := analyzerMetaAssumptions(currentSeries.Assumptions, window.Window, args.IncludeFull)
 		assumptions["baseline_window"] = baseline.Window
-		assumptions["rolling_window_days"] = args.RollingWindowDays
+		assumptions["rolling_window_days"] = effectiveRollingDays
 		if grain == analysis.SampleGrainWeekly {
 			assumptions["rolling_bucket_count"] = rolling
 		}

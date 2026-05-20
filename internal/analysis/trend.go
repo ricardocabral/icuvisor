@@ -103,15 +103,18 @@ func rollingSeries(samples []NumericSample, window int) []TrendPoint {
 }
 
 func trendSlope(samples []NumericSample, grain SampleGrain) (float64, bool) {
-	values := Values(samples)
-	xs := make([]float64, len(values))
-	for i := range values {
-		xs[i] = float64(i)
-	}
-	if grain == SampleGrainWeekly {
-		for i, sample := range samples {
-			xs[i] = float64(sample.Bucket)
+	xs := make([]float64, 0, len(samples))
+	values := make([]float64, 0, len(samples))
+	for i, sample := range samples {
+		if math.IsNaN(sample.Value) || math.IsInf(sample.Value, 0) {
+			continue
 		}
+		x := float64(i)
+		if grain == SampleGrainWeekly {
+			x = float64(sample.Bucket)
+		}
+		xs = append(xs, x)
+		values = append(values, sample.Value)
 	}
 	return olsSlopeXY(xs, values)
 }

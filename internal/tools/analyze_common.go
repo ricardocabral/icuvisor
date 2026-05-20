@@ -31,7 +31,6 @@ type analyzerClients struct {
 	fitness    FitnessClient
 	wellness   WellnessClient
 	activities ActivitiesClient
-	efforts    BestEffortsClient
 }
 
 func decodeAnalyzerStrict[T any](raw json.RawMessage) (T, error) {
@@ -244,7 +243,11 @@ func analyzerMetaAssumptions(base map[string]any, window analysis.Window, includ
 }
 
 func mergeSourceTools(series ...analyzerSampleSeries) []string {
-	var tools []string
+	count := 0
+	for _, item := range series {
+		count += len(item.SourceTools)
+	}
+	tools := make([]string, 0, count)
 	for _, item := range series {
 		tools = append(tools, item.SourceTools...)
 	}
