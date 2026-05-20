@@ -12,10 +12,11 @@ import (
 )
 
 func TestShapeAnalyzerResponseIncludesMandatoryMeta(t *testing.T) {
-	got, err := shapeAnalyzerResponse(analyzerDemoInput(), false, "test", false, "demo_analyzer", "")
+	encoded, err := encodeAnalyzerResponse(analyzerDemoInput(), false, "test", false, "demo_analyzer", "")
 	if err != nil {
-		t.Fatalf("shape analyzer response: %v", err)
+		t.Fatalf("encode analyzer response: %v", err)
 	}
+	got := encoded.StructuredContent
 	assertAnalyzerGolden(t, "analyzer/demo_terse.golden.json", got)
 
 	root := analyzerMap(t, got)
