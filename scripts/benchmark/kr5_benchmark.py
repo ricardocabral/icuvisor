@@ -357,8 +357,18 @@ def is_analyzer_tool(tool_name: str) -> bool:
     return tool_name.startswith(ANALYZER_TOOL_PREFIXES) or tool_name in ANALYZER_DIRECT_TOOLS
 
 
+def non_analyzer_catalog_rows(tools: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {
+        row["name"]: row
+        for row in catalog_payload(tools)
+        if not is_analyzer_tool(row["name"])
+    }
+
+
 def validate_analyzer_mode_catalogs(
-    measurement: ServerMeasurement, tool_names_by_mode: dict[str, set[str]]
+    measurement: ServerMeasurement,
+    tool_names_by_mode: dict[str, set[str]],
+    catalogs: dict[str, list[dict[str, Any]]],
 ) -> None:
     if ANALYZER_ENABLED_MODE not in tool_names_by_mode or ANALYZER_DISABLED_MODE not in tool_names_by_mode:
         return
@@ -370,12 +380,18 @@ def validate_analyzer_mode_catalogs(
             f"{measurement.server_id} disabled analyzer mode exposes analyzer tools: "
             + ", ".join(disabled_analyzers)
         )
-    enabled_non_analyzers = {name for name in enabled if not is_analyzer_tool(name)}
-    disabled_non_analyzers = {name for name in disabled if not is_analyzer_tool(name)}
-    if enabled_non_analyzers != disabled_non_analyzers:
+    enabled_non_analyzers = non_analyzer_catalog_rows(catalogs[ANALYZER_ENABLED_MODE])
+    disabled_non_analyzers = non_analyzer_catalog_rows(catalogs[ANALYZER_DISABLED_MODE])
+    if enabled_non_analyzers.keys() != disabled_non_analyzers.keys():
         raise BenchmarkError(
             f"{measurement.server_id} analyzer mode catalogs differ outside analyzer tools"
         )
+    for name, enabled_row in enabled_non_analyzers.items():
+        if canonical_json(enabled_row) != canonical_json(disabled_non_analyzers[name]):
+            raise BenchmarkError(
+                f"{measurement.server_id} analyzer mode catalog payload differs "
+                f"for shared non-analyzer tool {name!r}"
+            )
 
 
 def validate_measurement(
@@ -392,8 +408,9 @@ def validate_measurement(
         mode: {tool.get("name", "") for tool in tools}
         for mode, tools in catalogs.items()
     }
-    validate_analyzer_mode_catalogs(measurement, tool_names_by_mode)
+    validate_analyzer_mode_catalogs(measurement, tool_names_by_mode, catalogs)
     calls_by_prompt_mode: dict[tuple[str, str], set[str]] = {}
+    unavailable_prompt_modes: set[tuple[str, str]] = set()
     for call in measurement.calls:
         if call.mode not in tool_names_by_mode:
             raise BenchmarkError(
@@ -410,6 +427,7 @@ def validate_measurement(
                     f"{measurement.server_id} unavailable call "
                     f"{call.prompt_id}:{call.intent} must set isError=true"
                 )
+            unavailable_prompt_modes.add((call.prompt_id, call.mode))
             continue
         if call.tool not in tool_names_by_mode[call.mode]:
             raise BenchmarkError(
@@ -429,6 +447,8 @@ def validate_measurement(
                 isinstance(tool, str) for tool in expected_tools
             ):
                 raise BenchmarkError("expected_tools_by_mode values must be string lists")
+            if (prompt["id"], mode) in unavailable_prompt_modes:
+                continue
             called = calls_by_prompt_mode.get((prompt["id"], mode), set())
             missing_expected = sorted(set(expected_tools) - called)
             if missing_expected:
@@ -499,6 +519,34 @@ def response_size(result: dict[str, Any]) -> int:
     return len(canonical_bytes(result))
 
 
+def response_for_token_count(result: dict[str, Any]) -> dict[str, Any]:
+    content = result.get("content")
+    if not isinstance(content, list) or not content:
+        return result
+    first = content[0]
+    if not isinstance(first, dict) or not isinstance(first.get("text"), str):
+        return result
+    try:
+        payload = json.loads(first["text"])
+    except json.JSONDecodeError:
+        return result
+    if not isinstance(payload, dict) or "redaction_audit" not in payload:
+        return result
+    stripped_payload = dict(payload)
+    stripped_payload.pop("redaction_audit", None)
+    stripped_result = dict(result)
+    stripped_content = list(content)
+    stripped_first = dict(first)
+    stripped_first["text"] = canonical_json(stripped_payload)
+    stripped_content[0] = stripped_first
+    stripped_result["content"] = stripped_content
+    return stripped_result
+
+
+def response_token_count(result: dict[str, Any], token_counter: TokenCounter) -> int:
+    return token_counter.count(canonical_json(response_for_token_count(result)))
+
+
 def redact_env(env: dict[str, str] | None) -> dict[str, str]:
     if not env:
         return {}
@@ -549,7 +597,7 @@ def summarize(
                 calls_by_mode[call.mode] = []
             calls_by_mode[call.mode].append(call)
             size = response_size(call.result)
-            response_tokens = token_counter.count(canonical_json(call.result))
+            response_tokens = response_token_count(call.result, token_counter)
             row = {
                 "prompt_id": call.prompt_id,
                 "intent": call.intent,
@@ -568,7 +616,7 @@ def summarize(
             mode_calls = calls_by_mode.get(mode, [])
             mode_response_bytes = [response_size(call.result or {}) for call in mode_calls]
             mode_response_tokens = [
-                token_counter.count(canonical_json(call.result or {})) for call in mode_calls
+                response_token_count(call.result or {}, token_counter) for call in mode_calls
             ]
             mode_summaries[mode] = {
                 "tool_count": len(catalog),
