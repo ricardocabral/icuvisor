@@ -18,6 +18,20 @@ const (
 	fetchWellnessDataMessage               = "could not fetch wellness data; check intervals.icu credentials, athlete ID, and date range"
 )
 
+var wellnessSleepScoreNativeScales = map[string]string{
+	"garmin": "0-100 Garmin sleep score",
+	"oura":   "0-100 Oura sleep score",
+	"polar":  "1-100 Polar sleep_score",
+	"whoop":  "0-100 WHOOP sleep performance percentage",
+}
+
+var wellnessReadinessNativeScales = map[string]string{
+	"garmin": "0-100 Garmin Body Battery",
+	"oura":   "0-100 Oura readiness score",
+	"polar":  "1-6 Polar nightly_recharge_status",
+	"whoop":  "0-100 WHOOP recovery score",
+}
+
 // WellnessClient retrieves athlete wellness rows for tools.
 type WellnessClient interface {
 	ListWellness(context.Context, intervals.WellnessParams) ([]intervals.Wellness, error)
@@ -309,21 +323,17 @@ func hasNativeField(row intervals.Wellness, source string, field string) bool {
 func wellnessNativeScale(field string, source string) string {
 	switch field {
 	case "sleepScore":
-		switch source {
-		case "polar":
-			return "1-100 Polar sleep_score"
-		case "oura":
-			return "0-100 Oura sleep score"
-		default:
-			return "0-100 device nightly score"
+		if label, ok := wellnessSleepScoreNativeScales[source]; ok {
+			return label
 		}
+		return "unknown"
 	case "sleepSecs":
 		return "seconds"
 	case "avgSleepingHR", "restingHR":
 		return "bpm"
 	case "readiness":
-		if source == "polar" {
-			return "1-6 Polar nightly_recharge_status"
+		if label, ok := wellnessReadinessNativeScales[source]; ok {
+			return label
 		}
 		return "unknown"
 	case "hrv":
