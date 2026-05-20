@@ -50,6 +50,7 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 		getExtendedMetricsName:       safety.ToolsetFull,
 		getGearListName:              safety.ToolsetFull,
 		getActivityStreamsName:       safety.ToolsetFull,
+		getActivityHistogramName:     safety.ToolsetFull,
 		getTrainingPlanName:          safety.ToolsetFull,
 		applyTrainingPlanName:        safety.ToolsetFull,
 		getWorkoutLibraryName:        safety.ToolsetFull,
