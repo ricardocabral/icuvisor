@@ -9,6 +9,8 @@ import (
 )
 
 func (f *fakeActivityReadClient) GetActivityStreams(ctx context.Context, params intervals.ActivityStreamsParams) ([]intervals.ActivityStream, error) {
+	f.streamCalls++
+	f.streamParams = params
 	return f.streams, f.streamErr
 }
 

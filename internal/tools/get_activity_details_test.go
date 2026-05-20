@@ -12,17 +12,19 @@ import (
 
 type fakeActivityReadClient struct {
 	fakeProfileClient
-	activity    intervals.Activity
-	activityErr error
-	intervals   intervals.IntervalsDTO
-	intervalErr error
-	streams     []intervals.ActivityStream
-	streamErr   error
-	messages    []intervals.ActivityMessage
-	messageErr  error
-	gear        []intervals.Gear
-	gearErr     error
-	gearCalls   int
+	activity     intervals.Activity
+	activityErr  error
+	intervals    intervals.IntervalsDTO
+	intervalErr  error
+	streams      []intervals.ActivityStream
+	streamErr    error
+	streamCalls  int
+	streamParams intervals.ActivityStreamsParams
+	messages     []intervals.ActivityMessage
+	messageErr   error
+	gear         []intervals.Gear
+	gearErr      error
+	gearCalls    int
 }
 
 func (f *fakeActivityReadClient) ListGear(ctx context.Context) ([]intervals.Gear, error) {
