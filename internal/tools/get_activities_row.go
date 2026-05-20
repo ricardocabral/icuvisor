@@ -10,18 +10,19 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/units"
 )
 
-func shapeGetActivitiesResponse(activities []intervals.Activity, args GetActivitiesRequest, nextToken string, version string, timezoneFallback string, debugMetadata bool, unitSystem response.UnitSystem, shaping ...responseShaping) (any, error) {
+func shapeGetActivitiesResponse(activities []intervals.Activity, gearResolutions map[string]activityGearResolution, args GetActivitiesRequest, nextToken string, version string, timezoneFallback string, debugMetadata bool, unitSystem response.UnitSystem, shaping ...responseShaping) (any, error) {
 	rows := make([]getActivitiesRow, 0, len(activities))
 	for _, activity := range activities {
-		rows = append(rows, activityRow(activity, args.IncludeFull, timezoneFallback, unitSystem))
+		rows = append(rows, activityRow(activity, args.IncludeFull, timezoneFallback, unitSystem, gearResolutions[activity.ID]))
 	}
 	payload := getActivitiesResponse{Activities: rows, Meta: getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull}}
 	shapeCfg := responseShapingOrDefault(shaping)
 	return response.Shape(payload, shapeCfg.options(args.IncludeFull, []string{"activities"}, version, debugMetadata, getActivitiesName, unitSystem))
 }
 
-func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback string, unitSystem response.UnitSystem) getActivitiesRow {
+func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback string, unitSystem response.UnitSystem, gearResolution activityGearResolution) getActivitiesRow {
 	row := getActivitiesRow{ActivityID: activity.ID, Name: strings.TrimSpace(stringValue(activity.Name)), Sport: stringValue(activity.Type), SubType: stringValue(activity.SubType), StartDateLocal: stringValue(activity.StartDateLocal), StartDateUTC: stringValue(activity.StartDate), Timezone: firstNonEmpty(stringValue(activity.Timezone), timezoneFallback)}
+	applyActivityGearResolution(&row, gearResolution)
 	if isStravaBlocked(activity) {
 		row.StravaImported = true
 		row.Unavailable = &unavailableReason{Reason: "strava_tos", Workaround: stravaWorkaround}
@@ -77,6 +78,15 @@ func applyActivityDistanceAndPace(row *getActivitiesRow, activity intervals.Acti
 			row.PaceSecondsPerKM = &pace
 		}
 	}
+}
+
+func applyActivityGearResolution(row *getActivitiesRow, resolution activityGearResolution) {
+	if strings.TrimSpace(resolution.GearID) == "" {
+		return
+	}
+	row.GearID = resolution.GearID
+	row.GearName = resolution.Name
+	row.GearResolution = resolution.Status
 }
 
 func applyActivitySpeed(row *getActivitiesRow, speed *float64, average bool, unitSystem response.UnitSystem) {

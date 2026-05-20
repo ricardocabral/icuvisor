@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 
@@ -19,6 +20,17 @@ type fakeActivityReadClient struct {
 	streamErr   error
 	messages    []intervals.ActivityMessage
 	messageErr  error
+	gear        []intervals.Gear
+	gearErr     error
+	gearCalls   int
+}
+
+func (f *fakeActivityReadClient) ListGear(ctx context.Context) ([]intervals.Gear, error) {
+	f.gearCalls++
+	if f.gearErr != nil {
+		return nil, f.gearErr
+	}
+	return f.gear, nil
 }
 
 func (f *fakeActivityReadClient) GetActivity(ctx context.Context, activityID string) (intervals.Activity, error) {
@@ -62,6 +74,40 @@ func TestGetActivityDetailsShapesTerseFullAndStravaUnavailable(t *testing.T) {
 	full := activityMap["full"].(map[string]any)
 	if value, ok := full["name"]; !ok || value != nil {
 		t.Fatalf("full name = %#v present %v, want preserved nil", value, ok)
+	}
+}
+
+func TestGetActivityDetailsResolvesGear(t *testing.T) {
+	t.Parallel()
+
+	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`)
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity, gear: decodeToolGear(t, `{"id":"g-1","name":"Race Bike"}`)}
+	tool := newGetActivityDetailsToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	activityMap := resultMap(t, result)["activity"].(map[string]any)
+	if activityMap["gear_id"] != "g-1" || activityMap["gear_name"] != "Race Bike" || activityMap["gear_resolution"] != gearResolutionResolved {
+		t.Fatalf("activity = %#v, want resolved gear", activityMap)
+	}
+}
+
+func TestGetActivityDetailsMarksGearLookupUnavailable(t *testing.T) {
+	t.Parallel()
+
+	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`)
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity, gearErr: errors.New("gear upstream down")}
+	tool := newGetActivityDetailsToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	activityMap := resultMap(t, result)["activity"].(map[string]any)
+	if activityMap["gear_id"] != "g-1" || activityMap["gear_resolution"] != gearResolutionLookupUnavailable {
+		t.Fatalf("activity = %#v, want lookup_unavailable gear", activityMap)
 	}
 }
 

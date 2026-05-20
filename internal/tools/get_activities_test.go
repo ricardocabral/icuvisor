@@ -20,6 +20,22 @@ type fakeActivitiesProfileClient struct {
 	rejectInvalidRange bool
 	listCalls          []intervals.ListActivitiesParams
 	listErr            error
+	gear               []intervals.Gear
+	gearByTarget       map[string][]intervals.Gear
+	gearErr            error
+	gearCalls          int
+}
+
+func (f *fakeActivitiesProfileClient) ListGear(ctx context.Context) ([]intervals.Gear, error) {
+	f.gearCalls++
+	if f.gearErr != nil {
+		return nil, f.gearErr
+	}
+	if f.gearByTarget != nil {
+		target, _ := intervals.TargetAthleteIDFromContext(ctx)
+		return f.gearByTarget[target], nil
+	}
+	return f.gear, nil
 }
 
 func (f *fakeActivitiesProfileClient) ListActivities(ctx context.Context, params intervals.ListActivitiesParams) ([]intervals.Activity, error) {
@@ -72,6 +88,143 @@ func TestGetActivitiesRegistrationMetadata(t *testing.T) {
 	}
 }
 
+func TestGetActivitiesResolvesGearNames(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"a1","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`,
+	}, "metric")
+	client.gear = decodeToolGear(t, `{"id":"g-1","name":"Race Bike"}`)
+	cache := newGearListCache()
+	tool := newGetActivitiesToolWithGear(client, client, client, cache, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	row := resultMap(t, result)["activities"].([]any)[0].(map[string]any)
+	if row["gear_id"] != "g-1" || row["gear_name"] != "Race Bike" || row["gear_resolution"] != gearResolutionResolved {
+		t.Fatalf("row = %#v, want resolved gear", row)
+	}
+	if client.gearCalls != 1 {
+		t.Fatalf("gear calls = %d, want one lookup", client.gearCalls)
+	}
+}
+
+func TestGetActivitiesSkipsGearFetchWithoutGearIDs(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"a1","name":"Run","type":"Run","start_date_local":"2026-01-02T07:00:00"}`,
+	}, "metric")
+	tool := newGetActivitiesToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	row := resultMap(t, result)["activities"].([]any)[0].(map[string]any)
+	if _, ok := row["gear_id"]; ok {
+		t.Fatalf("row = %#v, want no gear fields", row)
+	}
+	if client.gearCalls != 0 {
+		t.Fatalf("gear calls = %d, want no lookup", client.gearCalls)
+	}
+}
+
+func TestGetActivitiesMarksUnknownUnnamedAndLookupUnavailableGear(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"unknown","name":"Ride","type":"Ride","start_date_local":"2026-01-04T07:00:00","gear_id":"missing"}`,
+		`{"id":"unnamed","name":"Run","type":"Run","start_date_local":"2026-01-03T07:00:00","gear_id":"shoe-1"}`,
+	}, "metric")
+	client.gear = decodeToolGear(t, `{"id":"shoe-1"}`)
+	tool := newGetActivitiesToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	rows := resultMap(t, result)["activities"].([]any)
+	statuses := map[string]string{}
+	for _, rawRow := range rows {
+		row := rawRow.(map[string]any)
+		statuses[row["activity_id"].(string)] = row["gear_resolution"].(string)
+	}
+	if statuses["unknown"] != gearResolutionUnresolved || statuses["unnamed"] != gearResolutionNameMissing {
+		t.Fatalf("statuses = %#v, want unknown and name_missing", statuses)
+	}
+
+	client = newFakeActivitiesClient(t, []string{`{"id":"a1","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`}, "metric")
+	client.gearErr = errors.New("gear upstream down")
+	tool = newGetActivitiesToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+	result, err = tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("lookup unavailable Handler() error = %v", err)
+	}
+	row := resultMap(t, result)["activities"].([]any)[0].(map[string]any)
+	if row["gear_id"] != "g-1" || row["gear_resolution"] != gearResolutionLookupUnavailable {
+		t.Fatalf("row = %#v, want lookup_unavailable with gear_id", row)
+	}
+}
+
+func TestGetActivitiesPreservesGearLookupCancellation(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{`{"id":"a1","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`}, "metric")
+	client.gearErr = context.Canceled
+	tool := newGetActivitiesToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("Handler() error = %v, want context.Canceled", err)
+	}
+}
+
+func TestGetActivitiesGearCacheReuseAndTargetIsolation(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{`{"id":"a1","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`}, "metric")
+	client.gear = decodeToolGear(t, `{"id":"g-1","name":"Race Bike"}`)
+	cache := newGearListCache()
+	gearTool := newGetGearListTool(client, cache, "test", false)
+	activityTool := newGetActivitiesToolWithGear(client, client, client, cache, "test", "UTC", false)
+	ctx111 := intervals.WithTargetAthleteID(context.Background(), "i111")
+
+	if _, err := gearTool.Handler(ctx111, Request{Name: gearTool.Name, Arguments: json.RawMessage(`{}`)}); err != nil {
+		t.Fatalf("gear Handler() error = %v", err)
+	}
+	if _, err := activityTool.Handler(ctx111, Request{Name: activityTool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)}); err != nil {
+		t.Fatalf("activity Handler() error = %v", err)
+	}
+	if client.gearCalls != 1 {
+		t.Fatalf("gear calls = %d, want activity read to reuse get_gear_list cache", client.gearCalls)
+	}
+
+	client.gearByTarget = map[string][]intervals.Gear{
+		"i111": decodeToolGear(t, `{"id":"g-1","name":"A Bike"}`),
+		"i222": decodeToolGear(t, `{"id":"g-1","name":"B Bike"}`),
+	}
+	client.gear = nil
+	cache = newGearListCache()
+	activityTool = newGetActivitiesToolWithGear(client, client, client, cache, "test", "UTC", false)
+	client.gearCalls = 0
+	first, err := activityTool.Handler(ctx111, Request{Name: activityTool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("athlete 111 Handler() error = %v", err)
+	}
+	second, err := activityTool.Handler(intervals.WithTargetAthleteID(context.Background(), "i222"), Request{Name: activityTool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("athlete 222 Handler() error = %v", err)
+	}
+	firstName := resultMap(t, first)["activities"].([]any)[0].(map[string]any)["gear_name"]
+	secondName := resultMap(t, second)["activities"].([]any)[0].(map[string]any)["gear_name"]
+	if firstName != "A Bike" || secondName != "B Bike" || client.gearCalls != 2 {
+		t.Fatalf("names/calls = %v/%v/%d, want target-isolated cache", firstName, secondName, client.gearCalls)
+	}
+}
+
 func TestGetActivitiesPaginationFiltersAndTokenRoundTrip(t *testing.T) {
 	t.Parallel()
 
@@ -113,7 +266,7 @@ func TestGetActivitiesPaginationFiltersAndTokenRoundTrip(t *testing.T) {
 func TestGetActivitiesBoundaryResponseShapeGoldenFixtures(t *testing.T) {
 	t.Parallel()
 
-	const exactFullWindowToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJkZXZpY2VfbmFtZSJdLCJiZWZvcmVfc3RhcnRfZGF0ZV9sb2NhbCI6IjIwMjYtMDEtMDNUMDc6MDA6MDAiLCJiZWZvcmVfaWQiOiJmMyIsInNraXBfaWRzX2F0X2JvdW5kYXJ5IjpbImYzIl19`
+	const exactFullWindowToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJkZXZpY2VfbmFtZSIsImdlYXJfaWQiXSwiYmVmb3JlX3N0YXJ0X2RhdGVfbG9jYWwiOiIyMDI2LTAxLTAzVDA3OjAwOjAwIiwiYmVmb3JlX2lkIjoiZjMiLCJza2lwX2lkc19hdF9ib3VuZGFyeSI6WyJmMyJdfQ`
 	const identicalTimestampStallToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJkZXZpY2VfbmFtZSJdLCJiZWZvcmVfc3RhcnRfZGF0ZV9sb2NhbCI6IjIwMjYtMDEtMDNUMDc6MDA6MDAiLCJiZWZvcmVfaWQiOiJzMyIsInNraXBfaWRzX2F0X2JvdW5kYXJ5IjpbInMzIl19`
 
 	tests := []struct {

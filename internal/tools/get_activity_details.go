@@ -97,8 +97,12 @@ type activityIntervalGroup struct {
 }
 
 func newGetActivityDetailsTool(client ActivityDetailsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	return newGetActivityDetailsToolWithGear(client, profileClient, nil, nil, version, timezoneFallback, debugMetadata, shaping...)
+}
+
+func newGetActivityDetailsToolWithGear(client ActivityDetailsClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
-	return coreTool(Tool{Name: getActivityDetailsName, Description: getActivityDetailsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityDetailsHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
+	return coreTool(Tool{Name: getActivityDetailsName, Description: getActivityDetailsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityDetailsHandler(client, profileClient, gearClient, gearCache, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
 func newGetActivityIntervalsTool(client ActivityIntervalsClient, detailsClient ActivityDetailsClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -106,7 +110,7 @@ func newGetActivityIntervalsTool(client ActivityIntervalsClient, detailsClient A
 	return coreTool(Tool{Name: getActivityIntervalsName, Description: getActivityIntervalsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityIntervalsHandler(client, detailsClient, version, debugMetadata, shapeCfg)})
 }
 
-func getActivityDetailsHandler(client ActivityDetailsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
+func getActivityDetailsHandler(client ActivityDetailsClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeActivityReadRequest(req.Arguments)
 		if err != nil {
@@ -130,7 +134,11 @@ func getActivityDetailsHandler(client ActivityDetailsClient, profileClient Profi
 			return Result{}, NewUserError(fetchActivityDetailsMessage, err)
 		}
 		unitSystem := profileUnitSystem(profile)
-		payload := getActivityDetailsResponse{Activity: activityRow(activity, args.IncludeFull, profileTimezone(profile.Timezone, timezoneFallback), unitSystem), Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull}}
+		gearResolutions, err := resolveActivityGear(ctx, gearClient, gearCache, []intervals.Activity{activity})
+		if err != nil {
+			return Result{}, err
+		}
+		payload := getActivityDetailsResponse{Activity: activityRow(activity, args.IncludeFull, profileTimezone(profile.Timezone, timezoneFallback), unitSystem, gearResolutions[activity.ID]), Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull}}
 		shaped, err := response.Shape(payload, shapeCfg.options(args.IncludeFull, nil, version, debugMetadata, getActivityDetailsName, unitSystem))
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activity_details response: %w", err)
@@ -281,5 +289,5 @@ func activityReadInputSchema() map[string]any {
 }
 
 func activityReadOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Activity detail or interval response. Activity detail rows include gear_id/gear_name when upstream permits and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed."}
 }
