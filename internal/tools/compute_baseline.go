@@ -12,6 +12,7 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/analysis"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/resources"
+	"github.com/ricardocabral/icuvisor/internal/response"
 )
 
 const (
@@ -99,7 +100,7 @@ func computeBaselineHandler(fitnessClient FitnessClient, wellnessClient Wellness
 		if err != nil {
 			return Result{}, NewUserError(fetchComputeBaselineMessage, err)
 		}
-		collected, err := collectBaselineSamples(ctx, args, metric, fitnessClient, wellnessClient, activitiesClient, extendedClient)
+		collected, err := collectBaselineSamples(ctx, args, metric, unitSystem, fitnessClient, wellnessClient, activitiesClient, extendedClient)
 		if err != nil {
 			if contextError(err) {
 				return Result{}, err
@@ -162,7 +163,7 @@ func decodeComputeBaselineRequest(raw json.RawMessage) (computeBaselineRequest, 
 	return args, metric, nil
 }
 
-func collectBaselineSamples(ctx context.Context, args computeBaselineRequest, metric analysis.Metric, fitnessClient FitnessClient, wellnessClient WellnessClient, activitiesClient ActivitiesClient, extendedClient ExtendedMetricsClient) (baselineCollected, error) {
+func collectBaselineSamples(ctx context.Context, args computeBaselineRequest, metric analysis.Metric, unitSystem response.UnitSystem, fitnessClient FitnessClient, wellnessClient WellnessClient, activitiesClient ActivitiesClient, extendedClient ExtendedMetricsClient) (baselineCollected, error) {
 	sources := analysis.MetricSources(metric)
 	for _, source := range sources {
 		switch source.Family {
@@ -170,23 +171,23 @@ func collectBaselineSamples(ctx context.Context, args computeBaselineRequest, me
 			if fitnessClient == nil {
 				continue
 			}
-			return collectSummaryBaseline(ctx, args, metric, source, fitnessClient)
+			return collectSummaryBaseline(ctx, args, metric, unitSystem, source, fitnessClient)
 		case analysis.SourceWellnessDaily:
 			if wellnessClient == nil {
 				continue
 			}
-			return collectWellnessBaseline(ctx, args, source, wellnessClient)
+			return collectWellnessBaseline(ctx, args, metric, source, wellnessClient)
 		case analysis.SourceActivityRow, analysis.SourceExtendedActivity:
 			if activitiesClient == nil {
 				continue
 			}
-			return collectActivityBaseline(ctx, args, source, activitiesClient, extendedClient)
+			return collectActivityBaseline(ctx, args, metric, unitSystem, source, activitiesClient, extendedClient)
 		}
 	}
 	return baselineCollected{UnsupportedReason: "interval_grain_not_supported_for_baseline"}, nil
 }
 
-func collectSummaryBaseline(ctx context.Context, args computeBaselineRequest, metric analysis.Metric, source analysis.MetricSource, client FitnessClient) (baselineCollected, error) {
+func collectSummaryBaseline(ctx context.Context, args computeBaselineRequest, metric analysis.Metric, unitSystem response.UnitSystem, source analysis.MetricSource, client FitnessClient) (baselineCollected, error) {
 	rows, err := client.ListAthleteSummary(ctx, intervals.AthleteSummaryParams{Start: args.BaselineStartDate, End: args.CurrentEndDate})
 	if err != nil {
 		return baselineCollected{}, err
@@ -195,7 +196,7 @@ func collectSummaryBaseline(ctx context.Context, args computeBaselineRequest, me
 	seenB, seenC := map[string]bool{}, map[string]bool{}
 	weeklyB, weeklyC := map[string]float64{}, map[string]float64{}
 	for _, row := range rows {
-		value, ok := summaryMetricValueForSport(row, metric, source.Field, args.Sport)
+		value, ok := summaryMetricValueForSport(row, metric, unitSystem, args.Sport)
 		date := row.Date
 		window := sampleWindow(date, args)
 		if window == "" {
@@ -232,7 +233,7 @@ func collectSummaryBaseline(ctx context.Context, args computeBaselineRequest, me
 	return out, nil
 }
 
-func collectWellnessBaseline(ctx context.Context, args computeBaselineRequest, source analysis.MetricSource, client WellnessClient) (baselineCollected, error) {
+func collectWellnessBaseline(ctx context.Context, args computeBaselineRequest, metric analysis.Metric, source analysis.MetricSource, client WellnessClient) (baselineCollected, error) {
 	rows, err := client.ListWellness(ctx, intervals.WellnessParams{Oldest: args.BaselineStartDate, Newest: args.CurrentEndDate, Fields: []string{source.Field}})
 	if err != nil {
 		return baselineCollected{}, err
@@ -245,7 +246,7 @@ func collectWellnessBaseline(ctx context.Context, args computeBaselineRequest, s
 		if window == "" {
 			continue
 		}
-		value, ok := wellnessMetricValue(row, source.Field)
+		value, ok := wellnessMetricValue(row, metric)
 		if ok {
 			addBaselineSample(&out, window, date, "", value, source.Tool)
 			if window == "baseline" {
@@ -262,7 +263,7 @@ func collectWellnessBaseline(ctx context.Context, args computeBaselineRequest, s
 	return out, nil
 }
 
-func collectActivityBaseline(ctx context.Context, args computeBaselineRequest, source analysis.MetricSource, activitiesClient ActivitiesClient, extendedClient ExtendedMetricsClient) (baselineCollected, error) {
+func collectActivityBaseline(ctx context.Context, args computeBaselineRequest, metric analysis.Metric, unitSystem response.UnitSystem, source analysis.MetricSource, activitiesClient ActivitiesClient, extendedClient ExtendedMetricsClient) (baselineCollected, error) {
 	activities, err := activitiesClient.ListActivities(ctx, intervals.ListActivitiesParams{Oldest: args.BaselineStartDate, Newest: args.CurrentEndDate, Limit: maxComputeActivityCandidates})
 	if err != nil {
 		return baselineCollected{}, err
@@ -287,7 +288,7 @@ func collectActivityBaseline(ctx context.Context, args computeBaselineRequest, s
 		if window == "" {
 			continue
 		}
-		value, ok := activityMetricValue(activity, source.Field)
+		value, ok := activityMetricValue(activity, metric, unitSystem)
 		if !ok && source.Tool == getExtendedMetricsName && extendedClient != nil && activity.ID != "" {
 			detail, derr := extendedClient.GetActivity(ctx, activity.ID)
 			if derr == nil {
@@ -329,9 +330,9 @@ func sampleWindow(date string, args computeBaselineRequest) string {
 	return ""
 }
 
-func summaryMetricValueForSport(row intervals.SummaryWithCats, metric analysis.Metric, field string, sport string) (float64, bool) {
+func summaryMetricValueForSport(row intervals.SummaryWithCats, metric analysis.Metric, unitSystem response.UnitSystem, sport string) (float64, bool) {
 	if strings.TrimSpace(sport) == "" {
-		return summaryMetricValue(row, metric, field)
+		return summaryMetricValue(row, metric, unitSystem)
 	}
 	for _, category := range row.ByCategory {
 		if !sameFold(sport, category.Category) {
@@ -381,123 +382,6 @@ func isoWeekKey(date string) string {
 	return fmt.Sprintf("%04d-W%02d", year, week)
 }
 
-func summaryMetricValue(row intervals.SummaryWithCats, metric analysis.Metric, field string) (float64, bool) {
-	switch metric {
-	case "ctl":
-		return row.Fitness, true
-	case "atl":
-		return row.Fatigue, true
-	case "tsb":
-		return row.Form, true
-	case "weekly_tss", "training_load":
-		return float64(row.TrainingLoad), row.TrainingLoad != 0
-	case "weekly_hours":
-		return float64(row.Time) / 3600, row.Time != 0
-	case "moving_time_seconds":
-		return float64(row.MovingTime), row.MovingTime != 0
-	case "elapsed_time_seconds", "time_seconds":
-		return float64(row.ElapsedTime), row.ElapsedTime != 0
-	case "calories_burned":
-		return float64(row.Calories), row.Calories != 0
-	case "distance_km":
-		return row.Distance / 1000, row.Distance != 0
-	case "distance_mi":
-		return row.Distance / 1609.344, row.Distance != 0
-	case "session_rpe":
-		return float64(row.SRPE), row.SRPE != 0
-	case "elevation_gain_m":
-		return row.TotalElevationGain, row.TotalElevationGain != 0
-	case "time_in_zones_total_seconds":
-		return float64(row.TimeInZonesTot), row.TimeInZonesTot != 0
-	}
-	return rawNumber(row.Raw, field)
-}
-func wellnessMetricValue(row intervals.Wellness, field string) (float64, bool) {
-	return rawNumber(row.Raw, field)
-}
-func activityMetricValue(activity intervals.Activity, field string) (float64, bool) {
-	switch field {
-	case "moving_time_seconds":
-		if activity.MovingTime != nil {
-			return float64(*activity.MovingTime), true
-		}
-	case "elapsed_time_seconds":
-		if activity.ElapsedTime != nil {
-			return float64(*activity.ElapsedTime), true
-		}
-	case "training_load":
-		if activity.TrainingLoad != nil {
-			return float64(*activity.TrainingLoad), true
-		}
-	case "distance_km":
-		if activity.Distance != nil {
-			return *activity.Distance / 1000, true
-		}
-		if activity.ICUDistance != nil {
-			return *activity.ICUDistance / 1000, true
-		}
-	case "distance_mi":
-		if activity.Distance != nil {
-			return *activity.Distance / 1609.344, true
-		}
-		if activity.ICUDistance != nil {
-			return *activity.ICUDistance / 1609.344, true
-		}
-	case "pace_seconds_per_km":
-		if activity.MovingTime != nil {
-			if d := activityDistanceMeters(activity); d > 0 {
-				return float64(*activity.MovingTime) / (d / 1000), true
-			}
-		}
-	case "pace_seconds_per_mile":
-		if activity.MovingTime != nil {
-			if d := activityDistanceMeters(activity); d > 0 {
-				return float64(*activity.MovingTime) / (d / 1609.344), true
-			}
-		}
-	case "average_speed_kmh":
-		if activity.AverageSpeed != nil {
-			return *activity.AverageSpeed * 3.6, true
-		}
-	case "average_speed_mph":
-		if activity.AverageSpeed != nil {
-			return *activity.AverageSpeed * 2.2369362921, true
-		}
-	case "max_speed_kmh":
-		if activity.MaxSpeed != nil {
-			return *activity.MaxSpeed * 3.6, true
-		}
-	case "max_speed_mph":
-		if activity.MaxSpeed != nil {
-			return *activity.MaxSpeed * 2.2369362921, true
-		}
-	case "average_heart_rate_bpm":
-		if activity.AverageHeartRate != nil {
-			return float64(*activity.AverageHeartRate), true
-		}
-	case "max_heart_rate_bpm":
-		if activity.MaxHeartRate != nil {
-			return float64(*activity.MaxHeartRate), true
-		}
-	case "average_cadence_rpm":
-		if activity.AverageCadence != nil {
-			return *activity.AverageCadence, true
-		}
-	case "calories_burned":
-		if activity.Calories != nil {
-			return float64(*activity.Calories), true
-		}
-	case "elevation_gain_m":
-		if activity.TotalElevationGain != nil {
-			return *activity.TotalElevationGain, true
-		}
-	case "elevation_loss_m":
-		if activity.TotalElevationLoss != nil {
-			return *activity.TotalElevationLoss, true
-		}
-	}
-	return rawNumber(activity.Raw, field)
-}
 func extendedActivityMetricValue(raw map[string]any, field string) (float64, bool) {
 	metrics := extendedMetricsFromActivity(raw, intervals.PowerVsHR{}, false)
 	data, _ := json.Marshal(metrics)
@@ -519,16 +403,6 @@ func baselineBoundaries(truncated bool) []string {
 		boundaries = append(boundaries, "activity candidates truncated at deterministic cap; baseline/current activity samples may be incomplete")
 	}
 	return boundaries
-}
-
-func activityDistanceMeters(activity intervals.Activity) float64 {
-	if activity.Distance != nil {
-		return *activity.Distance
-	}
-	if activity.ICUDistance != nil {
-		return *activity.ICUDistance
-	}
-	return 0
 }
 
 func sourceDTO(source analysis.MetricSource) baselineMetricSource {

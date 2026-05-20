@@ -133,7 +133,8 @@ func TestCatalogAnalyzerActivationHints(t *testing.T) {
 		if !strings.HasPrefix(descriptor.Summary, "Use when the prompt asks ") {
 			t.Fatalf("summary for %s = %q, want concrete prompt-shape activation hint", name, descriptor.Summary)
 		}
-		if !strings.Contains(descriptor.Summary, "do not fetch get_") || !strings.Contains(descriptor.Summary, "reduce them in chat") {
+		avoidance := strings.Contains(descriptor.Summary, "do not fetch get_") && (strings.Contains(descriptor.Summary, "reduce them in chat") || strings.Contains(descriptor.Summary, "bin them in chat") || strings.Contains(descriptor.Summary, "model the curve in chat"))
+		if !avoidance {
 			t.Fatalf("summary for %s = %q, want explicit get_* row/stream avoidance language", name, descriptor.Summary)
 		}
 	}

@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Analyzer-family tool descriptions now lead with concrete activation prompts and explicitly tell assistants not to fetch raw `get_*` rows or streams and reduce them in chat.
 - Strava-blocked activity responses now point users to the intervals.icu Connections page and Download old data action for the native device provider, naming Garmin/Wahoo/etc. when explicit payload evidence is available.
 - `get_wellness_data` provenance now reports provider-native sleep/readiness `native_scale` labels for Garmin, WHOOP, Oura, and Polar, while unresolved sources report `unknown` instead of a guessed device scale.
 - Write-tool echo responses now strip upstream null keys by default, including custom-item create/update responses, while preserving meaningful zero, false, and empty-string values.

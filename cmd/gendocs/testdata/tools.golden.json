@@ -36,7 +36,7 @@
     "group": "activities",
     "tier": "full",
     "safety": "read",
-    "summary": "Summarize a single activity's power, heart-rate, or pace distribution into terse time-in-bucket histogram rows.",
+    "summary": "Use when the prompt asks for a single activity's power, heart-rate, or pace distribution; do not fetch get_activity_streams samples and bin them in chat.",
     "anchor": "get_activity_histogram"
   },
   {
@@ -84,7 +84,7 @@
     "group": "analyzers",
     "tier": "full",
     "safety": "read",
-    "summary": "Use when the prompt asks whether two analysis metrics are correlated or lagged together; do not fetch rows and reduce them in chat.",
+    "summary": "Use when the prompt asks whether two analysis metrics are correlated or lagged together; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "analyze_correlation"
   },
   {
@@ -92,7 +92,7 @@
     "group": "analyzers",
     "tier": "full",
     "safety": "read",
-    "summary": "Use when the prompt asks for an analysis metric's distribution, histogram, quantiles, or outliers; do not fetch rows and reduce them in chat.",
+    "summary": "Use when the prompt asks for an analysis metric's distribution, histogram, quantiles, or outliers; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "analyze_distribution"
   },
   {
@@ -100,7 +100,7 @@
     "group": "analyzers",
     "tier": "full",
     "safety": "read",
-    "summary": "Use when the prompt asks whether best-effort power, heart-rate, or pace buckets changed versus baseline; do not fetch rows and reduce them in chat.",
+    "summary": "Use when the prompt asks whether best-effort power, heart-rate, or pace buckets changed versus baseline; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "analyze_efforts_delta"
   },
   {
@@ -108,7 +108,7 @@
     "group": "analyzers",
     "tier": "full",
     "safety": "read",
-    "summary": "Use when the prompt asks whether an analysis metric is trending up/down or changing versus baseline; do not fetch rows and reduce them in chat.",
+    "summary": "Use when the prompt asks whether an analysis metric is trending up, trending down, or changing versus baseline; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "analyze_trend"
   },
   {
@@ -116,7 +116,7 @@
     "group": "analyzers",
     "tier": "full",
     "safety": "read",
-    "summary": "Compute deterministic stats over one activity segment from canonical raw streams as the analyzer-family raw-stream exception.",
+    "summary": "Use when the prompt asks for an average, maximum, normalized power, or zone-time statistic over one explicit activity segment; do not fetch get_activity_streams samples and reduce them in chat.",
     "anchor": "compute_activity_segment_stats"
   },
   {
@@ -124,7 +124,7 @@
     "group": "analyzers",
     "tier": "full",
     "safety": "read",
-    "summary": "Use this when the user asks whether a metric is high, low, suppressed, elevated, or unusual versus a baseline window.",
+    "summary": "Use when the prompt asks whether a metric is high, low, suppressed, elevated, or unusual versus a baseline window; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "compute_baseline"
   },
   {
@@ -132,7 +132,7 @@
     "group": "analyzers",
     "tier": "full",
     "safety": "read",
-    "summary": "Use this when the user asks how well completed activities matched scheduled workouts, targets, sport, or event type.",
+    "summary": "Use when the prompt asks how well completed activities matched scheduled workouts, targets, sport, or event type; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "compute_compliance_rate"
   },
   {
@@ -140,7 +140,7 @@
     "group": "analyzers",
     "tier": "full",
     "safety": "read",
-    "summary": "Use this when the user asks whether training distribution is polarized, pyramidal, threshold-heavy, or balanced across low/moderate/high intensity.",
+    "summary": "Use when the prompt asks whether training distribution is polarized, pyramidal, threshold-heavy, or balanced across low/moderate/high intensity; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "compute_load_balance"
   },
   {
@@ -148,7 +148,7 @@
     "group": "analyzers",
     "tier": "full",
     "safety": "read",
-    "summary": "Use this when the user asks for time in power, heart-rate, or pace zones over a date window.",
+    "summary": "Use when the prompt asks for time in power, heart-rate, or pace zones over a date window; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "compute_zone_time"
   },
   {
@@ -276,7 +276,7 @@
     "group": "fitness",
     "tier": "full",
     "safety": "read",
-    "summary": "Project CTL, ATL, and TSB forward from a current fitness row using deterministic load assumptions: weekly ramp %, optional recovery-week cadence, horizon, and optional explicit planned daily loads.",
+    "summary": "Use when the prompt asks to project CTL, ATL, or TSB forward; do not fetch get_fitness rows and model the curve in chat.",
     "anchor": "get_fitness_projection"
   },
   {
