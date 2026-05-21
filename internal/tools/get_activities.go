@@ -11,7 +11,7 @@ import (
 
 const (
 	getActivitiesName                    = "get_activities"
-	getActivitiesDescription             = "List activities for a date range with terse unit-disambiguated rows, calories_burned as active/exercise calories, Strava-unavailable detection, and opaque pagination. Use this before details, intervals, streams, splits, or messages when a prompt asks about recent training."
+	getActivitiesDescription             = "List activities for a date range with terse unit-disambiguated rows, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, Strava-unavailable detection, and opaque pagination. Use this before details, intervals, streams, splits, or messages when a prompt asks about recent training."
 	invalidGetActivitiesArgumentsMessage = "invalid get_activities arguments; provide oldest/newest dates or a valid next_page_token"
 	fetchActivitiesMessage               = "could not fetch activities; check intervals.icu credentials, athlete ID, and date range"
 	activitiesPaginationBoundaryMessage  = "activity pagination hit too many same-timestamp filtered rows; narrow the date range or set include_unnamed true"
@@ -27,7 +27,8 @@ var terseActivityFields = []string{
 	"source", "_note", "icu_athlete_id", "external_id", "stream_types",
 	"distance", "icu_distance", "moving_time", "elapsed_time", "average_speed", "max_speed",
 	"total_elevation_gain", "total_elevation_loss", "icu_training_load", "average_heartrate",
-	"max_heartrate", "average_cadence", "calories", "device_name", "gear_id",
+	"max_heartrate", "average_cadence", "calories", "carbs_ingested", "carbs_used",
+	"device_name", "gear_id",
 }
 
 // ActivitiesClient lists intervals.icu activities for tools.
@@ -76,6 +77,8 @@ type getActivitiesRow struct {
 	MaxHeartRateBPM     int                `json:"max_heart_rate_bpm,omitempty"`
 	AverageCadenceRPM   *float64           `json:"average_cadence_rpm,omitempty"`
 	CaloriesBurned      *int               `json:"calories_burned,omitempty"`
+	CarbsIngestedG      *int               `json:"carbs_ingested_g,omitempty"`
+	CarbsUsedG          *int               `json:"carbs_used_g,omitempty"`
 	DeviceName          string             `json:"device_name,omitempty"`
 	GearID              string             `json:"gear_id,omitempty"`
 	GearName            string             `json:"gear_name,omitempty"`
@@ -178,5 +181,5 @@ func getActivitiesInputSchema() map[string]any {
 }
 
 func getActivitiesOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, calories_burned for active/exercise calories, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, calories_burned for active/exercise calories (distinct from wellness kcal_consumed intake), carbs_ingested_g for athlete-logged carb intake during activity, carbs_used_g for upstream carbs-burned estimate, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed."}
 }

@@ -57,6 +57,8 @@ type Activity struct {
 	MaxHeartRate       *int     `json:"max_heartrate"`
 	AverageCadence     *float64 `json:"average_cadence"`
 	Calories           *int     `json:"calories"`
+	CarbsIngested      *int     `json:"carbs_ingested"`
+	CarbsUsed          *int     `json:"carbs_used"`
 	DeviceName         *string  `json:"device_name"`
 	GearID             string   `json:"-"`
 	StreamTypes        []string `json:"stream_types"`

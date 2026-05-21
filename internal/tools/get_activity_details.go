@@ -17,7 +17,7 @@ import (
 const (
 	getActivityDetailsName              = "get_activity_details"
 	getActivityIntervalsName            = "get_activity_intervals"
-	getActivityDetailsDescription       = "Get one activity's terse metadata and metrics by activity_id, including calories_burned as active/exercise calories when upstream provides it. Use include_full only when raw upstream fields are needed; Strava-blocked activities return an unavailable marker instead of sparse N/A rows."
+	getActivityDetailsDescription       = "Get one activity's terse metadata and metrics by activity_id, including calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, and carbs_used_g for upstream carbs-burned estimate when upstream provides them. Use include_full only when raw upstream fields are needed; Strava-blocked activities return an unavailable marker instead of sparse N/A rows."
 	getActivityIntervalsDescription     = "Get analyzed intervals for one activity by activity_id. Interval units are normalized to the canonical intervals.icu unit enum and raw interval payloads require include_full."
 	invalidActivityReadArgumentsMessage = "invalid activity read arguments; provide activity_id and optional include_full"
 	fetchActivityDetailsMessage         = "could not fetch activity details; check activity_id and intervals.icu credentials"
@@ -309,5 +309,5 @@ func activityReadInputSchema() map[string]any {
 }
 
 func activityReadOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Activity detail or interval response. Activity detail rows include gear_id/gear_name when upstream permits and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Activity detail or interval response. Activity detail rows include calories_burned (active/exercise calories, distinct from wellness kcal_consumed intake), carbs_ingested_g (athlete-logged carb intake in grams), carbs_used_g (upstream carbs-burned estimate in grams), gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed."}
 }

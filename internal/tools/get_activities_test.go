@@ -122,6 +122,86 @@ func TestGetActivitiesCaloriesBurnedSemanticsAndNullStripping(t *testing.T) {
 	}
 }
 
+func TestGetActivitiesActivityNutritionFields(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		rawActivity   string
+		wantIngestedG *int
+		wantUsedG     *int
+		wantAbsent    []string
+		wantSemantics []string
+	}{
+		{
+			name:          "terse default with carbs_ingested and carbs_used",
+			rawActivity:   `{"id":"a1","name":"Long Ride","type":"Ride","start_date_local":"2026-05-14T07:00:00","calories":1850,"carbs_ingested":210,"carbs_used":390}`,
+			wantIngestedG: intPtr(210),
+			wantUsedG:     intPtr(390),
+			wantAbsent:    []string{"carbs", "carbohydrates", "carbs_ingested", "carbs_used", "kcal_consumed", "calories_intake"},
+			wantSemantics: []string{"calories_burned", "carbs_ingested_g", "carbs_used_g"},
+		},
+		{
+			name:          "null-stripping when carb fields absent",
+			rawActivity:   `{"id":"a2","name":"Easy Run","type":"Run","start_date_local":"2026-05-14T08:00:00","calories":400}`,
+			wantIngestedG: nil,
+			wantUsedG:     nil,
+			wantAbsent:    []string{"carbs_ingested_g", "carbs_used_g", "carbs", "carbohydrates"},
+		},
+		{
+			name:          "only carbs_ingested present",
+			rawActivity:   `{"id":"a3","name":"Race","type":"Ride","start_date_local":"2026-05-14T09:00:00","calories":2100,"carbs_ingested":280}`,
+			wantIngestedG: intPtr(280),
+			wantUsedG:     nil,
+			wantAbsent:    []string{"carbs_used_g", "carbs", "carbohydrates"},
+			wantSemantics: []string{"carbs_ingested_g"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			client := newFakeActivitiesClient(t, []string{tc.rawActivity}, "metric")
+			tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-05-01"}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			payload := resultMap(t, result)
+			rows := payload["activities"].([]any)
+			if len(rows) == 0 {
+				t.Fatalf("activities is empty")
+			}
+			row := rows[0].(map[string]any)
+
+			if tc.wantIngestedG != nil {
+				if row["carbs_ingested_g"] != float64(*tc.wantIngestedG) {
+					t.Fatalf("carbs_ingested_g = %v, want %d", row["carbs_ingested_g"], *tc.wantIngestedG)
+				}
+			}
+			if tc.wantUsedG != nil {
+				if row["carbs_used_g"] != float64(*tc.wantUsedG) {
+					t.Fatalf("carbs_used_g = %v, want %d", row["carbs_used_g"], *tc.wantUsedG)
+				}
+			}
+			for _, key := range tc.wantAbsent {
+				if _, ok := row[key]; ok {
+					t.Fatalf("activity row emitted disallowed/ambiguous key %s: %#v", key, row)
+				}
+			}
+			if len(tc.wantSemantics) > 0 {
+				semantics := payload["_meta"].(map[string]any)["field_semantics"].(map[string]any)
+				for _, key := range tc.wantSemantics {
+					if label, ok := semantics[key].(string); !ok || label == "" {
+						t.Fatalf("field_semantics missing %s: %#v", key, semantics)
+					}
+				}
+			}
+		})
+	}
+}
+
 func TestGetActivitiesResolvesGearNames(t *testing.T) {
 	t.Parallel()
 
@@ -300,8 +380,8 @@ func TestGetActivitiesPaginationFiltersAndTokenRoundTrip(t *testing.T) {
 func TestGetActivitiesBoundaryResponseShapeGoldenFixtures(t *testing.T) {
 	t.Parallel()
 
-	const exactFullWindowToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJkZXZpY2VfbmFtZSIsImdlYXJfaWQiXSwiYmVmb3JlX3N0YXJ0X2RhdGVfbG9jYWwiOiIyMDI2LTAxLTAzVDA3OjAwOjAwIiwiYmVmb3JlX2lkIjoiZjMiLCJza2lwX2lkc19hdF9ib3VuZGFyeSI6WyJmMyJdfQ`
-	const identicalTimestampStallToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJkZXZpY2VfbmFtZSJdLCJiZWZvcmVfc3RhcnRfZGF0ZV9sb2NhbCI6IjIwMjYtMDEtMDNUMDc6MDA6MDAiLCJiZWZvcmVfaWQiOiJzMyIsInNraXBfaWRzX2F0X2JvdW5kYXJ5IjpbInMzIl19`
+	const exactFullWindowToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJjYXJic19pbmdlc3RlZCIsImNhcmJzX3VzZWQiLCJkZXZpY2VfbmFtZSIsImdlYXJfaWQiXSwiYmVmb3JlX3N0YXJ0X2RhdGVfbG9jYWwiOiIyMDI2LTAxLTAzVDA3OjAwOjAwIiwiYmVmb3JlX2lkIjoiZjMiLCJza2lwX2lkc19hdF9ib3VuZGFyeSI6WyJmMyJdfQ`
+	const identicalTimestampStallToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJjYXJic19pbmdlc3RlZCIsImNhcmJzX3VzZWQiLCJkZXZpY2VfbmFtZSJdLCJiZWZvcmVfc3RhcnRfZGF0ZV9sb2NhbCI6IjIwMjYtMDEtMDNUMDc6MDA6MDAiLCJiZWZvcmVfaWQiOiJzMyIsInNraXBfaWRzX2F0X2JvdW5kYXJ5IjpbInMzIl19`
 
 	tests := []struct {
 		name            string

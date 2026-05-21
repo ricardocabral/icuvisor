@@ -1,0 +1,13 @@
+{
+  "id": "nutrition-ride",
+  "name": "Long Ride with Nutrition",
+  "type": "Ride",
+  "start_date_local": "2026-05-14T07:00:00",
+  "start_date": "2026-05-14T10:00:00Z",
+  "timezone": "Europe/Berlin",
+  "moving_time": 10800,
+  "elapsed_time": 11000,
+  "calories": 1850,
+  "carbs_ingested": 210,
+  "carbs_used": 390
+}
