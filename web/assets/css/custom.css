@@ -1,0 +1,98 @@
+/* icuvisor documentation overrides (loaded by hextra's head-css.html on every
+   page). Plain CSS only -- this file is not run through PostCSS/Tailwind. */
+
+:root {
+  /* Shared max width for the docs shell, navbar and footer so all three line
+     up vertically. ~1824px: near full-bleed on laptops, modest margins on
+     larger displays. */
+  --icuvisor-shell-max: 114rem;
+}
+
+/* --- Docs shell ------------------------------------------------------------
+   Hextra caps the docs container at screen-xl (1280px), which strands the
+   sidebar and table-of-contents far from the viewport edges on wide displays.
+   Widen the shell so both rails sit close to the margins and the article gets
+   real room. The shell is full-width up to a generous cap; the sidebar and TOC
+   keep their own 16px inner padding, so content never glues to the edge. */
+.icuvisor-doc-shell {
+  width: 100%;
+  max-width: var(--icuvisor-shell-max);
+  margin-inline: auto;
+}
+
+/* Keep the navbar and footer aligned with the widened docs shell. */
+.nav-container > nav {
+  max-width: var(--icuvisor-shell-max);
+}
+
+.hextra-footer .hextra-custom-footer,
+.hextra-footer .hextra-custom-footer + div {
+  max-width: var(--icuvisor-shell-max);
+}
+
+/* --- Reference tables ------------------------------------------------------
+   Hextra renders tables as horizontally scrolling blocks, so wide reference
+   tables clip their last column. Lay them out as real tables that wrap their
+   cell content to fit the column instead. */
+.content table {
+  display: table;
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.content table :is(th, td) {
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.1);
+  text-align: left;
+  vertical-align: top;
+  /* break-word (not anywhere): wraps long words when a column is squeezed, but
+     keeps the intrinsic min-width so table-layout:auto sizes columns sanely. */
+  overflow-wrap: break-word;
+}
+
+.content table thead th {
+  border-bottom: 2px solid rgba(17, 24, 39, 0.18);
+  font-weight: 600;
+}
+
+.content table tbody tr {
+  border: 0;
+  background: transparent;
+}
+
+.content table tbody tr:nth-child(odd) {
+  background: rgba(17, 24, 39, 0.025);
+}
+
+/* Inline code/kbd in cells wraps at natural break points (hyphens, etc.)
+   rather than forcing a single unbroken line that overflows the column. */
+.content table :is(code, kbd) {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.dark .content table :is(th, td) {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .content table thead th {
+  border-bottom-color: rgba(255, 255, 255, 0.18);
+}
+
+.dark .content table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* On phones a dense table can still be wider than the screen -- fall back to
+   Hextra's scrolling behaviour there rather than crushing every column. */
+@media (max-width: 640px) {
+  .content table {
+    display: block;
+    overflow-x: auto;
+  }
+}
