@@ -38,6 +38,8 @@ func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback
 	row.MaxHeartRateBPM = intValue(activity.MaxHeartRate)
 	row.AverageCadenceRPM = activity.AverageCadence
 	row.CaloriesBurned = activity.Calories
+	row.CarbsIngestedG = activity.CarbsIngested
+	row.CarbsUsedG = activity.CarbsUsed
 	row.DeviceName = stringValue(activity.DeviceName)
 	row.HasStreams = len(activity.StreamTypes) > 0
 	if activity.TotalElevationGain != nil {
@@ -132,12 +134,22 @@ func intValue(value *int) int {
 }
 
 func activityFieldSemantics(rows []getActivitiesRow) map[string]string {
+	semantics := map[string]string{}
 	for _, row := range rows {
 		if row.CaloriesBurned != nil {
-			return map[string]string{"calories_burned": "Active/exercise calories burned from upstream activity calories."}
+			semantics["calories_burned"] = "Active/exercise calories burned from upstream activity calories. Distinct from wellness kcal_consumed (dietary intake)."
+		}
+		if row.CarbsIngestedG != nil {
+			semantics["carbs_ingested_g"] = "Carbohydrates consumed/ingested during the activity in grams from upstream carbs_ingested."
+		}
+		if row.CarbsUsedG != nil {
+			semantics["carbs_used_g"] = "Upstream estimate of carbohydrates used/burned during the activity in grams from upstream carbs_used."
 		}
 	}
-	return nil
+	if len(semantics) == 0 {
+		return nil
+	}
+	return semantics
 }
 
 func stringValue(value *string) string {
