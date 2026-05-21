@@ -1,0 +1,88 @@
+# TP-005 — Status
+
+**Issue:** v0.1 — manual smoke docs
+**Iteration:** 1
+**Current Step:** Step 5: Verify v0.1 gate
+**Last Updated:** 2026-05-11
+**State:** ✅ Complete
+
+### Step 1: Plan the manual config and smoke test
+
+**Status:** ✅ Complete
+
+- [x] Identify exact v0.1 config inputs
+- [x] Check local `.env` availability for `INTERVALS_ICU_ATHLETE_ID` and `INTERVALS_ICU_API_KEY`; record only availability, not values
+- [x] Identify macOS Claude Desktop config file path and JSON shape
+- [x] Use placeholders only for secrets/IDs
+- [x] Write smoke-test plan in STATUS.md
+
+#### Smoke-test plan
+
+1. Build or verify the binary with `make build`, then run `./bin/icuvisor version`.
+2. Configure Claude Desktop on macOS by editing `~/Library/Application Support/Claude/claude_desktop_config.json` with an `mcpServers.icuvisor` entry that points to the local binary and supplies v0.1 config via placeholders-backed env vars or `--config` JSON.
+3. Restart Claude Desktop and start a new chat so MCP schema caching does not retain an old tool catalog.
+4. Confirm Claude lists `get_athlete_profile`, ask it to call the tool, and verify the response shape contains anonymized profile fields plus `_meta.server_version` without exposing credentials.
+5. If local credentials are unavailable, document the remaining human maintainer verification instead of fabricating a network result.
+
+### Step 2: Write manual setup documentation
+
+**Status:** ✅ Complete
+
+- [x] Document local build/install for v0.1
+- [x] Document intervals.icu API key acquisition
+- [x] Document config/env inputs
+- [x] Document safe untracked `.env` flow without committing/displaying secrets
+- [x] Provide Claude Desktop macOS JSON config example with placeholders
+- [x] Explain MCP schema caching/new chat requirement
+- [x] Include troubleshooting for common startup/auth/config errors
+
+### Step 3: Add a repeatable local smoke checklist
+
+**Status:** ✅ Complete
+
+- [x] Checklist for `icuvisor version`
+- [x] Checklist for `make build`
+- [x] Checklist for Claude Desktop tool listing/callability
+- [x] Expected anonymized `get_athlete_profile` response shape
+- [x] Note manual smoke requires a real intervals.icu account/API key
+
+### Step 4: Align code UX with docs if necessary
+
+**Status:** ✅ Complete
+
+- [x] Tighten confusing user-facing errors without leaking secrets
+- [x] Ensure invalid config failures are short/actionable
+- [x] Point README quickstart to detailed client guide
+- [x] Update `CHANGELOG.md`
+
+### Step 5: Verify v0.1 gate
+
+**Status:** ✅ Complete
+
+- [x] Run `make build`
+- [x] Run `make test`
+- [x] Run `make lint` if available
+- [x] Perform manual Claude Desktop smoke test if credentials are available, or record remaining human verification
+- [x] Confirm every v0.1 roadmap checkbox is represented in TP-001 through TP-005
+
+## Discoveries
+
+| Date | Finding | Impact |
+| ---- | ------- | ------ |
+
+| 2026-05-11 01:40 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-11 01:40 | Step 1 started | Plan the manual config and smoke test |
+| 2026-05-11 | v0.1 config inputs identified | Required: `INTERVALS_ICU_API_KEY`/`api_key`, `INTERVALS_ICU_ATHLETE_ID`/`athlete_id`; optional: `ICUVISOR_TIMEZONE`/`timezone`, `ICUVISOR_API_BASE_URL`/`api_base_url`, `ICUVISOR_HTTP_TIMEOUT`/`http_timeout`, and `ICUVISOR_CONFIG` or `--config /path/to/icuvisor.json`. `.env` is read for recognized vars during local development; process env overrides `.env`. |
+| 2026-05-11 | Local `.env` availability checked | `.env` is absent in this worktree, so no local `INTERVALS_ICU_ATHLETE_ID` or `INTERVALS_ICU_API_KEY` is available for automated maintainer smoke; no secret values were printed or recorded. |
+| 2026-05-11 | Claude Desktop macOS config shape identified | File: `~/Library/Application Support/Claude/claude_desktop_config.json`. Shape: top-level `mcpServers` object; `icuvisor` entry with `command` set to the absolute binary path, optional `args` such as `--config /absolute/path/icuvisor.json`, and/or `env` entries for v0.1 config. |
+| 2026-05-11 | Placeholder policy set | Documentation examples will use placeholders such as `/absolute/path/to/icuvisor`, `/Users/YOU/.config/icuvisor/icuvisor.json`, `YOUR_INTERVALS_ICU_API_KEY`, `i12345`, and `America/Sao_Paulo`; no real keys, athlete IDs, or machine-specific worker paths. |
+| 2026-05-11 | Verification commands passed | `make build`, `make test`, and `make lint` passed in this worktree. |
+| 2026-05-11 | Manual Claude Desktop smoke requires maintainer credentials | Local `.env` is absent, so this worker could not perform the real intervals.icu `get_athlete_profile` call. Remaining human verification: add a real API key/athlete ID locally, configure Claude Desktop with the documented JSON, restart/new chat, confirm `get_athlete_profile` is listed and returns the documented anonymized shape without secrets. |
+| 2026-05-11 | v0.1 roadmap representation confirmed | Roadmap items are represented by completed task work: TP-001 covers Go module/project layout and manual config foundation, TP-002 covers intervals.icu Basic Auth client, TP-003 covers MCP stdio transport, TP-004 covers `get_athlete_profile`, and TP-005 covers Claude Desktop manual JSON docs/smoke checklist. |
+| 2026-05-11 02:03 | Review R001 | plan Step 3: APPROVE |
+| 2026-05-11 02:06 | Review R001 | plan Step 4: APPROVE |
+
+| 2026-05-11 02:11 | Exit intercept reprompt | Supervisor provided instructions (558 chars) — reprompting worker |
+
+| 2026-05-11 02:12 | Worker iter 1 | done in 1908s, tools: 137 |
+| 2026-05-11 02:12 | Task complete | .DONE created |

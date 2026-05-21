@@ -1,0 +1,109 @@
+# TP-036-os-keychain-credential-storage: OS keychain credential storage — Status
+
+**Current Step:** Step 5: Documentation
+**Status:** ✅ Complete
+**Last Updated:** 2026-05-15
+**Review Level:** 3
+**Review Counter:** 11
+**Iteration:** 2
+**Size:** M
+
+---
+
+### Step 1: Backend selection and contract
+
+**Status:** ✅ Complete
+
+- [x] Pick keyring library; record rationale
+- [x] Define `Store` interface + canonical service/account names
+- [x] Decide `ErrNotFound` sentinel + wrapped-error semantics
+
+### Step 2: Backends
+
+**Status:** ✅ Complete
+
+- [x] macOS / Windows / Linux backends, no CGO
+- [x] Linux headless D-Bus degradation
+- [x] No secret in logs (slog capture test)
+- [x] Injectable keyring adapter seam with context checks and `OSKeychain()` constructor
+- [x] Backend unit tests for success, not-found mapping, unexpected errors, context cancellation, and log redaction
+
+### Step 3: Precedence chain in `internal/config`
+
+**Status:** ✅ Complete
+
+- [x] Order: env > keychain > file > error
+- [x] `_source` diagnostic indicator (env|keychain|file)
+- [x] Updated missing-key error message
+- [x] WARN on legacy file `api_key`
+- [x] `credstore.Store` injection in config options and production startup wiring
+- [x] Keychain error flow: env skips lookup, only `ErrNotFound` falls through, other errors fail load
+
+### Step 4: Tests + manual sweep
+
+**Status:** ✅ Complete
+
+- [x] Table-driven precedence tests
+- [x] Headless-D-Bus degradation test
+- [x] Manual three-OS sweep with platform-native UI (documented/operator-deferred for Windows/Linux)
+- [x] `go test -race` clean
+
+### Step 5: Documentation
+
+**Status:** ✅ Complete
+
+- [x] README "Getting an API key"
+- [x] CHANGELOG `[Unreleased]`
+- [x] SECURITY.md threat-model note
+
+---
+
+## Decisions
+
+- **Library:** Selected the selected OS keyring module at v0.2.8, reviewed locally. Rationale: small OS-native backend abstraction for macOS Keychain, Windows Credential Manager, and Linux libsecret over D-Bus; no CGO required for target paths; avoids encrypted-file/pass fallbacks that would reintroduce a key-on-disk default.
+- **License review:** `the selected OS keyring module` MIT; transitive deps from v0.2.8 are `the Windows credential helper module` v1.2.3 MIT, `the D-Bus module` v5.2.2 BSD-style, and `golang.org/x/sys` v0.27.0 BSD-style. No GPL/copyleft dependency introduced.
+- **Rejected backend:** `the alternate keyring module` is MIT but has broader backend/config surface, including encrypted file/pass-style fallbacks that conflict with the project's "OS keychain by default, no plaintext/encrypted local file fallback" security posture.
+- **Contract plan:** `internal/credstore.Store` will use context-aware signatures: `Get(ctx context.Context, account string) (string, error)`, `Set(ctx context.Context, account, secret string) error`, and `Delete(ctx context.Context, account string) error`.
+- **Canonical names:** `credstore.ServiceName = "icuvisor"` and `credstore.IntervalsAPIKeyAccount = "intervals-icu-api-key"`; this task stores one API key per host, not per athlete. Coach-mode key layout is deferred to TP-039.
+- **Error semantics:** `credstore.ErrNotFound` is the only fall-through sentinel and callers must use `errors.Is`. The wrapper maps `keyring.ErrNotFound` to `credstore.ErrNotFound`; Linux startup `Get` with unavailable D-Bus/session keyring also maps to `ErrNotFound` so config falls through to env/plaintext legacy sources. `Set`/`Delete` on unavailable Linux keyring should return actionable wrapped errors for TP-038 onboarding rather than pretending a write/delete succeeded. Other errors are wrapped with `%w` and must not include the secret value.
+- **Credential precedence:** process environment `INTERVALS_ICU_API_KEY` is highest priority; OS keychain is next; plaintext `.env` and JSON `api_key` are legacy file sources below keychain. `.env` remains supported but is not treated as an explicit process-env override.
+- **Source indicator:** `Config` will carry an unexported-to-JSON diagnostic source field (`json:"-"`) with values `env`, `keychain`, `file`, or empty. `.env` and JSON both report `file`; `Config.String()` will show the source while still redacting the secret.
+- **Step 2 backend plan:** implement `OSKeychain() Store` as a concrete wrapper over an internal adapter interface/function fields so normal tests fake keyring backend calls without touching the live OS keychain or relying on global mocks. The wrapper uses `ServiceName` internally and accepts only account/secret at the public interface.
+- **Step 2 context plan:** because the keyring backend is not context-aware, each operation checks `ctx.Err()` before calling the adapter and again after it returns. Do not wrap keychain operations in cancellation goroutines because `Set` could still write after cancellation.
+- **Step 2 Linux degradation plan:** add an `isKeychainUnavailable(err)` helper with Linux and non-Linux implementations. On `Get` only, map backend not-found and Linux headless/unavailable session/Secret Service/collection errors to `ErrNotFound`; permission denials, unlock failures, malformed responses, and unexpected backend errors remain wrapped. `Set` and `Delete` return actionable wrapped errors for unavailable Linux keyrings.
+- **Step 2 logging plan:** log `credential get/set/delete` attempts and outcomes at debug level with `service` and `account` fields only. Do not include secret values. Tests capture `slog` output around `Set` with a known secret and assert it is absent from messages and fields.
+- **Step 2 build plan:** prefer one wrapper file plus Linux/non-Linux classifier files. Validate `CGO_ENABLED=0 go test`/compile for linux, darwin, and windows targets after adding the dependency; live keychain tests remain behind `//go:build keychain_live`.
+- **Step 3 injection plan:** add `CredentialStore credstore.Store` to `config.Options`. A nil store means no keychain lookup so existing tests and explicit headless loads remain deterministic; production startup wires `credstore.OSKeychain()` before invoking `config.Load`; tests pass fakes/`credstore.NoopStore` and never touch a live keychain.
+- **Step 3 query plan:** read JSON and `.env` first to preserve existing non-secret settings and relative legacy-file precedence; then if trimmed process env `INTERVALS_ICU_API_KEY` is present, set source `env` and skip keychain entirely. If process env is absent, query `CredentialStore.Get(ctx, credstore.IntervalsAPIKeyAccount)`. A keychain value overrides plaintext `.env`/JSON; `credstore.ErrNotFound` falls through to legacy file values; any other keychain error fails load with a wrapped, actionable error and never falls through to plaintext credentials.
+- **Step 3 legacy warning plan:** any plaintext file-sourced API key (`config.json api_key` or `.env INTERVALS_ICU_API_KEY`) emits one WARN at load with source/path metadata only; the credential value is never logged. Process env does not warn.
+- **Step 3 source plan:** add a `Config.APIKeySource` diagnostic field with `json:"-"` and values `env`, `keychain`, `file`, or empty. `Config.String()` renders `api_key_source=<source>` beside `api_key=<redacted>`. `.env` and JSON both report `file`. The missing-key error names process env, OS keychain `service=icuvisor` / `account=intervals-icu-api-key`, JSON `api_key`, and `.env`.
+
+## Notes
+
+- **Step 4 manual sweep resolution:** Supervisor steering accepted the documented/operator-deferred manual sweep path for Windows/Linux because this worker has only a macOS host and no live intervals.icu credentials. Local macOS validation used dummy-only credentials: (1) native `security add-generic-password` / `find-generic-password` / `delete-generic-password` with service `icuvisor` and a temporary `tp-036-dummy-*` account; (2) a temporary `go test ./internal/credstore -run TestTP036LiveOSKeychainDummy -count=1` exercising `credstore.OSKeychain().Set/Get/Delete` against a temporary `tp-036-live-dummy-*` account. Both passed and cleaned up. Windows Credential Manager UI, Linux Secret Service UI, and real intervals.icu tool-call smoke remain documented operator/OS-specific validation, not worker-blocking.
+
+_Add notes as work progresses._
+
+| 2026-05-15 13:39 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-15 13:39 | Step 1 started | Backend selection and contract |
+| 2026-05-15 13:43 | Review R001 | plan Step 1: UNKNOWN |
+| 2026-05-15 13:47 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-15 13:50 | Review R003 | code Step 1: APPROVE |
+| 2026-05-15 13:53 | Review R004 | plan Step 2: REVISE |
+| 2026-05-15 13:55 | Review R005 | plan Step 2: APPROVE |
+| 2026-05-15 14:05 | Review R006 | code Step 2: APPROVE |
+| 2026-05-15 14:08 | Review R007 | plan Step 3: REVISE |
+| 2026-05-15 14:10 | Review R008 | plan Step 3: APPROVE |
+| 2026-05-15 14:18 | Review R009 | code Step 3: APPROVE |
+| 2026-05-15 14:22 | Review R010 | plan Step 4: APPROVE |
+
+| 2026-05-15 14:27 | Agent escalate | Blocked on Step 4 checkbox "Manual three-OS sweep with platform-native UI": this worker has only the current macOS worktree and no access to Windows Credential Manager or Linux Secret Service native U |
+| 2026-05-15 14:27 | Worker iter 1 | done in 2902s, tools: 160 |
+| 2026-05-15 14:27 | Step 4 started | Tests + manual sweep |
+| 2026-05-15 14:28 | Steering | Accepted documented/operator-deferred manual sweep for Windows/Linux; requested safe macOS dummy keychain validation only. |
+| 2026-05-15 14:29 | Manual validation | macOS native security dummy write/read/delete passed; temporary OSKeychain live test dummy Set/Get/Delete passed and cleaned up. |
+| 2026-05-15 14:34 | Review R011 | code Step 4: APPROVE |
+
+| 2026-05-15 14:35 | Agent reply | Acknowledged steering for TP-036 Step 4: I will use documented/operator-deferred manual sweep acceptance, run safe macOS dummy keychain write/read/delete cleanup if available, document exactly what wa |
+| 2026-05-15 14:35 | Worker iter 2 | done in 486s, tools: 36 |
+| 2026-05-15 14:35 | Task complete | .DONE created |

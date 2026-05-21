@@ -1,0 +1,18 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "activity_id": {
+      "description": "intervals.icu activity ID.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "Include raw upstream fields; default terse mode strips nulls and returns normalized fields.",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "activity_id"
+  ],
+  "type": "object"
+}

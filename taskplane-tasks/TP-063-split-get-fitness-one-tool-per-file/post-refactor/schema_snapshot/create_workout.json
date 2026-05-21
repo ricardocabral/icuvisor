@@ -1,0 +1,195 @@
+{
+  "additionalProperties": false,
+  "examples": [
+    {
+      "description": "60m easy aerobic endurance. Keep it conversational.",
+      "name": "Endurance aerobic ride",
+      "sport": "Ride"
+    },
+    {
+      "folder_id": "folder-build-1",
+      "name": "Threshold builder",
+      "sport": "Ride",
+      "tags": [
+        "threshold",
+        "build"
+      ],
+      "workout_doc": {
+        "steps": [
+          {
+            "description": "Warm up",
+            "duration": 900,
+            "power": {
+              "units": "PERCENT_FTP",
+              "value": 60
+            }
+          },
+          {
+            "description": "Threshold",
+            "duration": 1200,
+            "power": {
+              "max": 100,
+              "min": 95,
+              "units": "PERCENT_FTP"
+            }
+          },
+          {
+            "description": "Cool down",
+            "duration": 600,
+            "power": {
+              "units": "PERCENT_FTP",
+              "value": 50
+            }
+          }
+        ]
+      }
+    },
+    {
+      "folder_id": "folder-run-1",
+      "name": "Progressive run",
+      "sport": "Run",
+      "tags": [
+        "run",
+        "progression"
+      ],
+      "workout_doc": {
+        "steps": [
+          {
+            "duration": 900,
+            "pace": {
+              "text": "easy"
+            }
+          },
+          {
+            "duration": 1200,
+            "pace": {
+              "text": "steady"
+            },
+            "rpe": {
+              "value": 6
+            }
+          },
+          {
+            "duration": 600,
+            "pace": {
+              "text": "easy"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "input_examples": [
+    {
+      "description": "60m easy aerobic endurance. Keep it conversational.",
+      "name": "Endurance aerobic ride",
+      "sport": "Ride"
+    },
+    {
+      "folder_id": "folder-build-1",
+      "name": "Threshold builder",
+      "sport": "Ride",
+      "tags": [
+        "threshold",
+        "build"
+      ],
+      "workout_doc": {
+        "steps": [
+          {
+            "description": "Warm up",
+            "duration": 900,
+            "power": {
+              "units": "PERCENT_FTP",
+              "value": 60
+            }
+          },
+          {
+            "description": "Threshold",
+            "duration": 1200,
+            "power": {
+              "max": 100,
+              "min": 95,
+              "units": "PERCENT_FTP"
+            }
+          },
+          {
+            "description": "Cool down",
+            "duration": 600,
+            "power": {
+              "units": "PERCENT_FTP",
+              "value": 50
+            }
+          }
+        ]
+      }
+    },
+    {
+      "folder_id": "folder-run-1",
+      "name": "Progressive run",
+      "sport": "Run",
+      "tags": [
+        "run",
+        "progression"
+      ],
+      "workout_doc": {
+        "steps": [
+          {
+            "duration": 900,
+            "pace": {
+              "text": "easy"
+            }
+          },
+          {
+            "duration": 1200,
+            "pace": {
+              "text": "steady"
+            },
+            "rpe": {
+              "value": 6
+            }
+          },
+          {
+            "duration": 600,
+            "pace": {
+              "text": "easy"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "properties": {
+    "description": {
+      "description": "Optional free-text workout description. Preserved verbatim when workout_doc is omitted; mutually exclusive with workout_doc because intervals.icu accepts one description DSL string on writes.",
+      "type": "string"
+    },
+    "folder_id": {
+      "description": "Optional intervals.icu workout-library folder or plan ID to place the new template in. Omit to create a top-level library workout.",
+      "type": "string"
+    },
+    "name": {
+      "description": "Required workout-library template name/title. Surrounding whitespace is trimmed.",
+      "type": "string"
+    },
+    "sport": {
+      "description": "Required upstream sport/activity type for the workout template, such as Ride, Run, Swim, VirtualRide, or the athlete account's configured activity type.",
+      "type": "string"
+    },
+    "tags": {
+      "description": "Optional workout-library tags to preserve on the upstream template, in caller-provided order.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "workout_doc": {
+      "description": "Optional structured WorkoutDoc. Mutually exclusive with description; serialized to the upstream workout-description DSL. Syntax reference: icuvisor://workout-syntax.",
+      "type": "object"
+    }
+  },
+  "required": [
+    "name",
+    "sport"
+  ],
+  "type": "object"
+}

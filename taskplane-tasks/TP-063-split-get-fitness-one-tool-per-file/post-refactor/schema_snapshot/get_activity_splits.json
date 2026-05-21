@@ -1,0 +1,26 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "activity_id": {
+      "description": "Required intervals.icu activity ID whose manual or virtual splits should be returned.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, preserve full response metadata during shaping; split rows remain terse and unit-disambiguated by default.",
+      "type": "boolean"
+    },
+    "split_unit": {
+      "description": "Optional split distance unit. Defaults to the athlete's preferred_units when omitted, falling back to km.",
+      "enum": [
+        "km",
+        "mi"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "activity_id"
+  ],
+  "type": "object"
+}

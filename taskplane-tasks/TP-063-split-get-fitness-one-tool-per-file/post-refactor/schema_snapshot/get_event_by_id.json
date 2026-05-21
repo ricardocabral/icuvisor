@@ -1,0 +1,34 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "date": {
+      "description": "Optional athlete-local YYYY-MM-DD date hint. On detail 404, scans ±30 days around this date.",
+      "type": "string"
+    },
+    "event_id": {
+      "description": "Required upstream event ID. Numeric upstream IDs should be passed as strings.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include the raw upstream event payload under event.full; default response is terse.",
+      "type": "boolean"
+    },
+    "newest": {
+      "description": "Optional athlete-local scan end YYYY-MM-DD. Must be paired with oldest and span at most 61 days.",
+      "type": "string"
+    },
+    "oldest": {
+      "description": "Optional athlete-local scan start YYYY-MM-DD. Must be paired with newest and span at most 61 days.",
+      "type": "string"
+    },
+    "resolve": {
+      "description": "Optional upstream resolve flag for the fallback list scan; defaults to true to recover recurring or derived event instances.",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "event_id"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,23 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "activity_id": {
+      "description": "Required intervals.icu activity ID to append a message/note to. Surrounding whitespace is trimmed.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include the raw upstream add-message response under full; default returns a terse append confirmation.",
+      "type": "boolean"
+    },
+    "message": {
+      "description": "Required free-text message/note content. Must be non-empty after trimming; the body is sent as content and is not logged by icuvisor.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "activity_id",
+    "message"
+  ],
+  "type": "object"
+}

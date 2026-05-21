@@ -1,0 +1,39 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw upstream activity fields and preserve upstream nulls; default terse rows are unit-disambiguated and null-stripped.",
+      "type": "boolean"
+    },
+    "include_unnamed": {
+      "default": false,
+      "description": "When false, drop rows with an empty activity name after bounded pagination.",
+      "type": "boolean"
+    },
+    "newest": {
+      "description": "Optional local ISO-8601 end date/date-time; defaults upstream to now.",
+      "type": "string"
+    },
+    "next_page_token": {
+      "description": "Opaque token from _meta.next_page_token for the next page. Do not edit.",
+      "type": "string"
+    },
+    "oldest": {
+      "description": "Required local ISO-8601 start date/date-time unless next_page_token is supplied.",
+      "type": "string"
+    },
+    "page_size": {
+      "default": 50,
+      "description": "Number of terse rows to return per page; values above 200 are capped.",
+      "maximum": 200,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "route_id": {
+      "description": "Optional intervals.icu route ID filter.",
+      "type": "integer"
+    }
+  },
+  "type": "object"
+}

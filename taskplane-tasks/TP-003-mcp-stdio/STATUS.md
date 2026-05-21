@@ -1,0 +1,103 @@
+# TP-003 — Status
+
+**Issue:** v0.1 — MCP stdio
+**Iteration:** 1
+**Current Step:** Step 5: Verify and document
+**Last Updated:** 2026-05-10
+**State:** ✅ Complete
+
+### Step 1: SDK spike and plan
+
+**Status:** ✅ Complete
+
+- [x] Read official Go MCP SDK docs/examples
+- [x] Record chosen SDK APIs and limitations
+- [x] Confirm SDK license is permissive
+- [x] Define tiny internal registry interface
+- [x] R001: Record registry contract and SDK boundary decision
+- [x] R001: Record panic-to-error safe registrar strategy
+- [x] R001: Record dependency transitive license scan result
+- [x] R001-code: Include all modules from a full SDK dependency graph license scan
+
+### Step 2: Add the MCP SDK and stdio server skeleton
+
+**Status:** ✅ Complete
+
+- [x] Add official Go MCP SDK dependency
+- [x] Create internal MCP server constructor
+- [x] Wire stdio as default v0.1 behavior
+- [x] Keep `main` thin
+- [x] Honor context cancellation and return errors instead of panicking
+
+### Step 3: Add registry/test tool scaffolding
+
+**Status:** ✅ Complete
+
+- [x] Define tool registration contract
+- [x] R001: Define sanitized tool error contract
+- [x] R001: Document fake tool as test-only scaffolding
+- [x] R001: Record registrar invariants including duplicate-name rejection
+- [x] R001: Record v0.1 response content shape
+- [x] Add fake/noop tool sufficient for protocol tests
+- [x] Ensure tool names are snake_case and stable
+- [x] Ensure user-facing errors are short
+
+### Step 4: Test protocol behavior without Claude
+
+**Status:** ✅ Complete
+
+- [x] Test MCP initialize
+- [x] Test tool listing
+- [x] Test tool call dispatch
+- [x] Test malformed requests and handler errors
+- [x] R001-code: Exercise protocol tests through `Server.Run` with injected transport
+- [x] R001-code: Add actual malformed raw MCP/JSON-RPC request coverage
+
+### Step 5: Verify and document
+
+**Status:** ✅ Complete
+
+- [x] Run `go fmt ./...`
+- [x] Run `go mod tidy`
+- [x] Run `make test`
+- [x] Run `make build`
+- [x] Run `make lint` if available
+- [x] Update `CHANGELOG.md`
+
+## Discoveries
+
+| Date | Finding | Impact |
+| ---- | ------- | ------ |
+
+| 2026-05-10 23:08 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-10 23:08 | Step 1 started | SDK spike and plan |
+| 2026-05-10 | Official Go MCP SDK APIs chosen: `mcp.NewServer`, `mcp.AddTool`, `(*mcp.Server).Run`, `mcp.StdioTransport`, `mcp.IOTransport`, `mcp.NewInMemoryTransports`, `mcp.NewClient`, `ClientSession.ListTools`, and `ClientSession.CallTool`. | Stdio server can be tested without Claude via SDK client/in-memory transports; production default uses newline-delimited JSON over stdin/stdout. |
+| 2026-05-10 | SDK limitation: latest v1.6.0 requires Go 1.25, while icuvisor currently declares Go 1.23; v1.3.1 is the newest stable SDK release whose module declares Go 1.23 and has the needed stdio/tool APIs. `StdioTransport` hard-wires `os.Stdin`/`os.Stdout`; tests should use `IOTransport` or `NewInMemoryTransports`. | Pin `the MCP Go SDK` to v1.3.1 unless project Go version is intentionally raised. |
+| 2026-05-10 | `the MCP Go SDK` v1.3.1 `LICENSE` is MIT; latest v1.6.0 is transitioning to Apache-2.0 with unrelicensed MIT contributions. | Both MIT and Apache-2.0 are permissive and compatible with project policy; v1.3.1 keeps the dependency wholly MIT. |
+| 2026-05-10 | Tiny registry interface decision: `internal/tools` will own SDK-free contracts (`Registry.Register(context.Context, Registrar) error`, `Registrar.AddTool(Tool) error`, `Tool{Name, Description, InputSchema, Handler}`); `internal/mcp` will adapt those definitions to SDK `mcp.Tool`/handlers. | Keeps tool packages testable and avoids leaking official SDK types outside the MCP adapter boundary. |
+| 2026-05-10 | Registry/MCP boundary plan: `internal/mcp` constructor will take config, version, logger, `tools.Registry`, and an injectable SDK transport; production uses `mcp.StdioTransport`, tests use in-memory/IO transports. | Preserves thin `main`, avoids Claude Desktop in tests, and keeps future real tools under `internal/tools`. |
+| 2026-05-10 | Safe registrar strategy: all tool registration goes through an `internal/mcp` adapter that validates snake_case names and required schemas before calling SDK registration, wraps SDK `AddTool`/`Server.AddTool` in a `defer recover` boundary, and returns startup errors instead of allowing SDK panics to escape. | Satisfies no-panic-outside-main rule while still using SDK schema validation and typed handler behavior. |
+| 2026-05-10 | Full dependency graph license scan for a temp module importing `the MCP Go SDK/mcp@v1.3.1` (`go list -m all`): SDK MIT; `cloud.google.com/go/compute/metadata` Apache-2.0; `golang-jwt/jwt/v5` MIT; `google/go-cmp` BSD-3-Clause; `google/jsonschema-go` MIT; `segmentio/encoding` MIT; `yosida95/uritemplate/v3` BSD-3-Clause; `golang.org/x/oauth2`, `x/tools`, `x/sys` BSD-3-Clause; `segmentio/asm` MIT. | No GPL/copyleft modules found among the full newly introduced SDK dependency graph. |
+| 2026-05-10 | Tool registration contract: registries call `Registrar.AddTool(Tool)` with snake_case `Name`, non-empty `Description`, object `InputSchema`, optional object `OutputSchema`, and non-nil `Handler`; handlers receive raw JSON arguments and return text/structured content or a sanitized user error. | Provides deterministic contract for Step 3 implementation and Step 4 protocol tests without importing SDK types in `internal/tools`. |
+| 2026-05-10 | Tool error contract: `internal/tools` will expose a `UserError` carrying a short public message and wrapped internal cause; the MCP adapter logs detailed handler errors and returns unknown errors as a generic, actionable `tool failed; try again or check icuvisor logs` text result with `isError=true`. | Prevents upstream/config/internal details from leaking to the LLM while allowing deliberate short user-facing messages. |
+| 2026-05-10 | Fake/noop tool boundary: Step 3 will keep `test_echo` or equivalent fake registries in `_test.go` files only; production default registry remains empty until the real `get_athlete_profile` task lands. | Avoids exposing unstable placeholder tools in the v0.1 catalog. |
+| 2026-05-10 | Registrar invariants: reject invalid snake_case names, empty descriptions, nil/non-object schemas, nil handlers, unsupported content types, and duplicate names before invoking the SDK. | Normal validation failures become deterministic startup errors, not SDK panics. |
+| 2026-05-10 | Response content shape: v0.1 scaffolding supports text content plus optional structured JSON object passthrough; unsupported content types are rejected at registration/handler conversion time rather than silently dropped. | Step 4 can assert predictable `tools/call` responses and short error payloads. |
+| 2026-05-10 | Final verification passed: `go fmt ./...`, `go mod tidy`, `make test`, `make build`, and `make lint`. | Ready for TP-003 delivery. |
+| 2026-05-10 23:14 | Review R001 | plan Step 1: REVISE |
+| 2026-05-10 23:19 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-10 23:22 | Review R001 | code Step 1: REVISE |
+| 2026-05-10 23:24 | Review R001 | code Step 1: APPROVE |
+| 2026-05-10 23:27 | Review R001 | plan Step 2: APPROVE |
+| 2026-05-10 23:35 | Review R001 | code Step 2: APPROVE |
+| 2026-05-10 23:37 | Review R001 | plan Step 3: REVISE |
+| 2026-05-10 23:41 | Review R001 | plan Step 3: APPROVE |
+
+| 2026-05-11 00:24 | Exit intercept reprompt | Supervisor provided instructions (618 chars) — reprompting worker |
+| 2026-05-11 00:29 | Review R001 | code Step 4: REVISE |
+| 2026-05-11 00:33 | Review R001 | code Step 4: APPROVE |
+
+| 2026-05-11 00:37 | Exit intercept reprompt | Supervisor provided instructions (439 chars) — reprompting worker |
+
+| 2026-05-11 00:37 | Worker iter 1 | done in 5395s, tools: 222 |
+| 2026-05-11 00:37 | Task complete | .DONE created |

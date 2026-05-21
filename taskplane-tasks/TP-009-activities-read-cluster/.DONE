@@ -1,0 +1,2 @@
+TP-009 recovered by supervisor during manual batch repair.
+STATUS.md was complete and verification was recorded, but lane-runner did not create .DONE before no-progress failure.

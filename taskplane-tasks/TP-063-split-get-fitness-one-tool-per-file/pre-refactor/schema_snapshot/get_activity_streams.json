@@ -1,0 +1,25 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "activity_id": {
+      "description": "Required intervals.icu activity ID whose stream channels should be listed.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw upstream stream payloads and samples for available stream channels; default returns metadata only unless keys is supplied.",
+      "type": "boolean"
+    },
+    "keys": {
+      "description": "Optional stream keys to include as samples. Values are canonicalized to snake_case when known; unknown keys are reported in _meta. Supplying keys includes samples even when include_full is false.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "activity_id"
+  ],
+  "type": "object"
+}

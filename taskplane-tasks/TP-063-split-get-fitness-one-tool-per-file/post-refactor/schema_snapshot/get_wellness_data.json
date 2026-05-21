@@ -1,0 +1,30 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "fields": {
+      "description": "Optional upstream wellness field names to request; custom fields are preserved when returned.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include the raw upstream wellness row under full and keep null fields.",
+      "type": "boolean"
+    },
+    "newest": {
+      "description": "Local newest wellness date YYYY-MM-DD in the athlete timezone, inclusive.",
+      "type": "string"
+    },
+    "oldest": {
+      "description": "Local oldest wellness date YYYY-MM-DD in the athlete timezone.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "oldest",
+    "newest"
+  ],
+  "type": "object"
+}

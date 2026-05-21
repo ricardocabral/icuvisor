@@ -1,0 +1,10 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "item_type": {
+      "description": "Optional upstream custom-item type filter, for example FITNESS_CHART, INPUT_FIELD, ACTIVITY_FIELD, ACTIVITY_STREAM, ACTIVITY_PANEL, ACTIVITY_HISTOGRAM, ACTIVITY_MAP, ACTIVITY_HEATMAP, TRACE_CHART, FITNESS_TABLE, or ZONES.",
+      "type": "string"
+    }
+  },
+  "type": "object"
+}

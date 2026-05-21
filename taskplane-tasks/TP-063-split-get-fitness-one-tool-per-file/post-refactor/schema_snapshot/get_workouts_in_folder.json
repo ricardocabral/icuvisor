@@ -1,0 +1,18 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "folder_id": {
+      "description": "Required intervals.icu workout-library folder or plan ID. The public API lists all workouts, and icuvisor filters by this folder_id.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include each raw upstream workout_doc object verbatim. Default mode returns only workout_doc_summary.",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "folder_id"
+  ],
+  "type": "object"
+}

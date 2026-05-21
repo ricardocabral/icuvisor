@@ -1,0 +1,18 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "activity_id": {
+      "description": "Intervals.icu activity ID to fetch extended metrics for.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw upstream activity, interval, and power-vs-HR payloads. Default terse mode only returns upstream-exposed metrics and drops unavailable fields.",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "activity_id"
+  ],
+  "type": "object"
+}

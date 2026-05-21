@@ -1,0 +1,11 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "include_full": {
+      "default": false,
+      "description": "When true, include additional typed, non-secret profile and sport-setting identifiers. Defaults to false; raw upstream payloads and credentials are never returned.",
+      "type": "boolean"
+    }
+  },
+  "type": "object"
+}

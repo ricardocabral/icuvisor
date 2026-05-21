@@ -1,0 +1,13 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "item_id": {
+      "description": "Required intervals.icu custom item ID.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "item_id"
+  ],
+  "type": "object"
+}

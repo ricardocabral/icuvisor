@@ -1,0 +1,42 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "distance_meters": {
+      "description": "Pace distance buckets. Defaults depend on sport: run-style 400,1000,1609,5000,10000m; swim 50,100,200,400,1500m.",
+      "items": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "duration_seconds": {
+      "description": "Power/HR duration buckets. Defaults to 5,15,30,60,300,1200,3600 seconds.",
+      "items": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw upstream curve arrays and activity maps.",
+      "type": "boolean"
+    },
+    "newest": {
+      "description": "Optional local end date YYYY-MM-DD. Supply with oldest or omit both for all-time.",
+      "type": "string"
+    },
+    "oldest": {
+      "description": "Optional local start date YYYY-MM-DD. Supply with newest or omit both for all-time.",
+      "type": "string"
+    },
+    "sports": {
+      "description": "Intervals.icu sports/types to fan out. Defaults to Ride, Run, Swim.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "type": "object"
+}

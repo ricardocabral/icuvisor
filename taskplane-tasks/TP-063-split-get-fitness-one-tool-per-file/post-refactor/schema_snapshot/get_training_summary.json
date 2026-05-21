@@ -1,0 +1,23 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "end_date": {
+      "description": "local end date as YYYY-MM-DD in the athlete timezone.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw upstream summary rows.",
+      "type": "boolean"
+    },
+    "start_date": {
+      "description": "local start date for summary rows as YYYY-MM-DD in the athlete timezone.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "start_date",
+    "end_date"
+  ],
+  "type": "object"
+}
