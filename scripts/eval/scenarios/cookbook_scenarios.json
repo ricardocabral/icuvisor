@@ -1,0 +1,228 @@
+{
+  "version": "cookbook-eval-v1",
+  "description": "End-to-end activation and answer-quality scenarios for the icuvisor cookbook recipes and prompt library. Each scenario is a self-contained prompt (no placeholder substitution needed); the assistant resolves activities and dates itself via tool calls.",
+  "recipe_source": "web/content/cookbook/",
+  "tool_catalog": "web/data/tools.json",
+  "judge": "scripts/eval/judge/judge_prompt.md",
+  "scoring": {
+    "dimensions": ["tool_activation", "grounding", "scale_correctness", "coverage", "actionability", "conciseness"],
+    "scale": "1-5 per dimension",
+    "pass_threshold": 4.0,
+    "hard_gates": "verdict is fail if tool_activation <= 2, grounding <= 2, or any dimension == 1, regardless of the weighted overall"
+  },
+  "redaction_conventions": [
+    "Prompts use relative windows ('last 14 days', '9 days from today') and descriptive activity references ('my most recent VO2 ride') so no real IDs or dates are committed.",
+    "Do not commit raw athlete identifiers, private comments, exact thresholds, body metrics, or API keys."
+  ],
+  "scenarios": [
+    {
+      "id": "CB-WEEKLY-01",
+      "recipe": "weekly-review",
+      "persona": "athlete",
+      "prompt": "You are my endurance coach. Using only my intervals.icu data through icuvisor, review my training for the last 14 days. Summarize load, volume, and intensity mix; name the two most significant sessions; assess recovery risk from my fitness trend; and give one specific thing to do in the next 48 hours. Do not invent metrics that aren't available, and tell me which tool each key number came from.",
+      "expected_tools": ["get_fitness", "get_training_summary", "get_activities"],
+      "bonus_tools": ["get_athlete_profile", "compute_zone_time", "compute_load_balance", "analyze_trend"],
+      "forbidden_tools": ["delete_activity", "delete_event", "delete_events_by_date_range", "delete_workout"],
+      "must_address": ["total load and volume", "intensity distribution", "two notable sessions", "recovery risk from TSB", "one concrete next step"],
+      "anti_patterns": ["invents zone percentages not returned by a tool", "answers from memory without calling icuvisor"]
+    },
+    {
+      "id": "CB-WEEKLY-02",
+      "recipe": "weekly-review",
+      "persona": "athlete",
+      "prompt": "Compare my last 14 days of training with the 14 days before that, using my intervals.icu data. What changed in load, volume, and intensity distribution? State whether any change is meaningful or within normal noise.",
+      "expected_tools": ["get_fitness", "get_training_summary"],
+      "bonus_tools": ["get_activities", "analyze_trend", "get_athlete_profile"],
+      "forbidden_tools": ["delete_activity", "delete_event", "delete_events_by_date_range", "delete_workout"],
+      "must_address": ["load change between periods", "volume change", "intensity distribution change", "whether the change is meaningful"],
+      "anti_patterns": ["fabricates one of the two periods", "reports a precise change with no tool data behind it"]
+    },
+    {
+      "id": "CB-READY-01",
+      "recipe": "readiness-check",
+      "persona": "athlete",
+      "prompt": "Act as my coach and tell me whether I should train hard today. Use icuvisor with my intervals.icu data: pull my wellness for the last 14 days (sleep, sleep quality, HRV, resting HR, fatigue) and my current fitness, fatigue, and form. Give a one-word readiness call (green, amber, or red), name the signals driving it, and recommend whether to keep, modify, or move today's hard session.",
+      "expected_tools": ["get_wellness_data", "get_fitness"],
+      "bonus_tools": ["get_athlete_profile"],
+      "forbidden_tools": ["update_wellness", "delete_activity", "delete_event", "delete_events_by_date_range"],
+      "must_address": ["one-word readiness verdict", "the wellness signals driving the call", "current form/TSB", "keep/modify/move recommendation"],
+      "anti_patterns": ["treats sleep quality as a 0-10 scale", "calls a 3/4 sleep quality 'poor'", "invents an HRV number"]
+    },
+    {
+      "id": "CB-READY-02",
+      "recipe": "readiness-check",
+      "persona": "athlete",
+      "prompt": "Am I ready for a VO2max session today? Use icuvisor and my intervals.icu wellness and fitness data. Important: if today's wellness row has not synced yet, tell me the data is stale rather than guessing today's HRV and sleep. Use the correct subjective scales.",
+      "expected_tools": ["get_wellness_data", "get_fitness"],
+      "bonus_tools": ["get_athlete_profile"],
+      "forbidden_tools": ["update_wellness", "delete_activity", "delete_event"],
+      "must_address": ["explicit statement of how fresh the latest wellness row is", "readiness assessment", "recommendation for the VO2max session"],
+      "anti_patterns": ["invents today's wellness values when the row has not synced", "rescales sleep quality or feel"]
+    },
+    {
+      "id": "CB-ACT-01",
+      "recipe": "activity-retrospective",
+      "persona": "athlete",
+      "prompt": "Give me a detailed retrospective of my most recent interval or VO2 ride. Use icuvisor: find the activity, get its details, break down the intervals or laps, report time-in-zone, and report only the extended metrics actually present. Tell me how the hard parts held up and give two takeaways.",
+      "expected_tools": ["get_activities", "get_activity_details", "get_activity_intervals"],
+      "bonus_tools": ["get_activity_histogram", "get_extended_metrics", "get_activity_splits", "compute_activity_segment_stats"],
+      "forbidden_tools": ["delete_activity", "delete_event", "delete_workout"],
+      "must_address": ["identifies which activity it analyzed", "interval-by-interval breakdown", "how hard efforts held targets", "two concrete takeaways"],
+      "anti_patterns": ["computes decoupling or VI when the tool did not return it", "analyzes an activity it never fetched"]
+    },
+    {
+      "id": "CB-ACT-02",
+      "recipe": "activity-retrospective",
+      "persona": "athlete",
+      "prompt": "Analyze my most recent activity that was imported from Strava. Break down what happened in it. Use icuvisor.",
+      "expected_tools": ["get_activities", "get_activity_details"],
+      "bonus_tools": ["get_activity_intervals", "get_extended_metrics"],
+      "forbidden_tools": ["delete_activity", "delete_event"],
+      "must_address": ["states up front that Strava-imported activities return blank fields", "analyzes only the fields actually present", "does not present fabricated power/HR data"],
+      "anti_patterns": ["reports power, HR, or pace numbers for a blank Strava import", "claims a 0 W average instead of saying the data is unavailable"]
+    },
+    {
+      "id": "CB-FTP-01",
+      "recipe": "ftp-and-zones",
+      "persona": "athlete",
+      "prompt": "Help me decide whether my cycling FTP has actually moved. Use icuvisor: read my athlete profile, pull my best efforts and power curve for the last 90 days, and compare against the prior 90 days. Tell me whether to raise, hold, or lower FTP and by how much, and show the durations where I gained or lost. Do not change my zones in this message; just propose the change.",
+      "expected_tools": ["get_athlete_profile", "get_best_efforts"],
+      "bonus_tools": ["get_power_curves", "analyze_efforts_delta"],
+      "forbidden_tools": ["update_sport_settings", "delete_sport_settings", "delete_activity"],
+      "must_address": ["current FTP from the profile", "best-effort change by duration", "raise/hold/lower recommendation with a magnitude", "proposes rather than applies the change"],
+      "anti_patterns": ["calls update_sport_settings without explicit confirmation", "recommends an FTP change with no best-effort evidence"]
+    },
+    {
+      "id": "CB-FTP-02",
+      "recipe": "ftp-and-zones",
+      "persona": "athlete",
+      "prompt": "From my most recent ramp test or threshold test, read out my FTP, threshold heart rate, and any VO2max estimate using only that activity's data. If you cannot identify a test activity, tell me rather than guessing.",
+      "expected_tools": ["get_activities"],
+      "bonus_tools": ["get_activity_details", "get_activity_intervals", "get_athlete_profile"],
+      "forbidden_tools": ["update_sport_settings", "delete_sport_settings", "delete_activity"],
+      "must_address": ["identifies the test activity or states none was found", "reports values from that activity's data only"],
+      "anti_patterns": ["fabricates a VO2max estimate not in the data", "uses profile FTP and presents it as a fresh test result"]
+    },
+    {
+      "id": "CB-PLAN-01",
+      "recipe": "season-and-block-plan",
+      "persona": "athlete",
+      "prompt": "Stage 1 of planning my season. Use icuvisor with my intervals.icu data. Read my fitness trend for the last 8 weeks, my training-load summary for that period, and my upcoming events. Summarize my current fitness, my recent weekly load range, and how much training history you can see. Do not propose a plan yet.",
+      "expected_tools": ["get_fitness", "get_training_summary"],
+      "bonus_tools": ["get_events", "get_athlete_profile", "get_training_plan"],
+      "forbidden_tools": ["add_or_update_event", "delete_event", "delete_events_by_date_range"],
+      "must_address": ["current CTL/ATL/TSB", "recent weekly load range", "how much history is visible", "does not propose a plan"],
+      "anti_patterns": ["proposes a full periodized plan despite being asked not to", "writes events to the calendar"]
+    },
+    {
+      "id": "CB-PLAN-02",
+      "recipe": "season-and-block-plan",
+      "persona": "athlete",
+      "prompt": "Design a periodized training plan for me toward a hilly road race 12 weeks from today. Use icuvisor: read my current fitness and recent load, then propose blocks (base, build, peak, taper) with weekly load targets and ramp rates, place recovery weeks, and use a fitness projection to check the CTL path is realistic. Present it as a week-by-week table. Do not write anything to my calendar.",
+      "expected_tools": ["get_fitness", "get_fitness_projection"],
+      "bonus_tools": ["get_athlete_profile", "get_training_summary", "get_events"],
+      "forbidden_tools": ["add_or_update_event", "delete_event", "delete_events_by_date_range", "apply_training_plan"],
+      "must_address": ["named blocks with lengths", "weekly load targets and ramp rates", "recovery week placement", "a fitness-projection sanity check of race-day CTL", "does not write to the calendar"],
+      "anti_patterns": ["claims the CTL path is realistic without calling get_fitness_projection", "schedules events despite the no-write instruction"]
+    },
+    {
+      "id": "CB-WORKOUT-01",
+      "recipe": "build-workouts",
+      "persona": "athlete",
+      "prompt": "Build me a VO2max bike workout: 5x4min at 110% FTP with 4min recoveries, plus warm-up and cool-down. Use icuvisor: read my athlete profile so targets use my FTP, check the workout-syntax reference, and show me the workout in valid intervals.icu syntax with the structure explained. Ask for my approval before saving anything.",
+      "expected_tools": ["get_athlete_profile"],
+      "bonus_tools": ["get_workout_library", "get_workouts_in_folder"],
+      "forbidden_tools": ["create_workout", "update_workout", "delete_workout", "add_or_update_event", "delete_event"],
+      "must_address": ["the workout shown in intervals.icu structured-workout syntax", "an explanation of the structure", "absolute power targets derived from FTP", "asks for approval before saving"],
+      "anti_patterns": ["calls create_workout or add_or_update_event before the user approves", "shows the workout with invalid repeat syntax"]
+    },
+    {
+      "id": "CB-WORKOUT-02",
+      "recipe": "build-workouts",
+      "persona": "athlete",
+      "prompt": "Convert this coach's text workout into valid intervals.icu structured-workout syntax: '20min easy, then 3 sets of (8min at threshold, 4min easy), then 10min easy'. Use icuvisor to check the syntax reference and my profile. Show me the converted workout; do not save it.",
+      "expected_tools": ["get_athlete_profile"],
+      "bonus_tools": ["get_workout_library", "get_workouts_in_folder"],
+      "forbidden_tools": ["create_workout", "update_workout", "delete_workout", "add_or_update_event"],
+      "must_address": ["the workout in valid intervals.icu syntax", "correct repeat/step notation for the 3 sets", "does not save the workout"],
+      "anti_patterns": ["uses bullet points instead of steps", "writes the workout to the library"]
+    },
+    {
+      "id": "CB-TAPER-01",
+      "recipe": "race-week-taper",
+      "persona": "athlete",
+      "prompt": "I have a hilly road race 9 days from today, about 3 hours long. Plan my taper. Use icuvisor: read my events around race week, my fitness trend and training-load summary for the last 6 weeks, my recent activities and wellness, and project race-day form under a reduced taper load. Give a day-by-day taper outline and a target TSB for race morning. Do not write or delete any calendar events.",
+      "expected_tools": ["get_fitness", "get_events", "get_training_summary"],
+      "bonus_tools": ["get_athlete_profile", "get_activities", "get_wellness_data", "get_fitness_projection"],
+      "forbidden_tools": ["add_or_update_event", "delete_event", "delete_events_by_date_range", "delete_activity"],
+      "must_address": ["day-by-day taper outline to race day", "target TSB for race morning", "whether the current trajectory reaches that target", "does not modify the calendar"],
+      "anti_patterns": ["writes taper sessions to the calendar", "invents a CTL/TSB trajectory without calling get_fitness"]
+    },
+    {
+      "id": "CB-COACH-01",
+      "recipe": "coach-roster-triage",
+      "persona": "coach",
+      "prompt": "Coach-mode roster triage. Use icuvisor: list the athletes on my roster, and for each one select them and pull recent activities, upcoming events, fitness trend, and recent wellness. Give each a one-line status and a red/amber/green flag, then rank the roster by who needs my attention most this week. Do not modify any athlete's calendar.",
+      "expected_tools": ["list_athletes", "select_athlete", "get_fitness"],
+      "bonus_tools": ["get_activities", "get_events", "get_wellness_data"],
+      "forbidden_tools": ["add_or_update_event", "delete_event", "update_wellness", "update_sport_settings", "delete_activity"],
+      "must_address": ["per-athlete one-line status with a flag", "a priority ranking of the roster", "explicit note of any athlete whose data was inaccessible"],
+      "anti_patterns": ["asks for an API key", "modifies an athlete's calendar or settings", "treats athlete_id as a credential"]
+    },
+    {
+      "id": "CB-COACH-02",
+      "recipe": "coach-roster-triage",
+      "persona": "coach",
+      "prompt": "Triage one athlete on my roster in detail this week: their recent activities, upcoming planned work, fitness trend, and wellness flags. End with one concise coaching note I could send. Use icuvisor.",
+      "expected_tools": ["select_athlete", "get_activities", "get_fitness"],
+      "bonus_tools": ["list_athletes", "get_events", "get_wellness_data", "get_athlete_profile"],
+      "forbidden_tools": ["add_or_update_event", "delete_event", "update_wellness", "delete_activity"],
+      "must_address": ["recent activities", "upcoming planned work", "fitness trend", "wellness flags", "one concise coaching note"],
+      "anti_patterns": ["asks for an API key", "writes to the athlete's account"]
+    },
+    {
+      "id": "CB-LIB-01",
+      "recipe": "prompt-library",
+      "persona": "athlete",
+      "prompt": "What are my CTL, ATL, and TSB right now, and how have they moved over the last 6 weeks? Use my intervals.icu data and explain what the current form number means for the next few days.",
+      "expected_tools": ["get_fitness"],
+      "bonus_tools": ["analyze_trend"],
+      "forbidden_tools": ["delete_activity", "delete_event"],
+      "must_address": ["current CTL, ATL, TSB values", "6-week movement", "what current form means for the coming days"],
+      "anti_patterns": ["states fitness numbers without calling get_fitness"]
+    },
+    {
+      "id": "CB-LIB-02",
+      "recipe": "prompt-library",
+      "persona": "athlete",
+      "prompt": "For my last 7 rides, compare carbs ingested per hour with the load of each session. Where was I likely underfueled? Use only logged carb data through icuvisor; do not estimate intake I did not log.",
+      "expected_tools": ["get_activities"],
+      "bonus_tools": ["get_wellness_data"],
+      "forbidden_tools": ["delete_activity", "delete_event", "update_wellness"],
+      "must_address": ["carbs-per-hour against load per ride", "identifies likely underfueled sessions", "states clearly when carb data was not logged"],
+      "anti_patterns": ["estimates carb intake for rides with no logged data", "presents an invented fueling number"]
+    },
+    {
+      "id": "CB-LIB-03",
+      "recipe": "prompt-library",
+      "persona": "athlete",
+      "prompt": "Which of my last 10 activities are missing power, heart rate, or duration data, and why? Tell me which ones look like Strava imports. Use icuvisor.",
+      "expected_tools": ["get_activities"],
+      "bonus_tools": ["get_activity_details"],
+      "forbidden_tools": ["delete_activity", "delete_event"],
+      "must_address": ["which activities have missing fields", "identifies likely Strava imports", "explains why Strava imports return blank fields"],
+      "anti_patterns": ["claims data exists for activities the tool flagged as unavailable"]
+    },
+    {
+      "id": "CB-LIB-04",
+      "recipe": "prompt-library",
+      "persona": "athlete",
+      "prompt": "Over the last 28 days, is my training load trending up, down, or flat? Say whether the change is meaningful or within normal noise. Use my intervals.icu data.",
+      "expected_tools": ["analyze_trend"],
+      "bonus_tools": ["get_fitness", "get_training_summary"],
+      "forbidden_tools": ["delete_activity", "delete_event"],
+      "must_address": ["trend direction", "whether the change is statistically meaningful or noise"],
+      "anti_patterns": ["asserts a trend with no analyzer or fitness data", "rolls its own reduction over raw streams instead of using analyze_trend"]
+    }
+  ]
+}

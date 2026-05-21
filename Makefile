@@ -14,7 +14,7 @@ HUGO_PORT  ?= 1313
 
 .PHONY: all build install run test test-race cover bench lint fmt fmt-check vet tidy \
         download verify generate goimports check clean snapshot release \
-        docs-tools web-serve web-build web-clean help
+        docs-tools eval-validate web-serve web-build web-clean help
 
 all: build ## Build the binary
 
@@ -89,6 +89,9 @@ clean: web-clean ## Remove build artifacts (binary + site)
 
 docs-tools: ## Regenerate web/data/tools.json from the tool registry
 	$(GO) run ./cmd/gendocs --out web/data/tools.json
+
+eval-validate: ## Validate cookbook eval scenarios against the tool catalog
+	python3 scripts/eval/run_eval.py --validate
 
 # ---- website (web/, Hugo) ----------------------------------------------------
 

@@ -40,6 +40,10 @@ go.work.sum
 /web/resources/
 /web/.hugo_build.lock
 
+# Cookbook eval run output (keep the directory, not the runs)
+/scripts/eval/results/*
+!/scripts/eval/results/.gitkeep
+
 # Local AI tooling
 .pi-lens/
 

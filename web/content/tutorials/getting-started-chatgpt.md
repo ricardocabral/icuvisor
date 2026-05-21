@@ -107,6 +107,7 @@ Learn more in [What is MCP?](/explain/what-is-mcp/) and [Local-first by design](
 
 ## Where to next
 
+- [Browse the cookbook](/cookbook/) for ready-made prompts and multi-step recipes
 - [Configure another AI client](/connect/)
 - [Explore the full tool catalog](/reference/tools/)
 - [Set up coach mode for a roster](/guides/coach-mode/)

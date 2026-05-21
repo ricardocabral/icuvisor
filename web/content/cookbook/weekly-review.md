@@ -1,0 +1,81 @@
+---
+title: "Weekly training review"
+description: "A reusable prompt that turns the last 7-14 days of intervals.icu data into a coached weekly review."
+weight: 20
+---
+
+A weekly review is the most common thing athletes ask an AI assistant for. This recipe makes the assistant pull load, volume, intensity distribution, and form in a fixed order, then deliver a coached summary with a concrete next step — without inventing anything.
+
+## When to use this
+
+- Every Sunday or Monday, to close out a training week.
+- After a heavy block, to see whether form is trending into a hole.
+- Any time you want a load-and-intensity readout instead of eyeballing charts.
+
+## The recipe
+
+Copy this, set the window, and send it as one message.
+
+```text
+You are my endurance coach. Using only my intervals.icu data through icuvisor,
+review my training for the last 14 days.
+
+Pull, in this order:
+1. My athlete profile, so every number uses my units, zones, and thresholds.
+2. My fitness trend (CTL, ATL, TSB) across the window.
+3. My training-load and volume summary for the window.
+4. The list of activities in the window.
+5. My time-in-zone and training-load balance for the window.
+
+Then give me:
+- A three-sentence summary of the period: load, volume, intensity mix.
+- The two most significant sessions and why they mattered.
+- Recovery risk: is form (TSB) trending into a hole?
+- One specific thing to do in the next 48 hours.
+
+Rules: do not invent metrics that aren't available — if something is missing,
+say so. Keep subjective scales labeled correctly (sleep quality 1-4, feel 1-5).
+Tell me which icuvisor tool each key number came from.
+```
+
+## What icuvisor does
+
+The assistant should call, in roughly this order:
+
+| Step | Tool | Why |
+| --- | --- | --- |
+| 1 | [`get_athlete_profile`]({{< relref "/reference/tools#get_athlete_profile" >}}) | Anchors zones, units, and thresholds. |
+| 2 | [`get_fitness`]({{< relref "/reference/tools#get_fitness" >}}) | CTL / ATL / TSB across the window. |
+| 3 | [`get_training_summary`]({{< relref "/reference/tools#get_training_summary" >}}) | Aggregated load, time, and volume. |
+| 4 | [`get_activities`]({{< relref "/reference/tools#get_activities" >}}) | Per-session detail to name notable workouts. |
+| 5 | [`compute_zone_time`]({{< relref "/reference/tools#compute_zone_time" >}}) and [`compute_load_balance`]({{< relref "/reference/tools#compute_load_balance" >}}) | Intensity distribution and whether the block is polarized, pyramidal, or threshold-heavy. |
+
+`analyze_trend` may also be used to state whether load is meaningfully rising or falling.
+
+## A good answer looks like
+
+> **Last 14 days.** You completed 9 sessions for a load of 612 (`get_training_summary`), up about 11% on the prior fortnight — a normal build-week ramp (`analyze_trend`). 8h 40m total, mostly riding. Your intensity split was 78% low / 9% moderate / 13% high — pyramidal, leaning polarized (`compute_zone_time`, `compute_load_balance`).
+>
+> **Notable sessions.** Tuesday's 5x5 min VO2 ride (load 95) and Saturday's 3h 20m endurance ride (load 168) carried most of the work.
+>
+> **Recovery risk.** CTL 62 → 66, ATL 71, TSB -9 and falling (`get_fitness`). You are productively fatigued, not buried — but a second hard day soon would dig a hole.
+>
+> **Next 48 hours.** Keep tomorrow easy (Z1-Z2, under 60 min) so TSB stabilizes before your next quality session.
+
+Every number is tagged with the tool it came from, and nothing is asserted that the tools did not return.
+
+## Variations
+
+- **Monthly review:** change the window to "the last 28 days" and ask for the polarization trend week-over-week.
+- **Compare two periods:** "Compare the last 14 days with the 14 days before — what changed in load and intensity?"
+- **Sport-specific:** add "Only consider rides" or "Only consider runs" to scope the summary.
+
+## Why this prompt works
+
+- **Numbered tool order** stops the assistant from skipping the profile and misreading zones.
+- **"Do not invent metrics that aren't available"** is the line that cuts hallucinated zone percentages — the most-reported failure with AI training analysis.
+- **"Tell me which tool each number came from"** makes the answer auditable, so you can spot a wrong number instead of trusting a fluent paragraph.
+
+{{< callout type="info" >}}
+If your client supports [MCP prompts]({{< relref "/reference/resources-prompts" >}}), `training_analysis` and `weekly_planning` cover this workflow with server-side guardrails.
+{{< /callout >}}

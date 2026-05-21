@@ -69,6 +69,10 @@ disableHTML = false
     pageRef = "/tutorials"
     weight = 30
   [[menu.main]]
+    name = "Cookbook"
+    pageRef = "/cookbook"
+    weight = 35
+  [[menu.main]]
     name = "Guides"
     pageRef = "/guides"
     weight = 40
