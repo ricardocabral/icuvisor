@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -91,13 +92,44 @@ func (i *ActivityInterval) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
+	// intervals.icu returns interval start_time/end_time as numeric second
+	// offsets on some activities and as strings on others. Coerce numbers to
+	// strings before decoding so the stable *string fields accept either shape;
+	// Raw keeps the original upstream values for full-payload responses.
+	normalized := data
+	if decodeRaw, coerced := coerceIntervalTimeFields(raw); coerced {
+		buf, err := json.Marshal(decodeRaw)
+		if err != nil {
+			return err
+		}
+		normalized = buf
+	}
 	var decoded intervalAlias
-	if err := json.Unmarshal(data, &decoded); err != nil {
+	if err := json.Unmarshal(normalized, &decoded); err != nil {
 		return err
 	}
 	*i = ActivityInterval(decoded)
 	i.Raw = raw
 	return nil
+}
+
+// coerceIntervalTimeFields returns a copy of raw with numeric start_time and
+// end_time values rendered as strings. The second return value reports whether
+// any coercion happened, so callers can skip re-marshaling when it did not.
+func coerceIntervalTimeFields(raw map[string]any) (map[string]any, bool) {
+	coerced := false
+	out := make(map[string]any, len(raw))
+	for key, value := range raw {
+		if key == "start_time" || key == "end_time" {
+			if num, ok := value.(float64); ok {
+				out[key] = strconv.FormatFloat(num, 'f', -1, 64)
+				coerced = true
+				continue
+			}
+		}
+		out[key] = value
+	}
+	return out, coerced
 }
 
 // IntervalGroup contains stable interval group fields and preserves raw upstream fields.
