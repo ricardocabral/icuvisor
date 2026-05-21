@@ -104,7 +104,7 @@ brews:
       owner: ricardocabral
       name: homebrew-icuvisor
       branch: main
-      token: "{{ if index .Env \"HOMEBREW_TAP_PAT\" }}{{ .Env.HOMEBREW_TAP_PAT }}{{ end }}"
+      token: "{{ .Env.HOMEBREW_TAP_PAT }}"
     install: |
       bin.install "icuvisor"
     test: |
@@ -130,7 +130,7 @@ scoops:
       owner: ricardocabral
       name: scoop-icuvisor
       branch: main
-      token: "{{ if index .Env \"SCOOP_BUCKET_PAT\" }}{{ .Env.SCOOP_BUCKET_PAT }}{{ end }}"
+      token: "{{ .Env.SCOOP_BUCKET_PAT }}"
     # Skip when no bucket PAT is configured, or for prereleases.
     skip_upload: '{{ if not (index .Env "SCOOP_BUCKET_PAT") }}true{{ else }}auto{{ end }}'
 
