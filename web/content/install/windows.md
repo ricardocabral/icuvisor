@@ -42,7 +42,7 @@ In a new shell, run:
 icuvisor setup
 ```
 
-Setup asks for the intervals.icu API key (masked) and your athlete ID, verifies them against intervals.icu, stores the key in **Windows Credential Manager** under service `icuvisor` and account `intervals-icu-api-key`, autodetects your timezone, and writes only non-secret fields to the icuvisor config file.
+Setup asks for the intervals.icu API key (masked) and your athlete ID, verifies them against intervals.icu, stores the key in **Windows Credential Manager** under service `icuvisor` and account `intervals-icu-api-key`, autodetects your timezone, and writes only non-secret fields to the icuvisor config file. The config may include a `credential_ref` naming that Credential Manager location, but not the API key.
 
 Useful setup flags:
 

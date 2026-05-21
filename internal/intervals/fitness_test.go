@@ -50,6 +50,58 @@ func TestFitnessMetricClientEndpoints(t *testing.T) {
 			},
 		},
 		{
+			name:      "athlete hr curves with sport and secs",
+			wantPath:  "/athlete/i12345/hr-curves.json",
+			wantQuery: "curves=r.2026-05-01.2026-05-07&secs=60%2C300&type=Run",
+			body:      `{"list":[{"id":"r","secs":[60,300],"values":[178,165],"activity_id":["a1","a2"]}],"activities":{}}`,
+			call: func(ctx context.Context, client *Client) error {
+				set, err := client.ListAthleteHRCurves(ctx, CurveParams{Sport: "Run", CurveSpec: "r.2026-05-01.2026-05-07", DurationSeconds: []int{60, 300}})
+				if err != nil {
+					return err
+				}
+				if len(set.List) != 1 || len(set.List[0].Secs) != 2 || set.List[0].Values[0] != 178 {
+					t.Fatalf("hr curve set = %+v", set)
+				}
+				return nil
+			},
+		},
+		{
+			name:      "athlete pace curves with sport and distances",
+			wantPath:  "/athlete/i12345/pace-curves.json",
+			wantQuery: "curves=r.2026-05-01.2026-05-07&distances=1000%2C5000&type=Run",
+			body:      `{"list":[{"id":"r","distance":[1000,5000],"values":[240,1500],"activity_id":["a1","a2"]}],"activities":{}}`,
+			call: func(ctx context.Context, client *Client) error {
+				set, err := client.ListAthletePaceCurves(ctx, CurveParams{Sport: "Run", CurveSpec: "r.2026-05-01.2026-05-07", DistanceMeters: []int{1000, 5000}})
+				if err != nil {
+					return err
+				}
+				if len(set.List) != 1 || len(set.List[0].Distance) != 2 || set.List[0].Values[1] != 1500 {
+					t.Fatalf("pace curve set = %+v", set)
+				}
+				return nil
+			},
+		},
+		{
+			name:      "athlete hr curves permit omitted sport",
+			wantPath:  "/athlete/i12345/hr-curves.json",
+			wantQuery: "curves=r.2026-05-01.2026-05-07&secs=60",
+			body:      `{"list":[{"id":"r","secs":[60],"values":[178],"activity_id":["a1"]}],"activities":{}}`,
+			call: func(ctx context.Context, client *Client) error {
+				_, err := client.ListAthleteHRCurves(ctx, CurveParams{CurveSpec: "r.2026-05-01.2026-05-07", DurationSeconds: []int{60}})
+				return err
+			},
+		},
+		{
+			name:      "athlete pace curves permit omitted sport",
+			wantPath:  "/athlete/i12345/pace-curves.json",
+			wantQuery: "curves=r.2026-05-01.2026-05-07&distances=1000",
+			body:      `{"list":[{"id":"r","distance":[1000],"values":[240],"activity_id":["a1"]}],"activities":{}}`,
+			call: func(ctx context.Context, client *Client) error {
+				_, err := client.ListAthletePaceCurves(ctx, CurveParams{CurveSpec: "r.2026-05-01.2026-05-07", DistanceMeters: []int{1000}})
+				return err
+			},
+		},
+		{
 			name:      "activity power vs hr",
 			wantPath:  "/activity/a1/power-vs-hr.json",
 			wantQuery: "",

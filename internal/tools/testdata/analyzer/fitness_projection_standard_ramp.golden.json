@@ -1,0 +1,58 @@
+{
+  "_meta": {
+    "assumptions": {
+      "atl_time_constant_days": 7,
+      "ctl_time_constant_days": 42,
+      "horizon_days": 14,
+      "model": "deterministic_ctl_atl_tsb",
+      "modeled_load_without_plan": "starts from current CTL as daily load proxy and changes by weekly_ramp_pct each week",
+      "planned_daily_load_count": 0,
+      "planned_load_override_behavior": "planned_daily_loads replace modeled load on matching dates only",
+      "recovery_week_cadence": 0,
+      "recovery_week_load_pct": 60,
+      "weekly_ramp_pct": 7
+    },
+    "boundaries": [
+      "projection is deterministic scenario modeling, not a physiological prediction",
+      "requires a start_date with non-null current CTL, ATL, and TSB from get_fitness",
+      "does not read hidden upstream periodization or future calendar fields",
+      "horizon is capped at 180 days",
+      "only the deterministic_ctl_atl_tsb model is supported"
+    ],
+    "catalog_hash": "dev-catalog-hash",
+    "delete_mode": "safe",
+    "insufficient_sample": false,
+    "method": "deterministic_ctl_atl_tsb",
+    "missing_action": "skip",
+    "missing_days": 0,
+    "n": 1,
+    "server_version": "test",
+    "source_tools": [
+      "get_fitness"
+    ],
+    "toolset": "core",
+    "units": {
+      "distance": "km",
+      "pace": "min/km",
+      "speed": "km/h",
+      "system": "metric"
+    }
+  },
+  "result": {
+    "atl_change": -3.841,
+    "average_daily_load": 72.45,
+    "ctl_change": 0.761,
+    "end_atl": 74.159,
+    "end_ctl": 70.761,
+    "end_date": "2026-05-15",
+    "end_tsb": -3.398,
+    "max_ctl": 70.761,
+    "min_tsb": -8,
+    "start_atl": 78,
+    "start_ctl": 70,
+    "start_date": "2026-05-01",
+    "start_tsb": -8,
+    "total_load": 1014.3,
+    "tsb_change": 4.602
+  }
+}

@@ -1,0 +1,26 @@
+{{- if (site.Params.search.enable | default true) -}}
+<script src="{{ "pagefind/pagefind-ui.js" | relURL }}" defer></script>
+<script defer>
+  window.addEventListener("DOMContentLoaded", function () {
+    if (typeof PagefindUI === "undefined") {
+      return;
+    }
+
+    document.querySelectorAll(".icuvisor-pagefind-search").forEach(function (search, index) {
+      if (!search.id) {
+        search.id = "pagefind-search-" + index;
+      }
+
+      new PagefindUI({
+        element: "#" + search.id,
+        showImages: false,
+        showSubResults: true,
+        excerptLength: 20,
+        translations: {
+          placeholder: search.dataset.placeholder || "Search..."
+        }
+      });
+    });
+  });
+</script>
+{{- end -}}

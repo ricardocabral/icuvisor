@@ -86,16 +86,14 @@ func TestGetActivityMessagesPropagatesFallbackCancellation(t *testing.T) {
 func TestGetActivityMessagesFallbacksToStravaUnavailable(t *testing.T) {
 	t.Parallel()
 
-	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{Timezone: "UTC"}}, activity: decodeActivityFixture(t, `{"id":"stub1","source":"Strava","_note":"hidden"}`), messageErr: intervals.ErrNotFound}
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{Timezone: "UTC"}}, activity: decodeActivityFixture(t, `{"id":"stub1","source":"Strava","_note":"hidden","external_id":"wahoo-synthetic-12345"}`), messageErr: intervals.ErrNotFound}
 	tool := newGetActivityMessagesTool(client, client, client, "test", "UTC", false)
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"stub1"}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
 	payload := resultMap(t, result)
-	if payload["strava_imported"] != true || payload["unavailable"].(map[string]any)["reason"] != "strava_tos" {
-		t.Fatalf("payload = %#v, want Strava unavailable", payload)
-	}
+	assertUnavailableReasonAndWorkaround(t, payload, "strava_tos", wantWahooStravaWorkaround)
 }
 
 func decodeMessageFixtures(t *testing.T, raws ...string) []intervals.ActivityMessage {

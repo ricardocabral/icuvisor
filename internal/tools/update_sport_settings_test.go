@@ -93,11 +93,14 @@ func TestUpdateSportSettingsThresholdFieldsAndPaceConversion(t *testing.T) {
 			} else if call.ThresholdPace != nil {
 				t.Fatalf("threshold pace call = %+v, want nil", call.ThresholdPace)
 			}
-			meta := resultMap(t, result)["_meta"].(map[string]any)
+			out := resultMap(t, result)
+			settings := out["sport_settings"].(map[string]any)
+			meta := out["_meta"].(map[string]any)
 			fields := meta["fields_updated"].([]any)
-			if len(fields) != len(tc.wantFields) || fields[0] != tc.wantFields[0] || meta["recompute_pending"] != true {
-				t.Fatalf("meta = %#v, want fields %v and recompute_pending", meta, tc.wantFields)
+			if len(fields) != len(tc.wantFields) || fields[0] != tc.wantFields[0] || meta["recompute_pending"] != true || meta["zones_provided"] != false {
+				t.Fatalf("meta = %#v, want fields %v, recompute_pending, and zones_provided=false", meta, tc.wantFields)
 			}
+			assertKeyAbsent(t, settings, "zone_definitions_overwritten")
 			if tc.wantPace && (meta["pace_input_unit"] != "seconds_per_km" || meta["pace_upstream_unit"] != "MINS_MILE") {
 				t.Fatalf("meta = %#v, want pace conversion metadata", meta)
 			}

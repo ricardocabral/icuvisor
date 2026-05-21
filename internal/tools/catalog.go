@@ -43,6 +43,7 @@ type registryToolOptions struct {
 	debugMetadata    bool
 	capability       safety.Capability
 	shaping          responseShaping
+	gearCache        *gearListCache
 	coachModeEnabled bool
 	coachConfig      coach.Config
 }
@@ -55,6 +56,7 @@ func catalogTools() []Tool {
 		timezoneFallback: "UTC",
 		capability:       safety.NewCapability(safety.ModeFull),
 		shaping:          shaping,
+		gearCache:        newGearListCache(),
 		coachModeEnabled: true,
 	})
 	tools = append(tools, newListAdvancedCapabilitiesTool(tools, safety.ToolsetFull, shaping))
@@ -63,17 +65,24 @@ func catalogTools() []Tool {
 
 func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Tool {
 	capability := capabilityOrSafe(opts.capability)
-	tools := make([]Tool, 0, 39)
+	tools := make([]Tool, 0, 42)
 	tools = append(tools,
 		newGetAthleteProfileTool(client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetFitnessTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newAnalyzeTrendTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newAnalyzeDistributionTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newAnalyzeCorrelationTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newAnalyzeEffortsDeltaTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newGetFitnessProjectionTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetTrainingSummaryTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetWellnessDataTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newUpdateWellnessTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newUpdateSportSettingsTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, capability, opts.shaping),
 		newGetBestEffortsTool(client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetPowerCurvesTool(client, opts.version, opts.debugMetadata, opts.shaping),
-		newGetActivitiesTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newGetHRCurvesTool(client, opts.version, opts.debugMetadata, opts.shaping),
+		newGetPaceCurvesTool(client, client, opts.version, opts.debugMetadata, opts.shaping),
+		newGetActivitiesToolWithGear(client, client, client, opts.gearCache, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetEventsTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetEventByIDTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAddOrUpdateEventTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -93,14 +102,21 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 		newCreateCustomItemTool(client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newUpdateCustomItemTool(client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newDeleteCustomItemTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
-		newGetActivityDetailsTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newGetActivityDetailsToolWithGear(client, client, client, opts.gearCache, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newDeleteActivityTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetActivityIntervalsTool(client, client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetActivityStreamsTool(client, client, opts.version, opts.debugMetadata, opts.shaping),
+		newComputeActivitySegmentStatsTool(client, opts.version, opts.debugMetadata, opts.shaping),
+		newComputeZoneTimeTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newComputeLoadBalanceTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newComputeBaselineTool(client, client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newComputeComplianceRateTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetActivitySplitsTool(client, client, client, client, opts.version, opts.debugMetadata, opts.shaping),
+		newGetActivityHistogramTool(client, client, client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetActivityMessagesTool(client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAddActivityMessageTool(client, client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetExtendedMetricsTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newGetGearListTool(client, opts.gearCache, opts.version, opts.debugMetadata, opts.shaping),
 		newDeleteGearTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 	)
 	if opts.coachModeEnabled {
@@ -120,14 +136,16 @@ func sortToolDescriptors(descriptors []ToolDescriptor) {
 
 func toolCatalogGroup(name string) string {
 	switch name {
-	case getAthleteProfileName, updateSportSettingsName, deleteSportSettingsName, deleteGearName:
+	case getAthleteProfileName, updateSportSettingsName, deleteSportSettingsName, getGearListName, deleteGearName:
 		return "settings"
-	case getFitnessName, getTrainingSummaryName, getBestEffortsName, getPowerCurvesName:
+	case getFitnessName, getFitnessProjectionName, getTrainingSummaryName, getBestEffortsName, getPowerCurvesName, getHRCurvesName, getPaceCurvesName:
 		return "fitness"
 	case getWellnessDataName, updateWellnessName:
 		return "wellness"
-	case getActivitiesName, getActivityDetailsName, getActivityIntervalsName, getActivityStreamsName, getActivitySplitsName, getActivityMessagesName, addActivityMessageName, getExtendedMetricsName, deleteActivityName:
+	case getActivitiesName, getActivityDetailsName, getActivityIntervalsName, getActivityStreamsName, getActivitySplitsName, getActivityHistogramName, getActivityMessagesName, addActivityMessageName, getExtendedMetricsName, deleteActivityName:
 		return "activities"
+	case computeActivitySegmentStatsName, analyzeTrendName, analyzeDistributionName, analyzeCorrelationName, analyzeEffortsDeltaName, computeZoneTimeName, computeLoadBalanceName, computeBaselineName, computeComplianceRateName:
+		return "analyzers"
 	case getEventsName, getEventByIDName, addOrUpdateEventName, deleteEventName, deleteEventsByDateRangeName, linkActivityToEventName:
 		return "events"
 	case getTrainingPlanName, applyTrainingPlanName, getWorkoutLibraryName, getWorkoutsInFolderName, createWorkoutName, updateWorkoutName, deleteWorkoutName:

@@ -228,20 +228,29 @@ func extractWellnessNative(raw map[string]any) (map[string]map[string]any, []str
 	}
 
 	claimNested("polar", map[string]string{"ans_charge": "ans_charge", "nightly_recharge_status": "nightly_recharge_status", "sleep_score": "sleep_score"})
-	claimNested("garmin", map[string]string{"body_battery_min": "body_battery_min", "body_battery_max": "body_battery_max", "bodyBatteryMin": "body_battery_min", "bodyBatteryMax": "body_battery_max"})
-	claimNested("oura", map[string]string{"sleep_score": "sleep_score", "sleepScore": "sleep_score"})
+	claimNested("garmin", map[string]string{"body_battery_min": "body_battery_min", "body_battery_max": "body_battery_max", "bodyBatteryMin": "body_battery_min", "bodyBatteryMax": "body_battery_max", "sleep_score": "sleep_score", "sleepScore": "sleep_score"})
+	claimNested("oura", map[string]string{"readiness_score": "readiness_score", "readinessScore": "readiness_score", "sleep_score": "sleep_score", "sleepScore": "sleep_score"})
+	claimNested("whoop", map[string]string{"recovery_score": "recovery_score", "recoveryScore": "recovery_score", "sleep_performance_percentage": "sleep_performance_percentage", "sleepPerformancePercentage": "sleep_performance_percentage"})
 
 	for key, spec := range map[string]struct{ source, field string }{
-		"ans_charge":                    {"polar", "ans_charge"},
-		"nightly_recharge_status":       {"polar", "nightly_recharge_status"},
-		"polar_ans_charge":              {"polar", "ans_charge"},
-		"polar_sleep_score":             {"polar", "sleep_score"},
-		"polar_nightly_recharge_status": {"polar", "nightly_recharge_status"},
-		"body_battery_min":              {"garmin", "body_battery_min"},
-		"body_battery_max":              {"garmin", "body_battery_max"},
-		"garmin_body_battery_min":       {"garmin", "body_battery_min"},
-		"garmin_body_battery_max":       {"garmin", "body_battery_max"},
-		"oura_sleep_score":              {"oura", "sleep_score"},
+		"ans_charge":                               {"polar", "ans_charge"},
+		"nightly_recharge_status":                  {"polar", "nightly_recharge_status"},
+		"polar_ans_charge":                         {"polar", "ans_charge"},
+		"polar_sleep_score":                        {"polar", "sleep_score"},
+		"polar_nightly_recharge_status":            {"polar", "nightly_recharge_status"},
+		"body_battery_min":                         {"garmin", "body_battery_min"},
+		"body_battery_max":                         {"garmin", "body_battery_max"},
+		"garmin_body_battery_min":                  {"garmin", "body_battery_min"},
+		"garmin_body_battery_max":                  {"garmin", "body_battery_max"},
+		"garmin_sleep_score":                       {"garmin", "sleep_score"},
+		"oura_readiness_score":                     {"oura", "readiness_score"},
+		"oura_sleep_score":                         {"oura", "sleep_score"},
+		"recovery_score":                           {"whoop", "recovery_score"},
+		"sleep_performance_percentage":             {"whoop", "sleep_performance_percentage"},
+		"whoop_recovery_score":                     {"whoop", "recovery_score"},
+		"whoop_sleep_performance_percentage":       {"whoop", "sleep_performance_percentage"},
+		"whoop_sleep_performance_percent":          {"whoop", "sleep_performance_percentage"},
+		"whoop_sleep_performance_percentage_score": {"whoop", "sleep_performance_percentage"},
 	} {
 		if value, ok := raw[key]; ok {
 			claim(spec.source, spec.field, key, value)
@@ -266,11 +275,17 @@ func nativeSleepScoreSource(raw map[string]any) string {
 			continue
 		}
 		lower := strings.ToLower(value)
-		if strings.Contains(lower, "polar") {
-			return "polar"
+		if strings.Contains(lower, "garmin") {
+			return "garmin"
 		}
 		if strings.Contains(lower, "oura") {
 			return "oura"
+		}
+		if strings.Contains(lower, "polar") {
+			return "polar"
+		}
+		if strings.Contains(lower, "whoop") {
+			return "whoop"
 		}
 	}
 	return ""

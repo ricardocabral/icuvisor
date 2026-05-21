@@ -3,9 +3,27 @@
   "examples": [
     {
       "category": "NOTE",
+      "date": "2026-06-12",
+      "description": "Breakfast: oatmeal and banana. Lunch: rice bowl. Carry 90 g carbs/hour for the long ride.",
+      "name": "Race-week nutrition plan"
+    },
+    {
+      "category": "NOTE",
       "date": "2026-06-15",
-      "description": "Keep the day flexible; optional mobility only.",
-      "name": "Travel day"
+      "description": "Flight lands at 14:20. Pack pedals, charger, spare cleats, bottles, and race license.",
+      "name": "Travel logistics"
+    },
+    {
+      "category": "NOTE",
+      "date": "2026-06-17",
+      "description": "Take resting HR after waking, do 10 minutes mobility, and log sleep quality before training.",
+      "name": "Daily reminder"
+    },
+    {
+      "category": "NOTE",
+      "date": "2026-06-18",
+      "description": "Athlete reported tight calves; keep Thursday aerobic and reassess before intensity.",
+      "name": "Coach annotation"
     },
     {
       "category": "WORKOUT",
@@ -70,9 +88,27 @@
   "input_examples": [
     {
       "category": "NOTE",
+      "date": "2026-06-12",
+      "description": "Breakfast: oatmeal and banana. Lunch: rice bowl. Carry 90 g carbs/hour for the long ride.",
+      "name": "Race-week nutrition plan"
+    },
+    {
+      "category": "NOTE",
       "date": "2026-06-15",
-      "description": "Keep the day flexible; optional mobility only.",
-      "name": "Travel day"
+      "description": "Flight lands at 14:20. Pack pedals, charger, spare cleats, bottles, and race license.",
+      "name": "Travel logistics"
+    },
+    {
+      "category": "NOTE",
+      "date": "2026-06-17",
+      "description": "Take resting HR after waking, do 10 minutes mobility, and log sleep quality before training.",
+      "name": "Daily reminder"
+    },
+    {
+      "category": "NOTE",
+      "date": "2026-06-18",
+      "description": "Athlete reported tight calves; keep Thursday aerobic and reassess before intensity.",
+      "name": "Coach annotation"
     },
     {
       "category": "WORKOUT",

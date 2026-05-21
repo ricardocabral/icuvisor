@@ -12,9 +12,10 @@ import (
 )
 
 type writeFileConfig struct {
-	AthleteID  string `json:"athlete_id"`
-	Timezone   string `json:"timezone"`
-	APIBaseURL string `json:"api_base_url,omitempty"`
+	CredentialRef CredentialReference `json:"credential_ref"`
+	AthleteID     string              `json:"athlete_id"`
+	Timezone      string              `json:"timezone"`
+	APIBaseURL    string              `json:"api_base_url,omitempty"`
 }
 
 // Write stores non-secret config fields as JSON.
@@ -45,7 +46,7 @@ func Write(ctx context.Context, path string, cfg Config, opts WriteOptions) erro
 	if apiBaseURL == DefaultAPIBaseURL {
 		apiBaseURL = ""
 	}
-	payload, err := json.MarshalIndent(writeFileConfig{AthleteID: athleteID, Timezone: timezoneName, APIBaseURL: apiBaseURL}, "", "  ")
+	payload, err := json.MarshalIndent(writeFileConfig{CredentialRef: DefaultCredentialReference(), AthleteID: athleteID, Timezone: timezoneName, APIBaseURL: apiBaseURL}, "", "  ")
 	if err != nil {
 		return fmt.Errorf("encoding config file: %w", err)
 	}

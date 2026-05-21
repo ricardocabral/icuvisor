@@ -1,0 +1,40 @@
+{
+  "id": "structured-activity",
+  "analyzed": true,
+  "icu_intervals": [
+    {
+      "id": "warmup",
+      "name": "Warmup",
+      "type": "WARMUP",
+      "start_distance": 0,
+      "end_distance": 1000,
+      "distance": 1000,
+      "duration": 360
+    },
+    {
+      "id": "work-1",
+      "name": "Work 1",
+      "type": "WORK",
+      "start_distance": 1000,
+      "end_distance": 2000,
+      "distance": 1000,
+      "duration": 240
+    },
+    {
+      "id": "rest-1",
+      "name": "Recovery",
+      "type": "REST",
+      "start_distance": 2000,
+      "end_distance": 2600,
+      "distance": 600,
+      "duration": 240
+    }
+  ],
+  "icu_groups": [
+    {
+      "id": "main",
+      "name": "Main set",
+      "type": "WORK"
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ricardocabral/icuvisor/internal/analysis"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/units"
@@ -16,7 +17,7 @@ import (
 const (
 	getActivityDetailsName              = "get_activity_details"
 	getActivityIntervalsName            = "get_activity_intervals"
-	getActivityDetailsDescription       = "Get one activity's terse metadata and metrics by activity_id. Use include_full only when raw upstream fields are needed; Strava-blocked activities return an unavailable marker instead of sparse N/A rows."
+	getActivityDetailsDescription       = "Get one activity's terse metadata and metrics by activity_id, including calories_burned as active/exercise calories when upstream provides it. Use include_full only when raw upstream fields are needed; Strava-blocked activities return an unavailable marker instead of sparse N/A rows."
 	getActivityIntervalsDescription     = "Get analyzed intervals for one activity by activity_id. Interval units are normalized to the canonical intervals.icu unit enum and raw interval payloads require include_full."
 	invalidActivityReadArgumentsMessage = "invalid activity read arguments; provide activity_id and optional include_full"
 	fetchActivityDetailsMessage         = "could not fetch activity details; check activity_id and intervals.icu credentials"
@@ -60,10 +61,13 @@ type getActivityIntervalsUnavailableResponse struct {
 }
 
 type activityReadMeta struct {
-	ServerVersion string `json:"server_version"`
-	IncludeFull   bool   `json:"include_full"`
-	Limit         int    `json:"limit,omitempty"`
-	SinceID       int64  `json:"since_id,omitempty"`
+	ServerVersion    string                  `json:"server_version"`
+	IncludeFull      bool                    `json:"include_full"`
+	Limit            int                     `json:"limit,omitempty"`
+	SinceID          int64                   `json:"since_id,omitempty"`
+	FieldSemantics   map[string]string       `json:"field_semantics,omitempty"`
+	IntervalSource   analysis.IntervalSource `json:"interval_source,omitempty"`
+	AutoLapSuspected *bool                   `json:"auto_lap_suspected,omitempty"`
 }
 
 type activityIntervalRow struct {
@@ -96,8 +100,12 @@ type activityIntervalGroup struct {
 }
 
 func newGetActivityDetailsTool(client ActivityDetailsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	return newGetActivityDetailsToolWithGear(client, profileClient, nil, nil, version, timezoneFallback, debugMetadata, shaping...)
+}
+
+func newGetActivityDetailsToolWithGear(client ActivityDetailsClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
-	return coreTool(Tool{Name: getActivityDetailsName, Description: getActivityDetailsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityDetailsHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
+	return coreTool(Tool{Name: getActivityDetailsName, Description: getActivityDetailsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityDetailsHandler(client, profileClient, gearClient, gearCache, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
 func newGetActivityIntervalsTool(client ActivityIntervalsClient, detailsClient ActivityDetailsClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -105,7 +113,7 @@ func newGetActivityIntervalsTool(client ActivityIntervalsClient, detailsClient A
 	return coreTool(Tool{Name: getActivityIntervalsName, Description: getActivityIntervalsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityIntervalsHandler(client, detailsClient, version, debugMetadata, shapeCfg)})
 }
 
-func getActivityDetailsHandler(client ActivityDetailsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
+func getActivityDetailsHandler(client ActivityDetailsClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeActivityReadRequest(req.Arguments)
 		if err != nil {
@@ -129,7 +137,12 @@ func getActivityDetailsHandler(client ActivityDetailsClient, profileClient Profi
 			return Result{}, NewUserError(fetchActivityDetailsMessage, err)
 		}
 		unitSystem := profileUnitSystem(profile)
-		payload := getActivityDetailsResponse{Activity: activityRow(activity, args.IncludeFull, profileTimezone(profile.Timezone, timezoneFallback), unitSystem), Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull}}
+		gearResolutions, err := resolveActivityGear(ctx, gearClient, gearCache, []intervals.Activity{activity})
+		if err != nil {
+			return Result{}, err
+		}
+		row := activityRow(activity, args.IncludeFull, profileTimezone(profile.Timezone, timezoneFallback), unitSystem, gearResolutions[activity.ID])
+		payload := getActivityDetailsResponse{Activity: row, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull, FieldSemantics: activityFieldSemantics([]getActivitiesRow{row})}}
 		shaped, err := response.Shape(payload, shapeCfg.options(args.IncludeFull, nil, version, debugMetadata, getActivityDetailsName, unitSystem))
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activity_details response: %w", err)
@@ -186,7 +199,8 @@ func shapeActivityIntervalsDTO(activityID string, dto intervals.IntervalsDTO, in
 			return stravaUnavailableIntervalsResponse(firstNonEmpty(dto.ID, activityID), includeFull, version, dto.Raw)
 		}
 	}
-	out := getActivityIntervalsResponse{ActivityID: firstNonEmpty(dto.ID, activityID), Analyzed: dto.Analyzed, Intervals: make([]activityIntervalRow, 0, len(dto.ICUIntervals)), Groups: make([]activityIntervalGroup, 0, len(dto.ICUGroups)), Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull}}
+	classification := classifyActivityIntervalsDTO(dto)
+	out := getActivityIntervalsResponse{ActivityID: firstNonEmpty(dto.ID, activityID), Analyzed: dto.Analyzed, Intervals: make([]activityIntervalRow, 0, len(dto.ICUIntervals)), Groups: make([]activityIntervalGroup, 0, len(dto.ICUGroups)), Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, IntervalSource: classification.Source, AutoLapSuspected: boolPtr(classification.AutoLapSuspected)}}
 	if includeFull {
 		out.Full = dto.Raw
 	}
@@ -199,8 +213,23 @@ func shapeActivityIntervalsDTO(activityID string, dto intervals.IntervalsDTO, in
 	return out
 }
 
+func classifyActivityIntervalsDTO(dto intervals.IntervalsDTO) analysis.IntervalSourceResult {
+	input := analysis.IntervalSourceInput{Raw: dto.Raw, Intervals: make([]analysis.IntervalSourceInterval, 0, len(dto.ICUIntervals)), Groups: make([]analysis.IntervalSourceGroup, 0, len(dto.ICUGroups))}
+	for _, interval := range dto.ICUIntervals {
+		input.Intervals = append(input.Intervals, analysis.IntervalSourceInterval{Name: stringValue(interval.Name), Type: stringValue(interval.Type), Label: anyString(interval.Raw["label"]), Raw: interval.Raw, StartIndex: interval.StartIndex, EndIndex: interval.EndIndex, StartDistance: interval.StartDistance, EndDistance: interval.EndDistance, Distance: interval.Distance, Duration: interval.Duration})
+	}
+	for _, group := range dto.ICUGroups {
+		input.Groups = append(input.Groups, analysis.IntervalSourceGroup{Name: stringValue(group.Name), Type: stringValue(group.Type), Raw: group.Raw, StartIndex: group.StartIndex, EndIndex: group.EndIndex})
+	}
+	return analysis.InferIntervalSource(input)
+}
+
+func boolPtr(value bool) *bool {
+	return &value
+}
+
 func stravaUnavailableIntervalsResponse(activityID string, includeFull bool, version string, raw map[string]any) getActivityIntervalsUnavailableResponse {
-	out := getActivityIntervalsUnavailableResponse{ActivityID: activityID, StravaImported: true, Unavailable: &unavailableReason{Reason: "strava_blocked", Workaround: stravaWorkaround}, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull}}
+	out := getActivityIntervalsUnavailableResponse{ActivityID: activityID, StravaImported: true, Unavailable: &unavailableReason{Reason: "strava_blocked", Workaround: stravaBlockedWorkaround(raw)}, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull}}
 	if includeFull {
 		out.Full = raw
 	}
@@ -280,5 +309,5 @@ func activityReadInputSchema() map[string]any {
 }
 
 func activityReadOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Activity detail or interval response. Activity detail rows include gear_id/gear_name when upstream permits and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed."}
 }

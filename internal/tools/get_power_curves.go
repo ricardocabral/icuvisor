@@ -106,19 +106,10 @@ func decodePowerCurvesRequest(raw json.RawMessage) (powerCurvesRequest, error) {
 }
 
 func bucketPowerCurve(curve intervals.DataCurve, buckets []int) ([]powerCurvePoint, []int) {
-	points := []powerCurvePoint{}
-	missing := []int{}
-	for _, bucket := range buckets {
-		value, idx, ok := valueAtBucket(curve.Secs, curve.Values, bucket)
-		if !ok {
-			missing = append(missing, bucket)
-			continue
-		}
-		point := powerCurvePoint{DurationSeconds: bucket, Watts: roundPtr(value)}
-		if idx < len(curve.ActivityID) {
-			point.ActivityID = curve.ActivityID[idx]
-		}
-		points = append(points, point)
+	values, missing := durationCurveBucketValues(curve, buckets)
+	points := make([]powerCurvePoint, 0, len(values))
+	for _, value := range values {
+		points = append(points, powerCurvePoint{DurationSeconds: value.Bucket, Watts: value.Value, ActivityID: value.ActivityID})
 	}
 	return points, missing
 }

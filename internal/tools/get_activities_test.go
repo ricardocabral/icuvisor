@@ -20,6 +20,22 @@ type fakeActivitiesProfileClient struct {
 	rejectInvalidRange bool
 	listCalls          []intervals.ListActivitiesParams
 	listErr            error
+	gear               []intervals.Gear
+	gearByTarget       map[string][]intervals.Gear
+	gearErr            error
+	gearCalls          int
+}
+
+func (f *fakeActivitiesProfileClient) ListGear(ctx context.Context) ([]intervals.Gear, error) {
+	f.gearCalls++
+	if f.gearErr != nil {
+		return nil, f.gearErr
+	}
+	if f.gearByTarget != nil {
+		target, _ := intervals.TargetAthleteIDFromContext(ctx)
+		return f.gearByTarget[target], nil
+	}
+	return f.gear, nil
 }
 
 func (f *fakeActivitiesProfileClient) ListActivities(ctx context.Context, params intervals.ListActivitiesParams) ([]intervals.Activity, error) {
@@ -60,7 +76,7 @@ func TestGetActivitiesRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
 	client := newFakeActivitiesClient(t, nil, "metric")
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 	if !strings.Contains(tool.Description, "List activities for a date range") {
 		t.Fatalf("description = %q, want distinguishing activity-list sentence", tool.Description)
 	}
@@ -72,6 +88,177 @@ func TestGetActivitiesRegistrationMetadata(t *testing.T) {
 	}
 }
 
+func TestGetActivitiesCaloriesBurnedSemanticsAndNullStripping(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"zero","name":"Recovery Ride","type":"Ride","start_date_local":"2026-01-03T07:00:00","calories":0}`,
+		`{"id":"absent","name":"Untyped Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00"}`,
+	}, "metric")
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	payload := resultMap(t, result)
+	rows := payload["activities"].([]any)
+	zero := rows[0].(map[string]any)
+	if zero["calories_burned"] != float64(0) {
+		t.Fatalf("zero calories row = %#v, want present calories_burned=0", zero)
+	}
+	for _, key := range []string{"calories", "calories_intake", "calories_total", "carbs_g", "protein_g", "fat_g"} {
+		if _, ok := zero[key]; ok {
+			t.Fatalf("zero calories row emitted unsupported/ambiguous %s: %#v", key, zero)
+		}
+	}
+	absent := rows[1].(map[string]any)
+	if _, ok := absent["calories_burned"]; ok {
+		t.Fatalf("absent calories row emitted calories_burned: %#v", absent)
+	}
+	semantics := payload["_meta"].(map[string]any)["field_semantics"].(map[string]any)
+	if !strings.Contains(semantics["calories_burned"].(string), "Active/exercise calories") {
+		t.Fatalf("field_semantics = %#v, want active calories label", semantics)
+	}
+}
+
+func TestGetActivitiesResolvesGearNames(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"a1","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`,
+	}, "metric")
+	client.gear = decodeToolGear(t, `{"id":"g-1","name":"Race Bike"}`)
+	cache := newGearListCache()
+	tool := newGetActivitiesToolWithGear(client, client, client, cache, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	row := resultMap(t, result)["activities"].([]any)[0].(map[string]any)
+	if row["gear_id"] != "g-1" || row["gear_name"] != "Race Bike" || row["gear_resolution"] != gearResolutionResolved {
+		t.Fatalf("row = %#v, want resolved gear", row)
+	}
+	if client.gearCalls != 1 {
+		t.Fatalf("gear calls = %d, want one lookup", client.gearCalls)
+	}
+}
+
+func TestGetActivitiesSkipsGearFetchWithoutGearIDs(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"a1","name":"Run","type":"Run","start_date_local":"2026-01-02T07:00:00"}`,
+	}, "metric")
+	tool := newGetActivitiesToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	row := resultMap(t, result)["activities"].([]any)[0].(map[string]any)
+	if _, ok := row["gear_id"]; ok {
+		t.Fatalf("row = %#v, want no gear fields", row)
+	}
+	if client.gearCalls != 0 {
+		t.Fatalf("gear calls = %d, want no lookup", client.gearCalls)
+	}
+}
+
+func TestGetActivitiesMarksUnknownUnnamedAndLookupUnavailableGear(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"unknown","name":"Ride","type":"Ride","start_date_local":"2026-01-04T07:00:00","gear_id":"missing"}`,
+		`{"id":"unnamed","name":"Run","type":"Run","start_date_local":"2026-01-03T07:00:00","gear_id":"shoe-1"}`,
+	}, "metric")
+	client.gear = decodeToolGear(t, `{"id":"shoe-1"}`)
+	tool := newGetActivitiesToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	rows := resultMap(t, result)["activities"].([]any)
+	statuses := map[string]string{}
+	for _, rawRow := range rows {
+		row := rawRow.(map[string]any)
+		statuses[row["activity_id"].(string)] = row["gear_resolution"].(string)
+	}
+	if statuses["unknown"] != gearResolutionUnresolved || statuses["unnamed"] != gearResolutionNameMissing {
+		t.Fatalf("statuses = %#v, want unknown and name_missing", statuses)
+	}
+
+	client = newFakeActivitiesClient(t, []string{`{"id":"a1","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`}, "metric")
+	client.gearErr = errors.New("gear upstream down")
+	tool = newGetActivitiesToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+	result, err = tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("lookup unavailable Handler() error = %v", err)
+	}
+	row := resultMap(t, result)["activities"].([]any)[0].(map[string]any)
+	if row["gear_id"] != "g-1" || row["gear_resolution"] != gearResolutionLookupUnavailable {
+		t.Fatalf("row = %#v, want lookup_unavailable with gear_id", row)
+	}
+}
+
+func TestGetActivitiesPreservesGearLookupCancellation(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{`{"id":"a1","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`}, "metric")
+	client.gearErr = context.Canceled
+	tool := newGetActivitiesToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("Handler() error = %v, want context.Canceled", err)
+	}
+}
+
+func TestGetActivitiesGearCacheReuseAndTargetIsolation(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{`{"id":"a1","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`}, "metric")
+	client.gear = decodeToolGear(t, `{"id":"g-1","name":"Race Bike"}`)
+	cache := newGearListCache()
+	gearTool := newGetGearListTool(client, cache, "test", false)
+	activityTool := newGetActivitiesToolWithGear(client, client, client, cache, "test", "UTC", false)
+	ctx111 := intervals.WithTargetAthleteID(context.Background(), "i111")
+
+	if _, err := gearTool.Handler(ctx111, Request{Name: gearTool.Name, Arguments: json.RawMessage(`{}`)}); err != nil {
+		t.Fatalf("gear Handler() error = %v", err)
+	}
+	if _, err := activityTool.Handler(ctx111, Request{Name: activityTool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)}); err != nil {
+		t.Fatalf("activity Handler() error = %v", err)
+	}
+	if client.gearCalls != 1 {
+		t.Fatalf("gear calls = %d, want activity read to reuse get_gear_list cache", client.gearCalls)
+	}
+
+	client.gearByTarget = map[string][]intervals.Gear{
+		"i111": decodeToolGear(t, `{"id":"g-1","name":"A Bike"}`),
+		"i222": decodeToolGear(t, `{"id":"g-1","name":"B Bike"}`),
+	}
+	client.gear = nil
+	cache = newGearListCache()
+	activityTool = newGetActivitiesToolWithGear(client, client, client, cache, "test", "UTC", false)
+	client.gearCalls = 0
+	first, err := activityTool.Handler(ctx111, Request{Name: activityTool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("athlete 111 Handler() error = %v", err)
+	}
+	second, err := activityTool.Handler(intervals.WithTargetAthleteID(context.Background(), "i222"), Request{Name: activityTool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("athlete 222 Handler() error = %v", err)
+	}
+	firstName := resultMap(t, first)["activities"].([]any)[0].(map[string]any)["gear_name"]
+	secondName := resultMap(t, second)["activities"].([]any)[0].(map[string]any)["gear_name"]
+	if firstName != "A Bike" || secondName != "B Bike" || client.gearCalls != 2 {
+		t.Fatalf("names/calls = %v/%v/%d, want target-isolated cache", firstName, secondName, client.gearCalls)
+	}
+}
+
 func TestGetActivitiesPaginationFiltersAndTokenRoundTrip(t *testing.T) {
 	t.Parallel()
 
@@ -80,7 +267,7 @@ func TestGetActivitiesPaginationFiltersAndTokenRoundTrip(t *testing.T) {
 		`{"id":"a2","name":"","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
 		`{"id":"a1","name":"Easy","type":"Run","start_date_local":"2026-01-02T07:00:00","distance":2000,"moving_time":600}`,
 	}, "metric")
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	first, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","newest":"2026-01-04","page_size":1}`)})
 	if err != nil {
@@ -113,7 +300,7 @@ func TestGetActivitiesPaginationFiltersAndTokenRoundTrip(t *testing.T) {
 func TestGetActivitiesBoundaryResponseShapeGoldenFixtures(t *testing.T) {
 	t.Parallel()
 
-	const exactFullWindowToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJkZXZpY2VfbmFtZSJdLCJiZWZvcmVfc3RhcnRfZGF0ZV9sb2NhbCI6IjIwMjYtMDEtMDNUMDc6MDA6MDAiLCJiZWZvcmVfaWQiOiJmMyIsInNraXBfaWRzX2F0X2JvdW5kYXJ5IjpbImYzIl19`
+	const exactFullWindowToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJkZXZpY2VfbmFtZSIsImdlYXJfaWQiXSwiYmVmb3JlX3N0YXJ0X2RhdGVfbG9jYWwiOiIyMDI2LTAxLTAzVDA3OjAwOjAwIiwiYmVmb3JlX2lkIjoiZjMiLCJza2lwX2lkc19hdF9ib3VuZGFyeSI6WyJmMyJdfQ`
 	const identicalTimestampStallToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJkZXZpY2VfbmFtZSJdLCJiZWZvcmVfc3RhcnRfZGF0ZV9sb2NhbCI6IjIwMjYtMDEtMDNUMDc6MDA6MDAiLCJiZWZvcmVfaWQiOiJzMyIsInNraXBfaWRzX2F0X2JvdW5kYXJ5IjpbInMzIl19`
 
 	tests := []struct {
@@ -171,7 +358,7 @@ func TestGetActivitiesBoundaryResponseShapeGoldenFixtures(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			client := newFakeActivitiesClient(t, tc.rawActivities, "metric")
 			client.applyListParams = tc.applyListParams
-			tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+			tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.arguments)})
 			if err != nil {
@@ -207,7 +394,7 @@ func TestGetActivitiesStopsBeforeInvertedLowerBoundAfterFilteredBoundary(t *test
 	}, "metric")
 	client.applyListParams = true
 	client.rejectInvalidRange = true
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-03T07:00:00","page_size":1}`)})
 	if err != nil {
@@ -232,7 +419,7 @@ func TestGetActivitiesErrorsInsteadOfSkippingBeyondMaxSameTimestampWindow(t *tes
 	)
 	client := newFakeActivitiesClient(t, rawActivities, "metric")
 	client.applyListParams = true
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if message, ok := PublicErrorMessage(err); !ok || !strings.Contains(message, "same-timestamp filtered rows") {
@@ -251,7 +438,7 @@ func TestGetActivitiesWidensLookaheadBeforeCrossingSameTimestampBoundary(t *test
 		`{"id":"older","name":"Older","type":"Run","start_date_local":"2026-01-02T07:00:00","distance":1000,"moving_time":300}`,
 	}, "metric")
 	client.applyListParams = true
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if err != nil {
@@ -276,7 +463,7 @@ func TestGetActivitiesAdvancesPastFullyFilteredSameTimestampWindow(t *testing.T)
 		`{"id":"named","name":"Older","type":"Run","start_date_local":"2026-01-02T07:00:00","distance":1000,"moving_time":300}`,
 	}, "metric")
 	client.applyListParams = true
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if err != nil {
@@ -305,7 +492,7 @@ func TestGetActivitiesReturnsTokenWhenFilteredWindowsHitFetchCap(t *testing.T) {
 	client.activityPages = append(client.activityPages, decodeActivityPage(t,
 		`{"id":"eligible","name":"Recovered","type":"Run","start_date_local":"2026-01-01T07:00:00","distance":1000,"moving_time":300}`,
 	))
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	first, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if err != nil {
@@ -338,7 +525,7 @@ func TestGetActivitiesPreservesProfileCancellation(t *testing.T) {
 
 	client := newFakeActivitiesClient(t, nil, "metric")
 	client.err = context.Canceled
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if !errors.Is(err, context.Canceled) {
@@ -350,7 +537,7 @@ func TestGetActivitiesDoesNotTokenizeDateLessStravaStubsWithoutCursorProgress(t 
 	t.Parallel()
 
 	client := newFakeActivitiesClient(t, []string{`{}`, `{}`}, "metric")
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if err != nil {
@@ -372,7 +559,7 @@ func TestGetActivitiesUsesProfileTimezoneFallback(t *testing.T) {
 		`{"id":"run1","name":"Run","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
 	}, "metric")
 	client.profile.Timezone = "America/Sao_Paulo"
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
@@ -393,7 +580,7 @@ func TestGetActivitiesDoesNotLoopOnSameTimestampFilteredLookahead(t *testing.T) 
 		`{"id":"a1","name":"","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
 	}, "metric")
 	client.applyListParams = true
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	first, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if err != nil {
@@ -417,25 +604,31 @@ func TestGetActivitiesDetectsDocumentedStravaStubShapes(t *testing.T) {
 	t.Parallel()
 
 	client := newFakeActivitiesClient(t, []string{
+		`{"id":"stub-wahoo","icu_athlete_id":"i12345","start_date_local":"2026-01-03T07:00:00","external_id":"wahoo:12345"}`,
 		`{}`,
 		`{"id":"stub1","icu_athlete_id":"i12345","start_date_local":"2026-01-02T07:00:00"}`,
 		`{"id":"stub2","icu_athlete_id":"i12345","start_date_local":"2026-01-01T07:00:00","name":null}`,
 	}, "metric")
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
 	rows := resultMap(t, result)["activities"].([]any)
-	if len(rows) != 3 {
+	if len(rows) != 4 {
 		t.Fatalf("activities = %#v, want all documented Strava stubs surfaced", rows)
+	}
+	wantWorkarounds := map[string]string{
+		"stub-wahoo": wantWahooStravaWorkaround,
+		"":           wantUnknownStravaWorkaround,
+		"stub1":      wantUnknownStravaWorkaround,
+		"stub2":      wantUnknownStravaWorkaround,
 	}
 	for _, rawRow := range rows {
 		row := rawRow.(map[string]any)
-		if row["unavailable"].(map[string]any)["reason"] != "strava_tos" {
-			t.Fatalf("row = %#v, want Strava unavailable marker", row)
-		}
+		activityID, _ := row["activity_id"].(string)
+		assertUnavailableReasonAndWorkaround(t, row, "strava_tos", wantWorkarounds[activityID])
 	}
 }
 
@@ -446,7 +639,7 @@ func TestGetActivitiesKeepsStravaRowsWhenUnnamedFilteringIsDefault(t *testing.T)
 		`{"id":"hidden1","source":"Strava","_note":"Strava activity hidden","start_date_local":"2026-01-02T07:00:00","name":null}`,
 		`{"id":"unnamed","name":"","type":"Run","start_date_local":"2026-01-01T07:00:00","distance":1000,"moving_time":300}`,
 	}, "metric")
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
@@ -457,9 +650,10 @@ func TestGetActivitiesKeepsStravaRowsWhenUnnamedFilteringIsDefault(t *testing.T)
 		t.Fatalf("activities = %#v, want only Strava unavailable row", rows)
 	}
 	row := rows[0].(map[string]any)
-	if row["activity_id"] != "hidden1" || row["unavailable"].(map[string]any)["reason"] != "strava_tos" {
+	if row["activity_id"] != "hidden1" {
 		t.Fatalf("row = %#v, want visible Strava unavailable marker", row)
 	}
+	assertUnavailableReasonAndWorkaround(t, row, "strava_tos", wantUnknownStravaWorkaround)
 }
 
 func TestGetActivitiesDoesNotEmitPaceForCycling(t *testing.T) {
@@ -468,7 +662,7 @@ func TestGetActivitiesDoesNotEmitPaceForCycling(t *testing.T) {
 	client := newFakeActivitiesClient(t, []string{
 		`{"id":"ride1","name":"Ride","type":"Ride","start_date_local":"2026-01-03T07:00:00","distance":20000,"moving_time":2400,"average_speed":8.333333}`,
 	}, "metric")
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
@@ -493,7 +687,7 @@ func TestGetActivitiesShapesStravaFullAndUnits(t *testing.T) {
 		`{"id":"run1","name":"Run","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1609.344,"moving_time":480,"average_speed":3.3528,"name_null":null}`,
 		`{"id":"hidden1","source":"Strava","_note":"Strava activity hidden","start_date_local":"2026-01-02T07:00:00","name":null}`,
 	}, "imperial")
-	tool := newGetActivitiesTool(client, client, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","include_unnamed":true,"include_full":true}`)})
 	if err != nil {
@@ -512,10 +706,7 @@ func TestGetActivitiesShapesStravaFullAndUnits(t *testing.T) {
 		t.Fatalf("full name_null = %#v present %v, want preserved nil", value, ok)
 	}
 	hidden := rows[1].(map[string]any)
-	unavailable := hidden["unavailable"].(map[string]any)
-	if unavailable["reason"] != "strava_tos" || hidden["strava_imported"] != true {
-		t.Fatalf("hidden row = %#v, want Strava unavailable", hidden)
-	}
+	assertUnavailableReasonAndWorkaround(t, hidden, "strava_tos", wantUnknownStravaWorkaround)
 }
 
 func newFakeActivitiesClient(t *testing.T, rawActivities []string, preferredUnits string) *fakeActivitiesProfileClient {

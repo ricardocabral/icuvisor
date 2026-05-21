@@ -169,7 +169,7 @@ Wireframes will be produced separately; this PRD specifies behavior only.
 - **Single Go binary**, cross-compiled for macOS (arm64 + amd64, universal), Windows (amd64 + arm64), Linux (amd64 + arm64).
 - **Signed and notarized** on macOS; Authenticode-signed on Windows.
 - **Installers**: `.dmg`, `.msi`, `.deb`, `.rpm`, plus Homebrew tap, Scoop bucket, Winget manifest.
-- **DXT bundle** for Claude Desktop's one-click extension install where supported.
+- **MCPB bundle** (formerly DXT) for Claude Desktop's one-click extension install where supported.
 - **Auto-update** with signed-release verification.
 - **Reproducible builds** via GoReleaser + GitHub Actions.
 
@@ -191,11 +191,12 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 - `get_fitness` — CTL/ATL/TSB trends, taper projections.
 - `get_best_efforts` — PRs across sports.
 - `get_power_curves` — mean-maximal curves.
+- `get_gear_list` — full-toolset read of gear IDs/names with manual refresh for the per-athlete cache used by activity gear-name resolution.
 
 **Activities**
 
-- `get_activities` — date-range list; supports `include_unnamed` (issue #67) and pagination.
-- `get_activity_details` — single-activity metadata, zones, metrics.
+- `get_activities` — date-range list; supports `include_unnamed` (issue #67), pagination, and inline `gear_id` / `gear_name` when upstream exposes gear IDs. Unresolved gear IDs carry an explicit `gear_resolution` status rather than a guessed name.
+- `get_activity_details` — single-activity metadata, zones, metrics, and the same inline gear fields/resolution status as activity list rows.
 - `get_activity_intervals` — interval splits.
 - `get_activity_streams` — time-series (power, HR, altitude, cadence, etc.). **Stream keys are canonicalized** to a single naming convention (snake_case) across activities and devices; the upstream API exposes inconsistent casing (camelCase on some activity types, snake_case on others — forum #118) and the LLM must not have to guess.
 - `get_activity_splits` — virtual splits (per-km or per-mile) computed from streams when the activity has no manual laps, so continuous runs/rides are analyzable (forum #25 / #29). Honours `preferred_units`.
@@ -225,10 +226,10 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 
 **Wellness provenance + freshness** (forum thread 123739, posts #56–#58): intervals.icu collapses upstream-bridged wellness fields (notably `Readiness`) across providers with different native scales — Polar's 1–6 readiness, Garmin's body battery, Oura's readiness — under one field name with no provenance flag, and Polar-bridged values only refresh when the athlete visits intervals.icu's home page in a browser (so an MCP read can return data hours or days stale). icuvisor surfaces both signals so the LLM does not silently compare incompatible scales or reason over stale numbers:
 
-- Every bridged wellness field carries `_meta.provenance` per field: `{ "readiness": { "source": "polar", "native_scale": "1-6", "fetched_at": "<RFC3339>" } }`. `source` is one of `polar | garmin | oura | whoop | apple_health | manual | unknown`.
-- Where the upstream exposes raw native sub-fields (Polar's `ans_charge` -10..+10, `sleep_charge`, `nightly_recharge_status` 1–6; Garmin's body-battery min/max; Oura's raw `sleep_score` 1–100), surface them under `_native.<source>.<field>` so the LLM can choose between the normalized and the raw view.
+- Every bridged wellness field carries `_meta.provenance` per field: `{ "readiness": { "source": "polar", "native_scale": "1-6 Polar nightly_recharge_status", "fetched_at": "<RFC3339>" } }`. `source` is one of `polar | garmin | oura | whoop | apple_health | manual | unknown`; `native_scale` names the provider-native metric/scale for supported sleep/readiness providers (Garmin, WHOOP, Oura, Polar) and remains separate from canonical `_meta.scales.sleepScore`.
+- Where the upstream exposes raw native sub-fields (Polar's `ans_charge` -10..+10, `sleep_charge`, `nightly_recharge_status` 1–6; Garmin's body-battery min/max and sleep score; Oura's raw `sleep_score`/readiness score; WHOOP's sleep performance percentage/recovery score), surface them under `_native.<source>.<field>` so the LLM can choose between the normalized and the raw view.
 - A wellness row whose `fetched_at` is more than 24h older than the wellness `date` (i.e. the bridge has not refreshed) gets `_meta.stale: true` with a one-line `_meta.stale_reason` (`"polar bridge refresh requires user to open intervals.icu"`).
-- When provenance cannot be determined, emit `_meta.provenance.<field>.source: "unknown"` rather than omitting the marker — silence reads as "trusted" to a model.
+- When provenance cannot be determined, emit `_meta.provenance.<field>.source: "unknown"` and `_meta.provenance.<field>.native_scale: "unknown"` rather than omitting or guessing the marker — silence reads as "trusted" to a model.
 
 **Events & workouts**
 
@@ -314,7 +315,7 @@ The generated tool catalog is the source of truth for the current registered too
 - **Disambiguating field names** — emit `calories_burned` rather than `calories`, `distance_km` / `distance_mi` rather than `distance`, etc. Don't make the LLM guess units or direction.
 - **Timezone normalization** — all dates rendered in the athlete's configured TZ; tool docstrings mention the convention.
 - **Athlete ID normalization** — accept `i12345` or `12345`; emit `i12345` consistently.
-- **Strava-imported activity handling** — intervals.icu blocks Strava-synced activities from its public API per Strava's ToS. Tools must detect the blocked state and return a structured `unavailable: { reason: "strava_tos", workaround: "connect device directly to intervals.icu (Garmin, Wahoo, Coros, Suunto, Polar)" }` rather than empty/`N/A` fields the LLM might hallucinate over.
+- **Strava-imported activity handling** — intervals.icu blocks Strava-synced activities from its public API per Strava's ToS. Tools must detect the blocked state and return a structured `unavailable` marker with a stable reason such as `strava_tos` or `strava_blocked` and an actionable workaround: `Open the intervals.icu Connections page for the activity's original device provider and click Download old data so historical activities are re-imported directly from that provider instead of through Strava's restricted API.` When explicit payload evidence identifies the native provider, the workaround names it, for example: `Open the intervals.icu Connections page, choose Wahoo, and click Download old data so historical activities are re-imported directly from Wahoo instead of through Strava's restricted API.`
 - **Per-athlete unit normalization** — read `preferred_units` (miles vs km) from the athlete profile and render distances/paces in that unit, with the unit name embedded in the field key or `_meta` so the LLM can't drift to its default. Same pattern as the timezone rule.
 - **Stream-key canonicalization** — the intervals.icu streams endpoint emits inconsistent key casing across activity types and devices (forum #118: `groundContactTime` on some activities, `ground_contact_time` on others). icuvisor canonicalizes every stream key to snake_case at the response boundary so the LLM (and downstream code) sees one schema. The canonical map lives in code and is covered by tests.
 - **Self-explanatory shapes — don't assume a frontier-grade reasoner** (forum thread 123739 post #38): there is a real constituency running local quantized models (~70B and smaller) that are context-bound and weaker at multi-hop inference. Response shapes prefer pre-computed deltas, in-row scale labels, and explicit `_meta` legends over leaving the model to infer them. Every response should be interpretable by a model that does not have the tool description in its prompt at inference time (per the existing in-response scale-labels rule, but applied as a general principle).

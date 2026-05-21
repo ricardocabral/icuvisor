@@ -1,0 +1,15 @@
+[
+  {
+    "id": 123,
+    "name": "Race Bike",
+    "type": "Bike",
+    "brand": "Cervelo",
+    "model": "S5",
+    "retired": false
+  },
+  {
+    "id": "shoe-7",
+    "type": "Shoes",
+    "retired": true
+  }
+]

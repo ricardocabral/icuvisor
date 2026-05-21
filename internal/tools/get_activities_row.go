@@ -10,21 +10,22 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/units"
 )
 
-func shapeGetActivitiesResponse(activities []intervals.Activity, args GetActivitiesRequest, nextToken string, version string, timezoneFallback string, debugMetadata bool, unitSystem response.UnitSystem, shaping ...responseShaping) (any, error) {
+func shapeGetActivitiesResponse(activities []intervals.Activity, gearResolutions map[string]activityGearResolution, args GetActivitiesRequest, nextToken string, version string, timezoneFallback string, debugMetadata bool, unitSystem response.UnitSystem, shaping ...responseShaping) (any, error) {
 	rows := make([]getActivitiesRow, 0, len(activities))
 	for _, activity := range activities {
-		rows = append(rows, activityRow(activity, args.IncludeFull, timezoneFallback, unitSystem))
+		rows = append(rows, activityRow(activity, args.IncludeFull, timezoneFallback, unitSystem, gearResolutions[activity.ID]))
 	}
-	payload := getActivitiesResponse{Activities: rows, Meta: getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull}}
+	payload := getActivitiesResponse{Activities: rows, Meta: getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull, FieldSemantics: activityFieldSemantics(rows)}}
 	shapeCfg := responseShapingOrDefault(shaping)
 	return response.Shape(payload, shapeCfg.options(args.IncludeFull, []string{"activities"}, version, debugMetadata, getActivitiesName, unitSystem))
 }
 
-func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback string, unitSystem response.UnitSystem) getActivitiesRow {
+func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback string, unitSystem response.UnitSystem, gearResolution activityGearResolution) getActivitiesRow {
 	row := getActivitiesRow{ActivityID: activity.ID, Name: strings.TrimSpace(stringValue(activity.Name)), Sport: stringValue(activity.Type), SubType: stringValue(activity.SubType), StartDateLocal: stringValue(activity.StartDateLocal), StartDateUTC: stringValue(activity.StartDate), Timezone: firstNonEmpty(stringValue(activity.Timezone), timezoneFallback)}
+	applyActivityGearResolution(&row, gearResolution)
 	if isStravaBlocked(activity) {
 		row.StravaImported = true
-		row.Unavailable = &unavailableReason{Reason: "strava_tos", Workaround: stravaWorkaround}
+		row.Unavailable = &unavailableReason{Reason: "strava_tos", Workaround: stravaBlockedWorkaround(activity.Raw)}
 		if includeFull {
 			row.Full = activity.Raw
 		}
@@ -36,7 +37,7 @@ func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback
 	row.AverageHeartRateBPM = intValue(activity.AverageHeartRate)
 	row.MaxHeartRateBPM = intValue(activity.MaxHeartRate)
 	row.AverageCadenceRPM = activity.AverageCadence
-	row.CaloriesBurned = intValue(activity.Calories)
+	row.CaloriesBurned = activity.Calories
 	row.DeviceName = stringValue(activity.DeviceName)
 	row.HasStreams = len(activity.StreamTypes) > 0
 	if activity.TotalElevationGain != nil {
@@ -79,6 +80,15 @@ func applyActivityDistanceAndPace(row *getActivitiesRow, activity intervals.Acti
 	}
 }
 
+func applyActivityGearResolution(row *getActivitiesRow, resolution activityGearResolution) {
+	if strings.TrimSpace(resolution.GearID) == "" {
+		return
+	}
+	row.GearID = resolution.GearID
+	row.GearName = resolution.Name
+	row.GearResolution = resolution.Status
+}
+
 func applyActivitySpeed(row *getActivitiesRow, speed *float64, average bool, unitSystem response.UnitSystem) {
 	if speed == nil || *speed <= 0 {
 		return
@@ -119,6 +129,15 @@ func intValue(value *int) int {
 		return 0
 	}
 	return *value
+}
+
+func activityFieldSemantics(rows []getActivitiesRow) map[string]string {
+	for _, row := range rows {
+		if row.CaloriesBurned != nil {
+			return map[string]string{"calories_burned": "Active/exercise calories burned from upstream activity calories."}
+		}
+	}
+	return nil
 }
 
 func stringValue(value *string) string {

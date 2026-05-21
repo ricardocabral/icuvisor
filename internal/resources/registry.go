@@ -31,7 +31,7 @@ func NewRegistry() Registry {
 
 // NewRegistryWithOptions returns the default MCP resource registry.
 func NewRegistryWithOptions(profileClient clients.ProfileClient, opts ResourceOptions) Registry {
-	entries := []Resource{WorkoutSyntaxResource(), EventCategoriesResource(), CustomItemSchemasResource()}
+	entries := []Resource{WorkoutSyntaxResource(), EventCategoriesResource(), CustomItemSchemasResource(), AnalysisFormulasResource()}
 	if profileClient != nil && !opts.DisableAthleteProfile {
 		entries = append(entries, AthleteProfileResource(profileClient, opts))
 	}

@@ -1,0 +1,9 @@
+{
+  "id": "unknown-intervals",
+  "analyzed": true,
+  "icu_intervals": [
+    {"id": "a", "name": "Lap", "distance": 800, "duration": 240},
+    {"id": "b", "name": "Lap", "distance": 1250, "duration": 370},
+    {"id": "c", "name": "Lap", "distance": 2100, "duration": 600}
+  ]
+}

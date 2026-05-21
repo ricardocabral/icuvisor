@@ -68,6 +68,28 @@ func TestLinkActivityToEventSuccessNoWarning(t *testing.T) {
 	if full["paired_event_id"] != float64(1001) {
 		t.Fatalf("full = %#v, want raw linked activity", full)
 	}
+	assertKeyPresentNil(t, full, "extra")
+}
+
+func TestLinkActivityToEventDefaultOmitsRawSparsePayload(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeLinkActivityToEventClient{
+		activity: decodeActivityFixture(t, `{"id":"a1","start_date_local":"2026-05-10T07:00:00"}`),
+		event:    decodeToolEvents(t, `{"id":1001,"start_date_local":"2026-05-10"}`)[0],
+		linked:   decodeActivityFixture(t, `{"id":"a1","paired_event_id":1001,"extra":null}`),
+	}
+	tool := newLinkActivityToEventTool(client, client, client, "test", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","event_id":"1001"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	assertKeyAbsent(t, out, "full")
+	if out["activity_id"] != "a1" || out["event_id"] != "1001" || out["status"] != "linked" {
+		t.Fatalf("response = %#v, want terse link confirmation", out)
+	}
 }
 
 func TestLinkActivityToEventIdempotentRelink(t *testing.T) {

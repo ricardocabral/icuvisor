@@ -10,7 +10,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `get_extended_metrics` now surfaces the strain-score power-duration model parameters when intervals.icu has fitted them: `strain_score_cp_watts` (critical power), `strain_score_w_prime_kj` (W', converted from upstream joules), and `strain_score_p_max_watts` (maximal power). Terse mode still drops them when upstream returns null.
+- KR5 benchmark harness/report now compares analyzer-enabled versus analyzer-disabled fixture modes with v2 response-token metrics, source-tool usage validation, raw-stream pull counts, and TP-098 core-promotion evidence without promoting tools in this change.
+- Documented the upstream coverage gap for precomputed per-activity zone-time fields after auditing the v0.2 fixture corpus with a reproducible local script.
+- `analyze_trend`, `analyze_distribution`, `analyze_correlation`, and `analyze_efforts_delta` are registered in the full toolset to compute deterministic analyzer reductions with mandatory `_meta`, closed `analysis_metric` validation, terse-by-default responses, and unit-explicit best-efforts deltas.
+- `compute_zone_time`, `compute_load_balance`, `compute_baseline`, and `compute_compliance_rate` are registered in the full toolset as deterministic analyzer-family compute tools using existing read outputs, mandatory analyzer `_meta`, explicit missing/insufficient signals, and activation hints that tell assistants not to roll their own row/stream reductions.
+- `get_activity_histogram` summarizes one activity's power, heart-rate, or pace distribution into terse bucketed seconds/percentages using configured zones when available and fixed-width stream buckets otherwise.
+- `compute_activity_segment_stats` is registered in the full toolset as the analyzer-family raw-stream exception, computing segment mean/median/p90, drift, Pw:HR decoupling, NP, and IF from canonical activity streams with mandatory analyzer `_meta`.
+- `get_fitness_projection` simulates deterministic CTL/ATL/TSB scenarios from current fitness with horizon, ramp, recovery-week, and optional planned-load assumptions documented in analyzer `_meta`.
+- `get_activity_intervals` now emits additive `_meta.interval_source` and `_meta.auto_lap_suspected` signals so generic device auto-laps are not confused with structured workout segments.
+- Added shared analyzer response scaffolding so planned analyzer tools consistently emit mandatory `_meta.method`, `_meta.source_tools`, `_meta.n`, `_meta.missing_days`, `_meta.missing_action`, and `_meta.insufficient_sample` fields.
+- Claude Desktop Extension (`.mcpb`) packaging for the macOS universal release artifact, including a binary-server manifest, secure Desktop-managed `api_key` configuration, local pack/validate tooling, and extension-first install docs.
+- `icuvisor://analysis-formulas` MCP Resource documents canonical analyzer formula refs for HR drift, Pw:HR decoupling, polarization index, EF, VI, and z-score.
+- `get_hr_curves` and `get_pace_curves` expose upstream-computed heart-rate and pace curves as full-toolset siblings to `get_power_curves`, with terse/default buckets, raw `include_full` payloads, and athlete-preferred pace units.
+- Added NOTE-category examples for `add_or_update_event` so assistants and users can discover nutrition plans, travel logistics, daily reminders, and coach annotations without a separate note tool.
+- Added reusable closed `analysis_metric` enum helpers for planned analyzer tools, including canonical schema values, conservative aliases, source metadata, and concise unknown-metric hints.
+- `get_gear_list` lists intervals.icu gear IDs/names in the full toolset with a manual refresh path for the per-athlete gear cache.
+- Activity reads now surface `gear_id`, resolved `gear_name`, and explicit `gear_resolution` statuses when upstream exposes gear IDs.
+- Activity and wellness reads now disambiguate nutrition fields: activity `calories` is exposed as `calories_burned`, while wellness intake/macros use `calories_intake`, `carbs_g`, `protein_g`, and `fat_g` with `_meta.field_semantics` labels.
 - Homebrew install path: releases now produce a `darwin_universal` tarball and publish a Homebrew formula to the [`ricardocabral/homebrew-icuvisor`](https://github.com/ricardocabral/homebrew-icuvisor) tap. Install with `brew install ricardocabral/icuvisor/icuvisor`. The macOS tarball binary is not yet codesigned independently of the DMG, so first run may require dismissing Gatekeeper; signing the tarball binary is tracked as a follow-up.
+
+### Changed
+
+- Promoted `analyze_trend`, `compute_zone_time`, and `compute_baseline` into the default core toolset after TP-098/KR5 benchmark evidence showed positive net token savings and eliminated or avoided LLM-visible raw-stream pulls.
+- Analyzer-family tool descriptions now lead with concrete activation prompts and explicitly tell assistants not to fetch raw `get_*` rows or streams and reduce them in chat.
+- Strava-blocked activity responses now point users to the intervals.icu Connections page and Download old data action for the native device provider, naming Garmin/Wahoo/etc. when explicit payload evidence is available.
+- `get_wellness_data` provenance now reports provider-native sleep/readiness `native_scale` labels for Garmin, WHOOP, Oura, and Polar, while unresolved sources report `unknown` instead of a guessed device scale.
+- Write-tool echo responses now strip upstream null keys by default, including custom-item create/update responses, while preserving meaningful zero, false, and empty-string values.
+- Documented the TP-102 remote-connector decision: icuvisor will not add legacy SSE or generic public-tunnel recipes for ChatGPT-style remote custom connector UIs before the hosted relay; local stdio and loopback Streamable HTTP remain the supported ChatGPT paths.
+- `icuvisor setup` now writes a non-secret `credential_ref` to generated config files so users and docs can see the OS keychain service/account while the API key remains outside JSON. Setup stores and verifies the keychain credential before writing the config file, so keychain failures do not leave a fresh onboarding config behind.
 
 ## [0.0.2] - 2026-05-19
 

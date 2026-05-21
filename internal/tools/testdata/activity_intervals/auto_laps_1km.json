@@ -1,0 +1,11 @@
+{
+  "id": "auto-laps-1km",
+  "analyzed": true,
+  "icu_intervals": [
+    {"id": "lap-1", "name": "Lap 1", "start_distance": 0, "end_distance": 1000, "distance": 1000, "duration": 300},
+    {"id": "lap-2", "name": "Lap 2", "start_distance": 1000, "end_distance": 2002, "distance": 1002, "duration": 302},
+    {"id": "lap-3", "name": "Lap 3", "start_distance": 2002, "end_distance": 3001, "distance": 999, "duration": 301},
+    {"id": "lap-4", "name": "Lap 4", "start_distance": 3001, "end_distance": 4003, "distance": 1002, "duration": 300},
+    {"id": "lap-5", "name": "Lap 5", "start_distance": 4003, "end_distance": 5000, "distance": 997, "duration": 299}
+  ]
+}

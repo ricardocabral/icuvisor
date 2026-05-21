@@ -9,7 +9,16 @@ import (
 const (
 	AddActivityMessage               = "add_activity_message"
 	AddOrUpdateEvent                 = "add_or_update_event"
+	AnalyzeCorrelation               = "analyze_correlation"
+	AnalyzeDistribution              = "analyze_distribution"
+	AnalyzeEffortsDelta              = "analyze_efforts_delta"
+	AnalyzeTrend                     = "analyze_trend"
 	ApplyTrainingPlan                = "apply_training_plan"
+	ComputeActivitySegmentStats      = "compute_activity_segment_stats"
+	ComputeBaseline                  = "compute_baseline"
+	ComputeComplianceRate            = "compute_compliance_rate"
+	ComputeLoadBalance               = "compute_load_balance"
+	ComputeZoneTime                  = "compute_zone_time"
 	CreateCustomItem                 = "create_custom_item"
 	CreateWorkout                    = "create_workout"
 	DeleteActivity                   = "delete_activity"
@@ -21,6 +30,7 @@ const (
 	DeleteWorkout                    = "delete_workout"
 	GetActivities                    = "get_activities"
 	GetActivityDetails               = "get_activity_details"
+	GetActivityHistogram             = "get_activity_histogram"
 	GetActivityIntervals             = "get_activity_intervals"
 	GetActivityMessages              = "get_activity_messages"
 	GetActivitySplits                = "get_activity_splits"
@@ -33,6 +43,10 @@ const (
 	GetEvents                        = "get_events"
 	GetExtendedMetrics               = "get_extended_metrics"
 	GetFitness                       = "get_fitness"
+	GetFitnessProjection             = "get_fitness_projection"
+	GetGearList                      = "get_gear_list"
+	GetHRCurves                      = "get_hr_curves"
+	GetPaceCurves                    = "get_pace_curves"
 	GetPowerCurves                   = "get_power_curves"
 	GetTrainingPlan                  = "get_training_plan"
 	GetTrainingSummary               = "get_training_summary"
@@ -52,7 +66,16 @@ const (
 var athleteScopedToolNames = []string{
 	AddActivityMessage,
 	AddOrUpdateEvent,
+	AnalyzeCorrelation,
+	AnalyzeDistribution,
+	AnalyzeEffortsDelta,
+	AnalyzeTrend,
 	ApplyTrainingPlan,
+	ComputeActivitySegmentStats,
+	ComputeBaseline,
+	ComputeComplianceRate,
+	ComputeLoadBalance,
+	ComputeZoneTime,
 	CreateCustomItem,
 	CreateWorkout,
 	DeleteActivity,
@@ -64,6 +87,7 @@ var athleteScopedToolNames = []string{
 	DeleteWorkout,
 	GetActivities,
 	GetActivityDetails,
+	GetActivityHistogram,
 	GetActivityIntervals,
 	GetActivityMessages,
 	GetActivitySplits,
@@ -76,6 +100,10 @@ var athleteScopedToolNames = []string{
 	GetEvents,
 	GetExtendedMetrics,
 	GetFitness,
+	GetFitnessProjection,
+	GetGearList,
+	GetHRCurves,
+	GetPaceCurves,
 	GetPowerCurves,
 	GetTrainingPlan,
 	GetTrainingSummary,

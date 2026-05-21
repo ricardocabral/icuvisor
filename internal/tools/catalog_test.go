@@ -23,6 +23,7 @@ func TestCatalogDescriptors(t *testing.T) {
 	snakeCase := regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 	allowedGroups := map[string]struct{}{
 		"activities":      {},
+		"analyzers":       {},
 		"coach":           {},
 		"custom-items":    {},
 		"events":          {},
@@ -84,26 +85,78 @@ func TestCatalogMatchesRegistryAndPRDRegisteredTools(t *testing.T) {
 			t.Fatalf("PRD-documented registered tool %q missing from Catalog()", name)
 		}
 	}
+}
 
-	analyzerGhosts := []string{
-		"analyze_trend",
-		"analyze_distribution",
-		"analyze_correlation",
-		"analyze_efforts_delta",
-		"compute_zone_time",
-		"compute_load_balance",
-		"compute_baseline",
-		"compute_activity_segment_stats",
-		"compute_compliance_rate",
-		"get_fitness_projection",
+func TestCatalogIncludesAnalyzerFamilyPlacement(t *testing.T) {
+	t.Parallel()
+
+	descriptors := descriptorNameSet(Catalog())
+	cases := map[string]string{
+		computeActivitySegmentStatsName: "Use when the prompt asks for an average, maximum, normalized power, or zone-time statistic over one explicit activity segment as the analyzer-family raw-stream exception",
+		analyzeTrendName:                "Use when the prompt asks whether an analysis metric is trending up, trending down, or changing versus baseline",
+		analyzeDistributionName:         "Use when the prompt asks for an analysis metric's distribution, histogram, quantiles, or outliers",
+		analyzeCorrelationName:          "Use when the prompt asks whether two analysis metrics are correlated or lagged together",
+		analyzeEffortsDeltaName:         "Use when the prompt asks whether best-effort power, heart-rate, or pace buckets changed versus baseline",
+		getFitnessProjectionName:        "Use when the prompt asks to project CTL, ATL, or TSB forward",
+		computeZoneTimeName:             "Use when the prompt asks for time in power, heart-rate, or pace zones over a date window",
+		computeLoadBalanceName:          "Use when the prompt asks whether training distribution is polarized, pyramidal, threshold-heavy, or balanced across low/moderate/high intensity",
+		computeBaselineName:             "Use when the prompt asks whether a metric is high, low, suppressed, elevated, or unusual versus a baseline window",
+		computeComplianceRateName:       "Use when the prompt asks how well completed activities matched scheduled workouts, targets, sport, or event type",
 	}
-	for _, name := range analyzerGhosts {
-		if _, exists := registeredNames[name]; exists {
-			t.Fatalf("analyzer-family ghost %q unexpectedly registered", name)
+	for name, summaryNeedle := range cases {
+		descriptor, exists := descriptors[name]
+		if !exists {
+			t.Fatalf("Catalog() missing %q", name)
 		}
-		if _, exists := catalogNames[name]; exists {
-			t.Fatalf("analyzer-family ghost %q unexpectedly present in Catalog()", name)
+		wantGroup := "analyzers"
+		if name == getFitnessProjectionName {
+			wantGroup = "fitness"
 		}
+		wantTier := safety.ToolsetFull
+		if _, candidate := analyzerCorePromotionCandidateSet()[name]; candidate {
+			wantTier = safety.ToolsetCore
+		}
+		if descriptor.Group != wantGroup || descriptor.Tier != string(wantTier) {
+			t.Fatalf("descriptor = %#v, want %s/%s", descriptor, wantGroup, wantTier)
+		}
+		if !strings.Contains(descriptor.Summary, summaryNeedle) {
+			t.Fatalf("summary for %s = %q, want %q", name, descriptor.Summary, summaryNeedle)
+		}
+	}
+}
+
+func TestCatalogAnalyzerActivationHints(t *testing.T) {
+	t.Parallel()
+
+	descriptors := descriptorNameSet(Catalog())
+	for _, name := range analyzerFamilyCatalogNames() {
+		descriptor, exists := descriptors[name]
+		if !exists {
+			t.Fatalf("Catalog() missing analyzer-family tool %q", name)
+		}
+		if !strings.HasPrefix(descriptor.Summary, "Use when the prompt asks ") {
+			t.Fatalf("summary for %s = %q, want concrete prompt-shape activation hint", name, descriptor.Summary)
+		}
+		avoidance := strings.Contains(descriptor.Summary, "do not fetch get_") && (strings.Contains(descriptor.Summary, "reduce them in chat") || strings.Contains(descriptor.Summary, "bin them in chat") || strings.Contains(descriptor.Summary, "model the curve in chat"))
+		if !avoidance {
+			t.Fatalf("summary for %s = %q, want explicit get_* row/stream avoidance language", name, descriptor.Summary)
+		}
+	}
+}
+
+func analyzerFamilyCatalogNames() []string {
+	return []string{
+		analyzeTrendName,
+		analyzeDistributionName,
+		analyzeCorrelationName,
+		analyzeEffortsDeltaName,
+		computeZoneTimeName,
+		computeLoadBalanceName,
+		computeBaselineName,
+		computeComplianceRateName,
+		computeActivitySegmentStatsName,
+		getActivityHistogramName,
+		getFitnessProjectionName,
 	}
 }
 
@@ -114,7 +167,7 @@ func TestCatalogSummariesUseFirstDescriptionSentence(t *testing.T) {
 		name string
 		want string
 	}{
-		{name: getActivitiesName, want: "List activities for a date range with terse unit-disambiguated rows, Strava-unavailable detection, and opaque pagination."},
+		{name: getActivitiesName, want: "List activities for a date range with terse unit-disambiguated rows, calories_burned as active/exercise calories, Strava-unavailable detection, and opaque pagination."},
 		{name: updateWellnessName, want: "Update one athlete-local wellness row with sparse manual fields: subjective scales, measurements, injury text, and locked; legacy feel remains in the input schema for compatibility but rejects with field_not_writable: feel (not accepted by intervals.icu wellness write), device-owned sleepScore rejects with field_not_writable: sleepScore (device-managed), and _native rejects with field_not_writable: _native (bridge-managed)."},
 	}
 

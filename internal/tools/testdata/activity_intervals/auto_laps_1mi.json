@@ -1,0 +1,11 @@
+{
+  "id": "auto-laps-1mi",
+  "analyzed": true,
+  "icu_intervals": [
+    {"id": "mile-1", "name": "Mile 1", "start_distance": 0, "end_distance": 1609.344, "distance": 1609.344, "duration": 480},
+    {"id": "mile-2", "name": "Mile 2", "start_distance": 1609.344, "end_distance": 3220, "distance": 1610.656, "duration": 482},
+    {"id": "mile-3", "name": "Mile 3", "start_distance": 3220, "end_distance": 4828, "distance": 1608, "duration": 481},
+    {"id": "mile-4", "name": "Mile 4", "start_distance": 4828, "end_distance": 6438, "distance": 1610, "duration": 479},
+    {"id": "mile-5", "name": "Mile 5", "start_distance": 6438, "end_distance": 8047, "distance": 1609, "duration": 480}
+  ]
+}

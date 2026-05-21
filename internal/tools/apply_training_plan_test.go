@@ -99,7 +99,7 @@ func TestApplyTrainingPlanApplySkipExistingCreatesOnlyConflictFreeDays(t *testin
 
 	client := newApplyTrainingPlanTestClient(t)
 	client.events = decodeToolEvents(t, `{"id":"evt-conflict","category":"WORKOUT","start_date_local":"2026-06-02"}`)
-	client.created = decodeToolEvents(t, `{"id":"evt-created","category":"WORKOUT","type":"Ride","name":"Endurance","start_date_local":"2026-06-01","load_target":45,"time_target":3600}`)
+	client.created = decodeToolEvents(t, `{"id":"evt-created","category":"WORKOUT","type":"Ride","name":"Endurance","start_date_local":"2026-06-01","load_target":0,"distance":0,"time_target":3600,"description":null,"calendar_id":null}`)
 	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":false,"conflict_policy":"skip_existing"}`)})
@@ -117,6 +117,13 @@ func TestApplyTrainingPlanApplySkipExistingCreatesOnlyConflictFreeDays(t *testin
 		t.Fatalf("write call = %#v, want event params from add_or_update_event internals", call)
 	}
 	out := resultMap(t, result)
+	created := out["created_events"].([]any)[0].(map[string]any)
+	assertKeyAbsent(t, created, "description")
+	assertKeyAbsent(t, created, "calendar_id")
+	assertKeyAbsent(t, created, "full")
+	if created["load_target"] != float64(0) || created["distance_meters"] != float64(0) {
+		t.Fatalf("created event = %#v, want zero target load and distance preserved", created)
+	}
 	meta := out["_meta"].(map[string]any)
 	if meta["created_count"] != float64(1) {
 		t.Fatalf("meta = %#v, want created_count 1", meta)

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -119,11 +121,68 @@ func TestGetEventByIDMissReturnsStructuredUnavailable(t *testing.T) {
 	}
 }
 
+func TestGetEventByIDListedFixtureDetail404ReturnsInconsistencyWhenRescanMisses(t *testing.T) {
+	t.Parallel()
+
+	listedEvents := loadEventListFixture(t, "../intervals/testdata/events/inconsistent/synthetic_list.json")
+	if len(listedEvents) != 1 {
+		t.Fatalf("listed fixture events = %d, want one synthetic listed event", len(listedEvents))
+	}
+	listedID := normalizedEventID(listedEvents[0])
+	detailNote, err := os.ReadFile("../intervals/testdata/events/inconsistent/synthetic_detail_404.txt")
+	if err != nil {
+		t.Fatalf("read detail 404 note: %v", err)
+	}
+	if !strings.Contains(string(detailNote), listedID) || !strings.Contains(string(detailNote), "404 Not Found") {
+		t.Fatalf("detail note = %q, want listed ID and 404 marker", detailNote)
+	}
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		eventDetailErr:    fmt.Errorf("detail: %w", intervals.ErrNotFound),
+		events:            nil,
+	}
+	tool := newGetEventByIDToolWithClock(client, client, "test", "UTC", false, fixedNow("2026-05-01T12:00:00Z"))
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"event_id":"` + listedID + `","oldest":"2026-03-01","newest":"2026-03-31","resolve":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v, want structured upstream_inconsistency", err)
+	}
+	out := resultMap(t, result)
+	if _, ok := out["event"]; ok {
+		t.Fatalf("event present on fixture mismatch: %#v", out["event"])
+	}
+	unavailable := out["unavailable"].(map[string]any)
+	if unavailable["reason"] != "upstream_inconsistency" {
+		t.Fatalf("unavailable = %#v, want upstream_inconsistency", unavailable)
+	}
+	retried := unavailable["retried"].([]any)
+	if len(retried) != 2 || retried[0] != "detail" || retried[1] != "list_scan" {
+		t.Fatalf("retried = %#v, want detail/list_scan", retried)
+	}
+	call := client.listCalls[0]
+	if call.Oldest != "2026-03-01" || call.Newest != "2026-03-31" || call.Resolve == nil || !*call.Resolve {
+		t.Fatalf("fallback list call = %#v, want fixture date range with resolve=true", call)
+	}
+}
+
 func manyToolEvents(t *testing.T, count int) []intervals.Event {
 	t.Helper()
 	events := make([]intervals.Event, 0, count)
 	for i := range count {
 		events = append(events, decodeToolEvents(t, fmt.Sprintf(`{"id":"evt-%03d","category":"WORKOUT","start_date_local":"2026-01-01"}`, i))...)
+	}
+	return events
+}
+
+func loadEventListFixture(t *testing.T, path string) []intervals.Event {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read event fixture %s: %v", path, err)
+	}
+	var events []intervals.Event
+	if err := json.Unmarshal(data, &events); err != nil {
+		t.Fatalf("decode event fixture %s: %v", path, err)
 	}
 	return events
 }

@@ -1,0 +1,321 @@
+{
+  "_meta": {
+    "assumptions": {
+      "atl_time_constant_days": 7,
+      "ctl_time_constant_days": 42,
+      "horizon_days": 28,
+      "model": "deterministic_ctl_atl_tsb",
+      "modeled_load_without_plan": "starts from current CTL as daily load proxy and changes by weekly_ramp_pct each week",
+      "planned_daily_load_count": 0,
+      "planned_load_override_behavior": "planned_daily_loads replace modeled load on matching dates only",
+      "recovery_week_cadence": 4,
+      "recovery_week_load_pct": 0,
+      "weekly_ramp_pct": 5
+    },
+    "boundaries": [
+      "projection is deterministic scenario modeling, not a physiological prediction",
+      "requires a start_date with non-null current CTL, ATL, and TSB from get_fitness",
+      "does not read hidden upstream periodization or future calendar fields",
+      "horizon is capped at 180 days",
+      "only the deterministic_ctl_atl_tsb model is supported"
+    ],
+    "catalog_hash": "dev-catalog-hash",
+    "delete_mode": "safe",
+    "insufficient_sample": false,
+    "method": "deterministic_ctl_atl_tsb",
+    "missing_action": "skip",
+    "missing_days": 0,
+    "n": 1,
+    "server_version": "test",
+    "source_tools": [
+      "get_fitness"
+    ],
+    "toolset": "core",
+    "units": {
+      "distance": "km",
+      "pace": "min/km",
+      "speed": "km/h",
+      "system": "metric"
+    }
+  },
+  "result": {
+    "atl_change": -52.222,
+    "average_daily_load": 55.169,
+    "ctl_change": -9.537,
+    "end_atl": 25.778,
+    "end_ctl": 60.463,
+    "end_date": "2026-05-29",
+    "end_tsb": 34.685,
+    "max_ctl": 71.573,
+    "min_tsb": -8,
+    "start_atl": 78,
+    "start_ctl": 70,
+    "start_date": "2026-05-01",
+    "start_tsb": -8,
+    "total_load": 1544.725,
+    "tsb_change": 42.685
+  },
+  "series": [
+    {
+      "atl": 78,
+      "ctl": 70,
+      "date": "2026-05-01",
+      "day": 0,
+      "training_load": 0,
+      "training_load_source": "current_fitness",
+      "tsb": -8
+    },
+    {
+      "atl": 76.857,
+      "ctl": 70,
+      "date": "2026-05-02",
+      "day": 1,
+      "training_load": 70,
+      "training_load_source": "modeled_ramp",
+      "tsb": -6.857
+    },
+    {
+      "atl": 75.878,
+      "ctl": 70,
+      "date": "2026-05-03",
+      "day": 2,
+      "training_load": 70,
+      "training_load_source": "modeled_ramp",
+      "tsb": -5.878
+    },
+    {
+      "atl": 75.038,
+      "ctl": 70,
+      "date": "2026-05-04",
+      "day": 3,
+      "training_load": 70,
+      "training_load_source": "modeled_ramp",
+      "tsb": -5.038
+    },
+    {
+      "atl": 74.318,
+      "ctl": 70,
+      "date": "2026-05-05",
+      "day": 4,
+      "training_load": 70,
+      "training_load_source": "modeled_ramp",
+      "tsb": -4.318
+    },
+    {
+      "atl": 73.701,
+      "ctl": 70,
+      "date": "2026-05-06",
+      "day": 5,
+      "training_load": 70,
+      "training_load_source": "modeled_ramp",
+      "tsb": -3.701
+    },
+    {
+      "atl": 73.173,
+      "ctl": 70,
+      "date": "2026-05-07",
+      "day": 6,
+      "training_load": 70,
+      "training_load_source": "modeled_ramp",
+      "tsb": -3.173
+    },
+    {
+      "atl": 72.719,
+      "ctl": 70,
+      "date": "2026-05-08",
+      "day": 7,
+      "training_load": 70,
+      "training_load_source": "modeled_ramp",
+      "tsb": -2.719
+    },
+    {
+      "atl": 72.831,
+      "ctl": 70.083,
+      "date": "2026-05-09",
+      "day": 8,
+      "training_load": 73.5,
+      "training_load_source": "modeled_ramp",
+      "tsb": -2.748
+    },
+    {
+      "atl": 72.926,
+      "ctl": 70.165,
+      "date": "2026-05-10",
+      "day": 9,
+      "training_load": 73.5,
+      "training_load_source": "modeled_ramp",
+      "tsb": -2.762
+    },
+    {
+      "atl": 73.008,
+      "ctl": 70.244,
+      "date": "2026-05-11",
+      "day": 10,
+      "training_load": 73.5,
+      "training_load_source": "modeled_ramp",
+      "tsb": -2.764
+    },
+    {
+      "atl": 73.079,
+      "ctl": 70.322,
+      "date": "2026-05-12",
+      "day": 11,
+      "training_load": 73.5,
+      "training_load_source": "modeled_ramp",
+      "tsb": -2.757
+    },
+    {
+      "atl": 73.139,
+      "ctl": 70.397,
+      "date": "2026-05-13",
+      "day": 12,
+      "training_load": 73.5,
+      "training_load_source": "modeled_ramp",
+      "tsb": -2.742
+    },
+    {
+      "atl": 73.19,
+      "ctl": 70.471,
+      "date": "2026-05-14",
+      "day": 13,
+      "training_load": 73.5,
+      "training_load_source": "modeled_ramp",
+      "tsb": -2.719
+    },
+    {
+      "atl": 73.235,
+      "ctl": 70.543,
+      "date": "2026-05-15",
+      "day": 14,
+      "training_load": 73.5,
+      "training_load_source": "modeled_ramp",
+      "tsb": -2.691
+    },
+    {
+      "atl": 73.798,
+      "ctl": 70.701,
+      "date": "2026-05-16",
+      "day": 15,
+      "training_load": 77.175,
+      "training_load_source": "modeled_ramp",
+      "tsb": -3.096
+    },
+    {
+      "atl": 74.28,
+      "ctl": 70.855,
+      "date": "2026-05-17",
+      "day": 16,
+      "training_load": 77.175,
+      "training_load_source": "modeled_ramp",
+      "tsb": -3.425
+    },
+    {
+      "atl": 74.694,
+      "ctl": 71.006,
+      "date": "2026-05-18",
+      "day": 17,
+      "training_load": 77.175,
+      "training_load_source": "modeled_ramp",
+      "tsb": -3.688
+    },
+    {
+      "atl": 75.048,
+      "ctl": 71.153,
+      "date": "2026-05-19",
+      "day": 18,
+      "training_load": 77.175,
+      "training_load_source": "modeled_ramp",
+      "tsb": -3.895
+    },
+    {
+      "atl": 75.352,
+      "ctl": 71.296,
+      "date": "2026-05-20",
+      "day": 19,
+      "training_load": 77.175,
+      "training_load_source": "modeled_ramp",
+      "tsb": -4.056
+    },
+    {
+      "atl": 75.612,
+      "ctl": 71.436,
+      "date": "2026-05-21",
+      "day": 20,
+      "training_load": 77.175,
+      "training_load_source": "modeled_ramp",
+      "tsb": -4.176
+    },
+    {
+      "atl": 75.836,
+      "ctl": 71.573,
+      "date": "2026-05-22",
+      "day": 21,
+      "training_load": 77.175,
+      "training_load_source": "modeled_ramp",
+      "tsb": -4.263
+    },
+    {
+      "atl": 65.002,
+      "ctl": 69.869,
+      "date": "2026-05-23",
+      "day": 22,
+      "training_load": 0,
+      "training_load_source": "modeled_recovery_week",
+      "tsb": 4.867
+    },
+    {
+      "atl": 55.716,
+      "ctl": 68.205,
+      "date": "2026-05-24",
+      "day": 23,
+      "training_load": 0,
+      "training_load_source": "modeled_recovery_week",
+      "tsb": 12.489
+    },
+    {
+      "atl": 47.757,
+      "ctl": 66.581,
+      "date": "2026-05-25",
+      "day": 24,
+      "training_load": 0,
+      "training_load_source": "modeled_recovery_week",
+      "tsb": 18.825
+    },
+    {
+      "atl": 40.934,
+      "ctl": 64.996,
+      "date": "2026-05-26",
+      "day": 25,
+      "training_load": 0,
+      "training_load_source": "modeled_recovery_week",
+      "tsb": 24.062
+    },
+    {
+      "atl": 35.086,
+      "ctl": 63.448,
+      "date": "2026-05-27",
+      "day": 26,
+      "training_load": 0,
+      "training_load_source": "modeled_recovery_week",
+      "tsb": 28.362
+    },
+    {
+      "atl": 30.074,
+      "ctl": 61.938,
+      "date": "2026-05-28",
+      "day": 27,
+      "training_load": 0,
+      "training_load_source": "modeled_recovery_week",
+      "tsb": 31.864
+    },
+    {
+      "atl": 25.778,
+      "ctl": 60.463,
+      "date": "2026-05-29",
+      "day": 28,
+      "training_load": 0,
+      "training_load_source": "modeled_recovery_week",
+      "tsb": 34.685
+    }
+  ]
+}

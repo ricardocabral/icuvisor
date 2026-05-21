@@ -36,7 +36,7 @@ func detectActivityUnavailable(ctx context.Context, detailsClient ActivityDetail
 	if activityErr == nil && isStravaBlocked(activity) {
 		out.ActivityID = firstNonEmpty(activity.ID, activityID)
 		out.StravaImported = true
-		out.Unavailable = &unavailableReason{Reason: "strava_blocked", Workaround: stravaWorkaround}
+		out.Unavailable = &unavailableReason{Reason: "strava_blocked", Workaround: stravaBlockedWorkaround(activity.Raw)}
 		out.Full = activity.Raw
 		return out, nil
 	}

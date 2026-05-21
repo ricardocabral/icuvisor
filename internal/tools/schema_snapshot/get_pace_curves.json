@@ -1,0 +1,35 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "distance_meters": {
+      "description": "Pace curve distance buckets in meters. Defaults to 400,1000,1609,5000,10000m, or swim-style 50,100,200,400,1500m when sport contains Swim. Points include upstream elapsed_seconds plus either pace_seconds_per_km or pace_seconds_per_mile based on athlete units.",
+      "items": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw upstream curve arrays and activity maps.",
+      "type": "boolean"
+    },
+    "newest": {
+      "description": "Local end date YYYY-MM-DD.",
+      "type": "string"
+    },
+    "oldest": {
+      "description": "Local start date YYYY-MM-DD.",
+      "type": "string"
+    },
+    "sport": {
+      "description": "Optional intervals.icu sport/type filter for the upstream type parameter. Omit to let upstream aggregate its default pace curve set.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "oldest",
+    "newest"
+  ],
+  "type": "object"
+}

@@ -2,40 +2,9 @@ package intervals
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 )
-
-// Gear contains stable gear fields and preserves raw upstream fields.
-type Gear struct {
-	Raw map[string]any `json:"-"`
-
-	ID          string  `json:"-"`
-	Name        *string `json:"name"`
-	Type        *string `json:"type"`
-	Brand       *string `json:"brand"`
-	Model       *string `json:"model"`
-	Description *string `json:"description"`
-	Retired     *bool   `json:"retired"`
-}
-
-// UnmarshalJSON decodes Gear while retaining the original object for terse delete echoes.
-func (g *Gear) UnmarshalJSON(data []byte) error {
-	type gearAlias Gear
-	var raw map[string]any
-	if err := json.Unmarshal(data, &raw); err != nil {
-		return err
-	}
-	var decoded gearAlias
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		return err
-	}
-	*g = Gear(decoded)
-	g.Raw = raw
-	g.ID = rawIDString(raw["id"])
-	return nil
-}
 
 // DeleteEvent deletes one calendar event for the configured athlete.
 func (c *Client) DeleteEvent(ctx context.Context, eventID string) error {
@@ -86,19 +55,6 @@ func (c *Client) DeleteSportSettings(ctx context.Context, sportSettingsID string
 		return fmt.Errorf("deleting sport settings %s: %w", sportSettingsID, err)
 	}
 	return nil
-}
-
-// GetGear retrieves one gear item for the configured athlete.
-func (c *Client) GetGear(ctx context.Context, gearID string) (Gear, error) {
-	gearID = strings.TrimSpace(gearID)
-	if gearID == "" {
-		return Gear{}, fmt.Errorf("getting gear: gear ID is required")
-	}
-	var gear Gear
-	if err := c.doJSON(ctx, &gear, "athlete", c.athleteID, "gear", gearID); err != nil {
-		return Gear{}, fmt.Errorf("getting gear %s: %w", gearID, err)
-	}
-	return gear, nil
 }
 
 // DeleteGear deletes one gear item for the configured athlete.

@@ -58,6 +58,7 @@ type Activity struct {
 	AverageCadence     *float64 `json:"average_cadence"`
 	Calories           *int     `json:"calories"`
 	DeviceName         *string  `json:"device_name"`
+	GearID             string   `json:"-"`
 	StreamTypes        []string `json:"stream_types"`
 }
 
@@ -74,6 +75,7 @@ func (a *Activity) UnmarshalJSON(data []byte) error {
 	}
 	*a = Activity(decoded)
 	a.Raw = raw
+	a.GearID = rawIDString(raw["gear_id"])
 	return nil
 }
 

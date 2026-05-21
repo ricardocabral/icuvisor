@@ -42,11 +42,26 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v6
 
+      - name: Resolve Hugo modules
+        working-directory: web
+        run: |
+          hugo mod get github.com/imfing/hextra@v0.9.7
+          hugo mod tidy
+
       - name: Build
         working-directory: web
         env:
           HUGO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: hugo --minify --gc
+
+      - name: Build Pagefind index
+        working-directory: web
+        run: npx --yes pagefind --site public
+
+      - name: Smoke test site artifact
+        run: |
+          test -f web/public/index.html
+          test -d web/public/pagefind
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5

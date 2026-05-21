@@ -3,6 +3,9 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -11,14 +14,27 @@ import (
 
 type fakeActivityReadClient struct {
 	fakeProfileClient
-	activity    intervals.Activity
-	activityErr error
-	intervals   intervals.IntervalsDTO
-	intervalErr error
-	streams     []intervals.ActivityStream
-	streamErr   error
-	messages    []intervals.ActivityMessage
-	messageErr  error
+	activity     intervals.Activity
+	activityErr  error
+	intervals    intervals.IntervalsDTO
+	intervalErr  error
+	streams      []intervals.ActivityStream
+	streamErr    error
+	streamCalls  int
+	streamParams intervals.ActivityStreamsParams
+	messages     []intervals.ActivityMessage
+	messageErr   error
+	gear         []intervals.Gear
+	gearErr      error
+	gearCalls    int
+}
+
+func (f *fakeActivityReadClient) ListGear(ctx context.Context) ([]intervals.Gear, error) {
+	f.gearCalls++
+	if f.gearErr != nil {
+		return nil, f.gearErr
+	}
+	return f.gear, nil
 }
 
 func (f *fakeActivityReadClient) GetActivity(ctx context.Context, activityID string) (intervals.Activity, error) {
@@ -41,6 +57,31 @@ func TestActivityReadToolsRegistration(t *testing.T) {
 	findTool(t, registrar.tools, getActivityMessagesName)
 }
 
+func TestGetActivityDetailsCaloriesBurnedSemantics(t *testing.T) {
+	t.Parallel()
+
+	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","calories":450}`)
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
+	tool := newGetActivityDetailsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	payload := resultMap(t, result)
+	activityMap := payload["activity"].(map[string]any)
+	if activityMap["calories_burned"] != float64(450) {
+		t.Fatalf("activity = %#v, want calories_burned", activityMap)
+	}
+	if _, ok := activityMap["calories"]; ok {
+		t.Fatalf("activity = %#v, want no ambiguous calories key", activityMap)
+	}
+	semantics := payload["_meta"].(map[string]any)["field_semantics"].(map[string]any)
+	if !strings.Contains(semantics["calories_burned"].(string), "Active/exercise calories") {
+		t.Fatalf("field_semantics = %#v, want active calories label", semantics)
+	}
+}
+
 func TestGetActivityDetailsShapesTerseFullAndStravaUnavailable(t *testing.T) {
 	t.Parallel()
 
@@ -56,12 +97,71 @@ func TestGetActivityDetailsShapesTerseFullAndStravaUnavailable(t *testing.T) {
 	if activityMap["timezone"] != "America/Sao_Paulo" {
 		t.Fatalf("timezone = %v, want profile timezone", activityMap["timezone"])
 	}
-	if unavailable := activityMap["unavailable"].(map[string]any); unavailable["reason"] != "strava_tos" {
-		t.Fatalf("unavailable = %#v, want strava_tos", unavailable)
-	}
+	assertUnavailableReasonAndWorkaround(t, activityMap, "strava_tos", wantUnknownStravaWorkaround)
 	full := activityMap["full"].(map[string]any)
 	if value, ok := full["name"]; !ok || value != nil {
 		t.Fatalf("full name = %#v present %v, want preserved nil", value, ok)
+	}
+}
+
+func TestGetActivityDetailsMarksSyncChainStubsUnavailable(t *testing.T) {
+	t.Parallel()
+
+	wantWorkarounds := map[string]string{
+		"1234567890": wantWahooStravaWorkaround,
+		"2345678901": wantUnknownStravaWorkaround,
+		"3456789012": wantUnknownStravaWorkaround,
+	}
+	for _, activity := range loadActivityFixtureFile(t, stravaSyncChainFixture) {
+		t.Run(activity.ID, func(t *testing.T) {
+			t.Parallel()
+			client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
+			tool := newGetActivityDetailsTool(client, client, "test", "UTC", false)
+
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"` + activity.ID + `"}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			activityMap := resultMap(t, result)["activity"].(map[string]any)
+			if activityMap["strava_imported"] != true {
+				t.Fatalf("activity = %#v, want strava_imported marker", activityMap)
+			}
+			assertUnavailableReasonAndWorkaround(t, activityMap, "strava_tos", wantWorkarounds[activity.ID])
+		})
+	}
+}
+
+func TestGetActivityDetailsResolvesGear(t *testing.T) {
+	t.Parallel()
+
+	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`)
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity, gear: decodeToolGear(t, `{"id":"g-1","name":"Race Bike"}`)}
+	tool := newGetActivityDetailsToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	activityMap := resultMap(t, result)["activity"].(map[string]any)
+	if activityMap["gear_id"] != "g-1" || activityMap["gear_name"] != "Race Bike" || activityMap["gear_resolution"] != gearResolutionResolved {
+		t.Fatalf("activity = %#v, want resolved gear", activityMap)
+	}
+}
+
+func TestGetActivityDetailsMarksGearLookupUnavailable(t *testing.T) {
+	t.Parallel()
+
+	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`)
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity, gearErr: errors.New("gear upstream down")}
+	tool := newGetActivityDetailsToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	activityMap := resultMap(t, result)["activity"].(map[string]any)
+	if activityMap["gear_id"] != "g-1" || activityMap["gear_resolution"] != gearResolutionLookupUnavailable {
+		t.Fatalf("activity = %#v, want lookup_unavailable gear", activityMap)
 	}
 }
 
@@ -90,6 +190,39 @@ func TestGetActivityIntervalsCanonicalizesUnitsAndFullPayload(t *testing.T) {
 	second := rows[1].(map[string]any)
 	if second["unit"] != "UNKNOWN" || !strings.Contains(second["unknown_unit"].(string), "bananas") {
 		t.Fatalf("second row = %#v, want UNKNOWN with raw unit", second)
+	}
+}
+
+func TestGetActivityIntervalsSourceMetadata(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		fixture       string
+		wantSource    string
+		wantSuspected bool
+	}{
+		{name: "structured group", fixture: "structured.json", wantSource: "structured_workout"},
+		{name: "one kilometer device laps", fixture: "auto_laps_1km.json", wantSource: "device_laps", wantSuspected: true},
+		{name: "one mile device laps", fixture: "auto_laps_1mi.json", wantSource: "device_laps", wantSuspected: true},
+		{name: "unknown source", fixture: "unknown.json", wantSource: "unknown"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &fakeActivityReadClient{intervals: decodeActivityIntervalsFileFixture(t, tc.fixture)}
+			tool := newGetActivityIntervalsTool(client, client, "test", false)
+
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a123"}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			meta := resultMap(t, result)["_meta"].(map[string]any)
+			if meta["interval_source"] != tc.wantSource || meta["auto_lap_suspected"] != tc.wantSuspected {
+				t.Fatalf("_meta = %#v, want source %q suspected %v", meta, tc.wantSource, tc.wantSuspected)
+			}
+		})
 	}
 }
 
@@ -124,9 +257,7 @@ func TestGetActivityIntervalsUnavailableForHiddenSuccessPayload(t *testing.T) {
 		t.Fatalf("Handler() error = %v", err)
 	}
 	payload := resultMap(t, result)
-	if payload["strava_imported"] != true || payload["unavailable"].(map[string]any)["reason"] != "strava_blocked" {
-		t.Fatalf("payload = %#v, want Strava unavailable", payload)
-	}
+	assertUnavailableReasonAndWorkaround(t, payload, "strava_blocked", wantUnknownStravaWorkaround)
 }
 
 func TestGetActivityIntervalsFallbacksToDetailsForBlockedError(t *testing.T) {
@@ -140,9 +271,7 @@ func TestGetActivityIntervalsFallbacksToDetailsForBlockedError(t *testing.T) {
 		t.Fatalf("Handler() error = %v", err)
 	}
 	payload := resultMap(t, result)
-	if payload["strava_imported"] != true || payload["unavailable"].(map[string]any)["reason"] != "strava_blocked" {
-		t.Fatalf("payload = %#v, want Strava unavailable fallback", payload)
-	}
+	assertUnavailableReasonAndWorkaround(t, payload, "strava_blocked", wantUnknownStravaWorkaround)
 }
 
 type activityReadUnavailableCase struct {
@@ -174,6 +303,15 @@ func activityFixture(raw string) intervals.Activity {
 
 func assertUnavailableReason(t *testing.T, payload map[string]any, reason string) {
 	t.Helper()
+	if reason == "strava_blocked" {
+		assertUnavailableReasonAndWorkaround(t, payload, reason, wantUnknownStravaWorkaround)
+	} else {
+		assertUnavailableReasonAndWorkaround(t, payload, reason, "")
+	}
+}
+
+func assertUnavailableReasonAndWorkaround(t *testing.T, payload map[string]any, reason string, wantWorkaround string) {
+	t.Helper()
 	unavailable, ok := payload["unavailable"].(map[string]any)
 	if !ok {
 		t.Fatalf("payload = %#v, want unavailable object", payload)
@@ -181,10 +319,9 @@ func assertUnavailableReason(t *testing.T, payload map[string]any, reason string
 	if unavailable["reason"] != reason {
 		t.Fatalf("unavailable = %#v, want reason %q", unavailable, reason)
 	}
-	if reason == "strava_blocked" {
-		workaround, ok := unavailable["workaround"].(string)
-		if !ok || strings.TrimSpace(workaround) == "" {
-			t.Fatalf("unavailable = %#v, want non-empty workaround for Strava-blocked activity", unavailable)
+	if wantWorkaround != "" {
+		if unavailable["workaround"] != wantWorkaround {
+			t.Fatalf("unavailable = %#v, want workaround %q", unavailable, wantWorkaround)
 		}
 		if payload["strava_imported"] != true {
 			t.Fatalf("payload = %#v, want strava_imported true for Strava-blocked activity", payload)
@@ -220,4 +357,14 @@ func decodeIntervalsFixture(t *testing.T, raw string) intervals.IntervalsDTO {
 		t.Fatalf("decode intervals fixture: %v", err)
 	}
 	return dto
+}
+
+func decodeActivityIntervalsFileFixture(t *testing.T, name string) intervals.IntervalsDTO {
+	t.Helper()
+	path := filepath.Join("testdata", "activity_intervals", name)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read intervals fixture %s: %v", path, err)
+	}
+	return decodeIntervalsFixture(t, string(data))
 }

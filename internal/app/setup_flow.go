@@ -141,9 +141,6 @@ func setupReadAPIKey(ctx context.Context, prompter SetupPrompter) (string, error
 }
 
 func setupPersistConfigAndKey(ctx context.Context, path string, allowOverwrite bool, profile SetupProfile, timezoneName string, secret string, deps setupDependencies) error {
-	if err := deps.configWriter(ctx, path, config.Config{AthleteID: profile.AthleteID, Timezone: timezoneName, APIBaseURL: config.DefaultAPIBaseURL}, config.WriteOptions{AllowOverwrite: allowOverwrite}); err != nil {
-		return fmt.Errorf("write non-secret config: %w", err)
-	}
 	if err := deps.store.Set(ctx, credstore.IntervalsAPIKeyAccount, secret); err != nil {
 		return fmt.Errorf("store intervals.icu API key in OS keychain service %q account %q: %w", credstore.ServiceName, credstore.IntervalsAPIKeyAccount, err)
 	}
@@ -153,6 +150,9 @@ func setupPersistConfigAndKey(ctx context.Context, path string, allowOverwrite b
 	}
 	if storedSecret != secret {
 		return errors.New("stored API key verification failed")
+	}
+	if err := deps.configWriter(ctx, path, config.Config{CredentialRef: config.DefaultCredentialReference(), AthleteID: profile.AthleteID, Timezone: timezoneName, APIBaseURL: config.DefaultAPIBaseURL}, config.WriteOptions{AllowOverwrite: allowOverwrite}); err != nil {
+		return fmt.Errorf("write non-secret config: %w", err)
 	}
 	return nil
 }

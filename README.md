@@ -44,7 +44,7 @@ internal/coach/      Coach-mode roster and per-athlete tool ACLs
 internal/safety/     Delete-mode resolution and registration-time gating
 internal/response/   Terse/full response shaping and `_meta` plumbing
 internal/prompts/    Curated MCP prompt registry
-internal/resources/  MCP Resources (workout syntax, event categories, schemas, athlete profile)
+internal/resources/  MCP Resources (workout syntax, event categories, schemas, analysis formulas, athlete profile)
 internal/workoutdoc/ WorkoutDoc Parse/Serialize for the upstream description DSL
 docs/                PRD, roadmap, design notes
 ```

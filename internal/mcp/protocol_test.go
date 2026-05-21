@@ -438,6 +438,7 @@ func TestProtocolDefaultResourceRegistryIncludesAllResources(t *testing.T) {
 		resources.WorkoutSyntaxURI:     {name: "workout_syntax", mimeType: resources.WorkoutSyntaxMIMEType},
 		resources.EventCategoriesURI:   {name: "event_categories", mimeType: resources.EventCategoriesMIMEType},
 		resources.CustomItemSchemasURI: {name: "custom_item_schemas", mimeType: resources.CustomItemSchemasMIMEType},
+		resources.AnalysisFormulasURI:  {name: "analysis_formulas", mimeType: resources.AnalysisFormulasMIMEType},
 		resources.AthleteProfileURI:    {name: "athlete_profile", mimeType: resources.AthleteProfileMIMEType},
 	}
 	for _, resource := range list.Resources {
@@ -459,6 +460,7 @@ func TestProtocolDefaultResourceRegistryIncludesAllResources(t *testing.T) {
 		resources.WorkoutSyntaxURI:     {mimeType: resources.WorkoutSyntaxMIMEType, contains: "# Workout syntax"},
 		resources.EventCategoriesURI:   {mimeType: resources.EventCategoriesMIMEType, contains: "# Event categories"},
 		resources.CustomItemSchemasURI: {mimeType: resources.CustomItemSchemasMIMEType, contains: "# Custom item content schemas"},
+		resources.AnalysisFormulasURI:  {mimeType: resources.AnalysisFormulasMIMEType, contains: "# Analysis formulas"},
 		resources.AthleteProfileURI:    {mimeType: resources.AthleteProfileMIMEType, contains: "\"athlete_id\":\"i12345\""},
 	} {
 		read, err := session.ReadResource(ctx, &sdkmcp.ReadResourceParams{URI: uri})
@@ -1246,8 +1248,10 @@ func TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry(t *testing.T
 			t.Fatalf("core tools/list = %v, missing %s", got, wantName)
 		}
 	}
-	if slices.Contains(got, "get_power_curves") {
-		t.Fatalf("core tools/list = %v, should hide get_power_curves", got)
+	for _, hiddenName := range []string{"get_power_curves", "get_gear_list"} {
+		if slices.Contains(got, hiddenName) {
+			t.Fatalf("core tools/list = %v, should hide %s", got, hiddenName)
+		}
 	}
 
 	fullRegistry := tools.NewRegistryWithOptions(newNoNetworkProtocolClient(t), tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Toolset: safety.ToolsetFull})
@@ -1261,10 +1265,13 @@ func TestProtocolListAdvancedCapabilitiesVisibilityWithRealRegistry(t *testing.T
 	for _, tool := range fullResult.Tools {
 		fullNames = append(fullNames, tool.Name)
 	}
-	for _, wantName := range []string{"get_power_curves", "icuvisor_list_advanced_capabilities"} {
+	for _, wantName := range []string{"get_power_curves", "get_gear_list", "icuvisor_list_advanced_capabilities"} {
 		if !slices.Contains(fullNames, wantName) {
 			t.Fatalf("full tools/list = %v, missing %s", fullNames, wantName)
 		}
+	}
+	if slices.Contains(fullNames, "delete_gear") {
+		t.Fatalf("safe full tools/list = %v, should keep delete_gear hidden while get_gear_list remains visible", fullNames)
 	}
 }
 

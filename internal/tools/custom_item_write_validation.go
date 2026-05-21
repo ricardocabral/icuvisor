@@ -48,5 +48,5 @@ func shapeCustomItemWriteResponse(item intervals.CustomItem, operation string, e
 	if itemType == "" {
 		itemType = readShape.Meta.ItemType
 	}
-	return customItemWriteResponse{CustomItem: readShape.CustomItem, Meta: customItemWriteMeta{Operation: operation, SourceEndpoint: endpoint, ItemID: readShape.Meta.ItemID, ItemType: itemType, FieldsUpdated: fieldsUpdated, ContentPreserved: readShape.Meta.ContentPreserved, SchemaDocumentation: customItemSchemaDocumentation, SchemaSourceCount: schemaSourceCount, SchemaSource: schemaSource, DefaultPayloadScope: "full upstream custom item with content preserved verbatim; same custom_item read shape as get_custom_item_by_id"}}
+	return customItemWriteResponse{CustomItem: readShape.CustomItem, Meta: customItemWriteMeta{Operation: operation, SourceEndpoint: endpoint, ItemID: readShape.Meta.ItemID, ItemType: itemType, FieldsUpdated: fieldsUpdated, ContentPreserved: readShape.Meta.ContentPreserved, SchemaDocumentation: customItemSchemaDocumentation, SchemaSourceCount: schemaSourceCount, SchemaSource: schemaSource, DefaultPayloadScope: "custom item detail shape with null keys stripped by default; content preserved for non-null fields"}}
 }

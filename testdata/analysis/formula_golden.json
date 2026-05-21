@@ -1,0 +1,51 @@
+{
+  "drift": {
+    "formula_ref": "icuvisor://analysis-formulas#hr_drift",
+    "method_contains": "100 * (avg_hr_second_half - avg_hr_first_half) / avg_hr_first_half",
+    "value": 100,
+    "avg_hr_first_half": 100,
+    "avg_hr_second_half": 200,
+    "zero_denominator_insufficient": true
+  },
+  "decoupling": {
+    "formula_ref": "icuvisor://analysis-formulas#pw_hr_decoupling",
+    "method_contains": "100 * ((avg_power_first_half / avg_hr_first_half) - (avg_power_second_half / avg_hr_second_half)) / (avg_power_first_half / avg_hr_first_half)",
+    "value": 10,
+    "ratio_first": 2,
+    "ratio_second": 1.8,
+    "zero_denominator_insufficient": true
+  },
+  "polarization": {
+    "formula_ref": "icuvisor://analysis-formulas#polarization_index",
+    "input_zones": [700, 100, 100, 200],
+    "low_share": 0.727273,
+    "moderate_share": 0.090909,
+    "high_share": 0.181818,
+    "index": 3.20412,
+    "state": "ok",
+    "classification": "polarized",
+    "moderate_zero_state": "undefined_moderate_zero",
+    "high_zero_state": "undefined_high_zero"
+  },
+  "efficiency_factor": {
+    "formula_ref": "icuvisor://analysis-formulas#efficiency_factor",
+    "status": "resource_only",
+    "local_output": false
+  },
+  "variability_index": {
+    "formula_ref": "icuvisor://analysis-formulas#variability_index",
+    "status": "upstream_derived",
+    "source_field": "icu_variability_index",
+    "output_field": "variability_index",
+    "fixture_value": 1.07
+  },
+  "z_score": {
+    "formula_ref": "icuvisor://analysis-formulas#z_score",
+    "baseline": [50, 60],
+    "current": [70],
+    "baseline_mean": 55,
+    "sample_stddev": 7.071068,
+    "z_score": 2.12132,
+    "zero_variance_status": "insufficient_variance"
+  }
+}

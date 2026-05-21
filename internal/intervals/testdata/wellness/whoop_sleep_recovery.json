@@ -1,0 +1,12 @@
+{
+  "id": "2026-05-14",
+  "sleepScore": 87,
+  "readiness": 66,
+  "sleepSecs": 26000,
+  "provider": "WHOOP",
+  "bridge_fetched_at": "2026-05-14T00:00:00Z",
+  "whoop": {
+    "sleep_performance_percentage": 87,
+    "recovery_score": 66
+  }
+}

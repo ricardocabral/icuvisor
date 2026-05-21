@@ -1,0 +1,35 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "duration_seconds": {
+      "description": "Heart-rate curve duration buckets in seconds. Defaults to 5,15,30,60,300,1200,3600 seconds; point values are heart_rate_bpm.",
+      "items": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw upstream curve arrays and activity maps.",
+      "type": "boolean"
+    },
+    "newest": {
+      "description": "Local end date YYYY-MM-DD.",
+      "type": "string"
+    },
+    "oldest": {
+      "description": "Local start date YYYY-MM-DD.",
+      "type": "string"
+    },
+    "sport": {
+      "description": "Optional intervals.icu sport/type filter for the upstream type parameter. Omit to let upstream aggregate its default heart-rate curve set.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "oldest",
+    "newest"
+  ],
+  "type": "object"
+}

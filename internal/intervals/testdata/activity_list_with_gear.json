@@ -1,0 +1,17 @@
+[
+  {
+    "id": "a-bike",
+    "name": "Tempo Ride",
+    "type": "Ride",
+    "start_date_local": "2026-05-20T07:00:00",
+    "calories": 650,
+    "gear_id": 123
+  },
+  {
+    "id": "a-run",
+    "name": "Easy Run",
+    "type": "Run",
+    "start_date_local": "2026-05-21T07:00:00",
+    "gear_id": "shoe-7"
+  }
+]

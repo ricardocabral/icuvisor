@@ -71,7 +71,7 @@ func TestExtendedMetricsStravaUnavailableIncludesFullWhenRequested(t *testing.T)
 	t.Parallel()
 
 	client := newFakeExtendedMetricsClient(t)
-	client.activity = decodeExtendedMetricsActivity(t, `{"id":"strava-1","source":"Strava","_note":"Imported from Strava"}`)
+	client.activity = decodeExtendedMetricsActivity(t, `{"id":"strava-1","source":"Strava","_note":"Imported from Strava","external_id":"wahoo-synthetic-98765"}`)
 	tool := newGetExtendedMetricsTool(client, client, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"fallback","include_full":true}`)})
@@ -82,10 +82,7 @@ func TestExtendedMetricsStravaUnavailableIncludesFullWhenRequested(t *testing.T)
 	if got["activity_id"] != "strava-1" || got["strava_imported"] != true {
 		t.Fatalf("strava response = %#v", got)
 	}
-	unavailable := got["unavailable"].(map[string]any)
-	if unavailable["reason"] != "strava_blocked" || !strings.Contains(unavailable["workaround"].(string), "connect device directly") {
-		t.Fatalf("unavailable = %#v", unavailable)
-	}
+	assertUnavailableReasonAndWorkaround(t, got, "strava_blocked", wantWahooStravaWorkaround)
 	full := got["full"].(map[string]any)
 	activity := full["activity"].(map[string]any)
 	if activity["source"] != "Strava" {

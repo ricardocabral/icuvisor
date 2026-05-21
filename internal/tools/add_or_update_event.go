@@ -193,10 +193,28 @@ func addOrUpdateEventInputSchema() map[string]any {
 func addOrUpdateEventInputExamples() []map[string]any {
 	return []map[string]any{
 		{
+			"date":        "2026-06-12",
+			"category":    "NOTE",
+			"name":        "Race-week nutrition plan",
+			"description": "Breakfast: oatmeal and banana. Lunch: rice bowl. Carry 90 g carbs/hour for the long ride.",
+		},
+		{
 			"date":        "2026-06-15",
 			"category":    "NOTE",
-			"name":        "Travel day",
-			"description": "Keep the day flexible; optional mobility only.",
+			"name":        "Travel logistics",
+			"description": "Flight lands at 14:20. Pack pedals, charger, spare cleats, bottles, and race license.",
+		},
+		{
+			"date":        "2026-06-17",
+			"category":    "NOTE",
+			"name":        "Daily reminder",
+			"description": "Take resting HR after waking, do 10 minutes mobility, and log sleep quality before training.",
+		},
+		{
+			"date":        "2026-06-18",
+			"category":    "NOTE",
+			"name":        "Coach annotation",
+			"description": "Athlete reported tight calves; keep Thursday aerobic and reassess before intensity.",
 		},
 		{
 			"date":     "2026-06-16",

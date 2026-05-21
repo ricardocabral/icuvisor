@@ -33,7 +33,13 @@ Use the absolute path reported by `realpath` for MCP launch. icuvisor v0.1 start
 
 ## Provide credentials safely
 
-For real intervals.icu validation, make the required values available in the Codex process environment without printing them:
+For real intervals.icu validation, prefer the normal setup flow so the API key is stored in the OS keychain and the generated config contains only non-secret metadata:
+
+```bash
+./bin/icuvisor setup
+```
+
+If this validation must run in a deliberately headless shell where keychain access is unavailable, make the required values available in the Codex process environment without printing them:
 
 ```bash
 export INTERVALS_ICU_API_KEY="YOUR_INTERVALS_ICU_API_KEY"
@@ -42,7 +48,7 @@ export INTERVALS_ICU_ATHLETE_ID="i12345"
 export ICUVISOR_TIMEZONE="America/Sao_Paulo"
 ```
 
-A local untracked `.env` can also be used for maintainer smoke testing, but do not display or commit it. Before committing, verify only its git status, not its contents:
+A local untracked `.env` can also be used for maintainer smoke testing as the same fallback category, but do not display or commit it. Before committing, verify only its git status, not its contents:
 
 ```bash
 git status --short .env
@@ -52,7 +58,7 @@ git status --short .env
 
 Codex supports MCP servers under `mcp_servers.<name>` in TOML config. For validation, prefer per-command overrides instead of `codex mcp add`, so no MCP server entry or secret is written to `~/.codex/config.toml`.
 
-Use `env_vars` to pass variable names through from the Codex process environment. This avoids placing credential values in command-line arguments or config files.
+Use `env_vars` to pass non-secret variable names through from the Codex process environment. After `icuvisor setup`, pass only values such as `INTERVALS_ICU_ATHLETE_ID` and `ICUVISOR_TIMEZONE`; the API key is read from the OS keychain by the local icuvisor process. Include `INTERVALS_ICU_API_KEY` in `env_vars` only for the deliberate headless fallback described above, and never paste the key value into Codex config or prompts.
 
 ```bash
 CODEX=/Users/YOU/Library/pnpm/codex
@@ -68,7 +74,7 @@ REPO=/absolute/path/to/icuvisor
   -c 'sandbox_mode="danger-full-access"' \
   -c "mcp_servers.icuvisor.command=\"$ICUVISOR\"" \
   -c "mcp_servers.icuvisor.cwd=\"$REPO\"" \
-  -c 'mcp_servers.icuvisor.env_vars=["INTERVALS_ICU_ATHLETE_ID","INTERVALS_ICU_API_KEY","ICUVISOR_TIMEZONE"]' \
+  -c 'mcp_servers.icuvisor.env_vars=["INTERVALS_ICU_ATHLETE_ID","ICUVISOR_TIMEZONE"]' \
   'List the icuvisor MCP tools by name only. Do not print environment variables.'
 ```
 
@@ -94,7 +100,7 @@ Ask Codex to list the icuvisor tools:
   -c 'sandbox_mode="danger-full-access"' \
   -c "mcp_servers.icuvisor.command=\"$ICUVISOR\"" \
   -c "mcp_servers.icuvisor.cwd=\"$REPO\"" \
-  -c 'mcp_servers.icuvisor.env_vars=["INTERVALS_ICU_ATHLETE_ID","INTERVALS_ICU_API_KEY","ICUVISOR_TIMEZONE"]' \
+  -c 'mcp_servers.icuvisor.env_vars=["INTERVALS_ICU_ATHLETE_ID","ICUVISOR_TIMEZONE"]' \
   'List the MCP tools available from the icuvisor MCP server by name only. Do not run shell commands.'
 ```
 
@@ -108,7 +114,7 @@ Start a fresh Codex session after rebuilding icuvisor or changing tool schemas. 
 
 ## Exercise `get_athlete_profile`
 
-With real credentials in the process environment, run:
+After running `icuvisor setup` and keeping the API key in the OS keychain, run:
 
 ```bash
 "$CODEX" exec \
@@ -120,7 +126,7 @@ With real credentials in the process environment, run:
   -c 'sandbox_mode="danger-full-access"' \
   -c "mcp_servers.icuvisor.command=\"$ICUVISOR\"" \
   -c "mcp_servers.icuvisor.cwd=\"$REPO\"" \
-  -c 'mcp_servers.icuvisor.env_vars=["INTERVALS_ICU_ATHLETE_ID","INTERVALS_ICU_API_KEY","ICUVISOR_TIMEZONE"]' \
+  -c 'mcp_servers.icuvisor.env_vars=["INTERVALS_ICU_ATHLETE_ID","ICUVISOR_TIMEZONE"]' \
   'Use icuvisor to fetch my intervals.icu athlete profile. Summarize only non-sensitive fields and the response shape; do not include raw athlete IDs, API keys, or detailed training values.'
 ```
 
@@ -163,7 +169,7 @@ Use config override `-c 'approval_policy="never"'` for non-interactive `codex ex
 
 ### `missing intervals.icu API key`
 
-Set `INTERVALS_ICU_API_KEY` in the Codex process environment and include `INTERVALS_ICU_API_KEY` in `mcp_servers.icuvisor.env_vars`. Do not paste the key into the prompt.
+Run `./bin/icuvisor setup` to store the key in the OS keychain. For deliberate headless fallback only, set `INTERVALS_ICU_API_KEY` in the Codex process environment and include `INTERVALS_ICU_API_KEY` in `mcp_servers.icuvisor.env_vars`. Do not paste the key into the prompt.
 
 ### `missing athlete ID` or `invalid athlete ID`
 

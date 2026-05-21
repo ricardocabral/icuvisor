@@ -80,6 +80,34 @@ func firstCurve(set intervals.DataCurveSet) intervals.DataCurve {
 	return set.List[0]
 }
 
+type curveBucketValue struct {
+	Bucket     int
+	Value      *float64
+	ActivityID string
+}
+
+func durationCurveBucketValues(curve intervals.DataCurve, buckets []int) ([]curveBucketValue, []int) {
+	return curveBucketValues(curve.Secs, curve, buckets)
+}
+
+func distanceCurveBucketValues(curve intervals.DataCurve, buckets []int) ([]curveBucketValue, []int) {
+	return curveBucketValues(curve.Distance, curve, buckets)
+}
+
+func curveBucketValues(xs []float64, curve intervals.DataCurve, buckets []int) ([]curveBucketValue, []int) {
+	points := []curveBucketValue{}
+	missing := []int{}
+	for _, bucket := range buckets {
+		value, idx, ok := valueAtBucket(xs, curve.Values, bucket)
+		if !ok {
+			missing = append(missing, bucket)
+			continue
+		}
+		points = append(points, curveBucketValue{Bucket: bucket, Value: roundPtr(value), ActivityID: activityIDAt(curve, idx)})
+	}
+	return points, missing
+}
+
 func valueAtBucket(xs []float64, values []float64, bucket int) (float64, int, bool) {
 	for i, x := range xs {
 		if int(math.Round(x)) == bucket && i < len(values) {

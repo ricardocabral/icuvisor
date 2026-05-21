@@ -1,28 +1,62 @@
 ---
 title: "Connect Claude Desktop"
-description: "Configure Claude Desktop to start icuvisor over MCP stdio on macOS."
+description: "Install icuvisor as a Claude Desktop Extension or configure the MCP stdio server manually."
 ---
 
-Use this guide after installing `icuvisor.app` from the macOS DMG and storing your intervals.icu API key with `icuvisor setup`.
+The recommended Claude Desktop setup is the signed icuvisor Desktop Extension (`.mcpb`). It installs the local MCP server without editing `claude_desktop_config.json` and lets Claude Desktop store the intervals.icu API key as a sensitive extension setting.
 
-## Before you start
+The manual JSON/keychain setup remains available as a fallback for users who cannot install the extension.
+
+## Option 1: Install the Desktop Extension
 
 You need:
 
-- Claude Desktop installed on macOS.
-- `icuvisor.app` installed in `/Applications`.
+- Claude Desktop on macOS.
+- The current macOS universal `icuvisor_<version>_darwin_universal.mcpb` artifact from the GitHub release.
+- Your intervals.icu athlete ID, written as `i12345` or `12345`.
+- Your intervals.icu API key.
+
+Install:
+
+1. Download `icuvisor_<version>_darwin_universal.mcpb` from the release assets.
+2. Open the `.mcpb` file with Claude Desktop, or drag it into Claude Desktop's Extensions UI.
+3. When Claude Desktop asks for extension configuration, enter:
+   - `api_key`: your intervals.icu API key. The manifest marks this field as sensitive, so Claude Desktop stores it in its secure extension configuration instead of writing it to `claude_desktop_config.json`.
+   - `athlete_id`: your intervals.icu athlete ID, such as `i12345`.
+   - `timezone`: an IANA timezone such as `UTC`, `America/Sao_Paulo`, or `Europe/London`.
+   - `toolset`: keep `core` unless you intentionally want the larger `full` catalog.
+4. Enable the extension and restart Claude Desktop if it asks you to.
+5. Start a new chat so Claude refreshes the MCP tool catalog.
+
+Do not paste the API key into chat messages or into manual JSON config. In the extension path, Claude Desktop passes it to icuvisor as `INTERVALS_ICU_API_KEY` only when launching the local stdio server.
+
+<details>
+<summary>Extension smoke checklist</summary>
+
+1. Open Claude Desktop after installing or enabling the extension.
+2. Start a new chat.
+3. Ask: `What's my FTP?`
+4. Expected result: Claude calls icuvisor, uses [`get_athlete_profile`]({{< relref "../reference/tools#get_athlete_profile" >}}), and answers with your configured FTP/threshold data from intervals.icu.
+
+If the extension installs but tools do not appear, open Claude Desktop settings, confirm the icuvisor extension is enabled, and verify the athlete ID/timezone fields.
+
+</details>
+
+## Option 2: Manual JSON and keychain fallback
+
+Use this path if you installed `icuvisor.app` from the macOS DMG, use a development binary, or cannot install `.mcpb` files in your Claude Desktop environment.
+
+You need:
+
+- `icuvisor.app` installed in `/Applications`, or another absolute path to an `icuvisor` binary.
 - Your intervals.icu athlete ID, written as `i12345` or `12345`.
 - Your API key stored in the macOS Keychain under service `icuvisor` and account `intervals-icu-api-key`.
 
-Do not put your intervals.icu API key in `claude_desktop_config.json`. The config should contain only non-secret values such as athlete ID, timezone, and transport.
-
-If you have not run setup yet:
+Store the API key first:
 
 ```bash
 /Applications/icuvisor.app/Contents/MacOS/icuvisor setup
 ```
-
-## Edit Claude Desktop config
 
 Claude Desktop reads MCP server definitions from:
 
@@ -49,14 +83,15 @@ Create the file if it does not exist. Add or merge this `mcpServers.icuvisor` bl
 
 Notes:
 
+- Do not put your intervals.icu API key in `claude_desktop_config.json`; the manual path reads it from Keychain.
 - `ICUVISOR_TRANSPORT=stdio` is optional because stdio is the default, but keeping it explicit makes the config easier to audit.
 - Use a real IANA timezone such as `UTC`, `America/Sao_Paulo`, or `Europe/London`.
-- If you installed the app somewhere else, update `command` to the absolute path to `icuvisor.app/Contents/MacOS/icuvisor`.
+- If you installed the app somewhere else, update `command` to the absolute path to `icuvisor.app/Contents/MacOS/icuvisor` or your binary.
 
 After editing the file, fully quit and reopen Claude Desktop.
 
 <details>
-<summary>Smoke checklist</summary>
+<summary>Manual fallback smoke checklist</summary>
 
 1. Open Claude Desktop after restarting it.
 2. Start a new chat so Claude refreshes the MCP tool catalog.
@@ -78,6 +113,6 @@ security find-generic-password -s icuvisor -a intervals-icu-api-key >/dev/null
 
 </details>
 
-## Updating the app
+## Updating
 
-Download the newer signed DMG from the GitHub release, replace `/Applications/icuvisor.app`, fully quit Claude Desktop, and start a new chat. Do not move the API key into the JSON during upgrades; it remains in Keychain.
+For the extension path, download and open the newer `.mcpb` release asset, then restart Claude Desktop and start a new chat. For the manual app path, download the newer signed DMG, replace `/Applications/icuvisor.app`, fully quit Claude Desktop, and start a new chat. In both paths, keep the API key out of manual JSON config.

@@ -58,6 +58,10 @@ func TestGetWellnessDataFixtures(t *testing.T) {
 				if prov["source"] != "polar" || prov["native_scale"] != "1-100 Polar sleep_score" {
 					t.Fatalf("sleepScore provenance = %+v", prov)
 				}
+				scales := meta["scales"].(map[string]any)
+				if scales["sleepScore"] != "0-100 (device-imported nightly score)" {
+					t.Fatalf("canonical sleepScore scale = %+v", scales["sleepScore"])
+				}
 			},
 		},
 		{
@@ -69,8 +73,26 @@ func TestGetWellnessDataFixtures(t *testing.T) {
 					t.Fatalf("garmin native = %+v", native)
 				}
 				prov := provenanceFor(t, row, "readiness")
-				if prov["source"] != "garmin" {
+				if prov["source"] != "garmin" || prov["native_scale"] != "0-100 Garmin Body Battery" {
 					t.Fatalf("readiness provenance = %+v", prov)
+				}
+			},
+		},
+		{
+			name: "whoop sleep performance and recovery native fields",
+			file: "whoop_sleep_recovery.json",
+			assert: func(t *testing.T, row map[string]any) {
+				native := nestedMap(t, row, "_native", "whoop")
+				if native["sleep_performance_percentage"] != float64(87) || native["recovery_score"] != float64(66) {
+					t.Fatalf("whoop native = %+v", native)
+				}
+				sleep := provenanceFor(t, row, "sleepScore")
+				if sleep["source"] != "whoop" || sleep["native_scale"] != "0-100 WHOOP sleep performance percentage" {
+					t.Fatalf("sleepScore provenance = %+v", sleep)
+				}
+				readiness := provenanceFor(t, row, "readiness")
+				if readiness["source"] != "whoop" || readiness["native_scale"] != "0-100 WHOOP recovery score" {
+					t.Fatalf("readiness provenance = %+v", readiness)
 				}
 			},
 		},
@@ -89,12 +111,28 @@ func TestGetWellnessDataFixtures(t *testing.T) {
 			},
 		},
 		{
-			name: "manual only subjective scales without provenance",
+			name: "manual only subjective scales and nutrition fields without provenance",
 			file: "manual_only.json",
 			assert: func(t *testing.T, row map[string]any) {
+				for key, want := range map[string]float64{"calories_intake": 2400, "carbs_g": 320.5, "protein_g": 132.25, "fat_g": 78.75} {
+					if row[key] != want {
+						t.Fatalf("%s = %v, want %v in row %+v", key, row[key], want, row)
+					}
+				}
+				for _, key := range []string{"kcalConsumed", "carbohydrates", "protein", "fatTotal", "calories", "calories_total"} {
+					if _, ok := row[key]; ok {
+						t.Fatalf("manual row exposed legacy/ambiguous %s: %+v", key, row)
+					}
+				}
 				meta := row["_meta"].(map[string]any)
 				if _, ok := meta["provenance"]; ok {
 					t.Fatalf("manual-only row has provenance: %+v", meta)
+				}
+				semantics := meta["field_semantics"].(map[string]any)
+				for _, key := range []string{"calories_intake", "carbs_g", "protein_g", "fat_g"} {
+					if semantics[key] == "" {
+						t.Fatalf("field_semantics missing %s: %+v", key, semantics)
+					}
 				}
 				scales := meta["scales"].(map[string]any)
 				for _, field := range []string{"feel", "sleepQuality", "fatigue", "soreness", "stress", "mood", "motivation"} {
@@ -116,7 +154,7 @@ func TestGetWellnessDataFixtures(t *testing.T) {
 					t.Fatalf("missing_fields = %+v", meta["missing_fields"])
 				}
 				prov := provenanceFor(t, row, "sleepScore")
-				if prov["source"] != "unknown" || prov["native_scale"] != "0-100 device nightly score" {
+				if prov["source"] != "unknown" || prov["native_scale"] != "unknown" {
 					t.Fatalf("unknown source provenance = %+v", prov)
 				}
 			},
@@ -153,6 +191,33 @@ func TestGetWellnessDataNullStrippingAndIncludeFull(t *testing.T) {
 	}
 	if _, ok := fullRow["full"].(map[string]any); !ok {
 		t.Fatalf("include_full missing raw full payload: %+v", fullRow)
+	}
+
+	absentNutritionRow := shapedFixtureRow(t, "custom_fields.json", false)
+	for _, key := range []string{"calories_intake", "carbs_g", "protein_g", "fat_g", "kcalConsumed", "carbohydrates", "protein", "fatTotal"} {
+		if _, ok := absentNutritionRow[key]; ok {
+			t.Fatalf("absent nutrition row emitted %s: %+v", key, absentNutritionRow)
+		}
+	}
+}
+
+func TestGetWellnessDataIncludeFullRetainsRawNutritionNames(t *testing.T) {
+	t.Parallel()
+
+	row := shapedFixtureRow(t, "manual_only.json", true)
+	if row["calories_intake"] != float64(2400) || row["carbs_g"] != 320.5 || row["protein_g"] != 132.25 || row["fat_g"] != 78.75 {
+		t.Fatalf("include_full row nutrition = %+v, want disambiguated keys", row)
+	}
+	for _, key := range []string{"kcalConsumed", "carbohydrates", "protein", "fatTotal"} {
+		if _, ok := row[key]; ok {
+			t.Fatalf("include_full row leaked top-level legacy %s: %+v", key, row)
+		}
+	}
+	full := row["full"].(map[string]any)
+	for key, want := range map[string]float64{"kcalConsumed": 2400, "carbohydrates": 320.5, "protein": 132.25, "fatTotal": 78.75} {
+		if full[key] != want {
+			t.Fatalf("full[%s] = %v, want %v in raw nutrition payload", key, full[key], want)
+		}
 	}
 }
 

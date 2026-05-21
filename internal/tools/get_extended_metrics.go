@@ -185,7 +185,7 @@ func optionalPowerVsHR(ctx context.Context, client ExtendedMetricsClient, activi
 }
 
 func stravaUnavailableExtendedMetricsResponse(activityID string, activity intervals.Activity, includeFull bool, version string) extendedMetricsResponse {
-	out := extendedMetricsResponse{ActivityID: firstNonEmpty(activity.ID, activityID), StravaImported: true, Unavailable: &unavailableReason{Reason: "strava_blocked", Workaround: stravaWorkaround}, Meta: extendedMetricsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, ExtendedMetricUnits: extendedMetricUnits(), DroppedFields: droppedExtendedMetricFields}}
+	out := extendedMetricsResponse{ActivityID: firstNonEmpty(activity.ID, activityID), StravaImported: true, Unavailable: &unavailableReason{Reason: "strava_blocked", Workaround: stravaBlockedWorkaround(activity.Raw)}, Meta: extendedMetricsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, ExtendedMetricUnits: extendedMetricUnits(), DroppedFields: droppedExtendedMetricFields}}
 	if includeFull {
 		out.Full = map[string]any{"activity": activity.Raw}
 	}

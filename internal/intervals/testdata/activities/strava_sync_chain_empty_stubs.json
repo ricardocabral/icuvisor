@@ -1,0 +1,33 @@
+[
+  {
+    "id": "1234567890",
+    "external_id": "wahoo-synthetic-1234567890",
+    "icu_athlete_id": "i00000",
+    "start_date_local": "2026-05-01T06:30:00",
+    "name": null,
+    "type": null,
+    "distance": null,
+    "moving_time": null
+  },
+  {
+    "id": "2345678901",
+    "external_id": "mywhoosh-synthetic-2345678901",
+    "athlete_id": "i00000",
+    "start_date_local": "2026-05-02T07:15:00",
+    "name": null,
+    "sub_type": null,
+    "icu_distance": null,
+    "elapsed_time": null
+  },
+  {
+    "id": "3456789012",
+    "external_id": "trainerroad-synthetic-3456789012",
+    "icu_athlete_id": "i00000",
+    "start_date": "2026-05-03T10:00:00Z",
+    "start_date_local": "2026-05-03T07:00:00",
+    "source": null,
+    "_note": null,
+    "name": null,
+    "type": null
+  }
+]

@@ -71,7 +71,7 @@ func updateCustomItemHandler(client CustomItemUpdaterClient, readClient CustomIt
 			return Result{}, NewUserError(updateCustomItemMessage, err)
 		}
 		payload := shapeCustomItemWriteResponse(item, "update", customItemByIDEndpoint, args.ItemID, itemType, updateCustomItemFieldsUpdated(args), schemaSourceCount, schemaSource)
-		return encodeShaped(payload, true, nil, version, debugMetadata, updateCustomItemName, unitSystem, shapeCfg)
+		return encodeShaped(payload, false, nil, version, debugMetadata, updateCustomItemName, unitSystem, shapeCfg)
 	}
 }
 
@@ -229,5 +229,5 @@ func updateCustomItemInputExamples() []map[string]any {
 }
 
 func updateCustomItemOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Update confirmation containing the same full custom_item read shape as get_custom_item_by_id, with content preserved verbatim, fields_updated, and schema-validation metadata."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Update confirmation containing a custom_item detail shape with null keys stripped by default, non-null content fields preserved, fields_updated, and schema-validation metadata."}
 }

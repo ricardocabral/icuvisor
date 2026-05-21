@@ -7,12 +7,17 @@ Most users can run [`icuvisor setup`]({{< relref "cli#commands" >}}) and let icu
 
 When neither flag is set, icuvisor also loads the platform default config path if the file exists: `$XDG_CONFIG_HOME/icuvisor/config.json` on Linux, `~/Library/Application Support/icuvisor/config.json` on macOS, and `%AppData%\icuvisor\config.json` on Windows. This is the same path `icuvisor setup` writes by default.
 
-Keep API keys in the OS keychain whenever possible. The legacy `api_key` JSON field still exists for compatibility, but plaintext config keys emit a warning and should not be committed, synced, or backed up.
+Keep API keys in the OS keychain whenever possible. `icuvisor setup` writes a non-secret `credential_ref` that documents the keychain service/account it uses; the actual key remains outside JSON. The legacy `api_key` JSON field still exists for compatibility, but plaintext config keys emit a warning and should not be committed, synced, or backed up.
 
 ## Example
 
 ```json
 {
+  "credential_ref": {
+    "type": "keychain",
+    "service": "icuvisor",
+    "account": "intervals-icu-api-key"
+  },
   "athlete_id": "i12345",
   "timezone": "America/Sao_Paulo",
   "api_base_url": "https://intervals.icu/api/v1",
@@ -26,8 +31,9 @@ Keep API keys in the OS keychain whenever possible. The legacy `api_key` JSON fi
 
 | Field          | Type   | Default                                                        | Description                                                                                                                                                                                                        |
 | -------------- | ------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `athlete_id`   | string | required unless coach mode supplies `coach.default_athlete_id` | intervals.icu athlete ID. Both `12345` and `i12345` are accepted; icuvisor normalizes to `i12345`.                                                                                                                 |
-| `timezone`     | string | `UTC`                                                          | IANA timezone used for athlete-local dates and presentation, for example `UTC`, `Europe/London`, or `America/Sao_Paulo`. Invalid names fail config loading.                                                        |
+| `credential_ref` | object | omitted for hand-written configs                               | Non-secret metadata written by `icuvisor setup`: `{ "type": "keychain", "service": "icuvisor", "account": "intervals-icu-api-key" }`. It documents the OS keychain location; it is not a secret and does not override credential precedence. |
+| `athlete_id`     | string | required unless coach mode supplies `coach.default_athlete_id` | intervals.icu athlete ID. Both `12345` and `i12345` are accepted; icuvisor normalizes to `i12345`.                                                                                                                 |
+| `timezone`       | string | `UTC`                                                          | IANA timezone used for athlete-local dates and presentation, for example `UTC`, `Europe/London`, or `America/Sao_Paulo`. Invalid names fail config loading.                                                        |
 | `api_base_url` | string | `https://intervals.icu/api/v1`                                 | Absolute `http` or `https` intervals.icu API base URL. Most users should not change this. Trailing slashes are trimmed.                                                                                            |
 | `http_timeout` | string | `30s`                                                          | HTTP client timeout as a positive Go duration, such as `10s`, `30s`, or `1m`.                                                                                                                                      |
 | `transport`    | string | `stdio`                                                        | MCP transport. Accepted values: `stdio` or `http`.                                                                                                                                                                 |
@@ -81,5 +87,5 @@ Process environment values override JSON fields for the same setting, and CLI fl
 For normal user setup:
 
 1. Store the API key in the OS keychain with `icuvisor setup`.
-2. Put non-secret values in the config file or MCP client environment.
+2. Put non-secret values in the config file or MCP client environment. The generated `credential_ref` can stay in JSON because it contains only keychain metadata.
 3. Point the MCP client at the config with `--config /path/to/config.json` or `ICUVISOR_CONFIG=/path/to/config.json` when you want JSON config loading.

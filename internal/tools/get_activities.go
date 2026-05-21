@@ -11,7 +11,7 @@ import (
 
 const (
 	getActivitiesName                    = "get_activities"
-	getActivitiesDescription             = "List activities for a date range with terse unit-disambiguated rows, Strava-unavailable detection, and opaque pagination. Use this before details, intervals, streams, splits, or messages when a prompt asks about recent training."
+	getActivitiesDescription             = "List activities for a date range with terse unit-disambiguated rows, calories_burned as active/exercise calories, Strava-unavailable detection, and opaque pagination. Use this before details, intervals, streams, splits, or messages when a prompt asks about recent training."
 	invalidGetActivitiesArgumentsMessage = "invalid get_activities arguments; provide oldest/newest dates or a valid next_page_token"
 	fetchActivitiesMessage               = "could not fetch activities; check intervals.icu credentials, athlete ID, and date range"
 	activitiesPaginationBoundaryMessage  = "activity pagination hit too many same-timestamp filtered rows; narrow the date range or set include_unnamed true"
@@ -19,7 +19,7 @@ const (
 	maxActivitiesPageSize                = 200
 	maxActivityPageFetches               = 5
 	maxActivityFetchLimit                = 201
-	stravaWorkaround                     = "connect device directly to intervals.icu (Garmin, Wahoo, Coros, Suunto, Polar)"
+	stravaUnknownProviderWorkaround      = "Open the intervals.icu Connections page for the activity's original device provider and click Download old data so historical activities are re-imported directly from that provider instead of through Strava's restricted API."
 )
 
 var terseActivityFields = []string{
@@ -27,7 +27,7 @@ var terseActivityFields = []string{
 	"source", "_note", "icu_athlete_id", "external_id", "stream_types",
 	"distance", "icu_distance", "moving_time", "elapsed_time", "average_speed", "max_speed",
 	"total_elevation_gain", "total_elevation_loss", "icu_training_load", "average_heartrate",
-	"max_heartrate", "average_cadence", "calories", "device_name",
+	"max_heartrate", "average_cadence", "calories", "device_name", "gear_id",
 }
 
 // ActivitiesClient lists intervals.icu activities for tools.
@@ -75,8 +75,11 @@ type getActivitiesRow struct {
 	AverageHeartRateBPM int                `json:"average_heart_rate_bpm,omitempty"`
 	MaxHeartRateBPM     int                `json:"max_heart_rate_bpm,omitempty"`
 	AverageCadenceRPM   *float64           `json:"average_cadence_rpm,omitempty"`
-	CaloriesBurned      int                `json:"calories_burned,omitempty"`
+	CaloriesBurned      *int               `json:"calories_burned,omitempty"`
 	DeviceName          string             `json:"device_name,omitempty"`
+	GearID              string             `json:"gear_id,omitempty"`
+	GearName            string             `json:"gear_name,omitempty"`
+	GearResolution      string             `json:"gear_resolution,omitempty"`
 	HasStreams          bool               `json:"has_streams,omitempty"`
 	StravaImported      bool               `json:"strava_imported,omitempty"`
 	Unavailable         *unavailableReason `json:"unavailable,omitempty"`
@@ -89,26 +92,27 @@ type unavailableReason struct {
 }
 
 type getActivitiesMeta struct {
-	PageSize      int    `json:"page_size"`
-	NextPageToken string `json:"next_page_token,omitempty"`
-	MoreAvailable bool   `json:"more_available"`
-	IncludeFull   bool   `json:"include_full"`
+	PageSize       int               `json:"page_size"`
+	NextPageToken  string            `json:"next_page_token,omitempty"`
+	MoreAvailable  bool              `json:"more_available"`
+	IncludeFull    bool              `json:"include_full"`
+	FieldSemantics map[string]string `json:"field_semantics,omitempty"`
 }
 
 var errActivitiesPaginationBoundary = errors.New("activity pagination boundary exceeded")
 
-func newGetActivitiesTool(activityClient ActivitiesClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+func newGetActivitiesToolWithGear(activityClient ActivitiesClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
 	return coreTool(Tool{
 		Name:         getActivitiesName,
 		Description:  getActivitiesDescription,
 		InputSchema:  getActivitiesInputSchema(),
 		OutputSchema: getActivitiesOutputSchema(),
-		Handler:      getActivitiesHandler(activityClient, profileClient, version, timezoneFallback, debugMetadata, shapeCfg),
+		Handler:      getActivitiesHandler(activityClient, profileClient, gearClient, gearCache, version, timezoneFallback, debugMetadata, shapeCfg),
 	})
 }
 
-func getActivitiesHandler(activityClient ActivitiesClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
+func getActivitiesHandler(activityClient ActivitiesClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		if err := ctx.Err(); err != nil {
 			return Result{}, err
@@ -146,7 +150,11 @@ func getActivitiesHandler(activityClient ActivitiesClient, profileClient Profile
 			}
 			return Result{}, NewUserError(fetchActivitiesMessage, err)
 		}
-		shaped, err := shapeGetActivitiesResponse(activities, args, nextToken, version, activityTimezoneFallback, debugMetadata, unitSystem, shapeCfg)
+		gearResolutions, err := resolveActivityGear(ctx, gearClient, gearCache, activities)
+		if err != nil {
+			return Result{}, err
+		}
+		shaped, err := shapeGetActivitiesResponse(activities, gearResolutions, args, nextToken, version, activityTimezoneFallback, debugMetadata, unitSystem, shapeCfg)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activities response: %w", err)
 		}
@@ -170,5 +178,5 @@ func getActivitiesInputSchema() map[string]any {
 }
 
 func getActivitiesOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, Strava unavailable markers, and _meta.next_page_token when more data may be available."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, calories_burned for active/exercise calories, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed."}
 }

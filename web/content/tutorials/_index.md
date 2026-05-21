@@ -1,6 +1,8 @@
 ---
-title: Tutorials
-description: Learn icuvisor by completing one concrete, end-to-end setup.
+title: "Tutorials"
+description: "Learn icuvisor by completing one concrete, end-to-end setup."
+weight: 30
+type: docs
+cascade:
+  type: docs
 ---
-
-Tutorials are learning-oriented walkthroughs. Start here when you want to build confidence before choosing your own workflow.

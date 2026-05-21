@@ -20,7 +20,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "List activities for a date range with terse unit-disambiguated rows, Strava-unavailable detection, and opaque pagination.",
+    "summary": "List activities for a date range with terse unit-disambiguated rows, calories_burned as active/exercise calories, Strava-unavailable detection, and opaque pagination.",
     "anchor": "get_activities"
   },
   {
@@ -28,8 +28,16 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "Get one activity's terse metadata and metrics by activity_id.",
+    "summary": "Get one activity's terse metadata and metrics by activity_id, including calories_burned as active/exercise calories when upstream provides it.",
     "anchor": "get_activity_details"
+  },
+  {
+    "name": "get_activity_histogram",
+    "group": "activities",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks for a single activity's power, heart-rate, or pace distribution; do not fetch get_activity_streams samples and bin them in chat.",
+    "anchor": "get_activity_histogram"
   },
   {
     "name": "get_activity_intervals",
@@ -70,6 +78,78 @@
     "safety": "read",
     "summary": "Get one activity's upstream-exposed extended metrics by activity_id.",
     "anchor": "get_extended_metrics"
+  },
+  {
+    "name": "analyze_correlation",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks whether two analysis metrics are correlated or lagged together; do not fetch get_* rows or streams and reduce them in chat.",
+    "anchor": "analyze_correlation"
+  },
+  {
+    "name": "analyze_distribution",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks for an analysis metric's distribution, histogram, quantiles, or outliers; do not fetch get_* rows or streams and reduce them in chat.",
+    "anchor": "analyze_distribution"
+  },
+  {
+    "name": "analyze_efforts_delta",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks whether best-effort power, heart-rate, or pace buckets changed versus baseline; do not fetch get_* rows or streams and reduce them in chat.",
+    "anchor": "analyze_efforts_delta"
+  },
+  {
+    "name": "analyze_trend",
+    "group": "analyzers",
+    "tier": "core",
+    "safety": "read",
+    "summary": "Use when the prompt asks whether an analysis metric is trending up, trending down, or changing versus baseline; do not fetch get_* rows or streams and reduce them in chat.",
+    "anchor": "analyze_trend"
+  },
+  {
+    "name": "compute_activity_segment_stats",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks for an average, maximum, normalized power, or zone-time statistic over one explicit activity segment as the analyzer-family raw-stream exception; do not fetch get_activity_streams samples and reduce them in chat.",
+    "anchor": "compute_activity_segment_stats"
+  },
+  {
+    "name": "compute_baseline",
+    "group": "analyzers",
+    "tier": "core",
+    "safety": "read",
+    "summary": "Use when the prompt asks whether a metric is high, low, suppressed, elevated, or unusual versus a baseline window; do not fetch get_* rows or streams and reduce them in chat.",
+    "anchor": "compute_baseline"
+  },
+  {
+    "name": "compute_compliance_rate",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks how well completed activities matched scheduled workouts, targets, sport, or event type; do not fetch get_* rows or streams and reduce them in chat.",
+    "anchor": "compute_compliance_rate"
+  },
+  {
+    "name": "compute_load_balance",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks whether training distribution is polarized, pyramidal, threshold-heavy, or balanced across low/moderate/high intensity; do not fetch get_* rows or streams and reduce them in chat.",
+    "anchor": "compute_load_balance"
+  },
+  {
+    "name": "compute_zone_time",
+    "group": "analyzers",
+    "tier": "core",
+    "safety": "read",
+    "summary": "Use when the prompt asks for time in power, heart-rate, or pace zones over a date window; do not fetch get_* rows or streams and reduce them in chat.",
+    "anchor": "compute_zone_time"
   },
   {
     "name": "list_athletes",
@@ -192,6 +272,30 @@
     "anchor": "get_fitness"
   },
   {
+    "name": "get_fitness_projection",
+    "group": "fitness",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks to project CTL, ATL, or TSB forward; do not fetch get_fitness rows and model the curve in chat.",
+    "anchor": "get_fitness_projection"
+  },
+  {
+    "name": "get_hr_curves",
+    "group": "fitness",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Get upstream-computed heart-rate best-effort curves for a date range.",
+    "anchor": "get_hr_curves"
+  },
+  {
+    "name": "get_pace_curves",
+    "group": "fitness",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Get upstream-computed pace best-effort curves for a date range.",
+    "anchor": "get_pace_curves"
+  },
+  {
     "name": "get_power_curves",
     "group": "fitness",
     "tier": "full",
@@ -240,6 +344,14 @@
     "anchor": "get_athlete_profile"
   },
   {
+    "name": "get_gear_list",
+    "group": "settings",
+    "tier": "full",
+    "safety": "read",
+    "summary": "List the athlete's intervals.icu gear with IDs and human-readable names for resolving activity gear_id fields.",
+    "anchor": "get_gear_list"
+  },
+  {
     "name": "update_sport_settings",
     "group": "settings",
     "tier": "full",
@@ -252,7 +364,7 @@
     "group": "wellness",
     "tier": "core",
     "safety": "read",
-    "summary": "Get daily wellness rows for a local date range with distinct sleepQuality, sleepScore, sleepSecs, custom fields, and native provider sidecars.",
+    "summary": "Get daily wellness rows for a local date range with distinct sleepQuality, sleepScore, sleepSecs, nutrition keys calories_intake/carbs_g/protein_g/fat_g when present, custom fields, native provider sidecars, and provider-native provenance scale labels for sleep/readiness.",
     "anchor": "get_wellness_data"
   },
   {

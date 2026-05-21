@@ -116,7 +116,7 @@ func shapeActivityMessages(activityID string, messages []intervals.ActivityMessa
 }
 
 func stravaUnavailableMessagesResponse(activityID string, includeFull bool, version string, limit int, sinceID int64, raw map[string]any) getActivityMessagesResponse {
-	out := getActivityMessagesResponse{ActivityID: activityID, StravaImported: true, Unavailable: &unavailableReason{Reason: "strava_tos", Workaround: stravaWorkaround}, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, Limit: limit, SinceID: sinceID}}
+	out := getActivityMessagesResponse{ActivityID: activityID, StravaImported: true, Unavailable: &unavailableReason{Reason: "strava_tos", Workaround: stravaBlockedWorkaround(raw)}, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, Limit: limit, SinceID: sinceID}}
 	if includeFull {
 		out.Full = raw
 	}
