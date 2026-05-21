@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-21
+
 ### Added
 
 - Cookbook section on the documentation website (`web/content/cookbook/`): a quick prompt library plus eight reusable multi-step recipes (weekly review, readiness check, activity retrospective, FTP/zones review, season and block plan, build and schedule workouts, race-week taper, coach roster triage). Each recipe is written for reliable tool activation and grounded, hallucination-resistant answers, derived from common athlete and coach tasks on the intervals.icu forum.
@@ -68,7 +70,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/ricardocabral/icuvisor/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ricardocabral/icuvisor/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/ricardocabral/icuvisor/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/ricardocabral/icuvisor/releases/tag/v0.0.1
