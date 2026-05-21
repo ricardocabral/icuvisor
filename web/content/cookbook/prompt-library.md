@@ -119,7 +119,7 @@ Give me a post-race retrospective for activity [ACTIVITY]: pacing, decoupling, t
 ## Nutrition and fueling
 
 ```text
-For my last 7 rides, compare carbs ingested per hour with the load of each session. Where was I likely underfueled? Use only logged carb data; don't estimate intake.
+For my last 7 rides, compare carbs ingested per hour with each session's load. Fetch them in one get_activities call over the last 30 days, read carbs_ingested_g and load from that payload, and flag underfueled sessions. Where carbs weren't logged, say so — don't estimate.
 ```
 
 ```text
@@ -139,7 +139,7 @@ Triage athlete [ATHLETE_ID] for this week: recent activities, upcoming planned w
 ## Data checks and troubleshooting
 
 ```text
-Which of my last 10 activities are missing power, heart rate, or duration data, and why? Tell me which look like Strava imports.
+Which of my last 10 activities are missing power, heart rate, or duration data? Give one table row per activity, and identify Strava imports by quoting the source field. If any rows come back truncated, fetch those before answering.
 ```
 
 ```text

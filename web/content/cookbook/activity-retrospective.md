@@ -24,19 +24,25 @@ with my intervals.icu data.
    pick the one I described, and tell me which you chose.
 2. Get the activity details: sport, local start time, duration, distance,
    load, and source/device.
-3. Get the intervals or laps, and the per-kilometre or per-mile splits.
+3. Get the intervals or laps with get_activity_intervals, and the per-km or
+   per-mile splits.
 4. Get the time-in-zone for the session.
 5. Get the extended metrics, and report only the ones actually present
    (decoupling, IF, VI, normalized power, RPE, feel).
 
 Then give me:
 - What kind of session this was and how it went overall.
+- A table with one row per work interval: target vs actual power, average
+  HR, duration, and whether it held. If the activity has only laps and no
+  structured intervals, say so and summarize the laps instead.
 - How the hard parts held up — pacing, fade, heart-rate drift, decoupling.
 - Two concrete takeaways for next time.
 
 Rules: if this activity was imported from Strava and its fields are blank,
-tell me that up front and analyze only what is actually there. Do not compute
-or estimate metrics intervals.icu did not provide.
+tell me that up front and analyze only what is actually there. Quote a
+decoupling, NP, IF, or VI figure only when a tool returned it, and name the
+source tool inline. Do not compute or estimate metrics intervals.icu did not
+provide. Keep the answer under about 400 words, leading with the interval table.
 ```
 
 ## What icuvisor does
@@ -65,6 +71,7 @@ For a specific surge or climb, [`compute_activity_segment_stats`]({{< relref "/r
 
 - **Race debrief:** "...this was a race — focus on pacing discipline and where I lost time."
 - **Compare two sessions:** "Compare activity A and activity B — same workout, two weeks apart. Did the hard parts improve?"
+- **A Strava import specifically:** "Analyze my most recent Strava-imported activity. Identify genuine Strava imports by the `source` field — a Garmin or Wahoo device means a native upload, not a Strava import — state the blank-field policy first, and confirm the blank payload with `get_activity_details` rather than inferring it from the list."
 - **Leave a note:** add "If write tools are enabled, append a one-line summary as a comment on the activity." This uses [`add_activity_message`]({{< relref "/reference/tools#add_activity_message" >}}).
 
 ## Why this prompt works

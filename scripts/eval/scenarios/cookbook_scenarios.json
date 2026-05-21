@@ -63,22 +63,22 @@
       "id": "CB-ACT-01",
       "recipe": "activity-retrospective",
       "persona": "athlete",
-      "prompt": "Give me a detailed retrospective of my most recent interval or VO2 ride. Use icuvisor: find the activity, get its details, break down the intervals or laps, report time-in-zone, and report only the extended metrics actually present. Tell me how the hard parts held up and give two takeaways.",
+      "prompt": "Give me a detailed retrospective of my most recent interval or VO2 ride. Use icuvisor: find the activity and confirm which one you chose. Get its details, then call get_activity_intervals. If the activity has structured work intervals, produce a table with one row per work interval showing target vs actual power, average HR, duration, and whether it held. If it has only laps, say so and summarize the laps instead. Report time-in-zone, and quote a decoupling, NP, or IF figure only when a tool returned it, naming the source tool inline. Finish with two takeaways. Keep the answer under about 400 words, leading with the interval table.",
       "expected_tools": ["get_activities", "get_activity_details", "get_activity_intervals"],
       "bonus_tools": ["get_activity_histogram", "get_extended_metrics", "get_activity_splits", "compute_activity_segment_stats"],
       "forbidden_tools": ["delete_activity", "delete_event", "delete_workout"],
-      "must_address": ["identifies which activity it analyzed", "interval-by-interval breakdown", "how hard efforts held targets", "two concrete takeaways"],
-      "anti_patterns": ["computes decoupling or VI when the tool did not return it", "analyzes an activity it never fetched"]
+      "must_address": ["identifies which activity it analyzed", "a table with one row per work interval, or an explicit laps-only fallback", "how hard efforts held targets", "two concrete takeaways"],
+      "anti_patterns": ["computes decoupling or VI when the tool did not return it", "analyzes an activity it never fetched", "skips the interval table despite calling get_activity_intervals"]
     },
     {
       "id": "CB-ACT-02",
       "recipe": "activity-retrospective",
       "persona": "athlete",
-      "prompt": "Analyze my most recent activity that was imported from Strava. Break down what happened in it. Use icuvisor.",
+      "prompt": "Analyze my most recent activity that was imported from Strava. Use icuvisor. First, state in one sentence that Strava-imported activities return mostly blank fields by Strava's API policy. List recent activities and identify the genuine Strava imports by the source field, quoting the source value you used; an activity recorded on a Garmin or Wahoo device is a native upload, not a Strava import. For the most recent genuine Strava import, call get_activity_details to confirm the blank payload from the detail view rather than inferring it from the list, and report what is and is not available on that activity. If there is no Strava import, say so plainly. Do not present power, heart-rate, or pace numbers for a blank Strava import.",
       "expected_tools": ["get_activities", "get_activity_details"],
       "bonus_tools": ["get_activity_intervals", "get_extended_metrics"],
       "forbidden_tools": ["delete_activity", "delete_event"],
-      "must_address": ["states up front that Strava-imported activities return blank fields", "analyzes only the fields actually present", "does not present fabricated power/HR data"],
+      "must_address": ["states up front that Strava-imported activities return blank fields by policy", "classifies Strava vs native uploads by quoting the source field", "confirms the blank payload via get_activity_details rather than inferring it from the list", "does not present fabricated power/HR data"],
       "anti_patterns": ["reports power, HR, or pace numbers for a blank Strava import", "claims a 0 W average instead of saying the data is unavailable"]
     },
     {
@@ -96,11 +96,11 @@
       "id": "CB-FTP-02",
       "recipe": "ftp-and-zones",
       "persona": "athlete",
-      "prompt": "From my most recent ramp test or threshold test, read out my FTP, threshold heart rate, and any VO2max estimate using only that activity's data. If you cannot identify a test activity, tell me rather than guessing.",
+      "prompt": "Find my most recent ramp test or threshold test and read out my FTP, threshold heart rate, and any VO2max estimate from that activity's data only. Use icuvisor efficiently: make one get_activities call over the last 120 days and scan the names for 'ramp', 'FTP test', 'threshold', or '20-min test'. Pick the best candidate and inspect it with get_activity_details and get_activity_intervals. If no test activity is found after that one scan, say so plainly and stop — do not keep re-querying. Aim to answer within about 5 tool calls.",
       "expected_tools": ["get_activities"],
       "bonus_tools": ["get_activity_details", "get_activity_intervals", "get_athlete_profile"],
       "forbidden_tools": ["update_sport_settings", "delete_sport_settings", "delete_activity"],
-      "must_address": ["identifies the test activity or states none was found", "reports values from that activity's data only"],
+      "must_address": ["identifies the test activity or states none was found after one scan", "reports values from that activity's data only", "delivers a final answer rather than looping on get_activities"],
       "anti_patterns": ["fabricates a VO2max estimate not in the data", "uses profile FTP and presents it as a fresh test result"]
     },
     {
@@ -195,23 +195,23 @@
       "id": "CB-LIB-02",
       "recipe": "prompt-library",
       "persona": "athlete",
-      "prompt": "For my last 7 rides, compare carbs ingested per hour with the load of each session. Where was I likely underfueled? Use only logged carb data through icuvisor; do not estimate intake I did not log.",
+      "prompt": "For my last 7 rides, compare carbs ingested per hour with each session's load. Use icuvisor efficiently: make one get_activities call over the last 30 days filtered to rides, take the 7 most recent, and read carbs_ingested_g and load straight from that payload — do not re-query per ride. Identify the sessions that look underfueled. Where carbs_ingested_g is absent, say it was not logged rather than estimating. Aim to answer within about 4 tool calls.",
       "expected_tools": ["get_activities"],
       "bonus_tools": ["get_wellness_data"],
       "forbidden_tools": ["delete_activity", "delete_event", "update_wellness"],
-      "must_address": ["carbs-per-hour against load per ride", "identifies likely underfueled sessions", "states clearly when carb data was not logged"],
+      "must_address": ["carbs-per-hour against load per ride", "identifies likely underfueled sessions", "states clearly when carb data was not logged", "delivers a final answer rather than looping on get_activities"],
       "anti_patterns": ["estimates carb intake for rides with no logged data", "presents an invented fueling number"]
     },
     {
       "id": "CB-LIB-03",
       "recipe": "prompt-library",
       "persona": "athlete",
-      "prompt": "Which of my last 10 activities are missing power, heart rate, or duration data, and why? Tell me which ones look like Strava imports. Use icuvisor.",
+      "prompt": "Which of my last 10 activities are missing power, heart-rate, or duration data? Use icuvisor: list the last 10 activities and give one table row per activity. If any rows come back truncated, fetch those with get_activity_details before answering — do not guess for rows you could not see. Identify likely Strava imports by quoting the activity's source field, not by inference, and explain in one sentence that Strava imports return blank fields by policy.",
       "expected_tools": ["get_activities"],
       "bonus_tools": ["get_activity_details"],
       "forbidden_tools": ["delete_activity", "delete_event"],
-      "must_address": ["which activities have missing fields", "identifies likely Strava imports", "explains why Strava imports return blank fields"],
-      "anti_patterns": ["claims data exists for activities the tool flagged as unavailable"]
+      "must_address": ["one table row per activity for all 10", "identifies likely Strava imports by quoting the source field", "explains why Strava imports return blank fields"],
+      "anti_patterns": ["claims data exists for activities the tool flagged as unavailable", "answers for all 10 activities when some rows were truncated"]
     },
     {
       "id": "CB-LIB-04",
