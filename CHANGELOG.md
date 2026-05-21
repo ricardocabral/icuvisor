@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cookbook section on the documentation website (`web/content/cookbook/`): a quick prompt library plus eight reusable multi-step recipes (weekly review, readiness check, activity retrospective, FTP/zones review, season and block plan, build and schedule workouts, race-week taper, coach roster triage). Each recipe is written for reliable tool activation and grounded, hallucination-resistant answers, derived from common athlete and coach tasks on the intervals.icu forum.
 - Cookbook activation and answer-quality eval harness (`scripts/eval/`): self-contained scenario specs, an LLM-judge rubric scoring tool activation, grounding, subjective-scale correctness, coverage, actionability, and conciseness, and a `run_eval.py` runner with a CI-safe `--validate` mode (`make eval-validate`) that checks scenarios against the tool catalog, plus a live mode that drives icuvisor over MCP stdio and scores each run.
 
+### Fixed
+
+- Interval `start_time` and `end_time` are now decoded correctly when intervals.icu returns them as numeric second offsets instead of strings. The previous string-only typing failed to decode those activities, breaking `get_extended_metrics`, `get_activity_intervals`, and `compute_activity_segment_stats` for them.
+
 ## [0.1.0] - 2026-05-21
 
 ### Fixed

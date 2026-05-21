@@ -61,3 +61,60 @@ func TestGetActivityIntervalsSendsPathAndPreservesRaw(t *testing.T) {
 		t.Fatalf("raw nullable = %#v, want nil", got)
 	}
 }
+
+func TestActivityIntervalDecodesNumericAndStringTimeFields(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name      string
+		payload   string
+		wantStart string
+		wantEnd   string
+	}{
+		{
+			name:      "numeric second offsets",
+			payload:   `{"id":"i1","start_time":0,"end_time":240.5}`,
+			wantStart: "0",
+			wantEnd:   "240.5",
+		},
+		{
+			name:      "string time fields",
+			payload:   `{"id":"i1","start_time":"2026-05-01T10:00:00","end_time":"2026-05-01T10:04:00"}`,
+			wantStart: "2026-05-01T10:00:00",
+			wantEnd:   "2026-05-01T10:04:00",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			var interval ActivityInterval
+			if err := json.Unmarshal([]byte(tc.payload), &interval); err != nil {
+				t.Fatalf("Unmarshal() error = %v", err)
+			}
+			if interval.StartTime == nil || *interval.StartTime != tc.wantStart {
+				t.Errorf("StartTime = %v, want %q", interval.StartTime, tc.wantStart)
+			}
+			if interval.EndTime == nil || *interval.EndTime != tc.wantEnd {
+				t.Errorf("EndTime = %v, want %q", interval.EndTime, tc.wantEnd)
+			}
+		})
+	}
+}
+
+func TestIntervalsDTODecodesNumericIntervalTimes(t *testing.T) {
+	t.Parallel()
+	payload := `{"id":"a1","analyzed":true,"icu_intervals":[{"id":"i1","start_time":0,"end_time":240}],"icu_groups":[]}`
+	var dto IntervalsDTO
+	if err := json.Unmarshal([]byte(payload), &dto); err != nil {
+		t.Fatalf("Unmarshal() error = %v", err)
+	}
+	if len(dto.ICUIntervals) != 1 {
+		t.Fatalf("ICUIntervals len = %d, want 1", len(dto.ICUIntervals))
+	}
+	got := dto.ICUIntervals[0]
+	if got.EndTime == nil || *got.EndTime != "240" {
+		t.Errorf("EndTime = %v, want \"240\"", got.EndTime)
+	}
+	if raw, ok := got.Raw["end_time"].(float64); !ok || raw != 240 {
+		t.Errorf("Raw[end_time] = %#v, want numeric 240 for full-payload responses", got.Raw["end_time"])
+	}
+}
