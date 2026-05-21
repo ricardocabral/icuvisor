@@ -14,7 +14,7 @@ HUGO_PORT  ?= 1313
 
 .PHONY: all build install run test test-race cover bench lint fmt fmt-check vet tidy \
         download verify generate goimports check clean snapshot release \
-        docs-tools eval-validate web-serve web-build web-clean help
+        docs-tools eval-validate web-serve web-preview web-build web-clean help
 
 all: build ## Build the binary
 
@@ -95,8 +95,12 @@ eval-validate: ## Validate cookbook eval scenarios against the tool catalog
 
 # ---- website (web/, Hugo) ----------------------------------------------------
 
-web-serve: ## Run the Hugo dev server for the icuvisor.app site
+web-serve: ## Run the Hugo dev server for the icuvisor.app site (no search index)
 	cd web && $(HUGO) server -D --port $(HUGO_PORT) --bind 127.0.0.1
+
+web-preview: ## Build, index with Pagefind, and serve the site with working search
+	cd web && $(HUGO) --minify --gc
+	cd web && npx --yes pagefind --site public --serve
 
 web-build: ## Build the Hugo site into web/public
 	cd web && $(HUGO) --minify --gc
