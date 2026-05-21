@@ -87,7 +87,7 @@ type baselineCollected struct {
 
 func newComputeBaselineTool(fitnessClient FitnessClient, wellnessClient WellnessClient, activitiesClient ActivitiesClient, extendedClient ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
-	return fullTool(Tool{Name: computeBaselineName, Description: computeBaselineDescription, InputSchema: computeBaselineInputSchema(), OutputSchema: genericOutputSchema("Baseline z-score with analyzer metadata."), Handler: computeBaselineHandler(fitnessClient, wellnessClient, activitiesClient, extendedClient, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
+	return coreTool(Tool{Name: computeBaselineName, Description: computeBaselineDescription, InputSchema: computeBaselineInputSchema(), OutputSchema: genericOutputSchema("Baseline z-score with analyzer metadata."), Handler: computeBaselineHandler(fitnessClient, wellnessClient, activitiesClient, extendedClient, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
 func computeBaselineHandler(fitnessClient FitnessClient, wellnessClient WellnessClient, activitiesClient ActivitiesClient, extendedClient ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {

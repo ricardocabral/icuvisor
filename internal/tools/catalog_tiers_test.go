@@ -45,7 +45,7 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 		linkActivityToEventName:         safety.ToolsetCore,
 		listAdvancedCapabilitiesName:    safety.ToolsetCore,
 		getPowerCurvesName:              safety.ToolsetFull,
-		analyzeTrendName:                safety.ToolsetFull,
+		analyzeTrendName:                safety.ToolsetCore,
 		analyzeDistributionName:         safety.ToolsetFull,
 		analyzeCorrelationName:          safety.ToolsetFull,
 		analyzeEffortsDeltaName:         safety.ToolsetFull,
@@ -57,9 +57,9 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 		getActivityStreamsName:          safety.ToolsetFull,
 		getActivityHistogramName:        safety.ToolsetFull,
 		computeActivitySegmentStatsName: safety.ToolsetFull,
-		computeZoneTimeName:             safety.ToolsetFull,
+		computeZoneTimeName:             safety.ToolsetCore,
 		computeLoadBalanceName:          safety.ToolsetFull,
-		computeBaselineName:             safety.ToolsetFull,
+		computeBaselineName:             safety.ToolsetCore,
 		computeComplianceRateName:       safety.ToolsetFull,
 		getTrainingPlanName:             safety.ToolsetFull,
 		applyTrainingPlanName:           safety.ToolsetFull,
@@ -102,17 +102,21 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 	}
 }
 
-func TestAnalyzerFamilyDefaultsToFullToolset(t *testing.T) {
+func TestNonCandidateAnalyzerFamilyRemainsFullToolset(t *testing.T) {
 	t.Parallel()
 
 	tiers := registeredToolsetsByName(t)
+	candidates := analyzerCorePromotionCandidateSet()
 	for _, name := range analyzerFamilyCatalogNames() {
 		got, exists := tiers[name]
 		if !exists {
 			t.Fatalf("analyzer-family tool %q was not registered", name)
 		}
+		if _, candidate := candidates[name]; candidate {
+			continue
+		}
 		if got != safety.ToolsetFull {
-			t.Fatalf("analyzer-family tool %q tier = %q, want full until benchmark-gated promotion", name, got)
+			t.Fatalf("non-candidate analyzer-family tool %q tier = %q, want full", name, got)
 		}
 	}
 }
@@ -140,12 +144,20 @@ func TestAnalyzerCorePromotionCandidatesAreBenchmarkGated(t *testing.T) {
 			t.Fatalf("promotion candidate %q is not in analyzer-family catalog names", name)
 		}
 	}
+	tiers := registeredToolsetsByName(t)
 	for _, name := range analyzerFamilyCatalogNames() {
-		if _, ok := candidates[name]; ok {
+		got, exists := tiers[name]
+		if !exists {
+			t.Fatalf("analyzer-family tool %q was not registered", name)
+		}
+		if _, candidate := candidates[name]; candidate {
+			if got != safety.ToolsetCore {
+				t.Fatalf("benchmark-gated candidate %q tier = %q, want core", name, got)
+			}
 			continue
 		}
-		if name == analyzeTrendName || name == computeZoneTimeName || name == computeBaselineName {
-			t.Fatalf("candidate %q was unexpectedly treated as a non-candidate", name)
+		if got != safety.ToolsetFull {
+			t.Fatalf("non-candidate analyzer-family tool %q tier = %q, want full", name, got)
 		}
 	}
 }

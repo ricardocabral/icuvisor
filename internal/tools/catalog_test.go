@@ -87,7 +87,7 @@ func TestCatalogMatchesRegistryAndPRDRegisteredTools(t *testing.T) {
 	}
 }
 
-func TestCatalogIncludesFullAnalyzers(t *testing.T) {
+func TestCatalogIncludesAnalyzerFamilyPlacement(t *testing.T) {
 	t.Parallel()
 
 	descriptors := descriptorNameSet(Catalog())
@@ -112,8 +112,12 @@ func TestCatalogIncludesFullAnalyzers(t *testing.T) {
 		if name == getFitnessProjectionName {
 			wantGroup = "fitness"
 		}
-		if descriptor.Group != wantGroup || descriptor.Tier != string(safety.ToolsetFull) {
-			t.Fatalf("descriptor = %#v, want %s/full", descriptor, wantGroup)
+		wantTier := safety.ToolsetFull
+		if _, candidate := analyzerCorePromotionCandidateSet()[name]; candidate {
+			wantTier = safety.ToolsetCore
+		}
+		if descriptor.Group != wantGroup || descriptor.Tier != string(wantTier) {
+			t.Fatalf("descriptor = %#v, want %s/%s", descriptor, wantGroup, wantTier)
 		}
 		if !strings.Contains(descriptor.Summary, summaryNeedle) {
 			t.Fatalf("summary for %s = %q, want %q", name, descriptor.Summary, summaryNeedle)

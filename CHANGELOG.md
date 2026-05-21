@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Promoted `analyze_trend`, `compute_zone_time`, and `compute_baseline` into the default core toolset after TP-098/KR5 benchmark evidence showed positive net token savings and eliminated or avoided LLM-visible raw-stream pulls.
 - Analyzer-family tool descriptions now lead with concrete activation prompts and explicitly tell assistants not to fetch raw `get_*` rows or streams and reduce them in chat.
 - Strava-blocked activity responses now point users to the intervals.icu Connections page and Download old data action for the native device provider, naming Garmin/Wahoo/etc. when explicit payload evidence is available.
 - `get_wellness_data` provenance now reports provider-native sleep/readiness `native_scale` labels for Garmin, WHOOP, Oura, and Polar, while unresolved sources report `unknown` instead of a guessed device scale.

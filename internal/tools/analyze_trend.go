@@ -29,7 +29,7 @@ type analyzeTrendRequest struct {
 func newAnalyzeTrendTool(fitness FitnessClient, wellness WellnessClient, activities ActivitiesClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
 	clients := analyzerClients{fitness: fitness, wellness: wellness, activities: activities}
-	return fullTool(Tool{Name: analyzeTrendName, Description: analyzeTrendDescription, InputSchema: analyzeTrendInputSchema(), OutputSchema: genericOutputSchema("Analyzer trend result with rolling means, slope, baseline deltas, and analyzer _meta."), Handler: analyzeTrendHandler(clients, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
+	return coreTool(Tool{Name: analyzeTrendName, Description: analyzeTrendDescription, InputSchema: analyzeTrendInputSchema(), OutputSchema: genericOutputSchema("Analyzer trend result with rolling means, slope, baseline deltas, and analyzer _meta."), Handler: analyzeTrendHandler(clients, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
 func analyzeTrendHandler(clients analyzerClients, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {

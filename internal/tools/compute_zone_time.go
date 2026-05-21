@@ -99,7 +99,7 @@ type loadBucketRow struct {
 
 func newComputeZoneTimeTool(fitnessClient FitnessClient, activitiesClient ActivitiesClient, extendedClient ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
-	return fullTool(Tool{Name: computeZoneTimeName, Description: computeZoneTimeDescription, InputSchema: computeZoneInputSchema(true), OutputSchema: genericOutputSchema("Deterministic precomputed zone-time aggregate with analyzer metadata."), Handler: computeZoneTimeHandler(fitnessClient, activitiesClient, extendedClient, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
+	return coreTool(Tool{Name: computeZoneTimeName, Description: computeZoneTimeDescription, InputSchema: computeZoneInputSchema(true), OutputSchema: genericOutputSchema("Deterministic precomputed zone-time aggregate with analyzer metadata."), Handler: computeZoneTimeHandler(fitnessClient, activitiesClient, extendedClient, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
 func newComputeLoadBalanceTool(fitnessClient FitnessClient, activitiesClient ActivitiesClient, extendedClient ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
