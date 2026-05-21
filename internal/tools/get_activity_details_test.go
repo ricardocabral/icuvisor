@@ -82,6 +82,132 @@ func TestGetActivityDetailsCaloriesBurnedSemantics(t *testing.T) {
 	}
 }
 
+func TestGetActivityDetailsNutritionFieldsDisambiguated(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		raw           string
+		wantIngested  *int
+		wantUsed      *int
+		wantAbsent    []string
+		wantSemantics []string
+	}{
+		{
+			name:          "terse default with all three nutrition fields",
+			raw:           `{"id":"a1","icu_athlete_id":"i12345","name":"Long Ride","type":"Ride","start_date_local":"2026-05-14T07:00:00","calories":1850,"carbs_ingested":210,"carbs_used":390}`,
+			wantIngested:  intPtr(210),
+			wantUsed:      intPtr(390),
+			wantAbsent:    []string{"carbs", "carbohydrates", "carbs_ingested", "carbs_used"},
+			wantSemantics: []string{"calories_burned", "carbs_ingested_g", "carbs_used_g"},
+		},
+		{
+			name:         "null-stripping when nutrition absent",
+			raw:          `{"id":"a2","icu_athlete_id":"i12345","name":"Easy Run","type":"Run","start_date_local":"2026-05-14T08:00:00","calories":400}`,
+			wantIngested: nil,
+			wantUsed:     nil,
+			wantAbsent:   []string{"carbs_ingested_g", "carbs_used_g", "carbs", "carbohydrates"},
+		},
+		{
+			name:          "only carbs_used present",
+			raw:           `{"id":"a3","icu_athlete_id":"i12345","name":"Tempo","type":"Ride","start_date_local":"2026-05-14T09:00:00","calories":900,"carbs_used":200}`,
+			wantIngested:  nil,
+			wantUsed:      intPtr(200),
+			wantAbsent:    []string{"carbs_ingested_g", "carbs", "carbohydrates"},
+			wantSemantics: []string{"carbs_used_g"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			activity := decodeActivityFixture(t, tc.raw)
+			client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
+			tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, "test", "UTC", false)
+
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			activityMap := resultMap(t, result)["activity"].(map[string]any)
+
+			if tc.wantIngested != nil {
+				if activityMap["carbs_ingested_g"] != float64(*tc.wantIngested) {
+					t.Fatalf("carbs_ingested_g = %v, want %d", activityMap["carbs_ingested_g"], *tc.wantIngested)
+				}
+			}
+			if tc.wantUsed != nil {
+				if activityMap["carbs_used_g"] != float64(*tc.wantUsed) {
+					t.Fatalf("carbs_used_g = %v, want %d", activityMap["carbs_used_g"], *tc.wantUsed)
+				}
+			}
+			for _, key := range tc.wantAbsent {
+				if _, ok := activityMap[key]; ok {
+					t.Fatalf("activity row emitted disallowed/ambiguous key %s: %#v", key, activityMap)
+				}
+			}
+			if len(tc.wantSemantics) > 0 {
+				semantics := resultMap(t, result)["_meta"].(map[string]any)["field_semantics"].(map[string]any)
+				for _, key := range tc.wantSemantics {
+					if label, ok := semantics[key].(string); !ok || label == "" {
+						t.Fatalf("field_semantics missing %s: %#v", key, semantics)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestGetActivityDetailsCarbsIngestedDistinctFromWellnessKcalConsumed(t *testing.T) {
+	t.Parallel()
+
+	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-05-14T07:00:00","calories":1850,"carbs_ingested":210,"carbs_used":390}`)
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
+	tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	activityMap := resultMap(t, result)["activity"].(map[string]any)
+	semantics := resultMap(t, result)["_meta"].(map[string]any)["field_semantics"].(map[string]any)
+
+	if _, ok := activityMap["kcal_consumed"]; ok {
+		t.Fatalf("activity row emitted kcal_consumed (wellness intake key) in activity: %#v", activityMap)
+	}
+	if _, ok := activityMap["calories_intake"]; ok {
+		t.Fatalf("activity row emitted calories_intake (wellness intake key) in activity: %#v", activityMap)
+	}
+	caloriesLabel, ok := semantics["calories_burned"].(string)
+	if !ok || !strings.Contains(caloriesLabel, "Distinct from wellness kcal_consumed") {
+		t.Fatalf("calories_burned semantics = %q, want distinction from wellness kcal_consumed", caloriesLabel)
+	}
+}
+
+func TestGetActivityDetailsNutritionIncludeFullPreservesRawUpstreamKeys(t *testing.T) {
+	t.Parallel()
+
+	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-05-14T07:00:00","calories":1850,"carbs_ingested":210,"carbs_used":390}`)
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
+	tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","include_full":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	activityMap := resultMap(t, result)["activity"].(map[string]any)
+	if activityMap["carbs_ingested_g"] != float64(210) || activityMap["carbs_used_g"] != float64(390) {
+		t.Fatalf("include_full terse keys = %#v, want disambiguated nutrition keys", activityMap)
+	}
+	full, ok := activityMap["full"].(map[string]any)
+	if !ok {
+		t.Fatalf("include_full missing full payload: %#v", activityMap)
+	}
+	if full["carbs_ingested"] != float64(210) || full["carbs_used"] != float64(390) || full["calories"] != float64(1850) {
+		t.Fatalf("full raw nutrition = %#v, want upstream key names preserved", full)
+	}
+}
+
 func TestGetActivityDetailsShapesTerseFullAndStravaUnavailable(t *testing.T) {
 	t.Parallel()
 
