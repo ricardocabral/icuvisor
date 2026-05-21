@@ -12,6 +12,9 @@ import (
 
 func (f *fakeCustomItemsClient) CreateCustomItem(_ context.Context, params intervals.WriteCustomItemParams) (intervals.CustomItem, error) {
 	f.created = append(f.created, params)
+	if f.createErr != nil {
+		return intervals.CustomItem{}, f.createErr
+	}
 	if f.createdItem.Raw != nil {
 		return f.createdItem, nil
 	}
@@ -140,6 +143,34 @@ func TestCreateCustomItemRegistrationMetadata(t *testing.T) {
 	}
 	if strings.Contains(strings.ToLower(tool.Description), "confirm") || !strings.Contains(tool.Description, "validated against readable samples") || !strings.Contains(tool.Description, "icuvisor://custom-item-schemas") {
 		t.Fatalf("description = %q, want validation/resource language and no confirm", tool.Description)
+	}
+}
+
+func TestCreateCustomItem422ProducesActionableMessage(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeCustomItemsClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		items: decodeToolCustomItems(t,
+			`{"id":1,"type":"INPUT_FIELD","name":"Schema","content":{"field":"existing","label":"Existing","type":"number"}}`,
+		),
+		createErr: &intervals.ValidationError{Field: "WhoopStrain", UpstreamMessage: "Unrecognized field [WhoopStrain]"},
+	}
+	tool := newCreateCustomItemTool(client, client, client, "test", "UTC", false)
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"item_type":"INPUT_FIELD","name":"Whoop","content":{"field":"WhoopStrain","label":"Whoop strain","type":"number"}}`)})
+	if err == nil {
+		t.Fatal("Handler() error = nil, want actionable 422 error")
+	}
+	message, ok := PublicErrorMessage(err)
+	if !ok {
+		t.Fatalf("PublicErrorMessage() ok = false, err = %v", err)
+	}
+	wantMessage := `intervals.icu rejected field "WhoopStrain": create it under Settings > Custom Fields in intervals.icu, or omit it from this call`
+	if message != wantMessage {
+		t.Fatalf("message = %q, want %q", message, wantMessage)
+	}
+	if strings.Contains(message, "Unrecognized") {
+		t.Fatalf("message %q leaked raw upstream body", message)
 	}
 }
 
