@@ -29,7 +29,7 @@ The broader AI-for-intervals.icu market segments into two buckets athletes alrea
 
 - **MCP momentum**: stable spec, Claude Desktop/Code/Cowork, ChatGPT Developer Mode, Cursor, Pi, Le Chat, and local LLM clients all support MCP servers.
 - **Existing Python options have known limits**: Python/uv setup still creates install friction, and open-source issue backlogs target exactly the problems icuvisor is best positioned to solve from day one: model-uncontrollable delete safety, tiered toolsets to cut per-session token cost, in-response scale labels, debug-metadata stripping, and tool-name disambiguation.
-- **Distribution gap is now solvable**: Go's single-binary cross-compilation + Homebrew/Scoop/Winget/DXT bundles let us deliver `brew install icuvisor` to a triathlete who has never opened a terminal.
+- **Distribution gap is now solvable**: Go's single-binary cross-compilation + Homebrew/Scoop/Winget/MCPB bundles let us deliver `brew install icuvisor` or a Claude Desktop extension install to a triathlete who has never opened a terminal.
 - **Recent intervals.icu API additions** (custom wellness fields, activity messages, structured workout endpoints) make a richer feature set possible than what the original README documents.
 
 ---
@@ -190,7 +190,9 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 - `list_athletes`, `select_athlete` — coach mode.
 - `get_fitness` — CTL/ATL/TSB trends, taper projections.
 - `get_best_efforts` — PRs across sports.
-- `get_power_curves` — mean-maximal curves.
+- `get_power_curves` — mean-maximal power curves.
+- `get_hr_curves` — mean-maximal heart-rate curves, symmetric with `get_power_curves` for HR-duration best efforts.
+- `get_pace_curves` — mean-maximal pace curves, symmetric with `get_power_curves` for distance-bucket pace best efforts and athlete preferred units.
 - `get_gear_list` — full-toolset read of gear IDs/names with manual refresh for the per-athlete cache used by activity gear-name resolution.
 
 **Activities**
@@ -254,9 +256,9 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 
 - `get_custom_items`, `get_custom_item_by_id`, `create_custom_item`, `update_custom_item`, `delete_custom_item` — for custom charts/fields/zones. Long-form schema documentation for the inner `content` shape (which varies per `item_type`) lives in an MCP Resource (`icuvisor://custom-item-schemas`), not inline in the tool description (see §7.2.G).
 
-**Planned analyzers (`analyze_*` / `compute_*`) — v0.6 roadmap scope**
+**Analyzers (`analyze_*` / `compute_*`) — v0.6 shipped scope**
 
-The analyzer family is planned roadmap scope, not part of the current generated MCP tool catalog until the v0.6 phase lands. It is a small, deterministic family of derivation tools so the LLM reaches for a documented primitive instead of fetching `get_*` rows and writing an ad-hoc reduction in chat. Every analyzer aggregates from existing reads first and only falls back to stream math when intervals.icu has no windowed view of the field. The split is intentional: `analyze_*` is inferential (baseline, fit, correlation), `compute_*` is deterministic aggregation (sums, counts, time-in-zone).
+The analyzer family is part of the registered MCP tool catalog as of the v0.6 Taskplane batch. It is a small, deterministic family of derivation tools so the LLM reaches for a documented primitive instead of fetching `get_*` rows and writing an ad-hoc reduction in chat. Every analyzer aggregates from existing reads first and only falls back to stream math when intervals.icu has no windowed view of the field. The split is intentional: `analyze_*` is inferential (baseline, fit, correlation), `compute_*` is deterministic aggregation (sums, counts, time-in-zone).
 
 Design rules that apply to every tool in this family:
 
@@ -274,6 +276,7 @@ Tool catalog:
 
 - `analyze_trend` — rolling mean, slope, Δ%, week-over-week change for a metric over a window vs a baseline window. Use when the user asks whether something is improving, worsening, or flat (CTL ramp, weekly TSS, pace-at-LT2, weight, HRV).
 - `analyze_distribution` — histogram / quantiles / time-in-zone for a numeric field over a window. Use for "how is X spread" / "how polarized was this block".
+- `get_activity_histogram` — single-activity power / heart-rate / pace distribution buckets. Use for "how was this workout's power/HR/pace distributed" without pulling raw streams and binning them in chat.
 - `analyze_correlation` — Pearson r, Spearman ρ, n, slope, intercept for two daily or per-activity fields, with optional `lag_days` for lagged correlation (sleep quality → next-day RPE).
 - `analyze_efforts_delta` — best-effort durations or distances (5-min power, 20-min power, 5k pace) current window vs baseline window, unit-aware, with Δ%.
 - `compute_zone_time` — sum of time per power / HR / pace zone over a window, sport-filtered, with polarization index. Aggregates per-activity zone times from `get_activity_intervals` / `get_extended_metrics` — does not recompute from streams when upstream zone time is present.
@@ -296,9 +299,9 @@ Combined with the v0.4 MCP Prompt set (`training analysis`, `recovery check`, `w
 - No multi-athlete aggregation in v1; coach mode reuses single-athlete analyzers per athlete.
 - No free-form field arithmetic from the LLM. If a derived field becomes common, it enters the `analysis_metric` enum with a registered `formula_ref`.
 
-Toolset placement: the family lands in `full` by default; `analyze_trend`, `compute_zone_time`, and `compute_baseline` are promoted to `core` after the KR5 benchmark confirms net token savings vs the fetch-and-reduce baseline.
+Toolset placement: most of the family lands in `full`; `analyze_trend`, `compute_zone_time`, and `compute_baseline` are in `core` after the KR5 benchmark confirmed net token savings vs the fetch-and-reduce baseline.
 
-The generated tool catalog is the source of truth for the current registered tool count. Once the planned v0.6 analyzer family lands, the `core` toolset (see §7.2.D) exposes a curated subset by default; the full surface ships behind an opt-in env var.
+The generated tool catalog is the source of truth for the current registered tool count. As of the TP-098/TP-100 analyzer benchmark and tiering work, the catalog has 54 tools total: 22 in `core` and 32 additional `full` tools behind `ICUVISOR_TOOLSET=full`.
 
 #### D. Response shaping (the second differentiator)
 
@@ -322,7 +325,7 @@ The generated tool catalog is the source of truth for the current registered too
 
 #### E. Toolset tiers (token efficiency by default)
 
-The full ~30-tool surface costs meaningful tokens to load into a conversation — every conversation, every model, every client load. icuvisor defaults to exposing a curated **`core`** subset (~17 tools) covering the daily-use path (read activities, fitness, wellness, events; write events, wellness, messages). Power users and coaches opt in to the **`full`** surface via `ICUVISOR_TOOLSET=full` in their MCP client config.
+The full generated tool surface costs meaningful tokens to load into a conversation — every conversation, every model, every client load. icuvisor defaults to exposing a curated **`core`** subset covering the daily-use path (read activities, fitness, wellness, events; common writes; and benchmark-proven analyzers). Power users and coaches opt in to the **`full`** surface via `ICUVISOR_TOOLSET=full` in their MCP client config. As of the current generated catalog, `core` exposes 22 tools and `full` adds 32 more.
 
 A small `icuvisor_list_advanced_capabilities` tool lives in `core` so the LLM can discover what's hidden and tell the user how to enable it when a prompt requires an advanced tool. This addresses the "tool selection accuracy" failure mode that grows with surface size — smaller models pick the wrong tool less often when the catalog is smaller.
 
@@ -350,6 +353,7 @@ icuvisor ships MCP Resources for long-form, slow-changing content the LLM only o
 - `icuvisor://event-categories` — the full enum of event categories with descriptions.
 - `icuvisor://custom-item-schemas` — the per-`item_type` schema for the `content` field on custom items.
 - `icuvisor://athlete-profile` — current athlete profile (auto-refreshing).
+- `icuvisor://analysis-formulas` — canonical analyzer formula definitions and stable refs for `_meta.formula_ref`.
 
 It also ships a curated set of MCP Prompts (training analysis, recovery check, weekly planning, race-week taper, coach roster triage) so users on clients that surface prompts get a "what can this thing do?" entrypoint without having to learn the tool catalog.
 
@@ -399,7 +403,7 @@ It also ships a curated set of MCP Prompts (training analysis, recovery check, w
 9. **Token efficiency may not be a strong standalone differentiator.** Competing hosted servers do not appear to suffer obvious context-window problems, so KR5's Python-reference target may not translate directly to the icusync comparison. _(Validate by measuring icusync.icu's response shapes on the same prompt set.)_
 10. **Strava-blocked-activity detection** depends on a stable upstream marker. _(Validate by black-box testing against an athlete account with mixed direct/Strava-imported activities.)_
 11. **`preferred_units` is exposed on the intervals.icu athlete profile and round-trips through the API.** _(Validate during `get_athlete_profile` implementation.)_
-12. **A `core` toolset of ~17 tools covers ≥90% of real prompts** based on the curated lists open competitors have arrived at independently. The remaining ~13 tools (bulk ops, gear, sport settings, curves, histograms, custom items, workout-library writes) are correctly placed behind `ICUVISOR_TOOLSET=full`. _(Validate via opt-in telemetry on tool-call distribution after v0.5 dogfooding.)_
+12. **A curated `core` toolset covers ≥90% of real prompts** based on the curated lists open competitors have arrived at independently plus KR5 analyzer benchmark evidence. The current generated catalog exposes 22 `core` tools; the remaining 32 `full` tools (bulk ops, gear, sport settings, curves, histograms, custom items, workout-library writes, and specialized analyzers) are placed behind `ICUVISOR_TOOLSET=full`. _(Validate via opt-in telemetry on tool-call distribution after v0.5 dogfooding.)_
 13. **MCP Resources are honored by all target clients.** Verbose schema documentation (workout DSL, custom-item content shapes, event categories) belongs in Resources rather than inline tool descriptions. _(Validate during KR6 client-compatibility sweep — note any client that ignores `resources/list` and fall back to inline docs only for those.)_
 14. **`input_examples` is honored by the official Go MCP SDK and surfaces to LLMs.** Anthropic reports 72→90% accuracy on complex argument shapes when examples are present. _(Validate during MCP SDK integration; if not supported, file upstream or use the lower-level SDK API.)_
 15. **The `locked` flag on wellness records actually prevents device sync overwrites** as documented, so manual entries via MCP survive the next Garmin/Apple Health/Oura push. _(Validate by writing a wellness record with `locked: true` and triggering a device sync.)_
