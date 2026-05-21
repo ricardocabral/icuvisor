@@ -3,8 +3,10 @@ package intervals
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -82,5 +84,59 @@ func TestCustomItemsClientCreatesAndUpdatesItem(t *testing.T) {
 	}
 	if item.ID != "9" || item.Name == nil || *item.Name != "Renamed" {
 		t.Fatalf("item = %+v, want updated custom item", item)
+	}
+}
+
+func TestCreateCustomItem422ReturnsValidationError(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		body      string
+		wantField string
+	}{
+		{
+			name:      "unknown field in content",
+			body:      "Unknown field: WhoopStrain",
+			wantField: "WhoopStrain",
+		},
+		{
+			name:      "json error no field",
+			body:      `{"error":"content is invalid"}`,
+			wantField: "",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusUnprocessableEntity)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer server.Close()
+
+			client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+			_, err := client.CreateCustomItem(context.Background(), WriteCustomItemParams{
+				ItemType:   "INPUT_FIELD",
+				Name:       "Test",
+				NameSet:    true,
+				Content:    map[string]any{"field": "WhoopStrain"},
+				ContentSet: true,
+			})
+			if !errors.Is(err, ErrValidation) {
+				t.Fatalf("CreateCustomItem() error = %v, want ErrValidation", err)
+			}
+			var ve *ValidationError
+			if !errors.As(err, &ve) {
+				t.Fatalf("CreateCustomItem() error = %v, want *ValidationError", err)
+			}
+			if ve.Field != tc.wantField {
+				t.Fatalf("ValidationError.Field = %q, want %q", ve.Field, tc.wantField)
+			}
+			if tc.body != "" && strings.Contains(err.Error(), tc.body) {
+				t.Fatalf("error %q leaked raw upstream body", err)
+			}
+		})
 	}
 }

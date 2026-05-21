@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- HTTP 422 responses from intervals.icu are now categorized as a stable `ErrValidation` sentinel (matchable via `errors.Is`/`errors.As`) instead of falling through to the generic `ErrUpstream` path. Write tools (`update_wellness`, `create_custom_item`, `update_custom_item`, `update_sport_settings`) parse the upstream rejection body to extract the offending field name and return a short, actionable message — for example `intervals.icu rejected field "WhoopStrain": create it under Settings > Custom Fields in intervals.icu, or omit it from this call`. The full upstream body is logged via `slog` and never surfaced to the LLM.
+
 ### Added
 
 - `get_extended_metrics` now surfaces the strain-score power-duration model parameters when intervals.icu has fitted them: `strain_score_cp_watts` (critical power), `strain_score_w_prime_kj` (W', converted from upstream joules), and `strain_score_p_max_watts` (maximal power). Terse mode still drops them when upstream returns null.

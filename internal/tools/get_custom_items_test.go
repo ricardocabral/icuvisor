@@ -19,6 +19,8 @@ type fakeCustomItemsClient struct {
 	detailCalls []string
 	created     []intervals.WriteCustomItemParams
 	updated     []intervals.WriteCustomItemParams
+	createErr   error
+	updateErr   error
 }
 
 func (f *fakeCustomItemsClient) ListCustomItems(context.Context) ([]intervals.CustomItem, error) {

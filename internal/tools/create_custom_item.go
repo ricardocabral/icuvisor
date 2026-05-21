@@ -59,6 +59,9 @@ func createCustomItemHandler(client CustomItemCreatorClient, readClient CustomIt
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
 			}
+			if msg, ok := validationErrorMessage(err); ok {
+				return Result{}, NewUserError(msg, err)
+			}
 			return Result{}, NewUserError(createCustomItemMessage, err)
 		}
 		payload := shapeCustomItemWriteResponse(item, "create", customItemsEndpoint, item.ID, args.ItemType, nil, schemaSourceCount, schemaSource)

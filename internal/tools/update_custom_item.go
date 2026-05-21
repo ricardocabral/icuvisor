@@ -68,6 +68,9 @@ func updateCustomItemHandler(client CustomItemUpdaterClient, readClient CustomIt
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
 			}
+			if msg, ok := validationErrorMessage(err); ok {
+				return Result{}, NewUserError(msg, err)
+			}
 			return Result{}, NewUserError(updateCustomItemMessage, err)
 		}
 		payload := shapeCustomItemWriteResponse(item, "update", customItemByIDEndpoint, args.ItemID, itemType, updateCustomItemFieldsUpdated(args), schemaSourceCount, schemaSource)
