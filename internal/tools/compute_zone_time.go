@@ -238,7 +238,7 @@ func collectZoneAggregate(ctx context.Context, args computeZoneRequest, fitnessC
 		}
 		zones, key := zoneSliceForMetric(activity.Raw, args.ZoneMetric)
 		loadRaw := activity.Raw
-		if extendedClient != nil && activity.ID != "" {
+		if activity.ID != "" {
 			detail, detailErr := extendedClient.GetActivity(ctx, activity.ID)
 			if detailErr == nil {
 				loadRaw = detail.Raw
