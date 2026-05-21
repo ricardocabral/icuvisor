@@ -12,6 +12,9 @@ import (
 
 func (f *fakeCustomItemsClient) UpdateCustomItem(_ context.Context, params intervals.WriteCustomItemParams) (intervals.CustomItem, error) {
 	f.updated = append(f.updated, params)
+	if f.updateErr != nil {
+		return intervals.CustomItem{}, f.updateErr
+	}
 	if f.updatedItem.Raw != nil {
 		return f.updatedItem, nil
 	}

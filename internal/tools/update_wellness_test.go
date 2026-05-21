@@ -312,6 +312,67 @@ func TestUpdateWellnessIncludeFullPreservesRawNullKeys(t *testing.T) {
 	}
 }
 
+func TestUpdateWellness422ProducesActionableFieldMessage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		err         error
+		wantMessage string
+	}{
+		{
+			name:        "named field",
+			err:         &intervals.ValidationError{Field: "WhoopStrain", UpstreamMessage: "Unrecognized field [WhoopStrain]"},
+			wantMessage: `intervals.icu rejected field "WhoopStrain": create it under Settings > Custom Fields in intervals.icu, or omit it from this call`,
+		},
+		{
+			name:        "no field name",
+			err:         &intervals.ValidationError{UpstreamMessage: "invalid request"},
+			wantMessage: "intervals.icu rejected the request (HTTP 422): check that all fields are configured in your intervals.icu account settings",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &fakeWellnessWriterClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{Timezone: "UTC"}},
+				err:               tc.err,
+				row:               intervals.Wellness{},
+			}
+			// set up the fake so UpdateWellness returns the error
+			client.row = decodeWellnessRow(t, `{"id":"2026-05-01"}`)
+			client.err = tc.err
+			tool := newUpdateWellnessTool(client, client, "test", "UTC", false)
+			fatigue := 2
+			_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: mustMarshal(t, map[string]any{"date": "2026-05-01", "fatigue": fatigue})})
+			if err == nil {
+				t.Fatal("Handler() error = nil, want actionable validation error")
+			}
+			message, ok := PublicErrorMessage(err)
+			if !ok {
+				t.Fatalf("PublicErrorMessage() ok = false, err = %v", err)
+			}
+			if message != tc.wantMessage {
+				t.Fatalf("message = %q, want %q", message, tc.wantMessage)
+			}
+			var ve *intervals.ValidationError
+			if errors.As(tc.err, &ve) && ve.UpstreamMessage != "" && strings.Contains(message, ve.UpstreamMessage) {
+				t.Fatalf("message %q leaked raw upstream body", message)
+			}
+		})
+	}
+}
+
+func mustMarshal(t *testing.T, v any) json.RawMessage {
+	t.Helper()
+	b, err := json.Marshal(v)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	return json.RawMessage(b)
+}
+
 func TestUpdateWellnessRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 

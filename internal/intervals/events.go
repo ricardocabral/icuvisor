@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -222,8 +223,22 @@ func (c *Client) doJSONBody(ctx context.Context, method string, body any, out an
 
 		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 			retryAfter := parseRetryAfter(resp.Header.Get("Retry-After"), time.Now())
-			apiErr := errorForStatus(resp.StatusCode, retryAfter)
 			retry, wait := c.decideRetry(ctx, method, resp, nil, attempt)
+			if resp.StatusCode == http.StatusUnprocessableEntity {
+				validationErr := parseValidationError(resp.Body)
+				_ = resp.Body.Close()
+				if validationErr.UpstreamMessage != "" {
+					slog.Default().InfoContext(ctx, "intervals.icu 422 rejection", "upstream_message", validationErr.UpstreamMessage)
+				}
+				if retry {
+					if sleepErr := c.sleepBeforeRetry(ctx, wait); sleepErr != nil {
+						return sleepErr
+					}
+					continue
+				}
+				return fmt.Errorf("calling intervals.icu: %w", validationErr)
+			}
+			apiErr := errorForStatus(resp.StatusCode, retryAfter)
 			_, _ = io.Copy(io.Discard, resp.Body)
 			closeErr := resp.Body.Close()
 			if retry {

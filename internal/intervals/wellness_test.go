@@ -316,6 +316,121 @@ func TestListWellnessWrapsHTTPError(t *testing.T) {
 	}
 }
 
+func TestUpdateWellness422ReturnsValidationError(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		body      string
+		wantField string
+	}{
+		{
+			name:      "plain text unrecognized wellness field",
+			body:      "Unrecognized wellness field [WhoopStrain]",
+			wantField: "WhoopStrain",
+		},
+		{
+			name:      "json error shape",
+			body:      `{"error":"Unknown field: MyCustomField"}`,
+			wantField: "MyCustomField",
+		},
+		{
+			name:      "no field name",
+			body:      "invalid request",
+			wantField: "",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusUnprocessableEntity)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer server.Close()
+
+			client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+			fatigue := 2
+			_, err := client.UpdateWellness(context.Background(), WriteWellnessParams{Date: "2026-05-01", Fatigue: &fatigue})
+			if !errors.Is(err, ErrValidation) {
+				t.Fatalf("UpdateWellness() error = %v, want ErrValidation", err)
+			}
+			var ve *ValidationError
+			if !errors.As(err, &ve) {
+				t.Fatalf("UpdateWellness() error = %v, want *ValidationError", err)
+			}
+			if ve.Field != tc.wantField {
+				t.Fatalf("ValidationError.Field = %q, want %q", ve.Field, tc.wantField)
+			}
+			if strings.Contains(err.Error(), tc.body) {
+				t.Fatalf("error %q leaked raw upstream body", err)
+			}
+		})
+	}
+}
+
+func TestParseValidationErrorExtractsField(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		body      string
+		wantField string
+		wantMsg   string
+	}{
+		{
+			name:      "wellness bracket pattern",
+			body:      "Unrecognized wellness field [feel]",
+			wantField: "feel",
+			wantMsg:   "Unrecognized wellness field [feel]",
+		},
+		{
+			name:      "custom field colon pattern",
+			body:      "Unknown field: WhoopStrain",
+			wantField: "WhoopStrain",
+			wantMsg:   "Unknown field: WhoopStrain",
+		},
+		{
+			name:      "json message shape",
+			body:      `{"message":"Field 'MyScore' is not valid"}`,
+			wantField: "MyScore",
+			wantMsg:   "Field 'MyScore' is not valid",
+		},
+		{
+			name:      "json error shape",
+			body:      `{"error":"Unknown field: SomeCustom"}`,
+			wantField: "SomeCustom",
+			wantMsg:   "Unknown field: SomeCustom",
+		},
+		{
+			name:      "no field name",
+			body:      "internal server error",
+			wantField: "",
+			wantMsg:   "internal server error",
+		},
+		{
+			name:      "empty body",
+			body:      "",
+			wantField: "",
+			wantMsg:   "",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ve := parseValidationError(strings.NewReader(tc.body))
+			if ve.Field != tc.wantField {
+				t.Fatalf("Field = %q, want %q", ve.Field, tc.wantField)
+			}
+			if ve.UpstreamMessage != tc.wantMsg {
+				t.Fatalf("UpstreamMessage = %q, want %q", ve.UpstreamMessage, tc.wantMsg)
+			}
+		})
+	}
+}
+
 func readJSONFixture(t *testing.T, path string, out any) {
 	t.Helper()
 	data, err := os.ReadFile(path)
