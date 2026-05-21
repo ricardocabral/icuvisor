@@ -67,6 +67,22 @@ Useful flags: `--filter CB-WEEKLY` (subset by id prefix), `--model` /
 the server is not in coach mode; full-toolset scenarios are skipped on a
 core-only server.
 
+### Handling run-to-run noise
+
+The agent and the judge are both stochastic, so a single run scores ±1 point.
+The runner manages this:
+
+- `--repeats N` runs each scenario N times; the per-scenario verdict uses the
+  **mean overall**, so one noisy run cannot flip it. Output reports mean / min /
+  max per scenario.
+- `--scenario-delay` (default 5s) and `--tool-delay` (default 0.5s) throttle
+  requests to keep intervals.icu from rate-limiting a long run.
+- `--retries` (default 3) retries transient tool errors (rate limit, gateway,
+  timeout) with exponential backoff.
+
+When comparing a recipe change before/after, use `--repeats 3` or higher on the
+affected scenarios and compare the means.
+
 ## The iteration loop
 
 The judge does not just score — it returns `improvement_suggestions` aimed at

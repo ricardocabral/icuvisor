@@ -44,6 +44,10 @@ go.work.sum
 /scripts/eval/results/*
 !/scripts/eval/results/.gitkeep
 
+# Python bytecode (eval harness tooling)
+__pycache__/
+*.pyc
+
 # Local AI tooling
 .pi-lens/
 

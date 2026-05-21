@@ -16,16 +16,23 @@ Two modes:
 Live mode needs `anthropic` and `mcp` installed and ANTHROPIC_API_KEY set, and
 an icuvisor binary configured against a (test) intervals.icu account.
 
+Live runs throttle between tool calls and scenarios and retry transient
+upstream errors so a rate-limit blip does not poison scores. Use --repeats to
+run each scenario several times; the per-scenario verdict uses the mean overall
+so one noisy run cannot flip it.
+
 Examples:
   python3 scripts/eval/run_eval.py --validate
   python3 scripts/eval/run_eval.py --server-cmd ./bin/icuvisor
-  python3 scripts/eval/run_eval.py --filter CB-WEEKLY --server-cmd ./bin/icuvisor
+  python3 scripts/eval/run_eval.py --filter CB-ACT --repeats 3 --server-cmd ./bin/icuvisor
 """
 
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -150,9 +157,14 @@ async def run_live(args, spec: dict, judge_text: str) -> int:
     from mcp.client.stdio import stdio_client
 
     client = anthropic.Anthropic()
-    server = StdioServerParameters(command=args.server_cmd, args=args.server_args)
+    # Inherit the parent environment so the spawned icuvisor server sees
+    # ICUVISOR_TOOLSET, ICUVISOR_DELETE_MODE, ICUVISOR_CONFIG, etc. The MCP SDK
+    # otherwise starts the child with only a minimal default environment.
+    server = StdioServerParameters(command=args.server_cmd, args=args.server_args,
+                                   env=dict(os.environ))
+    prefixes = [p.strip() for p in args.filter.split(",") if p.strip()]
     scenarios = [s for s in spec["scenarios"]
-                 if not args.filter or s["id"].startswith(args.filter)]
+                 if not prefixes or any(s["id"].startswith(p) for p in prefixes)]
 
     results = []
     async with stdio_client(server) as (read, write):
@@ -166,6 +178,7 @@ async def run_live(args, spec: dict, judge_text: str) -> int:
                           for t in listed.tools]
             print(f"server exposes {len(available)} tools\n")
 
+            runnable = []
             for sc in scenarios:
                 missing = set(sc["expected_tools"]) - available
                 if missing:
@@ -174,23 +187,71 @@ async def run_live(args, spec: dict, judge_text: str) -> int:
                     results.append({"scenario_id": sc["id"], "verdict": "skipped",
                                     "reason": f"missing tools {sorted(missing)}"})
                     continue
+                runnable.append(sc)
 
-                print(f"RUN  {sc['id']} ({sc['recipe']}) ...", flush=True)
-                transcript = await _agent_loop(client, session, anth_tools, sc,
-                                               args.model, args.max_steps)
-                verdict = _judge(client, judge_text, sc, transcript,
-                                 args.judge_model)
-                results.append(verdict)
-                mark = {"pass": "PASS", "fail": "FAIL"}.get(
-                    verdict.get("verdict"), "????")
-                print(f"     {mark}  overall={verdict.get('overall')}")
+            total = len(runnable) * args.repeats
+            done = 0
+            for sc in runnable:
+                for rep in range(args.repeats):
+                    if done and args.scenario_delay > 0:
+                        await asyncio.sleep(args.scenario_delay)
+                    done += 1
+                    tag = f" [{rep + 1}/{args.repeats}]" if args.repeats > 1 else ""
+                    print(f"RUN  {sc['id']}{tag} ({sc['recipe']}) "
+                          f"[{done}/{total}] ...", flush=True)
+                    transcript = await _agent_loop(client, session, anth_tools, sc,
+                                                   args.model, args.max_steps,
+                                                   args.tool_delay, args.retries,
+                                                   args.max_tool_chars)
+                    verdict = _judge(client, judge_text, sc, transcript,
+                                     args.judge_model)
+                    verdict["repeat"] = rep + 1
+                    results.append(verdict)
+                    mark = {"pass": "PASS", "fail": "FAIL"}.get(
+                        verdict.get("verdict"), "????")
+                    print(f"     {mark}  overall={verdict.get('overall')}")
 
-    _write_and_report(spec, results, args.output)
-    failed = [r for r in results if r.get("verdict") == "fail"]
-    return 1 if failed else 0
+    threshold = spec.get("scoring", {}).get("pass_threshold", 4.0)
+    summary = _write_and_report(spec, results, args.output, args.repeats, threshold)
+    weak = [sid for sid, p in summary["per_scenario"].items()
+            if p["overall_mean"] < threshold]
+    return 1 if weak else 0
 
 
-async def _agent_loop(client, session, tools, scenario, model, max_steps):
+async def _call_tool(session, name, arguments, tool_delay, retries, max_chars):
+    """Call an MCP tool, pausing tool_delay before each attempt and retrying a
+    bounded number of times on clearly transient upstream failures (rate
+    limits, gateway errors, timeouts). Returns the result text for the model.
+
+    The cap must be generous enough to hold a full terse tool page (e.g. a
+    get_activities listing); too small a cap looks like a truncated upstream
+    payload and makes the agent loop re-querying for "missing" data."""
+    transient = ("rate limit", "ratelimit", "rate-limit", "429", "502", "503",
+                 "504", "timed out", "timeout", "temporarily", "try again")
+    attempt = 0
+    while True:
+        if tool_delay > 0:
+            await asyncio.sleep(tool_delay)
+        try:
+            result = await session.call_tool(name, arguments)
+            text = _tool_result_text(result)
+            is_error = bool(getattr(result, "isError", False))
+        except Exception as exc:  # noqa: BLE001 - surface tool errors to the model
+            text, is_error = f"ERROR calling {name}: {exc}", True
+        if (is_error and attempt < retries
+                and any(t in text.lower() for t in transient)):
+            attempt += 1
+            await asyncio.sleep(2 ** attempt)  # 2s, 4s, 8s backoff
+            continue
+        if len(text) > max_chars:
+            text = (text[:max_chars] + f"\n[the eval harness capped this result "
+                    f"at {max_chars} chars; this is a harness limit, not missing "
+                    f"upstream data — do not re-query for the rest]")
+        return text
+
+
+async def _agent_loop(client, session, tools, scenario, model, max_steps,
+                      tool_delay, retries, max_tool_chars):
     messages = [{"role": "user", "content": scenario["prompt"]}]
     tool_calls = []
     for _ in range(max_steps):
@@ -206,11 +267,8 @@ async def _agent_loop(client, session, tools, scenario, model, max_steps):
                 continue
             args = block.input or {}
             tool_calls.append({"name": block.name, "arguments": args})
-            try:
-                result = await session.call_tool(block.name, args)
-                text = _tool_result_text(result)[:2000]
-            except Exception as exc:  # noqa: BLE001 - report tool errors to model
-                text = f"ERROR calling {block.name}: {exc}"
+            text = await _call_tool(session, block.name, args, tool_delay,
+                                    retries, max_tool_chars)
             tool_results.append({"type": "tool_result",
                                  "tool_use_id": block.id, "content": text})
         messages.append({"role": "user", "content": tool_results})
@@ -242,7 +300,8 @@ def _judge(client, judge_text, scenario, transcript, judge_model) -> dict:
     return verdict
 
 
-def _write_and_report(spec, results, output: Path) -> None:
+def _write_and_report(spec, results, output: Path, repeats: int,
+                      threshold: float) -> dict:
     scored = [r for r in results if r.get("verdict") in ("pass", "fail")]
     dims = spec.get("scoring", {}).get("dimensions", [])
     means = {}
@@ -251,23 +310,54 @@ def _write_and_report(spec, results, output: Path) -> None:
                 if isinstance(r.get("scores"), dict) and d in r["scores"]]
         means[d] = round(sum(vals) / len(vals), 2) if vals else None
     passed = sum(1 for r in scored if r["verdict"] == "pass")
+
+    # Aggregate across repeats: a scenario is judged by its mean overall, so a
+    # single noisy run cannot flip a verdict on its own.
+    by_scenario: dict[str, list] = {}
+    for r in scored:
+        by_scenario.setdefault(r["scenario_id"], []).append(r)
+    per_scenario = {}
+    for sid, runs in sorted(by_scenario.items()):
+        overalls = [x.get("overall") or 0.0 for x in runs]
+        per_scenario[sid] = {
+            "runs": len(runs),
+            "passed": sum(1 for x in runs if x["verdict"] == "pass"),
+            "overall_mean": round(sum(overalls) / len(overalls), 2),
+            "overall_min": round(min(overalls), 2),
+            "overall_max": round(max(overalls), 2),
+            "meets_threshold": (sum(overalls) / len(overalls)) >= threshold,
+        }
     summary = {
         "scenario_set": spec.get("version"),
-        "scored": len(scored),
-        "passed": passed,
-        "pass_rate": round(passed / len(scored), 3) if scored else None,
+        "repeats": repeats,
+        "pass_threshold": threshold,
+        "scored_runs": len(scored),
+        "passed_runs": passed,
+        "scenarios_meeting_threshold":
+            sum(1 for p in per_scenario.values() if p["meets_threshold"]),
+        "scenario_count": len(per_scenario),
         "dimension_means": means,
+        "per_scenario": per_scenario,
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps({"summary": summary, "results": results}, indent=2))
 
-    print("\n" + "=" * 60)
-    print(f"pass {passed}/{len(scored)} scored"
-          + (f"  ({len(results) - len(scored)} skipped)"
-             if len(results) != len(scored) else ""))
+    print("\n" + "=" * 66)
+    skipped = len(results) - len(scored)
+    print(f"{summary['scenarios_meeting_threshold']}/{len(per_scenario)} "
+          f"scenarios meet the {threshold} threshold"
+          f" ({passed}/{len(scored)} runs passed"
+          + (f", {skipped} skipped)" if skipped else ")"))
+    print(f"\n{'scenario':16s} {'pass':>8s} {'mean':>6s} {'min':>6s} {'max':>6s}")
+    for sid, p in per_scenario.items():
+        flag = "  " if p["meets_threshold"] else " <"
+        print(f"  {sid:14s} {p['passed']}/{p['runs']:<6d} "
+              f"{p['overall_mean']:>6} {p['overall_min']:>6} {p['overall_max']:>6}{flag}")
+    print("\ndimension means (all scored runs):")
     for d, m in means.items():
         print(f"  {d:18s} {m}")
-    print(f"results written to {output}")
+    print(f"\nresults written to {output}")
+    return summary
 
 
 # --------------------------------------------------------------------------
@@ -280,7 +370,9 @@ def main() -> int:
     p.add_argument("--judge", type=Path, default=DEFAULT_JUDGE)
     p.add_argument("--catalog", type=Path, default=DEFAULT_CATALOG)
     p.add_argument("--output", type=Path, default=DEFAULT_RESULTS)
-    p.add_argument("--filter", default="", help="run only scenarios whose id starts with this")
+    p.add_argument("--filter", default="",
+                   help="run only scenarios whose id starts with one of these "
+                        "comma-separated prefixes")
     p.add_argument("--server-cmd", default="icuvisor",
                    help="icuvisor binary to spawn as the MCP server")
     p.add_argument("--server-args", nargs="*", default=[],
@@ -291,6 +383,17 @@ def main() -> int:
                    help="model used as the LLM judge")
     p.add_argument("--max-steps", type=int, default=12,
                    help="max agent tool-use turns per scenario")
+    p.add_argument("--repeats", type=int, default=1,
+                   help="run each scenario this many times; verdict uses the mean")
+    p.add_argument("--scenario-delay", type=float, default=5.0,
+                   help="seconds to pause between scenario runs (rate-limit headroom)")
+    p.add_argument("--tool-delay", type=float, default=0.5,
+                   help="seconds to pause before each MCP tool call")
+    p.add_argument("--retries", type=int, default=3,
+                   help="retries on transient (rate-limit/gateway/timeout) tool errors")
+    p.add_argument("--max-tool-chars", type=int, default=24000,
+                   help="cap on tool-result chars shown to the model; must hold a "
+                        "full terse page or the agent loops on perceived truncation")
     args = p.parse_args()
 
     if args.validate:
@@ -299,7 +402,6 @@ def main() -> int:
     spec = json.loads(args.scenarios.read_text())
     judge_text = args.judge.read_text()
     try:
-        import asyncio
         return asyncio.run(run_live(args, spec, judge_text))
     except ImportError as exc:
         print(f"live mode needs extra packages: {exc}")
