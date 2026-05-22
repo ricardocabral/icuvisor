@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-05-22
+
 ### Fixed
 
 - Setup and athlete-ID validation now accept the bare-numeric athlete IDs that intervals.icu issues to Strava-linked accounts (e.g. `612345`), not just the `i12345` form. The previous validation rejected any ID without a leading `i`, blocking setup for those athletes. Bare-numeric IDs are kept as-is — the `i` prefix is part of the ID and is never added or stripped. (#24)
@@ -85,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/ricardocabral/icuvisor/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/ricardocabral/icuvisor/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ricardocabral/icuvisor/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ricardocabral/icuvisor/compare/v0.0.2...v0.1.0
