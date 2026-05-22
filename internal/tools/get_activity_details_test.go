@@ -223,7 +223,7 @@ func TestGetActivityDetailsShapesTerseFullAndStravaUnavailable(t *testing.T) {
 	if activityMap["timezone"] != "America/Sao_Paulo" {
 		t.Fatalf("timezone = %v, want profile timezone", activityMap["timezone"])
 	}
-	assertUnavailableReasonAndWorkaround(t, activityMap, "strava_tos", wantUnknownStravaWorkaround)
+	assertUnavailableReasonAndWorkaround(t, activityMap, "strava_blocked", wantUnknownStravaWorkaround)
 	full := activityMap["full"].(map[string]any)
 	if value, ok := full["name"]; !ok || value != nil {
 		t.Fatalf("full name = %#v present %v, want preserved nil", value, ok)
@@ -252,7 +252,7 @@ func TestGetActivityDetailsMarksSyncChainStubsUnavailable(t *testing.T) {
 			if activityMap["strava_imported"] != true {
 				t.Fatalf("activity = %#v, want strava_imported marker", activityMap)
 			}
-			assertUnavailableReasonAndWorkaround(t, activityMap, "strava_tos", wantWorkarounds[activity.ID])
+			assertUnavailableReasonAndWorkaround(t, activityMap, "strava_blocked", wantWorkarounds[activity.ID])
 		})
 	}
 }

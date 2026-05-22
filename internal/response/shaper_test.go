@@ -792,7 +792,7 @@ func goldenSnapshotCases() []goldenSnapshotCase {
 			input: snapshotActivitiesResponse{
 				Activities: []snapshotActivityRow{
 					{ActivityID: "a1", Name: "Tempo Ride", Sport: "Ride", DistanceKM: &distanceKM, MovingTimeSeconds: 5400},
-					{ActivityID: "a2", Sport: "Run", MovingTimeSeconds: 1800, Unavailable: &snapshotUnavailable{Reason: "strava_tos", Workaround: "connect device directly"}},
+					{ActivityID: "a2", Sport: "Run", MovingTimeSeconds: 1800, Unavailable: &snapshotUnavailable{Reason: "strava_blocked", Workaround: "connect device directly"}},
 				},
 				Meta: snapshotActivitiesMeta{PageSize: 2, MoreAvailable: false, IncludeFull: false},
 			},

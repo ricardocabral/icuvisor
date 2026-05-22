@@ -93,7 +93,7 @@ func TestGetActivityMessagesFallbacksToStravaUnavailable(t *testing.T) {
 		t.Fatalf("Handler() error = %v", err)
 	}
 	payload := resultMap(t, result)
-	assertUnavailableReasonAndWorkaround(t, payload, "strava_tos", wantWahooStravaWorkaround)
+	assertUnavailableReasonAndWorkaround(t, payload, "strava_blocked", wantWahooStravaWorkaround)
 }
 
 func decodeMessageFixtures(t *testing.T, raws ...string) []intervals.ActivityMessage {

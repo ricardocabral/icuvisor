@@ -708,7 +708,7 @@ func TestGetActivitiesDetectsDocumentedStravaStubShapes(t *testing.T) {
 	for _, rawRow := range rows {
 		row := rawRow.(map[string]any)
 		activityID, _ := row["activity_id"].(string)
-		assertUnavailableReasonAndWorkaround(t, row, "strava_tos", wantWorkarounds[activityID])
+		assertUnavailableReasonAndWorkaround(t, row, "strava_blocked", wantWorkarounds[activityID])
 	}
 }
 
@@ -733,7 +733,7 @@ func TestGetActivitiesKeepsStravaRowsWhenUnnamedFilteringIsDefault(t *testing.T)
 	if row["activity_id"] != "hidden1" {
 		t.Fatalf("row = %#v, want visible Strava unavailable marker", row)
 	}
-	assertUnavailableReasonAndWorkaround(t, row, "strava_tos", wantUnknownStravaWorkaround)
+	assertUnavailableReasonAndWorkaround(t, row, "strava_blocked", wantUnknownStravaWorkaround)
 }
 
 func TestGetActivitiesDoesNotEmitPaceForCycling(t *testing.T) {
@@ -786,7 +786,7 @@ func TestGetActivitiesShapesStravaFullAndUnits(t *testing.T) {
 		t.Fatalf("full name_null = %#v present %v, want preserved nil", value, ok)
 	}
 	hidden := rows[1].(map[string]any)
-	assertUnavailableReasonAndWorkaround(t, hidden, "strava_tos", wantUnknownStravaWorkaround)
+	assertUnavailableReasonAndWorkaround(t, hidden, "strava_blocked", wantUnknownStravaWorkaround)
 }
 
 func newFakeActivitiesClient(t *testing.T, rawActivities []string, preferredUnits string) *fakeActivitiesProfileClient {

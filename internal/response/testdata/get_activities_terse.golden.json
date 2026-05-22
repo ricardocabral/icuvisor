@@ -27,7 +27,7 @@
       "moving_time_seconds": 1800,
       "sport": "Run",
       "unavailable": {
-        "reason": "strava_tos",
+        "reason": "strava_blocked",
         "workaround": "connect device directly"
       }
     }
