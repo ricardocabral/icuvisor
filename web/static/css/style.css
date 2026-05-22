@@ -456,7 +456,9 @@ pre.code .s {
 
 /* Semantic accents by tool verb */
 .tool-verb--get,
-.tool-verb--list {
+.tool-verb--list,
+.tool-verb--analyze,
+.tool-verb--compute {
 	--tool-accent: #2f6fa8;
 }
 .tool-verb--create,

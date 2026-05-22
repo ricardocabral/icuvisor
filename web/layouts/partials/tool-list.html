@@ -1,23 +1,13 @@
 {{ $tools := site.Data.tools }}
 {{ if not $tools }}{{ errorf "web/data/tools.json is missing or empty; run make docs-tools" }}{{ end }}
-{{ $groups := slice "activities" "workout-library" "events" "fitness" "wellness" "custom-items" "settings" "coach" "meta" }}
-{{ $labels := dict
-  "activities" "Activities"
-  "workout-library" "Workout library"
-  "events" "Events &amp; calendar"
-  "fitness" "Fitness metrics"
-  "wellness" "Wellness"
-  "custom-items" "Custom items"
-  "settings" "Sport settings"
-  "coach" "Coach mode"
-  "meta" "Server"
-}}
+{{ $groups := site.Data.tool_groups }}
+{{ if not $groups }}{{ errorf "web/data/tool_groups.yaml is missing or empty" }}{{ end }}
 <div class="tool-list">
-  {{ range $group := $groups }}
-    {{ $rows := where $tools "group" $group }}
+  {{ range $g := $groups }}
+    {{ $rows := where $tools "group" $g.key }}
     {{ with $rows }}
     <section class="tool-list-group">
-      <h3>{{ index $labels $group | safeHTML }}</h3>
+      <h3>{{ $g.label }}</h3>
       <dl>
       {{ range . }}
         {{ $parts := split .name "_" }}

@@ -1,0 +1,26 @@
+# Ordered tool-catalog groups.
+#
+# Shared by the landing-page tool list (layouts/partials/tool-list.html) and the
+# generated tool reference (layouts/partials/tool-catalog.html) so both pages
+# present the same topic hierarchy. `key` matches the `group` field emitted into
+# web/data/tools.json by `make docs-tools`; `label` is the display heading.
+- key: activities
+  label: Activities
+- key: workout-library
+  label: Workout library
+- key: events
+  label: Events & calendar
+- key: fitness
+  label: Fitness metrics
+- key: analyzers
+  label: Analyzers
+- key: wellness
+  label: Wellness
+- key: custom-items
+  label: Custom items
+- key: settings
+  label: Sport settings
+- key: coach
+  label: Coach mode
+- key: meta
+  label: Server
