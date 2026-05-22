@@ -242,6 +242,32 @@ func workoutDocSummary(value any) *workoutDocSummaryRow {
 	return summary
 }
 
+// workoutDocUnrenderedWarning explains that intervals.icu stored the write but did not
+// parse the uploaded workout_doc into a structured workout, so it renders as plain text.
+const workoutDocUnrenderedWarning = "intervals.icu saved this but did not parse the uploaded workout_doc into structured steps; it will display as plain text without graphical interval segments. The serialized workout DSL may not match the upstream workout grammar."
+
+// workoutDocHasSteps reports whether an upstream workout_doc payload parsed into at least one step.
+func workoutDocHasSteps(value any) bool {
+	switch typed := value.(type) {
+	case map[string]any:
+		steps, ok := typed["steps"].([]any)
+		return ok && len(steps) > 0
+	case []any:
+		return len(typed) > 0
+	default:
+		return false
+	}
+}
+
+// workoutDocRenderWarning returns a warning when a structured workout_doc with steps was
+// uploaded but the upstream response shows it was not parsed into a rendered workout.
+func workoutDocRenderWarning(uploadedSteps bool, upstreamDoc any) string {
+	if !uploadedSteps || workoutDocHasSteps(upstreamDoc) {
+		return ""
+	}
+	return workoutDocUnrenderedWarning
+}
+
 func firstRaw(raw map[string]any, keys ...string) any {
 	for _, key := range keys {
 		if value, ok := raw[key]; ok && value != nil {

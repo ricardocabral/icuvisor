@@ -95,6 +95,28 @@ func TestUpdateWorkoutSwapWorkoutDocSerializesGoldenDSL(t *testing.T) {
 	if meta["workout_doc_uploaded"] != "description_dsl" {
 		t.Fatalf("meta = %#v, want DSL upload marker", meta)
 	}
+	if _, ok := meta["workout_doc_warning"]; ok {
+		t.Fatalf("workout_doc_warning present when upstream rendered workout_doc: %#v", meta)
+	}
+}
+
+func TestUpdateWorkoutWarnsWhenUpstreamDoesNotRenderWorkoutDoc(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWorkoutUpdaterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		workout:           decodeToolWorkouts(t, `{"id":"w-9","name":"Unrendered","type":"Ride"}`)[0],
+	}
+	tool := newUpdateWorkoutTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"workout_id":"w-9","workout_doc":{"steps":[{"description":"Warmup","duration":600,"power":{"value":65,"units":"PERCENT_FTP"}}]}}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if warning, _ := meta["workout_doc_warning"].(string); warning == "" {
+		t.Fatalf("workout_doc_warning = %#v, want non-empty render warning when upstream returns no workout_doc", meta["workout_doc_warning"])
+	}
 }
 
 func TestUpdateWorkoutStripsSparseNullsAndPreservesFalseZero(t *testing.T) {
