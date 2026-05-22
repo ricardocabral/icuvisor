@@ -66,6 +66,31 @@ func TestCreateWorkoutWithStructuredStepsSerializesDSLAndReturnsReadShape(t *tes
 	if meta["operation"] != "create" || meta["workout_doc_uploaded"] != "description_dsl" || meta["sport"] != "Ride" {
 		t.Fatalf("meta = %#v, want create metadata", meta)
 	}
+	if _, ok := meta["workout_doc_warning"]; ok {
+		t.Fatalf("workout_doc_warning present when upstream rendered workout_doc: %#v", meta)
+	}
+}
+
+func TestCreateWorkoutWarnsWhenUpstreamDoesNotRenderWorkoutDoc(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWorkoutCreatorClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		workout:           decodeToolWorkouts(t, `{"id":"w-9","name":"Unrendered","type":"Ride","folder_id":"f-20"}`)[0],
+	}
+	tool := newCreateWorkoutTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"name":"Unrendered","folder_id":"f-20","sport":"Ride","workout_doc":{"steps":[{"description":"Warmup","duration":600,"power":{"value":65,"units":"PERCENT_FTP"}}]}}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["workout_doc_uploaded"] != "description_dsl" {
+		t.Fatalf("workout_doc_uploaded = %#v, want description_dsl", meta["workout_doc_uploaded"])
+	}
+	if warning, _ := meta["workout_doc_warning"].(string); warning == "" {
+		t.Fatalf("workout_doc_warning = %#v, want non-empty render warning when upstream returns no workout_doc", meta["workout_doc_warning"])
+	}
 }
 
 func TestCreateWorkoutWithFreeTextOnlyPreservesDescription(t *testing.T) {

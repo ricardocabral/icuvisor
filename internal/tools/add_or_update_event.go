@@ -49,6 +49,7 @@ type addOrUpdateEventMeta struct {
 	Date               string `json:"date"`
 	Timezone           string `json:"timezone"`
 	WorkoutDocUploaded string `json:"workout_doc_uploaded,omitempty"`
+	WorkoutDocWarning  string `json:"workout_doc_warning,omitempty"`
 	IncludeFull        bool   `json:"include_full"`
 }
 
@@ -168,7 +169,8 @@ func shapeAddOrUpdateEventResponse(event intervals.Event, args addOrUpdateEventR
 	if args.EventID != "" {
 		operation = "update"
 	}
-	return addOrUpdateEventResponse{Event: row, Meta: addOrUpdateEventMeta{Operation: operation, Date: args.Date, Timezone: timezoneName, WorkoutDocUploaded: workoutDocUploaded, IncludeFull: args.IncludeFull}}, nil
+	uploadedSteps := args.WorkoutDoc != nil && len(args.WorkoutDoc.Steps) > 0
+	return addOrUpdateEventResponse{Event: row, Meta: addOrUpdateEventMeta{Operation: operation, Date: args.Date, Timezone: timezoneName, WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, event.WorkoutDoc), IncludeFull: args.IncludeFull}}, nil
 }
 
 func addOrUpdateEventInputSchema() map[string]any {
@@ -250,5 +252,5 @@ func addOrUpdateEventInputExamples() []map[string]any {
 }
 
 func addOrUpdateEventOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Write confirmation containing the same terse event row shape used by get_event_by_id plus operation/date/timezone metadata."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Write confirmation containing the same terse event row shape used by get_event_by_id plus operation/date/timezone metadata. _meta.workout_doc_warning is set when intervals.icu stored the event but did not parse the uploaded workout_doc into a graphically rendered structured workout."}
 }

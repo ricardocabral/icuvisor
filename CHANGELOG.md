@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `get_activity_intervals` now exposes scalar upstream custom interval fields, such as manually-entered lactate values, under each interval's `custom_fields` map in terse mode without requiring `include_full:true`.
+- `create_workout`, `update_workout`, and `add_or_update_event` now set `_meta.workout_doc_warning` when a structured `workout_doc` was uploaded but intervals.icu did not parse it into a rendered structured workout, so callers learn the workout will display as plain text without graphical interval segments instead of silently assuming success.
 
 ### Changed
 

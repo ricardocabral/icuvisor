@@ -44,6 +44,7 @@ type createWorkoutMeta struct {
 	Sport               string   `json:"sport"`
 	Tags                []string `json:"tags,omitempty"`
 	WorkoutDocUploaded  string   `json:"workout_doc_uploaded,omitempty"`
+	WorkoutDocWarning   string   `json:"workout_doc_warning,omitempty"`
 	DefaultPayloadScope string   `json:"default_payload_scope"`
 }
 
@@ -123,7 +124,8 @@ func createWorkoutParams(args createWorkoutRequest) (intervals.WriteWorkoutParam
 }
 
 func shapeCreateWorkoutResponse(workout intervals.Workout, args createWorkoutRequest, workoutDocUploaded string) createWorkoutResponse {
-	return createWorkoutResponse{Workout: workoutToRow(workout, false), Meta: createWorkoutMeta{Operation: "create", SourceEndpoint: workoutLibraryWorkoutsEndpoint, FolderID: args.FolderID, Sport: args.Sport, Tags: append([]string(nil), args.Tags...), WorkoutDocUploaded: workoutDocUploaded, DefaultPayloadScope: "same terse workout row shape used by get_workout_library/get_workouts_in_folder; raw workout_doc remains summarized"}}
+	uploadedSteps := args.WorkoutDoc != nil && len(args.WorkoutDoc.Steps) > 0
+	return createWorkoutResponse{Workout: workoutToRow(workout, false), Meta: createWorkoutMeta{Operation: "create", SourceEndpoint: workoutLibraryWorkoutsEndpoint, FolderID: args.FolderID, Sport: args.Sport, Tags: append([]string(nil), args.Tags...), WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, workout.WorkoutDoc), DefaultPayloadScope: "same terse workout row shape used by get_workout_library/get_workouts_in_folder; raw workout_doc remains summarized"}}
 }
 
 func createWorkoutInputSchema() map[string]any {
@@ -176,5 +178,5 @@ func createWorkoutInputExamples() []map[string]any {
 }
 
 func createWorkoutOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Create confirmation containing the same terse workout row shape used by workout-library read tools plus operation, source endpoint, sport, and workout_doc upload metadata."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Create confirmation containing the same terse workout row shape used by workout-library read tools plus operation, source endpoint, sport, and workout_doc upload metadata. _meta.workout_doc_warning is set when intervals.icu stored the workout but did not parse the uploaded workout_doc into a graphically rendered structured workout."}
 }

@@ -199,6 +199,28 @@ func TestAddOrUpdateEventSerializesWorkoutDocGoldenFixture(t *testing.T) {
 	if meta["workout_doc_uploaded"] != "description_dsl" {
 		t.Fatalf("meta = %#v, want description_dsl upload marker", meta)
 	}
+	if _, ok := meta["workout_doc_warning"]; ok {
+		t.Fatalf("workout_doc_warning present when upstream rendered workout_doc: %#v", meta)
+	}
+}
+
+func TestAddOrUpdateEventWarnsWhenUpstreamDoesNotRenderWorkoutDoc(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		event:             decodeToolEvents(t, `{"id":"evt-9","category":"WORKOUT","name":"Unrendered","start_date_local":"2026-08-01"}`)[0],
+	}
+	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-08-01","category":"WORKOUT","type":"Ride","name":"Unrendered","workout_doc":{"steps":[{"description":"Warmup","duration":600,"power":{"value":65,"units":"PERCENT_FTP"}}]}}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if warning, _ := meta["workout_doc_warning"].(string); warning == "" {
+		t.Fatalf("workout_doc_warning = %#v, want non-empty render warning when upstream returns no workout_doc", meta["workout_doc_warning"])
+	}
 }
 
 func TestAddOrUpdateEventRejectsBadArguments(t *testing.T) {
