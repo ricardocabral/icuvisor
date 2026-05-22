@@ -1,11 +1,17 @@
 {{- if (site.Params.search.enable | default true) -}}
 <link rel="stylesheet" href="{{ "pagefind/pagefind-ui.css" | relURL }}" />
 {{- end }}
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --primary-hue: 22deg;
-    --primary-saturation: 89%;
-    --primary-lightness: 62%;
+    /* Hextra derives its whole primary scale from this HSL triple. Tuned to the
+       landing page's blue-grey secondary (#80a1c1) so links, sidebar/TOC active
+       states and code tints all read in the brand accent. */
+    --primary-hue: 210deg;
+    --primary-saturation: 42%;
+    --primary-lightness: 60%;
     --pagefind-ui-primary: #111827;
     --pagefind-ui-text: #111827;
     --pagefind-ui-background: #ffffff;

@@ -96,3 +96,365 @@
     overflow-x: auto;
   }
 }
+
+/* --- Tool reference catalog ------------------------------------------------
+   Styles the generated MCP tool catalog (layouts/partials/tool-catalog.html).
+   The landing page carries its own copy of these accents in
+   static/css/style.css; docs pages only load this file, so the catalog is
+   styled here too. Verbs are colour-coded by action: read, create, update,
+   delete -- the same scheme used by the landing-page tool list. */
+.tool-catalog {
+  --tv-read: #2f6fa8;
+  --tv-create: #15803d;
+  --tv-update: #b45309;
+  --tv-delete: #b91c1c;
+  --tv-meta: #6b7280;
+  display: grid;
+  gap: 2.5rem;
+  margin: 1.5rem 0 0;
+}
+.dark .tool-catalog {
+  --tv-read: #88b0d6;
+  --tv-create: #5fcb8c;
+  --tv-update: #e3a86e;
+  --tv-delete: #ec9090;
+  --tv-meta: #9aa1ad;
+}
+
+/* Verb -> accent mapping. Read covers get/list and the analyze/compute
+   analyzers; create covers add; update covers the in-place mutators. */
+.tool-catalog .tool-verb--get,
+.tool-catalog .tool-verb--list,
+.tool-catalog .tool-verb--analyze,
+.tool-catalog .tool-verb--compute {
+  --tool-accent: var(--tv-read);
+}
+.tool-catalog .tool-verb--create,
+.tool-catalog .tool-verb--add {
+  --tool-accent: var(--tv-create);
+}
+.tool-catalog .tool-verb--update,
+.tool-catalog .tool-verb--apply,
+.tool-catalog .tool-verb--link,
+.tool-catalog .tool-verb--select {
+  --tool-accent: var(--tv-update);
+}
+.tool-catalog .tool-verb--delete {
+  --tool-accent: var(--tv-delete);
+}
+.tool-catalog .tool-verb--icuvisor {
+  --tool-accent: var(--tv-meta);
+}
+
+/* Colour legend */
+.tool-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  margin: 0;
+  padding: 0.7rem 1rem;
+  border: 1px solid rgba(17, 24, 39, 0.1);
+  border-radius: 0.75rem;
+  background: rgba(17, 24, 39, 0.025);
+}
+.dark .tool-legend {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+.tool-legend-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  opacity: 0.7;
+}
+.tool-legend-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--tool-accent);
+}
+.tool-legend-dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 4px;
+  border-left: 3px solid var(--tool-accent);
+  background: color-mix(in srgb, var(--tool-accent) 22%, transparent);
+}
+
+/* Group sections */
+.tool-catalog .tool-group {
+  display: grid;
+  gap: 0.6rem;
+}
+.tool-catalog .tool-group > h2 {
+  margin: 0;
+  scroll-margin-top: 6rem;
+}
+.tool-catalog .table-wrap {
+  overflow-x: auto;
+}
+.tool-catalog .catalog-table {
+  margin: 0;
+}
+.tool-catalog tbody tr {
+  scroll-margin-top: 6rem;
+}
+
+/* Tool name -- a colour-coded chip keyed to the verb accent */
+.tool-catalog .catalog-table tbody th {
+  white-space: nowrap;
+}
+.tool-catalog .tool-id {
+  display: inline-flex;
+  align-items: baseline;
+  padding: 0.16rem 0.5rem 0.16rem 0.55rem;
+  border-radius: 6px;
+  border-left: 3px solid var(--tool-accent, rgba(120, 120, 120, 0.5));
+  background: color-mix(in srgb, var(--tool-accent, #808080) 9%, transparent);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.tool-catalog .tool-id .tool-verb {
+  color: var(--tool-accent);
+  font-weight: 600;
+}
+.tool-catalog .tool-id .tool-rest {
+  color: inherit;
+}
+
+/* Tier and safety badges */
+.tool-catalog .badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.tool-catalog .badge-tier {
+  color: var(--tv-meta);
+  background: color-mix(in srgb, var(--tv-meta) 10%, transparent);
+  border-color: color-mix(in srgb, var(--tv-meta) 28%, transparent);
+}
+.tool-catalog .badge-tier-full {
+  color: var(--tv-read);
+  background: color-mix(in srgb, var(--tv-read) 13%, transparent);
+  border-color: color-mix(in srgb, var(--tv-read) 32%, transparent);
+}
+.tool-catalog a.badge-tier-full:hover {
+  background: color-mix(in srgb, var(--tv-read) 22%, transparent);
+}
+.tool-catalog .badge-safety-read {
+  color: var(--tv-read);
+  background: color-mix(in srgb, var(--tv-read) 12%, transparent);
+  border-color: color-mix(in srgb, var(--tv-read) 30%, transparent);
+}
+.tool-catalog .badge-safety-write {
+  color: var(--tv-update);
+  background: color-mix(in srgb, var(--tv-update) 13%, transparent);
+  border-color: color-mix(in srgb, var(--tv-update) 30%, transparent);
+}
+.tool-catalog .badge-safety-delete {
+  color: var(--tv-delete);
+  background: color-mix(in srgb, var(--tv-delete) 13%, transparent);
+  border-color: color-mix(in srgb, var(--tv-delete) 30%, transparent);
+}
+
+/* Screen-reader-only text inside the catalog (e.g. badge context) */
+.tool-catalog .tool-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ===========================================================================
+   icuvisor brand skin
+   ---------------------------------------------------------------------------
+   Re-themes the Hextra docs (guides, tutorials, reference, cookbook, connect,
+   install, explain) so the colour scheme matches the bento landing page
+   (web/static/css/style.css): a warm cream page surface, the article floated
+   on a white "bento card", airy sidebar/TOC negative space, and a blue-grey
+   accent with peach reserved for tags and badges.
+
+   custom.css is loaded only on Hextra-rendered pages, never on the standalone
+   landing page, so every rule here is safely docs-scoped.
+
+   `!important` appears only where Hextra paints a colour through a Tailwind
+   utility class that would otherwise win on source order, or that already
+   carries its own `!important` (the dark-mode navbar).
+   =========================================================================== */
+
+:root {
+  --icv-surface: #fff5e6;
+  --icv-surface-sunk: #fdecd6;
+  --icv-card: #ffffff;
+  --icv-text: #111827;
+  --icv-text-muted: #4b5563;
+  --icv-border: rgba(17, 24, 39, 0.1);
+  --icv-border-soft: rgba(17, 24, 39, 0.07);
+  --icv-secondary: #80a1c1;
+  --icv-shadow: 0 1px 2px rgba(17, 24, 39, 0.04), 0 10px 30px rgba(17, 24, 39, 0.07);
+  --icv-radius: 16px;
+  --icv-radius-sm: 10px;
+}
+
+.dark {
+  /* The dark surface echoes the landing page's #0f172a code panels, so dark
+     mode still reads as the same product rather than generic Hextra grey. */
+  --icv-surface: #0f1729;
+  --icv-surface-sunk: #0b1120;
+  --icv-card: #161f33;
+  --icv-text: #e9eef6;
+  --icv-text-muted: #9fadc4;
+  --icv-border: rgba(255, 255, 255, 0.1);
+  --icv-border-soft: rgba(255, 255, 255, 0.06);
+  --icv-secondary: #9bb8d3;
+  --icv-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 34px rgba(0, 0, 0, 0.42);
+}
+
+/* --- Page surface ---------------------------------------------------------
+   Hextra paints the body white via the `hx-bg-white` utility; repaint it the
+   warm cream and lay in the same soft peach/blue-grey glows as the hero. */
+body {
+  background-color: var(--icv-surface) !important;
+  background-image:
+    radial-gradient(820px 460px at 100% -6%, rgba(128, 161, 193, 0.2), transparent 60%),
+    radial-gradient(680px 380px at -6% -2%, rgba(250, 212, 192, 0.34), transparent 56%) !important;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  color: var(--icv-text);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.dark body {
+  background-image:
+    radial-gradient(820px 460px at 100% -6%, rgba(128, 161, 193, 0.12), transparent 62%),
+    radial-gradient(680px 380px at -6% -2%, rgba(250, 212, 192, 0.07), transparent 58%) !important;
+}
+
+.content :is(pre, code, kbd),
+.chroma {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* --- Navbar ---------------------------------------------------------------
+   A translucent cream bar with a hairline rule instead of the white panel. */
+.nav-container-blur {
+  background-color: color-mix(in srgb, var(--icv-surface) 85%, transparent) !important;
+  border-bottom: 1px solid var(--icv-border-soft);
+  box-shadow: none;
+}
+
+.dark .nav-container-blur {
+  background-color: color-mix(in srgb, var(--icv-surface) 82%, transparent) !important;
+}
+
+/* --- Article: the bento card ----------------------------------------------
+   Float the documentation body on a white card with the landing page's
+   border, radius and shadow. The breadcrumb above and pager below sit on the
+   bare cream surface, mirroring the negative space between landing sections. */
+.icuvisor-doc-shell .content {
+  background: var(--icv-card);
+  border: 1px solid var(--icv-border);
+  border-radius: var(--icv-radius);
+  box-shadow: var(--icv-shadow);
+  padding: clamp(1.25rem, 0.9rem + 2vw, 2.75rem);
+  margin-top: 0.5rem;
+}
+
+/* --- Sidebar & TOC: airy negative space -----------------------------------
+   Keep both rails transparent on the cream surface and neutralise the white
+   fade gradients Hextra hard-codes for their sticky footers. */
+@media (max-width: 767px) {
+  .sidebar-container {
+    background-color: var(--icv-surface) !important;
+  }
+}
+
+.sidebar-container .hx-sticky.hx-bottom-0,
+.hextra-toc .hx-sticky.hx-bottom-0 {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* --- Footer ---------------------------------------------------------------- */
+.hextra-footer {
+  background-color: var(--icv-surface-sunk) !important;
+  border-top: 1px solid var(--icv-border-soft);
+}
+
+/* --- Body links -----------------------------------------------------------
+   Match the landing page exactly: near-black text with a blue-grey underline
+   that thickens on hover, rather than Hextra's fully coloured links. */
+.content a {
+  color: var(--icv-text);
+  text-decoration-color: var(--icv-secondary);
+  text-underline-offset: 3px;
+}
+
+.content a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.content a.hextra-card {
+  text-decoration: none;
+}
+
+/* --- Headings, code, quotes ----------------------------------------------- */
+.content h2 {
+  border-bottom-color: var(--icv-border);
+}
+
+.content pre:not(.lntable pre) {
+  border: 1px solid var(--icv-border-soft);
+}
+
+.content blockquote {
+  border-left: 4px solid var(--icv-secondary);
+  background: var(--icv-surface);
+  border-radius: var(--icv-radius-sm);
+  padding: 0.75rem 1rem;
+  font-style: normal;
+  color: var(--icv-text-muted);
+}
+
+.dark .content blockquote {
+  background: var(--icv-surface-sunk);
+}
+
+/* --- Nested Hextra cards --------------------------------------------------
+   Section index pages (e.g. /guides/) render Hextra cards inside the article.
+   Paint them cream-on-white so they read as cards-within, exactly like the
+   `.doc-card` tiles on the landing page. */
+.content .hextra-card {
+  background: var(--icv-surface) !important;
+  border: 1px solid var(--icv-border) !important;
+  border-radius: var(--icv-radius-sm) !important;
+  box-shadow: none !important;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.content .hextra-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--icv-shadow);
+  border-color: var(--icv-secondary) !important;
+}
+
+.dark .content .hextra-card {
+  background: var(--icv-surface-sunk) !important;
+}
