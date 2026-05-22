@@ -54,6 +54,7 @@ func NewRegistryWithOptions(client *intervals.Client, opts RegistryOptions) Regi
 		coachConfig:      opts.CoachConfig,
 		catalogFilter:    opts.CatalogFilter,
 		gearCache:        newGearListCache(),
+		customFieldCache: newCustomFieldCache(),
 	}
 }
 
@@ -69,6 +70,7 @@ type defaultRegistry struct {
 	coachConfig      coach.Config
 	catalogFilter    func(Tool) bool
 	gearCache        *gearListCache
+	customFieldCache *customFieldCache
 }
 
 type responseShaping struct {
@@ -123,6 +125,7 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 		capability:       r.capability,
 		shaping:          shaping,
 		gearCache:        r.gearCache,
+		customFieldCache: r.customFieldCache,
 		coachModeEnabled: r.coachModeEnabled,
 		coachConfig:      r.coachConfig,
 	}) {

@@ -11,7 +11,7 @@ import (
 
 const (
 	getActivitiesName                    = "get_activities"
-	getActivitiesDescription             = "List activities for a date range with terse unit-disambiguated rows, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, Strava-unavailable detection, and opaque pagination. Use this before details, intervals, streams, splits, or messages when a prompt asks about recent training."
+	getActivitiesDescription             = "List activities for a date range with terse unit-disambiguated rows, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, custom_fields for athlete-defined activity custom fields, Strava-unavailable detection, and opaque pagination. Use this before details, intervals, streams, splits, or messages when a prompt asks about recent training."
 	invalidGetActivitiesArgumentsMessage = "invalid get_activities arguments; provide oldest/newest dates or a valid next_page_token"
 	fetchActivitiesMessage               = "could not fetch activities; check intervals.icu credentials, athlete ID, and date range"
 	activitiesPaginationBoundaryMessage  = "activity pagination hit too many same-timestamp filtered rows; narrow the date range or set include_unnamed true"
@@ -29,6 +29,28 @@ var terseActivityFields = []string{
 	"total_elevation_gain", "total_elevation_loss", "icu_training_load", "average_heartrate",
 	"max_heartrate", "average_cadence", "calories", "carbs_ingested", "carbs_used",
 	"device_name", "gear_id",
+}
+
+// terseActivityFieldsWithCustom returns the terse upstream field set extended
+// with athlete-defined activity custom field codes so intervals.icu includes
+// them in field-limited terse list responses.
+func terseActivityFieldsWithCustom(customFieldCodes []string) []string {
+	fields := append([]string(nil), terseActivityFields...)
+	if len(customFieldCodes) == 0 {
+		return fields
+	}
+	seen := make(map[string]bool, len(fields))
+	for _, field := range fields {
+		seen[field] = true
+	}
+	for _, code := range customFieldCodes {
+		if code == "" || seen[code] {
+			continue
+		}
+		seen[code] = true
+		fields = append(fields, code)
+	}
+	return fields
 }
 
 // ActivitiesClient lists intervals.icu activities for tools.
@@ -86,6 +108,7 @@ type getActivitiesRow struct {
 	HasStreams          bool               `json:"has_streams,omitempty"`
 	StravaImported      bool               `json:"strava_imported,omitempty"`
 	Unavailable         *unavailableReason `json:"unavailable,omitempty"`
+	CustomFields        map[string]any     `json:"custom_fields,omitempty"`
 	Full                map[string]any     `json:"full,omitempty"`
 }
 
@@ -99,23 +122,24 @@ type getActivitiesMeta struct {
 	NextPageToken  string            `json:"next_page_token,omitempty"`
 	MoreAvailable  bool              `json:"more_available"`
 	IncludeFull    bool              `json:"include_full"`
+	Timezone       string            `json:"timezone,omitempty"`
 	FieldSemantics map[string]string `json:"field_semantics,omitempty"`
 }
 
 var errActivitiesPaginationBoundary = errors.New("activity pagination boundary exceeded")
 
-func newGetActivitiesToolWithGear(activityClient ActivitiesClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+func newGetActivitiesToolWithGear(activityClient ActivitiesClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, customFieldClient ActivityCustomFieldClient, customFieldCache *customFieldCache, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
 	return coreTool(Tool{
 		Name:         getActivitiesName,
 		Description:  getActivitiesDescription,
 		InputSchema:  getActivitiesInputSchema(),
 		OutputSchema: getActivitiesOutputSchema(),
-		Handler:      getActivitiesHandler(activityClient, profileClient, gearClient, gearCache, version, timezoneFallback, debugMetadata, shapeCfg),
+		Handler:      getActivitiesHandler(activityClient, profileClient, gearClient, gearCache, customFieldClient, customFieldCache, version, timezoneFallback, debugMetadata, shapeCfg),
 	})
 }
 
-func getActivitiesHandler(activityClient ActivitiesClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
+func getActivitiesHandler(activityClient ActivitiesClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, customFieldClient ActivityCustomFieldClient, customFieldCache *customFieldCache, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		if err := ctx.Err(); err != nil {
 			return Result{}, err
@@ -143,7 +167,8 @@ func getActivitiesHandler(activityClient ActivitiesClient, profileClient Profile
 		if token != nil && token.AthleteID != targetAthleteID {
 			return Result{}, NewUserError(invalidGetActivitiesArgumentsMessage, errors.New("next_page_token athlete does not match resolved athlete"))
 		}
-		activities, nextToken, err := fetchActivitiesPage(ctx, activityClient, args, token, targetAthleteID)
+		customFieldCodes := customFieldCache.activityFieldCodes(ctx, customFieldClient)
+		activities, nextToken, err := fetchActivitiesPage(ctx, activityClient, args, token, targetAthleteID, customFieldCodes)
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
@@ -157,7 +182,7 @@ func getActivitiesHandler(activityClient ActivitiesClient, profileClient Profile
 		if err != nil {
 			return Result{}, err
 		}
-		shaped, err := shapeGetActivitiesResponse(activities, gearResolutions, args, nextToken, version, activityTimezoneFallback, debugMetadata, unitSystem, shapeCfg)
+		shaped, err := shapeGetActivitiesResponse(activities, gearResolutions, args, nextToken, version, activityTimezoneFallback, debugMetadata, unitSystem, customFieldCodes, shapeCfg)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activities response: %w", err)
 		}
@@ -181,5 +206,5 @@ func getActivitiesInputSchema() map[string]any {
 }
 
 func getActivitiesOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, calories_burned for active/exercise calories (distinct from wellness kcal_consumed intake), carbs_ingested_g for athlete-logged carb intake during activity, carbs_used_g for upstream carbs-burned estimate, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, calories_burned for active/exercise calories (distinct from wellness kcal_consumed intake), carbs_ingested_g for athlete-logged carb intake during activity, carbs_used_g for upstream carbs-burned estimate, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. Each row's timezone is the IANA zone its start_date_local is in, and _meta.timezone is the athlete's configured timezone; start_date_utc is UTC. Derive calendar dates from these timezones so activities are not reported on the wrong day."}
 }

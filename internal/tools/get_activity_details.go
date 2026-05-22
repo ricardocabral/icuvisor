@@ -17,7 +17,7 @@ import (
 const (
 	getActivityDetailsName              = "get_activity_details"
 	getActivityIntervalsName            = "get_activity_intervals"
-	getActivityDetailsDescription       = "Get one activity's terse metadata and metrics by activity_id, including calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, and carbs_used_g for upstream carbs-burned estimate when upstream provides them. Use include_full only when raw upstream fields are needed; Strava-blocked activities return an unavailable marker instead of sparse N/A rows."
+	getActivityDetailsDescription       = "Get one activity's terse metadata and metrics by activity_id, including calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, and custom_fields for athlete-defined activity custom fields when upstream provides them. Use include_full only when raw upstream fields are needed; Strava-blocked activities return an unavailable marker instead of sparse N/A rows."
 	getActivityIntervalsDescription     = "Get analyzed intervals for one activity by activity_id, including scalar custom interval fields such as lactate under custom_fields when upstream includes them. Interval units are normalized to the canonical intervals.icu unit enum and raw interval payloads require include_full."
 	invalidActivityReadArgumentsMessage = "invalid activity read arguments; provide activity_id and optional include_full"
 	fetchActivityDetailsMessage         = "could not fetch activity details; check activity_id and intervals.icu credentials"
@@ -63,6 +63,7 @@ type getActivityIntervalsUnavailableResponse struct {
 type activityReadMeta struct {
 	ServerVersion    string                  `json:"server_version"`
 	IncludeFull      bool                    `json:"include_full"`
+	Timezone         string                  `json:"timezone,omitempty"`
 	Limit            int                     `json:"limit,omitempty"`
 	SinceID          int64                   `json:"since_id,omitempty"`
 	FieldSemantics   map[string]string       `json:"field_semantics,omitempty"`
@@ -100,13 +101,9 @@ type activityIntervalGroup struct {
 	Full       map[string]any `json:"full,omitempty"`
 }
 
-func newGetActivityDetailsTool(client ActivityDetailsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
-	return newGetActivityDetailsToolWithGear(client, profileClient, nil, nil, version, timezoneFallback, debugMetadata, shaping...)
-}
-
-func newGetActivityDetailsToolWithGear(client ActivityDetailsClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+func newGetActivityDetailsToolWithGear(client ActivityDetailsClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, customFieldClient ActivityCustomFieldClient, customFieldCache *customFieldCache, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
-	return coreTool(Tool{Name: getActivityDetailsName, Description: getActivityDetailsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityDetailsHandler(client, profileClient, gearClient, gearCache, version, timezoneFallback, debugMetadata, shapeCfg)})
+	return coreTool(Tool{Name: getActivityDetailsName, Description: getActivityDetailsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityDetailsHandler(client, profileClient, gearClient, gearCache, customFieldClient, customFieldCache, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
 func newGetActivityIntervalsTool(client ActivityIntervalsClient, detailsClient ActivityDetailsClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -114,7 +111,7 @@ func newGetActivityIntervalsTool(client ActivityIntervalsClient, detailsClient A
 	return coreTool(Tool{Name: getActivityIntervalsName, Description: getActivityIntervalsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityIntervalsHandler(client, detailsClient, version, debugMetadata, shapeCfg)})
 }
 
-func getActivityDetailsHandler(client ActivityDetailsClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
+func getActivityDetailsHandler(client ActivityDetailsClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, customFieldClient ActivityCustomFieldClient, customFieldCache *customFieldCache, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeActivityReadRequest(req.Arguments)
 		if err != nil {
@@ -142,8 +139,10 @@ func getActivityDetailsHandler(client ActivityDetailsClient, profileClient Profi
 		if err != nil {
 			return Result{}, err
 		}
-		row := activityRow(activity, args.IncludeFull, profileTimezone(profile.Timezone, timezoneFallback), unitSystem, gearResolutions[activity.ID])
-		payload := getActivityDetailsResponse{Activity: row, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull, FieldSemantics: activityFieldSemantics([]getActivitiesRow{row})}}
+		customFieldCodes := customFieldCache.activityFieldCodes(ctx, customFieldClient)
+		activityTimezone := profileTimezone(profile.Timezone, timezoneFallback)
+		row := activityRow(activity, args.IncludeFull, activityTimezone, unitSystem, gearResolutions[activity.ID], customFieldCodes)
+		payload := getActivityDetailsResponse{Activity: row, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull, Timezone: activityTimezone, FieldSemantics: activityFieldSemantics([]getActivitiesRow{row})}}
 		shaped, err := response.Shape(payload, shapeCfg.options(args.IncludeFull, nil, version, debugMetadata, getActivityDetailsName, unitSystem))
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activity_details response: %w", err)
@@ -356,5 +355,5 @@ func activityReadInputSchema() map[string]any {
 }
 
 func activityReadOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Activity detail or interval response. Activity detail rows include calories_burned (active/exercise calories, distinct from wellness kcal_consumed intake), carbs_ingested_g (athlete-logged carb intake in grams), carbs_used_g (upstream carbs-burned estimate in grams), gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Activity detail or interval response. Activity detail rows include calories_burned (active/exercise calories, distinct from wellness kcal_consumed intake), carbs_ingested_g (athlete-logged carb intake in grams), carbs_used_g (upstream carbs-burned estimate in grams), gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. On activity detail responses the activity's timezone field and _meta.timezone give the IANA zone start_date_local is in; start_date_utc is UTC. Derive the calendar date from that timezone so the activity is not reported on the wrong day."}
 }

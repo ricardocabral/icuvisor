@@ -136,8 +136,8 @@ func encodeActivitiesPageToken(token activitiesPageToken) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(data), nil
 }
 
-func fetchActivitiesPage(ctx context.Context, client ActivitiesClient, args GetActivitiesRequest, token *activitiesPageToken, targetAthleteID string) ([]intervals.Activity, string, error) {
-	cursor := newPageCursor(args, token, targetAthleteID)
+func fetchActivitiesPage(ctx context.Context, client ActivitiesClient, args GetActivitiesRequest, token *activitiesPageToken, targetAthleteID string, customFieldCodes []string) ([]intervals.Activity, string, error) {
+	cursor := newPageCursor(args, token, targetAthleteID, customFieldCodes)
 	page := make([]intervals.Activity, 0, args.PageSize)
 	for {
 		candidates, done, err := iteratePages(ctx, client, args, &cursor)
@@ -231,13 +231,13 @@ type pageCursor struct {
 	advancedThisIteration bool
 }
 
-func newPageCursor(args GetActivitiesRequest, token *activitiesPageToken, targetAthleteID string) pageCursor {
+func newPageCursor(args GetActivitiesRequest, token *activitiesPageToken, targetAthleteID string, customFieldCodes []string) pageCursor {
 	cursor := pageCursor{
 		token:      activitiesPageToken{Version: 1, Oldest: args.Oldest, Newest: args.Newest, RouteID: args.RouteID, IncludeUnnamed: args.IncludeUnnamed, IncludeFull: args.IncludeFull, PageSize: args.PageSize, AthleteID: targetAthleteID},
 		fetchLimit: min(args.PageSize*2+1, maxActivityFetchLimit),
 	}
 	if !args.IncludeFull {
-		cursor.token.Fields = append([]string(nil), terseActivityFields...)
+		cursor.token.Fields = terseActivityFieldsWithCustom(customFieldCodes)
 	}
 	if token != nil {
 		cursor.token.BeforeStartDateLocal = token.BeforeStartDateLocal

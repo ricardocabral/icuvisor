@@ -10,17 +10,17 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/units"
 )
 
-func shapeGetActivitiesResponse(activities []intervals.Activity, gearResolutions map[string]activityGearResolution, args GetActivitiesRequest, nextToken string, version string, timezoneFallback string, debugMetadata bool, unitSystem response.UnitSystem, shaping ...responseShaping) (any, error) {
+func shapeGetActivitiesResponse(activities []intervals.Activity, gearResolutions map[string]activityGearResolution, args GetActivitiesRequest, nextToken string, version string, timezoneFallback string, debugMetadata bool, unitSystem response.UnitSystem, customFieldCodes []string, shaping ...responseShaping) (any, error) {
 	rows := make([]getActivitiesRow, 0, len(activities))
 	for _, activity := range activities {
-		rows = append(rows, activityRow(activity, args.IncludeFull, timezoneFallback, unitSystem, gearResolutions[activity.ID]))
+		rows = append(rows, activityRow(activity, args.IncludeFull, timezoneFallback, unitSystem, gearResolutions[activity.ID], customFieldCodes))
 	}
-	payload := getActivitiesResponse{Activities: rows, Meta: getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull, FieldSemantics: activityFieldSemantics(rows)}}
+	payload := getActivitiesResponse{Activities: rows, Meta: getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull, Timezone: timezoneFallback, FieldSemantics: activityFieldSemantics(rows)}}
 	shapeCfg := responseShapingOrDefault(shaping)
 	return response.Shape(payload, shapeCfg.options(args.IncludeFull, []string{"activities"}, version, debugMetadata, getActivitiesName, unitSystem))
 }
 
-func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback string, unitSystem response.UnitSystem, gearResolution activityGearResolution) getActivitiesRow {
+func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback string, unitSystem response.UnitSystem, gearResolution activityGearResolution, customFieldCodes []string) getActivitiesRow {
 	row := getActivitiesRow{ActivityID: activity.ID, Name: strings.TrimSpace(stringValue(activity.Name)), Sport: stringValue(activity.Type), SubType: stringValue(activity.SubType), StartDateLocal: stringValue(activity.StartDateLocal), StartDateUTC: stringValue(activity.StartDate), Timezone: firstNonEmpty(stringValue(activity.Timezone), timezoneFallback)}
 	applyActivityGearResolution(&row, gearResolution)
 	if isStravaBlocked(activity) {
@@ -53,10 +53,31 @@ func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback
 	applyActivityDistanceAndPace(&row, activity, unitSystem)
 	applyActivitySpeed(&row, activity.AverageSpeed, true, unitSystem)
 	applyActivitySpeed(&row, activity.MaxSpeed, false, unitSystem)
+	row.CustomFields = activityCustomFields(activity.Raw, customFieldCodes)
 	if includeFull {
 		row.Full = activity.Raw
 	}
 	return row
+}
+
+// activityCustomFields surfaces athlete-defined activity custom field values,
+// keyed by their upstream field code. Only non-null scalar values are returned.
+func activityCustomFields(raw map[string]any, customFieldCodes []string) map[string]any {
+	if len(raw) == 0 || len(customFieldCodes) == 0 {
+		return nil
+	}
+	fields := make(map[string]any)
+	for _, code := range customFieldCodes {
+		value, ok := raw[code]
+		if !ok || !isCustomIntervalFieldValue(value) {
+			continue
+		}
+		fields[code] = value
+	}
+	if len(fields) == 0 {
+		return nil
+	}
+	return fields
 }
 
 func applyActivityDistanceAndPace(row *getActivitiesRow, activity intervals.Activity, unitSystem response.UnitSystem) {

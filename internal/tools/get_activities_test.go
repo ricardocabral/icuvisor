@@ -20,6 +20,9 @@ type fakeActivitiesProfileClient struct {
 	rejectInvalidRange bool
 	listCalls          []intervals.ListActivitiesParams
 	listErr            error
+	customItems        []intervals.CustomItem
+	customItemsErr     error
+	customItemsCalls   int
 	gear               []intervals.Gear
 	gearByTarget       map[string][]intervals.Gear
 	gearErr            error
@@ -76,7 +79,7 @@ func TestGetActivitiesRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
 	client := newFakeActivitiesClient(t, nil, "metric")
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 	if !strings.Contains(tool.Description, "List activities for a date range") {
 		t.Fatalf("description = %q, want distinguishing activity-list sentence", tool.Description)
 	}
@@ -95,7 +98,7 @@ func TestGetActivitiesCaloriesBurnedSemanticsAndNullStripping(t *testing.T) {
 		`{"id":"zero","name":"Recovery Ride","type":"Ride","start_date_local":"2026-01-03T07:00:00","calories":0}`,
 		`{"id":"absent","name":"Untyped Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00"}`,
 	}, "metric")
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
@@ -162,7 +165,7 @@ func TestGetActivitiesActivityNutritionFields(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			client := newFakeActivitiesClient(t, []string{tc.rawActivity}, "metric")
-			tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+			tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-05-01"}`)})
 			if err != nil {
@@ -210,7 +213,7 @@ func TestGetActivitiesResolvesGearNames(t *testing.T) {
 	}, "metric")
 	client.gear = decodeToolGear(t, `{"id":"g-1","name":"Race Bike"}`)
 	cache := newGearListCache()
-	tool := newGetActivitiesToolWithGear(client, client, client, cache, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, client, cache, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
@@ -231,7 +234,7 @@ func TestGetActivitiesSkipsGearFetchWithoutGearIDs(t *testing.T) {
 	client := newFakeActivitiesClient(t, []string{
 		`{"id":"a1","name":"Run","type":"Run","start_date_local":"2026-01-02T07:00:00"}`,
 	}, "metric")
-	tool := newGetActivitiesToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, client, newGearListCache(), nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
@@ -254,7 +257,7 @@ func TestGetActivitiesMarksUnknownUnnamedAndLookupUnavailableGear(t *testing.T) 
 		`{"id":"unnamed","name":"Run","type":"Run","start_date_local":"2026-01-03T07:00:00","gear_id":"shoe-1"}`,
 	}, "metric")
 	client.gear = decodeToolGear(t, `{"id":"shoe-1"}`)
-	tool := newGetActivitiesToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, client, newGearListCache(), nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
@@ -272,7 +275,7 @@ func TestGetActivitiesMarksUnknownUnnamedAndLookupUnavailableGear(t *testing.T) 
 
 	client = newFakeActivitiesClient(t, []string{`{"id":"a1","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`}, "metric")
 	client.gearErr = errors.New("gear upstream down")
-	tool = newGetActivitiesToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+	tool = newGetActivitiesToolWithGear(client, client, client, newGearListCache(), nil, nil, "test", "UTC", false)
 	result, err = tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
 		t.Fatalf("lookup unavailable Handler() error = %v", err)
@@ -288,7 +291,7 @@ func TestGetActivitiesPreservesGearLookupCancellation(t *testing.T) {
 
 	client := newFakeActivitiesClient(t, []string{`{"id":"a1","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`}, "metric")
 	client.gearErr = context.Canceled
-	tool := newGetActivitiesToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, client, newGearListCache(), nil, nil, "test", "UTC", false)
 
 	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if !errors.Is(err, context.Canceled) {
@@ -303,7 +306,7 @@ func TestGetActivitiesGearCacheReuseAndTargetIsolation(t *testing.T) {
 	client.gear = decodeToolGear(t, `{"id":"g-1","name":"Race Bike"}`)
 	cache := newGearListCache()
 	gearTool := newGetGearListTool(client, cache, "test", false)
-	activityTool := newGetActivitiesToolWithGear(client, client, client, cache, "test", "UTC", false)
+	activityTool := newGetActivitiesToolWithGear(client, client, client, cache, nil, nil, "test", "UTC", false)
 	ctx111 := intervals.WithTargetAthleteID(context.Background(), "i111")
 
 	if _, err := gearTool.Handler(ctx111, Request{Name: gearTool.Name, Arguments: json.RawMessage(`{}`)}); err != nil {
@@ -322,7 +325,7 @@ func TestGetActivitiesGearCacheReuseAndTargetIsolation(t *testing.T) {
 	}
 	client.gear = nil
 	cache = newGearListCache()
-	activityTool = newGetActivitiesToolWithGear(client, client, client, cache, "test", "UTC", false)
+	activityTool = newGetActivitiesToolWithGear(client, client, client, cache, nil, nil, "test", "UTC", false)
 	client.gearCalls = 0
 	first, err := activityTool.Handler(ctx111, Request{Name: activityTool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
@@ -347,7 +350,7 @@ func TestGetActivitiesPaginationFiltersAndTokenRoundTrip(t *testing.T) {
 		`{"id":"a2","name":"","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
 		`{"id":"a1","name":"Easy","type":"Run","start_date_local":"2026-01-02T07:00:00","distance":2000,"moving_time":600}`,
 	}, "metric")
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	first, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","newest":"2026-01-04","page_size":1}`)})
 	if err != nil {
@@ -438,7 +441,7 @@ func TestGetActivitiesBoundaryResponseShapeGoldenFixtures(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			client := newFakeActivitiesClient(t, tc.rawActivities, "metric")
 			client.applyListParams = tc.applyListParams
-			tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+			tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.arguments)})
 			if err != nil {
@@ -474,7 +477,7 @@ func TestGetActivitiesStopsBeforeInvertedLowerBoundAfterFilteredBoundary(t *test
 	}, "metric")
 	client.applyListParams = true
 	client.rejectInvalidRange = true
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-03T07:00:00","page_size":1}`)})
 	if err != nil {
@@ -499,7 +502,7 @@ func TestGetActivitiesErrorsInsteadOfSkippingBeyondMaxSameTimestampWindow(t *tes
 	)
 	client := newFakeActivitiesClient(t, rawActivities, "metric")
 	client.applyListParams = true
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if message, ok := PublicErrorMessage(err); !ok || !strings.Contains(message, "same-timestamp filtered rows") {
@@ -518,7 +521,7 @@ func TestGetActivitiesWidensLookaheadBeforeCrossingSameTimestampBoundary(t *test
 		`{"id":"older","name":"Older","type":"Run","start_date_local":"2026-01-02T07:00:00","distance":1000,"moving_time":300}`,
 	}, "metric")
 	client.applyListParams = true
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if err != nil {
@@ -543,7 +546,7 @@ func TestGetActivitiesAdvancesPastFullyFilteredSameTimestampWindow(t *testing.T)
 		`{"id":"named","name":"Older","type":"Run","start_date_local":"2026-01-02T07:00:00","distance":1000,"moving_time":300}`,
 	}, "metric")
 	client.applyListParams = true
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if err != nil {
@@ -572,7 +575,7 @@ func TestGetActivitiesReturnsTokenWhenFilteredWindowsHitFetchCap(t *testing.T) {
 	client.activityPages = append(client.activityPages, decodeActivityPage(t,
 		`{"id":"eligible","name":"Recovered","type":"Run","start_date_local":"2026-01-01T07:00:00","distance":1000,"moving_time":300}`,
 	))
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	first, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if err != nil {
@@ -605,7 +608,7 @@ func TestGetActivitiesPreservesProfileCancellation(t *testing.T) {
 
 	client := newFakeActivitiesClient(t, nil, "metric")
 	client.err = context.Canceled
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if !errors.Is(err, context.Canceled) {
@@ -617,7 +620,7 @@ func TestGetActivitiesDoesNotTokenizeDateLessStravaStubsWithoutCursorProgress(t 
 	t.Parallel()
 
 	client := newFakeActivitiesClient(t, []string{`{}`, `{}`}, "metric")
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if err != nil {
@@ -639,7 +642,7 @@ func TestGetActivitiesUsesProfileTimezoneFallback(t *testing.T) {
 		`{"id":"run1","name":"Run","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
 	}, "metric")
 	client.profile.Timezone = "America/Sao_Paulo"
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
@@ -660,7 +663,7 @@ func TestGetActivitiesDoesNotLoopOnSameTimestampFilteredLookahead(t *testing.T) 
 		`{"id":"a1","name":"","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1000,"moving_time":300}`,
 	}, "metric")
 	client.applyListParams = true
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	first, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if err != nil {
@@ -689,7 +692,7 @@ func TestGetActivitiesDetectsDocumentedStravaStubShapes(t *testing.T) {
 		`{"id":"stub1","icu_athlete_id":"i12345","start_date_local":"2026-01-02T07:00:00"}`,
 		`{"id":"stub2","icu_athlete_id":"i12345","start_date_local":"2026-01-01T07:00:00","name":null}`,
 	}, "metric")
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
@@ -719,7 +722,7 @@ func TestGetActivitiesKeepsStravaRowsWhenUnnamedFilteringIsDefault(t *testing.T)
 		`{"id":"hidden1","source":"Strava","_note":"Strava activity hidden","start_date_local":"2026-01-02T07:00:00","name":null}`,
 		`{"id":"unnamed","name":"","type":"Run","start_date_local":"2026-01-01T07:00:00","distance":1000,"moving_time":300}`,
 	}, "metric")
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
@@ -742,7 +745,7 @@ func TestGetActivitiesDoesNotEmitPaceForCycling(t *testing.T) {
 	client := newFakeActivitiesClient(t, []string{
 		`{"id":"ride1","name":"Ride","type":"Ride","start_date_local":"2026-01-03T07:00:00","distance":20000,"moving_time":2400,"average_speed":8.333333}`,
 	}, "metric")
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
 	if err != nil {
@@ -767,7 +770,7 @@ func TestGetActivitiesShapesStravaFullAndUnits(t *testing.T) {
 		`{"id":"run1","name":"Run","type":"Run","start_date_local":"2026-01-03T07:00:00","distance":1609.344,"moving_time":480,"average_speed":3.3528,"name_null":null}`,
 		`{"id":"hidden1","source":"Strava","_note":"Strava activity hidden","start_date_local":"2026-01-02T07:00:00","name":null}`,
 	}, "imperial")
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","include_unnamed":true,"include_full":true}`)})
 	if err != nil {

@@ -57,7 +57,7 @@ func activityDeleteEcho(activity intervals.Activity, activityID string, timezone
 	if strings.TrimSpace(activity.ID) == "" {
 		activity.ID = activityID
 	}
-	row := activityRow(activity, false, timezoneName, unitSystem, activityGearResolution{})
+	row := activityRow(activity, false, timezoneName, unitSystem, activityGearResolution{}, nil)
 	out, err := structToJSONMap(row)
 	if err != nil {
 		return nil, fmt.Errorf("encoding deleted activity echo: %w", err)
