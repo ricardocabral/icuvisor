@@ -33,8 +33,9 @@ with my intervals.icu data.
 Then give me:
 - What kind of session this was and how it went overall.
 - A table with one row per work interval: target vs actual power, average
-  HR, duration, and whether it held. If the activity has only laps and no
-  structured intervals, say so and summarize the laps instead.
+  HR, duration, any interval `custom_fields` that are relevant to the prompt
+  (for example manually-entered lactate), and whether it held. If the activity
+  has only laps and no structured intervals, say so and summarize the laps instead.
 - How the hard parts held up — pacing, fade, heart-rate drift, decoupling.
 - Two concrete takeaways for next time.
 
@@ -47,13 +48,13 @@ provide. Keep the answer under about 400 words, leading with the interval table.
 
 ## What icuvisor does
 
-| Step | Tool | Why |
-| --- | --- | --- |
-| 1 | [`get_activities`]({{< relref "/reference/tools#get_activities" >}}) | Finds the activity and its ID when you describe it. |
-| 2 | [`get_activity_details`]({{< relref "/reference/tools#get_activity_details" >}}) | Sport, timing, load, device, Strava-import flag. |
-| 3 | [`get_activity_intervals`]({{< relref "/reference/tools#get_activity_intervals" >}}) and [`get_activity_splits`]({{< relref "/reference/tools#get_activity_splits" >}}) | Per-rep and per-distance breakdown. |
-| 4 | [`get_activity_histogram`]({{< relref "/reference/tools#get_activity_histogram" >}}) | Time-in-zone distribution for the session. |
-| 5 | [`get_extended_metrics`]({{< relref "/reference/tools#get_extended_metrics" >}}) | Decoupling, IF, VI — only those upstream actually fitted. |
+| Step | Tool                                                                                                                                                                    | Why                                                                                                                                                    |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1    | [`get_activities`]({{< relref "/reference/tools#get_activities" >}})                                                                                                    | Finds the activity and its ID when you describe it.                                                                                                    |
+| 2    | [`get_activity_details`]({{< relref "/reference/tools#get_activity_details" >}})                                                                                        | Sport, timing, load, device, Strava-import flag.                                                                                                       |
+| 3    | [`get_activity_intervals`]({{< relref "/reference/tools#get_activity_intervals" >}}) and [`get_activity_splits`]({{< relref "/reference/tools#get_activity_splits" >}}) | Per-rep and per-distance breakdown. `get_activity_intervals` also includes scalar interval `custom_fields` such as lactate when upstream returns them. |
+| 4    | [`get_activity_histogram`]({{< relref "/reference/tools#get_activity_histogram" >}})                                                                                    | Time-in-zone distribution for the session.                                                                                                             |
+| 5    | [`get_extended_metrics`]({{< relref "/reference/tools#get_extended_metrics" >}})                                                                                        | Decoupling, IF, VI — only those upstream actually fitted.                                                                                              |
 
 For a specific surge or climb, [`compute_activity_segment_stats`]({{< relref "/reference/tools#compute_activity_segment_stats" >}}) computes mean/NP/decoupling over an explicit time range.
 
@@ -69,6 +70,7 @@ For a specific surge or climb, [`compute_activity_segment_stats`]({{< relref "/r
 
 ## Variations
 
+- **Lactate test:** "Analyze this interval session and include the lactate values I entered on each rep. Use `custom_fields.lactate` from `get_activity_intervals` when present."
 - **Race debrief:** "...this was a race — focus on pacing discipline and where I lost time."
 - **Compare two sessions:** "Compare activity A and activity B — same workout, two weeks apart. Did the hard parts improve?"
 - **A Strava import specifically:** "Analyze my most recent Strava-imported activity. Identify genuine Strava imports by the `source` field — a Garmin or Wahoo device means a native upload, not a Strava import — state the blank-field policy first, and confirm the blank payload with `get_activity_details` rather than inferring it from the list."

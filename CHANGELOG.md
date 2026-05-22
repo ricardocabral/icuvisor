@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `get_activity_intervals` now exposes scalar upstream custom interval fields, such as manually-entered lactate values, under each interval's `custom_fields` map in terse mode without requiring `include_full:true`.
+
 ## [0.1.1] - 2026-05-21
 
 ### Added

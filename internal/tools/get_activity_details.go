@@ -18,7 +18,7 @@ const (
 	getActivityDetailsName              = "get_activity_details"
 	getActivityIntervalsName            = "get_activity_intervals"
 	getActivityDetailsDescription       = "Get one activity's terse metadata and metrics by activity_id, including calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, and carbs_used_g for upstream carbs-burned estimate when upstream provides them. Use include_full only when raw upstream fields are needed; Strava-blocked activities return an unavailable marker instead of sparse N/A rows."
-	getActivityIntervalsDescription     = "Get analyzed intervals for one activity by activity_id. Interval units are normalized to the canonical intervals.icu unit enum and raw interval payloads require include_full."
+	getActivityIntervalsDescription     = "Get analyzed intervals for one activity by activity_id, including scalar custom interval fields such as lactate under custom_fields when upstream includes them. Interval units are normalized to the canonical intervals.icu unit enum and raw interval payloads require include_full."
 	invalidActivityReadArgumentsMessage = "invalid activity read arguments; provide activity_id and optional include_full"
 	fetchActivityDetailsMessage         = "could not fetch activity details; check activity_id and intervals.icu credentials"
 )
@@ -87,6 +87,7 @@ type activityIntervalRow struct {
 	AveragePower  *float64       `json:"average_power_watts,omitempty"`
 	AverageHR     *float64       `json:"average_heart_rate_bpm,omitempty"`
 	Pace          *float64       `json:"pace,omitempty"`
+	CustomFields  map[string]any `json:"custom_fields,omitempty"`
 	Full          map[string]any `json:"full,omitempty"`
 }
 
@@ -289,11 +290,57 @@ func shapeActivityInterval(interval intervals.ActivityInterval, includeFull bool
 	if rawUnit := stringValue(interval.Unit); rawUnit != "" {
 		unit, unknown = units.ParseUnit(rawUnit)
 	}
-	row := activityIntervalRow{IntervalID: anyString(interval.ID), Name: stringValue(interval.Name), Type: stringValue(interval.Type), Unit: unit, UnknownUnit: unknown, StartIndex: intValue(interval.StartIndex), EndIndex: intValue(interval.EndIndex), StartTime: stringValue(interval.StartTime), EndTime: stringValue(interval.EndTime), StartDistance: interval.StartDistance, EndDistance: interval.EndDistance, Distance: interval.Distance, Duration: interval.Duration, AveragePower: interval.AveragePower, AverageHR: interval.AverageHR, Pace: interval.Pace}
+	row := activityIntervalRow{IntervalID: anyString(interval.ID), Name: stringValue(interval.Name), Type: stringValue(interval.Type), Unit: unit, UnknownUnit: unknown, StartIndex: intValue(interval.StartIndex), EndIndex: intValue(interval.EndIndex), StartTime: stringValue(interval.StartTime), EndTime: stringValue(interval.EndTime), StartDistance: interval.StartDistance, EndDistance: interval.EndDistance, Distance: interval.Distance, Duration: interval.Duration, AveragePower: interval.AveragePower, AverageHR: interval.AverageHR, Pace: interval.Pace, CustomFields: intervalCustomFields(interval.Raw)}
 	if includeFull {
 		row.Full = interval.Raw
 	}
 	return row
+}
+
+func intervalCustomFields(raw map[string]any) map[string]any {
+	fields := make(map[string]any)
+	for key, value := range raw {
+		if !isCustomIntervalFieldKey(key) || !isCustomIntervalFieldValue(value) {
+			continue
+		}
+		fields[key] = value
+	}
+	if len(fields) == 0 {
+		return nil
+	}
+	return fields
+}
+
+func isCustomIntervalFieldKey(key string) bool {
+	_, known := knownIntervalRawFields[key]
+	return !known
+}
+
+func isCustomIntervalFieldValue(value any) bool {
+	if value == nil {
+		return false
+	}
+	switch value.(type) {
+	case string, bool, float64, int, json.Number:
+		return true
+	default:
+		return false
+	}
+}
+
+var knownIntervalRawFields = map[string]struct{}{
+	"id": {}, "name": {}, "label": {}, "type": {}, "unit": {}, "group_id": {},
+	"start_index": {}, "end_index": {}, "start_time": {}, "end_time": {},
+	"start_distance": {}, "end_distance": {}, "distance": {}, "duration": {},
+	"moving_time": {}, "elapsed_time": {}, "elapsed_time_excluding_pauses": {}, "recording_time": {},
+	"average_power": {}, "average_watts": {}, "average_watts_kg": {}, "weighted_average_watts": {},
+	"min_watts": {}, "max_watts": {}, "normalized_power": {}, "intensity": {},
+	"average_hr": {}, "average_heartrate": {}, "max_heartrate": {}, "min_heartrate": {},
+	"average_cadence": {}, "max_cadence": {}, "average_speed": {}, "max_speed": {},
+	"average_pace": {}, "pace": {}, "gap": {}, "total_elevation_gain": {}, "total_elevation_loss": {},
+	"average_stride": {}, "average_dfa_a1": {}, "wbal_start": {}, "wbal_end": {},
+	"joules_above_ftp": {}, "decoupling": {}, "avg_lr_balance": {}, "strain_score": {}, "training_load": {},
+	"w5s_variability": {}, "power_zone": {}, "hr_zone": {}, "pace_zone": {},
 }
 
 func shapeActivityIntervalGroup(group intervals.IntervalGroup, includeFull bool) activityIntervalGroup {

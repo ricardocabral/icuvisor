@@ -319,6 +319,32 @@ func TestGetActivityIntervalsCanonicalizesUnitsAndFullPayload(t *testing.T) {
 	}
 }
 
+func TestGetActivityIntervalsExposesCustomFieldsInTerseMode(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityReadClient{intervals: decodeIntervalsFixture(t, `{"id":"a123","analyzed":true,"icu_intervals":[{"id":"i1","label":"Rep 1","lactate":3.8,"interval_note":"felt controlled","blood_sample_ok":true,"moving_time":180,"average_heartrate":165,"nullable":null,"custom_series":[1,2],"custom_object":{"value":1}}]}`)}
+	tool := newGetActivityIntervalsTool(client, client, "test", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a123"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	rows := resultMap(t, result)["intervals"].([]any)
+	first := rows[0].(map[string]any)
+	if _, ok := first["full"]; ok {
+		t.Fatalf("terse interval included full payload: %#v", first)
+	}
+	custom := first["custom_fields"].(map[string]any)
+	if custom["lactate"] != float64(3.8) || custom["interval_note"] != "felt controlled" || custom["blood_sample_ok"] != true {
+		t.Fatalf("custom_fields = %#v, want scalar upstream custom interval fields", custom)
+	}
+	for _, key := range []string{"moving_time", "average_heartrate", "nullable", "custom_series", "custom_object"} {
+		if _, ok := custom[key]; ok {
+			t.Fatalf("custom_fields included %q: %#v", key, custom)
+		}
+	}
+}
+
 func TestGetActivityIntervalsSourceMetadata(t *testing.T) {
 	t.Parallel()
 

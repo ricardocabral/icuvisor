@@ -44,7 +44,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "Get analyzed intervals for one activity by activity_id.",
+    "summary": "Get analyzed intervals for one activity by activity_id, including scalar custom interval fields such as lactate under custom_fields when upstream includes them.",
     "anchor": "get_activity_intervals"
   },
   {
