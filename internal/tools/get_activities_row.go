@@ -25,7 +25,7 @@ func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback
 	applyActivityGearResolution(&row, gearResolution)
 	if isStravaBlocked(activity) {
 		row.StravaImported = true
-		row.Unavailable = &unavailableReason{Reason: "strava_tos", Workaround: stravaBlockedWorkaround(activity.Raw)}
+		row.Unavailable = &unavailableReason{Reason: "strava_blocked", Workaround: stravaBlockedWorkaround(activity.Raw)}
 		if includeFull {
 			row.Full = activity.Raw
 		}

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `get_activity_intervals` now exposes scalar upstream custom interval fields, such as manually-entered lactate values, under each interval's `custom_fields` map in terse mode without requiring `include_full:true`.
 
+### Changed
+
+- Strava-blocked activity reads now report a single stable `unavailable.reason` of `strava_blocked` across every tool. `get_activities` and `get_activity_messages` previously emitted `strava_tos` for the same condition that `get_activity_details`, `get_extended_metrics`, and `get_activity_streams` reported as `strava_blocked`.
+
 ## [0.1.1] - 2026-05-21
 
 ### Added
