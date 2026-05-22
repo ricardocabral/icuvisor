@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-05-22
+
 ### Added
 
 - `get_activity_intervals` now exposes scalar upstream custom interval fields, such as manually-entered lactate values, under each interval's `custom_fields` map in terse mode without requiring `include_full:true`.
@@ -79,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/ricardocabral/icuvisor/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ricardocabral/icuvisor/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ricardocabral/icuvisor/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/ricardocabral/icuvisor/compare/v0.0.1...v0.0.2
