@@ -74,7 +74,7 @@ func TestFetchActivitiesPageBoundaryGoldenFixtures(t *testing.T) {
 				token = parsed
 			}
 
-			activities, nextToken, err := fetchActivitiesPage(context.Background(), client, tc.args, token, "")
+			activities, nextToken, err := fetchActivitiesPage(context.Background(), client, tc.args, token, "", nil)
 			if err != nil {
 				t.Fatalf("fetchActivitiesPage() error = %v", err)
 			}
@@ -95,7 +95,7 @@ func TestFetchActivitiesPageTokenBindsAthlete(t *testing.T) {
 		`{"id":"a2","name":"Second","type":"Run","start_date_local":"2026-01-02T07:00:00","distance":1000,"moving_time":300}`,
 		`{"id":"a1","name":"First","type":"Run","start_date_local":"2026-01-01T07:00:00","distance":1000,"moving_time":300}`,
 	}, "metric")
-	_, nextToken, err := fetchActivitiesPage(context.Background(), client, GetActivitiesRequest{Oldest: "2026-01-01", PageSize: 1}, nil, "i222")
+	_, nextToken, err := fetchActivitiesPage(context.Background(), client, GetActivitiesRequest{Oldest: "2026-01-01", PageSize: 1}, nil, "i222", nil)
 	if err != nil {
 		t.Fatalf("fetchActivitiesPage() error = %v", err)
 	}
@@ -118,7 +118,7 @@ func TestGetActivitiesRejectsMismatchedToken(t *testing.T) {
 		`{"id":"a2","name":"Tempo","start_date_local":"2026-01-03T07:00:00"}`,
 		`{"id":"a1","name":"Easy","start_date_local":"2026-01-02T07:00:00"}`,
 	}, "metric")
-	tool := newGetActivitiesToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 	first, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","page_size":1}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)

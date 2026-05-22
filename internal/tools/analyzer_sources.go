@@ -76,7 +76,7 @@ func loadAllAnalyzerActivities(ctx context.Context, client ActivitiesClient, old
 	var out []intervals.Activity
 	seenTokens := map[string]bool{}
 	for pages := 0; pages < 100; pages++ {
-		rows, nextToken, err := fetchActivitiesPage(ctx, client, args, token, "")
+		rows, nextToken, err := fetchActivitiesPage(ctx, client, args, token, "", nil)
 		if err != nil {
 			if errors.Is(err, errActivitiesPaginationBoundary) {
 				return nil, errors.New(analyzerActivityWindowTooLargeMessage)

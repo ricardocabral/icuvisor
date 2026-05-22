@@ -20,7 +20,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "List activities for a date range with terse unit-disambiguated rows, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, Strava-unavailable detection, and opaque pagination.",
+    "summary": "List activities for a date range with terse unit-disambiguated rows, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, custom_fields for athlete-defined activity custom fields, Strava-unavailable detection, and opaque pagination.",
     "anchor": "get_activities"
   },
   {
@@ -28,7 +28,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "Get one activity's terse metadata and metrics by activity_id, including calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, and carbs_used_g for upstream carbs-burned estimate when upstream provides them.",
+    "summary": "Get one activity's terse metadata and metrics by activity_id, including calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, and custom_fields for athlete-defined activity custom fields when upstream provides them.",
     "anchor": "get_activity_details"
   },
   {

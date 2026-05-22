@@ -24,6 +24,7 @@ type fakeActivityReadClient struct {
 	streamParams intervals.ActivityStreamsParams
 	messages     []intervals.ActivityMessage
 	messageErr   error
+	customItems  []intervals.CustomItem
 	gear         []intervals.Gear
 	gearErr      error
 	gearCalls    int
@@ -62,7 +63,7 @@ func TestGetActivityDetailsCaloriesBurnedSemantics(t *testing.T) {
 
 	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","calories":450}`)
 	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
-	tool := newGetActivityDetailsTool(client, client, "test", "UTC", false)
+	tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
 	if err != nil {
@@ -123,7 +124,7 @@ func TestGetActivityDetailsNutritionFieldsDisambiguated(t *testing.T) {
 			t.Parallel()
 			activity := decodeActivityFixture(t, tc.raw)
 			client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
-			tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, "test", "UTC", false)
+			tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
 			if err != nil {
@@ -163,7 +164,7 @@ func TestGetActivityDetailsCarbsIngestedDistinctFromWellnessKcalConsumed(t *test
 
 	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-05-14T07:00:00","calories":1850,"carbs_ingested":210,"carbs_used":390}`)
 	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
-	tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
 	if err != nil {
@@ -189,7 +190,7 @@ func TestGetActivityDetailsNutritionIncludeFullPreservesRawUpstreamKeys(t *testi
 
 	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-05-14T07:00:00","calories":1850,"carbs_ingested":210,"carbs_used":390}`)
 	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
-	tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, "test", "UTC", false)
+	tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","include_full":true}`)})
 	if err != nil {
@@ -213,7 +214,7 @@ func TestGetActivityDetailsShapesTerseFullAndStravaUnavailable(t *testing.T) {
 
 	activity := decodeActivityFixture(t, `{"id":"stub1","icu_athlete_id":"i12345","start_date_local":"2026-01-02T07:00:00","name":null}`)
 	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "imperial", Timezone: "America/Sao_Paulo"}}, activity: activity}
-	tool := newGetActivityDetailsTool(client, client, "test", "UTC", false)
+	tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"stub1","include_full":true}`)})
 	if err != nil {
@@ -242,7 +243,7 @@ func TestGetActivityDetailsMarksSyncChainStubsUnavailable(t *testing.T) {
 		t.Run(activity.ID, func(t *testing.T) {
 			t.Parallel()
 			client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
-			tool := newGetActivityDetailsTool(client, client, "test", "UTC", false)
+			tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
 
 			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"` + activity.ID + `"}`)})
 			if err != nil {
@@ -262,7 +263,7 @@ func TestGetActivityDetailsResolvesGear(t *testing.T) {
 
 	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`)
 	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity, gear: decodeToolGear(t, `{"id":"g-1","name":"Race Bike"}`)}
-	tool := newGetActivityDetailsToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+	tool := newGetActivityDetailsToolWithGear(client, client, client, newGearListCache(), nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
 	if err != nil {
@@ -279,7 +280,7 @@ func TestGetActivityDetailsMarksGearLookupUnavailable(t *testing.T) {
 
 	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`)
 	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity, gearErr: errors.New("gear upstream down")}
-	tool := newGetActivityDetailsToolWithGear(client, client, client, newGearListCache(), "test", "UTC", false)
+	tool := newGetActivityDetailsToolWithGear(client, client, client, newGearListCache(), nil, nil, "test", "UTC", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
 	if err != nil {

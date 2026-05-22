@@ -44,6 +44,7 @@ type registryToolOptions struct {
 	capability       safety.Capability
 	shaping          responseShaping
 	gearCache        *gearListCache
+	customFieldCache *customFieldCache
 	coachModeEnabled bool
 	coachConfig      coach.Config
 }
@@ -57,6 +58,7 @@ func catalogTools() []Tool {
 		capability:       safety.NewCapability(safety.ModeFull),
 		shaping:          shaping,
 		gearCache:        newGearListCache(),
+		customFieldCache: newCustomFieldCache(),
 		coachModeEnabled: true,
 	})
 	tools = append(tools, newListAdvancedCapabilitiesTool(tools, safety.ToolsetFull, shaping))
@@ -82,7 +84,7 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 		newGetPowerCurvesTool(client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetHRCurvesTool(client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetPaceCurvesTool(client, client, opts.version, opts.debugMetadata, opts.shaping),
-		newGetActivitiesToolWithGear(client, client, client, opts.gearCache, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newGetActivitiesToolWithGear(client, client, client, opts.gearCache, client, opts.customFieldCache, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetEventsTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetEventByIDTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAddOrUpdateEventTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -102,7 +104,7 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 		newCreateCustomItemTool(client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newUpdateCustomItemTool(client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newDeleteCustomItemTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
-		newGetActivityDetailsToolWithGear(client, client, client, opts.gearCache, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newGetActivityDetailsToolWithGear(client, client, client, opts.gearCache, client, opts.customFieldCache, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newDeleteActivityTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetActivityIntervalsTool(client, client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetActivityStreamsTool(client, client, opts.version, opts.debugMetadata, opts.shaping),
