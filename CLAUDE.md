@@ -81,7 +81,7 @@ icuvisor uses `github.com/modelcontextprotocol/go-sdk`. Read its docs before cha
 - **Destructive ops are registration-time gated.** `delete_event`, `delete_events_by_date_range`, and other write/delete tools declare their required capability and are registered only when `internal/safety` allows it for `ICUVISOR_DELETE_MODE`; never add a model-controlled `confirm: true` override.
 - **Idempotency:** writes that can be safely retried should be idempotent. Document the ones that can't.
 - **Errors back to the LLM** must be short, actionable, and free of internal stack traces. Log the detail; return the summary.
-- **Athlete ID normalization:** accept `i12345` or `12345`; emit `i12345`. Centralize in `internal/config`.
+- **Athlete ID normalization:** accept both intervals.icu ID shapes — `i12345` (intervals.icu-native accounts) and bare-numeric `12345` (Strava-linked accounts). The leading `i` is part of the ID; never add or strip it. Normalization only trims whitespace, lowercases an optional `i`, and validates digits. Centralize in `internal/config`.
 - **Strava-imported activities:** detect via the upstream marker and label them in responses so the LLM doesn't hallucinate over `N/A` fields.
 - **Coach mode:** the coach-scoped API key never leaves the server. The `athlete_id` argument selects which athlete the call targets — it is _not_ a credential.
 

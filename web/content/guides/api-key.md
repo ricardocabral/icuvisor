@@ -25,7 +25,7 @@ If you built from source, run:
 ./bin/icuvisor setup
 ```
 
-Setup asks for the API key with masked input and your athlete ID, verifies the pair against intervals.icu, stores the key in the OS keychain, autodetects your timezone, and writes only non-secret config fields. The generated config may include a `credential_ref` that names the keychain service/account (`icuvisor` / `intervals-icu-api-key`), but it never contains the API key itself. Athlete IDs always start with `i` (for example `i12345`); intervals.icu does not expose the ID via the API, so it cannot be autodetected.
+Setup asks for the API key with masked input and your athlete ID, verifies the pair against intervals.icu, stores the key in the OS keychain, autodetects your timezone, and writes only non-secret config fields. The generated config may include a `credential_ref` that names the keychain service/account (`icuvisor` / `intervals-icu-api-key`), but it never contains the API key itself. Athlete IDs are usually the letter `i` followed by digits (for example `i12345`), but accounts created by linking Strava have a bare-numeric ID with no `i` — both forms are accepted. intervals.icu does not expose the ID via the API, so it cannot be autodetected.
 
 Useful setup flags are documented in the [CLI reference]({{< relref "../reference/cli" >}}):
 

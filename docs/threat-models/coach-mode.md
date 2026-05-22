@@ -26,7 +26,7 @@ Out of scope for v0.5: per-athlete delegated credentials, hosted multi-tenant op
 2. The intervals.icu API key is read only by server startup/configuration code and remains inside the local process. No tool schema contains an API-key argument, and no tool response includes the key or credential source details.
 3. A request may target exactly one normalized athlete ID. Wildcards, comma-separated lists, empty strings, and malformed IDs are rejected before any upstream call.
 4. In coach mode, the normalized athlete ID must match the configured coach roster before any tool-specific handler runs. In single-athlete mode, any explicit `athlete_id` must match the configured single athlete.
-5. Per-athlete ACL evaluation uses the normalized target athlete ID and requested tool name at request entry. The caller cannot choose another athlete's ACL by spelling the ID differently because all accepted IDs normalize to canonical `i12345` form before lookup.
+5. Per-athlete ACL evaluation uses the normalized target athlete ID and requested tool name at request entry. The caller cannot choose another athlete's ACL by spelling the ID differently because every accepted ID normalizes deterministically — whitespace trimmed and any leading `i` lowercased — to a single canonical form before lookup. Normalization never adds or strips the `i` prefix, so the `i12345` and bare-numeric (`12345`) ID shapes remain distinct athletes.
 6. Registration-time catalog filtering and request-time authorization both compose with the process-global delete-mode gate and the toolset-tier gate. Any deny is final.
 7. Error messages for malformed IDs and unknown roster members are intentionally the same class of error so callers cannot enumerate roster membership from differential failures.
 

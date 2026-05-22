@@ -115,7 +115,7 @@ func CoachRosterTriagePrompt() Prompt {
 		Title:       "Coach roster triage",
 		Description: "Guide a coach-mode per-athlete scan; athlete_id is a selector, not a credential.",
 		Arguments: []Argument{
-			{Name: "athlete_id", Title: "Athlete ID", Description: "Required intervals.icu athlete selector string; IDs start with 'i' followed by digits (e.g. i12345). This is not an API key or credential.", Required: true},
+			{Name: "athlete_id", Title: "Athlete ID", Description: "Required intervals.icu athlete selector string; IDs are digits, optionally with a leading 'i' (e.g. i12345 or 12345). This is not an API key or credential.", Required: true},
 			{Name: "start_date", Title: "Start date", Description: "Optional athlete-local date string (YYYY-MM-DD) for the triage window."},
 			{Name: "end_date", Title: "End date", Description: "Optional athlete-local date string (YYYY-MM-DD) for the triage window."},
 		},
@@ -171,11 +171,11 @@ func coachRosterTriageHandler(ctx context.Context, req Request) (Result, error) 
 	}
 	athleteID := strings.TrimSpace(req.Arguments["athlete_id"])
 	if athleteID == "" {
-		return Result{}, NewUserError("missing athlete_id; intervals.icu IDs start with 'i' followed by digits, e.g. i12345", nil)
+		return Result{}, NewUserError("missing athlete_id; intervals.icu IDs are digits, optionally with a leading 'i', e.g. i12345 or 12345", nil)
 	}
 	normalized, err := config.NormalizeAthleteID(athleteID)
 	if err != nil {
-		return Result{}, NewUserError("invalid athlete_id; intervals.icu IDs start with 'i' followed by digits, e.g. i12345", err)
+		return Result{}, NewUserError("invalid athlete_id; intervals.icu IDs are digits, optionally with a leading 'i', e.g. i12345 or 12345", err)
 	}
 	args := cloneArgs(req.Arguments)
 	args["athlete_id"] = normalized

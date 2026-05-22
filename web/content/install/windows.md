@@ -32,7 +32,7 @@ A signed MSI (Azure Trusted Signing) will land at v1.0 with no other changes.
 You need two things from intervals.icu:
 
 - **API key.** Log in to [intervals.icu](https://intervals.icu), open **Settings → Developer Settings**, and copy your API key. Setup will ask for this with masked input.
-- **Athlete ID.** It's displayed near the API key on the page above, or open any page on intervals.icu while logged in and look at the URL — it contains `/athlete/i12345/...`, where `i12345` is your athlete ID. intervals.icu IDs always start with the letter `i` followed by digits.
+- **Athlete ID.** It's displayed near the API key on the page above, or open any page on intervals.icu while logged in and look at the URL — it contains `/athlete/i12345/...`, where `i12345` is your athlete ID. Most IDs are the letter `i` followed by digits; accounts created by linking Strava have a bare-numeric ID with no `i`. Either form works.
 
 ## First-run setup
 

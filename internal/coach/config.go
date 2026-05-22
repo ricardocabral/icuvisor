@@ -74,7 +74,7 @@ func ValidateConfig(raw Config, mode Mode, normalize NormalizeAthleteIDFunc) (Co
 	for i, athlete := range raw.Athletes {
 		normalizedID, err := normalize(athlete.ID)
 		if err != nil {
-			return Config{}, fmt.Errorf("invalid coach.athletes[%d].id; intervals.icu IDs start with 'i' followed by digits, e.g. i12345", i)
+			return Config{}, fmt.Errorf("invalid coach.athletes[%d].id; intervals.icu IDs are digits, optionally with a leading 'i', e.g. i12345 or 12345", i)
 		}
 		if _, ok := seen[normalizedID]; ok {
 			return Config{}, fmt.Errorf("duplicate coach athlete id %q", normalizedID)
@@ -105,7 +105,7 @@ func ValidateConfig(raw Config, mode Mode, normalize NormalizeAthleteIDFunc) (Co
 	if defaultID != "" {
 		normalizedDefault, err := normalize(defaultID)
 		if err != nil {
-			return Config{}, fmt.Errorf("invalid coach.default_athlete_id; intervals.icu IDs start with 'i' followed by digits, e.g. i12345")
+			return Config{}, fmt.Errorf("invalid coach.default_athlete_id; intervals.icu IDs are digits, optionally with a leading 'i', e.g. i12345 or 12345")
 		}
 		if _, ok := seen[normalizedDefault]; !ok {
 			return Config{}, fmt.Errorf("coach.default_athlete_id must be present in coach.athletes")

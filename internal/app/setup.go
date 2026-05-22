@@ -87,7 +87,7 @@ func setupProfile(ctx context.Context, opts setupProfileOptions) (SetupProfile, 
 }
 
 func readAthleteID(ctx context.Context, prompter SetupPrompter) (string, error) {
-	answer, err := prompter.ReadLine(ctx, "Athlete ID (intervals.icu IDs start with 'i' — find yours in the URL, e.g. i12345):")
+	answer, err := prompter.ReadLine(ctx, "Athlete ID (find yours in the intervals.icu URL, e.g. i12345 or 12345):")
 	if err != nil {
 		return "", fmt.Errorf("read athlete ID: %w", err)
 	}
