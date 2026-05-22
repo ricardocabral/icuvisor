@@ -161,6 +161,9 @@ func TestLoadDotEnvFillsAbsentValues(t *testing.T) {
 	if cfg.Toolset != safety.ToolsetCore {
 		t.Fatalf("Toolset = %q, want default core", cfg.Toolset)
 	}
+	if cfg.DeleteMode != safety.ModeSafe {
+		t.Fatalf("DeleteMode = %q, want default %q", cfg.DeleteMode, safety.ModeSafe)
+	}
 	if cfg.Transport != TransportStdio {
 		t.Fatalf("Transport = %q, want default stdio", cfg.Transport)
 	}
@@ -197,6 +200,53 @@ func TestLoadToolsetFromDotEnvAndInvalidEnvFallback(t *testing.T) {
 	}
 	if cfg.Toolset != safety.ToolsetCore {
 		t.Fatalf("Toolset = %q, want invalid env fallback core", cfg.Toolset)
+	}
+}
+
+func TestLoadDeleteModeFromDotEnvAndProcessEnvPrecedence(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		dotEnvMode  string // value written into .env; "" omits the line entirely
+		processMode string // value of ICUVISOR_DELETE_MODE in process env; "" omits the key
+		want        safety.Mode
+	}{
+		{name: "dotenv full honored when process env is silent", dotEnvMode: "full", processMode: "", want: safety.ModeFull},
+		{name: "process env safe overrides dotenv full", dotEnvMode: "full", processMode: "safe", want: safety.ModeSafe},
+		{name: "process env none overrides dotenv full", dotEnvMode: "full", processMode: "none", want: safety.ModeNone},
+		{name: "invalid dotenv value never unlocks deletes", dotEnvMode: "bogus", processMode: "", want: safety.ModeSafe},
+		{name: "absent from every source defaults to safe", dotEnvMode: "", processMode: "", want: safety.ModeSafe},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			dir := t.TempDir()
+			dotEnvPath := dir + "/.env"
+			lines := []string{
+				"INTERVALS_ICU_API_KEY=dotenv-key",
+				"INTERVALS_ICU_ATHLETE_ID=i444",
+			}
+			if tc.dotEnvMode != "" {
+				lines = append(lines, safety.EnvDeleteMode+"="+tc.dotEnvMode)
+			}
+			writeFile(t, dotEnvPath, strings.Join(lines, "\n"))
+
+			env := map[string]string{}
+			if tc.processMode != "" {
+				env[safety.EnvDeleteMode] = tc.processMode
+			}
+
+			cfg, err := Load(context.Background(), Options{DotEnvPath: dotEnvPath, Env: env})
+			if err != nil {
+				t.Fatalf("Load() error = %v", err)
+			}
+			if cfg.DeleteMode != tc.want {
+				t.Fatalf("DeleteMode = %q, want %q", cfg.DeleteMode, tc.want)
+			}
+		})
 	}
 }
 
