@@ -41,8 +41,6 @@ Keep API keys in the OS keychain whenever possible. `icuvisor setup` writes a no
 | `coach`        | object | omitted                                                        | Optional coach-mode roster and per-athlete ACLs. See [Set up coach mode]({{< relref "../guides/coach-mode" >}}) for setup and [Coach mode model]({{< relref "../explain/coach-mode" >}}) for the conceptual model. |
 | `api_key`      | string | not recommended                                                | Legacy plaintext API-key fallback. Prefer the OS keychain or `INTERVALS_ICU_API_KEY` for emergency/headless use.                                                                                                   |
 
-Implementation source of truth: `internal/config/config.go` and `internal/coach/config.go`.
-
 ## Coach config object
 
 Coach mode is enabled with `ICUVISOR_COACH_MODE=on` or `ICUVISOR_COACH_MODE=auto`; see the [CLI reference]({{< relref "cli#environment-variables" >}}). The JSON config supplies the roster and ACLs.

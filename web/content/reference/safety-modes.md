@@ -18,8 +18,6 @@ For the complete flag and environment-variable list, see the [CLI reference]({{<
 | `none`           | Registers read tools only. Write and delete tools are omitted.                                       | Read-only analysis, demos, and cautious coach review.                                       |
 | empty or unknown | Falls back to `safe`.                                                                                | Misconfiguration does not unlock deletes.                                                   |
 
-Implementation source of truth: `internal/safety/mode.go`.
-
 ## Toolset tier
 
 `ICUVISOR_TOOLSET` controls how much of the catalog is registered.
@@ -39,8 +37,6 @@ The [`icuvisor_list_advanced_capabilities`]({{< relref "tools#icuvisor_list_adva
 - **Unsure or shared setups**: keep `core`; an AI client can still call `icuvisor_list_advanced_capabilities` to discover the rest.
 
 To switch, set `ICUVISOR_TOOLSET=full` in your MCP client's icuvisor entry, restart icuvisor, and start a fresh conversation.
-
-Implementation source of truth: `internal/safety/toolset.go` and `internal/mcp/registrar_tools.go`.
 
 ## How the gates combine
 

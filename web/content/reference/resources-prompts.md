@@ -5,8 +5,6 @@ description: "Reference for icuvisor MCP Resources and Prompts."
 
 icuvisor exposes MCP Resources for long-form reference material and MCP Prompts for curated starting points in clients that support them. Resources and prompts keep bulky guidance out of every tool description while still letting an AI client fetch it when needed.
 
-Implementation source of truth: `internal/resources/` and `internal/prompts/`.
-
 ## Resources
 
 | URI                              | Name                  | MIME type          | Description                                                                                                                                                                                                                                                                                                                       |
