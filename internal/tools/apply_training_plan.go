@@ -334,7 +334,7 @@ func eventDateOnly(event intervals.Event) string {
 
 func eventParamsFromPlanWorkout(date string, workout intervals.Workout) (intervals.WriteEventParams, error) {
 	trainingLoad := workoutTrainingLoad(workout)
-	args := addOrUpdateEventRequest{Date: date, Category: "WORKOUT", Type: stringValue(workout.Type), Name: stringValue(workout.Name), Tags: append([]string(nil), workout.Tags...), TargetLoad: trainingLoad, DistanceMeters: workout.Distance, MovingTimeSeconds: workout.MovingTime}
+	args := addOrUpdateEventRequest{Date: date, Category: "WORKOUT", Type: stringValue(workout.Type), Name: stringValue(workout.Name), Tags: append([]string(nil), workout.Tags...), Indoor: workout.Indoor, TargetLoad: trainingLoad, DistanceMeters: workout.Distance, MovingTimeSeconds: workout.MovingTime}
 	if workout.WorkoutDoc != nil {
 		doc, err := workoutDocFromAny(workout.WorkoutDoc)
 		if err != nil {

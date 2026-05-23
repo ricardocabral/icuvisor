@@ -33,6 +33,7 @@ type WriteEventParams struct {
 	Name               string
 	Description        *string
 	Tags               []string
+	Indoor             *bool
 	TargetLoad         *float64
 	DistanceMeters     *float64
 	MovingTimeSeconds  *int
@@ -52,6 +53,7 @@ type Event struct {
 	Updated           *string  `json:"updated"`
 	PlanApplied       *string  `json:"plan_applied"`
 	Description       *string  `json:"description"`
+	Indoor            *bool    `json:"indoor"`
 	TrainingLoad      *float64 `json:"icu_training_load"`
 	LoadTarget        *float64 `json:"load_target"`
 	Distance          *float64 `json:"distance"`
@@ -158,6 +160,7 @@ type writeEventPayload struct {
 	Name              string   `json:"name,omitempty"`
 	Description       *string  `json:"description,omitempty"`
 	Tags              []string `json:"tags,omitempty"`
+	Indoor            *bool    `json:"indoor,omitempty"`
 	LoadTarget        *float64 `json:"load_target,omitempty"`
 	DistanceTarget    *float64 `json:"distance_target,omitempty"`
 	TimeTarget        *int     `json:"time_target,omitempty"`
@@ -180,6 +183,7 @@ func writeEventBody(params WriteEventParams) (writeEventPayload, error) {
 		Name:              strings.TrimSpace(params.Name),
 		Description:       params.Description,
 		Tags:              append([]string(nil), params.Tags...),
+		Indoor:            params.Indoor,
 		LoadTarget:        params.TargetLoad,
 		DistanceTarget:    params.DistanceMeters,
 		TimeTarget:        params.MovingTimeSeconds,

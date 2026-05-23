@@ -113,7 +113,7 @@ func TestApplyTrainingPlanApplySkipExistingCreatesOnlyConflictFreeDays(t *testin
 		t.Fatalf("write calls = %d, want only conflict-free day", len(client.writeCalls))
 	}
 	call := client.writeCalls[0]
-	if call.Date != "2026-06-01" || call.Category != "WORKOUT" || call.Type != "Ride" || call.Name != "Endurance" || call.TargetLoad == nil || *call.TargetLoad != 45 || call.MovingTimeSeconds == nil || *call.MovingTimeSeconds != 3600 {
+	if call.Date != "2026-06-01" || call.Category != "WORKOUT" || call.Type != "Ride" || call.Name != "Endurance" || call.Indoor == nil || !*call.Indoor || call.TargetLoad == nil || *call.TargetLoad != 45 || call.MovingTimeSeconds == nil || *call.MovingTimeSeconds != 3600 {
 		t.Fatalf("write call = %#v, want event params from add_or_update_event internals", call)
 	}
 	out := resultMap(t, result)
@@ -209,7 +209,7 @@ func newApplyTrainingPlanTestClient(t *testing.T) *fakeApplyTrainingPlanClient {
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
 		folders:           decodeToolWorkoutFolders(t, `{"id":"plan-1","type":"PLAN","name":"Base plan"}`),
 		workouts: decodeToolWorkouts(t,
-			`{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1,"icu_training_load":45,"moving_time":3600,"workout_doc":{"steps":[{"duration":600}]}}`,
+			`{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1,"indoor":true,"icu_training_load":45,"moving_time":3600,"workout_doc":{"steps":[{"duration":600}]}}`,
 			`{"id":"w-2","name":"Run","type":"Run","folder_id":"plan-1","day":2,"description":"Easy run"}`,
 		),
 	}

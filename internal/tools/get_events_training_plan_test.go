@@ -69,7 +69,7 @@ func TestGetEventsTerseRowsTimezoneAndCategory(t *testing.T) {
 
 	client := &fakeEventsTrainingPlanClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
-		events:            decodeToolEvents(t, `{"id":123,"name":"Tempo","category":"WORKOUT","type":"Ride","start_date_local":"2026-01-03","end_date_local":"2026-01-03","description":"3x tempo","updated":"2026-01-03T12:00:00Z","plan_applied":"2026-01-02T12:00:00Z","calendar_id":"cal-1","training_plan_id":456,"icu_training_load":75,"distance":30000,"moving_time":3600,"workout_doc":{"steps":[{"duration":600}]}}`),
+		events:            decodeToolEvents(t, `{"id":123,"name":"Tempo","category":"WORKOUT","type":"Ride","start_date_local":"2026-01-03","end_date_local":"2026-01-03","description":"3x tempo","indoor":true,"updated":"2026-01-03T12:00:00Z","plan_applied":"2026-01-02T12:00:00Z","calendar_id":"cal-1","training_plan_id":456,"icu_training_load":75,"distance":30000,"moving_time":3600,"workout_doc":{"steps":[{"duration":600}]}}`),
 	}
 	tool := newGetEventsTool(client, client, "test", "UTC", false)
 
@@ -89,6 +89,9 @@ func TestGetEventsTerseRowsTimezoneAndCategory(t *testing.T) {
 	row := rows[0].(map[string]any)
 	if row["event_id"] != "123" || row["category"] != "WORKOUT" {
 		t.Fatalf("row id/category = %#v/%#v, want string id and raw category", row["event_id"], row["category"])
+	}
+	if row["indoor"] != true {
+		t.Fatalf("indoor = %#v, want true", row["indoor"])
 	}
 	if row["updated_local"] != "2026-01-03T09:00:00-03:00" {
 		t.Fatalf("updated_local = %#v, want Sao Paulo rendering", row["updated_local"])

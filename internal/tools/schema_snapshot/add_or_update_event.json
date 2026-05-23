@@ -28,6 +28,7 @@
     {
       "category": "WORKOUT",
       "date": "2026-06-16",
+      "indoor": true,
       "moving_time_seconds": 4200,
       "name": "Sweet spot repeats",
       "tags": [
@@ -113,6 +114,7 @@
     {
       "category": "WORKOUT",
       "date": "2026-06-16",
+      "indoor": true,
       "moving_time_seconds": 4200,
       "name": "Sweet spot repeats",
       "tags": [
@@ -200,6 +202,10 @@
     "include_full": {
       "default": false,
       "description": "When true, include the raw upstream event payload under event.full; default response matches get_event_by_id's terse event shape.",
+      "type": "boolean"
+    },
+    "indoor": {
+      "description": "Optional planned-event indoor/trainer flag. Set true for indoor trainer rides; commonly paired with type VirtualRide, but this boolean controls intervals.icu's Indoor toggle.",
       "type": "boolean"
     },
     "moving_time_seconds": {

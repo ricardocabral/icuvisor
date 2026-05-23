@@ -344,11 +344,13 @@ func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
 	distance := 30000.0
 	moving := 3600
 	elapsed := 3900
-	created, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{Date: "2026-06-01", Category: "WORKOUT", Type: "Ride", Name: "Tempo", Description: &description, Tags: []string{"tempo", "coach"}, TargetLoad: &targetLoad, DistanceMeters: &distance, MovingTimeSeconds: &moving, ElapsedTimeSeconds: &elapsed})
+	indoor := true
+	created, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{Date: "2026-06-01", Category: "WORKOUT", Type: "VirtualRide", Name: "Tempo", Description: &description, Tags: []string{"tempo", "coach"}, Indoor: &indoor, TargetLoad: &targetLoad, DistanceMeters: &distance, MovingTimeSeconds: &moving, ElapsedTimeSeconds: &elapsed})
 	if err != nil {
 		t.Fatalf("AddOrUpdateEvent(create) error = %v", err)
 	}
-	updated, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: " evt-9 ", Date: "2026-06-02", Category: "WORKOUT", Type: "Ride"})
+	indoorFalse := false
+	updated, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: " evt-9 ", Date: "2026-06-02", Category: "WORKOUT", Type: "Ride", Indoor: &indoorFalse})
 	if err != nil {
 		t.Fatalf("AddOrUpdateEvent(update) error = %v", err)
 	}
@@ -366,7 +368,7 @@ func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
 		t.Fatalf("create body = %#v, want single-event bulk payload", requests[0].body)
 	}
 	body := createBatch[0].(map[string]any)
-	if body["start_date_local"] != "2026-06-01T00:00:00" || body["category"] != "WORKOUT" || body["type"] != "Ride" || body["name"] != "Tempo" || body["description"] != description {
+	if body["start_date_local"] != "2026-06-01T00:00:00" || body["category"] != "WORKOUT" || body["type"] != "VirtualRide" || body["name"] != "Tempo" || body["description"] != description || body["indoor"] != true {
 		t.Fatalf("create body = %#v, want mapped event fields", body)
 	}
 	if _, ok := body["workout_doc"]; ok {
@@ -389,6 +391,10 @@ func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
 	}
 	if requests[1].method != http.MethodPut || requests[1].path != "/athlete/i12345/events/evt-9" {
 		t.Fatalf("update request = %#v, want PUT athlete events/{id}", requests[1])
+	}
+	updateBody := requests[1].body.(map[string]any)
+	if updateBody["indoor"] != false {
+		t.Fatalf("update body = %#v, want explicit indoor=false", updateBody)
 	}
 }
 
