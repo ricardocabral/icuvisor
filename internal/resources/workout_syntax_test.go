@@ -133,6 +133,37 @@ func TestWorkoutSyntaxMarkdownDocumentsLimitations(t *testing.T) {
 	}
 }
 
+func TestWorkoutSyntaxMarkdownIncludesCheatSheetAndCommonMistakes(t *testing.T) {
+	t.Parallel()
+
+	markdown, err := WorkoutSyntaxMarkdown()
+	if err != nil {
+		t.Fatalf("WorkoutSyntaxMarkdown() error = %v", err)
+	}
+	for _, want := range []string{
+		"## Cheat sheet",
+		"## Common mistakes",
+		"`m` is minutes",
+		"`mtr` for meters",
+		"No nested repeats",
+		"`workout_doc` and `description` coexist",
+		"`validate_workout`",
+	} {
+		if !strings.Contains(markdown, want) {
+			t.Fatalf("markdown missing %q", want)
+		}
+	}
+	spec := workoutdoc.WorkoutSyntaxSpec()
+	if len(spec.CommonMistakes) == 0 {
+		t.Fatal("spec.CommonMistakes is empty")
+	}
+	for _, mistake := range spec.CommonMistakes {
+		if !strings.Contains(markdown, "`"+mistake.Key+"`") {
+			t.Fatalf("markdown missing common-mistake key %q", mistake.Key)
+		}
+	}
+}
+
 func TestNewRegistryRegistersWorkoutSyntaxResource(t *testing.T) {
 	t.Parallel()
 

@@ -2,8 +2,28 @@ package workoutdoc
 
 // SyntaxSpec describes the structured workout DSL supported by Serialize.
 type SyntaxSpec struct {
-	Features    []SyntaxFeature
-	Limitations []SyntaxLimitation
+	CheatSheet     SyntaxCheatSheet
+	Features       []SyntaxFeature
+	Limitations    []SyntaxLimitation
+	CommonMistakes []SyntaxMistake
+}
+
+// SyntaxCheatSheet is a compact at-a-glance summary rendered at the top of the resource.
+type SyntaxCheatSheet struct {
+	Form     string
+	Examples []SyntaxCheatExample
+}
+
+// SyntaxCheatExample is a minimal labelled DSL snippet for the cheat sheet.
+type SyntaxCheatExample struct {
+	Label string
+	DSL   string
+}
+
+// SyntaxMistake captures a recurring authoring mistake worth flagging.
+type SyntaxMistake struct {
+	Key         string
+	Description string
 }
 
 // SyntaxFeature describes one supported workout DSL feature.
@@ -83,6 +103,15 @@ func WorkoutTargetUnitSyntax() []TargetUnitSyntax {
 // WorkoutSyntaxSpec returns the workout DSL syntax supported by this package.
 func WorkoutSyntaxSpec() SyntaxSpec {
 	return SyntaxSpec{
+		CheatSheet: SyntaxCheatSheet{
+			Form: "Simple step: `- [description] [duration|distance] [primary target] [optional cadence]`. Repeat block: `Nx` header with two-space-indented child steps. Use one primary target per step (power OR HR OR pace OR RPE OR freeride).",
+			Examples: []SyntaxCheatExample{
+				{Label: "Duration step", DSL: "- Endurance 10m 75%"},
+				{Label: "Distance step", DSL: "- Stride 400mtr 120%"},
+				{Label: "Repeat block", DSL: "Main set 3x\n  - Hard 2m 105-115% 95-105rpm\n  - Easy 1m freeride"},
+				{Label: "Ramp", DSL: "- Build 8m ramp 70-95%"},
+			},
+		},
 		Features: []SyntaxFeature{
 			{
 				Key:         "duration_steps",
@@ -184,6 +213,15 @@ func WorkoutSyntaxSpec() SyntaxSpec {
 			{Key: "freeride_not_ramp", Description: "Freeride cannot be combined with ramp or another primary target."},
 			{Key: "repeat_fields", Description: "Repeat blocks require reps greater than zero and child steps, cannot be nested, and cannot also carry simple-step fields."},
 			{Key: "simple_step_duration_or_distance", Description: "Simple steps require a positive duration or a supported distance."},
+		},
+		CommonMistakes: []SyntaxMistake{
+			{Key: "m_is_minutes", Description: "`m` is minutes, never meters. Use `mtr` for meters (e.g. `500mtr`, not `500m`)."},
+			{Key: "one_primary_target_per_step", Description: "One primary target per step. Use power OR HR OR pace OR RPE (plus optional cadence). Mixing primary targets in one step is rejected."},
+			{Key: "no_nested_repeats", Description: "No nested repeats. An `Nx` block cannot contain another `Nx` block."},
+			{Key: "repeat_header_carries_only_reps", Description: "Repeat headers carry only `Nx` and an optional label. Duration and targets belong on the child steps, not the header."},
+			{Key: "ramps_need_numeric_targets", Description: "Ramps cannot use text or zone-label pace targets. Use percentages or absolute pace bounds for the start/end."},
+			{Key: "prose_and_steps_coexist", Description: "`workout_doc` and `description` coexist in the same description field — prose, headers, and comments pass through untouched while structured-step lines are validated. You do not need a separate event or note to attach coach/athlete prose alongside structure."},
+			{Key: "preflight_validate", Description: "Pre-flight: when uncertain about syntax, call `validate_workout` (when registered) with the proposed `workout_doc` and/or `description` before writing to get a diagnostic. If the tool is not available the write tools still apply the same parser server-side."},
 		},
 	}
 }

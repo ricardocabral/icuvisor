@@ -14,7 +14,7 @@ import (
 
 const (
 	updateWorkoutName                    = "update_workout"
-	updateWorkoutDescription             = "Update one reusable workout-library template by workout_id with sparse fields only. Omitted fields stay untouched; workout_doc syntax is at icuvisor://workout-syntax."
+	updateWorkoutDescription             = "Update one reusable workout-library template by workout_id with sparse fields only. Omitted fields stay untouched. Accepts `workout_doc` (structured steps) and `description` (free-text prose) independently — set either or both; when both are present the server interleaves the prose verbatim around the serialized steps, so coaching notes do not need a separate template. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax for the cheat sheet and common mistakes)."
 	invalidUpdateWorkoutArgumentsMessage = "invalid update_workout arguments; provide workout_id plus at least one sparse workout field"
 	updateWorkoutMessage                 = "could not update workout; check intervals.icu credentials, athlete ID, workout ID, folder ID, and writable workout fields"
 )

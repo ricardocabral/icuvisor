@@ -13,7 +13,7 @@ import (
 
 const (
 	addOrUpdateEventName                    = "add_or_update_event"
-	addOrUpdateEventDescription             = "Create or update a non-destructive calendar event such as a planned workout, race, or note. Omitting event_id creates a new event; providing event_id updates that event without deleting or replacing unrelated events."
+	addOrUpdateEventDescription             = "Create or update a non-destructive calendar event such as a planned workout, race, or note. Omitting event_id creates a new event; providing event_id updates that event without deleting or replacing unrelated events. Accepts `workout_doc` (structured steps) and `description` (free-text prose) independently — set either or both; when both are present the server interleaves the prose verbatim around the serialized steps, so coaching notes do not need a separate event. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax for the cheat sheet and common mistakes)."
 	invalidAddOrUpdateEventArgumentsMessage = "invalid add_or_update_event arguments; provide date as athlete-local YYYY-MM-DD, category, type for WORKOUT events, name for NOTE creates, and optional event_id for updates"
 	writeEventMessage                       = "could not write event; check intervals.icu credentials, athlete ID, event ID, and writable event fields"
 )

@@ -2,6 +2,36 @@
 
 This resource documents the Intervals.icu structured-workout DSL emitted by icuvisor. Examples are generated from `internal/workoutdoc` structured steps with `workoutdoc.Serialize`, so the resource follows the serializer rather than a separate hand-authored grammar.
 
+## Cheat sheet
+
+Simple step: `- [description] [duration|distance] [primary target] [optional cadence]`. Repeat block: `Nx` header with two-space-indented child steps. Use one primary target per step (power OR HR OR pace OR RPE OR freeride).
+
+- Duration step:
+
+```text
+- Endurance 10m 75%
+```
+
+- Distance step:
+
+```text
+- Stride 400mtr 120%
+```
+
+- Repeat block:
+
+```text
+Main set 3x
+  - Hard 2m 105-115% 95-105rpm
+  - Easy 1m freeride
+```
+
+- Ramp:
+
+```text
+- Build 8m ramp 70-95%
+```
+
 ## General form
 
 - Simple steps begin with `- ` and include an optional description, a duration or distance, then at most one primary target plus optional cadence.
@@ -220,3 +250,13 @@ RPE targets support scalar values and ranges.
 - `freeride_not_ramp`: Freeride cannot be combined with ramp or another primary target.
 - `repeat_fields`: Repeat blocks require reps greater than zero and child steps, cannot be nested, and cannot also carry simple-step fields.
 - `simple_step_duration_or_distance`: Simple steps require a positive duration or a supported distance.
+
+## Common mistakes
+
+- `m_is_minutes`: `m` is minutes, never meters. Use `mtr` for meters (e.g. `500mtr`, not `500m`).
+- `one_primary_target_per_step`: One primary target per step. Use power OR HR OR pace OR RPE (plus optional cadence). Mixing primary targets in one step is rejected.
+- `no_nested_repeats`: No nested repeats. An `Nx` block cannot contain another `Nx` block.
+- `repeat_header_carries_only_reps`: Repeat headers carry only `Nx` and an optional label. Duration and targets belong on the child steps, not the header.
+- `ramps_need_numeric_targets`: Ramps cannot use text or zone-label pace targets. Use percentages or absolute pace bounds for the start/end.
+- `prose_and_steps_coexist`: `workout_doc` and `description` coexist in the same description field — prose, headers, and comments pass through untouched while structured-step lines are validated. You do not need a separate event or note to attach coach/athlete prose alongside structure.
+- `preflight_validate`: Pre-flight: when uncertain about syntax, call `validate_workout` (when registered) with the proposed `workout_doc` and/or `description` before writing to get a diagnostic. If the tool is not available the write tools still apply the same parser server-side.

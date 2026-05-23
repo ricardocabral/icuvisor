@@ -40,6 +40,23 @@ func WorkoutSyntaxMarkdown() (string, error) {
 	var b strings.Builder
 	b.WriteString("# Workout syntax\n\n")
 	b.WriteString("This resource documents the Intervals.icu structured-workout DSL emitted by icuvisor. Examples are generated from `internal/workoutdoc` structured steps with `workoutdoc.Serialize`, so the resource follows the serializer rather than a separate hand-authored grammar.\n\n")
+	if cheat := spec.CheatSheet; cheat.Form != "" || len(cheat.Examples) > 0 {
+		b.WriteString("## Cheat sheet\n\n")
+		if cheat.Form != "" {
+			b.WriteString(cheat.Form)
+			b.WriteString("\n\n")
+		}
+		for _, ex := range cheat.Examples {
+			if ex.Label == "" || ex.DSL == "" {
+				return "", fmt.Errorf("workout syntax cheat-sheet example is missing label/dsl")
+			}
+			b.WriteString("- ")
+			b.WriteString(ex.Label)
+			b.WriteString(":\n\n```text\n")
+			b.WriteString(ex.DSL)
+			b.WriteString("\n```\n\n")
+		}
+	}
 	b.WriteString("## General form\n\n")
 	b.WriteString("- Simple steps begin with `- ` and include an optional description, a duration or distance, then at most one primary target plus optional cadence.\n")
 	b.WriteString("- Repeat blocks use an `Nx` header and two-space-indented child steps.\n")
@@ -108,6 +125,19 @@ func WorkoutSyntaxMarkdown() (string, error) {
 		b.WriteString("`: ")
 		b.WriteString(limitation.Description)
 		b.WriteString("\n")
+	}
+	if len(spec.CommonMistakes) > 0 {
+		b.WriteString("\n## Common mistakes\n\n")
+		for _, mistake := range spec.CommonMistakes {
+			if mistake.Key == "" || mistake.Description == "" {
+				return "", fmt.Errorf("workout syntax common mistake is missing key/description")
+			}
+			b.WriteString("- `")
+			b.WriteString(mistake.Key)
+			b.WriteString("`: ")
+			b.WriteString(mistake.Description)
+			b.WriteString("\n")
+		}
 	}
 	return strings.TrimRight(b.String(), "\n") + "\n", nil
 }
