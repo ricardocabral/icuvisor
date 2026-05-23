@@ -33,6 +33,7 @@ type WriteEventParams struct {
 	Name               string
 	Description        *string
 	Tags               []string
+	TagsSet            bool
 	Indoor             *bool
 	TargetLoad         *float64
 	DistanceMeters     *float64
@@ -159,8 +160,8 @@ type writeEventPayload struct {
 	Type              string   `json:"type,omitempty"`
 	Name              string   `json:"name,omitempty"`
 	Description       *string  `json:"description,omitempty"`
-	Tags              []string `json:"tags,omitempty"`
-	Indoor            *bool    `json:"indoor,omitempty"`
+	Tags              *[]string `json:"tags,omitempty"`
+	Indoor            *bool     `json:"indoor,omitempty"`
 	LoadTarget        *float64 `json:"load_target,omitempty"`
 	DistanceTarget    *float64 `json:"distance_target,omitempty"`
 	TimeTarget        *int     `json:"time_target,omitempty"`
@@ -176,19 +177,23 @@ func writeEventBody(params WriteEventParams) (writeEventPayload, error) {
 	if category == "" {
 		return writeEventPayload{}, fmt.Errorf("writing event: category is required")
 	}
-	return writeEventPayload{
+	body := writeEventPayload{
 		StartDateLocal:    writeEventStartDateLocal(date, category),
 		Category:          category,
 		Type:              strings.TrimSpace(params.Type),
 		Name:              strings.TrimSpace(params.Name),
 		Description:       params.Description,
-		Tags:              append([]string(nil), params.Tags...),
 		Indoor:            params.Indoor,
 		LoadTarget:        params.TargetLoad,
 		DistanceTarget:    params.DistanceMeters,
 		TimeTarget:        params.MovingTimeSeconds,
 		ElapsedTimeTarget: params.ElapsedTimeSeconds,
-	}, nil
+	}
+	if params.TagsSet || len(params.Tags) > 0 {
+		tags := append([]string{}, params.Tags...)
+		body.Tags = &tags
+	}
+	return body, nil
 }
 
 func writeEventStartDateLocal(date string, category string) string {

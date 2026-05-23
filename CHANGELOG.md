@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `get_activities` and `get_activity_details` responses now report the athlete IANA timezone in `_meta.timezone` — the zone each row's `start_date_local` is expressed in — so assistants derive calendar dates from the athlete's timezone instead of reporting activities on the wrong day.
 - `add_or_update_event` now accepts a top-level `indoor` boolean and event reads echo `indoor`, allowing assistants to set intervals.icu's planned-event Indoor toggle for trainer rides instead of relying on tags or `VirtualRide` alone.
 
+### Fixed
+
+- `add_or_update_event` now treats an explicit `tags: []` as a tag-clearing update and sends `"tags": []` upstream instead of omitting the field as "no change".
+
 ## [0.1.3] - 2026-05-22
 
 ### Fixed

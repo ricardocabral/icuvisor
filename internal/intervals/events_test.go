@@ -398,6 +398,33 @@ func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateEventCanSendEmptyTags(t *testing.T) {
+	t.Parallel()
+
+	var body map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut || r.URL.Path != "/athlete/i12345/events/evt-4" {
+			t.Fatalf("request = %s %s, want PUT event", r.Method, r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"evt-4","category":"WORKOUT","start_date_local":"2026-06-02","tags":[]}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	_, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: "evt-4", Date: "2026-06-02", Category: "WORKOUT", Type: "Ride", TagsSet: true})
+	if err != nil {
+		t.Fatalf("AddOrUpdateEvent() error = %v", err)
+	}
+	tags, ok := body["tags"].([]any)
+	if !ok || len(tags) != 0 {
+		t.Fatalf("tags = %#v, want explicit empty tags array", body["tags"])
+	}
+}
+
 func TestAddOrUpdateEventRequiresWritableBasics(t *testing.T) {
 	t.Parallel()
 
