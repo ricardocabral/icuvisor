@@ -155,17 +155,17 @@ func (c *Client) AddOrUpdateEvent(ctx context.Context, params WriteEventParams) 
 }
 
 type writeEventPayload struct {
-	StartDateLocal    string   `json:"start_date_local"`
-	Category          string   `json:"category"`
-	Type              string   `json:"type,omitempty"`
-	Name              string   `json:"name,omitempty"`
-	Description       *string  `json:"description,omitempty"`
+	StartDateLocal    string    `json:"start_date_local"`
+	Category          string    `json:"category"`
+	Type              string    `json:"type,omitempty"`
+	Name              string    `json:"name,omitempty"`
+	Description       *string   `json:"description,omitempty"`
 	Tags              *[]string `json:"tags,omitempty"`
 	Indoor            *bool     `json:"indoor,omitempty"`
-	LoadTarget        *float64 `json:"load_target,omitempty"`
-	DistanceTarget    *float64 `json:"distance_target,omitempty"`
-	TimeTarget        *int     `json:"time_target,omitempty"`
-	ElapsedTimeTarget *int     `json:"elapsed_time_target,omitempty"`
+	LoadTarget        *float64  `json:"load_target,omitempty"`
+	DistanceTarget    *float64  `json:"distance_target,omitempty"`
+	TimeTarget        *int      `json:"time_target,omitempty"`
+	ElapsedTimeTarget *int      `json:"elapsed_time_target,omitempty"`
 }
 
 func writeEventBody(params WriteEventParams) (writeEventPayload, error) {
