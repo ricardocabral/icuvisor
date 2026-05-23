@@ -170,6 +170,31 @@ func TestAddOrUpdateEventUpdateUsesEventID(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateEventCanClearTags(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		event:             decodeToolEvents(t, `{"id":"evt-2","category":"WORKOUT","name":"Untagged","start_date_local":"2026-07-01","tags":[]}`)[0],
+	}
+	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"event_id":"evt-2","date":"2026-07-01","category":"WORKOUT","type":"Ride","tags":[]}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 {
+		t.Fatalf("write calls = %d, want 1", len(client.calls))
+	}
+	call := client.calls[0]
+	if !call.TagsSet {
+		t.Fatalf("TagsSet = false, want true for explicit empty tags")
+	}
+	if len(call.Tags) != 0 {
+		t.Fatalf("Tags = %#v, want empty replacement list", call.Tags)
+	}
+}
+
 func TestAddOrUpdateEventSerializesWorkoutDocGoldenFixture(t *testing.T) {
 	t.Parallel()
 

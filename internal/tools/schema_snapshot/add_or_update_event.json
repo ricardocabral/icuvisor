@@ -218,7 +218,7 @@
       "type": "string"
     },
     "tags": {
-      "description": "Optional event tags to preserve on the upstream event, in caller-provided order.",
+      "description": "Optional replacement event tags, in caller-provided order. Omit to leave unchanged on updates; provide [] to clear all tags.",
       "items": {
         "type": "string"
       },

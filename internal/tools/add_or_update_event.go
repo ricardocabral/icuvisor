@@ -38,6 +38,8 @@ type addOrUpdateEventRequest struct {
 	MovingTimeSeconds  *int                   `json:"moving_time_seconds,omitempty"`
 	ElapsedTimeSeconds *int                   `json:"elapsed_time_seconds,omitempty"`
 	IncludeFull        bool                   `json:"include_full,omitempty"`
+
+	tagsProvided bool
 }
 
 type addOrUpdateEventResponse struct {
@@ -92,6 +94,10 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 }
 
 func decodeAddOrUpdateEventRequest(raw json.RawMessage) (addOrUpdateEventRequest, error) {
+	fields, err := rawObjectFields(raw)
+	if err != nil {
+		return addOrUpdateEventRequest{}, err
+	}
 	var args addOrUpdateEventRequest
 	if strings.TrimSpace(string(raw)) == "" {
 		return args, errors.New("arguments must be a JSON object")
@@ -106,6 +112,7 @@ func decodeAddOrUpdateEventRequest(raw json.RawMessage) (addOrUpdateEventRequest
 	args.Category = strings.TrimSpace(args.Category)
 	args.Type = strings.TrimSpace(args.Type)
 	args.Name = strings.TrimSpace(args.Name)
+	args.tagsProvided = fields["tags"]
 	if !validDate(args.Date) {
 		return args, errors.New("date must be athlete-local YYYY-MM-DD")
 	}
@@ -145,6 +152,7 @@ func eventWriteParams(args addOrUpdateEventRequest) (intervals.WriteEventParams,
 		Name:               args.Name,
 		Description:        args.Description,
 		Tags:               append([]string(nil), args.Tags...),
+		TagsSet:            args.tagsProvided,
 		Indoor:             args.Indoor,
 		TargetLoad:         args.TargetLoad,
 		DistanceMeters:     args.DistanceMeters,
@@ -185,7 +193,7 @@ func addOrUpdateEventInputSchema() map[string]any {
 		"name":                 map[string]any{"type": "string", "description": "Event title/name shown on the athlete calendar. Required when creating NOTE events; optional for other supported writes and updates unless upstream requires it."},
 		"description":          map[string]any{"type": "string", "description": "Optional free-text athlete or coach notes. Preserved verbatim, including whitespace and line breaks; mutually exclusive with workout_doc."},
 		"workout_doc":          map[string]any{"type": "object", "description": "Optional structured WorkoutDoc. Mutually exclusive with description; serialized to the upstream workout DSL. Syntax reference: icuvisor://workout-syntax."},
-		"tags":                 map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional event tags to preserve on the upstream event, in caller-provided order."},
+		"tags":                 map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional replacement event tags, in caller-provided order. Omit to leave unchanged on updates; provide [] to clear all tags."},
 		"indoor":               map[string]any{"type": "boolean", "description": "Optional planned-event indoor/trainer flag. Set true for indoor trainer rides; commonly paired with type VirtualRide, but this boolean controls intervals.icu's Indoor toggle."},
 		"target_load":          map[string]any{"type": "number", "minimum": 0, "description": "Optional planned training load / TSS equivalent when supported upstream."},
 		"distance_meters":      map[string]any{"type": "number", "minimum": 0, "description": "Optional planned distance in meters when supported upstream."},
