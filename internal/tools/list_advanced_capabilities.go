@@ -13,8 +13,8 @@ import (
 
 const (
 	listAdvancedCapabilitiesName        = "icuvisor_list_advanced_capabilities"
-	listAdvancedCapabilitiesDescription = "Discover tools hidden from the default core catalog and explain how to enable the full icuvisor toolset. This tool makes no intervals.icu API calls."
-	listAdvancedCapabilitiesInstruction = "Set ICUVISOR_TOOLSET=full in the MCP client/server environment and restart icuvisor to enable the full tool catalog."
+	listAdvancedCapabilitiesDescription = "Discover tools hidden from the default core catalog (including delete operations such as delete_event and delete_activity) and explain how to enable them via server env vars ICUVISOR_TOOLSET=full and ICUVISOR_DELETE_MODE=full. These gates are server-config only; the LLM cannot bypass them at call time. This tool makes no intervals.icu API calls."
+	listAdvancedCapabilitiesInstruction = "Set ICUVISOR_TOOLSET=full in the MCP client/server environment to expose the full icuvisor toolset, and ICUVISOR_DELETE_MODE=full to additionally enable delete tools (default safe registers writes only; none disables both). restart icuvisor after changing either."
 )
 
 type advancedCapabilityRow struct {
@@ -128,7 +128,7 @@ func filteredAdvancedCapabilitiesResult(capabilities []advancedCapabilityRow, to
 	return TextResult(map[string]any{
 		"current_toolset":       toolset.String(),
 		"status":                status,
-		"enable_instruction":    "Set ICUVISOR_TOOLSET=full in the MCP client/server environment and restart icuvisor to enable the full icuvisor toolset.",
+		"enable_instruction":    "Set ICUVISOR_TOOLSET=full in the MCP client/server environment to expose the full icuvisor toolset, and ICUVISOR_DELETE_MODE=full to additionally enable delete tools. restart icuvisor after changing either.",
 		"advanced_capabilities": rows,
 		"_meta": map[string]any{
 			"count":            len(rows),
