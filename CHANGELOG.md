@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- MCP tool calls now emit structured `slog` entries for call start/completion, including tool name, status, duration, redacted argument/response byte counts, and approximate MCP token counts (`bytes/4`) without logging raw arguments or response payloads.
 - `get_activities` and `get_activity_details` now surface athlete-defined activity custom fields under each row's `custom_fields` map in terse mode. The field codes are discovered from `ACTIVITY_FIELD` custom-item definitions (fetched once per athlete and cached) and `get_activities` requests them alongside its terse field set so field-limited list responses still include them. Previously these values were only reachable with `include_full:true`. A custom-item lookup failure degrades gracefully: the activity read still succeeds, just without `custom_fields`.
 - `get_activities` and `get_activity_details` responses now report the athlete IANA timezone in `_meta.timezone` — the zone each row's `start_date_local` is expressed in — so assistants derive calendar dates from the athlete's timezone instead of reporting activities on the wrong day.
 

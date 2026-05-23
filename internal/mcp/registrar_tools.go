@@ -97,31 +97,49 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) error {
 			Description:  tool.Description,
 			InputSchema:  tool.InputSchema,
 			OutputSchema: tool.OutputSchema,
-		}, func(ctx context.Context, req *sdkmcp.CallToolRequest) (*sdkmcp.CallToolResult, error) {
+		}, func(ctx context.Context, req *sdkmcp.CallToolRequest) (res *sdkmcp.CallToolResult, err error) {
+			started := time.Now()
+			argumentBytes := len(req.Params.Arguments)
+			logToolCallStarted(r.logger, tool.Name, argumentBytes)
+			status := "ok"
+			defer func() {
+				logToolCallCompleted(r.logger, tool.Name, status, time.Since(started), argumentBytes, res)
+			}()
+
 			if r.recentToolCalls != nil {
-				if err := r.recentToolCalls.RecordToolCall(ctx, tool.Name, time.Now().UTC()); err != nil {
+				if err := r.recentToolCalls.RecordToolCall(ctx, tool.Name, started.UTC()); err != nil {
 					r.logger.Warn("recording diagnostics tool call failed", "tool", tool.Name, "error", err)
 				}
 			}
 			callCtx := r.withSelection(ctx, req.Session)
 			callCtx, arguments, err := r.resolveToolTarget(callCtx, tool.Name, req.Params.Arguments)
 			if err != nil {
-				return toolErrorResult(publicToolErrorMessage(err)), nil
+				status = "target_error"
+				res = toolErrorResult(publicToolErrorMessage(err))
+				return res, nil
 			}
 			result, err := tool.Handler(callCtx, tools.Request{
 				Name:      req.Params.Name,
 				Arguments: arguments,
 			})
 			if err != nil {
+				status = "tool_error"
 				logToolHandlerError(r.logger, tool.Name, err)
-				return toolErrorResult(publicToolErrorMessage(err)), nil
+				res = toolErrorResult(publicToolErrorMessage(err))
+				return res, nil
 			}
 			converted, err := convertResult(result)
 			if err != nil {
+				status = "conversion_error"
 				r.logger.Error("tool result conversion failed", "tool", tool.Name, "error", err)
-				return toolErrorResult(genericToolErrorMessage), nil
+				res = toolErrorResult(genericToolErrorMessage)
+				return res, nil
 			}
-			return converted, nil
+			if converted.IsError {
+				status = "tool_error"
+			}
+			res = converted
+			return res, nil
 		})
 		r.registeredTools = append(r.registeredTools, tool)
 		r.registeredCount++
@@ -274,6 +292,48 @@ func (r *safeRegistrar) validateTool(tool tools.Tool) error {
 		return fmt.Errorf("tool %q is missing a handler", tool.Name)
 	}
 	return nil
+}
+
+func logToolCallStarted(logger *slog.Logger, toolName string, argumentBytes int) {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	logger.Info("tool call started", "tool", toolName, "argument_bytes", argumentBytes, "estimated_argument_tokens", estimateTokenCount(argumentBytes), "token_estimate_method", "bytes_div_4")
+}
+
+func logToolCallCompleted(logger *slog.Logger, toolName string, status string, duration time.Duration, argumentBytes int, result *sdkmcp.CallToolResult) {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	responseBytes := marshaledJSONSize(result)
+	estimatedArgumentTokens := estimateTokenCount(argumentBytes)
+	estimatedResponseTokens := estimateTokenCount(responseBytes)
+	estimatedMCPTokens := estimatedArgumentTokens + estimatedResponseTokens
+	if estimatedResponseTokens < 0 {
+		estimatedMCPTokens = -1
+	}
+	logger.Info("tool call completed", "tool", toolName, "status", status, "duration_ms", duration.Milliseconds(), "argument_bytes", argumentBytes, "response_bytes", responseBytes, "estimated_argument_tokens", estimatedArgumentTokens, "estimated_response_tokens", estimatedResponseTokens, "estimated_mcp_tokens", estimatedMCPTokens, "token_estimate_method", "bytes_div_4")
+}
+
+func marshaledJSONSize(value any) int {
+	if value == nil {
+		return 0
+	}
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return -1
+	}
+	return len(payload)
+}
+
+func estimateTokenCount(byteCount int) int {
+	if byteCount < 0 {
+		return -1
+	}
+	if byteCount == 0 {
+		return 0
+	}
+	return (byteCount + 3) / 4
 }
 
 func logToolHandlerError(logger *slog.Logger, toolName string, err error) {

@@ -386,6 +386,54 @@ func TestLogToolHandlerErrorLevelsAndKeepsPayloadsOut(t *testing.T) {
 	}
 }
 
+func TestToolCallLogsMetricsWithoutPayloads(t *testing.T) {
+	t.Parallel()
+
+	logs := &safeLogBuffer{}
+	logger := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Registry: testEchoRegistry{}, Logger: logger})
+	defer cleanup()
+
+	secretPayload := "not-a-real-secret-payload"
+	result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: "test_echo", Arguments: map[string]any{"message": secretPayload}})
+	if err != nil {
+		t.Fatalf("CallTool() error = %v", err)
+	}
+	if result.IsError {
+		t.Fatalf("CallTool() IsError = true, content = %#v", result.Content)
+	}
+
+	out := logs.String()
+	for _, want := range []string{"msg=\"tool call started\"", "msg=\"tool call completed\"", "tool=test_echo", "status=ok", "argument_bytes=", "response_bytes=", "estimated_argument_tokens=", "estimated_response_tokens=", "estimated_mcp_tokens=", "token_estimate_method=bytes_div_4"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("tool-call log %q missing %q", out, want)
+		}
+	}
+	if strings.Contains(out, secretPayload) {
+		t.Fatalf("tool-call log leaked payload %q: %q", secretPayload, out)
+	}
+}
+
+func TestEstimateTokenCountUsesCeilingBytesDivFour(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		bytes int
+		want  int
+	}{
+		{bytes: -1, want: -1},
+		{bytes: 0, want: 0},
+		{bytes: 1, want: 1},
+		{bytes: 4, want: 1},
+		{bytes: 5, want: 2},
+	}
+	for _, tc := range tests {
+		if got := estimateTokenCount(tc.bytes); got != tc.want {
+			t.Fatalf("estimateTokenCount(%d) = %d, want %d", tc.bytes, got, tc.want)
+		}
+	}
+}
+
 func TestRunHonorsCanceledContext(t *testing.T) {
 	t.Parallel()
 
