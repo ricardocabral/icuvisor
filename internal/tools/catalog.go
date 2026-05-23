@@ -120,6 +120,7 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 		newGetExtendedMetricsTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetGearListTool(client, opts.gearCache, opts.version, opts.debugMetadata, opts.shaping),
 		newDeleteGearTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newValidateWorkoutTool(opts.version, opts.debugMetadata, opts.shaping),
 	)
 	if opts.coachModeEnabled {
 		tools = append(tools, newListAthletesTool(opts.coachConfig), newSelectAthleteTool(opts.coachConfig))
@@ -150,7 +151,7 @@ func toolCatalogGroup(name string) string {
 		return "analyzers"
 	case getEventsName, getEventByIDName, addOrUpdateEventName, deleteEventName, deleteEventsByDateRangeName, linkActivityToEventName:
 		return "events"
-	case getTrainingPlanName, applyTrainingPlanName, getWorkoutLibraryName, getWorkoutsInFolderName, createWorkoutName, updateWorkoutName, deleteWorkoutName:
+	case getTrainingPlanName, applyTrainingPlanName, getWorkoutLibraryName, getWorkoutsInFolderName, createWorkoutName, updateWorkoutName, deleteWorkoutName, validateWorkoutName:
 		return "workout-library"
 	case getCustomItemsName, getCustomItemByIDName, createCustomItemName, updateCustomItemName, deleteCustomItemName:
 		return "custom-items"

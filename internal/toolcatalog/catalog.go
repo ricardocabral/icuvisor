@@ -61,6 +61,7 @@ const (
 	UpdateSportSettings              = "update_sport_settings"
 	UpdateWellness                   = "update_wellness"
 	UpdateWorkout                    = "update_workout"
+	ValidateWorkout                  = "validate_workout"
 )
 
 var athleteScopedToolNames = []string{
@@ -117,7 +118,7 @@ var athleteScopedToolNames = []string{
 	UpdateWorkout,
 }
 
-var allToolNames = append(append([]string{}, athleteScopedToolNames...), ICUvisorListAdvancedCapabilities, ListAthletes, SelectAthlete)
+var allToolNames = append(append([]string{}, athleteScopedToolNames...), ICUvisorListAdvancedCapabilities, ListAthletes, SelectAthlete, ValidateWorkout)
 
 // AthleteScopedToolNames returns the canonical sorted names accepted by per-athlete ACLs.
 func AthleteScopedToolNames() []string {

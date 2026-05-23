@@ -73,6 +73,7 @@ var v03ToolCatalog = []catalogToolSpec{
 	{name: "update_sport_settings", requirement: tools.RequirementWrite},
 	{name: "update_wellness", requirement: tools.RequirementWrite},
 	{name: "update_workout", requirement: tools.RequirementWrite},
+	{name: "validate_workout", requirement: tools.RequirementRead},
 }
 
 type gatedCatalogRegistrar struct {

@@ -23,7 +23,7 @@ func TestRegistryWithIntervalsClientRegistersFullCatalog(t *testing.T) {
 		t.Fatalf("Register() error = %v", err)
 	}
 
-	wantNames := append(toolcatalog.AthleteScopedToolNames(), toolcatalog.ICUvisorListAdvancedCapabilities)
+	wantNames := append(toolcatalog.AthleteScopedToolNames(), toolcatalog.ICUvisorListAdvancedCapabilities, toolcatalog.ValidateWorkout)
 	slices.Sort(wantNames)
 
 	gotNames := make([]string, 0, len(registrar.tools))

@@ -79,6 +79,7 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 		deleteEventsByDateRangeName:     safety.ToolsetFull,
 		deleteActivityName:              safety.ToolsetFull,
 		deleteGearName:                  safety.ToolsetFull,
+		validateWorkoutName:             safety.ToolsetCore,
 	}
 
 	seen := make(map[string]safety.Toolset, len(registrar.tools))
