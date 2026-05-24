@@ -39,6 +39,7 @@ func TestRegisteredV03WriteToolsExposeInputExamples(t *testing.T) {
 	simpleWritesWithoutExamples := map[string]string{
 		addActivityMessageName:  "simple free-text activity comment writer",
 		linkActivityToEventName: "simple activity/event ID linker",
+		updateActivityName:      "simple sparse activity name/description updater",
 	}
 
 	for _, tool := range registrar.tools {

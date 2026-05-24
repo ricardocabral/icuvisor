@@ -1,0 +1,27 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "activity_id": {
+      "description": "Required intervals.icu activity ID whose interval structure will be (re)written. Surrounding whitespace is trimmed; the i-prefix is preserved verbatim.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include the raw upstream updated-activity payload under full; default returns a terse confirmation.",
+      "type": "boolean"
+    },
+    "prose": {
+      "description": "Optional free-text prose to interleave around the serialized steps; the upstream description retains the prose verbatim around the DSL block. Omit to send the serialized DSL alone.",
+      "type": "string"
+    },
+    "workout_doc": {
+      "description": "Required structured WorkoutDoc whose steps are serialized to the activity description DSL; intervals.icu re-parses the DSL into rendered intervals. Must contain at least one step. Syntax reference: icuvisor://workout-syntax. Call validate_workout first if uncertain about the DSL.",
+      "type": "object"
+    }
+  },
+  "required": [
+    "activity_id",
+    "workout_doc"
+  ],
+  "type": "object"
+}

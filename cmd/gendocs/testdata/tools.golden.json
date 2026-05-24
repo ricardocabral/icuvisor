@@ -80,6 +80,22 @@
     "anchor": "get_extended_metrics"
   },
   {
+    "name": "set_activity_intervals",
+    "group": "activities",
+    "tier": "full",
+    "safety": "delete",
+    "summary": "Set or correct the interval structure on one completed activity by writing a structured workout_doc as the activity's description; intervals.icu re-parses the DSL into rendered intervals overlaid on the recording.",
+    "anchor": "set_activity_intervals"
+  },
+  {
+    "name": "update_activity",
+    "group": "activities",
+    "tier": "core",
+    "safety": "write",
+    "summary": "Rename and/or edit the free-text description of one completed activity by activity_id.",
+    "anchor": "update_activity"
+  },
+  {
     "name": "analyze_correlation",
     "group": "analyzers",
     "tier": "full",

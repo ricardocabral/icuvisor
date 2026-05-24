@@ -58,6 +58,8 @@ const (
 	LinkActivityToEvent              = "link_activity_to_event"
 	ListAthletes                     = "list_athletes"
 	SelectAthlete                    = "select_athlete"
+	SetActivityIntervals             = "set_activity_intervals"
+	UpdateActivity                   = "update_activity"
 	UpdateCustomItem                 = "update_custom_item"
 	UpdateSportSettings              = "update_sport_settings"
 	UpdateWellness                   = "update_wellness"
@@ -114,6 +116,8 @@ var athleteScopedToolNames = []string{
 	GetWorkoutLibrary,
 	GetWorkoutsInFolder,
 	LinkActivityToEvent,
+	SetActivityIntervals,
+	UpdateActivity,
 	UpdateCustomItem,
 	UpdateSportSettings,
 	UpdateWellness,

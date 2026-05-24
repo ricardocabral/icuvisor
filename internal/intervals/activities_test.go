@@ -111,6 +111,83 @@ func TestLinkActivityToEventUsesPutActivityPairedEventID(t *testing.T) {
 	}
 }
 
+func TestUpdateActivitySendsSparsePutPayload(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got, want := r.Method, http.MethodPut; got != want {
+			t.Fatalf("method = %q, want %q", got, want)
+		}
+		if got, want := r.URL.Path, "/activity/i147866949"; got != want {
+			t.Fatalf("path = %q, want %q", got, want)
+		}
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("read body: %v", err)
+		}
+		var decoded map[string]any
+		if err := json.Unmarshal(body, &decoded); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if decoded["name"] != "Threshold ride" || decoded["description"] != "Felt strong; held target W" || len(decoded) != 2 {
+			t.Fatalf("body = %#v, want name+description only", decoded)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"i147866949","name":"Threshold ride","description":"Felt strong; held target W"}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	activity, err := client.UpdateActivity(context.Background(), UpdateActivityParams{
+		ActivityID:     " i147866949 ",
+		Name:           "Threshold ride",
+		NameSet:        true,
+		Description:    "Felt strong; held target W",
+		DescriptionSet: true,
+	})
+	if err != nil {
+		t.Fatalf("UpdateActivity() error = %v", err)
+	}
+	if activity.ID != "i147866949" || activity.Name == nil || *activity.Name != "Threshold ride" {
+		t.Fatalf("activity = %+v, want updated name", activity)
+	}
+}
+
+func TestUpdateActivityRequiresAtLeastOneField(t *testing.T) {
+	t.Parallel()
+
+	client := newTestClient(t, "https://example.invalid", http.DefaultClient, RetryConfig{})
+	if _, err := client.UpdateActivity(context.Background(), UpdateActivityParams{ActivityID: "a1"}); err == nil {
+		t.Fatal("UpdateActivity() error = nil, want validation error")
+	}
+	if _, err := client.UpdateActivity(context.Background(), UpdateActivityParams{Name: "x", NameSet: true}); err == nil {
+		t.Fatal("UpdateActivity() error = nil, want activity ID required")
+	}
+}
+
+func TestUpdateActivitySendsExplicitEmptyDescription(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		var decoded map[string]any
+		_ = json.Unmarshal(body, &decoded)
+		if _, ok := decoded["description"]; !ok {
+			t.Fatalf("body = %s, want description sent", body)
+		}
+		if decoded["description"] != "" {
+			t.Fatalf("description = %#v, want empty string to clear", decoded["description"])
+		}
+		_, _ = w.Write([]byte(`{"id":"a1","description":""}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	if _, err := client.UpdateActivity(context.Background(), UpdateActivityParams{ActivityID: "a1", DescriptionSet: true}); err != nil {
+		t.Fatalf("UpdateActivity() error = %v", err)
+	}
+}
+
 func TestLinkActivityToEventRequiresIDs(t *testing.T) {
 	t.Parallel()
 

@@ -79,6 +79,8 @@ var schemaCatalogToolNames = map[string]struct{}{
 	"get_workouts_in_folder":              {},
 	"icuvisor_list_advanced_capabilities": {},
 	"link_activity_to_event":              {},
+	"set_activity_intervals":              {},
+	"update_activity":                     {},
 	"update_sport_settings":               {},
 	"update_wellness":                     {},
 	"update_workout":                      {},

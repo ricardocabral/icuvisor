@@ -29,6 +29,22 @@ type linkActivityToEventPayload struct {
 	PairedEventID int `json:"paired_event_id"`
 }
 
+// UpdateActivityParams contains sparse activity metadata fields to update.
+// Set the *Set fields to true to mark a field as explicitly provided so callers
+// can distinguish "leave unchanged" from "clear".
+type UpdateActivityParams struct {
+	ActivityID     string
+	Name           string
+	NameSet        bool
+	Description    string
+	DescriptionSet bool
+}
+
+type updateActivityPayload struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
 // Activity contains stable activity fields used by read tools and preserves raw upstream fields.
 type Activity struct {
 	Raw map[string]any `json:"-"`
@@ -136,6 +152,39 @@ func (c *Client) LinkActivityToEvent(ctx context.Context, params LinkActivityToE
 	}
 	if err := c.ensureActivityTarget(ctx, activity); err != nil {
 		return Activity{}, fmt.Errorf("linking activity %s to event %s: %w", activityID, params.EventID, err)
+	}
+	return activity, nil
+}
+
+// UpdateActivity applies a sparse PUT to /activity/{id} for activity metadata.
+// Only fields with their corresponding *Set flag are sent; other fields are
+// left untouched upstream. Returns the upstream activity after the update.
+func (c *Client) UpdateActivity(ctx context.Context, params UpdateActivityParams) (Activity, error) {
+	activityID := strings.TrimSpace(params.ActivityID)
+	if activityID == "" {
+		return Activity{}, fmt.Errorf("updating activity: activity ID is required")
+	}
+	if !params.NameSet && !params.DescriptionSet {
+		return Activity{}, fmt.Errorf("updating activity %s: at least one of name or description is required", activityID)
+	}
+	payload := updateActivityPayload{}
+	if params.NameSet {
+		name := params.Name
+		payload.Name = &name
+	}
+	if params.DescriptionSet {
+		description := params.Description
+		payload.Description = &description
+	}
+	if err := c.ensureActivityIDTarget(ctx, activityID); err != nil {
+		return Activity{}, fmt.Errorf("updating activity %s: %w", activityID, err)
+	}
+	var activity Activity
+	if err := c.doJSONBody(ctx, http.MethodPut, payload, &activity, "activity", activityID); err != nil {
+		return Activity{}, fmt.Errorf("updating activity %s: %w", activityID, err)
+	}
+	if err := c.ensureActivityTarget(ctx, activity); err != nil {
+		return Activity{}, fmt.Errorf("updating activity %s: %w", activityID, err)
 	}
 	return activity, nil
 }

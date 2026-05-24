@@ -44,6 +44,8 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 		updateWellnessName:              safety.ToolsetCore,
 		addActivityMessageName:          safety.ToolsetCore,
 		linkActivityToEventName:         safety.ToolsetCore,
+		updateActivityName:              safety.ToolsetCore,
+		setActivityIntervalsName:        safety.ToolsetFull,
 		listAdvancedCapabilitiesName:    safety.ToolsetCore,
 		getPowerCurvesName:              safety.ToolsetFull,
 		analyzeTrendName:                safety.ToolsetCore,
