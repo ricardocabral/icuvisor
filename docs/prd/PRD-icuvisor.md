@@ -189,6 +189,7 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 - `update_sport_settings` — write FTP, threshold HR, threshold pace, and per-sport zone definitions back to the athlete profile (forum #35 — assistants offered FTP updates that didn't land because there was no write path). Per-sport scoped (`sport: "Ride" | "Run" | …`). Gated by `ICUVISOR_DELETE_MODE` like other destructive writes when used to overwrite zone definitions, since a bad zone overwrite silently miscolours every historical activity.
 - `list_athletes`, `select_athlete` — coach mode.
 - `get_fitness` — CTL/ATL/TSB trends, taper projections.
+- `get_today` — one-call athlete-local daily digest for "how's today looking?": today's CTL/ATL/TSB, wellness, completed activities, planned events, and NOTE/race annotations, terse by default with `include_full` raw section detail.
 - `get_best_efforts` — PRs across sports.
 - `get_power_curves` — mean-maximal power curves.
 - `get_hr_curves` — mean-maximal heart-rate curves, symmetric with `get_power_curves` for HR-duration best efforts.

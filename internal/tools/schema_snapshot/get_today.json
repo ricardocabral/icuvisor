@@ -1,0 +1,11 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw upstream payloads under each digest section's rows. Defaults to false for a terse today digest.",
+      "type": "boolean"
+    }
+  },
+  "type": "object"
+}

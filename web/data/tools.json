@@ -304,6 +304,14 @@
     "anchor": "get_power_curves"
   },
   {
+    "name": "get_today",
+    "group": "fitness",
+    "tier": "core",
+    "safety": "read",
+    "summary": "Answer how's today looking with one terse daily digest: today's CTL/ATL/TSB fitness, wellness, completed activities, planned events, and NOTE/race annotations.",
+    "anchor": "get_today"
+  },
+  {
     "name": "get_training_summary",
     "group": "fitness",
     "tier": "core",

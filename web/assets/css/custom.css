@@ -424,6 +424,18 @@ body {
   border: 1px solid var(--icv-border-soft);
 }
 
+/* Cookbook prompt examples are copy-paste prose rather than shell commands.
+   Wrap them in the article width so long prompts remain readable. */
+.icuvisor-section-cookbook .content pre:not(.lntable pre) {
+  white-space: pre-wrap;
+  overflow-x: visible;
+}
+
+.icuvisor-section-cookbook .content pre:not(.lntable pre) code {
+  white-space: inherit;
+  overflow-wrap: anywhere;
+}
+
 .content blockquote {
   border-left: 4px solid var(--icv-secondary);
   background: var(--icv-surface);

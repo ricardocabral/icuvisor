@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `get_today` read-only MCP tool returns one terse daily digest for "how's today looking?": today's CTL/ATL/TSB, wellness, completed activities, planned events, and NOTE/race annotations, with `include_full` widening each source-shaped section.
 - New read-only `validate_workout` MCP tool validates a free-text `description`, a structured `workout_doc`, or both, and returns the canonical merged DSL icuvisor would submit on a write. Prose passes through verbatim; only malformed structured-step lines surface as PARSE_ERROR. The reusable merge logic lives in `internal/workoutdoc.MergeDescription` for future write-path use.
 - MCP tool calls now emit structured `slog` entries for call start/completion, including tool name, status, duration, redacted argument/response byte counts, and approximate MCP token counts (`bytes/4`) without logging raw arguments or response payloads.
 - `get_activities` and `get_activity_details` now surface athlete-defined activity custom fields under each row's `custom_fields` map in terse mode. The field codes are discovered from `ACTIVITY_FIELD` custom-item definitions (fetched once per athlete and cached) and `get_activities` requests them alongside its terse field set so field-limited list responses still include them. Previously these values were only reachable with `include_full:true`. A custom-item lookup failure degrades gracefully: the activity read still succeeds, just without `custom_fields`.

@@ -25,6 +25,10 @@ Give me a month-end review for [MONTH]: load trend, polarization of my intensity
 ## Recovery and wellness
 
 ```text
+How's today looking? Use my intervals.icu data for today only: current CTL/ATL/TSB, wellness, completed activities, planned events, and any NOTE or race annotations. Keep it concise, call out missing/stale data instead of guessing, and end with one practical recommendation for the rest of the day.
+```
+
+```text
 Look at my wellness for the last 14 days. Summarize sleep, HRV, and resting heart rate trends. Use the correct scales (sleep quality is 1-4) and flag any clear downward trend.
 ```
 

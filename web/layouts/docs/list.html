@@ -1,7 +1,7 @@
 {{/* Overrides hextra's docs/list.html to widen the docs shell.
      See assets/css/custom.css (.icuvisor-doc-shell) for the width policy. */}}
 {{ define "main" }}
-  <div class="icuvisor-doc-shell hx-flex">
+  <div class="icuvisor-doc-shell{{ with .Section }} icuvisor-section-{{ . | urlize }}{{ end }} hx-flex">
     {{ partial "sidebar.html" (dict "context" .) }}
     {{ partial "toc.html" . }}
     <article class="hx-w-full hx-break-words hx-flex hx-min-h-[calc(100vh-var(--navbar-height))] hx-min-w-0 hx-justify-center hx-pb-8 hx-pr-[calc(env(safe-area-inset-right)-1.5rem)]">

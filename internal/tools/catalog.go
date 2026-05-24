@@ -71,6 +71,7 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 	tools = append(tools,
 		newGetAthleteProfileTool(client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetFitnessTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newGetTodayTool(client, client, client, opts.gearCache, client, opts.customFieldCache, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAnalyzeTrendTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAnalyzeDistributionTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAnalyzeCorrelationTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -141,7 +142,7 @@ func toolCatalogGroup(name string) string {
 	switch name {
 	case getAthleteProfileName, updateSportSettingsName, deleteSportSettingsName, getGearListName, deleteGearName:
 		return "settings"
-	case getFitnessName, getFitnessProjectionName, getTrainingSummaryName, getBestEffortsName, getPowerCurvesName, getHRCurvesName, getPaceCurvesName:
+	case getFitnessName, getTodayName, getFitnessProjectionName, getTrainingSummaryName, getBestEffortsName, getPowerCurvesName, getHRCurvesName, getPaceCurvesName:
 		return "fitness"
 	case getWellnessDataName, updateWellnessName:
 		return "wellness"

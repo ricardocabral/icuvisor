@@ -71,6 +71,7 @@ var schemaCatalogToolNames = map[string]struct{}{
 	"get_hr_curves":                       {},
 	"get_pace_curves":                     {},
 	"get_power_curves":                    {},
+	"get_today":                           {},
 	"get_training_plan":                   {},
 	"get_training_summary":                {},
 	"get_wellness_data":                   {},
