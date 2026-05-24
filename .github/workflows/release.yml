@@ -302,8 +302,14 @@ jobs:
     name: Finalize checksums and publish
     runs-on: ubuntu-latest
     needs: release-windows
+    permissions:
+      contents: write
+      id-token: write  # cosign keyless OIDC
     steps:
       - uses: actions/checkout@v5
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
 
       - name: Download all release artifacts
         shell: bash
@@ -336,11 +342,29 @@ jobs:
             > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
-      - name: Upload final checksums to draft release
+      - name: Sign SHA256SUMS.txt with cosign (keyless)
+        shell: bash
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          set -euo pipefail
+          cd dist
+          cosign sign-blob --yes \
+            --output-certificate SHA256SUMS.txt.pem \
+            --output-signature   SHA256SUMS.txt.sig \
+            SHA256SUMS.txt
+          ls -la SHA256SUMS.txt SHA256SUMS.txt.pem SHA256SUMS.txt.sig
+
+      - name: Upload final checksums and signatures to draft release
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "$GITHUB_REF_NAME" dist/SHA256SUMS.txt --clobber
+        run: |
+          gh release upload "$GITHUB_REF_NAME" \
+            dist/SHA256SUMS.txt \
+            dist/SHA256SUMS.txt.pem \
+            dist/SHA256SUMS.txt.sig \
+            --clobber
 
       - name: Publish draft release
         shell: bash

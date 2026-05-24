@@ -92,12 +92,12 @@ changelog:
 brews:
   - name: icuvisor
     ids: [darwin-universal, default]
-    homepage: "https://icuvisor.dev"
+    homepage: "https://icuvisor.app"
     description: "MCP server connecting intervals.icu training data to AI assistants."
     license: MIT
     commit_author:
       name: icuvisor-bot
-      email: bot@icuvisor.dev
+      email: bot@icuvisor.app
     commit_msg_template: "chore(icuvisor): update to {{ .Tag }}"
     directory: Formula
     repository:
@@ -118,12 +118,12 @@ brews:
 scoops:
   - name: icuvisor
     ids: [default]
-    homepage: "https://icuvisor.dev"
+    homepage: "https://icuvisor.app"
     description: "MCP server connecting intervals.icu training data to AI assistants."
     license: MIT
     commit_author:
       name: icuvisor-bot
-      email: bot@icuvisor.dev
+      email: bot@icuvisor.app
     commit_msg_template: "chore(icuvisor): update to {{ .Tag }}"
     directory: bucket
     repository:
