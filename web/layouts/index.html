@@ -89,7 +89,8 @@
       {{ $downloads := slice }}
       {{ with $release }}
         {{ range .assets }}
-          {{ if ne .name "SHA256SUMS.txt" }}
+          {{ $n := .name }}
+          {{ if and (ne $n "SHA256SUMS.txt") (ne $n "SHA256SUMS.txt.sig") (ne $n "SHA256SUMS.txt.pem") }}
             {{ $downloads = $downloads | append . }}
           {{ end }}
         {{ end }}
