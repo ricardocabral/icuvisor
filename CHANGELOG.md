@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-05-24
+
 ### Added
 
 - Shell installers at `https://icuvisor.app/install.sh` (POSIX sh; Linux, macOS, WSL, Git-Bash, CI) and `https://icuvisor.app/install.ps1` (native Windows PowerShell). Both detect OS/arch, pick the right release archive, verify the SHA-256 checksum, and verify the keyless Sigstore signature on `SHA256SUMS.txt` when `cosign` is available. The release workflow now signs `SHA256SUMS.txt` with cosign keyless OIDC and publishes the `.pem` + `.sig` alongside it. Re-running the installer updates an existing install in place: it reuses the directory of any `icuvisor` already on `PATH`, refuses to overwrite Homebrew- or Scoop-managed binaries (directing users to `brew upgrade` / `scoop update` instead), short-circuits when already at the target version (`--force` / `-Force` to override), uses an atomic rename so a running binary keeps executing off its old inode, and exposes `--check` / `-Check` for "is an update available?" in scripts (exit 0 = up to date, 1 = update available).
