@@ -29,13 +29,7 @@ On native Windows / PowerShell:
 iwr -useb https://icuvisor.app/install.ps1 | iex
 ```
 
-Both scripts verify the SHA-256 checksum and, when [`cosign`](https://docs.sigstore.dev/cosign/installation/) is installed, the keyless Sigstore signature on `SHA256SUMS.txt`. **Re-running either one-liner updates an existing install in place** — it overwrites the binary at the existing `icuvisor` on your `PATH`, no-ops when already at the latest version, and uses `--check` / `-Check` to report whether an update is available without changing anything. To inspect the script before running:
-
-```bash
-curl -fsSL https://icuvisor.app/install.sh -o install.sh
-less install.sh
-sh install.sh
-```
+See [SECURITY.md](SECURITY.md#installer-integrity) for installer signature verification and in-place update behaviour.
 
 Prefer a package manager? `brew install ricardocabral/icuvisor/icuvisor`, `scoop install icuvisor`, or download the `.dmg` / `.msi` from the [releases page](https://github.com/ricardocabral/icuvisor/releases).
 
@@ -55,32 +49,42 @@ make build
 ### Project layout
 
 ```
-cmd/icuvisor/        Binary entrypoint
-internal/app/        CLI dispatch, startup wiring, `setup` / `diagnostics` commands
-internal/config/     Config load/validate/write, athlete-ID/timezone normalization, HTTP bind, dotenv, redaction
-internal/credstore/  OS keychain wrapper (macOS Keychain, Windows Credential Manager, libsecret)
-internal/intervals/  intervals.icu API client (Basic Auth, retries, structured errors)
-internal/mcp/        MCP server + stdio/Streamable HTTP transports, schema, recovery
-internal/tools/      Tool implementations (registered via `tools.Catalog()`)
-internal/toolcatalog/ Catalog hashing and stale-catalog CI guard
-internal/coach/      Coach-mode roster and per-athlete tool ACLs
-internal/safety/     Delete-mode resolution and registration-time gating
-internal/response/   Terse/full response shaping and `_meta` plumbing
-internal/prompts/    Curated MCP prompt registry
-internal/resources/  MCP Resources (workout syntax, event categories, schemas, analysis formulas, athlete profile)
-internal/workoutdoc/ WorkoutDoc Parse/Serialize for the upstream description DSL
-docs/                PRD, roadmap, design notes
+cmd/icuvisor/             Binary entrypoint
+internal/app/             CLI dispatch, startup wiring, `setup` / `diagnostics` commands
+internal/cli/prompt/      Terminal prompting (masked input) for first-run setup
+internal/config/          Config load/validate/write, athlete-ID/timezone normalization, HTTP bind, dotenv, redaction
+internal/credstore/       OS keychain wrapper (macOS Keychain, Windows Credential Manager, libsecret)
+internal/diagnostics/     Redacted runtime/config snapshot for `icuvisor diagnostics`
+internal/intervals/       intervals.icu API client (Basic Auth, retries, structured errors)
+internal/clients/         Shared typed client interfaces (athlete profile, etc.)
+internal/mcp/             MCP server + stdio/Streamable HTTP transports, schema, recovery
+internal/tools/           Tool implementations (registered via `tools.Catalog()`)
+internal/toolcatalog/     Catalog hashing and stale-catalog CI guard surface
+internal/toolchecks/      Cross-tool invariants (delete-mode gating, examples, schema snapshots)
+internal/coach/           Coach-mode roster and per-athlete tool ACLs
+internal/safety/          Delete-mode resolution and registration-time gating
+internal/response/        Terse/full response shaping and `_meta` plumbing
+internal/analysis/        Deterministic analyzer math + interval-source / auto-lap classifier
+internal/prompts/         Curated MCP prompt registry
+internal/resources/       MCP Resources (workout syntax, event categories, schemas, analysis formulas, athlete profile)
+internal/athleteprofile/  Athlete profile read shaping shared by tool + resource
+internal/workoutdoc/      WorkoutDoc Parse/Serialize for the upstream description DSL
+internal/customitemschemas/ Custom-item content schema samples used by write validation
+internal/units/           Unit enum parsing + preferred-unit conversion
+internal/streams/         Canonical stream key normalization
+docs/                     PRD, roadmap, design notes
 ```
 
 ### Development
 
-Requires Go 1.23+ and (optionally) [`golangci-lint`](https://golangci-lint.run) and [`goreleaser`](https://goreleaser.com).
+Requires Go 1.25+ and (optionally) [`golangci-lint`](https://golangci-lint.run) and [`goreleaser`](https://goreleaser.com).
 
 ```bash
 make build       # build ./bin/icuvisor
 make test        # unit tests
 make test-race   # tests with the race detector
 make lint        # golangci-lint
+make check       # fmt-check + vet + lint + test-race (run before pushing)
 make snapshot    # local goreleaser snapshot
 make docs-tools  # regenerate website tool catalog data
 make help        # list all targets

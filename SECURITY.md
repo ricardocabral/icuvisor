@@ -56,6 +56,16 @@ Out of scope:
 - The MCP HTTP transport binds to `127.0.0.1` by default. Do not expose it to a public interface unless you understand the risks.
 - icuvisor only contacts `intervals.icu` and (if auto-update is enabled) `releases.icuvisor.dev`. Verify network activity against this expectation.
 
+## Installer integrity
+
+Both scripts verify the SHA-256 checksum and, when [`cosign`](https://docs.sigstore.dev/cosign/installation/) is installed, the keyless Sigstore signature on `SHA256SUMS.txt`. **Re-running either one-liner updates an existing install in place** — it overwrites the binary at the existing `icuvisor` on your `PATH`, no-ops when already at the latest version, and uses `--check` / `-Check` to report whether an update is available without changing anything. To inspect the script before running:
+
+```bash
+curl -fsSL https://icuvisor.app/install.sh -o install.sh
+less install.sh
+sh install.sh
+```
+
 ## Release signing and notarization
 
 Official macOS releases use a Developer ID Application certificate for the app bundle and Apple notarization for the DMG. Maintainers must provision the certificate in Apple Developer, export it as a password-protected `.p12`, and store only the following GitHub Actions secrets for release jobs:
