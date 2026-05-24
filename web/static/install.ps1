@@ -253,7 +253,19 @@ try {
   if (Test-Path $oldPath) {
     Remove-Item -Force $oldPath -ErrorAction SilentlyContinue
   }
-  Write-Step "installed: $destPath"
+  $installedVersion = $Version
+  try {
+    $versionOutput = & $destPath version 2>$null
+    if (-not $versionOutput) { $versionOutput = & $destPath --version 2>$null }
+    if ($versionOutput) {
+      $firstLine = ($versionOutput | Select-Object -First 1).ToString().Trim()
+      $match = [regex]::Match($firstLine, 'v?\d+\.\d+\.\d+(?:[\w\.\-+]*)?')
+      if ($match.Success) { $installedVersion = $match.Value }
+    }
+  } catch {
+    # best-effort version probe; fall back to the requested version
+  }
+  Write-Step "installed $installedVersion at $destPath"
 
   # Add InstallDir to the user PATH if missing.
   $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
@@ -267,7 +279,8 @@ try {
   Write-Host ''
   Write-Host 'Next steps:'
   Write-Host "  1. Run 'icuvisor setup' once to store your intervals.icu API key in Windows Credential Manager."
-  Write-Host '  2. Point your MCP client (Claude Desktop, Cursor, …) at the icuvisor.exe binary.'
+  Write-Host '  2. Point your MCP client (Claude Desktop, Cursor, …) at:'
+  Write-Host "       $destPath"
   Write-Host '  3. Docs: https://icuvisor.app'
   Write-Host ''
 }

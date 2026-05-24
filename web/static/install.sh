@@ -343,7 +343,7 @@ ${sudo_cmd:-} mv -f "$dest_tmp" "$dest" \
 installed_version=$("$dest" version 2>/dev/null \
                     || "$dest" --version 2>/dev/null \
                     || echo "$version")
-log "installed: ${installed_version}"
+log "installed ${installed_version} at ${dest}"
 
 case ":${PATH}:" in
   *":${INSTALL_DIR}:"*) ;;
@@ -359,7 +359,8 @@ cat <<EOF
 
 Next steps:
   1. Run 'icuvisor setup' once to store your intervals.icu API key in the OS keychain.
-  2. Point your MCP client (Claude Desktop, Cursor, …) at the icuvisor binary.
+  2. Point your MCP client (Claude Desktop, Cursor, …) at:
+       ${dest}
   3. Docs: https://icuvisor.app
 
 EOF
