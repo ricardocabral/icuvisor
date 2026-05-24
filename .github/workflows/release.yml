@@ -276,7 +276,7 @@ jobs:
 
       - name: Sign MSI with Azure Trusted Signing
         if: steps.signing.outputs.enabled == 'true'
-        uses: azure/trusted-signing-action@v0.5.1
+        uses: azure/trusted-signing-action@v2.0.0
         with:
           azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
