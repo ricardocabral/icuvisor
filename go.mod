@@ -4,7 +4,7 @@ go 1.25.10
 
 require (
 	github.com/godbus/dbus/v5 v5.2.2
-	github.com/modelcontextprotocol/go-sdk v1.6.0
+	github.com/modelcontextprotocol/go-sdk v1.6.1
 	github.com/zalando/go-keyring v0.2.8
 	golang.org/x/term v0.43.0
 )
