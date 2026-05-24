@@ -17,8 +17,6 @@
 
 ## For users
 
-Install icuvisor, connect your AI assistant, and read the tool catalog at <https://icuvisor.app>.
-
 The fastest path on Linux, macOS (without Homebrew), WSL, and CI is the shell installer:
 
 ```bash
@@ -40,6 +38,8 @@ sh install.sh
 ```
 
 Prefer a package manager? `brew install ricardocabral/icuvisor/icuvisor`, `scoop install icuvisor`, or download the `.dmg` / `.msi` from the [releases page](https://github.com/ricardocabral/icuvisor/releases).
+
+Learn more on how to connect your AI assistant, read the tool catalog and more at <https://icuvisor.app>.
 
 ## For developers
 
