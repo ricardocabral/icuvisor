@@ -9,6 +9,26 @@ cascade:
 
 Install the icuvisor binary for your operating system. Pick your platform below, then head to [Connect]({{< relref "/connect" >}}) to wire it into an AI client.
 
+## Quick install
+
+The fastest path on Linux, macOS (without Homebrew), WSL, and CI is the shell installer:
+
+```bash
+curl -fsSL https://icuvisor.app/install.sh | sh
+```
+
+On native Windows / PowerShell:
+
+```powershell
+iwr -useb https://icuvisor.app/install.ps1 | iex
+```
+
+The installer detects your platform, downloads the matching release asset, verifies the SHA256 checksum (and the cosign signature when `cosign` is on your `PATH`), and installs the binary. Re-run the same command to upgrade in place. See [installer integrity](https://github.com/ricardocabral/icuvisor/blob/main/SECURITY.md#installer-integrity) for signature verification details.
+
+## Platform guides
+
+Prefer a package manager or a signed installer package? Pick your platform:
+
 {{< cards >}}
   {{< card link="macos" title="macOS" subtitle="Install the signed macOS app and verify Gatekeeper status." >}}
   {{< card link="windows" title="Windows" subtitle="Install from the MSI package." >}}
