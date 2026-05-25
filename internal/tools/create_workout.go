@@ -13,7 +13,7 @@ import (
 
 const (
 	createWorkoutName                    = "create_workout"
-	createWorkoutDescription             = "Create a reusable workout-library template, not a calendar event. Accepts `workout_doc` (structured steps) and `description` (free-text prose) independently — set either or both; when both are present the server interleaves the prose verbatim around the serialized steps, so coaching notes do not need a separate template. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax for the cheat sheet and common mistakes)."
+	createWorkoutDescription             = "Create a reusable workout-library template, not a calendar event. Pass `workout_doc` (structured steps) or `description` (free-text prose) — mutually exclusive. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
 	invalidCreateWorkoutArgumentsMessage = "invalid create_workout arguments; provide name, sport, folder_id, optional tags, and either description or workout_doc"
 	createWorkoutMessage                 = "could not create workout; check intervals.icu credentials, athlete ID, folder ID, and writable workout fields"
 )
