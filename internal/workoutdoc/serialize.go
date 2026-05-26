@@ -31,6 +31,9 @@ func serializeStep(step Step, depth int, inRepeat bool) ([]string, error) {
 }
 
 func serializeRepeat(step Step, depth int, inRepeat bool) ([]string, error) {
+	if err := descriptionStructuralTokenError(step, "repeat"); err != nil {
+		return nil, err
+	}
 	if inRepeat {
 		return nil, unsupported(step, "nested repeats are not supported by the upstream workout DSL")
 	}
@@ -60,6 +63,9 @@ func serializeRepeat(step Step, depth int, inRepeat bool) ([]string, error) {
 }
 
 func serializeSimpleStep(step Step, depth int) (string, error) {
+	if err := descriptionStructuralTokenError(step, "step"); err != nil {
+		return "", err
+	}
 	if step.Duration <= 0 && step.Distance == nil {
 		return "", unsupported(step, "step requires duration or distance")
 	}

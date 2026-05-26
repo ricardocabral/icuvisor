@@ -65,6 +65,32 @@ func TestSerializeUnsupportedStepErrorContainsStep(t *testing.T) {
 	}
 }
 
+func TestSerializeRejectsDurationOrDistanceTokensInStepDescription(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		description string
+	}{
+		{name: "duration", description: "Endurance 2h15m"},
+		{name: "duration with punctuation", description: "Warm up (45m)"},
+		{name: "distance", description: "5km pace"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			doc := WorkoutDoc{Steps: []Step{{Description: tc.description, Duration: 8100, Power: &Target{Value: floatPtr(60), Units: "PERCENT_FTP"}}}}
+			_, err := Serialize(doc)
+			if err == nil {
+				t.Fatal("Serialize() error = nil, want structural token error")
+			}
+			var structural *StructuralTokenInDescriptionError
+			if !errors.As(err, &structural) {
+				t.Fatalf("Serialize() error = %T, want *StructuralTokenInDescriptionError", err)
+			}
+			if !strings.Contains(err.Error(), "duration/distance in structured fields") {
+				t.Fatalf("error = %q, want structured-field guidance", err.Error())
+			}
+		})
+	}
+}
+
 type goldenCase struct {
 	name           string
 	structuredPath string

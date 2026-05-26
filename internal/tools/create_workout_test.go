@@ -93,6 +93,33 @@ func TestCreateWorkoutWarnsWhenUpstreamDoesNotRenderWorkoutDoc(t *testing.T) {
 	}
 }
 
+func TestCreateWorkoutMergesDescriptionAndWorkoutDoc(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWorkoutCreatorClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		workout:           decodeToolWorkouts(t, `{"id":"w-merge","name":"Merged","type":"Ride","folder_id":"f-20","workout_doc":{"steps":[{"duration":600}]}}`)[0],
+	}
+	tool := newCreateWorkoutTool(client, client, "test", "UTC", false)
+	prose := "Coach note before.\n" + workoutdoc.StepsSentinel + "\nFuel after."
+	rawArgs := mustMarshalArgs(t, map[string]any{
+		"name":        "Merged",
+		"folder_id":   "f-20",
+		"sport":       "Ride",
+		"description": prose,
+		"workout_doc": map[string]any{"steps": []any{map[string]any{"description": "Warmup", "duration": 600, "power": map[string]any{"value": 60, "units": "PERCENT_FTP"}}}},
+	})
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(rawArgs)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	want := "Coach note before.\n- Warmup 10m 60%\nFuel after."
+	if len(client.calls) != 1 || client.calls[0].Description == nil || *client.calls[0].Description != want {
+		t.Fatalf("description = %#v, want merged DSL %q", client.calls, want)
+	}
+}
+
 func TestCreateWorkoutWithFreeTextOnlyPreservesDescription(t *testing.T) {
 	t.Parallel()
 
@@ -190,7 +217,7 @@ func TestCreateWorkoutRejectsBadArguments(t *testing.T) {
 		`{"name":"Tempo"}`,
 		`{"name":"Tempo","sport":"Ride"}`,
 		`{"name":"Tempo","folder_id":"   ","sport":"Ride"}`,
-		`{"name":"Tempo","folder_id":"f-test-folder","sport":"Ride","description":"note","workout_doc":{"steps":[{"duration":600}]}}`,
+		`{"name":"Tempo","folder_id":"f-test-folder","sport":"Ride","workout_doc":{"steps":[{"description":"10m warmup","duration":600}]}}`,
 		`{"name":"Tempo","folder_id":"f-test-folder","sport":"Ride","unknown":true}`,
 	} {
 		if _, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(raw)}); err == nil {

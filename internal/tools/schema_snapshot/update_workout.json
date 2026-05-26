@@ -82,7 +82,7 @@
   ],
   "properties": {
     "description": {
-      "description": "Optional replacement free-text workout description. Omit to leave unchanged; mutually exclusive with workout_doc. Empty strings are rejected to avoid accidentally clearing structured workout content.",
+      "description": "Optional replacement free-text workout description. Omit to leave unchanged. May be supplied with workout_doc; use the \u003c!-- icuvisor:steps --\u003e sentinel on its own line to choose where serialized steps are inserted. Empty strings without workout_doc are rejected to avoid accidentally clearing structured workout content.",
       "type": "string"
     },
     "folder_id": {
@@ -105,7 +105,7 @@
       "type": "array"
     },
     "workout_doc": {
-      "description": "Optional replacement structured WorkoutDoc. Serialized to the upstream workout-description DSL; empty steps clear structured content. Syntax reference: icuvisor://workout-syntax.",
+      "description": "Optional replacement structured WorkoutDoc. Serialized to the upstream workout-description DSL and merged with description when both are supplied; empty steps clear structured content. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Syntax reference: icuvisor://workout-syntax.",
       "type": "object"
     },
     "workout_id": {
