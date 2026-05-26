@@ -232,6 +232,34 @@ func TestAddOrUpdateEventSerializesWorkoutDocGoldenFixture(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateEventMergesDescriptionAndWorkoutDoc(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		event:             decodeToolEvents(t, `{"id":"evt-merge","category":"WORKOUT","name":"Merged","start_date_local":"2026-08-02","workout_doc":{"steps":[{"duration":600}]}}`)[0],
+	}
+	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+	prose := "Coach note before.\n" + workoutdoc.StepsSentinel + "\nFuel after."
+	rawArgs := mustMarshalArgs(t, map[string]any{
+		"date":        "2026-08-02",
+		"category":    "WORKOUT",
+		"type":        "Ride",
+		"name":        "Merged",
+		"description": prose,
+		"workout_doc": map[string]any{"steps": []any{map[string]any{"description": "Warmup", "duration": 600, "power": map[string]any{"value": 60, "units": "PERCENT_FTP"}}}},
+	})
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(rawArgs)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	want := "Coach note before.\n- Warmup 10m 60%\nFuel after."
+	if len(client.calls) != 1 || client.calls[0].Description == nil || *client.calls[0].Description != want {
+		t.Fatalf("description = %#v, want merged DSL %q", client.calls, want)
+	}
+}
+
 func TestAddOrUpdateEventWarnsWhenUpstreamDoesNotRenderWorkoutDoc(t *testing.T) {
 	t.Parallel()
 
@@ -262,7 +290,7 @@ func TestAddOrUpdateEventRejectsBadArguments(t *testing.T) {
 		`{"date":"2026-01-01","category":"WORKOUT"}`,
 		`{"date":"2026-01-01","category":"NOTE"}`,
 		`{"date":"2026-01-01","category":"WORKOUT","type":"Ride","moving_time_seconds":-1}`,
-		`{"date":"2026-01-01","category":"WORKOUT","type":"Ride","description":"note","workout_doc":{"steps":[{"duration":600}]}}`,
+		`{"date":"2026-01-01","category":"WORKOUT","type":"Ride","workout_doc":{"steps":[{"description":"10m warmup","duration":600}]}}`,
 	} {
 		if _, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(raw)}); err == nil {
 			t.Fatalf("Handler(%s) error = nil, want validation error", raw)

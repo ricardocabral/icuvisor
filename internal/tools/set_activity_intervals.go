@@ -166,8 +166,8 @@ func setActivityIntervalsInputSchema() map[string]any {
 		"required":             []string{"activity_id", "workout_doc"},
 		"properties": map[string]any{
 			"activity_id":  map[string]any{"type": "string", "description": "Required intervals.icu activity ID whose interval structure will be (re)written. Surrounding whitespace is trimmed; the i-prefix is preserved verbatim."},
-			"workout_doc":  map[string]any{"type": "object", "description": "Required structured WorkoutDoc whose steps are serialized to the activity description DSL; intervals.icu re-parses the DSL into rendered intervals. Must contain at least one step. Syntax reference: icuvisor://workout-syntax. Call validate_workout first if uncertain about the DSL."},
-			"prose":        map[string]any{"type": "string", "description": "Optional free-text prose to interleave around the serialized steps; the upstream description retains the prose verbatim around the DSL block. Omit to send the serialized DSL alone."},
+			"workout_doc":  map[string]any{"type": "object", "description": "Required structured WorkoutDoc whose steps are serialized to the activity description DSL; intervals.icu re-parses the DSL into rendered intervals. Must contain at least one step. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Syntax reference: icuvisor://workout-syntax. Call validate_workout first if uncertain about the DSL."},
+			"prose":        map[string]any{"type": "string", "description": "Optional free-text prose to interleave around the serialized steps; the upstream description retains the prose verbatim around the DSL block. Use the " + workoutdoc.StepsSentinel + " sentinel on its own line to choose where serialized steps are inserted. Omit to send the serialized DSL alone."},
 			"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, include the raw upstream updated-activity payload under full; default returns a terse confirmation."},
 		},
 	}

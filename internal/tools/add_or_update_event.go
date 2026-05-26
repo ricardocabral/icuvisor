@@ -13,7 +13,7 @@ import (
 
 const (
 	addOrUpdateEventName                    = "add_or_update_event"
-	addOrUpdateEventDescription             = "Create or update a non-destructive calendar event such as a planned workout, race, or note. Omitting event_id creates a new event; providing event_id updates that event without deleting or replacing unrelated events; use delete_event to remove. Pass `workout_doc` (structured steps) or `description` (free-text prose) — mutually exclusive. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
+	addOrUpdateEventDescription             = "Create or update a non-destructive calendar event such as a planned workout, race, or note. Omitting event_id creates a new event; providing event_id updates that event without deleting or replacing unrelated events; use delete_event to remove. Pass `workout_doc` (structured steps), `description` (free-text prose), or both; icuvisor merges them into the upstream description DSL. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
 	invalidAddOrUpdateEventArgumentsMessage = "invalid add_or_update_event arguments; provide date as athlete-local YYYY-MM-DD, category, type for WORKOUT events, name for NOTE creates, and optional event_id for updates"
 	writeEventMessage                       = "could not write event; check intervals.icu credentials, athlete ID, event ID, and writable event fields"
 )
@@ -125,9 +125,6 @@ func decodeAddOrUpdateEventRequest(raw json.RawMessage) (addOrUpdateEventRequest
 	if args.EventID == "" && strings.EqualFold(args.Category, "NOTE") && args.Name == "" {
 		return args, errors.New("name is required for NOTE creates")
 	}
-	if args.Description != nil && args.WorkoutDoc != nil {
-		return args, errors.New("provide either free-text description or structured workout_doc, not both")
-	}
 	if args.MovingTimeSeconds != nil && *args.MovingTimeSeconds < 0 {
 		return args, errors.New("moving_time_seconds must be non-negative")
 	}
@@ -162,9 +159,13 @@ func eventWriteParams(args addOrUpdateEventRequest) (intervals.WriteEventParams,
 	if args.WorkoutDoc == nil {
 		return params, "", nil
 	}
-	dsl, err := workoutdoc.Serialize(*args.WorkoutDoc)
+	prose := ""
+	if args.Description != nil {
+		prose = *args.Description
+	}
+	dsl, err := workoutdoc.MergeDescription(prose, *args.WorkoutDoc)
 	if err != nil {
-		return intervals.WriteEventParams{}, "", fmt.Errorf("serializing workout_doc: %w", err)
+		return intervals.WriteEventParams{}, "", fmt.Errorf("merging workout_doc with description: %w", err)
 	}
 	params.Description = &dsl
 	return params, "description_dsl", nil
@@ -191,8 +192,8 @@ func addOrUpdateEventInputSchema() map[string]any {
 		"category":             map[string]any{"type": "string", "description": intervals.EventCategoryReferenceDescription("Required upstream event category.")},
 		"type":                 map[string]any{"type": "string", "description": "Required for WORKOUT events: upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Surrounding whitespace is trimmed."},
 		"name":                 map[string]any{"type": "string", "description": "Event title/name shown on the athlete calendar. Required when creating NOTE events; optional for other supported writes and updates unless upstream requires it."},
-		"description":          map[string]any{"type": "string", "description": "Optional free-text athlete or coach notes. Preserved verbatim, including whitespace and line breaks; mutually exclusive with workout_doc."},
-		"workout_doc":          map[string]any{"type": "object", "description": "Optional structured WorkoutDoc. Mutually exclusive with description; serialized to the upstream workout DSL. Syntax reference: icuvisor://workout-syntax."},
+		"description":          map[string]any{"type": "string", "description": "Optional free-text athlete or coach notes. Preserved verbatim, including whitespace and line breaks. May be supplied with workout_doc; use the " + workoutdoc.StepsSentinel + " sentinel on its own line to choose where serialized steps are inserted."},
+		"workout_doc":          map[string]any{"type": "object", "description": "Optional structured WorkoutDoc. Serialized to the upstream workout DSL and merged with description when both are supplied. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Syntax reference: icuvisor://workout-syntax."},
 		"tags":                 map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional replacement event tags, in caller-provided order. Omit to leave unchanged on updates; provide [] to clear all tags."},
 		"indoor":               map[string]any{"type": "boolean", "description": "Optional planned-event indoor/trainer flag. Set true for indoor trainer rides; commonly paired with type VirtualRide, but this boolean controls intervals.icu's Indoor toggle."},
 		"target_load":          map[string]any{"type": "number", "minimum": 0, "description": "Optional planned training load / TSS equivalent when supported upstream."},

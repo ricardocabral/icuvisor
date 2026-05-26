@@ -123,10 +123,7 @@ func decodeUpdateWorkoutRequest(raw json.RawMessage) (updateWorkoutRequest, erro
 	if args.sportProvided && args.Sport == "" {
 		return args, errors.New("sport cannot be empty when supplied")
 	}
-	if args.descriptionProvided && args.WorkoutDoc != nil {
-		return args, errors.New("provide either free-text description or structured workout_doc, not both")
-	}
-	if args.descriptionProvided && args.Description != nil && strings.TrimSpace(*args.Description) == "" {
+	if args.descriptionProvided && args.WorkoutDoc == nil && args.Description != nil && strings.TrimSpace(*args.Description) == "" {
 		return args, errors.New("use workout_doc with an explicit empty steps list to clear structured workout content")
 	}
 	if len(updateWorkoutFieldsUpdated(args)) == 0 {
@@ -155,9 +152,13 @@ func updateWorkoutParams(args updateWorkoutRequest) (intervals.WriteWorkoutParam
 	if args.WorkoutDoc == nil {
 		return intervals.WriteWorkoutParams{}, "", errors.New("workout_doc cannot be null")
 	}
-	dsl, err := workoutdoc.Serialize(*args.WorkoutDoc)
+	prose := ""
+	if args.Description != nil {
+		prose = *args.Description
+	}
+	dsl, err := workoutdoc.MergeDescription(prose, *args.WorkoutDoc)
 	if err != nil {
-		return intervals.WriteWorkoutParams{}, "", fmt.Errorf("serializing workout_doc: %w", err)
+		return intervals.WriteWorkoutParams{}, "", fmt.Errorf("merging workout_doc with description: %w", err)
 	}
 	params.Description = &dsl
 	params.DescriptionSet = true
@@ -199,8 +200,8 @@ func updateWorkoutInputSchema() map[string]any {
 		"workout_id":  map[string]any{"type": "string", "description": "Required upstream workout-library template ID to update. Surrounding whitespace is trimmed."},
 		"name":        map[string]any{"type": "string", "description": "Optional replacement workout-library template name/title. Omit to leave unchanged."},
 		"folder_id":   map[string]any{"type": "string", "description": "Optional replacement intervals.icu workout-library folder or plan ID. Omit to leave unchanged; an explicit empty string moves the workout to the top level when upstream supports it."},
-		"description": map[string]any{"type": "string", "description": "Optional replacement free-text workout description. Omit to leave unchanged; mutually exclusive with workout_doc. Empty strings are rejected to avoid accidentally clearing structured workout content."},
-		"workout_doc": map[string]any{"type": "object", "description": "Optional replacement structured WorkoutDoc. Serialized to the upstream workout-description DSL; empty steps clear structured content. Syntax reference: icuvisor://workout-syntax."},
+		"description": map[string]any{"type": "string", "description": "Optional replacement free-text workout description. Omit to leave unchanged. May be supplied with workout_doc; use the " + workoutdoc.StepsSentinel + " sentinel on its own line to choose where serialized steps are inserted. Empty strings without workout_doc are rejected to avoid accidentally clearing structured workout content."},
+		"workout_doc": map[string]any{"type": "object", "description": "Optional replacement structured WorkoutDoc. Serialized to the upstream workout-description DSL and merged with description when both are supplied; empty steps clear structured content. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Syntax reference: icuvisor://workout-syntax."},
 		"tags":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional replacement workout-library tags. Omit to leave unchanged; provide the full desired tag list when appending a tag."},
 		"sport":       map[string]any{"type": "string", "description": "Optional replacement upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Omit to leave unchanged."},
 	}}

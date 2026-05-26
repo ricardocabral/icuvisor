@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/workoutdoc"
 )
 
 type fakeWorkoutUpdaterClient struct {
@@ -100,6 +101,31 @@ func TestUpdateWorkoutSwapWorkoutDocSerializesGoldenDSL(t *testing.T) {
 	}
 }
 
+func TestUpdateWorkoutMergesDescriptionAndWorkoutDoc(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWorkoutUpdaterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		workout:           decodeToolWorkouts(t, `{"id":"w-merge","name":"Merged","type":"Ride","workout_doc":{"steps":[{"duration":600}]}}`)[0],
+	}
+	tool := newUpdateWorkoutTool(client, client, "test", "UTC", false)
+	prose := "Coach note before.\n" + workoutdoc.StepsSentinel + "\nFuel after."
+	rawArgs := mustMarshalArgs(t, map[string]any{
+		"workout_id":  "w-merge",
+		"description": prose,
+		"workout_doc": map[string]any{"steps": []any{map[string]any{"description": "Warmup", "duration": 600, "power": map[string]any{"value": 60, "units": "PERCENT_FTP"}}}},
+	})
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(rawArgs)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	want := "Coach note before.\n- Warmup 10m 60%\nFuel after."
+	if len(client.calls) != 1 || !client.calls[0].DescriptionSet || client.calls[0].Description == nil || *client.calls[0].Description != want {
+		t.Fatalf("description = %#v, want merged DSL %q", client.calls, want)
+	}
+}
+
 func TestUpdateWorkoutWarnsWhenUpstreamDoesNotRenderWorkoutDoc(t *testing.T) {
 	t.Parallel()
 
@@ -169,7 +195,7 @@ func TestUpdateWorkoutRejectsBadArguments(t *testing.T) {
 		`{"workout_id":"w-1"}`,
 		`{"workout_id":"w-1","name":" "}`,
 		`{"workout_id":"w-1","sport":" "}`,
-		`{"workout_id":"w-1","description":"note","workout_doc":{"steps":[{"duration":600}]}}`,
+		`{"workout_id":"w-1","workout_doc":{"steps":[{"description":"10m warmup","duration":600}]}}`,
 		`{"workout_id":"w-1","description":""}`,
 		`{"workout_id":"w-1","unknown":true}`,
 	} {

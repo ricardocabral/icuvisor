@@ -114,6 +114,27 @@ func TestValidateWorkoutUnsupportedStepError(t *testing.T) {
 	}
 }
 
+func TestValidateWorkoutRejectsStructuralTokenInStepDescription(t *testing.T) {
+	t.Parallel()
+	payload := `{"workout_doc":{"steps":[{"description":"Endurance 2h15m","duration":8100,"power":{"value":60,"units":"PERCENT_FTP"}}]}}`
+	resp := runValidateWorkout(t, payload)
+	if resp.Valid {
+		t.Fatalf("Valid = true, want false")
+	}
+	if !diagContains(diagCodes(resp.Errors), "STRUCTURAL_TOKEN_IN_STEP_DESCRIPTION") {
+		t.Fatalf("expected STRUCTURAL_TOKEN_IN_STEP_DESCRIPTION; got %+v", resp.Errors)
+	}
+	if len(resp.Errors) != 1 {
+		t.Fatalf("errors = %+v, want one structural-token diagnostic", resp.Errors)
+	}
+	if resp.Errors[0].StepIndex == nil || *resp.Errors[0].StepIndex != 0 {
+		t.Fatalf("step_index = %#v, want 0", resp.Errors[0].StepIndex)
+	}
+	if !strings.Contains(resp.Errors[0].Message, "duration/distance in structured fields") {
+		t.Fatalf("message = %q, want structured-field guidance", resp.Errors[0].Message)
+	}
+}
+
 func TestValidateWorkoutProsePassesThroughVerbatim(t *testing.T) {
 	t.Parallel()
 	prose := "# Heading the parser does not recognize\nFree-form coaching note: keep cadence above 85.\n## Another heading"

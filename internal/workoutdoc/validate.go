@@ -129,16 +129,39 @@ func ValidateDoc(doc WorkoutDoc) ValidationResult {
 	}
 	dsl, err := Serialize(doc)
 	if err != nil {
-		code := "SERIALIZE_ERROR"
-		var unsupported *UnsupportedStepError
-		if errors.As(err, &unsupported) {
-			code = "UNSUPPORTED_STEP"
+		code := serializeDiagnosticCode(err)
+		if code != "STRUCTURAL_TOKEN_IN_STEP_DESCRIPTION" || !hasDiagnosticCode(result.Errors, code) {
+			result.Errors = append(result.Errors, Diagnostic{Code: code, Message: err.Error()})
 		}
-		result.Errors = append(result.Errors, Diagnostic{Code: code, Message: err.Error()})
+		return result
+	}
+	if _, err := Parse(dsl); err != nil {
+		result.Errors = append(result.Errors, Diagnostic{Code: "SERIALIZED_DSL_PARSE_ERROR", Message: "serialized workout_doc did not parse: " + err.Error()})
 		return result
 	}
 	result.StructuredStepLines = len(strings.Split(dsl, "\n"))
 	return result
+}
+
+func serializeDiagnosticCode(err error) string {
+	var structural *StructuralTokenInDescriptionError
+	if errors.As(err, &structural) {
+		return "STRUCTURAL_TOKEN_IN_STEP_DESCRIPTION"
+	}
+	var unsupported *UnsupportedStepError
+	if errors.As(err, &unsupported) {
+		return "UNSUPPORTED_STEP"
+	}
+	return "SERIALIZE_ERROR"
+}
+
+func hasDiagnosticCode(diags []Diagnostic, code string) bool {
+	for _, diag := range diags {
+		if diag.Code == code {
+			return true
+		}
+	}
+	return false
 }
 
 // EstimateDurationSeconds returns the total scheduled duration of doc's
@@ -164,6 +187,13 @@ func estimateStepDuration(step Step) int {
 }
 
 func collectStepDiagnostics(step Step, topIndex *int, parentReps *int, result *ValidationResult) {
+	if err := descriptionStructuralTokenError(step, "step"); err != nil {
+		result.Errors = append(result.Errors, Diagnostic{
+			Code:      "STRUCTURAL_TOKEN_IN_STEP_DESCRIPTION",
+			Message:   err.Error(),
+			StepIndex: topIndex,
+		})
+	}
 	if step.Reps > 0 || len(step.Steps) > 0 {
 		if parentReps != nil {
 			result.Errors = append(result.Errors, Diagnostic{

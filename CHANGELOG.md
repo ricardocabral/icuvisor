@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `add_or_update_event`, `create_workout`, and `update_workout` now merge free-text `description` prose with structured `workout_doc` steps instead of forcing callers to choose one source; the `<!-- icuvisor:steps -->` sentinel controls insertion point when present.
+
+### Fixed
+
+- Structured WorkoutDoc serialization now rejects step descriptions containing duration or distance tokens (for example `2h15m`, `45m`, `400mtr`, or `5km`) so planned workout duration/load cannot be doubled by submitting both a structured duration field and an inline DSL time token. `validate_workout` reports this as `STRUCTURAL_TOKEN_IN_STEP_DESCRIPTION`.
+
 ## [0.1.4] - 2026-05-24
 
 ### Added

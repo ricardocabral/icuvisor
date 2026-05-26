@@ -104,7 +104,7 @@ func WorkoutTargetUnitSyntax() []TargetUnitSyntax {
 func WorkoutSyntaxSpec() SyntaxSpec {
 	return SyntaxSpec{
 		CheatSheet: SyntaxCheatSheet{
-			Form: "Simple step: `- [description] [duration|distance] [primary target] [optional cadence]`. Repeat block: `Nx` header with two-space-indented child steps. Use one primary target per step (power OR HR OR pace OR RPE OR freeride).",
+			Form: "Simple step: `- [description] [duration|distance] [primary target] [optional cadence]`. In structured WorkoutDoc JSON, step `description` is only a label/comment; put duration or distance in its own field, not in the label. Repeat block: `Nx` header with two-space-indented child steps. Use one primary target per step (power OR HR OR pace OR RPE OR freeride).",
 			Examples: []SyntaxCheatExample{
 				{Label: "Duration step", DSL: "- Endurance 10m 75%"},
 				{Label: "Distance step", DSL: "- Stride 400mtr 120%"},
@@ -213,9 +213,11 @@ func WorkoutSyntaxSpec() SyntaxSpec {
 			{Key: "freeride_not_ramp", Description: "Freeride cannot be combined with ramp or another primary target."},
 			{Key: "repeat_fields", Description: "Repeat blocks require reps greater than zero and child steps, cannot be nested, and cannot also carry simple-step fields."},
 			{Key: "simple_step_duration_or_distance", Description: "Simple steps require a positive duration or a supported distance."},
+			{Key: "step_description_label_only", Description: "Structured WorkoutDoc step descriptions are labels/comments only. Do not include duration or distance tokens there; use the duration or distance fields so the serialized DSL has exactly one duration/distance source."},
 		},
 		CommonMistakes: []SyntaxMistake{
 			{Key: "m_is_minutes", Description: "`m` is minutes, never meters. Use `mtr` for meters (e.g. `500mtr`, not `500m`)."},
+			{Key: "no_duration_or_distance_in_step_description", Description: "In structured WorkoutDoc JSON, do not put tokens like `2h15m`, `45m`, `400mtr`, or `5km` in a step description. Use exactly one source: duration seconds or distance fields."},
 			{Key: "one_primary_target_per_step", Description: "One primary target per step. Use power OR HR OR pace OR RPE (plus optional cadence). Mixing primary targets in one step is rejected."},
 			{Key: "no_nested_repeats", Description: "No nested repeats. An `Nx` block cannot contain another `Nx` block."},
 			{Key: "repeat_header_carries_only_reps", Description: "Repeat headers carry only `Nx` and an optional label. Duration and targets belong on the child steps, not the header."},

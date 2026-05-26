@@ -13,8 +13,8 @@ import (
 
 const (
 	createWorkoutName                    = "create_workout"
-	createWorkoutDescription             = "Create a reusable workout-library template, not a calendar event. Pass `workout_doc` (structured steps) or `description` (free-text prose) — mutually exclusive. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
-	invalidCreateWorkoutArgumentsMessage = "invalid create_workout arguments; provide name, sport, folder_id, optional tags, and either description or workout_doc"
+	createWorkoutDescription             = "Create a reusable workout-library template, not a calendar event. Pass `workout_doc` (structured steps), `description` (free-text prose), or both; icuvisor merges them into the upstream description DSL. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
+	invalidCreateWorkoutArgumentsMessage = "invalid create_workout arguments; provide name, sport, folder_id, optional tags, and optional description and/or workout_doc"
 	createWorkoutMessage                 = "could not create workout; check intervals.icu credentials, athlete ID, folder ID, and writable workout fields"
 )
 
@@ -104,9 +104,6 @@ func decodeCreateWorkoutRequest(raw json.RawMessage) (createWorkoutRequest, erro
 	if args.FolderID == "" {
 		return args, errors.New("folder_id is required")
 	}
-	if args.Description != nil && args.WorkoutDoc != nil {
-		return args, errors.New("provide either free-text description or structured workout_doc, not both")
-	}
 	return args, nil
 }
 
@@ -115,9 +112,13 @@ func createWorkoutParams(args createWorkoutRequest) (intervals.WriteWorkoutParam
 	if args.WorkoutDoc == nil {
 		return params, "", nil
 	}
-	dsl, err := workoutdoc.Serialize(*args.WorkoutDoc)
+	prose := ""
+	if args.Description != nil {
+		prose = *args.Description
+	}
+	dsl, err := workoutdoc.MergeDescription(prose, *args.WorkoutDoc)
 	if err != nil {
-		return intervals.WriteWorkoutParams{}, "", fmt.Errorf("serializing workout_doc: %w", err)
+		return intervals.WriteWorkoutParams{}, "", fmt.Errorf("merging workout_doc with description: %w", err)
 	}
 	params.Description = &dsl
 	return params, "description_dsl", nil
@@ -133,8 +134,8 @@ func createWorkoutInputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"name", "folder_id", "sport"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
 		"name":        map[string]any{"type": "string", "description": "Required workout-library template name/title. Surrounding whitespace is trimmed."},
 		"folder_id":   map[string]any{"type": "string", "description": "Required intervals.icu workout-library folder ID. Must identify an existing folder owned by the athlete; top-level workout creates are refused upstream."},
-		"description": map[string]any{"type": "string", "description": "Optional free-text workout description. Preserved verbatim when workout_doc is omitted; mutually exclusive with workout_doc because intervals.icu accepts one description DSL string on writes."},
-		"workout_doc": map[string]any{"type": "object", "description": "Optional structured WorkoutDoc. Mutually exclusive with description; serialized to the upstream workout-description DSL. Syntax reference: icuvisor://workout-syntax."},
+		"description": map[string]any{"type": "string", "description": "Optional free-text workout description. Preserved verbatim. May be supplied with workout_doc; use the " + workoutdoc.StepsSentinel + " sentinel on its own line to choose where serialized steps are inserted."},
+		"workout_doc": map[string]any{"type": "object", "description": "Optional structured WorkoutDoc. Serialized to the upstream workout-description DSL and merged with description when both are supplied. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Syntax reference: icuvisor://workout-syntax."},
 		"tags":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional workout-library tags to preserve on the upstream template, in caller-provided order."},
 		"sport":       map[string]any{"type": "string", "description": "Required upstream sport/activity type for the workout template, such as Ride, Run, Swim, VirtualRide, or the athlete account's configured activity type."},
 	}}
