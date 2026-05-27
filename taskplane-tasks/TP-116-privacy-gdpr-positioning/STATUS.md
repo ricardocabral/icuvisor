@@ -1,11 +1,11 @@
 # TP-116: Privacy and GDPR positioning — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
+**Current Step:** Step 1: Define privacy claims and boundaries
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** S
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers may expand steps when runtime discoveries warrant it.
@@ -13,16 +13,16 @@
 ---
 
 ### Step 0: Preflight
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Required files and paths exist
-- [ ] Dependencies satisfied
-- [ ] Existing privacy, security, coach-mode, and HTTP transport claims reviewed
+- [x] Required files and paths exist
+- [x] Dependencies satisfied
+- [x] Existing privacy, security, coach-mode, and HTTP transport claims reviewed
 
 ---
 
 ### Step 1: Define privacy claims and boundaries
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Substantiated privacy/security claims inventoried
 - [ ] Explicit non-claims defined: no legal advice/certification, AI-client caveat, upstream data relationship caveat
@@ -90,6 +90,8 @@
 | Timestamp | Action | Outcome |
 |-----------|--------|---------|
 | 2026-05-27 | Task staged | PROMPT.md and STATUS.md created |
+| 2026-05-27 18:13 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-27 18:13 | Step 0 started | Preflight |
 
 ---
 
