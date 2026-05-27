@@ -50,6 +50,78 @@ func TestGoldenRoundTripStructuredSerializeParse(t *testing.T) {
 	}
 }
 
+func TestSerializeTargetUnitSemantics(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		step Step
+		want string
+	}{
+		{name: "power blank defaults to percent FTP", step: Step{Description: "Blank", Duration: 600, Power: targetValue(75, "")}, want: "- Blank 10m 75%"},
+		{name: "power percent FTP", step: Step{Description: "FTP", Duration: 600, Power: targetRange(88, 94, "PERCENT_FTP")}, want: "- FTP 10m 88-94%"},
+		{name: "power percent FTP alias", step: Step{Description: "FTP alias", Duration: 600, Power: targetValue(105, "%FTP")}, want: "- FTP alias 10m 105%"},
+		{name: "power watts", step: Step{Description: "Watts", Duration: 300, Power: targetValue(250, "WATTS")}, want: "- Watts 5m 250w"},
+		{name: "power watt alias", step: Step{Description: "Watt", Duration: 300, Power: targetValue(240, "WATT")}, want: "- Watt 5m 240w"},
+		{name: "power w alias", step: Step{Description: "W", Duration: 300, Power: targetRange(220, 260, "W")}, want: "- W 5m 220-260w"},
+		{name: "power zone scalar", step: Step{Description: "Power zone", Duration: 900, Power: targetValue(2, "POWER_ZONE")}, want: "- Power zone 15m Z2"},
+		{name: "power zone range", step: Step{Description: "Power zones", Duration: 900, Power: targetRange(2, 3, "ZONE")}, want: "- Power zones 15m Z2-Z3"},
+		{name: "pace percent threshold", step: Step{Description: "Pace", Duration: 600, Pace: targetValue(95, "PERCENT_THRESHOLD")}, want: "- Pace 10m 95% Pace"},
+		{name: "pace percent threshold pace alias", step: Step{Description: "Pace threshold", Duration: 600, Pace: targetRange(92, 96, "PERCENT_THRESHOLD_PACE")}, want: "- Pace threshold 10m 92-96% Pace"},
+		{name: "pace percent pace alias", step: Step{Description: "Pace percent", Duration: 600, Pace: targetValue(90, "PERCENT_PACE")}, want: "- Pace percent 10m 90% Pace"},
+		{name: "pace percent symbol alias", step: Step{Description: "Pace symbol", Duration: 600, Pace: targetRange(90, 95, "%PACE")}, want: "- Pace symbol 10m 90-95% Pace"},
+		{name: "pace numeric scalar", step: Step{Description: "Numeric pace", Duration: 300, Pace: targetValue(5, "PACE")}, want: "- Numeric pace 5m 5 Pace"},
+		{name: "pace numeric range", step: Step{Description: "Numeric pace range", Duration: 300, Pace: targetRange(4.5, 5, "PACE")}, want: "- Numeric pace range 5m 4.5-5 Pace"},
+		{name: "pace zone scalar", step: Step{Description: "Pace zone", Duration: 600, Pace: targetValue(2, "PACE_ZONE")}, want: "- Pace zone 10m Z2 Pace"},
+		{name: "pace zone range", step: Step{Description: "Pace zones", Duration: 600, Pace: targetRange(2, 3, "ZONE")}, want: "- Pace zones 10m Z2-Z3 Pace"},
+		{name: "pace text form", step: Step{Description: "Text pace", Duration: 300, Pace: &Target{Text: "5:00/km Pace"}}, want: "- Text pace 5m 5:00/km Pace"},
+		{name: "heart rate percent HR", step: Step{Description: "HR", Duration: 600, HR: targetValue(80, "PERCENT_HR")}, want: "- HR 10m 80% HR"},
+		{name: "heart rate percent max HR alias", step: Step{Description: "Max HR", Duration: 600, HR: targetRange(80, 85, "PERCENT_MAX_HR")}, want: "- Max HR 10m 80-85% HR"},
+		{name: "heart rate percent LTHR", step: Step{Description: "LTHR", Duration: 600, HR: targetRange(95, 99, "PERCENT_LTHR")}, want: "- LTHR 10m 95-99% LTHR"},
+		{name: "heart rate percent LTHR symbol alias", step: Step{Description: "LTHR symbol", Duration: 600, HR: targetValue(96, "%LTHR")}, want: "- LTHR symbol 10m 96% LTHR"},
+		{name: "heart rate LTHR alias", step: Step{Description: "LTHR alias", Duration: 600, HR: targetValue(97, "LTHR")}, want: "- LTHR alias 10m 97% LTHR"},
+		{name: "heart rate bpm", step: Step{Description: "BPM", Duration: 300, HR: targetValue(150, "BPM")}, want: "- BPM 5m 150bpm"},
+		{name: "heart rate zone scalar", step: Step{Description: "HR zone", Duration: 600, HR: targetValue(2, "HR_ZONE")}, want: "- HR zone 10m Z2 HR"},
+		{name: "heart rate zone range", step: Step{Description: "HR zones", Duration: 600, HR: targetRange(2, 3, "ZONE")}, want: "- HR zones 10m Z2-Z3 HR"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := Serialize(WorkoutDoc{Steps: []Step{tc.step}})
+			if err != nil {
+				t.Fatalf("Serialize() error = %v", err)
+			}
+			if got != tc.want {
+				t.Fatalf("Serialize() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestSerializeRejectsUnsupportedAbsolutePaceUnits(t *testing.T) {
+	t.Parallel()
+
+	for _, unit := range []string{"MINS_KM", "MINS_MILE"} {
+		t.Run(unit, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := Serialize(WorkoutDoc{Steps: []Step{{Description: "Absolute pace", Duration: 300, Pace: targetValue(5, unit)}}})
+			if err == nil {
+				t.Fatal("Serialize() error = nil, want unsupported pace unit error")
+			}
+			var unsupported *UnsupportedStepError
+			if !errors.As(err, &unsupported) {
+				t.Fatalf("Serialize() error = %T, want *UnsupportedStepError", err)
+			}
+			if !strings.Contains(unsupported.Reason, "unsupported pace target units") {
+				t.Fatalf("UnsupportedStepError.Reason = %q, want unsupported pace unit", unsupported.Reason)
+			}
+		})
+	}
+}
+
 func TestSerializeUnsupportedStepErrorContainsStep(t *testing.T) {
 	bad := WorkoutDoc{Steps: []Step{{Description: "No duration", Power: &Target{Value: floatPtr(60), Units: "PERCENT_FTP"}}}}
 	_, err := Serialize(bad)
