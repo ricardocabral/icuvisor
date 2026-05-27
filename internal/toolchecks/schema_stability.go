@@ -267,8 +267,8 @@ func compareStableSchema(base Snapshot, current Snapshot) []SchemaFailure {
 			failures = append(failures, SchemaFailure{ToolName: base.ToolName, Property: prop, Kind: "property-removed", Message: "baseline argument property is missing; removals and renames require a new tool name", Baseline: base.Path, Current: current.Path})
 			continue
 		}
-		if !reflect.DeepEqual(baseProps[prop], currentProp) {
-			failures = append(failures, SchemaFailure{ToolName: base.ToolName, Property: prop, Kind: "property-changed", Message: "baseline argument property schema changed; stable argument schemas are additive-only", Baseline: base.Path, Current: current.Path})
+		if !reflect.DeepEqual(compatibilitySchema(baseProps[prop]), compatibilitySchema(currentProp)) {
+			failures = append(failures, SchemaFailure{ToolName: base.ToolName, Property: prop, Kind: "property-changed", Message: "baseline argument property validation schema changed; stable argument schemas are additive-only", Baseline: base.Path, Current: current.Path})
 		}
 	}
 	baseRequired := stringSet(base.Schema["required"])
@@ -317,6 +317,28 @@ func sortedPropertyNames(props map[string]any) []string {
 	}
 	sort.Strings(names)
 	return names
+}
+
+func compatibilitySchema(value any) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		out := make(map[string]any, len(typed))
+		for key, child := range typed {
+			if key == "description" {
+				continue
+			}
+			out[key] = compatibilitySchema(child)
+		}
+		return out
+	case []any:
+		out := make([]any, len(typed))
+		for i, child := range typed {
+			out[i] = compatibilitySchema(child)
+		}
+		return out
+	default:
+		return value
+	}
 }
 
 func boolValue(value any) bool {

@@ -71,6 +71,23 @@ func TestCheckSchemaStability(t *testing.T) {
 			wantOK: true,
 		},
 		{
+			name:     "description-only argument guidance change passes",
+			baseline: map[string]map[string]any{"get_example": baseSchema},
+			generated: map[string]map[string]any{"get_example": {"type": "object", "additionalProperties": false, "properties": map[string]any{
+				"activity_id": map[string]any{"type": "string", "description": "Intervals.icu activity ID."},
+			}, "required": []string{"activity_id"}}},
+			wantOK: true,
+		},
+		{
+			name:     "argument validation change fails",
+			baseline: map[string]map[string]any{"get_example": baseSchema},
+			generated: map[string]map[string]any{"get_example": {"type": "object", "additionalProperties": false, "properties": map[string]any{
+				"activity_id": map[string]any{"type": "integer", "description": "Activity ID."},
+			}, "required": []string{"activity_id"}}},
+			wantOK:   false,
+			wantKind: "property-changed",
+		},
+		{
 			name:      "removed argument fails",
 			baseline:  map[string]map[string]any{"get_example": baseSchema},
 			generated: map[string]map[string]any{"get_example": {"type": "object", "additionalProperties": false, "properties": map[string]any{}, "required": []string{}}},
