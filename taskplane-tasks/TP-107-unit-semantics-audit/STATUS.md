@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -31,6 +31,7 @@
 - [x] Targeted workoutdoc tests passing
 - [x] Direct table-driven serializer matrix covers scalar/range power, pace, HR, zone, watt, BPM, and text pace forms
 - [x] Unsupported structured absolute pace target units are documented as discovery or fixed additively with tests
+- [ ] R004 coverage gap fixed for blank pace units and `%HR`/`HR` aliases
 
 ---
 
@@ -92,6 +93,8 @@
 |---|------|------|---------|------|
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | 1 | REVISE | `.reviews/R002-plan-step1.md` |
+| R003 | Plan | 1 | APPROVE | `.reviews/R003-plan-step1.md` |
+| R004 | Code | 1 | REVISE | `.reviews/R004-code-step1.md` |
 
 ---
 
@@ -130,3 +133,4 @@
 | 2026-05-27 12:57 | Review R001 | plan Step 1: REVISE |
 | 2026-05-27 12:59 | Review R002 | plan Step 1: REVISE |
 | 2026-05-27 13:01 | Review R003 | plan Step 1: APPROVE |
+| 2026-05-27 13:07 | Review R004 | code Step 1: REVISE |
