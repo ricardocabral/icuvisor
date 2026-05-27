@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -91,6 +91,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
+| R002 | Plan | 1 | REVISE | `.reviews/R002-plan-step1.md` |
 
 ---
 
@@ -121,5 +122,9 @@
 ## Notes
 
 - Tracking issue: https://github.com/ricardocabral/icuvisor/issues/34
-- Step 1 plan review requires a direct table-driven serializer matrix in `internal/workoutdoc`, including scalar and range cases; if `MINS_KM`/`MINS_MILE` remain unsupported in structured pace targets, document that explicitly rather than coercing.
+- Step 1 implementation plan: add `TestSerializeTargetUnitSemantics` in `internal/workoutdoc/workoutdoc_test.go`. Each table case will build a small `WorkoutDoc`, call `Serialize`, and assert the exact DSL string.
+- Step 1 serializer matrix: power blank/default percent FTP, `PERCENT_FTP`, `%FTP`, watts aliases (`WATTS`, `WATT`, `W`), and power zone scalar/range; pace percent-threshold aliases (`PERCENT_THRESHOLD`, `PERCENT_THRESHOLD_PACE`, `PERCENT_PACE`, `%PACE`), `PACE` numeric scalar/range, pace zone scalar/range, and text pace form (`5:00/km Pace`); HR `% HR` via `PERCENT_HR`/`PERCENT_MAX_HR`, `% LTHR` via `PERCENT_LTHR`/`%LTHR`/`LTHR`, BPM, and HR zone scalar/range.
+- Step 1 `MINS_KM`/`MINS_MILE` decision: current structured workout target units do not list these tokens; add an unsupported-unit regression and discovery unless tests reveal documented syntax metadata requiring an additive serializer/syntax fix. Do not coerce them to `PACE` silently.
+- Step 1 verification command: `go test ./internal/workoutdoc`; update discoveries with the proven behavior.
 | 2026-05-27 12:57 | Review R001 | plan Step 1: REVISE |
+| 2026-05-27 12:59 | Review R002 | plan Step 1: REVISE |
