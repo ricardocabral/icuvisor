@@ -1,7 +1,7 @@
 # TP-116: Privacy and GDPR positioning — Status
 
-**Current Step:** Step 4: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 5: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-27
 **Review Level:** 1
 **Review Counter:** 5
@@ -62,12 +62,12 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Final commit includes task ID
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Final commit includes task ID
 
 ---
 
@@ -88,6 +88,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | TP-113 dependency is not actually complete in this worktree: `taskplane-tasks/TP-113-local-first-positioning-refresh/STATUS.md` is Ready/Not Started despite a merge commit subject mentioning TP-113. | Supervisor authorized a constrained TP-116 pass because TP-113 was intentionally skipped in wave 1; do not edit homepage/local-first positioning owned by TP-113 or assume TP-113 copy exists. | Step 0 dependency check; `.reviews/R001-plan-step1.md`; steering message iteration 2 |
+| No repository source substantiates a legal compliance/certification claim such as "GDPR compliant". | Privacy copy uses posture/due-diligence framing and explicit non-claims instead of certification language. | Step 1 plan notes; `web/content/explain/privacy.md` |
 
 ---
 
@@ -127,3 +128,6 @@ Step 1 plan notes:
 - Step 4 app-test decision: `git diff --name-only HEAD` after docs/link commits showed only `STATUS.md` and the Step 4 review artifact uncommitted, so `make test` was not applicable for this docs-only pass.
 - Step 4 build decision: no app strings or tracked generated assets were touched; `make build` was not applicable. Website output was validated through `make web-build`.
 - Step 4 result: `make web-build` passed; Hugo emitted deprecation warnings for theme APIs but no build failures.
+- Step 5 must-update confirmation: privacy/local-first explanation requirement satisfied by adding standalone `web/content/explain/privacy.md` and linking it from the explain index, without editing TP-113-owned local-first/homepage copy.
+- Step 5 affected-docs review: `SECURITY.md`, coach-mode, HTTP transport, homepage layout, README, and changelog were reviewed. Coach-mode and HTTP transport received narrow contextual privacy links; changelog received an Unreleased docs note; homepage layout and README were intentionally left unchanged under the constrained no-homepage/no-TP-113-overlap pass.
+- Step 5 final-commit plan: commit message will include `TP-116`; prior step-boundary commits also include `TP-116`.
