@@ -37,7 +37,7 @@
 ---
 
 ### Step 2: Update prompt/docs wording
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Weekly-planning prompt reviewed/updated
 - [ ] Cookbook/explainer docs reviewed/updated
@@ -71,7 +71,8 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
-| R001 | plan | 1 | REVISE then APPROVE | `.reviews/R001-plan-step1.md` |
+| R001 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
+| R002 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 
 ---
 
