@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 12
+**Review Counter:** 13
 **Iteration:** 1
 **Size:** M
 
@@ -73,6 +73,7 @@
 ### Step 5: Testing & Verification
 **Status:** 🟨 In Progress
 
+- [x] Step 5 verification plan documents targeted/full/build/lint/fmt commands, result logging, and generated-output expectation
 - [ ] Targeted tests passing
 - [ ] FULL test suite passing: `make test`
 - [ ] Build passes: `make build`
@@ -107,6 +108,7 @@
 | R010 | Plan | 4 | REVISE | .reviews/R010-plan-step4.md |
 | R011 | Plan | 4 | APPROVE | .reviews/R011-plan-step4.md |
 | R012 | Code | 4 | APPROVE | .reviews/R012-code-step4.md |
+| R013 | Plan | 5 | REVISE | .reviews/R013-plan-step5.md |
 
 ---
 
@@ -140,6 +142,7 @@
 - Step 2 plan: in `getTodayHandler`, call the injectable `now()` exactly once, pass that instant to `response.AsOfMetadataInTimezone`, use `asOf.AsOfDate` for the existing `today` fetch date, and pass the full helper result into `shapeGetTodayResponse` so `date` and `as_of_date` cannot diverge across midnight. Extend `getTodayMeta` with `as_of`, `as_of_date`, and `as_of_weekday` while preserving existing `date`, `timezone`, `include_full`, `source_tools`, `section_counts`, `activity_window`, and response-shaper-added metadata such as `units`. Populate `_meta.timezone` from the helper's trimmed/defaulted `Timezone`. Update `get_today` tests through `newGetTodayToolWithClock` to assert exact São Paulo boundary `as_of*` values and unchanged local-date fetches/counts, then run `go test ./internal/tools -run TestGetToday`.
 - Step 3 plan: add a small tools-level helper that computes `response.AsOfMetadataInTimezone(now(), timezone)` once per request and attaches `as_of`, `as_of_date`, `as_of_weekday`, and helper-normalized `timezone` only when the normalized request date range includes `asOf.AsOfDate`; closed ranges require `oldest <= today <= newest`, and `get_activities` with blank `newest` treats the range as open-ended through upstream now. Add with-clock constructors for activities, events, and wellness so tests do not depend on wall-clock time. Preserve each tool's existing pagination token, count, null stripping, terse/full, and response-shaper metadata by only extending response meta structs immediately before shaping.
 - Step 4 plan: rely on `TestAsOfMetadataInTimezone` for helper-level positive-offset Kiritimati and negative-offset São Paulo boundary coverage, and add/keep range-tool regressions for both include and exclude behavior. Activities already has current-day/open-ended include and past-only exclude assertions; add past-only exclude assertions for events and wellness that verify `as_of`, `as_of_date`, and `as_of_weekday` are absent while existing metadata (`timezone`, count/limit/truncated/date_range for events; oldest/newest/include_full and null stripping for wellness) remains intact. Update `CHANGELOG.md` under `[Unreleased]` `### Added` with the additive `_meta.as_of`, `_meta.as_of_date`, `_meta.as_of_weekday`, and `_meta.timezone` behavior for `get_today` and current-day `get_activities`, `get_events`, and `get_wellness_data`. Run `go test ./internal/response ./internal/tools -run 'TestAsOfMetadataInTimezone|TestCurrentDayAsOfMetadataRangePredicate|TestGetActivities.*AsOf|TestGetEvents.*AsOf|TestGetWellnessData.*AsOf'`.
+- Step 5 plan: run targeted verification for all affected code with `go test ./internal/response ./internal/tools -run 'TestAsOfMetadataInTimezone|TestRender(Date|Time)InTimezone|TestCurrentDayAsOfMetadataRangePredicate|TestGetToday|TestGetActivities.*AsOf|TestGetEvents.*AsOf|TestGetWellnessData.*AsOf'`, then `make fmt-check`, `make test`, `make build`, and `make lint` in that order. Record each command's pass/fail in STATUS.md immediately after it completes; if any command fails, capture the exact command, relevant error, and whether a code fix was applied or evidence for an unrelated pre-existing failure. No generated tool-reference/docs refresh is expected because this task changes runtime response metadata descriptions/tests and `CHANGELOG.md`, not generated catalog data.
 | 2026-05-27 12:19 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-05-27 12:22 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-27 12:29 | Review R003 | code Step 1: APPROVE |
@@ -152,3 +155,4 @@
 | 2026-05-27 13:20 | Review R010 | plan Step 4: REVISE |
 | 2026-05-27 13:22 | Review R011 | plan Step 4: APPROVE |
 | 2026-05-27 13:29 | Review R012 | code Step 4: APPROVE |
+| 2026-05-27 13:32 | Review R013 | plan Step 5: REVISE |
