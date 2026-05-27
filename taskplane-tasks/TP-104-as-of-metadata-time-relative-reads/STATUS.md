@@ -49,12 +49,12 @@
 ### Step 3: Add metadata to current-day range reads
 **Status:** 🟨 In Progress
 
-- [ ] Shared current-day range predicate, as-of meta application helper, and injectable clock constructors added for range tools
-- [ ] `get_activities` current-day range metadata added
-- [ ] `get_events` current-day range metadata added
-- [ ] `get_wellness_data` current-day range metadata added
-- [ ] Pagination/null-stripping/terse-full behavior preserved
-- [ ] Targeted tool tests passing
+- [x] Shared current-day range predicate, as-of meta application helper, and injectable clock constructors added for range tools
+- [x] `get_activities` current-day range metadata added
+- [x] `get_events` current-day range metadata added
+- [x] `get_wellness_data` current-day range metadata added
+- [x] Pagination/null-stripping/terse-full behavior preserved
+- [x] Targeted tool tests passing
 
 ---
 

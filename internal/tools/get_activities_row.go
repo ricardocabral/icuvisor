@@ -10,12 +10,19 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/units"
 )
 
-func shapeGetActivitiesResponse(activities []intervals.Activity, gearResolutions map[string]activityGearResolution, args GetActivitiesRequest, nextToken string, version string, timezoneFallback string, debugMetadata bool, unitSystem response.UnitSystem, customFieldCodes []string, shaping ...responseShaping) (any, error) {
+func shapeGetActivitiesResponse(activities []intervals.Activity, gearResolutions map[string]activityGearResolution, args GetActivitiesRequest, nextToken string, version string, timezoneFallback string, debugMetadata bool, unitSystem response.UnitSystem, customFieldCodes []string, asOfMeta *response.AsOfMetadata, shaping ...responseShaping) (any, error) {
 	rows := make([]getActivitiesRow, 0, len(activities))
 	for _, activity := range activities {
 		rows = append(rows, activityRow(activity, args.IncludeFull, timezoneFallback, unitSystem, gearResolutions[activity.ID], customFieldCodes))
 	}
-	payload := getActivitiesResponse{Activities: rows, Meta: getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull, Timezone: timezoneFallback, FieldSemantics: activityFieldSemantics(rows)}}
+	meta := getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull, Timezone: timezoneFallback, FieldSemantics: activityFieldSemantics(rows)}
+	if asOfMeta != nil {
+		meta.AsOf = asOfMeta.AsOf
+		meta.AsOfDate = asOfMeta.AsOfDate
+		meta.AsOfWeekday = asOfMeta.AsOfWeekday
+		meta.Timezone = asOfMeta.Timezone
+	}
+	payload := getActivitiesResponse{Activities: rows, Meta: meta}
 	shapeCfg := responseShapingOrDefault(shaping)
 	return response.Shape(payload, shapeCfg.options(args.IncludeFull, []string{"activities"}, version, debugMetadata, getActivitiesName, unitSystem))
 }

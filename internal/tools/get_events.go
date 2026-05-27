@@ -77,6 +77,9 @@ type getEventsMeta struct {
 	Count       int           `json:"count"`
 	Truncated   bool          `json:"truncated"`
 	IncludeFull bool          `json:"include_full"`
+	AsOf        string        `json:"as_of,omitempty"`
+	AsOfDate    string        `json:"as_of_date,omitempty"`
+	AsOfWeekday string        `json:"as_of_weekday,omitempty"`
 }
 
 type dateRangeMeta struct {
@@ -85,11 +88,15 @@ type dateRangeMeta struct {
 }
 
 func newGetEventsTool(client EventsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
-	shapeCfg := responseShapingOrDefault(shaping)
-	return coreTool(Tool{Name: getEventsName, Description: getEventsDescription, InputSchema: getEventsInputSchema(), OutputSchema: getEventsOutputSchema(), Handler: getEventsHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
+	return newGetEventsToolWithClock(client, profileClient, version, timezoneFallback, debugMetadata, time.Now, shaping...)
 }
 
-func getEventsHandler(client EventsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
+func newGetEventsToolWithClock(client EventsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, now func() time.Time, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: getEventsName, Description: getEventsDescription, InputSchema: getEventsInputSchema(), OutputSchema: getEventsOutputSchema(), Handler: getEventsHandler(client, profileClient, version, timezoneFallback, debugMetadata, now, shapeCfg)})
+}
+
+func getEventsHandler(client EventsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, now func() time.Time, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeGetEventsRequest(req.Arguments)
 		if err != nil {
@@ -102,6 +109,10 @@ func getEventsHandler(client EventsClient, profileClient ProfileClient, version 
 		if client == nil {
 			return Result{}, NewUserError(fetchEventsMessage, errors.New("missing events client"))
 		}
+		asOfMeta, err := currentDayAsOfMetadata(now, timezoneName, args.Oldest, args.Newest)
+		if err != nil {
+			return Result{}, NewUserError(fetchEventsMessage, err)
+		}
 		events, err := client.ListEvents(ctx, intervals.ListEventsParams{Oldest: args.Oldest, Newest: args.Newest, Category: args.Category, CalendarID: args.CalendarID, Limit: args.Limit, Resolve: args.Resolve})
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
@@ -109,7 +120,7 @@ func getEventsHandler(client EventsClient, profileClient ProfileClient, version 
 			}
 			return Result{}, NewUserError(fetchEventsMessage, err)
 		}
-		payload, err := shapeGetEventsResponse(events, args, timezoneName)
+		payload, err := shapeGetEventsResponse(events, args, timezoneName, asOfMeta)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_events response: %w", err)
 		}
@@ -151,7 +162,7 @@ func decodeGetEventsRequest(raw json.RawMessage) (getEventsRequest, error) {
 	return args, nil
 }
 
-func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, timezoneName string) (getEventsResponse, error) {
+func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, timezoneName string, asOfMeta *response.AsOfMetadata) (getEventsResponse, error) {
 	limit := args.Limit
 	if limit <= 0 {
 		limit = defaultEventsLimit
@@ -175,7 +186,14 @@ func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, tim
 		}
 		return rows[i].EventID < rows[j].EventID
 	})
-	return getEventsResponse{Events: rows, Meta: getEventsMeta{DateRange: dateRangeMeta{Oldest: args.Oldest, Newest: args.Newest}, Timezone: timezoneName, Limit: limit, Count: len(rows), Truncated: truncated, IncludeFull: args.IncludeFull}}, nil
+	meta := getEventsMeta{DateRange: dateRangeMeta{Oldest: args.Oldest, Newest: args.Newest}, Timezone: timezoneName, Limit: limit, Count: len(rows), Truncated: truncated, IncludeFull: args.IncludeFull}
+	if asOfMeta != nil {
+		meta.AsOf = asOfMeta.AsOf
+		meta.AsOfDate = asOfMeta.AsOfDate
+		meta.AsOfWeekday = asOfMeta.AsOfWeekday
+		meta.Timezone = asOfMeta.Timezone
+	}
+	return getEventsResponse{Events: rows, Meta: meta}, nil
 }
 
 func eventRow(event intervals.Event, includeFull bool, timezoneName string) (getEventsRow, error) {

@@ -91,6 +91,46 @@ func TestGetActivitiesRegistrationMetadata(t *testing.T) {
 	}
 }
 
+func TestGetActivitiesCurrentDayRangeAddsAsOfMetadata(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"a1","name":"Easy","type":"Run","start_date_local":"2026-05-24T07:00:00"}`,
+	}, "metric")
+	client.profile.Timezone = "America/Sao_Paulo"
+	tool := newGetActivitiesToolWithGearAndClock(client, client, nil, nil, nil, nil, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-05-01","page_size":10}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	assertSaoPauloAsOfMeta(t, meta)
+	if meta["page_size"] != float64(10) || meta["more_available"] != false {
+		t.Fatalf("pagination meta = %#v, want preserved page_size/more_available", meta)
+	}
+}
+
+func TestGetActivitiesPastRangeOmitsAsOfMetadata(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"a1","name":"Easy","type":"Run","start_date_local":"2026-05-23T07:00:00"}`,
+	}, "metric")
+	client.profile.Timezone = "America/Sao_Paulo"
+	tool := newGetActivitiesToolWithGearAndClock(client, client, nil, nil, nil, nil, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-05-01","newest":"2026-05-23"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	assertNoAsOfMeta(t, meta)
+	if meta["timezone"] != "America/Sao_Paulo" {
+		t.Fatalf("timezone = %#v, want profile timezone without as-of fields", meta["timezone"])
+	}
+}
+
 func TestGetActivitiesCaloriesBurnedSemanticsAndNullStripping(t *testing.T) {
 	t.Parallel()
 

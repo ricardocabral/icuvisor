@@ -109,6 +109,26 @@ func TestGetEventsTerseRowsTimezoneAndCategory(t *testing.T) {
 	}
 }
 
+func TestGetEventsCurrentDayRangeAddsAsOfMetadata(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		events:            decodeToolEvents(t, `{"id":123,"name":"Easy","category":"WORKOUT","start_date_local":"2026-05-24"}`),
+	}
+	tool := newGetEventsToolWithClock(client, client, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-05-24","newest":"2026-05-24","limit":10}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	assertSaoPauloAsOfMeta(t, meta)
+	if meta["count"] != float64(1) || meta["limit"] != float64(10) || meta["truncated"] != false {
+		t.Fatalf("events meta = %#v, want preserved count/limit/truncated", meta)
+	}
+}
+
 func TestGetEventsCapsRowsAndReportsTruncation(t *testing.T) {
 	t.Parallel()
 

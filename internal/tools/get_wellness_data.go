@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 )
 
 const (
@@ -52,22 +53,34 @@ type getWellnessDataMeta struct {
 	ServerVersion string   `json:"server_version"`
 	Oldest        string   `json:"oldest"`
 	Newest        string   `json:"newest"`
+	Timezone      string   `json:"timezone,omitempty"`
+	AsOf          string   `json:"as_of,omitempty"`
+	AsOfDate      string   `json:"as_of_date,omitempty"`
+	AsOfWeekday   string   `json:"as_of_weekday,omitempty"`
 	Fields        []string `json:"fields,omitempty"`
 	IncludeFull   bool     `json:"include_full"`
 }
 
 func newGetWellnessDataTool(client WellnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
-	shapeCfg := responseShapingOrDefault(shaping)
-	return coreTool(Tool{Name: getWellnessDataName, Description: getWellnessDataDescription, InputSchema: wellnessDataInputSchema(), OutputSchema: getWellnessDataOutputSchema(), Handler: getWellnessDataHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
+	return newGetWellnessDataToolWithClock(client, profileClient, version, timezoneFallback, debugMetadata, time.Now, shaping...)
 }
 
-func getWellnessDataHandler(client WellnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
+func newGetWellnessDataToolWithClock(client WellnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, now func() time.Time, shaping ...responseShaping) Tool {
+	shapeCfg := responseShapingOrDefault(shaping)
+	return coreTool(Tool{Name: getWellnessDataName, Description: getWellnessDataDescription, InputSchema: wellnessDataInputSchema(), OutputSchema: getWellnessDataOutputSchema(), Handler: getWellnessDataHandler(client, profileClient, version, timezoneFallback, debugMetadata, now, shapeCfg)})
+}
+
+func getWellnessDataHandler(client WellnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, now func() time.Time, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeGetWellnessDataRequest(req.Arguments)
 		if err != nil {
 			return Result{}, NewUserError(invalidGetWellnessDataArgumentsMessage, err)
 		}
-		unitSystem, _, err := toolProfile(ctx, profileClient, timezoneFallback)
+		unitSystem, timezoneName, err := toolProfile(ctx, profileClient, timezoneFallback)
+		if err != nil {
+			return Result{}, NewUserError(fetchWellnessDataMessage, err)
+		}
+		asOfMeta, err := currentDayAsOfMetadata(now, timezoneName, args.Oldest, args.Newest)
 		if err != nil {
 			return Result{}, NewUserError(fetchWellnessDataMessage, err)
 		}
@@ -78,9 +91,21 @@ func getWellnessDataHandler(client WellnessClient, profileClient ProfileClient, 
 			}
 			return Result{}, NewUserError(fetchWellnessDataMessage, err)
 		}
-		payload := getWellnessDataResponse{Wellness: wellnessRows(rows, args.IncludeFull), Meta: getWellnessDataMeta{ServerVersion: normalizeVersion(version), Oldest: args.Oldest, Newest: args.Newest, Fields: args.Fields, IncludeFull: args.IncludeFull}}
+		meta := getWellnessDataMeta{ServerVersion: normalizeVersion(version), Oldest: args.Oldest, Newest: args.Newest, Fields: args.Fields, IncludeFull: args.IncludeFull}
+		applyAsOfToWellnessMeta(&meta, asOfMeta)
+		payload := getWellnessDataResponse{Wellness: wellnessRows(rows, args.IncludeFull), Meta: meta}
 		return encodeShaped(payload, args.IncludeFull, []string{"wellness"}, version, debugMetadata, getWellnessDataName, unitSystem, shapeCfg)
 	}
+}
+
+func applyAsOfToWellnessMeta(meta *getWellnessDataMeta, asOfMeta *response.AsOfMetadata) {
+	if meta == nil || asOfMeta == nil {
+		return
+	}
+	meta.Timezone = asOfMeta.Timezone
+	meta.AsOf = asOfMeta.AsOf
+	meta.AsOfDate = asOfMeta.AsOfDate
+	meta.AsOfWeekday = asOfMeta.AsOfWeekday
 }
 
 func decodeGetWellnessDataRequest(raw json.RawMessage) (getWellnessDataRequest, error) {

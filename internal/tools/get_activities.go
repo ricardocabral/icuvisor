@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 )
@@ -124,22 +125,29 @@ type getActivitiesMeta struct {
 	IncludeFull    bool              `json:"include_full"`
 	Timezone       string            `json:"timezone,omitempty"`
 	FieldSemantics map[string]string `json:"field_semantics,omitempty"`
+	AsOf           string            `json:"as_of,omitempty"`
+	AsOfDate       string            `json:"as_of_date,omitempty"`
+	AsOfWeekday    string            `json:"as_of_weekday,omitempty"`
 }
 
 var errActivitiesPaginationBoundary = errors.New("activity pagination boundary exceeded")
 
 func newGetActivitiesToolWithGear(activityClient ActivitiesClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, customFieldClient ActivityCustomFieldClient, customFieldCache *customFieldCache, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	return newGetActivitiesToolWithGearAndClock(activityClient, profileClient, gearClient, gearCache, customFieldClient, customFieldCache, version, timezoneFallback, debugMetadata, time.Now, shaping...)
+}
+
+func newGetActivitiesToolWithGearAndClock(activityClient ActivitiesClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, customFieldClient ActivityCustomFieldClient, customFieldCache *customFieldCache, version string, timezoneFallback string, debugMetadata bool, now func() time.Time, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
 	return coreTool(Tool{
 		Name:         getActivitiesName,
 		Description:  getActivitiesDescription,
 		InputSchema:  getActivitiesInputSchema(),
 		OutputSchema: getActivitiesOutputSchema(),
-		Handler:      getActivitiesHandler(activityClient, profileClient, gearClient, gearCache, customFieldClient, customFieldCache, version, timezoneFallback, debugMetadata, shapeCfg),
+		Handler:      getActivitiesHandler(activityClient, profileClient, gearClient, gearCache, customFieldClient, customFieldCache, version, timezoneFallback, debugMetadata, now, shapeCfg),
 	})
 }
 
-func getActivitiesHandler(activityClient ActivitiesClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, customFieldClient ActivityCustomFieldClient, customFieldCache *customFieldCache, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
+func getActivitiesHandler(activityClient ActivitiesClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, customFieldClient ActivityCustomFieldClient, customFieldCache *customFieldCache, version string, timezoneFallback string, debugMetadata bool, now func() time.Time, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		if err := ctx.Err(); err != nil {
 			return Result{}, err
@@ -163,6 +171,10 @@ func getActivitiesHandler(activityClient ActivitiesClient, profileClient Profile
 		}
 		unitSystem := profileUnitSystem(profile)
 		activityTimezoneFallback := profileTimezone(profile.Timezone, timezoneFallback)
+		asOfMeta, err := currentDayAsOfMetadata(now, activityTimezoneFallback, args.Oldest, args.Newest)
+		if err != nil {
+			return Result{}, NewUserError(fetchActivitiesMessage, err)
+		}
 		targetAthleteID, _ := intervals.TargetAthleteIDFromContext(ctx)
 		if token != nil && token.AthleteID != targetAthleteID {
 			return Result{}, NewUserError(invalidGetActivitiesArgumentsMessage, errors.New("next_page_token athlete does not match resolved athlete"))
@@ -182,7 +194,7 @@ func getActivitiesHandler(activityClient ActivitiesClient, profileClient Profile
 		if err != nil {
 			return Result{}, err
 		}
-		shaped, err := shapeGetActivitiesResponse(activities, gearResolutions, args, nextToken, version, activityTimezoneFallback, debugMetadata, unitSystem, customFieldCodes, shapeCfg)
+		shaped, err := shapeGetActivitiesResponse(activities, gearResolutions, args, nextToken, version, activityTimezoneFallback, debugMetadata, unitSystem, customFieldCodes, asOfMeta, shapeCfg)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activities response: %w", err)
 		}
@@ -206,5 +218,5 @@ func getActivitiesInputSchema() map[string]any {
 }
 
 func getActivitiesOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, calories_burned for active/exercise calories (distinct from wellness kcal_consumed intake), carbs_ingested_g for athlete-logged carb intake during activity, carbs_used_g for upstream carbs-burned estimate, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. Each row's timezone is the IANA zone its start_date_local is in, and _meta.timezone is the athlete's configured timezone; start_date_utc is UTC. Derive calendar dates from these timezones so activities are not reported on the wrong day."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, calories_burned for active/exercise calories (distinct from wellness kcal_consumed intake), carbs_ingested_g for athlete-logged carb intake during activity, carbs_used_g for upstream carbs-burned estimate, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. Each row's timezone is the IANA zone its start_date_local is in, and _meta.timezone is the athlete's configured timezone; start_date_utc is UTC. When the requested range includes the athlete-local current day, _meta also includes as_of, as_of_date, and as_of_weekday. Derive calendar dates from these timezones so activities are not reported on the wrong day."}
 }
