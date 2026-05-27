@@ -1,10 +1,10 @@
 # TP-116: Privacy and GDPR positioning — Status
 
-**Current Step:** Step 1: Define privacy claims and boundaries
+**Current Step:** Step 0: Preflight
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -13,16 +13,16 @@
 ---
 
 ### Step 0: Preflight
-**Status:** ✅ Complete
+**Status:** 🟨 In Progress
 
 - [x] Required files and paths exist
-- [x] Dependencies satisfied
+- [ ] Dependencies satisfied
 - [x] Existing privacy, security, coach-mode, and HTTP transport claims reviewed
 
 ---
 
 ### Step 1: Define privacy claims and boundaries
-**Status:** 🟨 In Progress
+**Status:** ⬜ Not Started
 
 - [ ] Substantiated privacy/security claims inventoried
 - [ ] Explicit non-claims defined: no legal advice/certification, AI-client caveat, upstream data relationship caveat
@@ -75,6 +75,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| 1 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -82,6 +83,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| TP-113 dependency is not actually complete in this worktree: `taskplane-tasks/TP-113-local-first-positioning-refresh/STATUS.md` is Ready/Not Started despite a merge commit subject mentioning TP-113. | Block TP-116 until TP-113 lands or supervisor explicitly authorizes a non-overlapping privacy-only pass. | Step 0 dependency check; `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -97,10 +99,11 @@
 
 ## Blockers
 
-*None*
+- 2026-05-27: TP-116 depends on TP-113 landing first. Verification found TP-113 task status is still Ready for Execution / Not Started; reviewer also requested blocking or explicit human approval before proceeding. Earlier git-log check only found a merge subject mentioning TP-113 and was insufficient.
 
 ---
 
 ## Notes
 
-*Reserved for execution notes*
+Plan review R001 requested Step 1 plan artifacts before implementation and flagged TP-113 as unsatisfied. Do not proceed to privacy copy until dependency is resolved or supervisor authorizes a constrained pass that avoids overlapping homepage/local-first copy.
+| 2026-05-27 18:16 | Review R001 | plan Step 1: UNKNOWN |
