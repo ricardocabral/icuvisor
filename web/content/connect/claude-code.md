@@ -48,7 +48,7 @@ Notes:
 - If your team commits a shared `.mcp.json`, use placeholders and document that each user must add their own non-secret athlete ID locally.
 - If you installed the app somewhere else, update `command` to the absolute path to `icuvisor.app/Contents/MacOS/icuvisor`.
 
-Restart Claude Code or reload MCP servers after editing the file.
+Restart Claude Code or reload MCP servers after editing the file. If tools or answers still look stale, follow the [stale conversation troubleshooting guide]({{< relref "../guides/troubleshooting#stale-conversations-and-cached-tool-catalogs" >}}).
 
 ## Verify the connection
 

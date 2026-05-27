@@ -58,4 +58,4 @@ Remote ChatGPT connectors are out of scope until the vNext hosted relay or a fut
 
 ## Verify
 
-Start a fresh ChatGPT conversation after saving the MCP configuration, then ask a simple profile question such as `What's my FTP?` The expected tool call is [`get_athlete_profile`]({{< relref "../reference/tools#get_athlete_profile" >}}).
+Start a fresh ChatGPT conversation after saving the MCP configuration, then ask a simple profile question such as `What's my FTP?` The expected tool call is [`get_athlete_profile`]({{< relref "../reference/tools#get_athlete_profile" >}}). If ChatGPT keeps using old tool names, old schemas, or stale timezone/zone assumptions, follow the [stale conversation troubleshooting guide]({{< relref "../guides/troubleshooting#stale-conversations-and-cached-tool-catalogs" >}}).

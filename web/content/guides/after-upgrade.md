@@ -39,7 +39,7 @@ When icuvisor can tell that the catalog hash differs from the hash first seen by
 
 If an AI client or assistant reports `_meta.schema_changed: true`, open a new conversation in the MCP client.
 
-A new chat forces the client to fetch the latest tool catalog and use the current argument schemas. Reusing the old conversation can keep sending stale arguments even though the upgraded binary is running.
+A new chat forces the client to fetch the latest tool catalog and use the current argument schemas. Reusing the old conversation can keep sending stale arguments even though the upgraded binary is running. If the client still shows old tools, stale timezone/date behavior, outdated zones, or write failures after the new chat, continue with the [stale conversation troubleshooting checklist]({{< relref "troubleshooting#stale-conversations-and-cached-tool-catalogs" >}}).
 
 ## Limits
 

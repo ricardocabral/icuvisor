@@ -1,6 +1,6 @@
 # TP-108: Stale conversation troubleshooting docs — Status
 
-**Current Step:** Step 1: Add troubleshooting guidance
+**Current Step:** Step 2: Link from related docs and update changelog
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 0
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Add troubleshooting guidance
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Discoverable stale-state troubleshooting section added
 - [x] Plain-language explanation included
@@ -33,12 +33,12 @@
 ---
 
 ### Step 2: Link from related docs and update changelog
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Links added from related setup/client docs where relevant
-- [ ] Existing schema-change/onboarding copy connected if present
-- [ ] `CHANGELOG.md` updated if project convention requires it
-- [ ] Markdown/link/docs checks run if available
+- [x] Links added from related setup/client docs where relevant
+- [x] Existing schema-change/onboarding copy connected if present
+- [x] `CHANGELOG.md` updated if project convention requires it
+- [x] Markdown/link/docs checks run if available
 
 ---
 

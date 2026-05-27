@@ -59,4 +59,4 @@ Use loopback by default. A LAN bind exposes an unauthenticated MCP server to any
 
 ## Verify
 
-After saving the configuration, start a new client conversation and ask a simple profile question such as `What's my FTP?` A working setup should call [`get_athlete_profile`]({{< relref "../reference/tools#get_athlete_profile" >}}).
+After saving the configuration, start a new client conversation and ask a simple profile question such as `What's my FTP?` A working setup should call [`get_athlete_profile`]({{< relref "../reference/tools#get_athlete_profile" >}}). If the client keeps using stale tools or assumptions after a config change, see [stale conversation troubleshooting]({{< relref "../guides/troubleshooting#stale-conversations-and-cached-tool-catalogs" >}}).

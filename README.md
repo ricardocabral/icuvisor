@@ -33,7 +33,7 @@ See [SECURITY.md](SECURITY.md#installer-integrity) for installer signature verif
 
 Prefer a package manager? `brew install ricardocabral/icuvisor/icuvisor`, `scoop install icuvisor`, or download the `.dmg` / `.msi` from the [releases page](https://github.com/ricardocabral/icuvisor/releases).
 
-Learn more on how to connect your AI assistant, read the tool catalog and more at <https://icuvisor.app>.
+Learn more on how to connect your AI assistant, read the tool catalog, and troubleshoot stale conversations or cached tool catalogs at <https://icuvisor.app>.
 
 ## For developers
 
