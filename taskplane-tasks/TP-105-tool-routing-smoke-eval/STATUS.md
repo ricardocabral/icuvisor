@@ -49,10 +49,10 @@
 ### Step 3: Wire command and documentation
 **Status:** 🟨 In Progress
 
-- [ ] `eval-tool-routing` Make target added to `.PHONY` and `make help`, invoking `go run ./scripts/toolroutingeval`
-- [ ] CONTRIBUTING documents live variables (`ICUVISOR_ROUTING_EVAL_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`) and optional model/URL overrides
-- [ ] Documentation states unset-provider zero-exit validation/skips, provider-error/mismatch non-zero exits, no handler execution, and no intervals.icu calls
-- [ ] Changelog `[Unreleased]` developer-tooling entry added
+- [x] `eval-tool-routing` Make target added to `.PHONY` and `make help`, invoking `go run ./scripts/toolroutingeval`
+- [x] CONTRIBUTING documents live variables (`ICUVISOR_ROUTING_EVAL_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`) and optional model/URL overrides
+- [x] Documentation states unset-provider zero-exit validation/skips, provider-error/mismatch non-zero exits, no handler execution, and no intervals.icu calls
+- [x] Changelog `[Unreleased]` developer-tooling entry added
 
 ---
 
@@ -101,6 +101,7 @@
 | 2026-05-27 10:24 | Step 0 started | Preflight |
 | 2026-05-27 11:25 | Worker iter 1 | done in 3644s, tools: 126 |
 | 2026-05-27 11:25 | Paused | User paused at iteration 1 |
+| 2026-05-27 12:12 | Task started | Runtime V2 lane-runner execution |
 
 ---
 

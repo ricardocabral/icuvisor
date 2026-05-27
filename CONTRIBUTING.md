@@ -91,6 +91,22 @@ The `icuvisor://analysis-formulas` resource and analyzer `_meta.formula_ref` out
 
 Tool descriptions in the same prefix/domain cluster must have distinguishing first sentences. CI compares normalized first sentences within each cluster using token Jaccard similarity and fails pairs at or above `0.58`. If the check fails, rewrite one first sentence to make the access pattern and payload shape obvious to an LLM reading only that sentence; do not rename the tool.
 
+### Tool routing smoke eval
+
+Run `make eval-tool-routing` to validate the local first-tool-call routing fixtures. By default the command validates fixtures and catalog wiring only; it does not call a model provider unless explicitly configured.
+
+Provider-backed runs currently support Anthropic-compatible chat completions via environment variables:
+
+```bash
+ICUVISOR_ROUTING_EVAL_PROVIDER=anthropic \
+ANTHROPIC_API_KEY=sk-ant-... \
+make eval-tool-routing
+```
+
+Optional overrides are `ICUVISOR_ROUTING_EVAL_MODEL` for the model name and `ICUVISOR_ROUTING_EVAL_ANTHROPIC_URL` for an Anthropic-compatible endpoint.
+
+When the provider is unset, `make eval-tool-routing` exits zero after validating fixture structure, expected-tool availability, and catalog construction, with each live model case reported as skipped. When a provider is configured, provider call errors or expected-versus-actual routing mismatches exit non-zero. The eval sends only registered tool names, descriptions, and JSON schemas to the provider; it does not execute icuvisor tool handlers and therefore does not call intervals.icu.
+
 ## Security issues
 
 Do **not** open a public issue for vulnerabilities. See [SECURITY.md](SECURITY.md).
