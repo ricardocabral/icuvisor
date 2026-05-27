@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 11
+**Review Counter:** 12
 **Iteration:** 1
 **Size:** M
 
@@ -51,7 +51,7 @@
 ---
 
 ### Step 3: Add calories and hydration semantics coverage
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Activity `calories_burned` and wellness `calories_intake` distinction covered
 - [x] `hydration` versus `hydrationVolume` semantics covered or clarified
@@ -107,6 +107,7 @@
 | R009 | Plan | 3 | REVISE | `.reviews/R009-plan-step3.md` |
 | R010 | Plan | 3 | APPROVE | `.reviews/R010-plan-step3.md` |
 | R011 | Code | 3 | REVISE | `.reviews/R011-code-step3.md` |
+| R012 | Code | 3 | APPROVE | `.reviews/R012-code-step3.md` |
 
 ---
 
@@ -165,3 +166,4 @@
 | 2026-05-27 13:23 | Review R009 | plan Step 3: REVISE |
 | 2026-05-27 13:25 | Review R010 | plan Step 3: APPROVE |
 | 2026-05-27 13:31 | Review R011 | code Step 3: REVISE |
+| 2026-05-27 13:34 | Review R012 | code Step 3: APPROVE |
