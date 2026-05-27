@@ -1,10 +1,10 @@
 # TP-107: Unit semantics audit — Status
 
-**Current Step:** Step 4: Changelog and full verification
+**Current Step:** Step 5: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 15
+**Review Counter:** 16
 **Iteration:** 1
 **Size:** M
 
@@ -72,7 +72,7 @@
 ---
 
 ### Step 5: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Targeted tests passing
 - [ ] FULL test suite passing: `make test`
@@ -111,6 +111,7 @@
 | R013 | Plan | 4 | REVISE | `.reviews/R013-plan-step4.md` |
 | R014 | Plan | 4 | APPROVE | `.reviews/R014-plan-step4.md` |
 | R015 | Code | 4 | APPROVE | `.reviews/R015-code-step4.md` |
+| R016 | Plan | 5 | REVISE | `.reviews/R016-plan-step5.md` |
 
 ---
 
@@ -164,6 +165,9 @@
 - Step 4 discovery plan: ensure `STATUS.md` captures no serializer behavior change beyond tests, energy/joule tested and audit-only surfaces, hydration metadata addition, and null hydration fields avoiding stale semantics.
 - Step 4 verification plan: run affected-package tests `go test ./internal/workoutdoc ./internal/units ./internal/response ./internal/tools` and record the command/result in the execution log. Leave `make test`, `make build`, and `make lint` for Step 5.
 - Step 4 docs/catalog boundary: no tool schema or description text is planned; generated tool docs/catalog regeneration is not needed unless that changes.
+- Step 5 verification plan: rerun targeted affected packages with `go test ./internal/workoutdoc ./internal/units ./internal/response ./internal/tools`, then run `make test`, `make build`, and `make lint` in that order. Record each command/result in the execution log.
+- Step 5 failure handling: fix task-related failures before checking boxes; if a failure appears pre-existing/unrelated, document the command, failure excerpt, and rationale in `STATUS.md` and leave the checkbox truthful.
+- Step 5 environment: no network-dependent tests or external services are expected.
 | 2026-05-27 12:57 | Review R001 | plan Step 1: REVISE |
 | 2026-05-27 12:59 | Review R002 | plan Step 1: REVISE |
 | 2026-05-27 13:01 | Review R003 | plan Step 1: APPROVE |
@@ -179,3 +183,4 @@
 | 2026-05-27 13:37 | Review R013 | plan Step 4: REVISE |
 | 2026-05-27 13:38 | Review R014 | plan Step 4: APPROVE |
 | 2026-05-27 13:41 | Review R015 | code Step 4: APPROVE |
+| 2026-05-27 13:43 | Review R016 | plan Step 5: REVISE |
