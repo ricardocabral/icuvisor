@@ -1,10 +1,10 @@
 # TP-115: Claude Project instructions pack — Status
 
-**Current Step:** Step 1: Design the instruction pack structure
+**Current Step:** Step 2: Add copy-paste Claude Project instructions
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -22,18 +22,18 @@
 ---
 
 ### Step 1: Design the instruction pack structure
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Placement chosen for the instruction pack
-- [ ] Reusable instruction blocks defined for base discipline, weekly review, recovery check, race-week taper, and stale/missing data handling
-- [ ] Exact registered tool/prompt names identified before use
+- [x] Placement chosen for the instruction pack
+- [x] Reusable instruction blocks defined for base discipline, weekly review, recovery check, race-week taper, and stale/missing data handling
+- [x] Exact registered tool/prompt names identified before use
 
 **Plan-review checkpoint**
 
 ---
 
 ### Step 2: Add copy-paste Claude Project instructions
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Complete base Project instruction block added
 - [ ] Optional blocks added for weekly review, recovery check, and race-week taper
@@ -77,6 +77,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| 1 | plan | 1 | APPROVE | |
 
 ---
 
@@ -105,4 +106,7 @@
 
 ## Notes
 
-*Reserved for execution notes*
+- Step 1 placement plan: publish a new copy-paste guide at `web/content/guides/claude-project-instructions.md`, link it from the Guides index and Claude connection docs, and add short pointers from relevant cookbook recipes instead of duplicating their full prompts.
+- Step 1 instruction-block plan: base block covers athlete-local timezone/date anchors, source-tool citations, terse-by-default tool use, missing/stale data caveats, no invented metrics, and no secrets/config in instructions; optional add-ons cover weekly review, recovery/readiness, and race-week taper behavior without replacing the server-side MCP prompt workflows.
+- Step 1 registered-name plan: prompt names documented in `web/content/reference/resources-prompts.md` are `weekly_review`, `recovery_check`, `race_week_taper`, `training_analysis`, and `weekly_planning`; tool names verified in `web/data/tools.json` include `get_today`, `get_athlete_profile`, `get_wellness_data`, `get_fitness`, `get_training_summary`, `get_activities`, `get_events`, `get_training_plan`, `compute_zone_time`, `compute_load_balance`, `compute_compliance_rate`, `analyze_trend`, `get_fitness_projection`, and `icuvisor_list_advanced_capabilities`.
+| 2026-05-27 17:50 | Review R001 | plan Step 1: APPROVE |
