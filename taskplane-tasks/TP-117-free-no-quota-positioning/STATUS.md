@@ -1,6 +1,6 @@
 # TP-117: Free and no-quota positioning — Status
 
-**Current Step:** Step 2: Link from install or local-first docs
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 0
@@ -31,17 +31,17 @@
 ---
 
 ### Step 2: Link from install or local-first docs
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Short explanation added in install or local-first docs if useful
-- [ ] License/open-source source linked where helpful
-- [ ] Troubleshooting copy updated only if quota/account confusion is already addressed there
-- [ ] `CHANGELOG.md` updated under `[Unreleased]` if appropriate
+- [x] Short explanation added in install or local-first docs if useful
+- [x] License/open-source source linked where helpful
+- [x] Troubleshooting copy updated only if quota/account confusion is already addressed there
+- [x] `CHANGELOG.md` updated under `[Unreleased]` if appropriate
 
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Docs/site build passing: `make web-build`
 - [ ] FULL test suite run if non-doc/generated app files are touched: `make test`
@@ -92,4 +92,4 @@
 
 ## Notes
 
-*Reserved for execution notes*
+- Step 2 troubleshooting review: existing troubleshooting guide covers stale tool catalogs, credentials, transport, keychain, and safety modes; it does not contain quota/account confusion copy, so no troubleshooting edit was needed.
