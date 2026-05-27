@@ -1,6 +1,6 @@
 # TP-103: Tags in terse read responses — Status
 
-**Current Step:** Step 2: Investigate and implement activity tag handling if supported
+**Current Step:** Step 3: Regression tests and docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Investigate and implement activity tag handling if supported
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 > ⚠️ Hydrate: Expand based on actual activity payload/model support discovered in source and fixtures.
 
@@ -47,7 +47,7 @@
 ---
 
 ### Step 3: Regression tests and docs
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Tags present/empty/missing/null cases covered
 - [ ] `include_full` and null-stripping behavior covered
