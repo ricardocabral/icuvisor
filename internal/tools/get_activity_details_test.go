@@ -58,6 +58,28 @@ func TestActivityReadToolsRegistration(t *testing.T) {
 	findTool(t, registrar.tools, getActivityMessagesName)
 }
 
+func TestGetActivityDetailsTagsPreserveOrderAndFullPayload(t *testing.T) {
+	t.Parallel()
+
+	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","tags":["tempo","coach"]}`)
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
+	tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","include_full":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	activityMap := resultMap(t, result)["activity"].(map[string]any)
+	tags := activityMap["tags"].([]any)
+	if len(tags) != 2 || tags[0] != "tempo" || tags[1] != "coach" {
+		t.Fatalf("tags = %#v, want preserved order", tags)
+	}
+	fullTags := activityMap["full"].(map[string]any)["tags"].([]any)
+	if len(fullTags) != 2 || fullTags[0] != "tempo" || fullTags[1] != "coach" {
+		t.Fatalf("full tags = %#v, want raw payload preserved", fullTags)
+	}
+}
+
 func TestGetActivityDetailsCaloriesBurnedSemantics(t *testing.T) {
 	t.Parallel()
 

@@ -12,7 +12,7 @@ import (
 
 const (
 	getActivitiesName                    = "get_activities"
-	getActivitiesDescription             = "List activities for a date range with terse unit-disambiguated rows, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, custom_fields for athlete-defined activity custom fields, Strava-unavailable detection, and opaque pagination. Use this before details, intervals, streams, splits, or messages when a prompt asks about recent training."
+	getActivitiesDescription             = "List activities for a date range with terse unit-disambiguated rows, upstream activity tags when returned, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, custom_fields for athlete-defined activity custom fields, Strava-unavailable detection, and opaque pagination. Use this before details, intervals, streams, splits, or messages when a prompt asks about recent training."
 	invalidGetActivitiesArgumentsMessage = "invalid get_activities arguments; provide oldest/newest dates or a valid next_page_token"
 	fetchActivitiesMessage               = "could not fetch activities; check intervals.icu credentials, athlete ID, and date range"
 	activitiesPaginationBoundaryMessage  = "activity pagination hit too many same-timestamp filtered rows; narrow the date range or set include_unnamed true"
@@ -29,7 +29,7 @@ var terseActivityFields = []string{
 	"distance", "icu_distance", "moving_time", "elapsed_time", "average_speed", "max_speed",
 	"total_elevation_gain", "total_elevation_loss", "icu_training_load", "average_heartrate",
 	"max_heartrate", "average_cadence", "calories", "carbs_ingested", "carbs_used",
-	"device_name", "gear_id",
+	"device_name", "gear_id", "tags",
 }
 
 // terseActivityFieldsWithCustom returns the terse upstream field set extended
@@ -109,6 +109,7 @@ type getActivitiesRow struct {
 	HasStreams          bool               `json:"has_streams,omitempty"`
 	StravaImported      bool               `json:"strava_imported,omitempty"`
 	Unavailable         *unavailableReason `json:"unavailable,omitempty"`
+	Tags                *[]string          `json:"tags,omitempty"`
 	CustomFields        map[string]any     `json:"custom_fields,omitempty"`
 	Full                map[string]any     `json:"full,omitempty"`
 }
@@ -218,5 +219,5 @@ func getActivitiesInputSchema() map[string]any {
 }
 
 func getActivitiesOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, calories_burned for active/exercise calories (distinct from wellness kcal_consumed intake), carbs_ingested_g for athlete-logged carb intake during activity, carbs_used_g for upstream carbs-burned estimate, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. Each row's timezone is the IANA zone its start_date_local is in, and _meta.timezone is the athlete's configured timezone; start_date_utc is UTC. When the requested range includes the athlete-local current day, _meta also includes as_of, as_of_date, and as_of_weekday. Derive calendar dates from these timezones so activities are not reported on the wrong day."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, upstream tags when intervals.icu returns a string-array tags field, calories_burned for active/exercise calories (distinct from wellness kcal_consumed intake), carbs_ingested_g for athlete-logged carb intake during activity, carbs_used_g for upstream carbs-burned estimate, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. Each row's timezone is the IANA zone its start_date_local is in, and _meta.timezone is the athlete's configured timezone; start_date_utc is UTC. When the requested range includes the athlete-local current day, _meta also includes as_of, as_of_date, and as_of_weekday. Derive calendar dates from these timezones so activities are not reported on the wrong day."}
 }

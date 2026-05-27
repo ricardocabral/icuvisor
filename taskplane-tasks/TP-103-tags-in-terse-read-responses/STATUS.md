@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -37,12 +37,12 @@
 
 > ⚠️ Hydrate: Expand based on actual activity payload/model support discovered in source and fixtures.
 
-- [ ] Activity read model, terse field selection, fixtures, and output schemas inspected for upstream `tags` availability
-- [ ] Expose activity `tags` from raw upstream JSON string arrays on shared terse activity rows, preserving order and explicit empty arrays while omitting missing/null/non-array/mixed values without guessing
-- [ ] Accept shared-row behavior for `get_activities`, `get_activity_details`, `get_today` completed activities, delete responses, and Strava-blocked rows
-- [ ] Update activity output schema/description surfaces if activity `tags` is added
-- [ ] Targeted activity tests cover present/order, explicit empty, missing/null/malformed omission, include_full raw preservation, and affected read paths
-- [ ] Targeted activity tests passing
+- [x] Activity read model, terse field selection, fixtures, and output schemas inspected for upstream `tags` availability
+- [x] Expose activity `tags` from raw upstream JSON string arrays on shared terse activity rows, preserving order and explicit empty arrays while omitting missing/null/non-array/mixed values without guessing
+- [x] Accept shared-row behavior for `get_activities`, `get_activity_details`, `get_today` completed activities, delete responses, and Strava-blocked rows
+- [x] Update activity output schema/description surfaces if activity `tags` is added
+- [x] Targeted activity tests cover present/order, explicit empty, missing/null/malformed omission, include_full raw preservation, and affected read paths
+- [x] Targeted activity tests passing
 
 ---
 
@@ -113,3 +113,4 @@
 | 2026-05-27 12:19 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-05-27 12:22 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-27 12:32 | Review R003 | plan Step 2: UNKNOWN |
+| 2026-05-27 12:35 | Review R004 | plan Step 2: APPROVE |
