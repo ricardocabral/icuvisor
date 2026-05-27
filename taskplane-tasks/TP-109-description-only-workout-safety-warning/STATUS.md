@@ -1,7 +1,7 @@
 # TP-109: Description-only workout safety warning — Status
 
 **Current Step:** Step 4: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-27
 **Review Level:** 1
 **Review Counter:** 3
@@ -53,12 +53,12 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `CHANGELOG.md` updated
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Step-boundary commit includes `TP-109`
+- [x] `CHANGELOG.md` updated
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Step-boundary commit includes `TP-109`
 
 ---
 
@@ -76,6 +76,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| `update_workout` is affected by description-only replacement risk because it sparsely updates an existing library template by ID and sets the upstream description/DSL when `description` is supplied. | Covered with the same `_meta.description_only_workout_warning` behavior and table-driven tests. | `internal/tools/update_workout.go`, `internal/tools/update_workout_test.go` |
+| Input schema snapshots were not affected because the change adds output metadata and output schema descriptions only; existing schema snapshots cover input schemas. | No snapshot regeneration needed after `go test ./internal/tools` passed. | `internal/tools/schema_snapshot/` |
 
 ---
 
@@ -100,6 +102,7 @@
 - Step 1 design: add a new optional `_meta.description_only_workout_warning` string to write responses instead of overloading existing `_meta.workout_doc_warning`, which is reserved for upstream render/parse failures after uploading WorkoutDoc.
 - Step 1 warning text: use terse non-blocking copy: `Description was written without workout_doc; if this item previously had structured steps, they may have been replaced. Include workout_doc when preserving or merging workout structure.`
 - Step 1 trigger: `add_or_update_event` sets the warning only on update-shaped writes with `event_id` present, `description` supplied, no `workout_doc`, and `category` equals `WORKOUT` case-insensitively. `update_workout` is affected because it sparsely updates an existing template by ID and a supplied `description` replaces the upstream description/DSL, so it sets the same warning when `description` is supplied and no `workout_doc` is supplied.
+- Step 4 Check If Affected review: `web/content/cookbook/build-workouts.md` already tells assistants to read back writes, check warnings, retain structured steps explicitly, and avoid description-only prose for intentional edits; `internal/prompts/catalog.go` already tells weekly planning to inspect write `_meta` warning fields and preserve `workout_doc`, so no extra doc/prompt edit was needed.
 | 2026-05-27 20:44 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-27 20:46 | Review R002 | plan Step 2: APPROVE |
 | 2026-05-27 20:52 | Review R003 | plan Step 3: APPROVE |

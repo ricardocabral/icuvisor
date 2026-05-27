@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `add_or_update_event` and `update_workout` now surface `_meta.description_only_workout_warning` when an existing workout-shaped item is updated with `description` but no `workout_doc`, so assistants can avoid accidentally replacing structured steps when they only intended to add prose.
 - Structured WorkoutDoc serialization now rejects step descriptions containing duration or distance tokens (for example `2h15m`, `45m`, `400mtr`, or `5km`) so planned workout duration/load cannot be doubled by submitting both a structured duration field and an inline DSL time token. `validate_workout` reports this as `STRUCTURAL_TOKEN_IN_STEP_DESCRIPTION`.
 
 ## [0.1.4] - 2026-05-24
