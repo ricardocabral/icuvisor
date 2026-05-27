@@ -70,10 +70,10 @@
 ### Step 5: Documentation & Delivery
 **Status:** 🟨 In Progress
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Final commit includes task ID
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Final commit includes task ID
 
 ---
 
@@ -89,6 +89,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | Activity fixtures currently contain no upstream `tags` samples, but activity read paths now tolerate and expose future valid raw `tags` string arrays without guessing. | Covered by synthetic regression tests for valid, empty, null, missing, and malformed activity tag payloads. | `internal/tools/get_activities_test.go`, `internal/tools/get_activity_details_test.go` |
+| README and PRD examples do not enumerate terse event/activity response fields beyond existing high-level catalog notes; generated tool data was affected by changed descriptions and regenerated. | No README/PRD edit needed; regenerated `web/data/tools.json` and golden catalog data. | `README.md`, `docs/prd/PRD-icuvisor.md`, `web/data/tools.json` |
 
 ---
 
