@@ -1,10 +1,10 @@
 # TP-116: Privacy and GDPR positioning — Status
 
-**Current Step:** Step 1: Define privacy claims and boundaries
+**Current Step:** Step 2: Add privacy-conscious user-facing copy
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 2
 **Size:** S
 
@@ -33,11 +33,11 @@
 ---
 
 ### Step 2: Add privacy-conscious user-facing copy
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Local trust boundary, credential storage, HTTP bind defaults, and coach-mode credential handling documented
-- [ ] EU/GDPR-conscious language framed as design posture/questions, not certification
-- [ ] Homepage/README pointer added only if useful
+- [x] Local trust boundary, credential storage, HTTP bind defaults, and coach-mode credential handling documented
+- [x] EU/GDPR-conscious language framed as design posture/questions, not certification
+- [x] Homepage/README pointer added only if useful
 
 ---
 
@@ -77,6 +77,7 @@
 |---|------|------|---------|------|
 | 1 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | 2 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
+| 3 | plan | 2 | APPROVE | `.reviews/R003-plan-step2.md` |
 
 ---
 
@@ -99,6 +100,7 @@
 | 2026-05-27 18:17 | Worker iter 1 | done in 281s, tools: 32 |
 | 2026-05-27 18:16 | Review R001 | plan Step 1: REVISE |
 | 2026-05-27 18:22 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-27 18:24 | Review R003 | plan Step 2: APPROVE |
 
 ---
 
@@ -116,3 +118,4 @@ Step 1 plan notes:
 - Substantiated claims: `SECURITY.md` says API keys are OS-keychain by default, plaintext file credentials are discouraged/warned, diagnostics redact secrets, HTTP binds to `127.0.0.1` by default, and icuvisor only contacts intervals.icu plus optional releases host. `web/content/explain/local-first.md` already says local binary, no icuvisor SaaS account/data host in normal local setup, keychain storage, and AI-client caveat. `web/content/explain/coach-mode.md` says coach API key stays in the server credential chain and `athlete_id` is only a selector gated by roster/ACL. `web/content/guides/http-transport.md` says HTTP loopback default and LAN bind exposes unauthenticated MCP. Code/tests substantiate `DefaultHTTPBindAddress = "127.0.0.1:8765"`, OS-keychain package, and coach ACL enforcement.
 - Explicit non-claims: do not call icuvisor GDPR-compliant/certified, do not provide legal advice, and frame EU/privacy language as due-diligence questions. State that the chosen AI client/model provider may process conversation/tool-response content under its own terms, and intervals.icu remains the upstream service that stores/processes the athlete's training data under its own terms.
 - Page decision: add a standalone `web/content/explain/privacy.md` privacy explanation and a card in `web/content/explain/_index.md`. This avoids editing homepage or local-first positioning owned by TP-113 while giving privacy-conscious users a stable target. Make only narrow cross-links/clarifications in coach-mode and HTTP transport docs; leave `SECURITY.md` authoritative and link to it instead of duplicating policy.
+- Step 2 pointer decision: no homepage or README pointer added in the constrained pass because TP-113 owns the main local-first/homepage positioning and supervisor explicitly requested no homepage/no-TP-113-overlap work. Discoverability will come from the explain-section index and contextual doc links.
