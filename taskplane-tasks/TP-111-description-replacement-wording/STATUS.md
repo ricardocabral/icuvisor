@@ -1,10 +1,10 @@
 # TP-111: Clarify description replacement wording — Status
 
-**Current Step:** Step 1: Update write-tool wording
+**Current Step:** Step 2: Update prompt/docs wording
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 3
 **Size:** S
 
@@ -22,17 +22,17 @@
 ---
 
 ### Step 1: Update write-tool wording
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 > **Plan-review checkpoint**
 
-- [ ] Plan-review R001 final wording pattern recorded in STATUS.md before source edits
-- [ ] Plan-review R001 snapshot verification owner included
-- [ ] `add_or_update_event` wording clarifies replacement semantics and structured-step risk
-- [ ] `create_workout` / `update_workout` wording checked and updated
-- [ ] `update_activity` wording checked for consistency
-- [ ] Schema snapshots updated
-- [ ] Targeted tests passing: `go test ./internal/tools`
+- [x] Plan-review R001 final wording pattern recorded in STATUS.md before source edits
+- [x] Plan-review R001 snapshot verification owner included
+- [x] `add_or_update_event` wording clarifies replacement semantics and structured-step risk
+- [x] `create_workout` / `update_workout` wording checked and updated
+- [x] `update_activity` wording checked for consistency
+- [x] Schema snapshots updated
+- [x] Targeted tests passing: `go test ./internal/tools`
 
 ---
 
@@ -71,6 +71,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | plan | 1 | REVISE then APPROVE | `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -95,6 +96,7 @@
 | 2026-05-27 18:15 | No progress | Iteration 2: 0 new checkboxes (1/3 stall limit) |
 | 2026-05-27 18:30 | Steering | TP-109 is non-blocking; proceed with current-state wording-only implementation and no references to nonexistent TP-109 behavior |
 | 2026-05-27 18:35 | Preflight review | Reviewed TP-109 terminology intent, write-tool description/schema text, weekly planning prompt, cookbook, calendar-notes explainer, and changelog |
+| 2026-05-27 18:45 | Step 1 verification | Ran `go run ./scripts/snapshot_tool_schemas.go` and `go test ./internal/tools ./internal/toolchecks` successfully |
 
 ---
 
@@ -116,3 +118,4 @@
 - R001 scope guard: TP-109 runtime warning/guard behavior is not implemented; TP-111 must avoid references to nonexistent warning/guard/block metadata or behavior.
 - Snapshot verification owner: after tool/schema wording edits, regenerate snapshots with `go run ./scripts/snapshot_tool_schemas.go`; targeted verification should include `go test ./internal/tools ./internal/toolchecks`.
 | 2026-05-27 18:19 | Review R001 | plan Step 1: REVISE |
+| 2026-05-27 18:21 | Review R002 | plan Step 1: APPROVE |
