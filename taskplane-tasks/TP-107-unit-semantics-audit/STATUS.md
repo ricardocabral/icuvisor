@@ -1,10 +1,10 @@
 # TP-107: Unit semantics audit — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Add workout target unit regression coverage
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -22,13 +22,15 @@
 ---
 
 ### Step 1: Add workout target unit regression coverage
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Percent FTP / power target serialization tests added
 - [ ] Pace target range and unit tests added
 - [ ] Heart-rate percent variant tests added where supported
 - [ ] Serializer fixes applied only if required
 - [ ] Targeted workoutdoc tests passing
+- [ ] Direct table-driven serializer matrix covers scalar/range power, pace, HR, zone, watt, BPM, and text pace forms
+- [ ] Unsupported structured absolute pace target units are documented as discovery or fixed additively with tests
 
 ---
 
@@ -88,6 +90,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -118,3 +121,5 @@
 ## Notes
 
 - Tracking issue: https://github.com/ricardocabral/icuvisor/issues/34
+- Step 1 plan review requires a direct table-driven serializer matrix in `internal/workoutdoc`, including scalar and range cases; if `MINS_KM`/`MINS_MILE` remain unsupported in structured pace targets, document that explicitly rather than coercing.
+| 2026-05-27 12:57 | Review R001 | plan Step 1: REVISE |
