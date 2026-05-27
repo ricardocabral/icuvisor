@@ -1,11 +1,11 @@
 # TP-114: Garmin to Claude walkthrough — Status
 
-**Current Step:** Step 3: Link the walkthrough from discovery surfaces
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 3
-**Iteration:** 1
+**Review Counter:** 4
+**Iteration:** 2
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers may expand steps when runtime discoveries warrant it.
@@ -52,13 +52,13 @@
 ---
 
 ### Step 4: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Docs/site build passing: `make web-build`
-- [ ] Rendered links and image references checked
-- [ ] FULL test suite run if non-doc/generated app files are touched: `make test`
-- [ ] Build passes if app strings or generated assets are touched: `make build`
-- [ ] All failures fixed or documented as pre-existing unrelated failures
+- [x] Docs/site build passing: `make web-build`
+- [x] Rendered links and image references checked
+- [x] FULL test suite run if non-doc/generated app files are touched: `make test`
+- [x] Build passes if app strings or generated assets are touched: `make build`
+- [x] All failures fixed or documented as pre-existing unrelated failures
 
 ---
 
@@ -97,6 +97,7 @@
 | 2026-05-27 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-05-27 18:13 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-27 18:13 | Step 0 started | Preflight |
+| 2026-05-27 18:26 | Worker iter 1 | done in 790s, tools: 86 |
 
 ---
 
@@ -116,5 +117,10 @@
 - R001 plan review approved; follow-ups for Step 2: verify Mermaid support or fall back to plain Markdown/ASCII, keep intervals.icu-only source language explicit, reuse setup/prompt docs instead of duplicating long sections, and use only synthetic examples.
 
 *Reserved for execution notes*
+
+- Step 4 verification: rendered tutorial output exists at `web/public/tutorials/garmin-to-claude/index.html`; all tutorial target pages referenced from the new Markdown exist in `web/public`; the walkthrough uses no image references. A broad generated-page scan only reported sitewide `/pagefind/` search assets, not tutorial links or images.
+- Step 4 verification: skipped `make test` because `git log`/changed-file review shows this task touched documentation, website content, changelog, and task metadata only; no non-doc Go app files were modified.
+- Step 4 verification: skipped `make build` because no app strings or tracked generated application assets were touched.
 | 2026-05-27 18:17 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-27 18:22 | Review R003 | plan Step 3: APPROVE |
+| 2026-05-27 18:25 | Review R004 | plan Step 4: APPROVE |
