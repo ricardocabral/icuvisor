@@ -1,6 +1,6 @@
 # TP-104: As-of metadata for time-relative reads — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Design and implement shared athlete-local as-of helper
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
@@ -13,7 +13,7 @@
 ---
 
 ### Step 0: Preflight
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Design and implement shared athlete-local as-of helper
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Helper returns local RFC3339 datetime, date, weekday, and timezone
 - [ ] Timezone edge cases covered with deterministic tests
