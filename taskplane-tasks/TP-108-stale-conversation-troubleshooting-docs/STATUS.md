@@ -1,6 +1,6 @@
 # TP-108: Stale conversation troubleshooting docs — Status
 
-**Current Step:** Step 2: Link from related docs and update changelog
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 0
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Link from related docs and update changelog
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Links added from related setup/client docs where relevant
 - [x] Existing schema-change/onboarding copy connected if present
@@ -43,13 +43,13 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Markdown/link checks passing if available
-- [ ] Docs generation run if applicable
-- [ ] FULL test suite run if generated docs/app strings are touched: `make test`
-- [ ] Build run if generated assets/app strings are touched: `make build`
-- [ ] All failures fixed or documented as pre-existing unrelated failures
+- [x] Markdown/link checks passing if available
+- [x] Docs generation run if applicable
+- [x] FULL test suite run if generated docs/app strings are touched: `make test`
+- [x] Build run if generated assets/app strings are touched: `make build`
+- [x] All failures fixed or documented as pre-existing unrelated failures
 
 ---
 
