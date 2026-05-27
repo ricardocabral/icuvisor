@@ -1,6 +1,6 @@
 # TP-117: Free and no-quota positioning — Status
 
-**Current Step:** Step 1: Clarify no icuvisor quota/account/subscription claim
+**Current Step:** Step 2: Link from install or local-first docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 0
@@ -22,16 +22,16 @@
 ---
 
 ### Step 1: Clarify no icuvisor quota/account/subscription claim
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Homepage and/or README copy updated to clarify free/open-source/no icuvisor account/credits/quota/subscription
-- [ ] Third-party limit caveats added where needed
-- [ ] Copy kept concise and free of competitor-comparison wording
+- [x] Homepage and/or README copy updated to clarify free/open-source/no icuvisor account/credits/quota/subscription
+- [x] Third-party limit caveats added where needed
+- [x] Copy kept concise and free of competitor-comparison wording
 
 ---
 
 ### Step 2: Link from install or local-first docs
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Short explanation added in install or local-first docs if useful
 - [ ] License/open-source source linked where helpful
