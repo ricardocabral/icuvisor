@@ -1,6 +1,6 @@
 # TP-109: Description-only workout safety warning — Status
 
-**Current Step:** Step 2: Implement warning behavior and tests
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
@@ -33,17 +33,17 @@
 ---
 
 ### Step 2: Implement warning behavior and tests
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Warning behavior implemented for description-only `WORKOUT` event updates
-- [ ] `update_workout` checked and covered if affected
-- [ ] Warning-present and warning-absent tests added
-- [ ] Targeted tests passing: `go test ./internal/tools`
+- [x] Warning behavior implemented for description-only `WORKOUT` event updates
+- [x] `update_workout` checked and covered if affected
+- [x] Warning-present and warning-absent tests added
+- [x] Targeted tests passing: `go test ./internal/tools`
 
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing: `make test`
 - [ ] Lint passing or documented: `make lint`

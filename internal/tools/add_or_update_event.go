@@ -14,6 +14,7 @@ import (
 const (
 	addOrUpdateEventName                    = "add_or_update_event"
 	addOrUpdateEventDescription             = "Create or update a non-destructive calendar event such as a planned workout, race, or note. Omitting event_id creates a new event; providing event_id updates that event without deleting or replacing unrelated events; use delete_event to remove. `description` is a replacement for the upstream event description/DSL, not append-only notes; omit it on updates to leave the current description unchanged. For WORKOUT updates, supplying `description` without `workout_doc` can replace existing structured steps; include the desired `workout_doc` to preserve or merge structure. When both are supplied, icuvisor merges them into the upstream description DSL and the `<!-- icuvisor:steps -->` sentinel controls serialized-step placement. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
+	descriptionOnlyWorkoutWarning           = "Description was written without workout_doc; if this item previously had structured steps, they may have been replaced. Include workout_doc when preserving or merging workout structure."
 	invalidAddOrUpdateEventArgumentsMessage = "invalid add_or_update_event arguments; provide date as athlete-local YYYY-MM-DD, category, type for WORKOUT events, name for NOTE creates, and optional event_id for updates"
 	writeEventMessage                       = "could not write event; check intervals.icu credentials, athlete ID, event ID, and writable event fields"
 )
@@ -48,12 +49,13 @@ type addOrUpdateEventResponse struct {
 }
 
 type addOrUpdateEventMeta struct {
-	Operation          string `json:"operation"`
-	Date               string `json:"date"`
-	Timezone           string `json:"timezone"`
-	WorkoutDocUploaded string `json:"workout_doc_uploaded,omitempty"`
-	WorkoutDocWarning  string `json:"workout_doc_warning,omitempty"`
-	IncludeFull        bool   `json:"include_full"`
+	Operation                     string `json:"operation"`
+	Date                          string `json:"date"`
+	Timezone                      string `json:"timezone"`
+	WorkoutDocUploaded            string `json:"workout_doc_uploaded,omitempty"`
+	WorkoutDocWarning             string `json:"workout_doc_warning,omitempty"`
+	DescriptionOnlyWorkoutWarning string `json:"description_only_workout_warning,omitempty"`
+	IncludeFull                   bool   `json:"include_full"`
 }
 
 func newAddOrUpdateEventTool(client EventWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -181,7 +183,14 @@ func shapeAddOrUpdateEventResponse(event intervals.Event, args addOrUpdateEventR
 		operation = "update"
 	}
 	uploadedSteps := args.WorkoutDoc != nil && len(args.WorkoutDoc.Steps) > 0
-	return addOrUpdateEventResponse{Event: row, Meta: addOrUpdateEventMeta{Operation: operation, Date: args.Date, Timezone: timezoneName, WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, event.WorkoutDoc), IncludeFull: args.IncludeFull}}, nil
+	return addOrUpdateEventResponse{Event: row, Meta: addOrUpdateEventMeta{Operation: operation, Date: args.Date, Timezone: timezoneName, WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, event.WorkoutDoc), DescriptionOnlyWorkoutWarning: addOrUpdateEventDescriptionOnlyWorkoutWarning(args), IncludeFull: args.IncludeFull}}, nil
+}
+
+func addOrUpdateEventDescriptionOnlyWorkoutWarning(args addOrUpdateEventRequest) string {
+	if args.EventID == "" || args.Description == nil || args.WorkoutDoc != nil || !strings.EqualFold(args.Category, "WORKOUT") {
+		return ""
+	}
+	return descriptionOnlyWorkoutWarning
 }
 
 func addOrUpdateEventInputSchema() map[string]any {
@@ -265,5 +274,5 @@ func addOrUpdateEventInputExamples() []map[string]any {
 }
 
 func addOrUpdateEventOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Write confirmation containing the same terse event row shape used by get_event_by_id plus operation/date/timezone metadata. _meta.workout_doc_warning is set when intervals.icu stored the event but did not parse the uploaded workout_doc into a graphically rendered structured workout."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Write confirmation containing the same terse event row shape used by get_event_by_id plus operation/date/timezone metadata. _meta.workout_doc_warning is set when intervals.icu stored the event but did not parse the uploaded workout_doc into a graphically rendered structured workout. _meta.description_only_workout_warning is set for WORKOUT event updates that supplied description without workout_doc."}
 }
