@@ -131,6 +131,8 @@
 | 2026-05-27 12:12 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-27 12:12 | Step 0 started | Preflight |
 | 2026-05-27 14:12 | Worker iter 1 | killed (wall-clock timeout) in 7201s, tools: 227 |
+| 2026-05-27 14:15 | Worker iter 2 | done in 132s, tools: 14 |
+| 2026-05-27 14:15 | Task complete | .DONE created |
 
 ---
 
