@@ -1,7 +1,7 @@
 # TP-115: Claude Project instructions pack — Status
 
 **Current Step:** Step 5: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-27
 **Review Level:** 1
 **Review Counter:** 4
@@ -64,12 +64,12 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Final commit includes task ID
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Final commit includes task ID
 
 ---
 
@@ -88,6 +88,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| No out-of-scope discoveries; implementation stayed within docs/instruction-pack scope. | No follow-up needed. | Step 5 delivery review |
 
 ---
 
@@ -115,6 +116,9 @@
 - Step 4 verification: `make test` was not run because changes are limited to docs, CHANGELOG, and task status/review files; no Go source, generated app assets, or runtime strings were touched.
 - Step 4 verification: `make build` was not run because no app strings, Go source, or generated app assets were touched.
 - Step 4 verification: no test failures observed; `make web-build` passed with existing Hugo deprecation warnings for `.Language.LanguageDirection` and `.Site.Data`.
+- Step 5 delivery: Must Update docs were modified (`web/content/guides/claude-project-instructions.md` added and `web/content/guides/_index.md` linked it).
+- Step 5 delivery: Check If Affected docs were reviewed/updated where relevant: Claude Desktop/Code connection docs, prompt library, weekly review, readiness check, race-week taper, MCP resources/prompts reference, and `CHANGELOG.md`.
+- Step 5 delivery: existing step commits include `TP-115`; final delivery status commit will use a `docs(TP-115): ...` message.
 | 2026-05-27 17:50 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-27 17:52 | Review R002 | plan Step 2: APPROVE |
 | 2026-05-27 17:55 | Review R003 | plan Step 3: APPROVE |
