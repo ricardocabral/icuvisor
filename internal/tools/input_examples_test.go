@@ -70,6 +70,39 @@ func TestRegisteredV03WriteToolsExposeInputExamples(t *testing.T) {
 	}
 }
 
+func TestWorkoutWriteDescriptionSchemaAdvertisesMergedWorkoutDoc(t *testing.T) {
+	registrar := &collectingRegistrar{}
+	if err := NewRegistryWithOptions(newNoNetworkIntervalsClient(t), RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull)}).Register(context.Background(), registrar); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+
+	for _, name := range []string{addOrUpdateEventName, createWorkoutName, updateWorkoutName} {
+		t.Run(name, func(t *testing.T) {
+			tool := findTool(t, registrar.tools, name)
+			schema, ok := tool.InputSchema.(map[string]any)
+			if !ok {
+				t.Fatalf("%s InputSchema type = %T, want map[string]any", tool.Name, tool.InputSchema)
+			}
+			props := schemaProperties(t, schema)
+			descriptionField := schemaPropertyDescription(t, props, "description")
+			workoutDocField := schemaPropertyDescription(t, props, "workout_doc")
+			contractText := normalizeContractText(tool.Description + "\n" + descriptionField + "\n" + workoutDocField)
+
+			for _, forbidden := range []string{"mutually exclusive", "mutually-exclusive", "exclusive with", "not both", "do not supply both", "cannot be supplied together", "either description or workout_doc", "choose description or workout_doc"} {
+				if strings.Contains(contractText, forbidden) {
+					t.Fatalf("%s schema contract contains contradictory wording %q:\n%s", tool.Name, forbidden, contractText)
+				}
+			}
+			if !strings.Contains(contractText, "description") || !strings.Contains(contractText, "workout_doc") {
+				t.Fatalf("%s schema contract should mention both description and workout_doc:\n%s", tool.Name, contractText)
+			}
+			if !strings.Contains(contractText, "may be supplied with workout_doc") && !strings.Contains(contractText, "merged with description when both are supplied") && !strings.Contains(contractText, "sentinel") {
+				t.Fatalf("%s schema contract lost merge/coexistence or sentinel guidance:\n%s", tool.Name, contractText)
+			}
+		})
+	}
+}
+
 func TestComplexWriteToolInputExamplesValidateAgainstSchema(t *testing.T) {
 	targets := []struct {
 		name   string
@@ -100,6 +133,32 @@ func TestComplexWriteToolInputExamplesValidateAgainstSchema(t *testing.T) {
 			}
 		})
 	}
+}
+
+func schemaProperties(t *testing.T, schema map[string]any) map[string]any {
+	t.Helper()
+	props, ok := schema["properties"].(map[string]any)
+	if !ok {
+		t.Fatalf("schema properties type = %T, want map[string]any", schema["properties"])
+	}
+	return props
+}
+
+func schemaPropertyDescription(t *testing.T, props map[string]any, name string) string {
+	t.Helper()
+	prop, ok := props[name].(map[string]any)
+	if !ok {
+		t.Fatalf("schema property %s type = %T, want map[string]any", name, props[name])
+	}
+	description, ok := prop["description"].(string)
+	if !ok || strings.TrimSpace(description) == "" {
+		t.Fatalf("schema property %s description = %#v, want non-empty string", name, prop["description"])
+	}
+	return description
+}
+
+func normalizeContractText(text string) string {
+	return strings.Join(strings.Fields(strings.ToLower(text)), " ")
 }
 
 func schemaInputExamples(t *testing.T, schema map[string]any) []any {

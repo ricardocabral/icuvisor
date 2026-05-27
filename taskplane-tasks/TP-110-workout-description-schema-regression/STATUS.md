@@ -1,10 +1,10 @@
 # TP-110: Workout description schema regression tests — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 2: Refresh affected snapshots and docs if needed
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -13,7 +13,7 @@
 ---
 
 ### Step 0: Preflight
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -22,19 +22,19 @@
 ---
 
 ### Step 1: Add metadata invariant tests
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 > **Plan-review checkpoint**
 
-- [ ] Regression test added for workout write tool descriptions
-- [ ] Test rejects `mutually exclusive`-style contradictory wording
-- [ ] Test asserts coexistence/merge or sentinel guidance remains present
-- [ ] Targeted tests passing: `go test ./internal/tools ./internal/toolchecks`
+- [x] Regression test added for workout write tool descriptions
+- [x] Test rejects `mutually exclusive`-style contradictory wording
+- [x] Test asserts coexistence/merge or sentinel guidance remains present
+- [x] Targeted tests passing: `go test ./internal/tools ./internal/toolchecks`
 
 ---
 
 ### Step 2: Refresh affected snapshots and docs if needed
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Schema snapshots regenerated or verified unchanged
 - [ ] `CHANGELOG.md` updated if needed
@@ -95,3 +95,4 @@
 ## Notes
 
 *Reserved for execution notes*
+| 2026-05-27 20:44 | Review R001 | plan Step 1: APPROVE |
