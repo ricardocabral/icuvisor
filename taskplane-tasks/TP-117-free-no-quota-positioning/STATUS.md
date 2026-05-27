@@ -1,11 +1,11 @@
 # TP-117: Free and no-quota positioning — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
+**Current Step:** Step 1: Clarify no icuvisor quota/account/subscription claim
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 0
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** S
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers may expand steps when runtime discoveries warrant it.
@@ -13,16 +13,16 @@
 ---
 
 ### Step 0: Preflight
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Required files and paths exist
-- [ ] Dependencies satisfied
-- [ ] Existing free/open-source/no-account claims reviewed
+- [x] Required files and paths exist
+- [x] Dependencies satisfied
+- [x] Existing free/open-source/no-account claims reviewed
 
 ---
 
 ### Step 1: Clarify no icuvisor quota/account/subscription claim
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Homepage and/or README copy updated to clarify free/open-source/no icuvisor account/credits/quota/subscription
 - [ ] Third-party limit caveats added where needed
@@ -79,6 +79,8 @@
 | Timestamp | Action | Outcome |
 |-----------|--------|---------|
 | 2026-05-27 | Task staged | PROMPT.md and STATUS.md created |
+| 2026-05-27 18:40 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-27 18:40 | Step 0 started | Preflight |
 
 ---
 
