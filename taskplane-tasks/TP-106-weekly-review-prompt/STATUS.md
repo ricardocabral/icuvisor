@@ -1,10 +1,10 @@
 # TP-106: Weekly review MCP prompt — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Add `weekly_review` prompt registration
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -22,12 +22,13 @@
 ---
 
 ### Step 1: Add `weekly_review` prompt registration
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Prompt registered with metadata, arguments, tool list, instructions, and return format
 - [ ] Athlete-local date/timezone guidance included
 - [ ] No-write-without-approval guidance included
 - [ ] Targeted prompt tests passing
+- [ ] Plan review revisions addressed: registry wiring, registration tests, deliberate analyzer/compute tool set, and explicit write/delete guardrail
 
 ---
 
@@ -75,6 +76,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | Plan | Step 1 | REVISE | .reviews/R001-plan-step1.md |
 
 ---
 
@@ -104,3 +106,4 @@
 ## Notes
 
 - Tracking issue: https://github.com/ricardocabral/icuvisor/issues/33
+| 2026-05-27 14:18 | Review R001 | plan Step 1: UNKNOWN |
