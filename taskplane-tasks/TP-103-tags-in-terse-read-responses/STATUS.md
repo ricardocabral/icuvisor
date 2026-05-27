@@ -1,6 +1,6 @@
 # TP-103: Tags in terse read responses — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Implement event tag read shaping
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
@@ -13,7 +13,7 @@
 ---
 
 ### Step 0: Preflight
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Implement event tag read shaping
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Decode or extract upstream `tags` for events without guessing missing values
 - [ ] Add `tags` to shared terse event rows while preserving order
