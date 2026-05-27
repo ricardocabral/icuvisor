@@ -30,7 +30,7 @@ Install:
 
 Do not paste the API key into chat messages or into manual JSON config. In the extension path, Claude Desktop passes it to icuvisor as `INTERVALS_ICU_API_KEY` only when launching the local stdio server.
 
-After the connection works, you can add reusable [Claude Project instructions]({{< relref "../guides/claude-project-instructions" >}}) so new training chats consistently use athlete-local dates, cite icuvisor tools, and flag missing or stale data without storing secrets in the Project.
+After the connection works, you can add reusable [Claude Project instructions]({{< relref "../guides/claude-project-instructions" >}}) so new training chats consistently use athlete-local dates, cite icuvisor tools, and flag missing or stale data without storing secrets in the Project. If your training data starts on a Garmin or another device provider, the [Garmin to Claude walkthrough]({{< relref "../tutorials/garmin-to-claude" >}}) shows the full device-provider → intervals.icu → icuvisor → Claude path.
 
 <details>
 <summary>Extension smoke checklist</summary>

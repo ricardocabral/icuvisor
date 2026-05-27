@@ -4,7 +4,7 @@ description: "Short, single-message prompts for everyday training questions, gro
 weight: 15
 ---
 
-Single-message prompts you can copy, adjust, and send. Every one names your data, gives a window, and tells the assistant not to guess — see [how to get reliable answers]({{< relref "_index" >}}). For multi-step jobs, use a [recipe]({{< relref "_index" >}}) instead. If you repeat the same guardrails in every Claude chat, add the reusable [Claude Project instructions]({{< relref "../guides/claude-project-instructions" >}}).
+Single-message prompts you can copy, adjust, and send. Every one names your data, gives a window, and tells the assistant not to guess — see [how to get reliable answers]({{< relref "_index" >}}). For multi-step jobs, use a [recipe]({{< relref "_index" >}}) instead. If you are setting up Claude from device-provider data for the first time, start with the [Garmin to Claude walkthrough]({{< relref "../tutorials/garmin-to-claude" >}}). If you repeat the same guardrails in every Claude chat, add the reusable [Claude Project instructions]({{< relref "../guides/claude-project-instructions" >}}).
 
 Replace bracketed placeholders like `[DATE]` or `[ACTIVITY]` before sending.
 

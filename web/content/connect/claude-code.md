@@ -14,7 +14,7 @@ You need:
 - Your intervals.icu athlete ID, written as `i12345` or `12345`.
 - Your API key stored in the macOS Keychain under service `icuvisor` and account `intervals-icu-api-key`.
 
-Do not put your intervals.icu API key in `.mcp.json` or any Claude Code project config. The MCP config should contain only non-secret values. For reusable chat behavior, use [Claude Project instructions]({{< relref "../guides/claude-project-instructions" >}}) that enforce timezone/date discipline and data grounding without storing secrets.
+Do not put your intervals.icu API key in `.mcp.json` or any Claude Code project config. The MCP config should contain only non-secret values. For reusable chat behavior, use [Claude Project instructions]({{< relref "../guides/claude-project-instructions" >}}) that enforce timezone/date discipline and data grounding without storing secrets. If your training data starts on a Garmin or another device provider, the [Garmin to Claude walkthrough]({{< relref "../tutorials/garmin-to-claude" >}}) shows where Claude Code fits in the device-provider → intervals.icu → icuvisor path.
 
 If needed, run setup first:
 
