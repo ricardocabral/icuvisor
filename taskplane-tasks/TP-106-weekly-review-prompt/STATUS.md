@@ -1,11 +1,11 @@
 # TP-106: Weekly review MCP prompt — Status
 
-**Current Step:** Step 1: Add `weekly_review` prompt registration
+**Current Step:** Step 3: Changelog and full verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 4
-**Iteration:** 1
+**Review Counter:** 5
+**Iteration:** 2
 **Size:** S
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers may expand steps when runtime discoveries warrant it.
@@ -35,17 +35,17 @@
 ---
 
 ### Step 2: Add golden tests
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Default golden prompt file added
-- [ ] Explicit-arguments test added or documented as unnecessary under current test style
-- [ ] Advanced-capability fallback guidance included where appropriate
-- [ ] Targeted prompt tests passing
+- [x] Default golden prompt file added
+- [x] Explicit-arguments test added or documented as unnecessary under current test style
+- [x] Advanced-capability fallback guidance included where appropriate
+- [x] Targeted prompt tests passing
 
 ---
 
 ### Step 3: Changelog and full verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `CHANGELOG.md` updated
 - [ ] Prompt docs/reference checked if applicable
@@ -99,6 +99,7 @@
 | 2026-05-26 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-05-27 14:15 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-27 14:15 | Step 0 started | Preflight |
+| 2026-05-27 14:29 | Worker iter 1 | done in 839s, tools: 58 |
 
 ---
 
@@ -115,3 +116,4 @@
 | 2026-05-27 14:20 | Review R002 | plan Step 1: UNKNOWN |
 | 2026-05-27 14:22 | Review R003 | plan Step 1: REVISE |
 | 2026-05-27 14:24 | Review R004 | plan Step 1: APPROVE |
+| 2026-05-27 14:28 | Review R005 | plan Step 2: APPROVE |

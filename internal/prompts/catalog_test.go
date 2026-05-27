@@ -56,6 +56,7 @@ func TestRenderedPromptsGolden(t *testing.T) {
 		{name: "training_analysis", prompt: TrainingAnalysisPrompt(), arguments: map[string]string{"start_date": "2026-04-01", "end_date": "2026-04-30"}, goldenFile: "training_analysis.md"},
 		{name: "recovery_check", prompt: RecoveryCheckPrompt(), arguments: map[string]string{"date": "2026-05-14", "lookback_days": "10"}, goldenFile: "recovery_check.md"},
 		{name: "weekly_planning", prompt: WeeklyPlanningPrompt(), arguments: map[string]string{"week_start": "2026-05-18"}, goldenFile: "weekly_planning.md"},
+		{name: "weekly_review", prompt: WeeklyReviewPrompt(), arguments: nil, goldenFile: "weekly_review.md"},
 		{name: "race_week_taper", prompt: RaceWeekTaperPrompt(), arguments: map[string]string{"race_date": "2026-06-07", "race_name": "A Race"}, goldenFile: "race_week_taper.md"},
 		{name: "coach_roster_triage", prompt: CoachRosterTriagePrompt(), arguments: map[string]string{"athlete_id": "i12345", "start_date": "2026-05-01", "end_date": "2026-05-14"}, goldenFile: "coach_roster_triage.md"},
 	}
@@ -72,6 +73,37 @@ func TestRenderedPromptsGolden(t *testing.T) {
 				t.Fatalf("rendered prompt mismatch with %s\n--- got ---\n%s\n--- want ---\n%s", tc.goldenFile, got, string(want))
 			}
 		})
+	}
+}
+
+func TestWeeklyReviewRendersExplicitArguments(t *testing.T) {
+	t.Parallel()
+
+	text := renderPromptText(t, WeeklyReviewPrompt(), map[string]string{
+		"week_start":        "2026-05-18",
+		"lookback_days":     "14",
+		"include_next_week": "true",
+	})
+	want := "Scope: week_start=2026-05-18, lookback_days=14, include_next_week=true."
+	if !strings.Contains(text, want) {
+		t.Fatalf("weekly review prompt text = %q, want %q", text, want)
+	}
+}
+
+func TestWeeklyReviewIncludesFallbackAndSafetyGuidance(t *testing.T) {
+	t.Parallel()
+
+	text := renderPromptText(t, WeeklyReviewPrompt(), nil)
+	for _, want := range []string{
+		"athlete-local timezone",
+		"icuvisor_list_advanced_capabilities",
+		"_meta.stale",
+		"provenance warnings",
+		"Do not call write or delete tools unless the user explicitly approves the exact change first.",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("weekly review prompt missing %q:\n%s", want, text)
+		}
 	}
 }
 
