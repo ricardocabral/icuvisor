@@ -1,7 +1,7 @@
 # TP-105: Tool routing smoke eval — Status
 
-**Current Step:** Step 4: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 5: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-27
 **Review Level:** 2
 **Review Counter:** 11
@@ -69,12 +69,12 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Final commit includes task ID
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Final commit includes task ID
 
 ---
 
@@ -89,6 +89,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| No out-of-scope discoveries during final delivery review. | No action needed. | Step 5 |
 
 ---
 
@@ -117,6 +118,8 @@
 - Step 4 targeted verification: `go test ./internal/toolrouting` passed; `make eval-tool-routing` dry run passed with 8 skipped cases because provider configuration was unset.
 - Provider-backed eval not run: `ICUVISOR_ROUTING_EVAL_PROVIDER` is unset in this worker environment; no model call was made.
 - Step 4 quality gates passed with no failures to fix or document: `make test`, `make build`, and `make lint`.
+- Step 5 affected-doc review: Makefile help includes `eval-tool-routing`; CHANGELOG has an `[Unreleased]` developer-tooling entry; `docs/kr5-benchmark.md` is benchmark-specific and did not need a routing-smoke-eval update.
+- Recent task commits use `TP-105` in the subject; final delivery commit will use the same task ID convention.
 | 2026-05-27 10:28 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-27 11:03 | Review R004 | plan Step 2: APPROVE |
 | 2026-05-27 11:13 | Review R005 | code Step 2: UNKNOWN |
