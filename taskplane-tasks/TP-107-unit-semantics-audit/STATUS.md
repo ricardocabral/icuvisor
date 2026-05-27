@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -99,6 +99,7 @@
 | R003 | Plan | 1 | APPROVE | `.reviews/R003-plan-step1.md` |
 | R004 | Code | 1 | REVISE | `.reviews/R004-code-step1.md` |
 | R005 | Code | 1 | APPROVE | `.reviews/R005-code-step1.md` |
+| R006 | Plan | 2 | REVISE | `.reviews/R006-plan-step2.md` |
 
 ---
 
@@ -134,8 +135,14 @@
 - Step 1 serializer matrix: power blank/default percent FTP, `PERCENT_FTP`, `%FTP`, watts aliases (`WATTS`, `WATT`, `W`), and power zone scalar/range; pace percent-threshold aliases (`PERCENT_THRESHOLD`, `PERCENT_THRESHOLD_PACE`, `PERCENT_PACE`, `%PACE`), `PACE` numeric scalar/range, pace zone scalar/range, and text pace form (`5:00/km Pace`); HR `% HR` via `PERCENT_HR`/`PERCENT_MAX_HR`, `% LTHR` via `PERCENT_LTHR`/`%LTHR`/`LTHR`, BPM, and HR zone scalar/range.
 - Step 1 `MINS_KM`/`MINS_MILE` decision: current structured workout target units do not list these tokens; add an unsupported-unit regression and discovery unless tests reveal documented syntax metadata requiring an additive serializer/syntax fix. Do not coerce them to `PACE` silently.
 - Step 1 verification command: `go test ./internal/workoutdoc`; update discoveries with the proven behavior.
+- Step 2 implementation plan: add extended-metrics regression coverage in `internal/tools/get_extended_metrics_test.go` for every raw joule field normalized to kJ: activity `icu_joules_above_ftp`, activity `ss_w_prime`, interval `wbal_start`, interval `wbal_end`, and interval `joules_above_ftp`; assert divided values and `_meta.extended_metric_units`.
+- Step 2 unknown-unit/energy plan: extend `internal/response/units_test.go` with `ToPreferredWithRaw` assertions that `KJ`, `KCAL`, and an unknown raw token pass through without conversion or guessed labels; record existing interval `unknown_unit` coverage if no code change is needed there.
+- Step 2 audit-only surfaces: `get_workout_library` / `get_workouts_in_folder` do not expose raw `joules` / `joules_above_ftp` as terse fields today; include-full workout docs are preserved rather than relabeled. Custom-item content is preserved verbatim and should not parse/relabel embedded units. `get_activity_histogram` emits only power/HR/pace histogram units unless audit finds a joule-bearing path.
+- Step 2 audit command: grep/review `joules`, `KJ`, `KCAL`, and `unknown_unit` across `internal/units`, `internal/response`, and relevant tools; log audit-only results in discoveries.
+- Step 2 verification commands: targeted `go test ./internal/units ./internal/response ./internal/tools` after narrower iterations as needed.
 | 2026-05-27 12:57 | Review R001 | plan Step 1: REVISE |
 | 2026-05-27 12:59 | Review R002 | plan Step 1: REVISE |
 | 2026-05-27 13:01 | Review R003 | plan Step 1: APPROVE |
 | 2026-05-27 13:07 | Review R004 | code Step 1: REVISE |
 | 2026-05-27 13:10 | Review R005 | code Step 1: APPROVE |
+| 2026-05-27 13:13 | Review R006 | plan Step 2: REVISE |
