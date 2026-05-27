@@ -1,10 +1,10 @@
 # TP-107: Unit semantics audit — Status
 
-**Current Step:** Step 3: Add calories and hydration semantics coverage
+**Current Step:** Step 4: Changelog and full verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 12
+**Review Counter:** 13
 **Iteration:** 1
 **Size:** M
 
@@ -63,7 +63,7 @@
 ---
 
 ### Step 4: Changelog and full verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `CHANGELOG.md` updated if behavior or metadata changes
 - [ ] Unit-surface discoveries logged
@@ -108,6 +108,7 @@
 | R010 | Plan | 3 | APPROVE | `.reviews/R010-plan-step3.md` |
 | R011 | Code | 3 | REVISE | `.reviews/R011-code-step3.md` |
 | R012 | Code | 3 | APPROVE | `.reviews/R012-code-step3.md` |
+| R013 | Plan | 4 | REVISE | `.reviews/R013-plan-step4.md` |
 
 ---
 
@@ -155,6 +156,10 @@
 - Step 3 hydration plan: add an inline or fixture-backed wellness row containing both upstream `hydration` and `hydrationVolume`; assert both top-level fields are preserved distinctly in terse mode, neither is renamed/collapsed, row-level `_meta.field_semantics` describes the distinction without adding bulky top-level fields, and `include_full:true` preserves raw upstream names only under `full`.
 - Step 3 metadata decision: prefer row-level `_meta.field_semantics` for hydration semantics; do not rename public fields. Keep default rows terse apart from `_meta` entries.
 - Step 3 verification command: `go test ./internal/tools -run 'TestGetActivityDetails|TestGetWellnessData'`; log any existing calories coverage used as a discovery.
+- Step 4 changelog plan: update `CHANGELOG.md` `[Unreleased]` with a concise user-visible entry that wellness rows now include `_meta.field_semantics` for `hydration` and `hydrationVolume`, without renaming fields or inventing units.
+- Step 4 discovery plan: ensure `STATUS.md` captures no serializer behavior change beyond tests, energy/joule tested and audit-only surfaces, hydration metadata addition, and null hydration fields avoiding stale semantics.
+- Step 4 verification plan: run affected-package tests `go test ./internal/workoutdoc ./internal/units ./internal/response ./internal/tools` and record the command/result in the execution log. Leave `make test`, `make build`, and `make lint` for Step 5.
+- Step 4 docs/catalog boundary: no tool schema or description text is planned; generated tool docs/catalog regeneration is not needed unless that changes.
 | 2026-05-27 12:57 | Review R001 | plan Step 1: REVISE |
 | 2026-05-27 12:59 | Review R002 | plan Step 1: REVISE |
 | 2026-05-27 13:01 | Review R003 | plan Step 1: APPROVE |
@@ -167,3 +172,4 @@
 | 2026-05-27 13:25 | Review R010 | plan Step 3: APPROVE |
 | 2026-05-27 13:31 | Review R011 | code Step 3: REVISE |
 | 2026-05-27 13:34 | Review R012 | code Step 3: APPROVE |
+| 2026-05-27 13:37 | Review R013 | plan Step 4: REVISE |
