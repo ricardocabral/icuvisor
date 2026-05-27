@@ -73,8 +73,8 @@ func TestGetTodayDigestUsesAthleteLocalDateAndSourceShapes(t *testing.T) {
 			`{"id":"a1","name":"Morning Run","type":"Run","start_date_local":"2026-05-24T07:30:00","distance":1609.344,"moving_time":480,"calories":120,"stream_types":["heartrate"]}`,
 		),
 		events: decodeToolEvents(t,
-			`{"id":"11","category":"WORKOUT","type":"Run","name":"Easy run","start_date_local":"2026-05-24","icu_training_load":35}`,
-			`{"id":"12","category":"NOTE","name":"Travel","description":"Pack race shoes","start_date_local":"2026-05-24"}`,
+			`{"id":"11","category":"WORKOUT","type":"Run","name":"Easy run","start_date_local":"2026-05-24","icu_training_load":35,"tags":["plan","run"]}`,
+			`{"id":"12","category":"NOTE","name":"Travel","description":"Pack race shoes","start_date_local":"2026-05-24","tags":["logistics"]}`,
 			`{"id":"13","category":"RACE_B","name":"Tune-up 5k","start_date_local":"2026-05-24"}`,
 		),
 	}
@@ -113,8 +113,16 @@ func TestGetTodayDigestUsesAthleteLocalDateAndSourceShapes(t *testing.T) {
 	if len(planned) != 1 || planned[0].(map[string]any)["category"] != "WORKOUT" {
 		t.Fatalf("planned_events = %#v, want only workout event", planned)
 	}
+	plannedTags := planned[0].(map[string]any)["tags"].([]any)
+	if len(plannedTags) != 2 || plannedTags[0] != "plan" || plannedTags[1] != "run" {
+		t.Fatalf("planned tags = %#v, want event tags", plannedTags)
+	}
 	if len(annotations) != 2 || annotations[0].(map[string]any)["category"] != "NOTE" || annotations[1].(map[string]any)["category"] != "RACE_B" {
 		t.Fatalf("annotations = %#v, want NOTE and race categories", annotations)
+	}
+	annotationTags := annotations[0].(map[string]any)["tags"].([]any)
+	if len(annotationTags) != 1 || annotationTags[0] != "logistics" {
+		t.Fatalf("annotation tags = %#v, want note tags", annotationTags)
 	}
 	meta := out["_meta"].(map[string]any)
 	if meta["date"] != "2026-05-24" || meta["as_of"] != "2026-05-24T23:30:00-03:00" || meta["as_of_date"] != "2026-05-24" || meta["as_of_weekday"] != "Sunday" || meta["timezone"] != "America/Sao_Paulo" || meta["include_full"] != false {

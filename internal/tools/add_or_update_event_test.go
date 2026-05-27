@@ -67,6 +67,10 @@ func TestAddOrUpdateEventCreatePreservesFreeTextTagsAndReadShape(t *testing.T) {
 	if row["load_target"] != float64(75) || row["distance_target_meters"] != float64(30000) || row["time_target_seconds"] != float64(3600) {
 		t.Fatalf("planned target row fields = %#v, want load/distance/time targets", row)
 	}
+	rowTags := row["tags"].([]any)
+	if len(rowTags) != 2 || rowTags[0] != "tempo" || rowTags[1] != "coach" {
+		t.Fatalf("row tags = %#v, want returned event tags", rowTags)
+	}
 	meta := out["_meta"].(map[string]any)
 	if meta["operation"] != "create" || meta["date"] != "2026-06-01" || meta["timezone"] != "America/Sao_Paulo" {
 		t.Fatalf("meta = %#v, want create metadata", meta)
@@ -88,6 +92,7 @@ func TestAddOrUpdateEventStripsSparseNullsAndPreservesRawFull(t *testing.T) {
 	}
 	row := resultMap(t, result)["event"].(map[string]any)
 	assertKeyAbsent(t, row, "notes")
+	assertKeyAbsent(t, row, "tags")
 	assertKeyAbsent(t, row, "full")
 	if row["indoor"] != false || row["load_target"] != float64(0) || row["distance_meters"] != float64(0) {
 		t.Fatalf("event row = %#v, want false indoor plus zero load_target and distance_meters preserved", row)

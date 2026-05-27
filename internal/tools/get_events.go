@@ -67,6 +67,7 @@ type getEventsRow struct {
 	PlanAppliedLocal         string                `json:"plan_applied_local,omitempty"`
 	Updated                  string                `json:"updated,omitempty"`
 	UpdatedLocal             string                `json:"updated_local,omitempty"`
+	Tags                     *[]string             `json:"tags,omitempty"`
 	Full                     map[string]any        `json:"full,omitempty"`
 }
 
@@ -197,7 +198,7 @@ func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, tim
 }
 
 func eventRow(event intervals.Event, includeFull bool, timezoneName string) (getEventsRow, error) {
-	row := getEventsRow{EventID: event.ID, Category: firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"])), Type: stringValue(event.Type), Name: stringValue(event.Name), StartDateLocal: stringValue(event.StartDateLocal), EndDateLocal: stringValue(event.EndDateLocal), Description: stringValue(event.Description), Indoor: event.Indoor, TrainingLoad: event.TrainingLoad, LoadTarget: event.LoadTarget, DistanceMeters: event.Distance, DistanceTargetMeters: event.DistanceTarget, MovingTimeSeconds: intValue(event.MovingTime), TimeTargetSeconds: intValue(event.TimeTarget), ElapsedTimeSeconds: intValue(event.ElapsedTime), ElapsedTimeTargetSeconds: intValue(event.ElapsedTimeTarget), TrainingPlanID: anyString(firstRaw(event.Raw, "training_plan_id", "plan_id")), CalendarID: anyString(event.CalendarID), PlanApplied: stringValue(event.PlanApplied), Updated: stringValue(event.Updated)}
+	row := getEventsRow{EventID: event.ID, Category: firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"])), Type: stringValue(event.Type), Name: stringValue(event.Name), StartDateLocal: stringValue(event.StartDateLocal), EndDateLocal: stringValue(event.EndDateLocal), Description: stringValue(event.Description), Indoor: event.Indoor, TrainingLoad: event.TrainingLoad, LoadTarget: event.LoadTarget, DistanceMeters: event.Distance, DistanceTargetMeters: event.DistanceTarget, MovingTimeSeconds: intValue(event.MovingTime), TimeTargetSeconds: intValue(event.TimeTarget), ElapsedTimeSeconds: intValue(event.ElapsedTime), ElapsedTimeTargetSeconds: intValue(event.ElapsedTimeTarget), TrainingPlanID: anyString(firstRaw(event.Raw, "training_plan_id", "plan_id")), CalendarID: anyString(event.CalendarID), PlanApplied: stringValue(event.PlanApplied), Updated: stringValue(event.Updated), Tags: eventTags(event.Raw)}
 	if row.CalendarID == "" {
 		row.CalendarID = anyString(event.Raw["calendar_id"])
 	}
@@ -222,6 +223,22 @@ func eventRow(event intervals.Event, includeFull bool, timezoneName string) (get
 		row.Full = cloneJSONMap(event.Raw)
 	}
 	return row, nil
+}
+
+func eventTags(raw map[string]any) *[]string {
+	values, ok := raw["tags"].([]any)
+	if !ok {
+		return nil
+	}
+	tags := make([]string, 0, len(values))
+	for _, value := range values {
+		tag, ok := value.(string)
+		if !ok {
+			return nil
+		}
+		tags = append(tags, tag)
+	}
+	return &tags
 }
 
 func renderEventTimestamp(value string, timezoneName string) (string, error) {
