@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Update write-tool wording
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 > **Plan-review checkpoint**
 
