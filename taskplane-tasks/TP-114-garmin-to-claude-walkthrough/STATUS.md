@@ -1,7 +1,7 @@
 # TP-114: Garmin to Claude walkthrough — Status
 
 **Current Step:** Step 5: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-27
 **Review Level:** 1
 **Review Counter:** 4
@@ -100,6 +100,8 @@
 | 2026-05-27 18:13 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-27 18:13 | Step 0 started | Preflight |
 | 2026-05-27 18:26 | Worker iter 1 | done in 790s, tools: 86 |
+| 2026-05-27 18:30 | Worker iter 2 | done in 234s, tools: 40 |
+| 2026-05-27 18:30 | Task complete | .DONE created |
 
 ---
 
