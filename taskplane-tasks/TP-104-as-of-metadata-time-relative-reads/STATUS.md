@@ -74,11 +74,11 @@
 **Status:** 🟨 In Progress
 
 - [x] Step 5 verification plan documents targeted/full/build/lint/fmt commands, result logging, and generated-output expectation
-- [ ] Targeted tests passing
-- [ ] FULL test suite passing: `make test`
-- [ ] Build passes: `make build`
-- [ ] Lint passes: `make lint`
-- [ ] All failures fixed or documented as pre-existing unrelated failures
+- [x] Targeted tests passing
+- [x] FULL test suite passing: `make test`
+- [x] Build passes: `make build`
+- [x] Lint passes: `make lint`
+- [x] All failures fixed or documented as pre-existing unrelated failures
 
 ---
 
@@ -117,6 +117,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| `make fmt-check`, targeted tests, `make test`, `make build`, and `make lint` passed for TP-104 verification. | Recorded as Step 5 evidence; no pre-existing failures encountered. | STATUS.md Step 5 |
 
 ---
 
