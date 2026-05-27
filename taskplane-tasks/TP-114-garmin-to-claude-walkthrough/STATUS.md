@@ -1,11 +1,11 @@
 # TP-114: Garmin to Claude walkthrough — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
+**Current Step:** Step 1: Plan the tutorial and visual treatment
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers may expand steps when runtime discoveries warrant it.
@@ -13,11 +13,11 @@
 ---
 
 ### Step 0: Preflight
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Required files and paths exist
-- [ ] Dependencies satisfied
-- [ ] Existing tutorial, connect, and cookbook structure reviewed
+- [x] Required files and paths exist
+- [x] Dependencies satisfied
+- [x] Existing tutorial, connect, and cookbook structure reviewed
 
 ---
 
@@ -91,6 +91,8 @@
 | Timestamp | Action | Outcome |
 |-----------|--------|---------|
 | 2026-05-27 | Task staged | PROMPT.md and STATUS.md created |
+| 2026-05-27 18:13 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-27 18:13 | Step 0 started | Preflight |
 
 ---
 
