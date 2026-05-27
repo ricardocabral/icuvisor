@@ -1,10 +1,10 @@
 # TP-107: Unit semantics audit — Status
 
-**Current Step:** Step 2: Add work/energy and unknown-unit regression coverage
+**Current Step:** Step 3: Add calories and hydration semantics coverage
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 1
 **Size:** M
 
@@ -51,12 +51,13 @@
 ---
 
 ### Step 3: Add calories and hydration semantics coverage
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Activity `calories_burned` and wellness `calories_intake` distinction covered
 - [ ] `hydration` versus `hydrationVolume` semantics covered or clarified
 - [ ] Explanatory metadata added if needed without bloating terse responses
 - [ ] Targeted wellness/activity tests passing
+- [ ] Hydration row preserves `hydration` and `hydrationVolume` distinctly with terse metadata and include_full raw preservation
 
 ---
 
@@ -102,6 +103,7 @@
 | R006 | Plan | 2 | REVISE | `.reviews/R006-plan-step2.md` |
 | R007 | Plan | 2 | APPROVE | `.reviews/R007-plan-step2.md` |
 | R008 | Code | 2 | APPROVE | `.reviews/R008-code-step2.md` |
+| R009 | Plan | 3 | REVISE | `.reviews/R009-plan-step3.md` |
 
 ---
 
@@ -144,6 +146,10 @@
 - Step 2 audit-only surfaces: `get_workout_library` / `get_workouts_in_folder` do not expose raw `joules` / `joules_above_ftp` as terse fields today; include-full workout docs are preserved rather than relabeled. Custom-item content is preserved verbatim and should not parse/relabel embedded units. `get_activity_histogram` emits only power/HR/pace histogram units unless audit finds a joule-bearing path.
 - Step 2 audit command: grep/review `joules`, `KJ`, `KCAL`, and `unknown_unit` across `internal/units`, `internal/response`, and relevant tools; log audit-only results in discoveries.
 - Step 2 verification commands: targeted `go test ./internal/units ./internal/response ./internal/tools` after narrower iterations as needed.
+- Step 3 calories plan: rely on and, if needed, extend existing `internal/tools/get_activity_details_test.go` and `internal/tools/get_wellness_data_test.go` coverage asserting activity `calories_burned` is distinct from wellness `calories_intake`, ambiguous `calories`/`kcalConsumed` do not leak at top level, and `_meta.field_semantics` explains nutrition semantics.
+- Step 3 hydration plan: add an inline or fixture-backed wellness row containing both upstream `hydration` and `hydrationVolume`; assert both top-level fields are preserved distinctly in terse mode, neither is renamed/collapsed, row-level `_meta.field_semantics` describes the distinction without adding bulky top-level fields, and `include_full:true` preserves raw upstream names only under `full`.
+- Step 3 metadata decision: prefer row-level `_meta.field_semantics` for hydration semantics; do not rename public fields. Keep default rows terse apart from `_meta` entries.
+- Step 3 verification command: `go test ./internal/tools -run 'TestGetActivityDetails|TestGetWellnessData'`; log any existing calories coverage used as a discovery.
 | 2026-05-27 12:57 | Review R001 | plan Step 1: REVISE |
 | 2026-05-27 12:59 | Review R002 | plan Step 1: REVISE |
 | 2026-05-27 13:01 | Review R003 | plan Step 1: APPROVE |
@@ -152,3 +158,4 @@
 | 2026-05-27 13:13 | Review R006 | plan Step 2: REVISE |
 | 2026-05-27 13:15 | Review R007 | plan Step 2: APPROVE |
 | 2026-05-27 13:20 | Review R008 | code Step 2: APPROVE |
+| 2026-05-27 13:23 | Review R009 | plan Step 3: REVISE |
