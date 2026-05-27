@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added a Garmin/device-provider to Claude walkthrough that shows the intervals.icu → local icuvisor → Claude path, safe copy-paste prompts, and missing-data caveats.
+- Added a privacy posture explanation page covering icuvisor's local trust boundary, OS credential storage, loopback HTTP default, coach-mode credential handling, and AI-client/upstream caveats without claiming legal compliance.
 - Added copy-paste Claude Project instructions for grounded icuvisor training chats, including timezone/date discipline, source-tool citation, stale/missing-data handling, weekly-review, recovery-check, and race-week taper add-ons.
 - Added an opt-in `make eval-tool-routing` smoke eval for first-tool-call routing against the registered MCP tool catalog, with provider-backed runs only when explicitly configured.
 - Documentation now explains stale conversations and cached MCP tool catalogs, including when to start a new chat, reconnect tools, verify `icuvisor version`, run `icuvisor diagnostics`, and avoid pasting API keys into assistant conversations.
