@@ -35,4 +35,4 @@ MCP clients may cache the tool catalog for a conversation. If switching athletes
 
 ## Setup guide
 
-For the JSON shape, mode values, and examples, see [Set up coach mode]({{< relref "../guides/coach-mode" >}}).
+For the JSON shape, mode values, and examples, see [Set up coach mode]({{< relref "../guides/coach-mode" >}}). For the broader privacy trust boundary around coach-scoped credentials and AI clients, see [Privacy posture]({{< relref "privacy" >}}).

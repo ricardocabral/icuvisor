@@ -60,7 +60,7 @@ ICUVISOR_HTTP_BIND=192.168.1.10:8765 \
 /Applications/icuvisor.app/Contents/MacOS/icuvisor
 ```
 
-icuvisor logs a warning when HTTP starts on a non-loopback bind.
+icuvisor logs a warning when HTTP starts on a non-loopback bind. For how the loopback default fits into icuvisor's local privacy posture, see [Privacy posture]({{< relref "../explain/privacy" >}}).
 
 ## Troubleshooting
 
