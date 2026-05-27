@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 
@@ -40,13 +40,13 @@
 
 > ⚠️ Hydrate: Expand based on actual unit-bearing surfaces found during audit.
 
-- [ ] Joules/kilojoules surfaces audited and covered
-- [ ] Extended metrics raw-joule-to-kJ conversion tests cover activity, interval, and strain-score W' fields with `_meta.extended_metric_units`
-- [ ] Workout-library joules fields are audited as raw/full-only or covered if surfaced
-- [ ] Raw joules not mislabeled as kilojoules
-- [ ] Unknown units preserved rather than guessed
-- [ ] Response preferred-unit pass-through covers KJ/KCAL and unknown raw unit labels
-- [ ] Targeted unit/response tests passing
+- [x] Joules/kilojoules surfaces audited and covered
+- [x] Extended metrics raw-joule-to-kJ conversion tests cover activity, interval, and strain-score W' fields with `_meta.extended_metric_units`
+- [x] Workout-library joules fields are audited as raw/full-only or covered if surfaced
+- [x] Raw joules not mislabeled as kilojoules
+- [x] Unknown units preserved rather than guessed
+- [x] Response preferred-unit pass-through covers KJ/KCAL and unknown raw unit labels
+- [x] Targeted unit/response tests passing
 
 ---
 
@@ -100,6 +100,7 @@
 | R004 | Code | 1 | REVISE | `.reviews/R004-code-step1.md` |
 | R005 | Code | 1 | APPROVE | `.reviews/R005-code-step1.md` |
 | R006 | Plan | 2 | REVISE | `.reviews/R006-plan-step2.md` |
+| R007 | Plan | 2 | APPROVE | `.reviews/R007-plan-step2.md` |
 
 ---
 
@@ -109,6 +110,8 @@
 |-----------|-------------|----------|
 | Preflight scope: workout target units are centralized in `workoutTargetUnits`/`formatTarget`; interval units use `units.ParseUnit` with `unknown_unit`; extended metrics currently convert raw joules fields to `*_kj`; wellness calories use `calories_intake` while activity rows use `calories_burned`; hydration and `hydrationVolume` are emitted as separate wellness fields. | Drives regression coverage in Steps 1-3. | `internal/workoutdoc/serialize.go`; `internal/tools/get_activity_details.go`; `internal/tools/get_extended_metrics.go`; `internal/tools/get_wellness_data.go` |
 | Structured workout serializer does not support `MINS_KM`/`MINS_MILE` pace target units; Step 1 locks this as an unsupported-unit regression instead of silently coercing absolute pace into numeric `PACE`. | Covered by `TestSerializeRejectsUnsupportedAbsolutePaceUnits`; no serializer fix applied. | `internal/workoutdoc/workoutdoc_test.go` |
+| Step 2 audit: workout-library `joules` / `joules_above_ftp` exist only on the internal upstream DTO; current `get_workout_library` and `get_workouts_in_folder` terse rows do not expose them, and include-full preserves raw `workout_doc` rather than relabeling energy fields. Custom items are preserved verbatim, and activity histograms emit only power/HR/pace units. | Treat as audit-only for TP-107; no additive labels needed unless these fields become public tool fields later. | `internal/intervals/workout_library.go`; `internal/tools/get_workout_library.go`; `internal/tools/get_workouts_in_folder.go`; `internal/tools/get_custom_items.go`; `internal/tools/get_activity_histogram.go` |
+| Unknown upstream unit preservation already exists in activity intervals (`unit: UNKNOWN` plus `unknown_unit`) and `units.ParseUnit`; Step 2 added preferred-unit energy pass-through coverage so KJ/KCAL are not converted by distance-unit preferences. | Existing interval coverage retained; response coverage extended. | `internal/tools/get_activity_details_test.go`; `internal/units/unit_test.go`; `internal/response/units_test.go` |
 
 ---
 
@@ -146,3 +149,4 @@
 | 2026-05-27 13:07 | Review R004 | code Step 1: REVISE |
 | 2026-05-27 13:10 | Review R005 | code Step 1: APPROVE |
 | 2026-05-27 13:13 | Review R006 | plan Step 2: REVISE |
+| 2026-05-27 13:15 | Review R007 | plan Step 2: APPROVE |

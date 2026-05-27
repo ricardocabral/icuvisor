@@ -224,6 +224,37 @@ func TestExtendedMetricsDropsUnavailableFieldsAndConvertsUnits(t *testing.T) {
 	}
 }
 
+func TestExtendedMetricsJouleFieldsConvertToKilojoules(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeExtendedMetricsClient(t)
+	client.activity = decodeExtendedMetricsActivity(t, `{"id":"activity-j","name":"Ride","icu_joules_above_ftp":42000,"ss_w_prime":19500}`)
+	client.intervals = decodeExtendedMetricsIntervals(t, `{"id":"activity-j","analyzed":true,"icu_intervals":[{"id":"i1","label":"Work","wbal_start":20100,"wbal_end":18300,"joules_above_ftp":18000}]}`)
+	client.powerErr = intervals.ErrNotFound
+	tool := newGetExtendedMetricsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"activity-j"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	payload := resultMap(t, result)
+	metrics := payload["metrics"].(map[string]any)
+	if metrics["joules_above_ftp_kj"] != float64(42) || metrics["strain_score_w_prime_kj"] != float64(19.5) {
+		t.Fatalf("activity joule conversions = %#v, want raw joules divided to kJ", metrics)
+	}
+	intervalRows := payload["intervals"].([]any)
+	first := intervalRows[0].(map[string]any)
+	if first["w_prime_balance_start_kj"] != float64(20.1) || first["w_prime_balance_end_kj"] != float64(18.3) || first["joules_above_ftp_kj"] != float64(18) {
+		t.Fatalf("interval joule conversions = %#v, want raw joules divided to kJ", first)
+	}
+	units := payload["_meta"].(map[string]any)["extended_metric_units"].(map[string]any)
+	for _, key := range []string{"joules_above_ftp_kj", "strain_score_w_prime_kj", "w_prime_balance_start_kj", "w_prime_balance_end_kj"} {
+		if units[key] != "KJ" {
+			t.Fatalf("extended_metric_units[%s] = %v, want KJ in %#v", key, units[key], units)
+		}
+	}
+}
+
 func TestExtendedMetricsStrainScoreModelParameters(t *testing.T) {
 	t.Parallel()
 
