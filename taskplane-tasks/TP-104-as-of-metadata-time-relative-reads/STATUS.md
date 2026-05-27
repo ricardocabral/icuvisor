@@ -24,14 +24,14 @@
 ### Step 1: Design and implement shared athlete-local as-of helper
 **Status:** 🟨 In Progress
 
-- [ ] Helper returns local RFC3339 datetime, date, weekday, and timezone
+- [x] Helper returns local RFC3339 datetime, date, weekday, and timezone
 - [x] Shared helper API/location and single-localized-instant contract documented in plan
 - [x] Clock contract for deterministic current-day checks documented in plan
 - [x] Timezone error/fallback behavior documented in plan
 - [x] Helper test coverage plan includes offset, weekday, empty/trimmed, and invalid-zone cases
-- [ ] Timezone edge cases covered with deterministic tests
-- [ ] Existing timezone error behavior preserved
-- [ ] Targeted helper tests passing
+- [x] Timezone edge cases covered with deterministic tests
+- [x] Existing timezone error behavior preserved
+- [x] Targeted helper tests passing
 
 ---
 

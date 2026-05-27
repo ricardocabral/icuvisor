@@ -215,15 +215,11 @@ func eventRowsBefore(left, right getEventsRow) bool {
 }
 
 func athleteLocalDate(now time.Time, timezoneName string) (string, error) {
-	zone := strings.TrimSpace(timezoneName)
-	if zone == "" {
-		zone = "UTC"
-	}
-	loc, err := time.LoadLocation(zone)
+	asOf, err := response.AsOfMetadataInTimezone(now, timezoneName)
 	if err != nil {
-		return "", fmt.Errorf("loading athlete timezone %q: %w", zone, err)
+		return "", err
 	}
-	return now.In(loc).Format(time.DateOnly), nil
+	return asOf.AsOfDate, nil
 }
 
 func todayCustomFieldCodes(ctx context.Context, client ActivityCustomFieldClient, cache *customFieldCache) []string {
