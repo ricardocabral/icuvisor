@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 1
 **Size:** M
 
@@ -62,6 +62,7 @@
 ### Step 4: Regression tests and changelog
 **Status:** 🟨 In Progress
 
+- [x] Step 4 plan documents timezone boundary coverage, include/exclude range coverage, past-only assertions, changelog location, and targeted tests
 - [ ] Positive/negative timezone boundary cases covered
 - [ ] Date ranges including/excluding local today covered
 - [ ] Past-only range behavior verified
@@ -103,6 +104,7 @@
 | R007 | Plan | 3 | APPROVE | .reviews/R007-plan-step3.md |
 | R008 | Code | 3 | REVISE | .reviews/R008-code-step3.md |
 | R009 | Code | 3 | APPROVE | .reviews/R009-code-step3.md |
+| R010 | Plan | 4 | REVISE | .reviews/R010-plan-step4.md |
 
 ---
 
@@ -135,6 +137,7 @@
 - Step 1 plan: add a shared `internal/response.AsOfMetadata(now time.Time, timezone string)` helper returning one struct with `as_of`, `as_of_date`, `as_of_weekday`, and `timezone`, all derived from a single localized instant. The helper will reuse the existing timezone loading path used by `RenderTimeInTimezone`/`RenderDateInTimezone`; malformed zones return the existing wrapped load error and empty timezone continues to resolve to UTC. `get_today` keeps using its injectable `now func() time.Time`; Step 3 tools will receive injectable clock constructors before calling the helper/current-day range predicate, avoiding direct untestable `time.Now()` in handlers. Tests will cover positive/negative offset date shifts, weekday consistency, trimmed and empty timezone behavior, and invalid-zone errors.
 - Step 2 plan: in `getTodayHandler`, call the injectable `now()` exactly once, pass that instant to `response.AsOfMetadataInTimezone`, use `asOf.AsOfDate` for the existing `today` fetch date, and pass the full helper result into `shapeGetTodayResponse` so `date` and `as_of_date` cannot diverge across midnight. Extend `getTodayMeta` with `as_of`, `as_of_date`, and `as_of_weekday` while preserving existing `date`, `timezone`, `include_full`, `source_tools`, `section_counts`, `activity_window`, and response-shaper-added metadata such as `units`. Populate `_meta.timezone` from the helper's trimmed/defaulted `Timezone`. Update `get_today` tests through `newGetTodayToolWithClock` to assert exact São Paulo boundary `as_of*` values and unchanged local-date fetches/counts, then run `go test ./internal/tools -run TestGetToday`.
 - Step 3 plan: add a small tools-level helper that computes `response.AsOfMetadataInTimezone(now(), timezone)` once per request and attaches `as_of`, `as_of_date`, `as_of_weekday`, and helper-normalized `timezone` only when the normalized request date range includes `asOf.AsOfDate`; closed ranges require `oldest <= today <= newest`, and `get_activities` with blank `newest` treats the range as open-ended through upstream now. Add with-clock constructors for activities, events, and wellness so tests do not depend on wall-clock time. Preserve each tool's existing pagination token, count, null stripping, terse/full, and response-shaper metadata by only extending response meta structs immediately before shaping.
+- Step 4 plan: rely on `TestAsOfMetadataInTimezone` for helper-level positive-offset Kiritimati and negative-offset São Paulo boundary coverage, and add/keep range-tool regressions for both include and exclude behavior. Activities already has current-day/open-ended include and past-only exclude assertions; add past-only exclude assertions for events and wellness that verify `as_of`, `as_of_date`, and `as_of_weekday` are absent while existing metadata (`timezone`, count/limit/truncated/date_range for events; oldest/newest/include_full and null stripping for wellness) remains intact. Update `CHANGELOG.md` under `[Unreleased]` `### Added` with the additive `_meta.as_of`, `_meta.as_of_date`, `_meta.as_of_weekday`, and `_meta.timezone` behavior for `get_today` and current-day `get_activities`, `get_events`, and `get_wellness_data`. Run `go test ./internal/response ./internal/tools -run 'TestAsOfMetadataInTimezone|TestCurrentDayAsOfMetadataRangePredicate|TestGetActivities.*AsOf|TestGetEvents.*AsOf|TestGetWellnessData.*AsOf'`.
 | 2026-05-27 12:19 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-05-27 12:22 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-27 12:29 | Review R003 | code Step 1: APPROVE |
@@ -144,3 +147,4 @@
 | 2026-05-27 12:50 | Review R007 | plan Step 3: APPROVE |
 | 2026-05-27 13:10 | Review R008 | code Step 3: REVISE |
 | 2026-05-27 13:17 | Review R009 | code Step 3: APPROVE |
+| 2026-05-27 13:20 | Review R010 | plan Step 4: REVISE |
