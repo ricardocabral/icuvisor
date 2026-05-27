@@ -3,7 +3,29 @@ title: "Troubleshooting"
 description: "Common icuvisor setup symptoms and fixes."
 ---
 
-Use this table when icuvisor does not start, an MCP client cannot see tools, or a connection works differently after an upgrade.
+Use this guide when icuvisor does not start, an MCP client cannot see tools, or a connection works differently after an upgrade.
+
+## Stale conversations and cached tool catalogs
+
+MCP clients can keep a copy of icuvisor's tool catalog and sometimes keep using context from the current chat. That is useful for speed, but it means a long-running conversation may not immediately notice that you upgraded icuvisor, changed `ICUVISOR_TOOLSET` or `ICUVISOR_DELETE_MODE`, edited your timezone, fixed zone settings in intervals.icu, or restarted the server with a different config. The binary can be correct while the open chat is still reasoning from yesterday's tools or assumptions.
+
+Before changing credentials or pasting details into a chat, try these safe first steps:
+
+1. Start a new conversation in the MCP client. This is the quickest way to force the assistant to stop using stale chat context.
+2. Refresh, reconnect, or reload MCP tools in the client, then fully restart the client if tools still look wrong. Different clients use different labels for this action.
+3. Verify the running binary with `icuvisor version` and confirm your client config points at that binary.
+4. Run `icuvisor diagnostics` and review the redacted output for the active transport, toolset, delete mode, timezone, config source, and credential source.
+
+Common stale-state symptoms include:
+
+- The assistant reports the wrong local date, day boundary, or timezone after you changed `ICUVISOR_TIMEZONE`.
+- FTP, heart-rate, pace, or power zones look old after you updated settings in intervals.icu.
+- A tool added in a new release is missing, an old tool schema is still used, or a delete/write tool remains hidden after changing toolset or delete-mode settings.
+- Writes fail with arguments that no longer match the current docs, or the assistant keeps retrying a field that a new schema removed or renamed.
+
+Treat API keys as credentials, not troubleshooting data. Do not paste an intervals.icu API key into an assistant conversation, issue report, or manual MCP JSON config. Use `icuvisor setup`, the OS keychain, or your client's sensitive extension setting instead. `icuvisor diagnostics` is designed to redact secrets; prefer sharing that redacted output when asking for help.
+
+## Symptom table
 
 | Symptom                                                                       | Likely cause                                                                                               | Fix                                                                                                                                                                                                                                                                           |
 | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
