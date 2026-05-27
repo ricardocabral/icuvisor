@@ -20,7 +20,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "List activities for a date range with terse unit-disambiguated rows, upstream activity tags when returned, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, custom_fields for athlete-defined activity custom fields, Strava-unavailable detection, and opaque pagination.",
+    "summary": "Scan a local date window and return a paginated activity index: terse unit-disambiguated summary rows with IDs, source/device hints, tags, custom_fields, and Strava-unavailable markers.",
     "anchor": "get_activities"
   },
   {
@@ -92,7 +92,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "write",
-    "summary": "Rename and/or edit the free-text description of one completed activity by activity_id.",
+    "summary": "Rename and/or replace the free-text description of one completed activity by activity_id.",
     "anchor": "update_activity"
   },
   {

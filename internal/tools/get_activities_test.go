@@ -80,7 +80,7 @@ func TestGetActivitiesRegistrationMetadata(t *testing.T) {
 
 	client := newFakeActivitiesClient(t, nil, "metric")
 	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
-	if !strings.Contains(tool.Description, "List activities for a date range") {
+	if !strings.Contains(tool.Description, "paginated activity index") {
 		t.Fatalf("description = %q, want distinguishing activity-list sentence", tool.Description)
 	}
 	properties := tool.InputSchema.(map[string]any)["properties"].(map[string]any)
