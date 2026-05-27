@@ -1,6 +1,6 @@
 # TP-108: Stale conversation troubleshooting docs — Status
 
-**Current Step:** Step 3: Testing & Verification
+**Current Step:** Step 4: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 0
@@ -43,7 +43,7 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Markdown/link checks passing if available
 - [x] Docs generation run if applicable
@@ -54,12 +54,12 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Final commit includes task ID
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Final commit includes task ID
 
 ---
 
@@ -74,6 +74,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Existing Hugo docs already had `after-upgrade` and troubleshooting pages; stale-state guidance fits best in `web/content/guides/troubleshooting.md` with links from client connection docs. | Implemented in docs and linked from README/client/upgrade pages. | `web/content/guides/troubleshooting.md`, `web/content/connect/*`, `README.md` |
 
 ---
 
@@ -95,4 +96,7 @@
 
 ## Notes
 
+- Verification run: `make web-build` passed with existing Hugo deprecation warnings for `.Site.Data` and `.Language.LanguageDirection`.
+- Verification run: `make test` passed.
+- Verification run: `make build` passed.
 - Tracking issue: https://github.com/ricardocabral/icuvisor/issues/35
