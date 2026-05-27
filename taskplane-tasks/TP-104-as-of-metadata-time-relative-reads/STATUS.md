@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -55,6 +55,7 @@
 - [x] `get_wellness_data` current-day range metadata added
 - [x] Pagination/null-stripping/terse-full behavior preserved
 - [x] Targeted tool tests passing
+- [ ] Output schemas for `get_events` and `get_wellness_data` document current-day as-of metadata
 
 ---
 
@@ -100,6 +101,7 @@
 | R005 | Plan | 2 | APPROVE | .reviews/R005-plan-step2.md |
 | R006 | Code | 2 | APPROVE | .reviews/R006-code-step2.md |
 | R007 | Plan | 3 | APPROVE | .reviews/R007-plan-step3.md |
+| R008 | Code | 3 | REVISE | .reviews/R008-code-step3.md |
 
 ---
 
@@ -139,3 +141,4 @@
 | 2026-05-27 12:36 | Review R005 | plan Step 2: APPROVE |
 | 2026-05-27 12:44 | Review R006 | code Step 2: APPROVE |
 | 2026-05-27 12:50 | Review R007 | plan Step 3: APPROVE |
+| 2026-05-27 13:10 | Review R008 | code Step 3: REVISE |
