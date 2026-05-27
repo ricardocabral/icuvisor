@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 1
 **Size:** M
 
@@ -58,6 +58,7 @@
 - [x] Explanatory metadata added if needed without bloating terse responses
 - [x] Targeted wellness/activity tests passing
 - [x] Hydration row preserves `hydration` and `hydrationVolume` distinctly with terse metadata and include_full raw preservation
+- [ ] R011 null hydration fields do not leave stale field semantics in terse responses
 
 ---
 
@@ -105,6 +106,7 @@
 | R008 | Code | 2 | APPROVE | `.reviews/R008-code-step2.md` |
 | R009 | Plan | 3 | REVISE | `.reviews/R009-plan-step3.md` |
 | R010 | Plan | 3 | APPROVE | `.reviews/R010-plan-step3.md` |
+| R011 | Code | 3 | REVISE | `.reviews/R011-code-step3.md` |
 
 ---
 
@@ -162,3 +164,4 @@
 | 2026-05-27 13:20 | Review R008 | code Step 2: APPROVE |
 | 2026-05-27 13:23 | Review R009 | plan Step 3: REVISE |
 | 2026-05-27 13:25 | Review R010 | plan Step 3: APPROVE |
+| 2026-05-27 13:31 | Review R011 | code Step 3: REVISE |
