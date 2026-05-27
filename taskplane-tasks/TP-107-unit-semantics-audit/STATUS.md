@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -24,13 +24,13 @@
 ### Step 1: Add workout target unit regression coverage
 **Status:** 🟨 In Progress
 
-- [ ] Percent FTP / power target serialization tests added
-- [ ] Pace target range and unit tests added
-- [ ] Heart-rate percent variant tests added where supported
-- [ ] Serializer fixes applied only if required
-- [ ] Targeted workoutdoc tests passing
-- [ ] Direct table-driven serializer matrix covers scalar/range power, pace, HR, zone, watt, BPM, and text pace forms
-- [ ] Unsupported structured absolute pace target units are documented as discovery or fixed additively with tests
+- [x] Percent FTP / power target serialization tests added
+- [x] Pace target range and unit tests added
+- [x] Heart-rate percent variant tests added where supported
+- [x] Serializer fixes applied only if required
+- [x] Targeted workoutdoc tests passing
+- [x] Direct table-driven serializer matrix covers scalar/range power, pace, HR, zone, watt, BPM, and text pace forms
+- [x] Unsupported structured absolute pace target units are documented as discovery or fixed additively with tests
 
 ---
 
@@ -99,7 +99,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
-| Preflight scope: workout target units are centralized in `workoutTargetUnits`/`formatTarget`; interval units use `units.ParseUnit` with `unknown_unit`; extended metrics currently convert raw joules fields to `*_kj`; wellness calories use `calories_intake` while activity rows use `calories_burned`; hydration and `hydrationVolume` are emitted as separate wellness fields. | Drives regression coverage in Steps 1-3. | `internal/workoutdoc/serialize.go`; `internal/tools/get_activity_details.go`; `internal/tools/get_extended_metrics.go`; `internal/tools/get_wellness_data.go`
+| Preflight scope: workout target units are centralized in `workoutTargetUnits`/`formatTarget`; interval units use `units.ParseUnit` with `unknown_unit`; extended metrics currently convert raw joules fields to `*_kj`; wellness calories use `calories_intake` while activity rows use `calories_burned`; hydration and `hydrationVolume` are emitted as separate wellness fields. | Drives regression coverage in Steps 1-3. | `internal/workoutdoc/serialize.go`; `internal/tools/get_activity_details.go`; `internal/tools/get_extended_metrics.go`; `internal/tools/get_wellness_data.go` |
+| Structured workout serializer does not support `MINS_KM`/`MINS_MILE` pace target units; Step 1 locks this as an unsupported-unit regression instead of silently coercing absolute pace into numeric `PACE`. | Covered by `TestSerializeRejectsUnsupportedAbsolutePaceUnits`; no serializer fix applied. | `internal/workoutdoc/workoutdoc_test.go` |
 
 ---
 
@@ -128,3 +129,4 @@
 - Step 1 verification command: `go test ./internal/workoutdoc`; update discoveries with the proven behavior.
 | 2026-05-27 12:57 | Review R001 | plan Step 1: REVISE |
 | 2026-05-27 12:59 | Review R002 | plan Step 1: REVISE |
+| 2026-05-27 13:01 | Review R003 | plan Step 1: APPROVE |
