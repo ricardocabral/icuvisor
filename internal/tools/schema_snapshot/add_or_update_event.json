@@ -182,7 +182,7 @@
       "type": "string"
     },
     "description": {
-      "description": "Optional free-text athlete or coach notes. Preserved verbatim, including whitespace and line breaks. May be supplied with workout_doc; use the \u003c!-- icuvisor:steps --\u003e sentinel on its own line to choose where serialized steps are inserted.",
+      "description": "Optional replacement for the upstream event description/DSL, not append-only notes. Omit on updates to leave unchanged. For WORKOUT updates, supplying description without workout_doc can replace existing structured steps; include the desired workout_doc to preserve or merge structure. Preserved verbatim, including whitespace and line breaks. May be supplied with workout_doc; use the \u003c!-- icuvisor:steps --\u003e sentinel on its own line to choose where serialized steps are inserted.",
       "type": "string"
     },
     "distance_meters": {
@@ -234,7 +234,7 @@
       "type": "string"
     },
     "workout_doc": {
-      "description": "Optional structured WorkoutDoc. Serialized to the upstream workout DSL and merged with description when both are supplied. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Syntax reference: icuvisor://workout-syntax.",
+      "description": "Optional structured WorkoutDoc. Serialized to the upstream workout DSL and merged with description when both are supplied. For WORKOUT updates, include the desired structured steps when changing prose so the replacement description/DSL preserves the workout structure. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Syntax reference: icuvisor://workout-syntax.",
       "type": "object"
     }
   },

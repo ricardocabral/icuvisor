@@ -13,7 +13,7 @@ import (
 
 const (
 	updateActivityName                    = "update_activity"
-	updateActivityDescription             = "Rename and/or edit the free-text description of one completed activity by activity_id. Sparse update: omit a field to leave it unchanged; pass an explicit empty string for description to clear it. This non-destructive metadata edit does not alter recorded streams, intervals, or analyzed metrics. Use set_activity_intervals (delete-mode tool) to write a structured workout_doc as the activity's interval set."
+	updateActivityDescription             = "Rename and/or replace the free-text description of one completed activity by activity_id. Sparse update: omit a field to leave it unchanged; pass an explicit empty string for description to clear it. Activity descriptions are prose metadata only, not planned-workout structure. This non-destructive metadata edit does not alter recorded streams, intervals, or analyzed metrics. Use set_activity_intervals (delete-mode tool) to write a structured workout_doc as the activity's interval set."
 	invalidUpdateActivityArgumentsMessage = "invalid update_activity arguments; provide activity_id plus at least one of name or description"
 	updateActivityMessage                 = "could not update activity; check intervals.icu credentials, activity ID, and writable activity fields"
 )
@@ -161,7 +161,7 @@ func updateActivityInputSchema() map[string]any {
 		"properties": map[string]any{
 			"activity_id":  map[string]any{"type": "string", "description": "Required intervals.icu activity ID. Surrounding whitespace is trimmed; the i-prefix is preserved verbatim."},
 			"name":         map[string]any{"type": "string", "description": "Optional replacement activity title. Omit to leave unchanged. Empty strings are rejected to avoid accidentally blanking the title; intervals.icu's UI also rejects blank titles."},
-			"description":  map[string]any{"type": "string", "description": "Optional replacement free-text activity description. Omit to leave unchanged; pass an explicit empty string to clear the description. Prose only — to write structured intervals, use set_activity_intervals with a workout_doc."},
+			"description":  map[string]any{"type": "string", "description": "Optional replacement free-text activity description; this is not append-only. Omit to leave unchanged; pass an explicit empty string to clear the description. Prose metadata only — to write structured intervals, use set_activity_intervals with a workout_doc."},
 			"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, include the raw upstream updated-activity payload under full; default returns a terse update confirmation."},
 		},
 	}
