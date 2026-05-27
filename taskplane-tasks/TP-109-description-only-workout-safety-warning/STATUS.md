@@ -1,10 +1,10 @@
 # TP-109: Description-only workout safety warning — Status
 
-**Current Step:** Step 1: Design the warning/guard contract
+**Current Step:** Step 2: Implement warning behavior and tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -22,18 +22,18 @@
 ---
 
 ### Step 1: Design the warning/guard contract
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 > **Plan-review checkpoint**
 
-- [ ] Minimal additive response metadata field(s) chosen
-- [ ] Warning text is terse, actionable, and non-blocking for legitimate strength prose updates
-- [ ] Trigger condition documented
+- [x] Minimal additive response metadata field(s) chosen
+- [x] Warning text is terse, actionable, and non-blocking for legitimate strength prose updates
+- [x] Trigger condition documented
 
 ---
 
 ### Step 2: Implement warning behavior and tests
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Warning behavior implemented for description-only `WORKOUT` event updates
 - [ ] `update_workout` checked and covered if affected
@@ -66,6 +66,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | plan | 1 | APPROVE | `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -94,4 +95,7 @@
 
 ## Notes
 
-*Reserved for execution notes*
+- Step 1 design: add a new optional `_meta.description_only_workout_warning` string to write responses instead of overloading existing `_meta.workout_doc_warning`, which is reserved for upstream render/parse failures after uploading WorkoutDoc.
+- Step 1 warning text: use terse non-blocking copy: `Description was written without workout_doc; if this item previously had structured steps, they may have been replaced. Include workout_doc when preserving or merging workout structure.`
+- Step 1 trigger: `add_or_update_event` sets the warning only on update-shaped writes with `event_id` present, `description` supplied, no `workout_doc`, and `category` equals `WORKOUT` case-insensitively. `update_workout` is affected because it sparsely updates an existing template by ID and a supplied `description` replaces the upstream description/DSL, so it sets the same warning when `description` is supplied and no `workout_doc` is supplied.
+| 2026-05-27 20:44 | Review R001 | plan Step 1: APPROVE |
