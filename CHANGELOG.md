@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Clarified public docs that icuvisor itself is free and open source with no icuvisor-hosted account, onboarding credit, SaaS quota, or subscription gate, while third-party services keep their own terms and limits.
 - `add_or_update_event`, `create_workout`, and `update_workout` now merge free-text `description` prose with structured `workout_doc` steps instead of forcing callers to choose one source; the `<!-- icuvisor:steps -->` sentinel controls insertion point when present.
 - Clarified write-tool and planning guidance that `description` writes replace the upstream description/DSL field rather than appending notes; preserving structured workout steps on updates requires supplying the desired `workout_doc` explicitly.
+- Added prompt and cookbook guardrails for bulk workout/calendar writes: validate or preview a representative structured payload, perform one write/readback, inspect warnings and structured-step summaries, then continue with the rest.
 
 ### Fixed
 

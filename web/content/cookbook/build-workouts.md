@@ -29,7 +29,9 @@ my intervals.icu data.
 
 Rules: get the DSL right — correct repeat syntax, steps not bullets, targets
 as percentages of my threshold. Do not overwrite an existing library workout;
-create a new one unless I explicitly name one to update.
+create a new one unless I explicitly name one to update. For multiple calendar
+or library writes, validate one representative workout, write one, read it back,
+check warnings and structured-step summaries, then continue with the rest.
 ```
 
 ## What icuvisor does
@@ -41,7 +43,7 @@ create a new one unless I explicitly name one to update.
 | 3 | — | Drafting happens in the chat; nothing is written yet. |
 | 4 | [`create_workout`]({{< relref "/reference/tools#create_workout" >}}) or [`add_or_update_event`]({{< relref "/reference/tools#add_or_update_event" >}}) | Saves to the library or schedules it — gated on write mode. |
 
-To revise an existing template, name it and the assistant uses [`update_workout`]({{< relref "/reference/tools#update_workout" >}}). On updates, supplied `description` text replaces the upstream template description/DSL rather than appending a note. If the existing template has structured steps you want to keep, ask the assistant to include the desired `workout_doc` explicitly and use `<!-- icuvisor:steps -->` to place the serialized steps around any prose.
+To revise an existing template, name it and the assistant uses [`update_workout`]({{< relref "/reference/tools#update_workout" >}}). On updates, supplied `description` text replaces the upstream template description/DSL rather than appending a note. If the existing template has structured steps you want to keep, ask the assistant to include the desired `workout_doc` explicitly and use `<!-- icuvisor:steps -->` to place the serialized steps around any prose. For bulk edits, avoid parallel writes until one representative readback confirms `_meta.workout_doc_warning` is absent or understood and `workout_doc_summary` still shows the expected steps.
 
 ## A good answer looks like
 

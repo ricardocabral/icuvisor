@@ -45,7 +45,9 @@ table. Do not write anything to my calendar yet.
 ```text
 Stage 3. The plan looks good. Add it to my calendar one week at a time:
 create the block markers and the key sessions as events, show me each week
-before moving to the next, and stop if I say so.
+before moving to the next, and stop if I say so. For the first structured
+workout, validate the payload, write one event, read it back, and confirm no
+unexpected warnings or lost structured steps before writing the rest.
 ```
 
 ## What icuvisor does
@@ -83,4 +85,4 @@ Stage 2 should produce something like:
 
 - **Three stages, three messages.** Keeps each tool burst small and gives you a checkpoint before any write — the opposite of a single mega-prompt that gets interrupted.
 - **`get_fitness_projection` as a reality check.** The assistant proposes a ramp; the tool tests whether the CTL path is actually reachable, so the plan is not just plausible prose.
-- **Schedule last, week by week.** Calendar writes are [gated]({{< relref "/reference/safety-modes" >}}) and hard to undo in bulk. Incremental scheduling keeps you in control.
+- **Schedule last, week by week.** Calendar writes are [gated]({{< relref "/reference/safety-modes" >}}) and hard to undo in bulk. Incremental scheduling keeps you in control, and the first write/readback catches cases where a description update would replace structured workout steps if the desired `workout_doc` was omitted.
