@@ -1,6 +1,6 @@
 # TP-104: As-of metadata for time-relative reads — Status
 
-**Current Step:** Step 3: Add metadata to current-day range reads
+**Current Step:** Step 4: Regression tests and changelog
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
@@ -60,7 +60,7 @@
 ---
 
 ### Step 4: Regression tests and changelog
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Positive/negative timezone boundary cases covered
 - [ ] Date ranges including/excluding local today covered
