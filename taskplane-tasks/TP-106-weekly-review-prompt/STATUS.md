@@ -1,10 +1,10 @@
 # TP-106: Weekly review MCP prompt — Status
 
-**Current Step:** Step 3: Changelog and full verification
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 2
 **Size:** S
 
@@ -45,16 +45,16 @@
 ---
 
 ### Step 3: Changelog and full verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `CHANGELOG.md` updated
-- [ ] Prompt docs/reference checked if applicable
-- [ ] Targeted prompt tests passing
+- [x] `CHANGELOG.md` updated
+- [x] Prompt docs/reference checked if applicable
+- [x] Targeted prompt tests passing
 
 ---
 
 ### Step 4: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Targeted tests passing
 - [ ] FULL test suite passing: `make test`
@@ -117,3 +117,4 @@
 | 2026-05-27 14:22 | Review R003 | plan Step 1: REVISE |
 | 2026-05-27 14:24 | Review R004 | plan Step 1: APPROVE |
 | 2026-05-27 14:28 | Review R005 | plan Step 2: APPROVE |
+| 2026-05-27 14:37 | Review R006 | plan Step 3: APPROVE |
