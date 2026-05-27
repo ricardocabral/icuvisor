@@ -1,10 +1,10 @@
 # TP-114: Garmin to Claude walkthrough — Status
 
-**Current Step:** Step 1: Plan the tutorial and visual treatment
+**Current Step:** Step 2: Add the walkthrough content
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -33,12 +33,12 @@
 ---
 
 ### Step 2: Add the walkthrough content
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] New tutorial page created for the Garmin → intervals.icu → icuvisor → Claude journey
-- [ ] Copy-paste prompts included for first call, weekly review, recovery check, and missing-data troubleshooting
-- [ ] Source limitations explained plainly
-- [ ] Redacted/mock visuals or diagrams added if useful and safe
+- [x] New tutorial page created for the Garmin → intervals.icu → icuvisor → Claude journey
+- [x] Copy-paste prompts included for first call, weekly review, recovery check, and missing-data troubleshooting
+- [x] Source limitations explained plainly
+- [x] Redacted/mock visuals or diagrams added if useful and safe
 
 ---
 
@@ -77,6 +77,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R001 | plan | 1 | APPROVE | `.reviews/R001-plan-step1.md` |
+| R002 | plan | 2 | UNAVAILABLE | — |
 
 ---
 
@@ -84,6 +85,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| No existing Mermaid usage was found in `web/content`; the tutorial uses a plain Markdown text diagram instead of relying on Mermaid rendering. | Applied in Step 2 | `web/content/tutorials/garmin-to-claude.md` |
 
 ---
 
