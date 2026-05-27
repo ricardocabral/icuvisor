@@ -106,6 +106,9 @@
 | 2026-05-27 19:00 | Step 3 make test | Initial `make test` found stale `cmd/gendocs/testdata/tools.golden.json` summary from wording change; updated golden and reran `make test` successfully |
 | 2026-05-27 19:02 | Step 3 lint | Ran `make lint` successfully (0 issues) |
 | 2026-05-27 19:04 | Step 3 build | Ran `make build` successfully |
+| 2026-05-27 18:40 | ⚠️ Steering | TP-109 was intentionally skipped in wave 1, so treat it as a non-blocking dependency for this batch. Proceed with TP-111, but do not assume any TP-109 runtime warning/metadata/guard exists. Use TP-109 |
+| 2026-05-27 18:40 | Worker iter 3 | done in 1489s, tools: 110 |
+| 2026-05-27 18:40 | Task complete | .DONE created |
 
 ---
 
