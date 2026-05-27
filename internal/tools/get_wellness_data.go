@@ -227,7 +227,7 @@ func deleteLegacyWellnessNutritionKeys(out map[string]any) {
 func addWellnessFieldSemantics(out map[string]any) {
 	semantics := map[string]string{}
 	for _, field := range []string{"calories_intake", "carbs_g", "protein_g", "fat_g", "hydration", "hydrationVolume"} {
-		if _, ok := out[field]; ok {
+		if value, ok := out[field]; ok && value != nil {
 			semantics[field] = wellnessFieldSemantics[field]
 		}
 	}

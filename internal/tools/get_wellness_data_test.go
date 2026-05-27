@@ -309,6 +309,25 @@ func TestGetWellnessDataHydrationSemanticsAndIncludeFull(t *testing.T) {
 	}
 }
 
+func TestGetWellnessDataNullHydrationDoesNotEmitSemantics(t *testing.T) {
+	t.Parallel()
+
+	row := shapedInlineWellnessRow(t, `{"id":"2026-05-17","hydration":null,"hydrationVolume":null}`, false)
+	if _, ok := row["hydration"]; ok {
+		t.Fatalf("null hydration was not stripped: %+v", row)
+	}
+	if _, ok := row["hydrationVolume"]; ok {
+		t.Fatalf("null hydrationVolume was not stripped: %+v", row)
+	}
+	if meta, ok := row["_meta"].(map[string]any); ok {
+		if semantics, ok := meta["field_semantics"].(map[string]any); ok {
+			if semantics["hydration"] != nil || semantics["hydrationVolume"] != nil {
+				t.Fatalf("null hydration left stale field_semantics: %+v", semantics)
+			}
+		}
+	}
+}
+
 func shapedFixtureRow(t *testing.T, fixture string, includeFull bool) map[string]any {
 	t.Helper()
 	return shapedWellnessRow(t, loadWellnessFixture(t, fixture), includeFull)

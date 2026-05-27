@@ -58,7 +58,7 @@
 - [x] Explanatory metadata added if needed without bloating terse responses
 - [x] Targeted wellness/activity tests passing
 - [x] Hydration row preserves `hydration` and `hydrationVolume` distinctly with terse metadata and include_full raw preservation
-- [ ] R011 null hydration fields do not leave stale field semantics in terse responses
+- [x] R011 null hydration fields do not leave stale field semantics in terse responses
 
 ---
 
