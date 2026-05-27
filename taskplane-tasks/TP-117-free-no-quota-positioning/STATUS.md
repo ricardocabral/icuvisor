@@ -1,6 +1,6 @@
 # TP-117: Free and no-quota positioning — Status
 
-**Current Step:** Step 3: Testing & Verification
+**Current Step:** Step 4: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 0
@@ -41,17 +41,17 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Docs/site build passing: `make web-build`
-- [ ] FULL test suite run if non-doc/generated app files are touched: `make test`
-- [ ] Build passes if app strings or generated assets are touched: `make build`
-- [ ] All failures fixed or documented as pre-existing unrelated failures
+- [x] Docs/site build passing: `make web-build`
+- [x] FULL test suite run if non-doc/generated app files are touched: `make test`
+- [x] Build passes if app strings or generated assets are touched: `make build`
+- [x] All failures fixed or documented as pre-existing unrelated failures
 
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] "Must Update" docs modified
 - [ ] "Check If Affected" docs reviewed
@@ -93,3 +93,6 @@
 ## Notes
 
 - Step 2 troubleshooting review: existing troubleshooting guide covers stale tool catalogs, credentials, transport, keychain, and safety modes; it does not contain quota/account confusion copy, so no troubleshooting edit was needed.
+- Step 3 `make test` skipped: task touched documentation/site/README/changelog/status files only, with no non-doc/generated app files.
+- Step 3 `make build` skipped: no app strings or generated assets were touched.
+- Step 3 `make web-build` passed; Hugo emitted existing deprecation warnings for `.Language.LanguageDirection` and `.Site.Data`, with no failures.
