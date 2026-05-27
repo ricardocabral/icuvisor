@@ -5,7 +5,7 @@
 **Last Updated:** 2026-05-27
 **Review Level:** 2
 **Review Counter:** 15
-**Iteration:** 1
+**Iteration:** 2
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers may expand steps when runtime discoveries warrant it.
@@ -85,9 +85,9 @@
 ### Step 6: Documentation & Delivery
 **Status:** 🟨 In Progress
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 - [ ] Final commit includes task ID
 
 ---
@@ -119,6 +119,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | `make fmt-check`, targeted tests, `make test`, `make build`, and `make lint` passed for TP-104 verification. | Recorded as Step 5 evidence; no pre-existing failures encountered. | STATUS.md Step 5 |
+| ROADMAP `_meta.as_of` item is fully satisfied by TP-104; generated tool docs had no diff after `make docs-tools`, and PRD product contract did not require changes. | ROADMAP checkbox updated; no generated docs or PRD edits needed. | ROADMAP.md / docs/prd/PRD-icuvisor.md / web/data/tools.json |
 
 ---
 
@@ -129,6 +130,7 @@
 | 2026-05-26 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-05-27 12:12 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-27 12:12 | Step 0 started | Preflight |
+| 2026-05-27 14:12 | Worker iter 1 | killed (wall-clock timeout) in 7201s, tools: 227 |
 
 ---
 
