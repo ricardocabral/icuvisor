@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation now explains stale conversations and cached MCP tool catalogs, including when to start a new chat, reconnect tools, verify `icuvisor version`, run `icuvisor diagnostics`, and avoid pasting API keys into assistant conversations.
 - New curated MCP prompt `weekly_review` guides assistants through a structured previous-week training review, planned-vs-completed comparison, wellness caveats, and optional next-week preview using existing read/analyzer tools.
 - Time-relative reads now include athlete-local as-of anchors: `get_today` always returns `_meta.as_of`, `_meta.as_of_date`, `_meta.as_of_weekday`, and `_meta.timezone`, and `get_activities`, `get_events`, and `get_wellness_data` return the same metadata when the requested range includes the athlete-local current day.
+- Terse event and activity read responses now include upstream `tags` arrays when intervals.icu returns them, preserving order and explicit empty lists without requiring `include_full:true`.
 
 ### Changed
 

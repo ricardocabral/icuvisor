@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -49,10 +49,10 @@
 ### Step 3: Regression tests and docs
 **Status:** 🟨 In Progress
 
-- [ ] Audit event/activity regression coverage for tags present/order, explicit empty arrays, missing/null omission, malformed omission, and include_full raw preservation
-- [ ] Update catalog/schema/doc golden expectations affected by tag-related description or schema changes
-- [ ] `CHANGELOG.md` updated under `[Unreleased]` for user-visible tag response additions
-- [ ] Targeted tests passing for `go test ./internal/tools ./internal/intervals`
+- [x] Audit event/activity regression coverage for tags present/order, explicit empty arrays, missing/null omission, malformed omission, and include_full raw preservation
+- [x] Update catalog/schema/doc golden expectations affected by tag-related description or schema changes
+- [x] `CHANGELOG.md` updated under `[Unreleased]` for user-visible tag response additions
+- [x] Targeted tests passing for `go test ./internal/tools ./internal/intervals`
 
 ---
 
@@ -88,6 +88,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Activity fixtures currently contain no upstream `tags` samples, but activity read paths now tolerate and expose future valid raw `tags` string arrays without guessing. | Covered by synthetic regression tests for valid, empty, null, missing, and malformed activity tag payloads. | `internal/tools/get_activities_test.go`, `internal/tools/get_activity_details_test.go` |
 
 ---
 
@@ -115,3 +116,4 @@
 | 2026-05-27 12:32 | Review R003 | plan Step 2: UNKNOWN |
 | 2026-05-27 12:35 | Review R004 | plan Step 2: APPROVE |
 | 2026-05-27 12:44 | Review R005 | plan Step 3: UNKNOWN |
+| 2026-05-27 12:46 | Review R006 | plan Step 3: APPROVE |
