@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -24,9 +24,10 @@
 ### Step 1: Implement event tag read shaping
 **Status:** 🟨 In Progress
 
-- [ ] Decode or extract upstream `tags` for events without guessing missing values
-- [ ] Add `tags` to shared terse event rows while preserving order
+- [ ] Extract event tags from raw upstream payload only when `tags` is a JSON string array, preserving explicit empty arrays and omitting missing/null/non-array/mixed values
+- [ ] Add copied `tags` pointer to shared terse event rows while preserving order and inherited shared-row behavior for all event response helpers
 - [ ] Ensure `get_events`, `get_event_by_id`, `add_or_update_event`, and `get_today` share behavior
+- [ ] Targeted event tests cover present/order, explicit empty, missing/null/malformed omission, include_full raw preservation, and affected event paths
 - [ ] Targeted event tests passing
 
 ---
@@ -105,3 +106,4 @@
 ## Notes
 
 - Tracking issue: https://github.com/ricardocabral/icuvisor/issues/30
+| 2026-05-27 12:19 | Review R001 | plan Step 1: UNKNOWN |
