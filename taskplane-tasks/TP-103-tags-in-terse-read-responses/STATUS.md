@@ -1,6 +1,6 @@
 # TP-103: Tags in terse read responses — Status
 
-**Current Step:** Step 1: Implement event tag read shaping
+**Current Step:** Step 2: Investigate and implement activity tag handling if supported
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Implement event tag read shaping
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Extract event tags from raw upstream payload only when `tags` is a JSON string array, preserving explicit empty arrays and omitting missing/null/non-array/mixed values
 - [x] Add copied `tags` pointer to shared terse event rows while preserving order and inherited shared-row behavior for all event response helpers
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Investigate and implement activity tag handling if supported
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 > ⚠️ Hydrate: Expand based on actual activity payload/model support discovered in source and fixtures.
 
