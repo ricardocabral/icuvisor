@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 1
 **Size:** M
 
@@ -47,7 +47,7 @@
 ---
 
 ### Step 3: Add metadata to current-day range reads
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Shared current-day range predicate, as-of meta application helper, and injectable clock constructors added for range tools
 - [x] `get_activities` current-day range metadata added
@@ -102,6 +102,7 @@
 | R006 | Code | 2 | APPROVE | .reviews/R006-code-step2.md |
 | R007 | Plan | 3 | APPROVE | .reviews/R007-plan-step3.md |
 | R008 | Code | 3 | REVISE | .reviews/R008-code-step3.md |
+| R009 | Code | 3 | APPROVE | .reviews/R009-code-step3.md |
 
 ---
 
@@ -142,3 +143,4 @@
 | 2026-05-27 12:44 | Review R006 | code Step 2: APPROVE |
 | 2026-05-27 12:50 | Review R007 | plan Step 3: APPROVE |
 | 2026-05-27 13:10 | Review R008 | code Step 3: REVISE |
+| 2026-05-27 13:17 | Review R009 | code Step 3: APPROVE |
