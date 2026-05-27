@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 11
+**Review Counter:** 12
 **Iteration:** 1
 **Size:** M
 
@@ -60,7 +60,7 @@
 ---
 
 ### Step 4: Regression tests and changelog
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Step 4 plan documents timezone boundary coverage, include/exclude range coverage, past-only assertions, changelog location, and targeted tests
 - [x] Positive/negative timezone boundary cases covered
@@ -106,6 +106,7 @@
 | R009 | Code | 3 | APPROVE | .reviews/R009-code-step3.md |
 | R010 | Plan | 4 | REVISE | .reviews/R010-plan-step4.md |
 | R011 | Plan | 4 | APPROVE | .reviews/R011-plan-step4.md |
+| R012 | Code | 4 | APPROVE | .reviews/R012-code-step4.md |
 
 ---
 
@@ -150,3 +151,4 @@
 | 2026-05-27 13:17 | Review R009 | code Step 3: APPROVE |
 | 2026-05-27 13:20 | Review R010 | plan Step 4: REVISE |
 | 2026-05-27 13:22 | Review R011 | plan Step 4: APPROVE |
+| 2026-05-27 13:29 | Review R012 | code Step 4: APPROVE |
