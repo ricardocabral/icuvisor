@@ -17,14 +17,14 @@ func (r *captureRegistrar) AddPrompt(prompt Prompt) error {
 	return nil
 }
 
-func TestNewRegistryRegistersFivePrompts(t *testing.T) {
+func TestNewRegistryRegistersSixPrompts(t *testing.T) {
 	t.Parallel()
 
 	registrar := &captureRegistrar{}
 	if err := NewRegistry().Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	wantNames := []string{TrainingAnalysisName, RecoveryCheckName, WeeklyPlanningName, RaceWeekTaperName, CoachRosterTriageName}
+	wantNames := []string{TrainingAnalysisName, RecoveryCheckName, WeeklyPlanningName, WeeklyReviewName, RaceWeekTaperName, CoachRosterTriageName}
 	if len(registrar.prompts) != len(wantNames) {
 		t.Fatalf("registered %d prompts, want %d", len(registrar.prompts), len(wantNames))
 	}
@@ -111,7 +111,7 @@ func TestRaceWeekTaperRequiresRaceDate(t *testing.T) {
 func TestPromptResourceCitationsStayTerse(t *testing.T) {
 	t.Parallel()
 
-	for _, prompt := range []Prompt{TrainingAnalysisPrompt(), RecoveryCheckPrompt(), WeeklyPlanningPrompt(), RaceWeekTaperPrompt(), CoachRosterTriagePrompt()} {
+	for _, prompt := range []Prompt{TrainingAnalysisPrompt(), RecoveryCheckPrompt(), WeeklyPlanningPrompt(), WeeklyReviewPrompt(), RaceWeekTaperPrompt(), CoachRosterTriagePrompt()} {
 		text := renderPromptText(t, prompt, requiredArgsForPrompt(prompt.Name))
 		if !strings.Contains(text, "icuvisor://") {
 			t.Fatalf("prompt %s missing resource URI:\n%s", prompt.Name, text)

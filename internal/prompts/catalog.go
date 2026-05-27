@@ -12,6 +12,7 @@ const (
 	TrainingAnalysisName  = "training_analysis"
 	RecoveryCheckName     = "recovery_check"
 	WeeklyPlanningName    = "weekly_planning"
+	WeeklyReviewName      = "weekly_review"
 	RaceWeekTaperName     = "race_week_taper"
 	CoachRosterTriageName = "coach_roster_triage"
 )
@@ -91,6 +92,41 @@ func WeeklyPlanningPrompt() Prompt {
 				"When proposing workouts, prefer the structured `workout_doc` form on write tools and attach any coaching notes via `description` on the same event — both fields coexist, so a separate note event is not needed; call `validate_workout` before the write if uncertain about the DSL syntax, and read `icuvisor://workout-syntax` for the cheat sheet and common mistakes.",
 			},
 			Return: "day-by-day plan, key load constraints, planned-vs-completed notes, and questions before any write tool is used",
+		}),
+	}
+}
+
+// WeeklyReviewPrompt guides structured weekly retrospective and next-week preview.
+func WeeklyReviewPrompt() Prompt {
+	return Prompt{
+		Name:        WeeklyReviewName,
+		Title:       "Weekly review",
+		Description: "Guide a structured review of the previous training week and optional preview of the upcoming week using existing icuvisor tools.",
+		Arguments: []Argument{
+			{Name: "week_start", Title: "Week start", Description: "Optional athlete-local Monday date string (YYYY-MM-DD) for the week being reviewed."},
+			{Name: "lookback_days", Title: "Lookback days", Description: "Optional positive integer string for context before week_start; default 7."},
+			{Name: "include_next_week", Title: "Include next week", Description: "Optional boolean string; when true, include an upcoming-week preview after the review."},
+		},
+		Handler: staticPromptHandler(promptSpec{
+			Title:        "Weekly review",
+			DefaultScope: "review the previous athlete-local week with a 7-day lookback and include next week only if requested",
+			ArgOrder:     []string{"week_start", "lookback_days", "include_next_week"},
+			Resources:    []string{"icuvisor://athlete-profile", "icuvisor://event-categories"},
+			Tools:        []string{"get_athlete_profile", "get_wellness_data", "get_fitness", "get_training_summary", "get_activities", "get_events", "get_training_plan", "compute_zone_time", "compute_load_balance", "compute_compliance_rate", "analyze_trend", "icuvisor_list_advanced_capabilities"},
+			Do: []string{
+				"Read profile first to establish athlete-local timezone, current date, sport settings, and units; compare days only after converting to athlete-local dates.",
+				"Use fitness, training summary, and compute_zone_time to summarize load, volume, intensity mix, and fatigue/freshness changes.",
+				"Use compute_load_balance and compute_compliance_rate when available; otherwise call icuvisor_list_advanced_capabilities, continue from available reads, and name the missing helper.",
+				"Review activities, events, and training plan for planned-versus-completed work; include the upcoming-week preview only when include_next_week is true or the user asks.",
+				"Use wellness data for sleep/readiness/HRV context; check `_meta.stale`, missing fields, and provenance warnings, and do not infer readiness when wellness is stale or absent.",
+				"Use analyze_trend only for specific trend questions; keep raw activity rows terse unless evidence is missing.",
+			},
+			Guardrails: []string{
+				"Do not request or accept intervals.icu API keys in chat.",
+				"Prefer terse default tool responses; use include_full only when the user asks or evidence is missing.",
+				"Do not call write or delete tools unless the user explicitly approves the exact change first.",
+			},
+			Return: "weekly review with wins, concerns, planned-vs-completed gaps, wellness caveats, load/intensity evidence, next-week preview when requested, and explicit follow-up questions before any write",
 		}),
 	}
 }
