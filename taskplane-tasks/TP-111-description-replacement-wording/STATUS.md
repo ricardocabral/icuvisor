@@ -1,10 +1,10 @@
 # TP-111: Clarify description replacement wording — Status
 
-**Current Step:** Step 3: Testing & Verification
+**Current Step:** Step 4: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 3
 **Size:** S
 
@@ -48,12 +48,12 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] FULL test suite passing: `make test`
-- [ ] Lint passing or documented: `make lint`
-- [ ] Build passes: `make build`
-- [ ] All failures fixed or documented as pre-existing unrelated failures
+- [x] FULL test suite passing: `make test`
+- [x] Lint passing or documented: `make lint`
+- [x] Build passes: `make build`
+- [x] All failures fixed or documented as pre-existing unrelated failures
 
 ---
 
@@ -74,6 +74,7 @@
 | R001 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | plan | 2 | APPROVE | `.reviews/R003-plan-step2.md` |
+| R004 | plan | 3 | UNAVAILABLE | n/a |
 
 ---
 
@@ -100,6 +101,9 @@
 | 2026-05-27 18:35 | Preflight review | Reviewed TP-109 terminology intent, write-tool description/schema text, weekly planning prompt, cookbook, calendar-notes explainer, and changelog |
 | 2026-05-27 18:45 | Step 1 verification | Ran `go run ./scripts/snapshot_tool_schemas.go` and `go test ./internal/tools ./internal/toolchecks` successfully |
 | 2026-05-27 18:55 | Step 2 verification | Ran `go test ./internal/prompts ./internal/tools` successfully |
+| 2026-05-27 19:00 | Step 3 make test | Initial `make test` found stale `cmd/gendocs/testdata/tools.golden.json` summary from wording change; updated golden and reran `make test` successfully |
+| 2026-05-27 19:02 | Step 3 lint | Ran `make lint` successfully (0 issues) |
+| 2026-05-27 19:04 | Step 3 build | Ran `make build` successfully |
 
 ---
 
