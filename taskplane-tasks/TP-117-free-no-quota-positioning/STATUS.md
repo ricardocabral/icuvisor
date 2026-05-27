@@ -53,9 +53,9 @@
 ### Step 4: Documentation & Delivery
 **Status:** 🟨 In Progress
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 - [ ] Final commit includes task ID
 
 ---
@@ -71,6 +71,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| No out-of-scope discoveries during TP-117 | No action needed | STATUS.md |
 
 ---
 
@@ -96,3 +97,4 @@
 - Step 3 `make test` skipped: task touched documentation/site/README/changelog/status files only, with no non-doc/generated app files.
 - Step 3 `make build` skipped: no app strings or generated assets were touched.
 - Step 3 `make web-build` passed; Hugo emitted existing deprecation warnings for `.Language.LanguageDirection` and `.Site.Data`, with no failures.
+- Step 4 affected-docs review: install landing page updated; platform install pages, local-first explanation, and troubleshooting were reviewed and left unchanged except where the new install explanation covers the quota/account question.
