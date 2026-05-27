@@ -205,7 +205,7 @@ func wellnessRow(row intervals.Wellness, includeFull bool) map[string]any {
 		out["_native"] = cloneNestedJSONMap(row.Native)
 	}
 	addWellnessMeta(out, row)
-	addWellnessNutritionFieldSemantics(out)
+	addWellnessFieldSemantics(out)
 	if includeFull {
 		out["full"] = cloneJSONMap(row.Raw)
 	}
@@ -224,11 +224,11 @@ func deleteLegacyWellnessNutritionKeys(out map[string]any) {
 	}
 }
 
-func addWellnessNutritionFieldSemantics(out map[string]any) {
+func addWellnessFieldSemantics(out map[string]any) {
 	semantics := map[string]string{}
-	for _, field := range []string{"calories_intake", "carbs_g", "protein_g", "fat_g"} {
+	for _, field := range []string{"calories_intake", "carbs_g", "protein_g", "fat_g", "hydration", "hydrationVolume"} {
 		if _, ok := out[field]; ok {
-			semantics[field] = wellnessNutritionFieldSemantics[field]
+			semantics[field] = wellnessFieldSemantics[field]
 		}
 	}
 	if len(semantics) == 0 {
@@ -244,11 +244,13 @@ func addWellnessNutritionFieldSemantics(out map[string]any) {
 	out["_meta"] = meta
 }
 
-var wellnessNutritionFieldSemantics = map[string]string{
+var wellnessFieldSemantics = map[string]string{
 	"calories_intake": "Consumed calories from upstream wellness kcalConsumed.",
 	"carbs_g":         "Carbohydrates consumed in grams from upstream wellness carbohydrates.",
 	"protein_g":       "Protein consumed in grams from upstream wellness protein.",
 	"fat_g":           "Fat consumed in grams from upstream wellness fatTotal.",
+	"hydration":       "Upstream wellness hydration score/count field; unit semantics are not inferred.",
+	"hydrationVolume": "Upstream wellness hydrationVolume field preserved separately from hydration; volume unit is upstream-defined.",
 }
 
 func addWellnessMeta(out map[string]any, row intervals.Wellness) {

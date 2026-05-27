@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 1
 **Size:** M
 
@@ -53,11 +53,11 @@
 ### Step 3: Add calories and hydration semantics coverage
 **Status:** 🟨 In Progress
 
-- [ ] Activity `calories_burned` and wellness `calories_intake` distinction covered
-- [ ] `hydration` versus `hydrationVolume` semantics covered or clarified
-- [ ] Explanatory metadata added if needed without bloating terse responses
-- [ ] Targeted wellness/activity tests passing
-- [ ] Hydration row preserves `hydration` and `hydrationVolume` distinctly with terse metadata and include_full raw preservation
+- [x] Activity `calories_burned` and wellness `calories_intake` distinction covered
+- [x] `hydration` versus `hydrationVolume` semantics covered or clarified
+- [x] Explanatory metadata added if needed without bloating terse responses
+- [x] Targeted wellness/activity tests passing
+- [x] Hydration row preserves `hydration` and `hydrationVolume` distinctly with terse metadata and include_full raw preservation
 
 ---
 
@@ -104,6 +104,7 @@
 | R007 | Plan | 2 | APPROVE | `.reviews/R007-plan-step2.md` |
 | R008 | Code | 2 | APPROVE | `.reviews/R008-code-step2.md` |
 | R009 | Plan | 3 | REVISE | `.reviews/R009-plan-step3.md` |
+| R010 | Plan | 3 | APPROVE | `.reviews/R010-plan-step3.md` |
 
 ---
 
@@ -115,6 +116,7 @@
 | Structured workout serializer does not support `MINS_KM`/`MINS_MILE` pace target units; Step 1 locks this as an unsupported-unit regression instead of silently coercing absolute pace into numeric `PACE`. | Covered by `TestSerializeRejectsUnsupportedAbsolutePaceUnits`; no serializer fix applied. | `internal/workoutdoc/workoutdoc_test.go` |
 | Step 2 audit: workout-library `joules` / `joules_above_ftp` exist only on the internal upstream DTO; current `get_workout_library` and `get_workouts_in_folder` terse rows do not expose them, and include-full preserves raw `workout_doc` rather than relabeling energy fields. Custom items are preserved verbatim, and activity histograms emit only power/HR/pace units. | Treat as audit-only for TP-107; no additive labels needed unless these fields become public tool fields later. | `internal/intervals/workout_library.go`; `internal/tools/get_workout_library.go`; `internal/tools/get_workouts_in_folder.go`; `internal/tools/get_custom_items.go`; `internal/tools/get_activity_histogram.go` |
 | Unknown upstream unit preservation already exists in activity intervals (`unit: UNKNOWN` plus `unknown_unit`) and `units.ParseUnit`; Step 2 added preferred-unit energy pass-through coverage so KJ/KCAL are not converted by distance-unit preferences. | Existing interval coverage retained; response coverage extended. | `internal/tools/get_activity_details_test.go`; `internal/units/unit_test.go`; `internal/response/units_test.go` |
+| Calories semantics were already covered on activity details and wellness rows: activity emits `calories_burned` and rejects wellness intake keys; wellness emits `calories_intake` and keeps raw `kcalConsumed` only under `full` in include-full mode. | Relied on existing regression tests for Step 3; hydration metadata coverage was added. | `internal/tools/get_activity_details_test.go`; `internal/tools/get_wellness_data_test.go` |
 
 ---
 
@@ -159,3 +161,4 @@
 | 2026-05-27 13:15 | Review R007 | plan Step 2: APPROVE |
 | 2026-05-27 13:20 | Review R008 | code Step 2: APPROVE |
 | 2026-05-27 13:23 | Review R009 | plan Step 3: REVISE |
+| 2026-05-27 13:25 | Review R010 | plan Step 3: APPROVE |

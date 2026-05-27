@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
@@ -274,9 +275,56 @@ func TestGetWellnessDataIncludeFullRetainsRawNutritionNames(t *testing.T) {
 	}
 }
 
+func TestGetWellnessDataHydrationSemanticsAndIncludeFull(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"id":"2026-05-16","hydration":3,"hydrationVolume":1.75}`
+	terse := shapedInlineWellnessRow(t, raw, false)
+	if terse["hydration"] != float64(3) || terse["hydrationVolume"] != 1.75 {
+		t.Fatalf("terse hydration row = %+v, want distinct hydration and hydrationVolume", terse)
+	}
+	for _, key := range []string{"hydration_ml", "hydration_liters", "hydration_volume"} {
+		if _, ok := terse[key]; ok {
+			t.Fatalf("terse hydration row emitted guessed/renamed %s: %+v", key, terse)
+		}
+	}
+	semantics := terse["_meta"].(map[string]any)["field_semantics"].(map[string]any)
+	if !strings.Contains(semantics["hydration"].(string), "unit semantics are not inferred") {
+		t.Fatalf("hydration semantics = %#v, want no inferred unit", semantics)
+	}
+	if !strings.Contains(semantics["hydrationVolume"].(string), "preserved separately") {
+		t.Fatalf("hydrationVolume semantics = %#v, want distinction", semantics)
+	}
+	if _, ok := terse["full"]; ok {
+		t.Fatalf("terse hydration row included full payload: %+v", terse)
+	}
+
+	fullRow := shapedInlineWellnessRow(t, raw, true)
+	if fullRow["hydration"] != float64(3) || fullRow["hydrationVolume"] != 1.75 {
+		t.Fatalf("full hydration row = %+v, want distinct top-level fields", fullRow)
+	}
+	full := fullRow["full"].(map[string]any)
+	if full["hydration"] != float64(3) || full["hydrationVolume"] != 1.75 {
+		t.Fatalf("full raw hydration = %+v, want upstream names preserved under full", full)
+	}
+}
+
 func shapedFixtureRow(t *testing.T, fixture string, includeFull bool) map[string]any {
 	t.Helper()
-	row := loadWellnessFixture(t, fixture)
+	return shapedWellnessRow(t, loadWellnessFixture(t, fixture), includeFull)
+}
+
+func shapedInlineWellnessRow(t *testing.T, raw string, includeFull bool) map[string]any {
+	t.Helper()
+	var row intervals.Wellness
+	if err := json.Unmarshal([]byte(raw), &row); err != nil {
+		t.Fatalf("decode inline wellness row: %v", err)
+	}
+	return shapedWellnessRow(t, row, includeFull)
+}
+
+func shapedWellnessRow(t *testing.T, row intervals.Wellness, includeFull bool) map[string]any {
+	t.Helper()
 	client := &fakeWellnessClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", MeasurementPreference: "METRIC"}},
 		rows:              []intervals.Wellness{row},
