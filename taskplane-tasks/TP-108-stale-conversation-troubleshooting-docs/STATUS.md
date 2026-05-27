@@ -1,6 +1,6 @@
 # TP-108: Stale conversation troubleshooting docs — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Add troubleshooting guidance
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 0
@@ -13,7 +13,7 @@
 ---
 
 ### Step 0: Preflight
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -22,13 +22,13 @@
 ---
 
 ### Step 1: Add troubleshooting guidance
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Discoverable stale-state troubleshooting section added
-- [ ] Plain-language explanation included
-- [ ] Safe first steps included
-- [ ] Common stale-state symptoms included
-- [ ] Credential safety guidance included
+- [x] Discoverable stale-state troubleshooting section added
+- [x] Plain-language explanation included
+- [x] Safe first steps included
+- [x] Common stale-state symptoms included
+- [x] Credential safety guidance included
 
 ---
 
