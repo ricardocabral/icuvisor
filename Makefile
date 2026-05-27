@@ -14,7 +14,7 @@ HUGO_PORT  ?= 1313
 
 .PHONY: all build install run test test-race cover bench lint fmt fmt-check vet tidy \
         download verify generate goimports check clean snapshot release \
-        docs-tools eval-validate web-serve web-preview web-build web-clean help
+        docs-tools eval-validate eval-tool-routing web-serve web-preview web-build web-clean help
 
 all: build ## Build the binary
 
@@ -50,10 +50,10 @@ fmt: ## Format Go code (gofmt + goimports)
 		echo "goimports not installed; run 'go install golang.org/x/tools/cmd/goimports@latest'"
 
 fmt-check: ## Fail if files are not gofmt/goimports clean
-	@diff=$$(gofmt -l .); \
+	@diff=`gofmt -l .`; \
 	if [ -n "$$diff" ]; then echo "gofmt diff:"; echo "$$diff"; exit 1; fi
 	@command -v $(GOIMPORTS) >/dev/null 2>&1 && \
-		diff=$$($(GOIMPORTS) -l -local $(PKG) .); \
+		diff=`$(GOIMPORTS) -l -local $(PKG) .`; \
 		if [ -n "$$diff" ]; then echo "goimports diff:"; echo "$$diff"; exit 1; fi || true
 
 goimports: ## Run goimports with the project's local import group
@@ -92,6 +92,9 @@ docs-tools: ## Regenerate web/data/tools.json from the tool registry
 
 eval-validate: ## Validate cookbook eval scenarios against the tool catalog
 	python3 scripts/eval/run_eval.py --validate
+
+eval-tool-routing: ## Run opt-in first-tool routing smoke eval (provider skipped unless configured)
+	$(GO) run ./scripts/toolroutingeval
 
 # ---- website (web/, Hugo) ----------------------------------------------------
 
