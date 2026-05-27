@@ -1,6 +1,6 @@
 # TP-104: As-of metadata for time-relative reads — Status
 
-**Current Step:** Step 4: Regression tests and changelog
+**Current Step:** Step 5: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
@@ -71,7 +71,7 @@
 ---
 
 ### Step 5: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Targeted tests passing
 - [ ] FULL test suite passing: `make test`
