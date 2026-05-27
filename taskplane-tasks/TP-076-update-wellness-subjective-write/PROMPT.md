@@ -134,3 +134,7 @@ TP-076. Closes #7.
 ## Amendments
 
 _Add amendments below this line only._
+
+### Amendment 1 — 2026-05-27
+**Issue:** Prior operator/supervisor steering told workers to let TP-076 fail and forbade further live wellness writes, DELETE attempts, endpoint probes, direct GETs, or new probe-row creation, leaving the Step 1 cleanup checkbox blocked.
+**Resolution:** The operator explicitly superseded that prior steering for the next batch: complete the remaining live test-athlete cleanup work using the test athlete credentials from `.env-dev`. Keep the original safety constraints: use only the dedicated test athlete, do not print secrets or raw athlete IDs, do not use production credentials, make the minimum live calls required to restore/verify cleanup, and record sanitized evidence in `STATUS.md`.

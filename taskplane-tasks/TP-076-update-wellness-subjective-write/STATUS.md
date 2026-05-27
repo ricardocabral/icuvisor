@@ -1,8 +1,8 @@
 # TP-076-update-wellness-subjective-write — Status
 
 **Current Step:** Step 1: Live probe to isolate the rejection
-**Status:** 🚧 Blocked
-**Last Updated:** 2026-05-20
+**Status:** 🔵 Ready for Execution
+**Last Updated:** 2026-05-27
 **Review Level:** 2
 **Review Counter:** 13
 **Iteration:** 1
@@ -15,7 +15,9 @@
 
 ### Step 1: Live probe to isolate the rejection
 
-**Status:** 🚧 Blocked
+**Status:** 🔵 Ready for Execution
+
+> 2026-05-27 operator update: prior “let it fail” / no-live-cleanup steering is superseded for the next batch. Complete the remaining cleanup using `.env-dev` test athlete credentials only, without printing secrets/raw athlete IDs, and record sanitized evidence.
 
 - [x] Source `.env-dev` safely and run a production-account guard without printing secrets or raw athlete IDs.
 - [x] Snapshot the probe-date wellness row before mutation and define exact restore values, with `locked` tested last.
@@ -34,6 +36,7 @@
 - Step 1 cleanup blocker: the live probe intentionally tested `locked` last, but the public API now ignores `locked:false`, ignores `null` clears for subjective fields, rejects `sleepQuality:0`, rejects alternate unlock field names (`lock`, `isLocked`, `icu_lock`, `icuLocked`), rejects/ignores method/date/scope/query unlock variants, and returns 405 for DELETE on the v1 wellness row. The probe row remains locked with synthetic subjective values on the dedicated test athlete; operator intervention through the intervals.icu UI or a documented unlock endpoint is needed before this checkbox can be truthfully completed. Step 4 stdio re-validation reused this already-contaminated locked row for the accepted seven-field path and did not create a new locked row or a new live-account safety gap. Operator steering on 2026-05-18 says to let TP-076 fail rather than perform additional live cleanup attempts.
 - Iteration 5 blocker confirmation: no additional live wellness writes, DELETE attempts, endpoint probes, or new probe-row creation were performed because supervisor/operator steering explicitly forbids them; the final unchecked cleanup checkbox cannot be completed truthfully without external manual cleanup.
 - Iteration 1 restart blocker confirmation (2026-05-20): resumed at the same first unchecked Step 1 cleanup checkbox. No additional live wellness writes, DELETE attempts, endpoint probes, direct GETs, or new probe-row creation were performed because prior supervisor/operator steering explicitly says to let TP-076 fail; the checkbox remains impossible to complete truthfully without external manual cleanup or documented operator acceptance of the residual test-athlete contamination.
+- 2026-05-27 operator update: prior no-live-cleanup steering is explicitly superseded. Next worker should use `.env-dev` test athlete credentials to perform the remaining cleanup/verification work only, preserving credential hygiene and sanitized logging.
 
 ### Step 2: Add a failing test
 
