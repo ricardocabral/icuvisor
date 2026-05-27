@@ -1,6 +1,6 @@
 # TP-103: Tags in terse read responses — Status
 
-**Current Step:** Step 3: Regression tests and docs
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
@@ -47,7 +47,7 @@
 ---
 
 ### Step 3: Regression tests and docs
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Audit event/activity regression coverage for tags present/order, explicit empty arrays, missing/null omission, malformed omission, and include_full raw preservation
 - [x] Update catalog/schema/doc golden expectations affected by tag-related description or schema changes
@@ -57,7 +57,7 @@
 ---
 
 ### Step 4: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Targeted tests passing
 - [ ] FULL test suite passing: `make test`
