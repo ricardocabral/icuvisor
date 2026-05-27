@@ -106,6 +106,9 @@
 | 2026-05-27 18:24 | Review R003 | plan Step 2: APPROVE |
 | 2026-05-27 18:26 | Review R004 | plan Step 3: APPROVE |
 | 2026-05-27 18:29 | Review R005 | plan Step 4: APPROVE |
+| 2026-05-27 18:32 | ⚠️ Steering | Proceed with a constrained TP-116 pass. TP-113 was intentionally skipped in wave 1, so do not treat it as satisfied and do not edit homepage/local-first positioning owned by TP-113. Limit TP-116 to pr |
+| 2026-05-27 18:32 | Worker iter 2 | done in 905s, tools: 96 |
+| 2026-05-27 18:32 | Task complete | .DONE created |
 
 ---
 
