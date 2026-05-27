@@ -17,7 +17,7 @@ func TestGetEventByIDDetailSuccessUsesEventEnvelope(t *testing.T) {
 
 	client := &fakeEventsTrainingPlanClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
-		eventDetail:       decodeToolEvents(t, `{"id":123,"name":"Tempo","category":"WORKOUT","start_date_local":"2026-01-03","updated":"2026-01-03T12:00:00Z"}`)[0],
+		eventDetail:       decodeToolEvents(t, `{"id":123,"name":"Tempo","category":"WORKOUT","start_date_local":"2026-01-03","updated":"2026-01-03T12:00:00Z","tags":["detail","tempo"]}`)[0],
 	}
 	tool := newGetEventByIDToolWithClock(client, client, "test", "UTC", false, fixedNow("2026-05-01T12:00:00Z"))
 
@@ -32,6 +32,10 @@ func TestGetEventByIDDetailSuccessUsesEventEnvelope(t *testing.T) {
 	row := out["event"].(map[string]any)
 	if row["event_id"] != "123" || row["updated_local"] != "2026-01-03T09:00:00-03:00" {
 		t.Fatalf("event row = %#v, want detail row with local timestamp", row)
+	}
+	tags := row["tags"].([]any)
+	if len(tags) != 2 || tags[0] != "detail" || tags[1] != "tempo" {
+		t.Fatalf("tags = %#v, want detail tags", tags)
 	}
 	meta := out["_meta"].(map[string]any)
 	if meta["source"] != "detail" || meta["recovered"] != false || meta["timezone"] != "America/Sao_Paulo" {
@@ -48,7 +52,7 @@ func TestGetEventByIDFallbackScansDateWindowWithResolveAndCap(t *testing.T) {
 	client := &fakeEventsTrainingPlanClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
 		eventDetailErr:    fmt.Errorf("detail: %w", intervals.ErrNotFound),
-		events:            decodeToolEvents(t, `{"id":"target","name":"Recovered","category":"WORKOUT","start_date_local":"2026-03-15"}`),
+		events:            decodeToolEvents(t, `{"id":"target","name":"Recovered","category":"WORKOUT","start_date_local":"2026-03-15","tags":[]}`),
 	}
 	tool := newGetEventByIDToolWithClock(client, client, "test", "UTC", false, fixedNow("2026-05-01T12:00:00Z"))
 
@@ -70,6 +74,9 @@ func TestGetEventByIDFallbackScansDateWindowWithResolveAndCap(t *testing.T) {
 	row := out["event"].(map[string]any)
 	if row["event_id"] != "target" || row["name"] != "Recovered" {
 		t.Fatalf("event row = %#v, want recovered target", row)
+	}
+	if tags, ok := row["tags"].([]any); !ok || len(tags) != 0 {
+		t.Fatalf("recovered tags = %#v, want explicit empty array", row["tags"])
 	}
 	meta := out["_meta"].(map[string]any)
 	if meta["source"] != "list_scan" || meta["recovered"] != true || meta["limit"] != float64(fallbackEventByIDLimit) || meta["count"] != float64(1) {

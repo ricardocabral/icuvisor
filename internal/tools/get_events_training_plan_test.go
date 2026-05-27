@@ -69,7 +69,7 @@ func TestGetEventsTerseRowsTimezoneAndCategory(t *testing.T) {
 
 	client := &fakeEventsTrainingPlanClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
-		events:            decodeToolEvents(t, `{"id":123,"name":"Tempo","category":"WORKOUT","type":"Ride","start_date_local":"2026-01-03","end_date_local":"2026-01-03","description":"3x tempo","indoor":true,"updated":"2026-01-03T12:00:00Z","plan_applied":"2026-01-02T12:00:00Z","calendar_id":"cal-1","training_plan_id":456,"icu_training_load":75,"distance":30000,"moving_time":3600,"workout_doc":{"steps":[{"duration":600}]}}`),
+		events:            decodeToolEvents(t, `{"id":123,"name":"Tempo","category":"WORKOUT","type":"Ride","start_date_local":"2026-01-03","end_date_local":"2026-01-03","description":"3x tempo","tags":["tempo","coach"],"indoor":true,"updated":"2026-01-03T12:00:00Z","plan_applied":"2026-01-02T12:00:00Z","calendar_id":"cal-1","training_plan_id":456,"icu_training_load":75,"distance":30000,"moving_time":3600,"workout_doc":{"steps":[{"duration":600}]}}`),
 	}
 	tool := newGetEventsTool(client, client, "test", "UTC", false)
 
@@ -92,6 +92,10 @@ func TestGetEventsTerseRowsTimezoneAndCategory(t *testing.T) {
 	}
 	if row["indoor"] != true {
 		t.Fatalf("indoor = %#v, want true", row["indoor"])
+	}
+	tags := row["tags"].([]any)
+	if len(tags) != 2 || tags[0] != "tempo" || tags[1] != "coach" {
+		t.Fatalf("tags = %#v, want upstream order", tags)
 	}
 	if row["updated_local"] != "2026-01-03T09:00:00-03:00" {
 		t.Fatalf("updated_local = %#v, want Sao Paulo rendering", row["updated_local"])
@@ -182,6 +186,53 @@ func TestGetEventsCapsRowsAndReportsTruncation(t *testing.T) {
 	if rows[0].(map[string]any)["event_id"] != "1" || rows[1].(map[string]any)["event_id"] != "3" {
 		t.Fatalf("rows = %#v, want first two upstream rows sorted at response boundary", rows)
 	}
+}
+
+func TestGetEventsTagEdgeCases(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		events: decodeToolEvents(t,
+			`{"id":"present","category":"WORKOUT","start_date_local":"2026-01-01","tags":["alpha","beta"]}`,
+			`{"id":"empty","category":"WORKOUT","start_date_local":"2026-01-02","tags":[]}`,
+			`{"id":"missing","category":"WORKOUT","start_date_local":"2026-01-03"}`,
+			`{"id":"null","category":"WORKOUT","start_date_local":"2026-01-04","tags":null}`,
+			`{"id":"object","category":"WORKOUT","start_date_local":"2026-01-05","tags":{"name":"alpha"}}`,
+			`{"id":"mixed","category":"WORKOUT","start_date_local":"2026-01-06","tags":["alpha",7]}`,
+		),
+	}
+	tool := newGetEventsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","newest":"2026-01-31","limit":10,"include_full":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	rows := resultMap(t, result)["events"].([]any)
+	byID := map[string]map[string]any{}
+	for _, rawRow := range rows {
+		row := rawRow.(map[string]any)
+		byID[row["event_id"].(string)] = row
+	}
+
+	present := byID["present"]
+	presentTags := present["tags"].([]any)
+	if len(presentTags) != 2 || presentTags[0] != "alpha" || presentTags[1] != "beta" {
+		t.Fatalf("present tags = %#v, want preserved order", presentTags)
+	}
+	fullTags := present["full"].(map[string]any)["tags"].([]any)
+	if len(fullTags) != 2 || fullTags[0] != "alpha" || fullTags[1] != "beta" {
+		t.Fatalf("full tags = %#v, want raw payload preserved", fullTags)
+	}
+
+	emptyTags, ok := byID["empty"]["tags"].([]any)
+	if !ok || len(emptyTags) != 0 {
+		t.Fatalf("empty tags = %#v, want explicit empty array", byID["empty"]["tags"])
+	}
+	for _, id := range []string{"missing", "null", "object", "mixed"} {
+		assertKeyAbsent(t, byID[id], "tags")
+	}
+	assertKeyPresentNil(t, byID["null"]["full"].(map[string]any), "tags")
 }
 
 func TestGetEventsRejectsDateTimesAndTooLargeRange(t *testing.T) {
