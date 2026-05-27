@@ -101,6 +101,14 @@ func TestToPreferredPreservesSportSpecificAndUnknownUnits(t *testing.T) {
 	if row.Value != 115 || row.Unit != units.UnitSecs500M || row.FieldSuffix != "seconds_per_500m" || row.Converted {
 		t.Fatalf("row pace = %+v, want pass-through sec/500m", row)
 	}
+	kilojoules := ToPreferred(42, units.UnitKJ, UnitSystemImperial)
+	if kilojoules.Value != 42 || kilojoules.Unit != units.UnitKJ || kilojoules.UnitLabel != "KJ" || kilojoules.FieldSuffix != "kj" || kilojoules.Converted {
+		t.Fatalf("kilojoules = %+v, want KJ pass-through without preferred-unit conversion", kilojoules)
+	}
+	kilocalories := ToPreferred(2400, units.UnitKCAL, UnitSystemMetric)
+	if kilocalories.Value != 2400 || kilocalories.Unit != units.UnitKCAL || kilocalories.UnitLabel != "KCAL" || kilocalories.FieldSuffix != "kcal" || kilocalories.Converted {
+		t.Fatalf("kilocalories = %+v, want KCAL pass-through without preferred-unit conversion", kilocalories)
+	}
 	unknown := ToPreferredWithRaw(7, units.UnitUnknown, "FEET", UnitSystemImperial)
 	if unknown.Value != 7 || unknown.Unit != units.UnitUnknown || unknown.UnitLabel != "FEET" || unknown.UnknownUnit != "FEET" || unknown.Converted {
 		t.Fatalf("unknown unit = %+v, want raw FEET pass-through", unknown)
