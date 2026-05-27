@@ -1,10 +1,10 @@
 # TP-111: Clarify description replacement wording — Status
 
-**Current Step:** Step 2: Update prompt/docs wording
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 3
 **Size:** S
 
@@ -37,13 +37,13 @@
 ---
 
 ### Step 2: Update prompt/docs wording
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Weekly-planning prompt reviewed/updated
-- [ ] Cookbook/explainer docs reviewed/updated
-- [ ] Prompt golden tests updated if needed
-- [ ] `CHANGELOG.md` updated
-- [ ] Targeted tests passing: `go test ./internal/prompts ./internal/tools`
+- [x] Weekly-planning prompt reviewed/updated
+- [x] Cookbook/explainer docs reviewed/updated
+- [x] Prompt golden tests updated if needed
+- [x] `CHANGELOG.md` updated
+- [x] Targeted tests passing: `go test ./internal/prompts ./internal/tools`
 
 ---
 
@@ -73,6 +73,7 @@
 |---|------|------|---------|------|
 | R001 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
+| R003 | plan | 2 | APPROVE | `.reviews/R003-plan-step2.md` |
 
 ---
 
@@ -98,6 +99,7 @@
 | 2026-05-27 18:30 | Steering | TP-109 is non-blocking; proceed with current-state wording-only implementation and no references to nonexistent TP-109 behavior |
 | 2026-05-27 18:35 | Preflight review | Reviewed TP-109 terminology intent, write-tool description/schema text, weekly planning prompt, cookbook, calendar-notes explainer, and changelog |
 | 2026-05-27 18:45 | Step 1 verification | Ran `go run ./scripts/snapshot_tool_schemas.go` and `go test ./internal/tools ./internal/toolchecks` successfully |
+| 2026-05-27 18:55 | Step 2 verification | Ran `go test ./internal/prompts ./internal/tools` successfully |
 
 ---
 
@@ -120,3 +122,4 @@
 - Snapshot verification owner: after tool/schema wording edits, regenerate snapshots with `go run ./scripts/snapshot_tool_schemas.go`; targeted verification should include `go test ./internal/tools ./internal/toolchecks`.
 | 2026-05-27 18:19 | Review R001 | plan Step 1: REVISE |
 | 2026-05-27 18:21 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-27 18:25 | Review R003 | plan Step 2: APPROVE |

@@ -41,7 +41,7 @@ create a new one unless I explicitly name one to update.
 | 3 | — | Drafting happens in the chat; nothing is written yet. |
 | 4 | [`create_workout`]({{< relref "/reference/tools#create_workout" >}}) or [`add_or_update_event`]({{< relref "/reference/tools#add_or_update_event" >}}) | Saves to the library or schedules it — gated on write mode. |
 
-To revise an existing template, name it and the assistant uses [`update_workout`]({{< relref "/reference/tools#update_workout" >}}).
+To revise an existing template, name it and the assistant uses [`update_workout`]({{< relref "/reference/tools#update_workout" >}}). On updates, supplied `description` text replaces the upstream template description/DSL rather than appending a note. If the existing template has structured steps you want to keep, ask the assistant to include the desired `workout_doc` explicitly and use `<!-- icuvisor:steps -->` to place the serialized steps around any prose.
 
 ## A good answer looks like
 
@@ -69,7 +69,7 @@ To revise an existing template, name it and the assistant uses [`update_workout`
 
 - **Read the syntax reference first.** The `icuvisor://workout-syntax` resource is the authoritative DSL spec. Forcing the assistant to consult it — plus real library examples — is what fixes the broken repeat/bullet syntax users hit.
 - **Draft, then save.** Showing the workout in the chat before any write means you catch a wrong target before it lands on your calendar.
-- **"Create, don't overwrite."** Without this, an assistant may update the closest-matching library workout. The explicit rule protects your existing templates.
+- **"Create, don't overwrite."** Without this, an assistant may update the closest-matching library workout. The explicit rule protects your existing templates; for any intentional bulk or template edit, read and retain structured steps explicitly instead of sending description-only prose.
 
 {{< callout type="warning" >}}
 `create_workout`, `update_workout`, and `add_or_update_event` only run when the server is in write mode. In read-only mode the assistant should still draft the workout and show you the syntax to paste into intervals.icu yourself. See [safety modes]({{< relref "/reference/safety-modes" >}}).

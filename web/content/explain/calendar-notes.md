@@ -14,7 +14,7 @@ Everything on the intervals.icu calendar is an event. A planned workout, a goal 
 A NOTE event uses two fields:
 
 - `name` — a short title. Give every new NOTE a non-empty one.
-- `description` — the note body, as plain text.
+- `description` — the note body, as plain text. On updates, a supplied `description` replaces the NOTE body; omit it to leave the body unchanged.
 
 Do not put the body in `workout_doc`. That field holds the structured-workout DSL and only makes sense for `WORKOUT` events; on a NOTE it is meaningless. See [Build and schedule workouts]({{< relref "/cookbook/build-workouts" >}}) for where `workout_doc` *does* belong.
 
