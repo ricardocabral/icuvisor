@@ -9,10 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added a Garmin/device-provider to Claude walkthrough that shows the intervals.icu → local icuvisor → Claude path, safe copy-paste prompts, and missing-data caveats.
-- Added a privacy posture explanation page covering icuvisor's local trust boundary, OS credential storage, loopback HTTP default, coach-mode credential handling, and AI-client/upstream caveats without claiming legal compliance.
-- Added copy-paste Claude Project instructions for grounded icuvisor training chats, including timezone/date discipline, source-tool citation, stale/missing-data handling, weekly-review, recovery-check, and race-week taper add-ons.
-- Added an opt-in `make eval-tool-routing` smoke eval for first-tool-call routing against the registered MCP tool catalog, with provider-backed runs only when explicitly configured.
 - Documentation now explains stale conversations and cached MCP tool catalogs, including when to start a new chat, reconnect tools, verify `icuvisor version`, run `icuvisor diagnostics`, and avoid pasting API keys into assistant conversations.
 - New curated MCP prompt `weekly_review` guides assistants through a structured previous-week training review, planned-vs-completed comparison, wellness caveats, and optional next-week preview using existing read/analyzer tools.
 - Time-relative reads now include athlete-local as-of anchors: `get_today` always returns `_meta.as_of`, `_meta.as_of_date`, `_meta.as_of_weekday`, and `_meta.timezone`, and `get_activities`, `get_events`, and `get_wellness_data` return the same metadata when the requested range includes the athlete-local current day.
@@ -21,11 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Refreshed homepage, metadata, README, and local-first docs to lead with the local binary, OS keychain credential storage, no icuvisor SaaS account, and the privacy/reliability tradeoffs versus hosted connector flows.
-- Clarified public docs that icuvisor itself is free and open source with no icuvisor-hosted account, onboarding credit, SaaS quota, or subscription gate, while third-party services keep their own terms and limits.
 - `add_or_update_event`, `create_workout`, and `update_workout` now merge free-text `description` prose with structured `workout_doc` steps instead of forcing callers to choose one source; the `<!-- icuvisor:steps -->` sentinel controls insertion point when present.
 - Clarified write-tool and planning guidance that `description` writes replace the upstream description/DSL field rather than appending notes; preserving structured workout steps on updates requires supplying the desired `workout_doc` explicitly.
-- Added prompt and cookbook guardrails for bulk workout/calendar writes: validate or preview a representative structured payload, perform one write/readback, inspect warnings and structured-step summaries, then continue with the rest.
 
 ### Fixed
 
