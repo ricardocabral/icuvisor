@@ -1,6 +1,6 @@
 # TP-109: Description-only workout safety warning — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Design the warning/guard contract
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
@@ -13,7 +13,7 @@
 ---
 
 ### Step 0: Preflight
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Design the warning/guard contract
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 > **Plan-review checkpoint**
 
