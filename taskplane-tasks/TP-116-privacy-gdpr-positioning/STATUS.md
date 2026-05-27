@@ -1,10 +1,10 @@
 # TP-116: Privacy and GDPR positioning — Status
 
-**Current Step:** Step 3: Link from relevant docs and update changelog
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 2
 **Size:** S
 
@@ -51,13 +51,13 @@
 ---
 
 ### Step 4: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Docs/site build passing: `make web-build`
-- [ ] Rendered links and page placement checked
-- [ ] FULL test suite run if non-doc/generated app files are touched: `make test`
-- [ ] Build passes if app strings or generated assets are touched: `make build`
-- [ ] All failures fixed or documented as pre-existing unrelated failures
+- [x] Docs/site build passing: `make web-build`
+- [x] Rendered links and page placement checked
+- [x] FULL test suite run if non-doc/generated app files are touched: `make test`
+- [x] Build passes if app strings or generated assets are touched: `make build`
+- [x] All failures fixed or documented as pre-existing unrelated failures
 
 ---
 
@@ -79,6 +79,7 @@
 | 2 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | 3 | plan | 2 | APPROVE | `.reviews/R003-plan-step2.md` |
 | 4 | plan | 3 | APPROVE | `.reviews/R004-plan-step3.md` |
+| 5 | plan | 4 | APPROVE | `.reviews/R005-plan-step4.md` |
 
 ---
 
@@ -103,6 +104,7 @@
 | 2026-05-27 18:22 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-27 18:24 | Review R003 | plan Step 2: APPROVE |
 | 2026-05-27 18:26 | Review R004 | plan Step 3: APPROVE |
+| 2026-05-27 18:29 | Review R005 | plan Step 4: APPROVE |
 
 ---
 
@@ -122,3 +124,6 @@ Step 1 plan notes:
 - Page decision: add a standalone `web/content/explain/privacy.md` privacy explanation and a card in `web/content/explain/_index.md`. This avoids editing homepage or local-first positioning owned by TP-113 while giving privacy-conscious users a stable target. Make only narrow cross-links/clarifications in coach-mode and HTTP transport docs; leave `SECURITY.md` authoritative and link to it instead of duplicating policy.
 - Step 2 pointer decision: no homepage or README pointer added in the constrained pass because TP-113 owns the main local-first/homepage positioning and supervisor explicitly requested no homepage/no-TP-113-overlap work. Discoverability will come from the explain-section index and contextual doc links.
 - Step 3 security-policy decision: `SECURITY.md` was not rewritten; the new privacy page links to it as the authoritative source for vulnerability reporting, release integrity, and hardening details.
+- Step 4 app-test decision: `git diff --name-only HEAD` after docs/link commits showed only `STATUS.md` and the Step 4 review artifact uncommitted, so `make test` was not applicable for this docs-only pass.
+- Step 4 build decision: no app strings or tracked generated assets were touched; `make build` was not applicable. Website output was validated through `make web-build`.
+- Step 4 result: `make web-build` passed; Hugo emitted deprecation warnings for theme APIs but no build failures.
