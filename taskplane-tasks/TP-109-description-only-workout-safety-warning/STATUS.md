@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 
@@ -67,6 +67,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R001 | plan | 1 | APPROVE | `.reviews/R001-plan-step1.md` |
+| R002 | plan | 2 | APPROVE | `.reviews/R002-plan-step2.md` |
 
 ---
 
@@ -99,3 +100,4 @@
 - Step 1 warning text: use terse non-blocking copy: `Description was written without workout_doc; if this item previously had structured steps, they may have been replaced. Include workout_doc when preserving or merging workout structure.`
 - Step 1 trigger: `add_or_update_event` sets the warning only on update-shaped writes with `event_id` present, `description` supplied, no `workout_doc`, and `category` equals `WORKOUT` case-insensitively. `update_workout` is affected because it sparsely updates an existing template by ID and a supplied `description` replaces the upstream description/DSL, so it sets the same warning when `description` is supplied and no `workout_doc` is supplied.
 | 2026-05-27 20:44 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-27 20:46 | Review R002 | plan Step 2: APPROVE |
