@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -39,6 +39,7 @@
 **Status:** 🟨 In Progress
 
 - [ ] `get_today` meta includes `as_of`, `as_of_date`, `as_of_weekday`, and timezone
+- [x] Step 2 plan documents single `now()` anchor, existing meta preservation, helper timezone, and targeted tests
 - [ ] Existing injectable clock used in tests
 - [ ] Existing `date`, `activity_window`, and counts preserved
 - [ ] Targeted `get_today` tests passing
@@ -94,6 +95,7 @@
 | R001 | Plan | 1 | REVISE | .reviews/R001-plan-step1.md |
 | R002 | Plan | 1 | APPROVE | .reviews/R002-plan-step1.md |
 | R003 | Code | 1 | APPROVE | .reviews/R003-code-step1.md |
+| R004 | Plan | 2 | REVISE | .reviews/R004-plan-step2.md |
 
 ---
 
@@ -124,6 +126,8 @@
 
 - Tracking issue: https://github.com/ricardocabral/icuvisor/issues/31
 - Step 1 plan: add a shared `internal/response.AsOfMetadata(now time.Time, timezone string)` helper returning one struct with `as_of`, `as_of_date`, `as_of_weekday`, and `timezone`, all derived from a single localized instant. The helper will reuse the existing timezone loading path used by `RenderTimeInTimezone`/`RenderDateInTimezone`; malformed zones return the existing wrapped load error and empty timezone continues to resolve to UTC. `get_today` keeps using its injectable `now func() time.Time`; Step 3 tools will receive injectable clock constructors before calling the helper/current-day range predicate, avoiding direct untestable `time.Now()` in handlers. Tests will cover positive/negative offset date shifts, weekday consistency, trimmed and empty timezone behavior, and invalid-zone errors.
+- Step 2 plan: in `getTodayHandler`, call the injectable `now()` exactly once, pass that instant to `response.AsOfMetadataInTimezone`, use `asOf.AsOfDate` for the existing `today` fetch date, and pass the full helper result into `shapeGetTodayResponse` so `date` and `as_of_date` cannot diverge across midnight. Extend `getTodayMeta` with `as_of`, `as_of_date`, and `as_of_weekday` while preserving existing `date`, `timezone`, `include_full`, `source_tools`, `section_counts`, `activity_window`, and response-shaper-added metadata such as `units`. Populate `_meta.timezone` from the helper's trimmed/defaulted `Timezone`. Update `get_today` tests through `newGetTodayToolWithClock` to assert exact São Paulo boundary `as_of*` values and unchanged local-date fetches/counts, then run `go test ./internal/tools -run TestGetToday`.
 | 2026-05-27 12:19 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-05-27 12:22 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-27 12:29 | Review R003 | code Step 1: APPROVE |
+| 2026-05-27 12:33 | Review R004 | plan Step 2: REVISE |
