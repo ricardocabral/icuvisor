@@ -28,7 +28,7 @@ func shapeGetActivitiesResponse(activities []intervals.Activity, gearResolutions
 }
 
 func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback string, unitSystem response.UnitSystem, gearResolution activityGearResolution, customFieldCodes []string) getActivitiesRow {
-	row := getActivitiesRow{ActivityID: activity.ID, Name: strings.TrimSpace(stringValue(activity.Name)), Sport: stringValue(activity.Type), SubType: stringValue(activity.SubType), StartDateLocal: stringValue(activity.StartDateLocal), StartDateUTC: stringValue(activity.StartDate), Timezone: firstNonEmpty(stringValue(activity.Timezone), timezoneFallback)}
+	row := getActivitiesRow{ActivityID: activity.ID, Name: strings.TrimSpace(stringValue(activity.Name)), Sport: stringValue(activity.Type), SubType: stringValue(activity.SubType), StartDateLocal: stringValue(activity.StartDateLocal), StartDateUTC: stringValue(activity.StartDate), Timezone: firstNonEmpty(stringValue(activity.Timezone), timezoneFallback), Tags: rawStringArray(activity.Raw, "tags")}
 	applyActivityGearResolution(&row, gearResolution)
 	if isStravaBlocked(activity) {
 		row.StravaImported = true

@@ -70,7 +70,7 @@ func TestGetTodayDigestUsesAthleteLocalDateAndSourceShapes(t *testing.T) {
 		fitnessRows:       decodeSummaries(t, `[{"date":"2026-05-24","fitness":71.2345,"fatigue":80.2,"form":-8.9}]`),
 		wellnessRows:      []intervals.Wellness{decodeWellnessRow(t, `{"id":"2026-05-24","sleepQuality":3,"feel":4,"weight":null}`)},
 		activities: decodeActivityPage(t,
-			`{"id":"a1","name":"Morning Run","type":"Run","start_date_local":"2026-05-24T07:30:00","distance":1609.344,"moving_time":480,"calories":120,"stream_types":["heartrate"]}`,
+			`{"id":"a1","name":"Morning Run","type":"Run","start_date_local":"2026-05-24T07:30:00","distance":1609.344,"moving_time":480,"calories":120,"stream_types":["heartrate"],"tags":["commute","easy"]}`,
 		),
 		events: decodeToolEvents(t,
 			`{"id":"11","category":"WORKOUT","type":"Run","name":"Easy run","start_date_local":"2026-05-24","icu_training_load":35,"tags":["plan","run"]}`,
@@ -104,6 +104,10 @@ func TestGetTodayDigestUsesAthleteLocalDateAndSourceShapes(t *testing.T) {
 	activity := out["completed_activities"].([]any)[0].(map[string]any)
 	if activity["distance_mi"] != 1.0 || activity["pace_seconds_per_mile"] != 480.0 {
 		t.Fatalf("activity = %#v, want imperial unit-normalized source shape", activity)
+	}
+	activityTags := activity["tags"].([]any)
+	if len(activityTags) != 2 || activityTags[0] != "commute" || activityTags[1] != "easy" {
+		t.Fatalf("activity tags = %#v, want completed activity tags", activityTags)
 	}
 	if _, ok := activity["full"]; ok {
 		t.Fatalf("activity included full in terse digest: %#v", activity)

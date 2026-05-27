@@ -165,6 +165,48 @@ func TestGetActivitiesCaloriesBurnedSemanticsAndNullStripping(t *testing.T) {
 	}
 }
 
+func TestGetActivitiesTagEdgeCases(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"present","name":"Tagged Ride","type":"Ride","start_date_local":"2026-01-01T07:00:00","tags":["tempo","indoor"]}`,
+		`{"id":"empty","name":"Empty Tags","type":"Ride","start_date_local":"2026-01-02T07:00:00","tags":[]}`,
+		`{"id":"missing","name":"Missing Tags","type":"Ride","start_date_local":"2026-01-03T07:00:00"}`,
+		`{"id":"null","name":"Null Tags","type":"Ride","start_date_local":"2026-01-04T07:00:00","tags":null}`,
+		`{"id":"object","name":"Object Tags","type":"Ride","start_date_local":"2026-01-05T07:00:00","tags":{"name":"tempo"}}`,
+		`{"id":"mixed","name":"Mixed Tags","type":"Ride","start_date_local":"2026-01-06T07:00:00","tags":["tempo",7]}`,
+	}, "metric")
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","include_full":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	rows := resultMap(t, result)["activities"].([]any)
+	byID := map[string]map[string]any{}
+	for _, rawRow := range rows {
+		row := rawRow.(map[string]any)
+		byID[row["activity_id"].(string)] = row
+	}
+
+	presentTags := byID["present"]["tags"].([]any)
+	if len(presentTags) != 2 || presentTags[0] != "tempo" || presentTags[1] != "indoor" {
+		t.Fatalf("present tags = %#v, want preserved order", presentTags)
+	}
+	fullTags := byID["present"]["full"].(map[string]any)["tags"].([]any)
+	if len(fullTags) != 2 || fullTags[0] != "tempo" || fullTags[1] != "indoor" {
+		t.Fatalf("full tags = %#v, want raw payload preserved", fullTags)
+	}
+	emptyTags, ok := byID["empty"]["tags"].([]any)
+	if !ok || len(emptyTags) != 0 {
+		t.Fatalf("empty tags = %#v, want explicit empty array", byID["empty"]["tags"])
+	}
+	for _, id := range []string{"missing", "null", "object", "mixed"} {
+		assertKeyAbsent(t, byID[id], "tags")
+	}
+	assertKeyPresentNil(t, byID["null"]["full"].(map[string]any), "tags")
+}
+
 func TestGetActivitiesActivityNutritionFields(t *testing.T) {
 	t.Parallel()
 
@@ -423,8 +465,8 @@ func TestGetActivitiesPaginationFiltersAndTokenRoundTrip(t *testing.T) {
 func TestGetActivitiesBoundaryResponseShapeGoldenFixtures(t *testing.T) {
 	t.Parallel()
 
-	const exactFullWindowToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJjYXJic19pbmdlc3RlZCIsImNhcmJzX3VzZWQiLCJkZXZpY2VfbmFtZSIsImdlYXJfaWQiXSwiYmVmb3JlX3N0YXJ0X2RhdGVfbG9jYWwiOiIyMDI2LTAxLTAzVDA3OjAwOjAwIiwiYmVmb3JlX2lkIjoiZjMiLCJza2lwX2lkc19hdF9ib3VuZGFyeSI6WyJmMyJdfQ`
-	const identicalTimestampStallToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJjYXJic19pbmdlc3RlZCIsImNhcmJzX3VzZWQiLCJkZXZpY2VfbmFtZSJdLCJiZWZvcmVfc3RhcnRfZGF0ZV9sb2NhbCI6IjIwMjYtMDEtMDNUMDc6MDA6MDAiLCJiZWZvcmVfaWQiOiJzMyIsInNraXBfaWRzX2F0X2JvdW5kYXJ5IjpbInMzIl19`
+	const exactFullWindowToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJjYXJic19pbmdlc3RlZCIsImNhcmJzX3VzZWQiLCJkZXZpY2VfbmFtZSIsImdlYXJfaWQiLCJ0YWdzIl0sImJlZm9yZV9zdGFydF9kYXRlX2xvY2FsIjoiMjAyNi0wMS0wM1QwNzowMDowMCIsImJlZm9yZV9pZCI6ImYzIiwic2tpcF9pZHNfYXRfYm91bmRhcnkiOlsiZjMiXX0`
+	const identicalTimestampStallToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJjYXJic19pbmdlc3RlZCIsImNhcmJzX3VzZWQiLCJkZXZpY2VfbmFtZSIsInRhZ3MiXSwiYmVmb3JlX3N0YXJ0X2RhdGVfbG9jYWwiOiIyMDI2LTAxLTAzVDA3OjAwOjAwIiwiYmVmb3JlX2lkIjoiczMiLCJza2lwX2lkc19hdF9ib3VuZGFyeSI6WyJzMyJdfQ`
 
 	tests := []struct {
 		name            string

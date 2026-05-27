@@ -226,19 +226,23 @@ func eventRow(event intervals.Event, includeFull bool, timezoneName string) (get
 }
 
 func eventTags(raw map[string]any) *[]string {
-	values, ok := raw["tags"].([]any)
+	return rawStringArray(raw, "tags")
+}
+
+func rawStringArray(raw map[string]any, key string) *[]string {
+	values, ok := raw[key].([]any)
 	if !ok {
 		return nil
 	}
-	tags := make([]string, 0, len(values))
+	items := make([]string, 0, len(values))
 	for _, value := range values {
-		tag, ok := value.(string)
+		item, ok := value.(string)
 		if !ok {
 			return nil
 		}
-		tags = append(tags, tag)
+		items = append(items, item)
 	}
-	return &tags
+	return &items
 }
 
 func renderEventTimestamp(value string, timezoneName string) (string, error) {
