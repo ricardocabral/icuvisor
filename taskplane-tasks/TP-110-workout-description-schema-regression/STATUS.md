@@ -1,10 +1,10 @@
 # TP-110: Workout description schema regression tests — Status
 
-**Current Step:** Step 2: Refresh affected snapshots and docs if needed
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 
@@ -34,16 +34,16 @@
 ---
 
 ### Step 2: Refresh affected snapshots and docs if needed
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Schema snapshots regenerated or verified unchanged
-- [ ] `CHANGELOG.md` updated if needed
-- [ ] Generated docs checked for contradictory wording
+- [x] Schema snapshots regenerated or verified unchanged
+- [x] `CHANGELOG.md` updated if needed
+- [x] Generated docs checked for contradictory wording
 
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing: `make test`
 - [ ] Lint passing or documented: `make lint`
@@ -96,3 +96,4 @@
 
 *Reserved for execution notes*
 | 2026-05-27 20:44 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-27 20:49 | Review R002 | plan Step 2: APPROVE |
