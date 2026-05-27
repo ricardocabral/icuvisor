@@ -1,11 +1,11 @@
 # TP-107: Unit semantics audit — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
-**Last Updated:** 2026-05-26
+**Current Step:** Step 0: Preflight
+**Status:** 🟡 In Progress
+**Last Updated:** 2026-05-27
 **Review Level:** 2
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers may expand steps when runtime discoveries warrant it.
@@ -13,11 +13,11 @@
 ---
 
 ### Step 0: Preflight
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Required files and paths exist
-- [ ] Dependencies satisfied
-- [ ] Current unit/metadata behavior scoped before changing code
+- [x] Required files and paths exist
+- [x] Dependencies satisfied
+- [x] Current unit/metadata behavior scoped before changing code
 
 ---
 
@@ -95,6 +95,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Preflight scope: workout target units are centralized in `workoutTargetUnits`/`formatTarget`; interval units use `units.ParseUnit` with `unknown_unit`; extended metrics currently convert raw joules fields to `*_kj`; wellness calories use `calories_intake` while activity rows use `calories_burned`; hydration and `hydrationVolume` are emitted as separate wellness fields. | Drives regression coverage in Steps 1-3. | `internal/workoutdoc/serialize.go`; `internal/tools/get_activity_details.go`; `internal/tools/get_extended_metrics.go`; `internal/tools/get_wellness_data.go`
 
 ---
 
@@ -103,6 +104,8 @@
 | Timestamp | Action | Outcome |
 |-----------|--------|---------|
 | 2026-05-26 | Task staged | PROMPT.md and STATUS.md created |
+| 2026-05-27 12:51 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-27 12:51 | Step 0 started | Preflight |
 
 ---
 
