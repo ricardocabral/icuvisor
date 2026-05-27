@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 16
+**Review Counter:** 17
 **Iteration:** 1
 **Size:** M
 
@@ -74,11 +74,11 @@
 ### Step 5: Testing & Verification
 **Status:** 🟨 In Progress
 
-- [ ] Targeted tests passing
-- [ ] FULL test suite passing: `make test`
-- [ ] Build passes: `make build`
-- [ ] Lint passes: `make lint`
-- [ ] All failures fixed or documented as pre-existing unrelated failures
+- [x] Targeted tests passing
+- [x] FULL test suite passing: `make test`
+- [x] Build passes: `make build`
+- [x] Lint passes: `make lint`
+- [x] All failures fixed or documented as pre-existing unrelated failures
 
 ---
 
@@ -112,6 +112,7 @@
 | R014 | Plan | 4 | APPROVE | `.reviews/R014-plan-step4.md` |
 | R015 | Code | 4 | APPROVE | `.reviews/R015-code-step4.md` |
 | R016 | Plan | 5 | REVISE | `.reviews/R016-plan-step5.md` |
+| R017 | Plan | 5 | APPROVE | `.reviews/R017-plan-step5.md` |
 
 ---
 
@@ -136,6 +137,10 @@
 | 2026-05-27 12:51 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-27 12:51 | Step 0 started | Preflight |
 | 2026-05-27 | Step 4 affected-package tests | `go test ./internal/workoutdoc ./internal/units ./internal/response ./internal/tools` passed |
+| 2026-05-27 | Step 5 targeted tests | `go test ./internal/workoutdoc ./internal/units ./internal/response ./internal/tools` passed |
+| 2026-05-27 | Step 5 full test suite | `make test` passed |
+| 2026-05-27 | Step 5 build | `make build` passed |
+| 2026-05-27 | Step 5 lint | `make lint` passed |
 
 ---
 
@@ -184,3 +189,4 @@
 | 2026-05-27 13:38 | Review R014 | plan Step 4: APPROVE |
 | 2026-05-27 13:41 | Review R015 | code Step 4: APPROVE |
 | 2026-05-27 13:43 | Review R016 | plan Step 5: REVISE |
+| 2026-05-27 13:44 | Review R017 | plan Step 5: APPROVE |
