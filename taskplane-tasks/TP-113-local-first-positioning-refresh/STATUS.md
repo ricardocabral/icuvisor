@@ -1,6 +1,6 @@
 # TP-113: Local-first positioning refresh — Status
 
-**Current Step:** Step 2: Strengthen explanatory copy and links
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 0
@@ -31,16 +31,16 @@
 ---
 
 ### Step 2: Strengthen explanatory copy and links
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `web/content/explain/local-first.md` updated with local binary + OS keychain versus hosted connector/OAuth-style flows
-- [ ] Related docs links added or adjusted if needed
-- [ ] `CHANGELOG.md` updated under `[Unreleased]` if appropriate
+- [x] `web/content/explain/local-first.md` updated with local binary + OS keychain versus hosted connector/OAuth-style flows
+- [x] Related docs links added or adjusted if needed
+- [x] `CHANGELOG.md` updated under `[Unreleased]` if appropriate
 
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Docs/site build passing: `make web-build`
 - [ ] FULL test suite run if non-doc/generated app files are touched: `make test`

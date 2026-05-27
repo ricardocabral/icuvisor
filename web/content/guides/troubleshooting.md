@@ -23,7 +23,7 @@ Common stale-state symptoms include:
 - A tool added in a new release is missing, an old tool schema is still used, or a delete/write tool remains hidden after changing toolset or delete-mode settings.
 - Writes fail with arguments that no longer match the current docs, or the assistant keeps retrying a field that a new schema removed or renamed.
 
-Treat API keys as credentials, not troubleshooting data. Do not paste an intervals.icu API key into an assistant conversation, issue report, or manual MCP JSON config. Use `icuvisor setup`, the OS keychain, or your client's sensitive extension setting instead. `icuvisor diagnostics` is designed to redact secrets; prefer sharing that redacted output when asking for help.
+Treat API keys as credentials, not troubleshooting data. Do not paste an intervals.icu API key into an assistant conversation, issue report, or manual MCP JSON config. Use `icuvisor setup`, the OS keychain, or your client's sensitive extension setting instead. `icuvisor diagnostics` is designed to redact secrets; prefer sharing that redacted output when asking for help. For the trust-boundary model behind this guidance, read [Local-first design]({{< relref "../explain/local-first" >}}).
 
 ## Symptom table
 
