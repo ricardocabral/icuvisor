@@ -524,5 +524,5 @@ func wellnessDataInputSchema() map[string]any {
 }
 
 func getWellnessDataOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Daily wellness rows with distinct sleepQuality (1-4), sleepScore (0-100 plus provider-native scale metadata), sleepSecs, nutrition keys calories_intake/carbs_g/protein_g/fat_g when present, custom fields, _native provider fields, and _meta.provenance.<field>.native_scale labels for Garmin, WHOOP, Oura, Polar, or unknown sources."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Daily wellness rows with distinct sleepQuality (1-4), sleepScore (0-100 plus provider-native scale metadata), sleepSecs, nutrition keys calories_intake/carbs_g/protein_g/fat_g when present, custom fields, _native provider fields, _meta.provenance.<field>.native_scale labels for Garmin, WHOOP, Oura, Polar, or unknown sources, and conditional athlete-local timezone/as_of/as_of_date/as_of_weekday metadata when the range includes the current local day."}
 }

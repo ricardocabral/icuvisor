@@ -55,7 +55,7 @@
 - [x] `get_wellness_data` current-day range metadata added
 - [x] Pagination/null-stripping/terse-full behavior preserved
 - [x] Targeted tool tests passing
-- [ ] Output schemas for `get_events` and `get_wellness_data` document current-day as-of metadata
+- [x] Output schemas for `get_events` and `get_wellness_data` document current-day as-of metadata
 
 ---
 

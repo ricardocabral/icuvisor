@@ -309,5 +309,5 @@ func getEventsInputSchema() map[string]any {
 }
 
 func getEventsOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Bounded calendar event rows with raw upstream category enum values, date-range metadata, truncation metadata, and optional full raw payloads."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Bounded calendar event rows with raw upstream category enum values, date-range metadata, truncation metadata, athlete timezone, conditional athlete-local as_of/as_of_date/as_of_weekday metadata when the range includes the current local day, and optional full raw payloads."}
 }
