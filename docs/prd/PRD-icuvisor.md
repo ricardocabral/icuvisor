@@ -362,7 +362,7 @@ icuvisor ships MCP Resources for long-form, slow-changing content the LLM only o
 - `icuvisor://athlete-profile` — current athlete profile (auto-refreshing).
 - `icuvisor://analysis-formulas` — canonical analyzer formula definitions and stable refs for `_meta.formula_ref`.
 
-It also ships a curated set of MCP Prompts (training analysis, recovery check, weekly planning, race-week taper, coach roster triage) so users on clients that surface prompts get a "what can this thing do?" entrypoint without having to learn the tool catalog.
+It also ships a curated set of MCP Prompts (training analysis, recovery check, weekly planning, weekly review, race-week taper, coach roster triage) so users on clients that surface prompts get a "what can this thing do?" entrypoint without having to learn the tool catalog.
 
 #### H. Configuration
 
