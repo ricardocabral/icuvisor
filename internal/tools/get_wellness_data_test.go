@@ -195,6 +195,34 @@ func TestGetWellnessDataCurrentDayRangeAddsAsOfMetadata(t *testing.T) {
 	}
 }
 
+func TestGetWellnessDataPastRangeOmitsAsOfMetadata(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		rows:              []intervals.Wellness{decodeWellnessRow(t, `{"id":"2026-05-23","sleepQuality":3,"weight":null}`)},
+	}
+	tool := newGetWellnessDataToolWithClock(client, client, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-05-01","newest":"2026-05-23"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	payload := resultMap(t, result)
+	meta := payload["_meta"].(map[string]any)
+	assertNoAsOfMeta(t, meta)
+	if _, ok := meta["timezone"]; ok {
+		t.Fatalf("timezone present without current-day as-of metadata: %#v", meta)
+	}
+	if meta["include_full"] != false || meta["oldest"] != "2026-05-01" || meta["newest"] != "2026-05-23" {
+		t.Fatalf("wellness meta = %#v, want preserved range/include_full", meta)
+	}
+	row := payload["wellness"].([]any)[0].(map[string]any)
+	if _, ok := row["weight"]; ok {
+		t.Fatalf("wellness row kept null weight in terse mode: %#v", row)
+	}
+}
+
 func TestGetWellnessDataNullStrippingAndIncludeFull(t *testing.T) {
 	t.Parallel()
 

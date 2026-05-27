@@ -63,10 +63,10 @@
 **Status:** 🟨 In Progress
 
 - [x] Step 4 plan documents timezone boundary coverage, include/exclude range coverage, past-only assertions, changelog location, and targeted tests
-- [ ] Positive/negative timezone boundary cases covered
-- [ ] Date ranges including/excluding local today covered
-- [ ] Past-only range behavior verified
-- [ ] `CHANGELOG.md` updated
+- [x] Positive/negative timezone boundary cases covered
+- [x] Date ranges including/excluding local today covered
+- [x] Past-only range behavior verified
+- [x] `CHANGELOG.md` updated
 
 ---
 
