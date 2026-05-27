@@ -92,7 +92,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "write",
-    "summary": "Rename and/or edit the free-text description of one completed activity by activity_id.",
+    "summary": "Rename and/or replace the free-text description of one completed activity by activity_id.",
     "anchor": "update_activity"
   },
   {
