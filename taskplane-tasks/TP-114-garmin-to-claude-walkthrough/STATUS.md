@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -22,11 +22,11 @@
 ---
 
 ### Step 1: Plan the tutorial and visual treatment
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Redacted mock screenshots, lightweight diagrams, or existing UI-free documentation pattern chosen
-- [ ] Tutorial path defined from device sync to intervals.icu through first Claude prompts
-- [ ] Privacy guardrails for visuals and prompts identified
+- [x] Redacted mock screenshots, lightweight diagrams, or existing UI-free documentation pattern chosen
+- [x] Tutorial path defined from device sync to intervals.icu through first Claude prompts
+- [x] Privacy guardrails for visuals and prompts identified
 
 **Plan-review checkpoint**
 
@@ -76,6 +76,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | plan | 1 | APPROVE | `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -104,4 +105,12 @@
 
 ## Notes
 
+### Step 1 tutorial plan
+
+- Visual treatment: use a lightweight Mermaid flow diagram plus a short text "grounded answer" example instead of screenshots. This matches the site's UI-free documentation patterns, avoids private training images, and still shows the Garmin/device-provider → intervals.icu → local icuvisor → Claude path.
+- Tutorial path: start with device-provider sync already landing in intervals.icu, then verify intervals.icu has recent data, install/setup icuvisor using the existing macOS/Claude docs, connect Claude Desktop or Claude Code, ask a first grounded question, then graduate to weekly review, recovery check, and missing-data troubleshooting prompts.
+- Privacy guardrails: no real screenshots, athlete IDs, API keys, access tokens, location-specific activity names, medical/wellness values, or unique training numbers. Prompts should ask Claude to use icuvisor/intervals.icu data without pasting secrets, and examples should use synthetic values with explicit "example" language.
+- R001 plan review approved; follow-ups for Step 2: verify Mermaid support or fall back to plain Markdown/ASCII, keep intervals.icu-only source language explicit, reuse setup/prompt docs instead of duplicating long sections, and use only synthetic examples.
+
 *Reserved for execution notes*
+| 2026-05-27 18:17 | Review R001 | plan Step 1: APPROVE |
