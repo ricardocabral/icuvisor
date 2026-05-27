@@ -1,10 +1,10 @@
 # TP-105: Tool routing smoke eval — Status
 
-**Current Step:** Step 3: Wire command and documentation
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 1
 **Size:** M
 
@@ -57,14 +57,14 @@
 ---
 
 ### Step 4: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Targeted tests passing
-- [ ] FULL test suite passing: `make test`
-- [ ] Build passes: `make build`
-- [ ] Lint passes: `make lint`
-- [ ] Optional provider-backed eval run recorded if credentials are available
-- [ ] All failures fixed or documented as pre-existing unrelated failures
+- [x] Targeted tests passing
+- [x] FULL test suite passing: `make test`
+- [x] Build passes: `make build`
+- [x] Lint passes: `make lint`
+- [x] Optional provider-backed eval run recorded if credentials are available
+- [x] All failures fixed or documented as pre-existing unrelated failures
 
 ---
 
@@ -114,6 +114,9 @@
 ## Notes
 
 - Tracking issue: https://github.com/ricardocabral/icuvisor/issues/32
+- Step 4 targeted verification: `go test ./internal/toolrouting` passed; `make eval-tool-routing` dry run passed with 8 skipped cases because provider configuration was unset.
+- Provider-backed eval not run: `ICUVISOR_ROUTING_EVAL_PROVIDER` is unset in this worker environment; no model call was made.
+- Step 4 quality gates passed with no failures to fix or document: `make test`, `make build`, and `make lint`.
 | 2026-05-27 10:28 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-27 11:03 | Review R004 | plan Step 2: APPROVE |
 | 2026-05-27 11:13 | Review R005 | code Step 2: UNKNOWN |
@@ -121,3 +124,4 @@
 | 2026-05-27 11:22 | Review R007 | plan Step 3: UNKNOWN |
 | 2026-05-27 11:24 | Review R008 | plan Step 3: APPROVE |
 | 2026-05-27 12:20 | Review R009 | code Step 3: APPROVE |
+| 2026-05-27 12:23 | Review R010 | plan Step 4: APPROVE |
