@@ -31,7 +31,7 @@
 - [x] Targeted workoutdoc tests passing
 - [x] Direct table-driven serializer matrix covers scalar/range power, pace, HR, zone, watt, BPM, and text pace forms
 - [x] Unsupported structured absolute pace target units are documented as discovery or fixed additively with tests
-- [ ] R004 coverage gap fixed for blank pace units and `%HR`/`HR` aliases
+- [x] R004 coverage gap fixed for blank pace units and `%HR`/`HR` aliases
 
 ---
 
