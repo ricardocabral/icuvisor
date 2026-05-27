@@ -67,9 +67,9 @@
 ### Step 5: Documentation & Delivery
 **Status:** 🟨 In Progress
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 - [ ] Final commit includes task ID
 
 ---
@@ -89,6 +89,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| No out-of-scope discoveries. | N/A | TP-106 final review |
 
 ---
 
@@ -112,6 +113,8 @@
 ## Notes
 
 - Tracking issue: https://github.com/ricardocabral/icuvisor/issues/33
+- Must-update docs completed: `CHANGELOG.md` records the new curated prompt and `STATUS.md` is current.
+- Check-if-affected docs reviewed: `web/content/reference/resources-prompts.md` and PRD prompt list updated; README has only a project layout path and no curated prompt list.
 | 2026-05-27 14:18 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-05-27 14:20 | Review R002 | plan Step 1: UNKNOWN |
 | 2026-05-27 14:22 | Review R003 | plan Step 1: REVISE |
