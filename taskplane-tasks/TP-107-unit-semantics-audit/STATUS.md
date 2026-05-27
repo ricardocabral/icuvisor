@@ -1,6 +1,6 @@
 # TP-107: Unit semantics audit — Status
 
-**Current Step:** Step 1: Add workout target unit regression coverage
+**Current Step:** Step 2: Add work/energy and unknown-unit regression coverage
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
@@ -36,13 +36,16 @@
 ---
 
 ### Step 2: Add work/energy and unknown-unit regression coverage
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 > ⚠️ Hydrate: Expand based on actual unit-bearing surfaces found during audit.
 
 - [ ] Joules/kilojoules surfaces audited and covered
+- [ ] Extended metrics raw-joule-to-kJ conversion tests cover activity, interval, and strain-score W' fields with `_meta.extended_metric_units`
+- [ ] Workout-library joules fields are audited as raw/full-only or covered if surfaced
 - [ ] Raw joules not mislabeled as kilojoules
 - [ ] Unknown units preserved rather than guessed
+- [ ] Response preferred-unit pass-through covers KJ/KCAL and unknown raw unit labels
 - [ ] Targeted unit/response tests passing
 
 ---
