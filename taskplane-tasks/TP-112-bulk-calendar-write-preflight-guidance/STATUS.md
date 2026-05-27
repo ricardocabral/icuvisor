@@ -1,7 +1,7 @@
 # TP-112: Bulk calendar write preflight guidance — Status
 
-**Current Step:** Step 3: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 4: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-27
 **Review Level:** 1
 **Review Counter:** 4
@@ -56,12 +56,12 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Step-boundary commit includes `TP-112`
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Step-boundary commit includes `TP-112`
 
 ---
 
@@ -76,6 +76,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| TP-109 task status is still not started, but current write tools already expose `workout_doc_warning` and readback `workout_doc_summary`; TP-112 wording was scoped to those existing fields rather than a future `_meta.warnings` contract. | Used in prompt/cookbook wording. | `internal/tools/*workout*.go`, `internal/tools/add_or_update_event.go`, `STATUS.md` R001 notes |
+| `web/content/reference/resources-prompts.md` and `docs/dogfood/v0.3-prompts.md` were reviewed; no update needed because the prompt reference is a code-truth tool/resource summary and dogfood write prompts already require per-write readback rather than bulk scheduling. | No doc changes needed. | Step 4 review |
 
 ---
 
