@@ -1,6 +1,6 @@
 # TP-104: As-of metadata for time-relative reads — Status
 
-**Current Step:** Step 1: Design and implement shared athlete-local as-of helper
+**Current Step:** Step 2: Add metadata to `get_today`
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
@@ -36,7 +36,7 @@
 ---
 
 ### Step 2: Add metadata to `get_today`
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `get_today` meta includes `as_of`, `as_of_date`, `as_of_weekday`, and timezone
 - [ ] Existing injectable clock used in tests
