@@ -1,6 +1,12 @@
 name: Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build (for example v0.1.5)"
+        required: true
+        type: string
   push:
     tags:
       - "v*.*.*"
@@ -9,7 +15,10 @@ permissions:
   contents: write
 
 env:
+  GORELEASER_VERSION: "v2.15.2"
   ICUVISOR_MCPB_CLI_PACKAGE: "@anthropic-ai/mcpb@2.1.2"
+  RELEASE_REF: ${{ github.event.inputs.tag || github.ref }}
+  RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
 jobs:
   preflight:
@@ -19,6 +28,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ref: ${{ env.RELEASE_REF }}
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -49,7 +59,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
-          version: latest
+          version: ${{ env.GORELEASER_VERSION }}
           args: check
 
       - name: Validate MCPB manifest
@@ -70,6 +80,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ref: ${{ env.RELEASE_REF }}
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -129,7 +140,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
-          version: latest
+          version: ${{ env.GORELEASER_VERSION }}
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -142,7 +153,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_TAG#v}"
           binary_path="$(find dist -path '*_darwin_all/icuvisor' -type f | sort | head -n 1)"
           if [ -z "$binary_path" ]; then
             echo "error: universal darwin binary not found under dist" >&2
@@ -168,7 +179,7 @@ jobs:
           ICUVISOR_MCPB_OUTPUT="dist/icuvisor_${version}_darwin_universal.mcpb" \
             scripts/package_mcpb.sh
 
-          gh release upload "$GITHUB_REF_NAME" "dist/icuvisor_${version}_darwin_universal.mcpb" --clobber
+          gh release upload "$RELEASE_TAG" "dist/icuvisor_${version}_darwin_universal.mcpb" --clobber
 
       - name: Build, sign, notarize, and staple macOS DMG
         shell: bash
@@ -182,7 +193,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release upload "$GITHUB_REF_NAME" dist/icuvisor_*_macos_universal.dmg --clobber
+          gh release upload "$RELEASE_TAG" dist/icuvisor_*_macos_universal.dmg --clobber
 
   release-windows:
     name: Build signed Windows MSI
@@ -194,6 +205,9 @@ jobs:
         arch: [amd64, arm64]
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ env.RELEASE_REF }}
 
       - name: Resolve MSI arch
         id: arch
@@ -209,7 +223,7 @@ jobs:
         id: ver
         shell: pwsh
         env:
-          REF_NAME: ${{ github.ref_name }}
+          REF_NAME: ${{ env.RELEASE_TAG }}
         run: |
           $tag = $env:REF_NAME -replace '^v', ''
           # Strip pre-release / build metadata. MSI ProductVersion only allows N.N.N.N.
@@ -223,7 +237,7 @@ jobs:
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REF_NAME: ${{ github.ref_name }}
+          REF_NAME: ${{ env.RELEASE_TAG }}
           MSI_VERSION: ${{ steps.ver.outputs.version }}
           MATRIX_ARCH: ${{ matrix.arch }}
         run: |
@@ -294,7 +308,7 @@ jobs:
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REF_NAME: ${{ github.ref_name }}
+          REF_NAME: ${{ env.RELEASE_TAG }}
         run: |
           gh release upload $env:REF_NAME (Get-ChildItem dist/*.msi).FullName --clobber
 
@@ -307,6 +321,9 @@ jobs:
       id-token: write  # cosign keyless OIDC
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ env.RELEASE_REF }}
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
@@ -319,7 +336,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           cd dist
-          gh release download "$GITHUB_REF_NAME" \
+          gh release download "$RELEASE_TAG" \
             --pattern 'icuvisor_*_linux_*.tar.gz' \
             --pattern 'icuvisor_*_windows_*.zip' \
             --pattern 'icuvisor_*_windows_*.msi' \
@@ -360,7 +377,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "$GITHUB_REF_NAME" \
+          gh release upload "$RELEASE_TAG" \
             dist/SHA256SUMS.txt \
             dist/SHA256SUMS.txt.pem \
             dist/SHA256SUMS.txt.sig \
@@ -370,4 +387,4 @@ jobs:
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit "$GITHUB_REF_NAME" --draft=false
+        run: gh release edit "$RELEASE_TAG" --draft=false
