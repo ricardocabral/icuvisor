@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 13
+**Review Counter:** 14
 **Iteration:** 1
 **Size:** M
 
@@ -65,9 +65,9 @@
 ### Step 4: Changelog and full verification
 **Status:** 🟨 In Progress
 
-- [ ] `CHANGELOG.md` updated if behavior or metadata changes
-- [ ] Unit-surface discoveries logged
-- [ ] Targeted tests passing
+- [x] `CHANGELOG.md` updated if behavior or metadata changes
+- [x] Unit-surface discoveries logged
+- [x] Targeted tests passing
 
 ---
 
@@ -109,6 +109,7 @@
 | R011 | Code | 3 | REVISE | `.reviews/R011-code-step3.md` |
 | R012 | Code | 3 | APPROVE | `.reviews/R012-code-step3.md` |
 | R013 | Plan | 4 | REVISE | `.reviews/R013-plan-step4.md` |
+| R014 | Plan | 4 | APPROVE | `.reviews/R014-plan-step4.md` |
 
 ---
 
@@ -121,6 +122,7 @@
 | Step 2 audit: workout-library `joules` / `joules_above_ftp` exist only on the internal upstream DTO; current `get_workout_library` and `get_workouts_in_folder` terse rows do not expose them, and include-full preserves raw `workout_doc` rather than relabeling energy fields. Custom items are preserved verbatim, and activity histograms emit only power/HR/pace units. | Treat as audit-only for TP-107; no additive labels needed unless these fields become public tool fields later. | `internal/intervals/workout_library.go`; `internal/tools/get_workout_library.go`; `internal/tools/get_workouts_in_folder.go`; `internal/tools/get_custom_items.go`; `internal/tools/get_activity_histogram.go` |
 | Unknown upstream unit preservation already exists in activity intervals (`unit: UNKNOWN` plus `unknown_unit`) and `units.ParseUnit`; Step 2 added preferred-unit energy pass-through coverage so KJ/KCAL are not converted by distance-unit preferences. | Existing interval coverage retained; response coverage extended. | `internal/tools/get_activity_details_test.go`; `internal/units/unit_test.go`; `internal/response/units_test.go` |
 | Calories semantics were already covered on activity details and wellness rows: activity emits `calories_burned` and rejects wellness intake keys; wellness emits `calories_intake` and keeps raw `kcalConsumed` only under `full` in include-full mode. | Relied on existing regression tests for Step 3; hydration metadata coverage was added. | `internal/tools/get_activity_details_test.go`; `internal/tools/get_wellness_data_test.go` |
+| Unit-semantics audit did not require workout serializer behavior changes; Step 1 is regression coverage only. Hydration metadata is additive and avoids stale field semantics when upstream hydration fields are null. | Changelog updated for user-visible hydration metadata; no generated tool docs/catalog change required because schemas/descriptions were not changed. | `internal/workoutdoc/workoutdoc_test.go`; `internal/tools/get_wellness_data.go`; `CHANGELOG.md` |
 
 ---
 
@@ -131,6 +133,7 @@
 | 2026-05-26 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-05-27 12:51 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-27 12:51 | Step 0 started | Preflight |
+| 2026-05-27 | Step 4 affected-package tests | `go test ./internal/workoutdoc ./internal/units ./internal/response ./internal/tools` passed |
 
 ---
 
@@ -173,3 +176,4 @@
 | 2026-05-27 13:31 | Review R011 | code Step 3: REVISE |
 | 2026-05-27 13:34 | Review R012 | code Step 3: APPROVE |
 | 2026-05-27 13:37 | Review R013 | plan Step 4: REVISE |
+| 2026-05-27 13:38 | Review R014 | plan Step 4: APPROVE |
