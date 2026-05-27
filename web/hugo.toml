@@ -5,7 +5,7 @@ enableRobotsTXT = true
 disableKinds = ["taxonomy", "term", "RSS"]
 
 [params]
-description = "Open-source MCP server that connects intervals.icu training data to Claude, ChatGPT, Cursor, and other AI assistants. One signed Go binary. No SaaS."
+description = "Local-first, open-source MCP server that connects intervals.icu training data to Claude, ChatGPT, Cursor, and other AI assistants. One signed Go binary, OS keychain credentials, no icuvisor SaaS account."
 github = "https://github.com/ricardocabral/icuvisor"
 intervals = "https://intervals.icu"
 featuredTools = [

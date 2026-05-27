@@ -1,6 +1,6 @@
 # TP-113: Local-first positioning refresh — Status
 
-**Current Step:** Step 1: Refresh homepage and metadata positioning
+**Current Step:** Step 2: Strengthen explanatory copy and links
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 0
@@ -22,16 +22,16 @@
 ---
 
 ### Step 1: Refresh homepage and metadata positioning
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Landing-page hero/feature/privacy copy foregrounds local-first operation, keychain credential storage, no icuvisor SaaS account, and simple MCP setup
-- [ ] Site metadata or README summary copy updated if needed
-- [ ] Copy checked for accuracy across supported clients and external AI-provider caveats
+- [x] Landing-page hero/feature/privacy copy foregrounds local-first operation, keychain credential storage, no icuvisor SaaS account, and simple MCP setup
+- [x] Site metadata or README summary copy updated if needed
+- [x] Copy checked for accuracy across supported clients and external AI-provider caveats
 
 ---
 
 ### Step 2: Strengthen explanatory copy and links
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `web/content/explain/local-first.md` updated with local binary + OS keychain versus hosted connector/OAuth-style flows
 - [ ] Related docs links added or adjusted if needed

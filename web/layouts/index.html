@@ -39,8 +39,8 @@
     <main class="bento" role="main">
 
       <section class="card hero col-12" aria-labelledby="hero-title">
-        <h1 id="hero-title">Talk to your <span style="background:linear-gradient(120deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;color:transparent;">intervals.icu</span> data.</h1>
-        <p class="lead">icuvisor is an open-source <a href="https://modelcontextprotocol.io" rel="noopener">MCP</a> server for <a href="{{ .Site.Params.intervals }}" rel="noopener">intervals.icu</a>, shipped as a single signed Go binary. Connect Claude, ChatGPT, Cursor, Pi, or Zed to your training data — locally, privately, free.</p>
+        <h1 id="hero-title">Talk to your <span style="background:linear-gradient(120deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;color:transparent;">intervals.icu</span> data from your own computer.</h1>
+        <p class="lead">icuvisor is an open-source, local-first <a href="https://modelcontextprotocol.io" rel="noopener">MCP</a> server for <a href="{{ .Site.Params.intervals }}" rel="noopener">intervals.icu</a>, shipped as one signed Go binary. Your API key stays in the OS keychain, there is no icuvisor SaaS account to create, and Claude, ChatGPT, Cursor, Pi, Zed, or another MCP client connects through a simple local setup.</p>
         <div class="actions">
           <a class="btn" href="#install">Get started</a>
           <a class="btn btn-ghost" href="{{ .Site.Params.github }}" rel="noopener">View on GitHub →</a>
@@ -49,27 +49,28 @@
 
       <section class="card col-8" id="features" aria-labelledby="why-title">
         <span class="tag">Why icuvisor</span>
-        <h2 id="why-title">Your training data, in any AI assistant.</h2>
-        <p>Ask follow-up questions about last week's threshold workout. Get a plain-English summary of your form trend. Plan an event from your calendar. icuvisor exposes intervals.icu through a clean MCP catalog so the assistant you already use can read and reason over your data.</p>
+        <h2 id="why-title">Your training data, available locally to the assistant you choose.</h2>
+        <p>Ask follow-up questions about last week's threshold workout. Get a plain-English summary of your form trend. Plan an event from your calendar. icuvisor exposes intervals.icu through a clean MCP catalog while keeping the connector on your machine instead of adding an icuvisor-hosted middle service.</p>
         <ul class="feature-list">
-          <li><strong>Single signed binary</strong> for macOS, Windows, and Linux — no Python, no Docker.</li>
+          <li><strong>Single signed binary</strong> for macOS, Windows, and Linux — no Python, no Docker, no hosted connector account.</li>
+          <li><strong>Guided local setup</strong> stores your intervals.icu API key in macOS Keychain, Windows Credential Manager, or libsecret.</li>
           <li><strong>Terse-by-default responses</strong> tuned for LLM context windows. Heavy payloads are opt-in.</li>
           <li><strong>Generated MCP tool catalog</strong> covering activities, wellness, fitness, events, and custom items.</li>
           <li><strong>Coach mode</strong> for working across a roster of athletes from one install.</li>
-          <li><strong>stdio &amp; Streamable HTTP</strong> transports for every major MCP client.</li>
+          <li><strong>stdio &amp; Streamable HTTP</strong> transports for major MCP clients.</li>
         </ul>
       </section>
 
       <section class="card col-4" aria-labelledby="privacy-title">
         <span class="tag">Privacy</span>
         <h3 id="privacy-title">Local-first by design.</h3>
-        <p>Your API key lives in the OS keychain — never on disk in plain text, never in a tool argument, never on someone else's server. The HTTP transport binds to <span class="mono">127.0.0.1</span> by default.</p>
+        <p>Your intervals.icu API key lives in the OS keychain — never on disk in plain text, never in a tool argument, never on an icuvisor server. The HTTP transport binds to <span class="mono">127.0.0.1</span> by default, so local clients stay local unless you deliberately change that configuration.</p>
       </section>
 
       <section class="card col-4" aria-labelledby="oss-title">
         <span class="tag">Open source &amp; free</span>
         <h3 id="oss-title">No icuvisor account, credits, or subscription.</h3>
-        <p>The icuvisor binary is free and open source, with no hosted icuvisor account to create and no icuvisor SaaS usage quota. AI clients, model providers, downloads, and intervals.icu remain separate services with their own terms.</p>
+        <p>The icuvisor binary is free and open source, with no hosted icuvisor account to create and no icuvisor SaaS usage quota. AI clients, model providers, package downloads, and intervals.icu remain separate services with their own terms, limits, and conversation-data settings.</p>
       </section>
 
       {{ $releaseURL := "https://api.github.com/repos/ricardocabral/icuvisor/releases/latest" }}
@@ -98,8 +99,8 @@
 
       <section class="card col-8" id="install" aria-labelledby="install-title">
         <span class="tag">Install</span>
-        <h3 id="install-title">Download and install.</h3>
-        <p>Pick the build for your platform — icuvisor {{ with $release }}{{ .tag_name }}{{ end }}.</p>
+        <h3 id="install-title">Download, run setup, connect your client.</h3>
+        <p>Pick the build for your platform — icuvisor {{ with $release }}{{ .tag_name }}{{ end }} — then run <span class="mono">icuvisor setup</span> to save your intervals.icu credential in the OS keychain and generate local MCP settings.</p>
         {{ with $downloads }}
         <ul class="download-list">
         {{ range . }}
