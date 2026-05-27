@@ -38,11 +38,11 @@
 ### Step 2: Add metadata to `get_today`
 **Status:** 🟨 In Progress
 
-- [ ] `get_today` meta includes `as_of`, `as_of_date`, `as_of_weekday`, and timezone
+- [x] `get_today` meta includes `as_of`, `as_of_date`, `as_of_weekday`, and timezone
 - [x] Step 2 plan documents single `now()` anchor, existing meta preservation, helper timezone, and targeted tests
-- [ ] Existing injectable clock used in tests
-- [ ] Existing `date`, `activity_window`, and counts preserved
-- [ ] Targeted `get_today` tests passing
+- [x] Existing injectable clock used in tests
+- [x] Existing `date`, `activity_window`, and counts preserved
+- [x] Targeted `get_today` tests passing
 
 ---
 

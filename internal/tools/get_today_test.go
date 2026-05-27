@@ -117,8 +117,8 @@ func TestGetTodayDigestUsesAthleteLocalDateAndSourceShapes(t *testing.T) {
 		t.Fatalf("annotations = %#v, want NOTE and race categories", annotations)
 	}
 	meta := out["_meta"].(map[string]any)
-	if meta["date"] != "2026-05-24" || meta["timezone"] != "America/Sao_Paulo" || meta["include_full"] != false {
-		t.Fatalf("meta = %#v, want today/timezone/include_full", meta)
+	if meta["date"] != "2026-05-24" || meta["as_of"] != "2026-05-24T23:30:00-03:00" || meta["as_of_date"] != "2026-05-24" || meta["as_of_weekday"] != "Sunday" || meta["timezone"] != "America/Sao_Paulo" || meta["include_full"] != false {
+		t.Fatalf("meta = %#v, want today/as-of/timezone/include_full", meta)
 	}
 	if counts := meta["section_counts"].(map[string]any); counts["completed_activities"] != float64(1) || counts["annotations"] != float64(2) {
 		t.Fatalf("section_counts = %#v, want activity and annotation counts", counts)

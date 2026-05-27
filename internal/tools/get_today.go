@@ -44,6 +44,9 @@ type getTodayResponse struct {
 
 type getTodayMeta struct {
 	Date           string         `json:"date"`
+	AsOf           string         `json:"as_of"`
+	AsOfDate       string         `json:"as_of_date"`
+	AsOfWeekday    string         `json:"as_of_weekday"`
 	Timezone       string         `json:"timezone"`
 	IncludeFull    bool           `json:"include_full"`
 	SourceTools    []string       `json:"source_tools"`
@@ -85,10 +88,11 @@ func getTodayHandler(client todayClient, profileClient ProfileClient, gearClient
 		}
 		unitSystem := profileUnitSystem(profile)
 		timezoneName := profileTimezone(profile.Timezone, timezoneFallback)
-		today, err := athleteLocalDate(now(), timezoneName)
+		asOf, err := response.AsOfMetadataInTimezone(now(), timezoneName)
 		if err != nil {
 			return Result{}, NewUserError(fetchTodayMessage, err)
 		}
+		today := asOf.AsOfDate
 
 		fitnessRows, err := client.ListAthleteSummary(ctx, intervals.AthleteSummaryParams{Start: today, End: today})
 		if err != nil {
@@ -118,7 +122,7 @@ func getTodayHandler(client todayClient, profileClient ProfileClient, gearClient
 			return todayFetchError(err)
 		}
 
-		payload, err := shapeGetTodayResponse(todayDigestInputs{today: today, timezone: timezoneName, includeFull: args.IncludeFull, unitSystem: unitSystem, fitnessRows: fitnessRows, wellnessRows: wellness, activities: activities, gearResolutions: gearResolutions, customFieldCodes: customFieldCodes, events: events})
+		payload, err := shapeGetTodayResponse(todayDigestInputs{today: today, asOf: asOf, timezone: asOf.Timezone, includeFull: args.IncludeFull, unitSystem: unitSystem, fitnessRows: fitnessRows, wellnessRows: wellness, activities: activities, gearResolutions: gearResolutions, customFieldCodes: customFieldCodes, events: events})
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_today response: %w", err)
 		}
@@ -146,6 +150,7 @@ func decodeGetTodayRequest(raw json.RawMessage) (getTodayRequest, error) {
 
 type todayDigestInputs struct {
 	today            string
+	asOf             response.AsOfMetadata
 	timezone         string
 	includeFull      bool
 	unitSystem       response.UnitSystem
@@ -174,7 +179,10 @@ func shapeGetTodayResponse(in todayDigestInputs) (getTodayResponse, error) {
 		Annotations:         annotations,
 		Meta: getTodayMeta{
 			Date:           in.today,
-			Timezone:       in.timezone,
+			AsOf:           in.asOf.AsOf,
+			AsOfDate:       in.asOf.AsOfDate,
+			AsOfWeekday:    in.asOf.AsOfWeekday,
+			Timezone:       in.asOf.Timezone,
 			IncludeFull:    in.includeFull,
 			SourceTools:    []string{getFitnessName, getWellnessDataName, getActivitiesName, getEventsName},
 			SectionCounts:  map[string]int{"fitness": len(in.fitnessRows), "wellness": len(in.wellnessRows), "completed_activities": len(completed), "planned_events": len(planned), "annotations": len(annotations)},
@@ -214,14 +222,6 @@ func eventRowsBefore(left, right getEventsRow) bool {
 	return left.EventID < right.EventID
 }
 
-func athleteLocalDate(now time.Time, timezoneName string) (string, error) {
-	asOf, err := response.AsOfMetadataInTimezone(now, timezoneName)
-	if err != nil {
-		return "", err
-	}
-	return asOf.AsOfDate, nil
-}
-
 func todayCustomFieldCodes(ctx context.Context, client ActivityCustomFieldClient, cache *customFieldCache) []string {
 	if client == nil {
 		return nil
@@ -251,5 +251,5 @@ func getTodayInputSchema() map[string]any {
 }
 
 func getTodayOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "One-call athlete-local today digest with fitness, wellness, completed_activities, planned_events, annotations, source_tools, section counts, units, and scale labels. Terse by default; include_full adds raw upstream payloads per section."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "One-call athlete-local today digest with fitness, wellness, completed_activities, planned_events, annotations, athlete-local as-of metadata, source_tools, section counts, units, and scale labels. Terse by default; include_full adds raw upstream payloads per section."}
 }
