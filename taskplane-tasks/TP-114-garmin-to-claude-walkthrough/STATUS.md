@@ -1,10 +1,10 @@
 # TP-114: Garmin to Claude walkthrough — Status
 
-**Current Step:** Step 2: Add the walkthrough content
+**Current Step:** Step 3: Link the walkthrough from discovery surfaces
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -43,11 +43,11 @@
 ---
 
 ### Step 3: Link the walkthrough from discovery surfaces
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Tutorial linked from tutorial index and relevant Claude connection docs
-- [ ] Homepage or cookbook pointer added only if useful
-- [ ] `CHANGELOG.md` updated under `[Unreleased]` if appropriate
+- [x] Tutorial linked from tutorial index and relevant Claude connection docs
+- [x] Homepage or cookbook pointer added only if useful
+- [x] `CHANGELOG.md` updated under `[Unreleased]` if appropriate
 
 ---
 
@@ -78,6 +78,7 @@
 |---|------|------|---------|------|
 | R001 | plan | 1 | APPROVE | `.reviews/R001-plan-step1.md` |
 | R002 | plan | 2 | UNAVAILABLE | — |
+| R003 | plan | 3 | APPROVE | `.reviews/R003-plan-step3.md` |
 
 ---
 
@@ -116,3 +117,4 @@
 
 *Reserved for execution notes*
 | 2026-05-27 18:17 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-27 18:22 | Review R003 | plan Step 3: APPROVE |
