@@ -1,6 +1,6 @@
 # TP-114: Garmin to Claude walkthrough — Status
 
-**Current Step:** Step 4: Testing & Verification
+**Current Step:** Step 5: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
@@ -63,12 +63,12 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Final commit includes task ID
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Final commit includes task ID
 
 ---
 
@@ -79,6 +79,7 @@
 | R001 | plan | 1 | APPROVE | `.reviews/R001-plan-step1.md` |
 | R002 | plan | 2 | UNAVAILABLE | — |
 | R003 | plan | 3 | APPROVE | `.reviews/R003-plan-step3.md` |
+| R004 | plan | 4 | APPROVE | `.reviews/R004-plan-step4.md` |
 
 ---
 
@@ -87,6 +88,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | No existing Mermaid usage was found in `web/content`; the tutorial uses a plain Markdown text diagram instead of relying on Mermaid rendering. | Applied in Step 2 | `web/content/tutorials/garmin-to-claude.md` |
+| Local Hugo output from `make web-build` does not include sitewide Pagefind assets, so broad generated-page href/src scans report `/pagefind/` files unrelated to this walkthrough. Tutorial-specific rendered targets and image references were checked separately. | Documented in Step 4 verification | `web/public/tutorials/garmin-to-claude/index.html` |
 
 ---
 
@@ -121,6 +123,9 @@
 - Step 4 verification: rendered tutorial output exists at `web/public/tutorials/garmin-to-claude/index.html`; all tutorial target pages referenced from the new Markdown exist in `web/public`; the walkthrough uses no image references. A broad generated-page scan only reported sitewide `/pagefind/` search assets, not tutorial links or images.
 - Step 4 verification: skipped `make test` because `git log`/changed-file review shows this task touched documentation, website content, changelog, and task metadata only; no non-doc Go app files were modified.
 - Step 4 verification: skipped `make build` because no app strings or tracked generated application assets were touched.
+- Step 5 delivery: Must Update docs verified: `web/content/tutorials/garmin-to-claude.md` exists with the device-provider → intervals.icu → icuvisor → Claude path, safe prompts, and direct-source caveats; STATUS records the visual/content approach.
+- Step 5 delivery: Check If Affected docs reviewed: Claude Desktop, Claude Code, prompt library, tutorial index, and CHANGELOG contain focused pointers; homepage was left unchanged to avoid duplicating the tutorial.
+- Step 5 delivery: existing task commits all include `TP-114`; the final delivery commit will use the same task ID convention.
 | 2026-05-27 18:17 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-27 18:22 | Review R003 | plan Step 3: APPROVE |
 | 2026-05-27 18:25 | Review R004 | plan Step 4: APPROVE |
