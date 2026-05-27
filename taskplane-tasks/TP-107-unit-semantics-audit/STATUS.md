@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -36,7 +36,7 @@
 ---
 
 ### Step 2: Add work/energy and unknown-unit regression coverage
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 > ⚠️ Hydrate: Expand based on actual unit-bearing surfaces found during audit.
 
@@ -101,6 +101,7 @@
 | R005 | Code | 1 | APPROVE | `.reviews/R005-code-step1.md` |
 | R006 | Plan | 2 | REVISE | `.reviews/R006-plan-step2.md` |
 | R007 | Plan | 2 | APPROVE | `.reviews/R007-plan-step2.md` |
+| R008 | Code | 2 | APPROVE | `.reviews/R008-code-step2.md` |
 
 ---
 
@@ -150,3 +151,4 @@
 | 2026-05-27 13:10 | Review R005 | code Step 1: APPROVE |
 | 2026-05-27 13:13 | Review R006 | plan Step 2: REVISE |
 | 2026-05-27 13:15 | Review R007 | plan Step 2: APPROVE |
+| 2026-05-27 13:20 | Review R008 | code Step 2: APPROVE |
