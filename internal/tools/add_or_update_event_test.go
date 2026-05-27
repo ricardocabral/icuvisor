@@ -175,6 +175,58 @@ func TestAddOrUpdateEventUpdateUsesEventID(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateEventDescriptionOnlyWorkoutWarning(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name        string
+		args        string
+		wantWarning bool
+	}{
+		{
+			name:        "workout update with description and no workout_doc warns",
+			args:        `{"event_id":"evt-2","date":"2026-07-01","category":"WORKOUT","type":"Ride","description":"Add coach note only."}`,
+			wantWarning: true,
+		},
+		{
+			name: "workout update with workout_doc does not warn",
+			args: `{"event_id":"evt-2","date":"2026-07-01","category":"WORKOUT","type":"Ride","description":"Keep structure.","workout_doc":{"steps":[{"duration":600,"power":{"value":60,"units":"PERCENT_FTP"}}]}}`,
+		},
+		{
+			name: "workout create with description does not warn",
+			args: `{"date":"2026-07-01","category":"WORKOUT","type":"Ride","description":"Strength session prose."}`,
+		},
+		{
+			name: "non-workout update with description does not warn",
+			args: `{"event_id":"evt-race","date":"2026-07-01","category":"RACE","description":"Race plan."}`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeEventWriterClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+				event:             decodeToolEvents(t, `{"id":"evt-2","category":"WORKOUT","name":"Updated","start_date_local":"2026-07-01","workout_doc":{"steps":[{"duration":600}]}}`)[0],
+			}
+			tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.args)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			meta := resultMap(t, result)["_meta"].(map[string]any)
+			warning, ok := meta["description_only_workout_warning"].(string)
+			if tc.wantWarning {
+				if !ok || warning != descriptionOnlyWorkoutWarning {
+					t.Fatalf("description_only_workout_warning = %#v, want %q", meta["description_only_workout_warning"], descriptionOnlyWorkoutWarning)
+				}
+				return
+			}
+			if ok {
+				t.Fatalf("description_only_workout_warning present = %q", warning)
+			}
+		})
+	}
+}
+
 func TestAddOrUpdateEventCanClearTags(t *testing.T) {
 	t.Parallel()
 

@@ -47,13 +47,14 @@ type updateWorkoutResponse struct {
 }
 
 type updateWorkoutMeta struct {
-	Operation           string   `json:"operation"`
-	SourceEndpoint      string   `json:"source_endpoint"`
-	WorkoutID           string   `json:"workout_id"`
-	FieldsUpdated       []string `json:"fields_updated"`
-	WorkoutDocUploaded  string   `json:"workout_doc_uploaded,omitempty"`
-	WorkoutDocWarning   string   `json:"workout_doc_warning,omitempty"`
-	DefaultPayloadScope string   `json:"default_payload_scope"`
+	Operation                     string   `json:"operation"`
+	SourceEndpoint                string   `json:"source_endpoint"`
+	WorkoutID                     string   `json:"workout_id"`
+	FieldsUpdated                 []string `json:"fields_updated"`
+	WorkoutDocUploaded            string   `json:"workout_doc_uploaded,omitempty"`
+	WorkoutDocWarning             string   `json:"workout_doc_warning,omitempty"`
+	DescriptionOnlyWorkoutWarning string   `json:"description_only_workout_warning,omitempty"`
+	DefaultPayloadScope           string   `json:"default_payload_scope"`
 }
 
 func newUpdateWorkoutTool(client WorkoutUpdaterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -167,7 +168,14 @@ func updateWorkoutParams(args updateWorkoutRequest) (intervals.WriteWorkoutParam
 
 func shapeUpdateWorkoutResponse(workout intervals.Workout, args updateWorkoutRequest, workoutDocUploaded string) updateWorkoutResponse {
 	uploadedSteps := args.WorkoutDoc != nil && len(args.WorkoutDoc.Steps) > 0
-	return updateWorkoutResponse{Workout: workoutToRow(workout, false), Meta: updateWorkoutMeta{Operation: "update", SourceEndpoint: workoutLibraryWorkoutsEndpoint, WorkoutID: args.WorkoutID, FieldsUpdated: updateWorkoutFieldsUpdated(args), WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, workout.WorkoutDoc), DefaultPayloadScope: "same terse workout row shape used by get_workout_library/get_workouts_in_folder; raw workout_doc remains summarized"}}
+	return updateWorkoutResponse{Workout: workoutToRow(workout, false), Meta: updateWorkoutMeta{Operation: "update", SourceEndpoint: workoutLibraryWorkoutsEndpoint, WorkoutID: args.WorkoutID, FieldsUpdated: updateWorkoutFieldsUpdated(args), WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, workout.WorkoutDoc), DescriptionOnlyWorkoutWarning: updateWorkoutDescriptionOnlyWorkoutWarning(args), DefaultPayloadScope: "same terse workout row shape used by get_workout_library/get_workouts_in_folder; raw workout_doc remains summarized"}}
+}
+
+func updateWorkoutDescriptionOnlyWorkoutWarning(args updateWorkoutRequest) string {
+	if !args.descriptionProvided || args.Description == nil || args.WorkoutDoc != nil {
+		return ""
+	}
+	return descriptionOnlyWorkoutWarning
 }
 
 func updateWorkoutFieldsUpdated(args updateWorkoutRequest) []string {
@@ -233,5 +241,5 @@ func updateWorkoutInputExamples() []map[string]any {
 }
 
 func updateWorkoutOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Update confirmation containing the same terse workout row shape used by workout-library read tools plus operation, source endpoint, workout ID, fields-updated, and workout_doc upload metadata. _meta.workout_doc_warning is set when intervals.icu stored the workout but did not parse the uploaded workout_doc into a graphically rendered structured workout."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Update confirmation containing the same terse workout row shape used by workout-library read tools plus operation, source endpoint, workout ID, fields-updated, and workout_doc upload metadata. _meta.workout_doc_warning is set when intervals.icu stored the workout but did not parse the uploaded workout_doc into a graphically rendered structured workout. _meta.description_only_workout_warning is set when description is supplied without workout_doc."}
 }
