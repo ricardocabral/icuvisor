@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 3
 **Size:** S
 
@@ -26,6 +26,8 @@
 
 > **Plan-review checkpoint**
 
+- [ ] Plan-review R001 final wording pattern recorded in STATUS.md before source edits
+- [ ] Plan-review R001 snapshot verification owner included
 - [ ] `add_or_update_event` wording clarifies replacement semantics and structured-step risk
 - [ ] `create_workout` / `update_workout` wording checked and updated
 - [ ] `update_activity` wording checked for consistency
@@ -106,4 +108,11 @@
 
 ## Notes
 
-*Reserved for execution notes*
+- R001 plan wording pattern to apply:
+  - `add_or_update_event`: `description` replaces the upstream event description/DSL; omit on updates to leave unchanged. For `WORKOUT` updates, supplying `description` without `workout_doc` can replace existing structured steps; include the desired `workout_doc` to preserve/merge structure, using `<!-- icuvisor:steps -->` to position serialized steps when also supplying prose.
+  - `create_workout`: creation builds the initial upstream template description/DSL from `description`, `workout_doc`, or both. It has no existing template to preserve, but `description` is part of the single upstream description/DSL field, not an append-only notes channel.
+  - `update_workout`: omitted sparse fields stay unchanged; supplied `description` and/or `workout_doc` replaces the template's upstream description/DSL. To preserve structured steps while changing prose, provide the desired `workout_doc` plus prose/sentinel.
+  - `update_activity`: replacement free-text activity description only; do not imply activity descriptions carry planned workout structure. Keep the `set_activity_intervals` pointer.
+- R001 scope guard: TP-109 runtime warning/guard behavior is not implemented; TP-111 must avoid references to nonexistent warning/guard/block metadata or behavior.
+- Snapshot verification owner: after tool/schema wording edits, regenerate snapshots with `go run ./scripts/snapshot_tool_schemas.go`; targeted verification should include `go test ./internal/tools ./internal/toolchecks`.
+| 2026-05-27 18:19 | Review R001 | plan Step 1: REVISE |
