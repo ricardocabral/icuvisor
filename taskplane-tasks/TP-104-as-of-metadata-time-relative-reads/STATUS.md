@@ -1,6 +1,6 @@
 # TP-104: As-of metadata for time-relative reads — Status
 
-**Current Step:** Step 2: Add metadata to `get_today`
+**Current Step:** Step 3: Add metadata to current-day range reads
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
@@ -47,8 +47,9 @@
 ---
 
 ### Step 3: Add metadata to current-day range reads
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
+- [ ] Shared current-day range predicate, as-of meta application helper, and injectable clock constructors added for range tools
 - [ ] `get_activities` current-day range metadata added
 - [ ] `get_events` current-day range metadata added
 - [ ] `get_wellness_data` current-day range metadata added
@@ -129,6 +130,7 @@
 - Tracking issue: https://github.com/ricardocabral/icuvisor/issues/31
 - Step 1 plan: add a shared `internal/response.AsOfMetadata(now time.Time, timezone string)` helper returning one struct with `as_of`, `as_of_date`, `as_of_weekday`, and `timezone`, all derived from a single localized instant. The helper will reuse the existing timezone loading path used by `RenderTimeInTimezone`/`RenderDateInTimezone`; malformed zones return the existing wrapped load error and empty timezone continues to resolve to UTC. `get_today` keeps using its injectable `now func() time.Time`; Step 3 tools will receive injectable clock constructors before calling the helper/current-day range predicate, avoiding direct untestable `time.Now()` in handlers. Tests will cover positive/negative offset date shifts, weekday consistency, trimmed and empty timezone behavior, and invalid-zone errors.
 - Step 2 plan: in `getTodayHandler`, call the injectable `now()` exactly once, pass that instant to `response.AsOfMetadataInTimezone`, use `asOf.AsOfDate` for the existing `today` fetch date, and pass the full helper result into `shapeGetTodayResponse` so `date` and `as_of_date` cannot diverge across midnight. Extend `getTodayMeta` with `as_of`, `as_of_date`, and `as_of_weekday` while preserving existing `date`, `timezone`, `include_full`, `source_tools`, `section_counts`, `activity_window`, and response-shaper-added metadata such as `units`. Populate `_meta.timezone` from the helper's trimmed/defaulted `Timezone`. Update `get_today` tests through `newGetTodayToolWithClock` to assert exact São Paulo boundary `as_of*` values and unchanged local-date fetches/counts, then run `go test ./internal/tools -run TestGetToday`.
+- Step 3 plan: add a small tools-level helper that computes `response.AsOfMetadataInTimezone(now(), timezone)` once per request and attaches `as_of`, `as_of_date`, `as_of_weekday`, and helper-normalized `timezone` only when the normalized request date range includes `asOf.AsOfDate`; closed ranges require `oldest <= today <= newest`, and `get_activities` with blank `newest` treats the range as open-ended through upstream now. Add with-clock constructors for activities, events, and wellness so tests do not depend on wall-clock time. Preserve each tool's existing pagination token, count, null stripping, terse/full, and response-shaper metadata by only extending response meta structs immediately before shaping.
 | 2026-05-27 12:19 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-05-27 12:22 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-27 12:29 | Review R003 | code Step 1: APPROVE |
