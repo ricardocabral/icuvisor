@@ -1,7 +1,7 @@
 # TP-107: Unit semantics audit — Status
 
-**Current Step:** Step 5: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 6: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-27
 **Review Level:** 2
 **Review Counter:** 18
@@ -83,12 +83,12 @@
 ---
 
 ### Step 6: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Final commit includes task ID
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Final commit includes task ID
 
 ---
 
@@ -174,6 +174,7 @@
 - Step 5 verification plan: rerun targeted affected packages with `go test ./internal/workoutdoc ./internal/units ./internal/response ./internal/tools`, then run `make test`, `make build`, and `make lint` in that order. Record each command/result in the execution log.
 - Step 5 failure handling: fix task-related failures before checking boxes; if a failure appears pre-existing/unrelated, document the command, failure excerpt, and rationale in `STATUS.md` and leave the checkbox truthful.
 - Step 5 environment: no network-dependent tests or external services are expected.
+- Step 6 docs review: `CHANGELOG.md` and `STATUS.md` updated. `docs/prd/PRD-icuvisor.md`, generated tool reference, and `README.md` were reviewed as not affected because no product contract names, tool schemas, descriptions, or public examples changed.
 | 2026-05-27 12:57 | Review R001 | plan Step 1: REVISE |
 | 2026-05-27 12:59 | Review R002 | plan Step 1: REVISE |
 | 2026-05-27 13:01 | Review R003 | plan Step 1: APPROVE |
