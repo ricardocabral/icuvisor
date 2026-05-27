@@ -104,17 +104,7 @@ func TestHashToolCatalogRejectsNonMarshalableSchema(t *testing.T) {
 func TestNewServerCatalogHashUsesExposedCatalog(t *testing.T) {
 	t.Parallel()
 
-	coreRead := catalogHashTestTool("catalog_core", "Core tool.", schemaWithArgument("value", "core input"), map[string]any{"type": "object"}, safety.ToolsetCore, tools.RequirementRead)
-	fullRead := catalogHashTestTool("catalog_full", "Full tool.", schemaWithArgument("value", "full input"), map[string]any{"type": "object"}, safety.ToolsetFull, tools.RequirementRead)
-	coreDelete := catalogHashTestTool("catalog_delete", "Delete tool.", schemaWithArgument("value", "delete input"), map[string]any{"type": "object"}, safety.ToolsetCore, tools.RequirementDelete)
-	registry := registryFunc(func(_ context.Context, registrar tools.Registrar) error {
-		for _, tool := range []tools.Tool{coreRead, fullRead, coreDelete} {
-			if err := registrar.AddTool(tool); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	coreRead, fullRead, coreDelete, registry := catalogFilteringFixture()
 
 	server, err := NewServer(context.Background(), Options{Registry: registry, Capability: safety.NewCapability(safety.ModeSafe), Toolset: safety.ToolsetCore})
 	if err != nil {
@@ -143,11 +133,39 @@ func TestNewServerCatalogHashUsesExposedCatalog(t *testing.T) {
 	}
 }
 
+func TestCollectToolCatalogUsesExposedCatalog(t *testing.T) {
+	t.Parallel()
+
+	coreRead, _, _, registry := catalogFilteringFixture()
+	collected, err := CollectToolCatalog(context.Background(), CatalogHashOptions{Registry: registry, Capability: safety.NewCapability(safety.ModeSafe), Toolset: safety.ToolsetCore})
+	if err != nil {
+		t.Fatalf("CollectToolCatalog() error = %v", err)
+	}
+	if len(collected) != 1 || collected[0].Name != coreRead.Name {
+		t.Fatalf("CollectToolCatalog() = %#v, want only %s", collected, coreRead.Name)
+	}
+}
+
 func catalogHashFixtureTools() []tools.Tool {
 	return []tools.Tool{
 		catalogHashTestTool("catalog_alpha", "Alpha tool.", schemaWithOrderedKeys([]string{"type", "description"}), map[string]any{"type": "object"}, safety.ToolsetCore, tools.RequirementRead),
 		catalogHashTestTool("catalog_beta", "Beta tool.", schemaWithOrderedKeys([]string{"description", "type"}), map[string]any{"type": "object"}, safety.ToolsetCore, tools.RequirementRead),
 	}
+}
+
+func catalogFilteringFixture() (tools.Tool, tools.Tool, tools.Tool, tools.Registry) {
+	coreRead := catalogHashTestTool("catalog_core", "Core tool.", schemaWithArgument("value", "core input"), map[string]any{"type": "object"}, safety.ToolsetCore, tools.RequirementRead)
+	fullRead := catalogHashTestTool("catalog_full", "Full tool.", schemaWithArgument("value", "full input"), map[string]any{"type": "object"}, safety.ToolsetFull, tools.RequirementRead)
+	coreDelete := catalogHashTestTool("catalog_delete", "Delete tool.", schemaWithArgument("value", "delete input"), map[string]any{"type": "object"}, safety.ToolsetCore, tools.RequirementDelete)
+	registry := registryFunc(func(_ context.Context, registrar tools.Registrar) error {
+		for _, tool := range []tools.Tool{coreRead, fullRead, coreDelete} {
+			if err := registrar.AddTool(tool); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return coreRead, fullRead, coreDelete, registry
 }
 
 func catalogHashTestTool(name, description string, inputSchema, outputSchema any, toolset safety.Toolset, requirement tools.Requirement) tools.Tool {

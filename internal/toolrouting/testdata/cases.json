@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "activity-details-read",
+      "prompt": "Show me the details for activity 123456, including intervals and gear if available.",
+      "expected_first_tool": "get_activity_details",
+      "catalog_mode": "core_safe",
+      "toolset": "core",
+      "delete_mode": "safe",
+      "notes": "Confusable read case: details for one known activity should route to get_activity_details before streams or lists."
+    },
+    {
+      "id": "activity-stream-analyzer-helper",
+      "prompt": "For activity 123456, compute the average power and heart-rate for the segment from 00:10:00 to 00:25:00.",
+      "expected_first_tool": "compute_activity_segment_stats",
+      "catalog_mode": "full_safe",
+      "toolset": "full",
+      "delete_mode": "safe",
+      "notes": "Analyzer helper should be selected instead of fetching raw streams into chat."
+    },
+    {
+      "id": "event-write-upsert",
+      "prompt": "Add a planned bike workout called Endurance 60 on 2026-06-01 with a one hour endurance description.",
+      "expected_first_tool": "add_or_update_event",
+      "catalog_mode": "core_safe",
+      "toolset": "core",
+      "delete_mode": "safe",
+      "notes": "Write/update event routing should use the event upsert tool."
+    },
+    {
+      "id": "event-delete-hidden-in-safe-mode",
+      "prompt": "Delete the calendar event evt-789 from my intervals.icu calendar.",
+      "expected_first_tool": null,
+      "catalog_mode": "full_safe",
+      "toolset": "full",
+      "delete_mode": "safe",
+      "notes": "Safe delete mode must not expose delete_event; the expected first action is no tool rather than a write workaround."
+    },
+    {
+      "id": "event-delete-full-mode",
+      "prompt": "Delete the calendar event evt-789 from my intervals.icu calendar.",
+      "expected_first_tool": "delete_event",
+      "catalog_mode": "full_full_delete",
+      "toolset": "full",
+      "delete_mode": "full",
+      "notes": "Same destructive intent should route to delete_event when delete tools are registered."
+    },
+    {
+      "id": "workout-library-list",
+      "prompt": "Find workouts in my workout library folder called Base Plans.",
+      "expected_first_tool": "get_workouts_in_folder",
+      "catalog_mode": "full_safe",
+      "toolset": "full",
+      "delete_mode": "safe",
+      "notes": "Workout-library read case with a folder should use the folder-specific listing."
+    },
+    {
+      "id": "workout-library-create-full",
+      "prompt": "Create a reusable workout named Sweet Spot Builder in my library with 3x10 minutes at 90 percent FTP.",
+      "expected_first_tool": "create_workout",
+      "catalog_mode": "full_safe",
+      "toolset": "full",
+      "delete_mode": "safe",
+      "notes": "Full toolset write case for workout-library CRUD."
+    },
+    {
+      "id": "training-distribution-analyzer",
+      "prompt": "Was my training distribution polarized or threshold-heavy over the last 8 weeks?",
+      "expected_first_tool": "compute_load_balance",
+      "catalog_mode": "full_safe",
+      "toolset": "full",
+      "delete_mode": "safe",
+      "notes": "Analyzer helper should handle training-distribution classification."
+    }
+  ]
+}

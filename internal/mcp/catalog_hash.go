@@ -33,11 +33,24 @@ type CatalogHashOptions struct {
 
 // ComputeToolCatalogHash returns the same tool-catalog hash NewServer exposes without starting a transport.
 func ComputeToolCatalogHash(ctx context.Context, opts CatalogHashOptions) (string, error) {
-	if err := ctx.Err(); err != nil {
+	toolCatalog, err := CollectToolCatalog(ctx, opts)
+	if err != nil {
 		return "", err
 	}
+	catalogHash, err := hashToolCatalog(toolCatalog)
+	if err != nil {
+		return "", fmt.Errorf("hashing tool catalog: %w", err)
+	}
+	return catalogHash, nil
+}
+
+// CollectToolCatalog returns the exposed MCP tool definitions without starting a transport.
+func CollectToolCatalog(ctx context.Context, opts CatalogHashOptions) ([]tools.Tool, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if opts.Registry == nil {
-		return hashToolCatalog(nil)
+		return nil, nil
 	}
 	logger := opts.Logger
 	if logger == nil {
@@ -54,13 +67,9 @@ func ComputeToolCatalogHash(ctx context.Context, opts CatalogHashOptions) (strin
 		names:          make(map[string]struct{}),
 	}
 	if err := opts.Registry.Register(ctx, registrar); err != nil {
-		return "", fmt.Errorf("registering tools for catalog hash: %w", err)
+		return nil, fmt.Errorf("registering tools for catalog collection: %w", err)
 	}
-	catalogHash, err := hashToolCatalog(registrar.registeredTools)
-	if err != nil {
-		return "", fmt.Errorf("hashing tool catalog: %w", err)
-	}
-	return catalogHash, nil
+	return append([]tools.Tool(nil), registrar.registeredTools...), nil
 }
 
 func hashToolCatalog(toolCatalog []tools.Tool) (string, error) {
