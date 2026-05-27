@@ -1,10 +1,10 @@
 # TP-115: Claude Project instructions pack — Status
 
-**Current Step:** Step 3: Link and deduplicate with existing recipes
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -43,17 +43,17 @@
 ---
 
 ### Step 3: Link and deduplicate with existing recipes
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] New guide linked from Claude connection docs and guides index
-- [ ] Relevant cookbook/prompt-library pages link to the new guide where useful
-- [ ] MCP Prompts versus Project instructions clarified if needed
-- [ ] `CHANGELOG.md` updated under `[Unreleased]` if appropriate
+- [x] New guide linked from Claude connection docs and guides index
+- [x] Relevant cookbook/prompt-library pages link to the new guide where useful
+- [x] MCP Prompts versus Project instructions clarified if needed
+- [x] `CHANGELOG.md` updated under `[Unreleased]` if appropriate
 
 ---
 
 ### Step 4: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Docs/site build passing: `make web-build`
 - [ ] Internal links and docs navigation checked
@@ -79,6 +79,7 @@
 |---|------|------|---------|------|
 | 1 | plan | 1 | APPROVE | |
 | 2 | plan | 2 | APPROVE | |
+| 3 | plan | 3 | APPROVE | |
 
 ---
 
@@ -112,3 +113,4 @@
 - Step 1 registered-name plan: relevant prompt names documented in `web/content/reference/resources-prompts.md` are `weekly_review`, `recovery_check`, `race_week_taper`, `training_analysis`, and `weekly_planning` (the full documented set also includes `coach_roster_triage`); tool names verified in `web/data/tools.json` include `get_today`, `get_athlete_profile`, `get_wellness_data`, `get_fitness`, `get_training_summary`, `get_activities`, `get_events`, `get_training_plan`, `compute_zone_time`, `compute_load_balance`, `compute_compliance_rate`, `analyze_trend`, `get_fitness_projection`, and `icuvisor_list_advanced_capabilities`.
 | 2026-05-27 17:50 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-27 17:52 | Review R002 | plan Step 2: APPROVE |
+| 2026-05-27 17:55 | Review R003 | plan Step 3: APPROVE |

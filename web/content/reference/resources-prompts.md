@@ -5,6 +5,8 @@ description: "Reference for icuvisor MCP Resources and Prompts."
 
 icuvisor exposes MCP Resources for long-form reference material and MCP Prompts for curated starting points in clients that support them. Resources and prompts keep bulky guidance out of every tool description while still letting an AI client fetch it when needed.
 
+MCP Prompts are server-registered workflows that clients can invoke when they support `prompts/list`. Claude Project instructions are client-side standing instructions that apply across ordinary chats; use the [Claude Project instructions guide]({{< relref "../guides/claude-project-instructions" >}}) when you want timezone/date, grounding, and stale-data guardrails even outside a specific MCP Prompt.
+
 ## Resources
 
 | URI                              | Name                  | MIME type          | Description                                                                                                                                                                                                                                                                                                                       |

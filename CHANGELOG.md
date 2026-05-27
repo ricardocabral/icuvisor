@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added copy-paste Claude Project instructions for grounded icuvisor training chats, including timezone/date discipline, source-tool citation, stale/missing-data handling, weekly-review, recovery-check, and race-week taper add-ons.
 - Added an opt-in `make eval-tool-routing` smoke eval for first-tool-call routing against the registered MCP tool catalog, with provider-backed runs only when explicitly configured.
 - Documentation now explains stale conversations and cached MCP tool catalogs, including when to start a new chat, reconnect tools, verify `icuvisor version`, run `icuvisor diagnostics`, and avoid pasting API keys into assistant conversations.
 - New curated MCP prompt `weekly_review` guides assistants through a structured previous-week training review, planned-vs-completed comparison, wellness caveats, and optional next-week preview using existing read/analyzer tools.

@@ -4,7 +4,7 @@ description: "Decide whether to train hard today using wellness and form, with c
 weight: 30
 ---
 
-Before a hard session, you want a straight answer: train as planned, modify, or back off. This recipe makes the assistant weigh wellness against current fatigue and give a green/amber/red call — while handling the two things AI assistants get wrong most often: subjective scales and not-yet-synced data.
+Before a hard session, you want a straight answer: train as planned, modify, or back off. This recipe makes the assistant weigh wellness against current fatigue and give a green/amber/red call — while handling the two things AI assistants get wrong most often: subjective scales and not-yet-synced data. To make those scale and staleness rules stick across Claude chats, add the [Claude Project instructions]({{< relref "../guides/claude-project-instructions" >}}).
 
 ## When to use this
 

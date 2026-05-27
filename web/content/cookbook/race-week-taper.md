@@ -4,7 +4,7 @@ description: "Plan the final days before a goal event — load, intensity, and t
 weight: 80
 ---
 
-The taper is where good fitness is either sharpened or wasted. This recipe makes the assistant ground the taper in your real fitness trajectory and race-week calendar, then hand you a day-by-day outline — without touching your events.
+The taper is where good fitness is either sharpened or wasted. This recipe makes the assistant ground the taper in your real fitness trajectory and race-week calendar, then hand you a day-by-day outline — without touching your events. For a Claude Project dedicated to race prep, add the [race-week Project instruction block]({{< relref "../guides/claude-project-instructions#optional-block-race-week-taper" >}}) so the no-write and timezone rules are always present.
 
 ## When to use this
 

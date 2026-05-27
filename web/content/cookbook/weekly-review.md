@@ -4,7 +4,7 @@ description: "A reusable prompt that turns the last 7-14 days of intervals.icu d
 weight: 20
 ---
 
-A weekly review is the most common thing athletes ask an AI assistant for. This recipe makes the assistant pull load, volume, intensity distribution, and form in a fixed order, then deliver a coached summary with a concrete next step — without inventing anything.
+A weekly review is the most common thing athletes ask an AI assistant for. This recipe makes the assistant pull load, volume, intensity distribution, and form in a fixed order, then deliver a coached summary with a concrete next step — without inventing anything. For reusable Claude-wide guardrails before you paste this recipe, see the [Claude Project instructions guide]({{< relref "../guides/claude-project-instructions" >}}).
 
 ## When to use this
 

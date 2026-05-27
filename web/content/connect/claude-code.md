@@ -14,7 +14,7 @@ You need:
 - Your intervals.icu athlete ID, written as `i12345` or `12345`.
 - Your API key stored in the macOS Keychain under service `icuvisor` and account `intervals-icu-api-key`.
 
-Do not put your intervals.icu API key in `.mcp.json` or any Claude Code project config. The MCP config should contain only non-secret values.
+Do not put your intervals.icu API key in `.mcp.json` or any Claude Code project config. The MCP config should contain only non-secret values. For reusable chat behavior, use [Claude Project instructions]({{< relref "../guides/claude-project-instructions" >}}) that enforce timezone/date discipline and data grounding without storing secrets.
 
 If needed, run setup first:
 
@@ -48,7 +48,7 @@ Notes:
 - If your team commits a shared `.mcp.json`, use placeholders and document that each user must add their own non-secret athlete ID locally.
 - If you installed the app somewhere else, update `command` to the absolute path to `icuvisor.app/Contents/MacOS/icuvisor`.
 
-Restart Claude Code or reload MCP servers after editing the file. If tools or answers still look stale, follow the [stale conversation troubleshooting guide]({{< relref "../guides/troubleshooting#stale-conversations-and-cached-tool-catalogs" >}}).
+Restart Claude Code or reload MCP servers after editing the file. Start a new session after changing Project instructions or MCP config. If tools or answers still look stale, follow the [stale conversation troubleshooting guide]({{< relref "../guides/troubleshooting#stale-conversations-and-cached-tool-catalogs" >}}).
 
 ## Verify the connection
 

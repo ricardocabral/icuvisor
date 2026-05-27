@@ -30,6 +30,8 @@ Install:
 
 Do not paste the API key into chat messages or into manual JSON config. In the extension path, Claude Desktop passes it to icuvisor as `INTERVALS_ICU_API_KEY` only when launching the local stdio server.
 
+After the connection works, you can add reusable [Claude Project instructions]({{< relref "../guides/claude-project-instructions" >}}) so new training chats consistently use athlete-local dates, cite icuvisor tools, and flag missing or stale data without storing secrets in the Project.
+
 <details>
 <summary>Extension smoke checklist</summary>
 
@@ -115,4 +117,4 @@ security find-generic-password -s icuvisor -a intervals-icu-api-key >/dev/null
 
 ## Updating
 
-For the extension path, download and open the newer `.mcpb` release asset, then restart Claude Desktop and start a new chat. For the manual app path, download the newer signed DMG, replace `/Applications/icuvisor.app`, fully quit Claude Desktop, and start a new chat. In both paths, keep the API key out of manual JSON config. If Claude still shows old tools or stale answers, use the [stale conversation troubleshooting guide]({{< relref "../guides/troubleshooting#stale-conversations-and-cached-tool-catalogs" >}}).
+For the extension path, download and open the newer `.mcpb` release asset, then restart Claude Desktop and start a new chat. For the manual app path, download the newer signed DMG, replace `/Applications/icuvisor.app`, fully quit Claude Desktop, and start a new chat. In both paths, keep the API key out of manual JSON config. Also start a new chat after changing Project instructions. If Claude still shows old tools or stale answers, use the [stale conversation troubleshooting guide]({{< relref "../guides/troubleshooting#stale-conversations-and-cached-tool-catalogs" >}}).
