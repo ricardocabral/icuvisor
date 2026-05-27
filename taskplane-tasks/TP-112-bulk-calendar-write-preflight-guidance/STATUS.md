@@ -1,10 +1,10 @@
 # TP-112: Bulk calendar write preflight guidance — Status
 
-**Current Step:** Step 1: Add curated prompt guardrails
+**Current Step:** Step 2: Add user-facing cookbook guidance
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** S
 
@@ -36,12 +36,12 @@
 ---
 
 ### Step 2: Add user-facing cookbook guidance
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Workout/calendar cookbook guidance updated
-- [ ] Structured-step preservation risk explained concisely
-- [ ] Guidance remains client-neutral
-- [ ] `CHANGELOG.md` updated
+- [x] Workout/calendar cookbook guidance updated
+- [x] Structured-step preservation risk explained concisely
+- [x] Guidance remains client-neutral
+- [x] `CHANGELOG.md` updated
 
 ---
 
@@ -101,3 +101,4 @@
 - Step 1 implementation note: add this as a `Do` item in `WeeklyPlanningPrompt` rather than a custom `Guardrails` slice, keeping the default guardrails intact and the rendered prompt terse.
 | 2026-05-27 19:10 | Review R001 | plan Step 1: REVISE |
 | 2026-05-27 19:12 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-27 19:16 | Review R003 | plan Step 2: APPROVE |
