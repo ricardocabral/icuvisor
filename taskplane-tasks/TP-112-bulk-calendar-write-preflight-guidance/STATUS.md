@@ -1,11 +1,11 @@
 # TP-112: Bulk calendar write preflight guidance — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
+**Current Step:** Step 0: Preflight
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 1
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** S
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it.
@@ -13,11 +13,11 @@
 ---
 
 ### Step 0: Preflight
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Required files and paths exist
-- [ ] Dependencies satisfied
-- [ ] Existing prompt and cookbook guidance reviewed
+- [x] Required files and paths exist
+- [x] Dependencies satisfied
+- [x] Existing prompt and cookbook guidance reviewed
 
 ---
 
@@ -83,6 +83,8 @@
 | Timestamp | Action | Outcome |
 |-----------|--------|---------|
 | 2026-05-27 | Task staged | PROMPT.md and STATUS.md created |
+| 2026-05-27 19:06 | Task started | Runtime V2 lane-runner execution |
+| 2026-05-27 19:06 | Step 0 started | Preflight |
 
 ---
 
