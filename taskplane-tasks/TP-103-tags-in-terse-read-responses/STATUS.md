@@ -37,7 +37,8 @@
 
 > ⚠️ Hydrate: Expand based on actual activity payload/model support discovered in source and fixtures.
 
-- [ ] Activity tag availability determined and either implemented or documented with a regression test/discovery
+- [ ] Activity read model, terse field selection, and fixtures inspected for upstream `tags` availability
+- [ ] If supported, expose activity `tags` on shared terse activity rows; otherwise document the unsupported/gap decision with regression coverage
 - [ ] Targeted activity tests passing
 
 ---
