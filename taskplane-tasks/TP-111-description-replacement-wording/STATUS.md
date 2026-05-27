@@ -58,11 +58,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 - [ ] Step-boundary commit includes `TP-111`
 
 ---
@@ -82,6 +82,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| TP-109 was intentionally skipped for this wave; TP-111 implemented wording-only guidance with no references to nonexistent runtime warning/guard behavior. | Recorded per supervisor steering and used TP-109 PROMPT.md only for terminology intent. | `STATUS.md`, write-tool and docs wording |
+| Changing the first sentence of a tool description affects generated docs catalog summaries. | Updated `cmd/gendocs/testdata/tools.golden.json` after `make test` caught the stale summary. | `cmd/gendocs/testdata/tools.golden.json` |
 
 ---
 
