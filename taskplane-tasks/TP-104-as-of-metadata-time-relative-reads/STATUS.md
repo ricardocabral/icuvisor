@@ -1,6 +1,6 @@
 # TP-104: As-of metadata for time-relative reads — Status
 
-**Current Step:** Step 5: Testing & Verification
+**Current Step:** Step 6: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-27
 **Review Level:** 2
@@ -83,7 +83,7 @@
 ---
 
 ### Step 6: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] "Must Update" docs modified
 - [ ] "Check If Affected" docs reviewed
