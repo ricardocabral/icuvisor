@@ -1,6 +1,6 @@
 # TP-130: Token-safe workout library positioning — Status
 
-**Current Step:** Step 1: Audit workout-library response shape
+**Current Step:** Step 2: Add docs/eval hardening
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Audit workout-library response shape
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Inspect workout-library tools/tests for pagination, terse default, and folder scoping.
 - [x] Record whether existing tests protect against huge raw payloads and `include_full` behavior.
@@ -31,7 +31,7 @@
 ---
 
 ### Step 2: Add docs/eval hardening
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Update build-workouts cookbook to recommend folder-filtered and paginated library queries instead of dumping all templates.
 - [ ] Add or update tests only if audit finds missing token-safety coverage.
