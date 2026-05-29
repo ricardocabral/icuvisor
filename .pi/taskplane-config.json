@@ -16,12 +16,106 @@
         "build": "make build"
       }
     },
+    "standards": {
+      "docs": [],
+      "rules": []
+    },
+    "standardsOverrides": {},
+    "worker": {
+      "model": "",
+      "tools": "read,write,edit,bash,grep,find,ls",
+      "thinking": "",
+      "excludeExtensions": []
+    },
+    "reviewer": {
+      "model": "",
+      "tools": "read,bash,grep,find,ls",
+      "thinking": "on",
+      "excludeExtensions": []
+    },
+    "context": {
+      "workerContextWindow": 0,
+      "warnPercent": 85,
+      "killPercent": 95,
+      "maxWorkerIterations": 20,
+      "maxReviewCycles": 2,
+      "noProgressLimit": 3
+    },
     "taskAreas": {
       "general": {
         "path": "taskplane-tasks",
         "prefix": "TP",
         "context": "taskplane-tasks/CONTEXT.md"
       }
+    },
+    "referenceDocs": {},
+    "neverLoad": [],
+    "selfDocTargets": {},
+    "protectedDocs": [],
+    "qualityGate": {
+      "enabled": false,
+      "reviewModel": "",
+      "maxReviewCycles": 2,
+      "maxFixCycles": 1,
+      "passThreshold": "no_critical"
+    },
+    "modelFallback": "inherit"
+  },
+  "orchestrator": {
+    "orchestrator": {
+      "maxLanes": 3,
+      "worktreeLocation": "subdirectory",
+      "worktreePrefix": "taskplane-wt",
+      "batchIdFormat": "timestamp",
+      "spawnMode": "subprocess",
+      "sessionPrefix": "orch",
+      "operatorId": "",
+      "integration": "manual"
+    },
+    "dependencies": {
+      "source": "prompt",
+      "cache": true
+    },
+    "assignment": {
+      "strategy": "affinity-first",
+      "sizeWeights": {
+        "S": 1,
+        "M": 2,
+        "L": 4
+      }
+    },
+    "preWarm": {
+      "autoDetect": false,
+      "commands": {},
+      "always": []
+    },
+    "merge": {
+      "model": "",
+      "tools": "read,write,edit,bash,grep,find,ls",
+      "thinking": "off",
+      "verify": [],
+      "order": "fewest-files-first",
+      "timeoutMinutes": 90,
+      "excludeExtensions": []
+    },
+    "failure": {
+      "onTaskFailure": "skip-dependents",
+      "onMergeFailure": "pause",
+      "stallTimeout": 60,
+      "maxWorkerMinutes": 120,
+      "abortGracePeriod": 60
+    },
+    "monitoring": {
+      "pollInterval": 5
+    },
+    "verification": {
+      "enabled": false,
+      "mode": "permissive",
+      "flakyReruns": 1
+    },
+    "supervisor": {
+      "model": "",
+      "autonomy": "supervised"
     }
   }
 }
