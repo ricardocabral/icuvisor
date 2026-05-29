@@ -1,10 +1,10 @@
 # TP-118: Activity tombstone delete endpoint — Status
 
-**Current Step:** Step 2: Implement and lock the endpoint behavior
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** S
 
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Implement and lock the endpoint behavior
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Client path/method updated if needed
 - [x] httptest coverage asserts exact method/path and target-athlete safety
@@ -44,7 +44,7 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing
 - [ ] Lint passing if source changed
@@ -71,6 +71,7 @@
 | R003 | Code | Step 1 | APPROVE | `.reviews/R003-code-step1.md` |
 | R004 | Plan | Step 2 | REVISE | `.reviews/R004-plan-step2.md` |
 | R005 | Plan | Step 2 | APPROVE | `.reviews/R005-plan-step2.md` |
+| R006 | Code | Step 2 | APPROVE | `.reviews/R006-code-step2.md` |
 
 ---
 
@@ -110,3 +111,4 @@ Plan review R004 requires Step 2 tests to include intervals endpoint/safety sele
 | 2026-05-29 15:29 | Review R003 | code Step 1: APPROVE |
 | 2026-05-29 15:32 | Review R004 | plan Step 2: REVISE |
 | 2026-05-29 15:33 | Review R005 | plan Step 2: APPROVE |
+| 2026-05-29 15:40 | Review R006 | code Step 2: APPROVE |
