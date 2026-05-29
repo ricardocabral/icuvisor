@@ -1,10 +1,10 @@
 # TP-133: Gym and strength best-effort support plan — Status
 
-**Current Step:** Step 1: Scope current support and upstream gaps
+**Current Step:** Step 2: Add best-effort prompt/docs guidance
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -22,17 +22,17 @@
 ---
 
 ### Step 1: Scope current support and upstream gaps
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Inspect current event/workout category handling and PRD/Roadmap strength-training mentions.
-- [ ] Determine what can be represented today without inventing unsupported structured strength sets.
-- [ ] Create or update an upstream-gap note for strength/gym support if missing.
-- [ ] Run targeted checks/tests as relevant.
+- [x] Inspect current event/workout category handling and PRD/Roadmap strength-training mentions.
+- [x] Determine what can be represented today without inventing unsupported structured strength sets.
+- [x] Create or update an upstream-gap note for strength/gym support if missing.
+- [x] Run targeted checks/tests as relevant.
 
 ---
 
 ### Step 2: Add best-effort prompt/docs guidance
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Update cookbook/prompt guidance to allow scheduling simple gym time blocks or notes when the user wants that, while explicitly saying detailed strength sets are future scope unless upstream support exists.
 - [ ] Avoid adding a new write tool in this task unless upstream API support is already documented in this repository.
@@ -79,6 +79,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Current event support accepts documented categories plus custom pass-through values; `WORKOUT` requires an upstream activity `type`, and `NOTE` can carry free-text calendar annotations. PRD/Roadmap list strength only as upstream-dependent future scope/assumption. | Use docs guidance to recommend NOTE time blocks or simple supported WORKOUTs, not structured strength sets. | `internal/intervals/event_categories.go`, `internal/tools/add_or_update_event.go`, `docs/prd/PRD-icuvisor.md`, `ROADMAP.md` |
 
 ---
 
@@ -101,3 +102,4 @@
 ## Notes
 
 *Reserved for execution notes*
+| 2026-05-29 14:25 | Review R001 | plan Step 1: APPROVE |
