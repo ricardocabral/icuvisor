@@ -48,7 +48,7 @@
 - [x] Keep downstream `activity_id` hints concise: resolve described/date-based activities with `get_activities` over the athlete-local date window, then pass the returned `activity_id`.
 - [x] If tool catalog text changes, regenerate generated tool docs/data with `make docs-tools` (or document why not needed before Step 5).
 - [x] Run targeted tests: `go test ./internal/tools ./internal/prompts` and `make eval-validate`
-- [ ] R008: Update `cmd/gendocs/testdata/tools.golden.json` for changed generated catalog summaries and verify `go test ./cmd/gendocs`.
+- [x] R008: Update `cmd/gendocs/testdata/tools.golden.json` for changed generated catalog summaries and verify `go test ./cmd/gendocs`.
 
 ---
 
