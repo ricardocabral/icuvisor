@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -34,11 +34,11 @@
 ### Step 2: Implement date anchors and tests
 **Status:** 🟨 In Progress
 
-- [ ] Implement `resolve_calendar_dates` as a strict read-only core tool with optional `base_date` (YYYY-MM-DD, default from injected clock converted to athlete timezone), optional `offsets` (default `[0]`, unique integers, max 32 items, each between -366 and 366), athlete-local `AddDate(0,0,offset)` arithmetic, strict `additionalProperties:false`, response rows containing `offset_days`, `date`, `weekday`, and `_meta` containing `timezone`, `base_date`, `base_weekday`, `server_version`, and `count`.
-- [ ] Register the public tool across `registryBaseTools`, `toolCatalogGroup`, `internal/toolcatalog`, and schema stability surfaces so it is core and athlete-scoped.
-- [ ] Add tests covering current day, future day offsets, base_date parsing, DST/timezone boundaries, invalid input, registration metadata, and catalog membership.
-- [ ] Update catalog/schema snapshots if the public tool surface changes.
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/toolcatalog`
+- [x] Implement `resolve_calendar_dates` as a strict read-only core tool with optional `base_date` (YYYY-MM-DD, default from injected clock converted to athlete timezone), optional `offsets` (default `[0]`, unique integers, max 32 items, each between -366 and 366), athlete-local `AddDate(0,0,offset)` arithmetic, strict `additionalProperties:false`, response rows containing `offset_days`, `date`, `weekday`, and `_meta` containing `timezone`, `base_date`, `base_weekday`, `server_version`, and `count`.
+- [x] Register the public tool across `registryBaseTools`, `toolCatalogGroup`, `internal/toolcatalog`, and schema stability surfaces so it is core and athlete-scoped.
+- [x] Add tests covering current day, future day offsets, base_date parsing, DST/timezone boundaries, invalid input, registration metadata, and catalog membership.
+- [x] Update catalog/schema snapshots if the public tool surface changes.
+- [x] Run targeted tests: `go test ./internal/tools ./internal/toolcatalog`
 
 ---
 
@@ -110,3 +110,4 @@ Plan review R003 further pinned the default-base injected clock conversion, exac
 | 2026-05-29 13:24 | Review R001 | code Step 1: APPROVE |
 | 2026-05-29 13:27 | Review R002 | plan Step 2: REVISE |
 | 2026-05-29 13:29 | Review R003 | plan Step 2: REVISE |
+| 2026-05-29 13:31 | Review R004 | plan Step 2: APPROVE |
