@@ -224,6 +224,66 @@ func TestGetWellnessDataPastRangeOmitsAsOfMetadata(t *testing.T) {
 	}
 }
 
+func TestGetWellnessDataNullReadinessKeepsFallbackEvidence(t *testing.T) {
+	t.Parallel()
+
+	row := shapedInlineWellnessRow(t, `{
+		"id":"2026-05-15",
+		"readiness":null,
+		"restingHR":47,
+		"hrv":61.5,
+		"hrvSDNN":72.25,
+		"sleepSecs":27600,
+		"sleepScore":82,
+		"sleepQuality":3,
+		"avgSleepingHR":43,
+		"fatigue":2,
+		"soreness":1,
+		"stress":2,
+		"feel":4,
+		"motivation":4,
+		"provider":"Garmin Connect",
+		"bridge_fetched_at":"2026-05-15T00:00:00Z",
+		"garmin":{"body_battery_min":28,"body_battery_max":79,"sleep_score":82}
+	}`, false)
+
+	if _, ok := row["readiness"]; ok {
+		t.Fatalf("null readiness was not stripped: %+v", row)
+	}
+	meta := row["_meta"].(map[string]any)
+	if !containsAny(meta["missing_fields"].([]any), "readiness") {
+		t.Fatalf("missing_fields = %+v, want readiness", meta["missing_fields"])
+	}
+	for key, want := range map[string]any{
+		"restingHR":     float64(47),
+		"hrv":           61.5,
+		"hrvSDNN":       72.25,
+		"sleepSecs":     float64(27600),
+		"sleepScore":    float64(82),
+		"sleepQuality":  float64(3),
+		"avgSleepingHR": float64(43),
+		"fatigue":       float64(2),
+		"soreness":      float64(1),
+		"stress":        float64(2),
+		"feel":          float64(4),
+		"motivation":    float64(4),
+	} {
+		if row[key] != want {
+			t.Fatalf("%s = %v, want %v in row %+v", key, row[key], want, row)
+		}
+	}
+	native := nestedMap(t, row, "_native", "garmin")
+	if native["body_battery_min"] != float64(28) || native["body_battery_max"] != float64(79) || native["sleep_score"] != float64(82) {
+		t.Fatalf("garmin native = %+v", native)
+	}
+	for _, field := range []string{"restingHR", "hrv", "hrvSDNN", "sleepScore", "sleepSecs", "avgSleepingHR"} {
+		prov := provenanceFor(t, row, field)
+		if prov["source"] != "garmin" {
+			t.Fatalf("%s provenance = %+v, want garmin source", field, prov)
+		}
+	}
+}
+
 func TestGetWellnessDataNullStrippingAndIncludeFull(t *testing.T) {
 	t.Parallel()
 

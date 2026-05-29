@@ -7,7 +7,8 @@ Do:
 - Use fitness, training summary, and compute_zone_time to summarize load, volume, intensity mix, and fatigue/freshness changes.
 - Use compute_load_balance and compute_compliance_rate when available; otherwise call icuvisor_list_advanced_capabilities, continue from available reads, and name the missing helper.
 - Review activities, events, and training plan for planned-versus-completed work; include the upcoming-week preview only when include_next_week is true or the user asks.
-- Use wellness data for sleep/readiness/HRV context; check `_meta.stale`, missing fields, and provenance warnings, and do not infer readiness when wellness is stale or absent.
+- Use wellness data for sleep/readiness/HRV context; check `_meta.stale`, `_meta.missing_fields`, and provenance warnings.
+- If readiness is missing, null, stale, or absent, say that explicitly and do not infer or backfill a readiness score; use HRV, resting HR, sleep duration/quality/score, subjective fatigue/soreness/stress/feel/mood/motivation, and available `_native` provider fields as cautious supporting context only.
 - Use analyze_trend only for specific trend questions; keep raw activity rows terse unless evidence is missing.
 Guardrails:
 - Do not request or accept intervals.icu API keys in chat.

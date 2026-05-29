@@ -1,10 +1,10 @@
 # TP-129: Readiness fallback guidance for null upstream readiness — Status
 
-**Current Step:** Step 1: Audit wellness readiness semantics
+**Current Step:** Step 2: Add fallback tests or prompt guidance
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -33,11 +33,11 @@
 ---
 
 ### Step 2: Add fallback tests or prompt guidance
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Add tests if missing for null readiness with present HRV/RHR/sleep/native fields.
-- [ ] Update recovery/weekly prompts so assistants do not invent readiness scores and explain missingness before fallback interpretation.
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/prompts`
+- [x] Add tests if missing for null readiness with present HRV/RHR/sleep/native fields.
+- [x] Update recovery/weekly prompts so assistants do not invent readiness scores and explain missingness before fallback interpretation.
+- [x] Run targeted tests: `go test ./internal/tools ./internal/prompts`
 
 ---
 
@@ -76,6 +76,7 @@
 | R001 | plan | 1 | APPROVE | `.reviews/R001-plan-step1.md` |
 | R002 | code | 1 | REVISE | `.reviews/R002-code-step1.md` |
 | R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
+| R004 | plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
 
 ---
 
@@ -112,3 +113,4 @@
 | 2026-05-29 13:54 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-29 13:58 | Review R002 | code Step 1: UNKNOWN |
 | 2026-05-29 14:01 | Review R003 | code Step 1: APPROVE |
+| 2026-05-29 14:04 | Review R004 | plan Step 2: APPROVE |
