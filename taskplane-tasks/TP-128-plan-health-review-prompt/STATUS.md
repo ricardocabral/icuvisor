@@ -1,11 +1,11 @@
 # TP-128: Plan health review prompt — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Design plan-health prompt contract
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 0
-**Iteration:** 1
+**Review Counter:** 1
+**Iteration:** 2
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -22,11 +22,13 @@
 ---
 
 ### Step 1: Design plan-health prompt contract
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Inspect existing `weekly_review`, `weekly_planning`, `race_week_taper`, analyzer tools, and cookbook pages.
 - [ ] Decide whether to add a new `plan_health_review` prompt or extend `weekly_review` without duplicating TP-122 season-planning scope.
 - [ ] Define required tool sequence: events/training plan, fitness/projection, planned-vs-completed compliance, recent wellness, and caveats for deload/recovery weeks.
+- [ ] Record explicit prompt contract in Discoveries: name/approach, arguments, date windows, output sections, race-risk behavior, and test implications.
+- [ ] Include formula-transparency fallbacks and scope boundaries in Discoveries: formula resource, analyzer `_meta.method` assumptions, advanced capability fallback, no black-box score, no plan-filler/autonomous coaching/calendar writes.
 - [ ] Run targeted tests: `go test ./internal/prompts`
 
 ---
@@ -73,6 +75,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -90,6 +93,8 @@
 | 2026-05-29 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-05-29 14:57 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-29 14:57 | Step 0 started | Preflight |
+| 2026-05-29 15:14 | Worker iter 1 | done in 1018s, tools: 11 |
+| 2026-05-29 15:14 | Step 1 started | Design plan-health prompt contract |
 
 ---
 
@@ -102,3 +107,4 @@
 ## Notes
 
 *Reserved for execution notes*
+| 2026-05-29 15:17 | Review R001 | plan Step 1: REVISE |
