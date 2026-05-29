@@ -1,7 +1,7 @@
 # TP-132: Multiple same-day events regression pack — Status
 
 **Current Step:** Step 4: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-29
 **Review Level:** 1
 **Review Counter:** 3
@@ -52,11 +52,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -73,6 +73,7 @@
 |-----------|-------------|----------|
 | Existing same-day event shaping appends rows and stable-sorts by `start_date_local` then `event_id`; no date-keyed map collapse found in production shaping. | Add regression tests because current tests cover one workout plus NOTE/race only, not multiple same-day workouts. | `internal/tools/get_today.go`, `internal/tools/get_events.go`, `internal/tools/get_today_test.go`, `internal/tools/get_events_training_plan_test.go` |
 | Athlete-local date filtering requests bounded upstream date ranges (`Oldest`/`Newest`) and preserves each returned event row; response code does not group or overwrite by date. | Cover requested same-day/tomorrow ranges with duplicate local-date workouts in tests. | `internal/tools/get_today.go:120`, `internal/tools/get_events.go:117`, `internal/tools/get_events.go:176` |
+| PRD already describes `get_today` and `get_events` event/calendar behavior at the current level; regression tests and eval coverage do not materially change response behavior. | No PRD edit needed; changelog updated for coverage. | `docs/prd/PRD-icuvisor.md`, `CHANGELOG.md` |
 
 ---
 
