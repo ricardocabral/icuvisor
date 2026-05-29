@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 2
 **Size:** M
 
@@ -48,6 +48,7 @@
 - [x] Update build-workouts cookbook with before/after preview language and approval workflow.
 - [x] Ensure examples distinguish prose description from structured `workout_doc`.
 - [x] Run targeted tests/docs validation as available.
+- [ ] Add a concrete existing-template before/after update preview showing duration, key intervals, intensity targets, load/distance/time deltas, and preserved fields before approval.
 
 ---
 
@@ -81,6 +82,7 @@
 | R005 | code | 2 | REVISE | `.reviews/R005-code-step2.md` |
 | R006 | code | 2 | APPROVE | inline review_step response |
 | R007 | plan | 3 | APPROVE | `.reviews/R007-plan-step3.md` |
+| R008 | code | 3 | REVISE | `.reviews/R008-code-step3.md` |
 
 ---
 
@@ -122,3 +124,4 @@
 | 2026-05-29 14:47 | Review R005 | code Step 2: REVISE |
 | 2026-05-29 14:51 | Review R006 | code Step 2: APPROVE |
 | 2026-05-29 14:53 | Review R007 | plan Step 3: APPROVE |
+| 2026-05-29 14:56 | Review R008 | code Step 3: REVISE |
