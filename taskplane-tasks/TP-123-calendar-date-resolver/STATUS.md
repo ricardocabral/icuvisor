@@ -1,10 +1,10 @@
 # TP-123: Calendar date resolver and future date anchors — Status
 
-**Current Step:** Step 1: Design deterministic date surface
+**Current Step:** Step 2: Implement date anchors and tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -32,10 +32,11 @@
 ---
 
 ### Step 2: Implement date anchors and tests
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Implement the chosen deterministic date anchor behavior using athlete timezone, local date, weekday, and offsets.
-- [ ] Add tests covering current day, future day offsets, timezone boundaries, and invalid input if a new tool is added.
+- [ ] Implement `resolve_calendar_dates` as a strict read-only core tool with `base_date`, bounded unique integer offsets, athlete-local `AddDate` arithmetic, and `_meta` base/timezone/version/count fields.
+- [ ] Register the public tool across `registryBaseTools`, `toolCatalogGroup`, `internal/toolcatalog`, and schema stability surfaces so it is core and athlete-scoped.
+- [ ] Add tests covering current day, future day offsets, base_date parsing, DST/timezone boundaries, invalid input, registration metadata, and catalog membership.
 - [ ] Update catalog/schema snapshots if the public tool surface changes.
 - [ ] Run targeted tests: `go test ./internal/tools ./internal/toolcatalog`
 
@@ -103,5 +104,7 @@
 
 ## Notes
 
-*Reserved for execution notes*
+Plan review R002 requested explicit registration/catalog surfaces, an athlete-local `AddDate` arithmetic contract (not UTC/24h duration math), and a pinned strict input/output schema before coding.
+
 | 2026-05-29 13:24 | Review R001 | code Step 1: APPROVE |
+| 2026-05-29 13:27 | Review R002 | plan Step 2: REVISE |
