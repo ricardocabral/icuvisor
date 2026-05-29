@@ -1,10 +1,10 @@
 # TP-131: Workout change preview guidance — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Audit current pre-write guidance
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -73,6 +73,8 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | plan | 1 | APPROVE | `.reviews/R001-plan-step1.md` |
+| R002 | code | 1 | REVISE | `.reviews/R002-code-step1.md` |
 
 ---
 
@@ -92,6 +94,8 @@
 | 2026-05-29 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-05-29 14:18 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-29 14:18 | Step 0 started | Preflight |
+| 2026-05-29 14:19 | Step 1 plan review | APPROVE; see `.reviews/R001-plan-step1.md` |
+| 2026-05-29 14:20 | Step 1 targeted tests | `go test ./internal/tools ./internal/prompts` passed (`ok` for both packages, cached) |
 
 ---
 
@@ -105,3 +109,4 @@
 
 *Reserved for execution notes*
 | 2026-05-29 14:23 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-29 14:26 | Review R002 | code Step 1: UNKNOWN |
