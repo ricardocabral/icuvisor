@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 2
 **Size:** M
 
@@ -47,9 +47,10 @@
 ### Step 3: Add activation guidance and eval coverage
 **Status:** 🟨 In Progress
 
-- [ ] Add or update eval/cookbook prompt text so prompts that mention future weeks or “tomorrow” use the deterministic date anchor.
-- [ ] Add an eval scenario for a known-bad weekday/date pairing such as “Monday May 26” when the local date says otherwise.
-- [ ] Ensure guidance does not ask the assistant to infer dates from UTC.
+- [ ] Update existing relative-future cookbook scenarios `CB-PLAN-02` and `CB-TAPER-01` so `resolve_calendar_dates` is an expected tool and must use returned athlete-local `date` + `weekday` values.
+- [ ] Add an eval scenario for a known-bad weekday/date pairing such as “Monday May 26” with `resolve_calendar_dates` expected and model-arithmetic/UTC/client-time anti-patterns.
+- [ ] Update Claude Project guidance to name `resolve_calendar_dates`, athlete-local offsets, and the requirement not to infer dates from UTC/client time or model arithmetic.
+- [ ] Regenerate generated public tool catalog/reference docs before eval validation: `make docs-tools`.
 - [ ] Run targeted tests: `make eval-validate`
 
 ---
@@ -118,3 +119,4 @@ Plan review R003 further pinned the default-base injected clock conversion, exac
 | 2026-05-29 13:31 | Review R004 | plan Step 2: APPROVE |
 | 2026-05-29 13:43 | Review R005 | code Step 2: REVISE |
 | 2026-05-29 13:48 | Review R006 | code Step 2: APPROVE |
+| 2026-05-29 13:51 | Review R007 | plan Step 3: REVISE |
