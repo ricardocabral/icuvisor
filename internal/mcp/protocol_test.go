@@ -215,10 +215,10 @@ func TestProtocolSharedTransportSuite(t *testing.T) {
 				if err != nil {
 					t.Fatalf("ListPrompts() error = %v", err)
 				}
-				if len(result.Prompts) != 6 {
-					t.Fatalf("prompts/list length = %d, want 6: %#v", len(result.Prompts), result.Prompts)
+				if len(result.Prompts) != 7 {
+					t.Fatalf("prompts/list length = %d, want 7: %#v", len(result.Prompts), result.Prompts)
 				}
-				wantNames := []string{"coach_roster_triage", "race_week_taper", "recovery_check", "training_analysis", "weekly_planning", "weekly_review"}
+				wantNames := []string{"coach_roster_triage", "plan_health_review", "race_week_taper", "recovery_check", "training_analysis", "weekly_planning", "weekly_review"}
 				for i, want := range wantNames {
 					if result.Prompts[i].Name != want || result.Prompts[i].Description == "" {
 						t.Fatalf("prompts[%d] = %#v, want name %q with description", i, result.Prompts[i], want)
