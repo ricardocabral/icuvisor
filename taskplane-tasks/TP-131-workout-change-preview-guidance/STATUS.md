@@ -1,10 +1,10 @@
 # TP-131: Workout change preview guidance — Status
 
-**Current Step:** Step 2: Harden preview guidance
+**Current Step:** Step 3: Update cookbook examples
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 2
 **Size:** M
 
@@ -32,7 +32,7 @@
 ---
 
 ### Step 2: Harden preview guidance
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Update prompts/tool examples so proposed changes include total duration, key steps, target intensities, load/distance/time changes, and what is being preserved.
 - [x] Recommend `validate_workout` preflight for uncertain DSL or structured workout changes.
@@ -79,6 +79,7 @@
 | R003 | code | 1 | APPROVE | inline review_step response |
 | R004 | plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
 | R005 | code | 2 | REVISE | `.reviews/R005-code-step2.md` |
+| R006 | code | 2 | APPROVE | inline review_step response |
 
 ---
 
@@ -118,3 +119,4 @@
 | 2026-05-29 14:28 | Review R003 | code Step 1: APPROVE |
 | 2026-05-29 14:31 | Review R004 | plan Step 2: APPROVE |
 | 2026-05-29 14:47 | Review R005 | code Step 2: REVISE |
+| 2026-05-29 14:51 | Review R006 | code Step 2: APPROVE |
