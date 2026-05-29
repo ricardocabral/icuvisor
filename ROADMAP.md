@@ -33,7 +33,7 @@ Living document. Phases are scoped and gated, not calendared. icuvisor will not 
 - [ ] Local-LLM client recipes (ollmcp, Cline, LM Studio).
 - [ ] Diagnostics export button in tray menu.
 - [ ] Telemetry-driven response-shape tuning.
-- [ ] Strength training and training plan endpoints (depends on PRD assumptions §7.4.3 / §7.4.4).
+- [ ] Strength training and training plan endpoints (depends on PRD assumptions §7.4.3 / §7.4.4 and the evidence criteria in `docs/upstream-gaps/strength-training.md`; current support remains best-effort gym notes/simple supported calendar events).
 
 ## v2.x
 

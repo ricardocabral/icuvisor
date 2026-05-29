@@ -1,11 +1,11 @@
 # TP-133: Gym and strength best-effort support plan — Status
 
-**Current Step:** Step 3: Capture follow-up implementation criteria
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
-**Review Counter:** 2
-**Iteration:** 1
+**Review Counter:** 3
+**Iteration:** 2
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -41,11 +41,11 @@
 ---
 
 ### Step 3: Capture follow-up implementation criteria
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Record in docs what evidence is needed before adding first-class strength-training tools: upstream endpoints, schema fields, response shape, and safe write behavior.
-- [ ] Update ROADMAP/PRD only if this clarifies existing future scope, not to expand v1 commitments.
-- [ ] Run docs/test validation as available.
+- [x] Record in docs what evidence is needed before adding first-class strength-training tools: upstream endpoints, schema fields, response shape, and safe write behavior.
+- [x] Update ROADMAP/PRD only if this clarifies existing future scope, not to expand v1 commitments.
+- [x] Run docs/test validation as available. (`go test ./internal/prompts` passed)
 
 ---
 
@@ -90,6 +90,7 @@
 | 2026-05-29 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-05-29 14:23 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-29 14:23 | Step 0 started | Preflight |
+| 2026-05-29 14:39 | Worker iter 1 | done in 962s, tools: 65 |
 
 ---
 
@@ -104,3 +105,4 @@
 *Reserved for execution notes*
 | 2026-05-29 14:25 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-29 14:28 | Review R002 | plan Step 2: APPROVE |
+| 2026-05-29 14:31 | Review R003 | plan Step 3: APPROVE |

@@ -34,4 +34,14 @@ Before adding strength-training MCP tools, collect black-box or public API evide
 5. Safe-delete/update behavior so destructive operations can be registered behind icuvisor's existing capability gates.
 6. Terse response shape that summarizes the session without dumping large exercise/set payloads unless `include_full: true` is requested.
 
+## Implementation criteria
+
+First-class strength/gym tools should not be added until the evidence above can answer each contract question below:
+
+- **Endpoint contract:** documented or black-box verified read/write endpoints, authentication scope, pagination model, stable identifiers, and representative success/error payloads.
+- **Schema contract:** typed fields for exercise, set, rep, load, bodyweight, rest, effort, side/limb, superset/circuit grouping, notes, planned-versus-completed state, and units/scale labels.
+- **Response contract:** a terse default shape that can summarize one session and a list of sessions without flooding the model context, plus an explicit `include_full: true` expansion for full set-level payloads.
+- **Write-safety contract:** idempotency or retry semantics for create/update, partial-update behavior, conflict handling, and destructive-operation behavior that can be gated by icuvisor's existing safety policy.
+- **Round-trip contract:** proof that data written by icuvisor is returned by the upstream API without silently losing structured sets, loads, notes, or calendar linkage.
+
 Until that evidence exists, docs and prompts should steer assistants to schedule gym blocks as notes or simple supported calendar events and explicitly avoid inventing structured strength-set support.
