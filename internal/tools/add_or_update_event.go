@@ -259,6 +259,17 @@ func addOrUpdateEventInputExamples() []map[string]any {
 			"moving_time_seconds": 4200,
 		},
 		{
+			"date":                 "2026-09-13",
+			"category":             "RACE_A",
+			"type":                 "Run",
+			"name":                 "Goal marathon",
+			"description":          "A race. Confirm taper, fueling, pacing, and weather plan before adding workouts around it.",
+			"tags":                 []any{"race", "goal-race"},
+			"distance_meters":      42195,
+			"target_load":          210,
+			"elapsed_time_seconds": 10800,
+		},
+		{
 			"event_id":             "evt-example-42",
 			"date":                 "2026-06-21",
 			"category":             "RACE_B",
@@ -267,8 +278,20 @@ func addOrUpdateEventInputExamples() []map[string]any {
 			"description":          "B race. Practice breakfast, warm-up, and even pacing.",
 			"tags":                 []any{"race", "tune-up"},
 			"distance_meters":      10000,
+			"target_load":          85,
 			"elapsed_time_seconds": 3300,
 			"include_full":         true,
+		},
+		{
+			"date":                "2026-05-30",
+			"category":            "RACE_C",
+			"type":                "Ride",
+			"name":                "Local criterium practice",
+			"description":         "C race. Treat as skills practice; keep surrounding plan priority higher.",
+			"tags":                []any{"race", "practice"},
+			"distance_meters":     40000,
+			"target_load":         95,
+			"moving_time_seconds": 5400,
 		},
 	}
 }

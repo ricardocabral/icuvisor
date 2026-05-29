@@ -355,6 +355,35 @@ func TestAddOrUpdateEventRejectsBadArguments(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateEventRaceInputExamplesIncludePlanningFields(t *testing.T) {
+	t.Parallel()
+
+	examples := addOrUpdateEventInputExamples()
+	seen := map[string]bool{}
+	for _, example := range examples {
+		category, _ := example["category"].(string)
+		if category != "RACE_A" && category != "RACE_B" && category != "RACE_C" {
+			continue
+		}
+		seen[category] = true
+		for _, field := range []string{"date", "type", "name", "distance_meters", "target_load"} {
+			if _, ok := example[field]; !ok {
+				t.Fatalf("%s example missing %s: %#v", category, field, example)
+			}
+		}
+		if _, ok := example["moving_time_seconds"]; !ok {
+			if _, ok := example["elapsed_time_seconds"]; !ok {
+				t.Fatalf("%s example missing expected duration: %#v", category, example)
+			}
+		}
+	}
+	for _, category := range []string{"RACE_A", "RACE_B", "RACE_C"} {
+		if !seen[category] {
+			t.Fatalf("missing %s race input example in %#v", category, examples)
+		}
+	}
+}
+
 func TestAddOrUpdateEventRegistrationMetadata(t *testing.T) {
 	t.Parallel()
 
