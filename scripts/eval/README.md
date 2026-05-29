@@ -104,5 +104,9 @@ Add an object to `scenarios/cookbook_scenarios.json` with: `id` (unique,
 `CB-` prefix), `recipe` (matching a cookbook page slug), `persona`
 (`athlete` or `coach`), a self-contained `prompt` (no real IDs or dates — use
 relative windows and descriptive references), `expected_tools`, optional
-`bonus_tools`, `forbidden_tools`, `must_address`, and `anti_patterns`. Then run
-`--validate`.
+`bonus_tools`, `forbidden_tools`, `must_address`, and `anti_patterns`. For
+multi-step activity questions, put the lookup tool and downstream detail tools in
+the intended order in `expected_tools`, then make the ordering and grounding
+requirements explicit in `must_address` and `anti_patterns` because validate mode
+checks schema/catalog integrity while the judge scores transcript order and
+unsupported claims. Then run `--validate`.
