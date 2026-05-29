@@ -53,7 +53,7 @@
 - [x] Include caveats for deload weeks, planned races, and incomplete wellness/readiness data.
 - [x] Update MCP prompt/cookbook reference pages affected by adding `plan_health_review`, including `web/content/reference/resources-prompts.md` and `web/content/cookbook/_index.md`.
 - [x] Run targeted tests: `go test ./internal/prompts ./internal/mcp` plus docs build if available (`make web-build` or equivalent).
-- [ ] Address R010 docs review findings: keep deload/compliance/wellness caveat out of the base weekly-review recipe unless fetched, and fix season-plan wording/link for the prompt-library copy.
+- [x] Address R010 docs review findings: keep deload/compliance/wellness caveat out of the base weekly-review recipe unless fetched, and fix season-plan wording/link for the prompt-library copy.
 
 ---
 
