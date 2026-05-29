@@ -272,6 +272,14 @@
     "anchor": "link_activity_to_event"
   },
   {
+    "name": "resolve_calendar_dates",
+    "group": "events",
+    "tier": "core",
+    "safety": "read",
+    "summary": "Resolve athlete-local calendar anchors before planning, scheduling, or answering date-sensitive prompts such as today, tomorrow, next week, or N days from today.",
+    "anchor": "resolve_calendar_dates"
+  },
+  {
     "name": "get_best_efforts",
     "group": "fitness",
     "tier": "core",
