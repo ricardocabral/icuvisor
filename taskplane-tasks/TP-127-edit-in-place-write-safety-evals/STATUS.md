@@ -29,7 +29,7 @@
 - [x] Identify whether existing descriptions already prefer update/edit in place and where eval coverage is missing.
 - [x] Record the current safety contract and any token-budget tradeoff in STATUS.md Discoveries.
 - [x] Run targeted tests: `go test ./internal/tools`
-- [ ] Record exact Step 1 test evidence and safety-test rationale requested by R003.
+- [x] Record exact Step 1 test evidence and safety-test rationale requested by R003.
 
 ---
 
@@ -83,7 +83,7 @@
 |-----------|-------------|----------|
 | Existing write guidance already distinguishes in-place updates from destructive deletes: `add_or_update_event` updates when `event_id` is present and says it never deletes; `update_workout` is sparse by `workout_id`; delete tools are registered only in full delete mode and expose no `confirm`. | Preserve and add eval coverage before changing wording. | `internal/tools/add_or_update_event.go`, `internal/tools/update_workout.go`, `internal/tools/delete_event.go`, `internal/tools/delete_workout.go` |
 | `create_workout` currently describes initial template creation but does not explicitly warn against using create to modify an existing template; this is a concise-description tradeoff to avoid bloating tool metadata. | Consider a terse warning only if Step 2 eval shows ambiguity. | `internal/tools/create_workout.go` |
-| Existing eval/adversarial coverage covers safe-mode delete unavailability and no-confirm schemas, but cookbook scenarios do not cover changing tomorrow's existing workout/event in place. | Add explicit edit-in-place scenario in Step 2. | `docs/safety/adversarial-prompts.md`, `scripts/eval/scenarios/cookbook_scenarios.json`, `internal/safety/adversarial_test.go` |
+| Existing eval/adversarial coverage covers safe-mode delete unavailability and no-confirm schemas, but cookbook scenarios do not cover changing tomorrow's existing workout/event in place. `go test ./internal/safety` was run because the audit relies on registration-time gating; result: pass (`ok github.com/ricardocabral/icuvisor/internal/safety (cached)`). | Add explicit edit-in-place scenario in Step 2. | `docs/safety/adversarial-prompts.md`, `scripts/eval/scenarios/cookbook_scenarios.json`, `internal/safety/adversarial_test.go` |
 
 ---
 
@@ -94,6 +94,8 @@
 | 2026-05-29 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-05-29 14:06 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-29 14:06 | Step 0 started | Preflight |
+| 2026-05-29 14:06 | Step 1 safety audit | Inspected write/delete tool descriptions and `internal/safety/adversarial_test.go`; ran `go test ./internal/safety` -> pass (`ok`, cached). |
+| 2026-05-29 14:06 | Step 1 targeted tests | Ran `go test ./internal/tools` -> pass (`ok`, 0.329s). |
 
 ---
 
