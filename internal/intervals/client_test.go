@@ -113,7 +113,7 @@ func TestActivityIDEndpointsRequireResolvedTargetOwnership(t *testing.T) {
 					_, _ = w.Write([]byte(`{"id":1}`))
 				case r.Method == http.MethodPut && r.URL.Path == "/activity/a1":
 					_, _ = w.Write([]byte(`{"id":"a1","icu_athlete_id":"i222"}`))
-				case r.Method == http.MethodDelete && r.URL.Path == "/activity/a1":
+				case r.Method == http.MethodDelete && r.URL.Path == "/activity/a1/tombstone":
 					w.WriteHeader(http.StatusNoContent)
 				default:
 					t.Fatalf("unexpected request %s %s", r.Method, r.URL.String())

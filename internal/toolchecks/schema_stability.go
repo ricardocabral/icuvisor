@@ -53,6 +53,7 @@ var schemaCatalogToolNames = map[string]struct{}{
 	"add_or_update_event":                 {},
 	"apply_training_plan":                 {},
 	"create_workout":                      {},
+	"delete_activity":                     {},
 	"delete_workout":                      {},
 	"get_activities":                      {},
 	"get_activity_details":                {},
