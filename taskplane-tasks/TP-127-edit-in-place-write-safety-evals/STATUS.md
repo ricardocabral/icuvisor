@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 2
 **Size:** M
 
@@ -44,7 +44,7 @@
 ---
 
 ### Step 3: Harden guidance if necessary
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Evaluate Step 2 eval/test results and decide whether concise tool descriptions or cookbook prompts still show ambiguity.
 - [x] If ambiguity remains, update only the concise tool descriptions or cookbook prompts needed; if not, record the no-change rationale in STATUS Discoveries.
@@ -80,6 +80,8 @@
 | R007 | plan | 2 | REVISE | `.reviews/R007-plan-step2.md` |
 | R008 | plan | 2 | APPROVE | `.reviews/R008-plan-step2.md` |
 | R009 | code | 2 | APPROVE | `.reviews/R009-code-step2.md` |
+| R010 | plan | 3 | UNAVAILABLE | n/a |
+| R011 | code | 3 | APPROVE | `.reviews/R011-code-step3.md` |
 
 ---
 
@@ -113,6 +115,7 @@
 | 2026-05-29 | Step 3 guidance evaluation | Step 2 scenario pins calendar read-before-write and forbidden recreate tools; targeted tests passed, so no additional ambiguity found in concise descriptions/cookbook prompts. |
 | 2026-05-29 | Step 3 gating verification | No Step 3 diffs under `internal/tools` or `internal/safety`; existing no-confirm tests remain in place. |
 | 2026-05-29 | Step 3 targeted tests | `go test ./internal/tools` -> ok cached. |
+| 2026-05-29 | Review R011 | code Step 3: APPROVE. |
 | 2026-05-29 14:39 | Exit intercept reprompt | Supervisor provided instructions (1095 chars) — reprompting worker |
 
 ---
@@ -138,3 +141,6 @@
 | 2026-05-29 14:28 | Review R007 | plan Step 2: REVISE |
 | 2026-05-29 14:30 | Review R008 | plan Step 2: APPROVE |
 | 2026-05-29 14:42 | Review R009 | code Step 2: APPROVE |
+| 2026-05-29 14:45 | Review R010 | plan Step 3: UNAVAILABLE |
+| 2026-05-29 14:47 | Review R011 | code Step 3: APPROVE |
+| 2026-05-29 14:49 | Review R011 | code Step 3: APPROVE |
