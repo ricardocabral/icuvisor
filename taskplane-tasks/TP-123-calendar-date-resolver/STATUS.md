@@ -4,8 +4,8 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 4
-**Iteration:** 1
+**Review Counter:** 5
+**Iteration:** 2
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -43,7 +43,7 @@
 ---
 
 ### Step 3: Add activation guidance and eval coverage
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Add or update eval/cookbook prompt text so prompts that mention future weeks or “tomorrow” use the deterministic date anchor.
 - [ ] Add an eval scenario for a known-bad weekday/date pairing such as “Monday May 26” when the local date says otherwise.
@@ -93,6 +93,8 @@
 | 2026-05-29 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-05-29 13:19 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-29 13:19 | Step 0 started | Preflight |
+| 2026-05-29 13:43 | Worker iter 1 | done in 1422s, tools: 99 |
+| 2026-05-29 13:43 | Step 3 started | Add activation guidance and eval coverage |
 
 ---
 
@@ -111,3 +113,4 @@ Plan review R003 further pinned the default-base injected clock conversion, exac
 | 2026-05-29 13:27 | Review R002 | plan Step 2: REVISE |
 | 2026-05-29 13:29 | Review R003 | plan Step 2: REVISE |
 | 2026-05-29 13:31 | Review R004 | plan Step 2: APPROVE |
+| 2026-05-29 13:43 | Review R005 | code Step 2: REVISE |
