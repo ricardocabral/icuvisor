@@ -21,6 +21,8 @@ const (
 	maxCalendarOffset     = 366
 )
 
+var errResolveCalendarDatesTimezone = errors.New("invalid athlete timezone")
+
 type resolveCalendarDatesRequest struct {
 	BaseDate string `json:"base_date,omitempty"`
 	Offsets  []int  `json:"offsets,omitempty"`
@@ -77,7 +79,11 @@ func resolveCalendarDatesHandler(profileClient ProfileClient, version string, ti
 		}
 		payload, err := shapeResolveCalendarDates(args, now, timezoneName)
 		if err != nil {
-			return Result{}, NewUserError(invalidResolveCalendarDatesMessage, err)
+			message := invalidResolveCalendarDatesMessage
+			if errors.Is(err, errResolveCalendarDatesTimezone) {
+				message = fetchResolveCalendarDatesMessage
+			}
+			return Result{}, NewUserError(message, err)
 		}
 		return encodeShaped(payload, false, []string{"dates"}, version, debugMetadata, resolveCalendarDatesName, unitSystem, shapeCfg)
 	}
@@ -120,7 +126,7 @@ func decodeResolveCalendarDatesRequest(raw json.RawMessage) (resolveCalendarDate
 func shapeResolveCalendarDates(args resolveCalendarDatesRequest, now func() time.Time, timezoneName string) (resolveCalendarDatesResponse, error) {
 	loc, err := time.LoadLocation(timezoneName)
 	if err != nil {
-		return resolveCalendarDatesResponse{}, fmt.Errorf("loading timezone %q: %w", timezoneName, err)
+		return resolveCalendarDatesResponse{}, fmt.Errorf("%w: loading timezone %q: %v", errResolveCalendarDatesTimezone, timezoneName, err)
 	}
 	base, err := resolveCalendarBaseDate(args.BaseDate, now, loc)
 	if err != nil {

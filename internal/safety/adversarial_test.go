@@ -63,6 +63,7 @@ var v03ToolCatalog = []catalogToolSpec{
 	{name: "get_hr_curves", requirement: tools.RequirementRead},
 	{name: "get_pace_curves", requirement: tools.RequirementRead},
 	{name: "get_power_curves", requirement: tools.RequirementRead},
+	{name: "resolve_calendar_dates", requirement: tools.RequirementRead},
 	{name: "get_training_plan", requirement: tools.RequirementRead},
 	{name: "get_training_summary", requirement: tools.RequirementRead},
 	{name: "get_wellness_data", requirement: tools.RequirementRead},
