@@ -57,6 +57,7 @@ const (
 	ICUvisorListAdvancedCapabilities = "icuvisor_list_advanced_capabilities"
 	LinkActivityToEvent              = "link_activity_to_event"
 	ListAthletes                     = "list_athletes"
+	ResolveCalendarDates             = "resolve_calendar_dates"
 	SelectAthlete                    = "select_athlete"
 	SetActivityIntervals             = "set_activity_intervals"
 	UpdateActivity                   = "update_activity"
@@ -116,6 +117,7 @@ var athleteScopedToolNames = []string{
 	GetWorkoutLibrary,
 	GetWorkoutsInFolder,
 	LinkActivityToEvent,
+	ResolveCalendarDates,
 	SetActivityIntervals,
 	UpdateActivity,
 	UpdateCustomItem,
