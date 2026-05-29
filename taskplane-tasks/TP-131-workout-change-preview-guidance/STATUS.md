@@ -1,11 +1,11 @@
 # TP-131: Workout change preview guidance — Status
 
-**Current Step:** Step 1: Audit current pre-write guidance
+**Current Step:** Step 2: Harden preview guidance
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 3
-**Iteration:** 1
+**Review Counter:** 4
+**Iteration:** 2
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -34,10 +34,10 @@
 ### Step 2: Harden preview guidance
 **Status:** 🟨 In Progress
 
-- [ ] Update prompts/tool examples so proposed changes include total duration, key steps, target intensities, load/distance/time changes, and what is being preserved.
-- [ ] Recommend `validate_workout` preflight for uncertain DSL or structured workout changes.
-- [ ] Do not introduce a model-controlled `confirm` override or bypass safety modes.
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/prompts`
+- [x] Update prompts/tool examples so proposed changes include total duration, key steps, target intensities, load/distance/time changes, and what is being preserved.
+- [x] Recommend `validate_workout` preflight for uncertain DSL or structured workout changes.
+- [x] Do not introduce a model-controlled `confirm` override or bypass safety modes.
+- [x] Run targeted tests: `go test ./internal/tools ./internal/prompts`
 
 ---
 
@@ -97,6 +97,7 @@
 | 2026-05-29 14:18 | Step 0 started | Preflight |
 | 2026-05-29 14:19 | Step 1 plan review | APPROVE; see `.reviews/R001-plan-step1.md` |
 | 2026-05-29 14:20 | Step 1 targeted tests | `go test ./internal/tools ./internal/prompts` passed (`ok` for both packages, cached) |
+| 2026-05-29 14:40 | Worker iter 1 | done in 1312s, tools: 52 |
 
 ---
 
@@ -112,3 +113,4 @@
 | 2026-05-29 14:23 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-29 14:26 | Review R002 | code Step 1: UNKNOWN |
 | 2026-05-29 14:28 | Review R003 | code Step 1: APPROVE |
+| 2026-05-29 14:31 | Review R004 | plan Step 2: APPROVE |
