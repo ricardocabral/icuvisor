@@ -8,9 +8,10 @@ AI assistants are good at designing a workout and bad at writing it in valid int
 
 ## When to use this
 
-- When you need a specific session — "5x4min VO2", "a sweet-spot ramp" — built and scheduled.
-- To turn a workout idea from elsewhere into a valid intervals.icu structured workout.
+- When you need a specific endurance session — "5x4min VO2", "a sweet-spot ramp" — built and scheduled.
+- To turn an endurance workout idea from elsewhere into a valid intervals.icu structured workout.
 - To stock your library with reusable templates.
+- When you only need a gym/strength time block or note on the calendar, not detailed structured strength sets.
 
 ## The recipe
 
@@ -28,10 +29,15 @@ my intervals.icu data.
    calendar event on [DATE]. Tell me which you did and confirm the planned load.
 
 Rules: get the DSL right — correct repeat syntax, steps not bullets, targets
-as percentages of my threshold. Do not overwrite an existing library workout;
-create a new one unless I explicitly name one to update. For multiple calendar
-or library writes, validate one representative workout, write one, read it back,
-check warnings and structured-step summaries, then continue with the rest.
+as percentages of my threshold. Use structured `workout_doc` only for endurance
+workouts supported by the intervals.icu DSL. If I ask for gym or strength work,
+schedule a simple `NOTE` time block or a free-text supported calendar event;
+do not invent exercises, sets, reps, or loads as structured workout steps unless
+my intervals.icu account exposes documented strength-training support. Do not
+overwrite an existing library workout; create a new one unless I explicitly name
+one to update. For multiple calendar or library writes, validate one
+representative workout, write one, read it back, check warnings and
+structured-step summaries, then continue with the rest.
 ```
 
 ## What icuvisor does
@@ -65,7 +71,8 @@ To revise an existing template, name it and the assistant uses [`update_workout`
 
 - **Library only:** "...just save it to my 'VO2' folder, do not schedule it."
 - **A week of workouts:** describe 3-4 sessions and ask for them scheduled across named days — still review each before the writes.
-- **From a description:** paste a coach's text workout and ask for it converted to valid intervals.icu syntax.
+- **From a description:** paste a coach's text endurance workout and ask for it converted to valid intervals.icu syntax.
+- **Gym time block:** "Put 45 minutes of gym strength and mobility on Friday as a calendar note; keep the exercise details in free text and do not create structured sets."
 
 ## Why this prompt works
 

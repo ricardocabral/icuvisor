@@ -1,10 +1,10 @@
 # TP-133: Gym and strength best-effort support plan — Status
 
-**Current Step:** Step 2: Add best-effort prompt/docs guidance
+**Current Step:** Step 3: Capture follow-up implementation criteria
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -32,16 +32,16 @@
 ---
 
 ### Step 2: Add best-effort prompt/docs guidance
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Update cookbook/prompt guidance to allow scheduling simple gym time blocks or notes when the user wants that, while explicitly saying detailed strength sets are future scope unless upstream support exists.
-- [ ] Avoid adding a new write tool in this task unless upstream API support is already documented in this repository.
-- [ ] Run targeted tests: `go test ./internal/prompts` if prompt fixtures change.
+- [x] Update cookbook/prompt guidance to allow scheduling simple gym time blocks or notes when the user wants that, while explicitly saying detailed strength sets are future scope unless upstream support exists.
+- [x] Avoid adding a new write tool in this task unless upstream API support is already documented in this repository.
+- [x] Run targeted tests: `go test ./internal/prompts` if prompt fixtures change.
 
 ---
 
 ### Step 3: Capture follow-up implementation criteria
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Record in docs what evidence is needed before adding first-class strength-training tools: upstream endpoints, schema fields, response shape, and safe write behavior.
 - [ ] Update ROADMAP/PRD only if this clarifies existing future scope, not to expand v1 commitments.
@@ -103,3 +103,4 @@
 
 *Reserved for execution notes*
 | 2026-05-29 14:25 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-29 14:28 | Review R002 | plan Step 2: APPROVE |

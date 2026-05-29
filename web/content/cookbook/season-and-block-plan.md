@@ -45,7 +45,10 @@ table. Do not write anything to my calendar yet.
 ```text
 Stage 3. The plan looks good. Add it to my calendar one week at a time:
 create the block markers and the key sessions as events, show me each week
-before moving to the next, and stop if I say so. For the first structured
+before moving to the next, and stop if I say so. If I ask for gym or strength
+work, schedule only a simple gym time block or free-text note unless my
+intervals.icu account exposes a supported workout type; do not invent detailed
+sets/reps/loads as structured workout steps. For the first structured endurance
 workout, validate the payload, write one event, read it back, and confirm no
 unexpected warnings or lost structured steps before writing the rest.
 ```
@@ -79,6 +82,7 @@ Stage 2 should produce something like:
 
 - **No calendar writes:** stop after Stage 2 and apply the plan in intervals.icu yourself. Useful when the server runs read-only.
 - **Apply a library plan:** if a structured plan already exists, ask the assistant to use [`apply_training_plan`]({{< relref "/reference/tools#apply_training_plan" >}}) instead of authoring one.
+- **Gym or strength blocks:** ask for a `NOTE` such as "Gym — 45 min strength and mobility" or a simple supported calendar workout type if your account has one; detailed exercises, sets, reps, and loads are future scope until intervals.icu exposes a documented strength-training API.
 - **Re-plan mid-season:** "I missed two weeks to illness — re-assess and adjust the remaining blocks."
 
 ## Why this prompt works

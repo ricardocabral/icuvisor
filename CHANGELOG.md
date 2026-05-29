@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Documented the strength-training upstream API gap and current best-effort gym support via simple calendar notes or supported events.
 - Cookbook eval scenarios now cover athlete-local date lookup before activity detail/interval/split analysis for prompts like race retrospectives and run split comparisons.
 
 ### Changed
 
+- Weekly planning and workout cookbook guidance now allow simple gym time blocks while warning that detailed structured strength sets remain future scope until upstream API support is documented.
 - Recovery and weekly-review prompts now tell assistants to state missing/null Intervals readiness before using HRV, resting HR, sleep, subjective wellness scales, and provider `_native` fields as cautious fallback evidence.
 - The readiness-check cookbook now includes Garmin/null-readiness fallback guidance while preserving explicit sleepQuality, sleepScore, feel, and provider-native scale labels.
 - Activity tool descriptions and the activity-retrospective cookbook now make the `get_activities` → `activity_id` → detail/interval/splits routing path explicit for described or relative-date activities.
