@@ -1,6 +1,6 @@
 # TP-126: Deterministic segment-comparison analyzer workflow — Status
 
-**Current Step:** Step 4: Testing & Verification
+**Current Step:** Step 5: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
@@ -61,11 +61,11 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -93,6 +93,7 @@
 | "Last 10 km" must be translated by the workflow: call `get_activities` or `get_activity_details` for total distance (`distance_km` or `distance_mi` in preferred units), convert to meters, then call `compute_activity_segment_stats` with `start_distance_m=max(total_distance_m-10000, 0)` and `end_distance_m=total_distance_m`; first 10 km is `0..10000`. | Document in cookbook/eval; no helper needed unless future activation shows repeated failures. | `internal/tools/get_activities.go`, `internal/tools/get_activities_row.go`, `internal/tools/compute_activity_segment_stats.go` |
 | Description/schema mismatch found: tool description says "maximum" and "zone-time", but the schema enum supports `mean`, `median`, `p90`, `decoupling`, `drift`, `np`, and `if`. Pace wording also needs care: segment scalar supports `velocity_smooth` in m/s, not formatted pace, so final answers should convert velocity to pace when requested. | Tighten activation text in Step 2 without bloating the description. | `internal/tools/compute_activity_segment_stats.go` |
 | Current eval coverage has `compute_activity_segment_stats` only as a bonus tool in `CB-ACT-01`; no scenario currently requires first 10 km vs last 10 km segment comparisons or forbids chat-side raw-stream reduction for that use case. Existing tests cover one terse distance scalar and full decoupling audit, but do not compare first-vs-last distance windows. | Add eval/docs in Step 2 and first/last distance unit coverage in Step 3. | `scripts/eval/scenarios/cookbook_scenarios.json`, `internal/tools/compute_activity_segment_stats_test.go` |
+| Tool-reference golden data must be regenerated/kept in sync when analyzer activation summaries change; full `make test` surfaced the updated `compute_activity_segment_stats` summary in `cmd/gendocs/testdata/tools.golden.json`. | Committed the golden update with Step 4 verification artifacts. | `cmd/gendocs/testdata/tools.golden.json` |
 
 ---
 
@@ -122,3 +123,4 @@
 | 2026-05-29 14:07 | Review R007 | code Step 3: APPROVE |
 | 2026-05-29 14:09 | Review R008 | plan Step 4: APPROVE |
 | 2026-05-29 14:14 | Review R009 | code Step 4: APPROVE |
+| 2026-05-29 14:16 | Docs review | Reviewed `docs/kr5-benchmark.md`; no update needed because TP-126 did not change toolset placement or rerun the frozen KR5 benchmark results. |

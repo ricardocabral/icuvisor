@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The readiness-check cookbook now includes Garmin/null-readiness fallback guidance while preserving explicit sleepQuality, sleepScore, feel, and provider-native scale labels.
 - Activity tool descriptions and the activity-retrospective cookbook now make the `get_activities` → `activity_id` → detail/interval/splits routing path explicit for described or relative-date activities.
 - README positioning now highlights icuvisor's local-first credentials, single-binary install, terse structured responses, explicit units/scales, and registration-time delete safety.
+- Hardened segment-comparison activation with cookbook guidance, eval coverage, and unit tests so first-vs-last distance prompts use `compute_activity_segment_stats` instead of chat-side raw-stream reduction.
 - Hardened the `weekly_planning`, `weekly_review`, and `race_week_taper` MCP prompts so season/race planning gathers race priority/date context, active plans, planned events, current load, recent completion/compliance, and explicit approval before any calendar writes.
 - Expanded `add_or_update_event` race input examples to cover `RACE_A`, `RACE_B`, and `RACE_C` with sport type, date, distance, expected duration, and target load.
 
