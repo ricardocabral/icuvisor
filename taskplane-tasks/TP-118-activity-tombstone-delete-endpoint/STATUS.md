@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 
@@ -24,11 +24,11 @@
 ### Step 1: Determine the correct activity deletion contract
 **Status:** 🟨 In Progress
 
-- [ ] Existing delete implementation and tests inspected
-- [ ] Public upstream evidence checked without competitor source
-- [ ] Endpoint decision recorded in Discoveries
-- [ ] `/api/v1` base-path handling captured for the selected endpoint
-- [ ] Targeted tests run with regex covering intervals path and target-athlete safety tests
+- [x] Existing delete implementation and tests inspected
+- [x] Public upstream evidence checked without competitor source
+- [x] Endpoint decision recorded in Discoveries
+- [x] `/api/v1` base-path handling captured for the selected endpoint
+- [x] Targeted tests run with regex covering intervals path and target-athlete safety tests
 
 ---
 
@@ -66,6 +66,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R001 | Plan | Step 1 | REVISE | `.reviews/R001-plan-step1.md` |
+| R002 | Plan | Step 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 
 ---
 
@@ -73,6 +74,9 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Repository search found no local OpenAPI file and no existing tombstone fixture; only icuvisor docs/tests and the TP-118 prompt's newly observed public OpenAPI path mention activity deletion/tombstone. | Use clean-room public API signal from task prompt plus existing tests; no competitor source opened. | `PROMPT.md`, repo grep for `tombstone`/delete activity |
+| `DeleteActivity` should issue `DELETE /activity/{id}/tombstone` because the newly observed public Intervals.icu OpenAPI path is more specific for activity deletion than the existing direct `/activity/{id}` path. No fallback is planned because destructive retries against multiple endpoints would broaden deletion semantics without documented need. | Implement in Step 2 and lock with exact-path httptest coverage. | `internal/intervals/delete.go`, `internal/intervals/delete_test.go` |
+| The observed upstream path includes `/api/v1`, but `config.DefaultAPIBaseURL` and test base URLs already represent the API root; client calls must pass relative path parts `activity`, `{id}`, `tombstone`, yielding `/activity/{id}/tombstone` in httptest and `/api/v1/activity/{id}/tombstone` against the default base URL. | Assert the relative request path in Step 2; do not duplicate `/api/v1`. | `internal/intervals/client.go`, `internal/intervals/delete_test.go` |
 
 ---
 
@@ -96,3 +100,4 @@
 
 Plan review R001 requires Step 1 tests to include `DeleteMethods|ActivityIDEndpointsRequireResolvedTargetOwnership` coverage and discoveries to explicitly note `/api/v1` base URL handling.
 | 2026-05-29 15:25 | Review R001 | plan Step 1: REVISE |
+| 2026-05-29 15:26 | Review R002 | plan Step 1: APPROVE |
