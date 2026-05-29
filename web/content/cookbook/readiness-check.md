@@ -19,19 +19,25 @@ Act as my coach and tell me whether I should train hard today. Use icuvisor
 with my intervals.icu data.
 
 1. Read my athlete profile.
-2. Pull my wellness for the last 14 days: sleep duration, sleep quality, HRV,
-   resting heart rate, fatigue, soreness, mood, and stress.
+2. Pull my wellness for the last 14 days: Intervals readiness when present,
+   sleep duration, sleep quality, sleep score, HRV, resting heart rate, fatigue,
+   soreness, stress, feel, mood, motivation, and any `_native` provider fields.
 3. Pull my current fitness, fatigue, and form (CTL / ATL / TSB).
 
 Then:
-- Give today's readiness in one word — green, amber, or red — and why.
+- Give today's training-readiness guidance in one word — green, amber, or red — and why.
+- If the Intervals readiness field is missing or null, say that before using fallback signals.
 - Name the one or two signals driving that call.
 - Recommend whether to keep, modify, or move today's planned hard session.
 
-Rules: sleep quality is a 1-4 scale and feel is a 1-5 scale — use the labels
-icuvisor returns, do not rescale them to 0-10. If today's wellness row has not
-synced yet (common with a timezone offset), tell me the latest data is stale
-rather than guessing today's values. Do not invent HRV or sleep numbers.
+Rules: sleep quality is a 1-4 scale, sleep score is 0-100 when device-imported,
+and feel is a 1-5 scale — use the labels icuvisor returns, do not rescale them
+to 0-10. If readiness is missing, do not invent or backfill a readiness score
+from Garmin Body Battery or any other native/supporting field; treat HRV,
+resting HR, sleep, subjective scales, and `_native` fields as cautious evidence.
+If today's wellness row has not synced yet (common with a timezone offset), tell
+me the latest data is stale rather than guessing today's values. Do not invent
+HRV or sleep numbers.
 ```
 
 ## What icuvisor does
@@ -39,18 +45,18 @@ rather than guessing today's values. Do not invent HRV or sleep numbers.
 | Step | Tool | Why |
 | --- | --- | --- |
 | 1 | [`get_athlete_profile`]({{< relref "/reference/tools#get_athlete_profile" >}}) | Confirms units and which wellness fields you track. |
-| 2 | [`get_wellness_data`]({{< relref "/reference/tools#get_wellness_data" >}}) | Sleep, HRV, resting HR, and subjective scales over the window. |
+| 2 | [`get_wellness_data`]({{< relref "/reference/tools#get_wellness_data" >}}) | Readiness when present; sleep, HRV, resting HR, subjective scales, missing fields, provenance, and provider `_native` fields over the window. |
 | 3 | [`get_fitness`]({{< relref "/reference/tools#get_fitness" >}}) | CTL / ATL / TSB — the fatigue side of the picture. |
 
 `analyze_correlation` can be added if you want to know whether a wellness metric tracks load over a longer window.
 
 ## A good answer looks like
 
-> **Readiness: amber.**
+> **Readiness guidance: amber.**
 >
-> Your last fully synced wellness row is yesterday — today's has not arrived yet, so this call uses yesterday plus the 14-day trend (`get_wellness_data`).
+> Intervals readiness is missing for today (`_meta.missing_fields` includes `readiness`), so I am not treating Garmin/native fields as a replacement score. This call uses supporting wellness signals plus current form.
 >
-> **Driving signals:** HRV is 48 ms, down from a 14-day average of 58 ms and the lowest in that window. Sleep last night was 6h 10m at quality 2/4 (below your usual 3/4). Resting HR is +4 bpm.
+> **Driving signals:** HRV is 48 ms, down from a 14-day average of 58 ms and the lowest in that window. Sleep last night was 6h 10m at quality 2/4 (sleepScore 72/100). Resting HR is +4 bpm, and `_native.garmin` includes Body Battery min/max on its own 0-100 provider scale.
 >
 > **Form:** TSB is -14 (`get_fitness`) — you are carrying real fatigue.
 >
@@ -65,6 +71,7 @@ rather than guessing today's values. Do not invent HRV or sleep numbers.
 ## Why this prompt works
 
 - **Explicit scale reminder.** Assistants routinely treat sleep quality as out of 10 and call a 3/4 "poor". Stating the scale stops a good night being read as a bad one.
+- **Missing-readiness fallback.** Garmin and other providers can expose useful HRV, resting HR, sleep, subjective, and `_native` wellness fields even when Intervals readiness itself is null. The prompt tells the assistant to explain that absence first and use fallback fields cautiously instead of creating a synthetic score.
 - **Staleness instruction.** intervals.icu wellness often lags by a day because of timezone offsets. Telling the assistant to flag stale data prevents it from inventing today's HRV.
 - **One-word verdict first.** Forcing green/amber/red keeps the answer decision-shaped instead of a hedge.
 

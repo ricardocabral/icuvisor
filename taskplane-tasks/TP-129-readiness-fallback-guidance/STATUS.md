@@ -1,10 +1,10 @@
 # TP-129: Readiness fallback guidance for null upstream readiness — Status
 
-**Current Step:** Step 2: Add fallback tests or prompt guidance
+**Current Step:** Step 3: Update cookbook docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -42,11 +42,11 @@
 ---
 
 ### Step 3: Update cookbook docs
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Update readiness-check cookbook with Garmin/null-readiness fallback examples and language.
-- [ ] Keep scale labels explicit and avoid device-specific claims not backed by response fields.
-- [ ] Run targeted tests/docs validation as available.
+- [x] Update readiness-check cookbook with Garmin/null-readiness fallback examples and language.
+- [x] Keep scale labels explicit and avoid device-specific claims not backed by response fields.
+- [x] Run targeted tests/docs validation as available.
 
 ---
 
@@ -78,6 +78,7 @@
 | R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
 | R004 | plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
 | R005 | code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
+| R006 | plan | 3 | APPROVE | `.reviews/R006-plan-step3.md` |
 
 ---
 
@@ -116,3 +117,4 @@
 | 2026-05-29 14:01 | Review R003 | code Step 1: APPROVE |
 | 2026-05-29 14:04 | Review R004 | plan Step 2: APPROVE |
 | 2026-05-29 14:08 | Review R005 | code Step 2: APPROVE |
+| 2026-05-29 14:10 | Review R006 | plan Step 3: APPROVE |
