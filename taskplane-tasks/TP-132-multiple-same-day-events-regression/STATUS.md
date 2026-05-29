@@ -1,10 +1,10 @@
 # TP-132: Multiple same-day events regression pack — Status
 
-**Current Step:** Step 2: Add regression coverage
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 
@@ -32,17 +32,17 @@
 ---
 
 ### Step 2: Add regression coverage
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Add tests with at least two WORKOUT events on the same date plus optional NOTE/race annotations.
-- [ ] Assert both entries are present, separately identifiable, and not overwritten by map/date grouping.
-- [ ] If useful, add an eval scenario for “what is on tomorrow?” with two planned sessions.
-- [ ] Run targeted tests: `go test ./internal/tools` and `make eval-validate` if eval changed.
+- [x] Add tests with at least two WORKOUT events on the same date plus optional NOTE/race annotations.
+- [x] Assert both entries are present, separately identifiable, and not overwritten by map/date grouping.
+- [x] If useful, add an eval scenario for “what is on tomorrow?” with two planned sessions.
+- [x] Run targeted tests: `go test ./internal/tools` and `make eval-validate` if eval changed.
 
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing: `make test`
 - [ ] Lint passes or pre-existing linter limitations are documented: `make lint`
@@ -96,3 +96,4 @@
 
 *Reserved for execution notes*
 | 2026-05-29 16:06 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-29 16:09 | Review R002 | plan Step 2: APPROVE |

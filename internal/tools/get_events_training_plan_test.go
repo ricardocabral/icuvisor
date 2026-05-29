@@ -113,6 +113,53 @@ func TestGetEventsTerseRowsTimezoneAndCategory(t *testing.T) {
 	}
 }
 
+func TestGetEventsPreservesMultipleSameDayEvents(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		events: decodeToolEvents(t,
+			`{"id":"201","name":"AM aerobic run","category":"WORKOUT","type":"Run","start_date_local":"2026-05-25","icu_training_load":35}`,
+			`{"id":"202","name":"PM endurance ride","category":"WORKOUT","type":"Ride","start_date_local":"2026-05-25","icu_training_load":52}`,
+			`{"id":"203","name":"Travel window","category":"NOTE","start_date_local":"2026-05-25"}`,
+			`{"id":"204","name":"Goal race marker","category":"RACE_B","start_date_local":"2026-05-25"}`,
+		),
+	}
+	tool := newGetEventsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-05-25","newest":"2026-05-25","limit":10}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-05-25" || client.listCalls[0].Newest != "2026-05-25" {
+		t.Fatalf("ListEvents params = %#v, want single athlete-local date range", client.listCalls)
+	}
+	rows := resultMap(t, result)["events"].([]any)
+	if len(rows) != 4 {
+		t.Fatalf("events count = %d, want all same-day events: %#v", len(rows), rows)
+	}
+	want := []struct {
+		id       string
+		name     string
+		category string
+	}{
+		{id: "201", name: "AM aerobic run", category: "WORKOUT"},
+		{id: "202", name: "PM endurance ride", category: "WORKOUT"},
+		{id: "203", name: "Travel window", category: "NOTE"},
+		{id: "204", name: "Goal race marker", category: "RACE_B"},
+	}
+	for i, wantRow := range want {
+		row := rows[i].(map[string]any)
+		if row["event_id"] != wantRow.id || row["name"] != wantRow.name || row["category"] != wantRow.category || row["start_date_local"] != "2026-05-25" {
+			t.Fatalf("events[%d] = %#v, want separately identified same-day event %#v", i, row, wantRow)
+		}
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["count"] != float64(4) || meta["truncated"] != false {
+		t.Fatalf("meta = %#v, want all same-day events counted without truncation", meta)
+	}
+}
+
 func TestGetEventsCurrentDayRangeAddsAsOfMetadata(t *testing.T) {
 	t.Parallel()
 

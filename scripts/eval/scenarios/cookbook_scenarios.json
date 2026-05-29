@@ -352,6 +352,38 @@
       ]
     },
     {
+      "id": "CB-PLAN-03",
+      "recipe": "season-and-block-plan",
+      "persona": "athlete",
+      "prompt": "What is on my calendar tomorrow? Use icuvisor: resolve tomorrow in my athlete timezone, read tomorrow's events, and list every planned workout separately if there is more than one session on that date. Include notes or race annotations after the planned workouts, and do not write or delete anything.",
+      "expected_tools": [
+        "resolve_calendar_dates",
+        "get_events"
+      ],
+      "bonus_tools": [
+        "get_today",
+        "get_athlete_profile"
+      ],
+      "forbidden_tools": [
+        "add_or_update_event",
+        "delete_event",
+        "delete_events_by_date_range",
+        "apply_training_plan"
+      ],
+      "must_address": [
+        "tomorrow resolved in the athlete-local timezone",
+        "each planned workout on tomorrow's date listed as a separate item",
+        "notes or race annotations included separately from workouts when present",
+        "does not write to the calendar"
+      ],
+      "anti_patterns": [
+        "collapses two same-day workouts into one summary item",
+        "drops one event because another event has the same date",
+        "computes tomorrow with UTC or client-local time instead of resolve_calendar_dates",
+        "writes or deletes calendar events"
+      ]
+    },
+    {
       "id": "CB-WORKOUT-01",
       "recipe": "build-workouts",
       "persona": "athlete",

@@ -140,6 +140,55 @@ func TestGetTodayDigestUsesAthleteLocalDateAndSourceShapes(t *testing.T) {
 	}
 }
 
+func TestGetTodayPreservesMultipleSameDayPlannedEventsAndAnnotations(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeTodayClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		events: decodeToolEvents(t,
+			`{"id":"101","category":"WORKOUT","type":"Run","name":"AM aerobic run","start_date_local":"2026-05-24","icu_training_load":35}`,
+			`{"id":"102","category":"WORKOUT","type":"Ride","name":"PM endurance ride","start_date_local":"2026-05-24","icu_training_load":52}`,
+			`{"id":"103","category":"NOTE","name":"Travel window","description":"Pack race shoes","start_date_local":"2026-05-24"}`,
+			`{"id":"104","category":"RACE_A","name":"Goal race marker","start_date_local":"2026-05-24"}`,
+		),
+	}
+	tool := newGetTodayToolWithClock(client, client, nil, nil, nil, nil, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+
+	assertTodayCalls(t, client, "2026-05-24")
+	planned := out["planned_events"].([]any)
+	if len(planned) != 2 {
+		t.Fatalf("planned_events count = %d, want both same-day workouts: %#v", len(planned), planned)
+	}
+	wantPlanned := []struct {
+		id       string
+		name     string
+		category string
+	}{
+		{id: "101", name: "AM aerobic run", category: "WORKOUT"},
+		{id: "102", name: "PM endurance ride", category: "WORKOUT"},
+	}
+	for i, want := range wantPlanned {
+		row := planned[i].(map[string]any)
+		if row["event_id"] != want.id || row["name"] != want.name || row["category"] != want.category || row["start_date_local"] != "2026-05-24" {
+			t.Fatalf("planned_events[%d] = %#v, want separately identified same-day workout %#v", i, row, want)
+		}
+	}
+	annotations := out["annotations"].([]any)
+	if len(annotations) != 2 || annotations[0].(map[string]any)["event_id"] != "103" || annotations[1].(map[string]any)["event_id"] != "104" {
+		t.Fatalf("annotations = %#v, want NOTE and race rows preserved separately", annotations)
+	}
+	counts := out["_meta"].(map[string]any)["section_counts"].(map[string]any)
+	if counts["planned_events"] != float64(2) || counts["annotations"] != float64(2) {
+		t.Fatalf("section_counts = %#v, want all same-day events counted", counts)
+	}
+}
+
 func TestGetTodayIncludeFullWidensEverySection(t *testing.T) {
 	t.Parallel()
 
