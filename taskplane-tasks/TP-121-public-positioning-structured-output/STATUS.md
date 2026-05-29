@@ -1,6 +1,6 @@
 # TP-121: Public positioning for structured local-first output — Status
 
-**Current Step:** Step 2: Align docs if wording exposes drift
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 0
@@ -41,11 +41,11 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Full tests run if applicable, or not-applicable rationale recorded
-- [ ] Documentation issues fixed
-- [ ] Build run if applicable, or not-applicable rationale recorded
+- [x] Full tests run if applicable, or not-applicable rationale recorded (not applicable: modified README/CHANGELOG only; no code, generated catalog, or runnable examples changed)
+- [x] Documentation issues fixed (markdownlint unavailable; manual README/CHANGELOG review and git diff --check passed)
+- [x] Build run if applicable, or not-applicable rationale recorded (not applicable: docs-only README/CHANGELOG changes, no generated/catalog-adjacent references)
 
 ---
 
