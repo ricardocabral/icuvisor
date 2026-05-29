@@ -1,7 +1,7 @@
 # TP-122: Season planning prompt and context hardening — Status
 
 **Current Step:** Step 5: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-29
 **Review Level:** 2
 **Review Counter:** 9
@@ -63,12 +63,12 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `CHANGELOG.md` updated
-- [ ] `ROADMAP.md` checked if affected
-- [ ] PRD checked if affected
-- [ ] Discoveries logged
+- [x] `CHANGELOG.md` updated
+- [x] `ROADMAP.md` checked if affected
+- [x] PRD checked if affected
+- [x] Discoveries logged
 
 ---
 
@@ -85,6 +85,7 @@
 |-----------|-------------|----------|
 | Step 1 design: enhance existing prompts instead of adding a seventh `season_planning` prompt; strengthen `weekly_planning` as the season/race planning entry point, with lighter race-priority/compliance context in `race_week_taper` and `weekly_review`. | Avoids PRD prompt-catalog churn and keeps the guidance surface within the existing registry/golden-test pattern. | internal/prompts/catalog.go |
 | Planning guidance will cite existing deterministic reads/analyzers only: `get_events`, `get_training_plan`, `get_fitness`, `get_training_summary`, `compute_compliance_rate`, and `icuvisor_list_advanced_capabilities`; `get_training_plan` and `compute_compliance_rate` may be unavailable in core toolsets, so prompts must tell assistants to list capabilities and proceed from events/fitness/summary when absent. | Do not add or imply an ATP/season calendar writer; do not automatically fill the calendar, create ATP notes, or call write/delete tools before the user approves exact changes. | internal/prompts/catalog.go |
+| Documentation check: no new prompt was added, so PRD prompt-catalog count remains accurate; ROADMAP future planning/fill-calendar scope was not changed by this prompt/example hardening. | Updated CHANGELOG only for user-visible prompt/example behavior. | CHANGELOG.md |
 
 ---
 
@@ -105,6 +106,8 @@
 | 2026-05-29 13:38 | Step 4 started | Testing and verification |
 | 2026-05-29 13:44 | Step 4 completed | Code review approved |
 | 2026-05-29 13:44 | Step 5 started | Documentation and delivery |
+| 2026-05-29 13:48 | Step 5 completed | Changelog updated; roadmap and PRD checked |
+| 2026-05-29 13:48 | Task completed | All steps complete |
 
 ---
 
