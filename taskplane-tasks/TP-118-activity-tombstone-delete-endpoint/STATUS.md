@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -27,7 +27,8 @@
 - [ ] Existing delete implementation and tests inspected
 - [ ] Public upstream evidence checked without competitor source
 - [ ] Endpoint decision recorded in Discoveries
-- [ ] Targeted tests run
+- [ ] `/api/v1` base-path handling captured for the selected endpoint
+- [ ] Targeted tests run with regex covering intervals path and target-athlete safety tests
 
 ---
 
@@ -64,6 +65,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | Plan | Step 1 | REVISE | `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -92,4 +94,5 @@
 
 ## Notes
 
-*Reserved for execution notes*
+Plan review R001 requires Step 1 tests to include `DeleteMethods|ActivityIDEndpointsRequireResolvedTargetOwnership` coverage and discoveries to explicitly note `/api/v1` base URL handling.
+| 2026-05-29 15:25 | Review R001 | plan Step 1: REVISE |
