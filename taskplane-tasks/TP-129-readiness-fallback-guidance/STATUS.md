@@ -1,10 +1,10 @@
 # TP-129: Readiness fallback guidance for null upstream readiness — Status
 
-**Current Step:** Step 3: Update cookbook docs
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -51,12 +51,12 @@
 ---
 
 ### Step 4: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] FULL test suite passing: `make test`
-- [ ] Lint passes or pre-existing linter limitations are documented: `make lint`
-- [ ] Build passes: `make build`
-- [ ] All failures fixed or clearly documented as pre-existing
+- [x] FULL test suite passing: `make test`
+- [x] Lint passes or pre-existing linter limitations are documented: `make lint`
+- [x] Build passes: `make build`
+- [x] All failures fixed or clearly documented as pre-existing
 
 ---
 
@@ -80,6 +80,7 @@
 | R005 | code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
 | R006 | plan | 3 | APPROVE | `.reviews/R006-plan-step3.md` |
 | R007 | code | 3 | APPROVE | `.reviews/R007-code-step3.md` |
+| R008 | plan | 4 | APPROVE | `.reviews/R008-plan-step4.md` |
 
 ---
 
@@ -101,6 +102,7 @@
 | 2026-05-29 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-05-29 13:51 | Task started | Runtime V2 lane-runner execution |
 | 2026-05-29 13:51 | Step 0 started | Preflight |
+| 2026-05-29 | Step 4 verification | `make test`, `make lint`, and `make build` passed. |
 
 ---
 
@@ -120,3 +122,4 @@
 | 2026-05-29 14:08 | Review R005 | code Step 2: APPROVE |
 | 2026-05-29 14:10 | Review R006 | plan Step 3: APPROVE |
 | 2026-05-29 14:14 | Review R007 | code Step 3: APPROVE |
+| 2026-05-29 14:16 | Review R008 | plan Step 4: APPROVE |
