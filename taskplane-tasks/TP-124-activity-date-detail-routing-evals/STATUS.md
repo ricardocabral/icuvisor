@@ -1,10 +1,10 @@
 # TP-124: Activity date resolution and detail-routing evals — Status
 
-**Current Step:** Step 3: Harden descriptions or cookbook guidance
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 1
 **Size:** M
 
@@ -42,7 +42,7 @@
 ---
 
 ### Step 3: Harden descriptions or cookbook guidance
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] If gaps are found, update tool descriptions or cookbook text to make the list→detail/interval/splits path explicit, including `internal/tools/get_activity_streams.go` when split hints change.
 - [x] Keep downstream `activity_id` hints concise: resolve described/date-based activities with `get_activities` over the athlete-local date window, then pass the returned `activity_id`.
@@ -53,7 +53,7 @@
 ---
 
 ### Step 4: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing: `make test`
 - [ ] Lint passes or pre-existing linter limitations are documented: `make lint`
@@ -83,6 +83,7 @@
 | R006 | Plan | 3 | REVISE | `.reviews/R006-plan-step3.md` |
 | R007 | Plan | 3 | APPROVE | `.reviews/R007-plan-step3.md` |
 | R008 | Code | 3 | REVISE | `.reviews/R008-code-step3.md` |
+| R009 | Code | 3 | APPROVE | `.reviews/R009-code-step3.md` |
 
 ---
 
@@ -129,3 +130,4 @@ Code review R008 found stale `cmd/gendocs/testdata/tools.golden.json` summaries 
 | 2026-05-29 13:35 | Review R006 | plan Step 3: REVISE |
 | 2026-05-29 13:37 | Review R007 | plan Step 3: APPROVE |
 | 2026-05-29 13:42 | Review R008 | code Step 3: REVISE |
+| 2026-05-29 13:45 | Review R009 | code Step 3: APPROVE |
