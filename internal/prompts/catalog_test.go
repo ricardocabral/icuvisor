@@ -101,6 +101,7 @@ func TestWeeklyReviewIncludesFallbackAndSafetyGuidance(t *testing.T) {
 		"_meta.stale",
 		"provenance warnings",
 		"Do not call write or delete tools unless the user explicitly approves the exact change first.",
+		"Do not auto-fill calendars or create ATP notes from the review",
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("weekly review prompt missing %q:\n%s", want, text)
@@ -126,6 +127,37 @@ func TestPlanHealthReviewIncludesTransparentRiskGuidance(t *testing.T) {
 		if !strings.Contains(text, want) {
 			t.Fatalf("plan health review prompt missing %q:\n%s", want, text)
 		}
+	}
+}
+
+func TestPlanningPromptsIncludeSeasonContextAndWriteGuardrails(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name   string
+		prompt Prompt
+		args   map[string]string
+	}{
+		{name: "weekly planning", prompt: WeeklyPlanningPrompt(), args: map[string]string{"week_start": "2026-05-18"}},
+		{name: "race-week taper", prompt: RaceWeekTaperPrompt(), args: map[string]string{"race_date": "2026-06-07"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			text := renderPromptText(t, tc.prompt, tc.args)
+			for _, want := range []string{
+				"priority/category",
+				"get_training_plan",
+				"compute_compliance_rate",
+				"icuvisor_list_advanced_capabilities",
+				"Do not automatically fill the calendar, create ATP notes, or call write/delete tools",
+				"approval of exact changes",
+			} {
+				if !strings.Contains(text, want) {
+					t.Fatalf("%s prompt missing %q:\n%s", tc.name, want, text)
+				}
+			}
+		})
 	}
 }
 
