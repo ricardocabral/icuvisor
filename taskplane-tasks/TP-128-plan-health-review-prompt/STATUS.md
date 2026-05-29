@@ -1,7 +1,7 @@
 # TP-128: Plan health review prompt — Status
 
-**Current Step:** Step 4: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 5: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-29
 **Review Level:** 2
 **Review Counter:** 13
@@ -68,11 +68,11 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -104,6 +104,7 @@
 | Plan-health tool order: read `get_athlete_profile`; read `get_events` and `get_training_plan` for planned/race context; read `get_activities` only as needed for completed context; run `compute_compliance_rate` for scheduled-vs-completed adherence; read `get_fitness`/`get_training_summary`; run `compute_load_balance` for intensity/block classification; run `get_fitness_projection` for the stated horizon/ramp/recovery assumptions; read `get_wellness_data` for recent sleep/readiness/HRV caveats; call `icuvisor_list_advanced_capabilities` and name missing full-tool analyzers when advanced tools are unavailable. | Prompt contract input for Step 2 | `internal/prompts/catalog.go` |
 | `plan_health_review` contract: optional `planned_start`/`planned_end` athlete-local dates (default next 14 days), optional `completed_lookback_days` positive integer (default 14), optional `race_date` and `race_name` for risk anchoring. Output sections should be: data coverage/missing-data caveats; planned-vs-completed adherence; load/form trajectory; plan-health risk table with evidence and no opaque aggregate score; deload/recovery-week interpretation; race-date risk if a race date/event is available; reviewed proposal/questions before any writes. If no race event is found, say no confirmed race event was found and report any user-supplied race date as a scenario anchor rather than an observed race. | Prompt contract input for Step 2 | `internal/prompts/catalog.go`; `internal/prompts/testdata/plan_health_review.md` |
 | Formula/scope guardrails: prompt should cite `icuvisor://analysis-formulas`, require analyzer `_meta.method`, `_meta.assumptions`, `_meta.formula_ref`, missing-days/sample-size caveats where present, and forbid a hidden black-box plan-health score. Risk labels may be low/medium/high only when backed by surfaced values. Deload/recovery weeks must be treated as intentional load reductions unless compliance/wellness/form evidence says otherwise. This is a review workflow only: no plan filler, no autonomous physiology model, and no calendar writes until the exact proposal has been shown and approved. | Prompt contract input for Step 2 and cookbook docs | `internal/prompts/catalog.go`; `web/content/cookbook/weekly-review.md`; `web/content/cookbook/season-and-block-plan.md` |
+| Check-if-affected docs: PRD §7.2.G materially changed because the prompt catalog now has seven prompts, so the prompt list was updated. ROADMAP.md was reviewed and does not need a change because plan filler and science-guardrail future phase assumptions remain unchanged. | Completed in Step 5 | `docs/prd/PRD-icuvisor.md`; `ROADMAP.md` |
 
 ---
 
