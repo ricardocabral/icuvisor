@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recovery and weekly-review prompts now tell assistants to state missing/null Intervals readiness before using HRV, resting HR, sleep, subjective wellness scales, and provider `_native` fields as cautious fallback evidence.
 - The readiness-check cookbook now includes Garmin/null-readiness fallback guidance while preserving explicit sleepQuality, sleepScore, feel, and provider-native scale labels.
 - Activity tool descriptions and the activity-retrospective cookbook now make the `get_activities` → `activity_id` → detail/interval/splits routing path explicit for described or relative-date activities.
+- README positioning now highlights icuvisor's local-first credentials, single-binary install, terse structured responses, explicit units/scales, and registration-time delete safety.
 
 ## [0.1.5] - 2026-05-27
 
