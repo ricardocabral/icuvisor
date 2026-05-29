@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Map current routing hints
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Inspect `get_activities`, `get_activity_details`, `get_activity_intervals`, `get_activity_splits`, cookbook prompts, prompt testdata, and eval scenarios.
 - [x] Identify where prompts/tool descriptions fail to instruct list-by-date before detail/interval fetch.
@@ -32,7 +32,7 @@
 ---
 
 ### Step 2: Add eval scenarios
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Add at least one eval scenario for “analyze my race last Sunday” that requires activity-date lookup then detail/interval fetch.
 - [ ] Add one scenario for “show/compare lap splits or reps for my run on [date]” that must not stop at session summaries.
@@ -75,6 +75,7 @@
 |---|------|------|---------|------|
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
+| R003 | Code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
 
 ---
 
@@ -111,3 +112,4 @@ Plan review R001 required adding `get_activity_splits` / `internal/tools/get_act
 Step 1 inspection identified three routing gaps: detail/interval/splits tool descriptions require `activity_id` but do not remind assistants to resolve described/date-based activities through `get_activities`; activity-retrospective cookbook says to list recent activities when no ID is supplied but does not explicitly say to query the athlete-local date window for relative dates like "last Sunday"; existing eval scenarios lack a race-by-date and splits/reps-by-date regression.
 | 2026-05-29 13:22 | Review R001 | plan Step 1: REVISE |
 | 2026-05-29 13:24 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-29 13:27 | Review R003 | code Step 1: APPROVE |
