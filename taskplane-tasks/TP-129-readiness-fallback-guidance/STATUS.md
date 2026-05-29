@@ -28,7 +28,7 @@
 - [x] Identify whether null readiness already appears in missing_fields and whether prompts instruct cautious fallback.
 - [x] Record available fallback fields and non-goals in STATUS.md Discoveries.
 - [x] Run targeted tests: `go test ./internal/tools ./internal/prompts`
-- [ ] Address R002: include all audited fallback/supporting wellness fields (`motivation`, `spO2`, `respiration`, `steps`, `vo2max`, `baevskySI`) in Discoveries or explicitly scope them out.
+- [x] Address R002: include all audited fallback/supporting wellness fields (`motivation`, `spO2`, `respiration`, `steps`, `vo2max`, `baevskySI`) in Discoveries or explicitly scope them out.
 
 ---
 
@@ -83,7 +83,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | Wellness shaping strips nulls into `_meta.missing_fields`; a raw `readiness:null` should be absent from the row and listed there, but no existing fixture specifically covers Garmin/native fallback with null canonical readiness. | Add coverage in Step 2. | `internal/response/meta.go`, `internal/tools/get_wellness_data_test.go` |
-| Available fallback evidence when readiness is absent: `hrv`, `hrvSDNN`, `restingHR`, `avgSleepingHR`, `sleepSecs`, `sleepScore`, `sleepQuality`, `fatigue`, `soreness`, `stress`, `mood`, `feel`, plus `_native.<source>` fields and `_meta.provenance` scale labels. | Use in prompt/docs guidance; state as supporting evidence, not a substitute score. | `internal/tools/get_wellness_data.go`, PRD §7.2.C |
+| Available fallback evidence when readiness is absent: `hrv`, `hrvSDNN`, `restingHR`, `avgSleepingHR`, `sleepSecs`, `sleepScore`, `sleepQuality`, `fatigue`, `soreness`, `stress`, `mood`, `feel`, `motivation`, and where present `spO2`, `respiration`, `steps`, `vo2max`, `baevskySI`, plus `_native.<source>` fields and `_meta.provenance` scale labels. | Use in prompt/docs guidance as supporting/context signals only; state they are not a substitute score and avoid over-weighting general activity metrics such as steps/VO2max/Baevsky. | `internal/tools/get_wellness_data.go`, PRD §7.2.C |
 | Non-goals: do not invent/normalize a readiness score from Garmin Body Battery or other native fields, do not claim device-specific readiness semantics unless the field/scale is present, and do not request API keys in chat. | Preserve in Step 2/3 wording. | `internal/prompts/testdata/recovery_check.md`, `web/content/cookbook/readiness-check.md` |
 | Recovery prompt currently asks for readiness but does not explicitly say to explain missingness or use cautious fallback; weekly prompt says not to infer readiness when stale/absent but does not name fallback signals. | Update prompt golden files in Step 2. | `internal/prompts/testdata/recovery_check.md`, `internal/prompts/testdata/weekly_review.md` |
 
