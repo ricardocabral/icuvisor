@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -24,9 +24,9 @@
 ### Step 1: Audit workout-library response shape
 **Status:** 🟨 In Progress
 
-- [ ] Inspect workout-library tools/tests for pagination, terse default, and folder scoping.
-- [ ] Record whether existing tests protect against huge raw payloads and `include_full` behavior.
-- [ ] Run targeted tests: `go test ./internal/tools`
+- [x] Inspect workout-library tools/tests for pagination, terse default, and folder scoping.
+- [x] Record whether existing tests protect against huge raw payloads and `include_full` behavior.
+- [x] Run targeted tests: `go test ./internal/tools`
 
 ---
 
@@ -70,6 +70,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Workout-library audit found `get_workout_library` returns folders by default and only fetches top-level workouts on opt-in; `get_workouts_in_folder` requires `folder_id`, filters server results client-side, and uses `include_full` for raw docs. No explicit page-size/page-token pagination exists for folder workouts; token safety currently relies on folder scoping and terse shaping. | Inform Step 2 docs/test hardening. | `internal/tools/get_workout_library.go`; `internal/tools/get_workouts_in_folder.go`; `internal/tools/get_workout_library_test.go` |
+| Existing tests verify `get_workout_library` does not expose raw `workout_doc`, does not fetch workouts by default, and `get_workouts_in_folder` hides `workout_doc`/description unless `include_full:true`; they do not include a large-payload regression fixture proving many raw docs stay hidden. | Add focused test in Step 2. | `internal/tools/get_workout_library_test.go` |
 
 ---
 
@@ -92,3 +94,4 @@
 ## Notes
 
 *Reserved for execution notes*
+| 2026-05-29 15:49 | Review R001 | plan Step 1: APPROVE |
