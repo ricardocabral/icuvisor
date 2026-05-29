@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -29,6 +29,7 @@
 - [x] Identify whether existing descriptions already prefer update/edit in place and where eval coverage is missing.
 - [x] Record the current safety contract and any token-budget tradeoff in STATUS.md Discoveries.
 - [x] Run targeted tests: `go test ./internal/tools`
+- [ ] Record exact Step 1 test evidence and safety-test rationale requested by R003.
 
 ---
 
@@ -105,6 +106,8 @@
 ## Notes
 
 - Step 1 plan review R001 requested explicit `create_workout` audit coverage and registration-time delete gating coverage.
+- Step 1 code review R003 requested exact test evidence in STATUS; its status-complete request is deferred until code review APPROVE per Review Level 2 protocol.
 
 | 2026-05-29 14:10 | Review R001 | plan Step 1: REVISE |
 | 2026-05-29 14:11 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-29 14:15 | Review R003 | code Step 1: REVISE |
