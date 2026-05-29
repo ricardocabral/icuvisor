@@ -1,10 +1,10 @@
 # TP-127: Edit-in-place write safety evals — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Audit write/delete guidance
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -22,9 +22,10 @@
 ---
 
 ### Step 1: Audit write/delete guidance
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Inspect create/update/delete workout and event tool descriptions, schemas, and safety tests.
+- [ ] Inspect create/update/delete workout and event tool descriptions, schemas, and safety tests, including `create_workout` as the unsafe recreate side.
+- [ ] Inspect registration-time delete gating coverage in `internal/safety/adversarial_test.go` and decide whether `go test ./internal/safety` is needed.
 - [ ] Identify whether existing descriptions already prefer update/edit in place and where eval coverage is missing.
 - [ ] Record the current safety contract and any token-budget tradeoff in STATUS.md Discoveries.
 - [ ] Run targeted tests: `go test ./internal/tools`
@@ -100,4 +101,6 @@
 
 ## Notes
 
-*Reserved for execution notes*
+- Step 1 plan review R001 requested explicit `create_workout` audit coverage and registration-time delete gating coverage.
+
+| 2026-05-29 14:10 | Review R001 | plan Step 1: REVISE |
