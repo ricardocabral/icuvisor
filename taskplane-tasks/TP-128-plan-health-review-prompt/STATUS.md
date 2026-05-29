@@ -1,10 +1,10 @@
 # TP-128: Plan health review prompt — Status
 
-**Current Step:** Step 1: Design plan-health prompt contract
+**Current Step:** Step 2: Implement prompt and golden tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 2
 **Size:** M
 
@@ -34,12 +34,12 @@
 ---
 
 ### Step 2: Implement prompt and golden tests
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Add or update prompt text with transparent scoring/caveats, explicit missing-data handling, and no hidden black-box score unless computed from surfaced values.
-- [ ] Add/update prompt registry golden tests.
-- [ ] Ensure prompt asks for a reviewed proposal before any calendar writes.
-- [ ] Run targeted tests: `go test ./internal/prompts`
+- [x] Add or update prompt text with transparent scoring/caveats, explicit missing-data handling, and no hidden black-box score unless computed from surfaced values.
+- [x] Add/update prompt registry golden tests.
+- [x] Ensure prompt asks for a reviewed proposal before any calendar writes.
+- [x] Run targeted tests: `go test ./internal/prompts`
 
 ---
 
@@ -116,3 +116,4 @@
 | 2026-05-29 15:17 | Review R001 | plan Step 1: REVISE |
 | 2026-05-29 15:20 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-29 15:22 | Review R003 | code Step 1: APPROVE |
+| 2026-05-29 15:24 | Review R004 | plan Step 2: APPROVE |
