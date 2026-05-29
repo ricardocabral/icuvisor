@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -24,10 +24,10 @@
 ### Step 1: Audit current pre-write guidance
 **Status:** 🟨 In Progress
 
-- [ ] Inspect `validate_workout`, workout write tool descriptions/examples, and weekly-planning/build-workouts prompts.
-- [ ] Identify whether assistants are instructed to summarize proposed changes before writes.
-- [ ] Record current behavior and chosen changes in STATUS.md Discoveries.
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/prompts`
+- [x] Inspect `validate_workout`, workout write tool descriptions/examples, and weekly-planning/build-workouts prompts.
+- [x] Identify whether assistants are instructed to summarize proposed changes before writes.
+- [x] Record current behavior and chosen changes in STATUS.md Discoveries.
+- [x] Run targeted tests: `go test ./internal/tools ./internal/prompts`
 
 ---
 
@@ -80,6 +80,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Existing guidance requires a reviewed proposal/approval before writes in weekly planning and the cookbook, and write tools already warn that description-only workout updates can replace structured steps. | Harden preview content by explicitly requiring a human-readable change preview: total duration, key steps, target intensities, load/distance/time deltas, and preserved fields before create/update/schedule writes. | internal/prompts/testdata/weekly_planning.md; web/content/cookbook/build-workouts.md; internal/tools/add_or_update_event.go; internal/tools/create_workout.go; internal/tools/update_workout.go |
+| `validate_workout` is read-only and reports canonical DSL plus estimated duration; current guidance recommends it only when syntax is uncertain. | Keep validate as preflight guidance for uncertain DSL/structured changes and use its output to support preview summaries, without making validation a write precondition or adding confirmation arguments. | internal/tools/validate_workout.go |
 
 ---
 
@@ -102,3 +104,4 @@
 ## Notes
 
 *Reserved for execution notes*
+| 2026-05-29 14:23 | Review R001 | plan Step 1: APPROVE |
