@@ -58,7 +58,7 @@ provide. Keep the answer under about 400 words, leading with the interval table.
 | 4    | [`get_activity_histogram`]({{< relref "/reference/tools#get_activity_histogram" >}})                                                                                    | Time-in-zone distribution for the session.                                                                                                             |
 | 5    | [`get_extended_metrics`]({{< relref "/reference/tools#get_extended_metrics" >}})                                                                                        | Decoupling, IF, VI — only those upstream actually fitted.                                                                                              |
 
-For a specific surge or climb, [`compute_activity_segment_stats`]({{< relref "/reference/tools#compute_activity_segment_stats" >}}) computes mean/NP/decoupling over an explicit time range.
+For a specific surge, climb, or distance-bounded split, [`compute_activity_segment_stats`]({{< relref "/reference/tools#compute_activity_segment_stats" >}}) computes mean/median/p90, NP/IF, drift, or decoupling over an explicit time or distance range. For relative requests like "last 10 km", first use `get_activity_details` to get the activity distance, convert it to meters, and pass explicit bounds such as `start_distance_m = total_distance_m - 10000` and `end_distance_m = total_distance_m`. Do not fetch raw streams and average them in chat.
 
 ## A good answer looks like
 
@@ -74,6 +74,7 @@ For a specific surge or climb, [`compute_activity_segment_stats`]({{< relref "/r
 
 - **Lactate test:** "Analyze this interval session and include the lactate values I entered on each rep. Use `custom_fields.lactate` from `get_activity_intervals` when present."
 - **Race debrief:** "...this was a race — focus on pacing discipline and where I lost time."
+- **First-vs-last distance comparison:** "Compare the first 10 km with the last 10 km of this run. Use `get_activity_details` for total distance, then call `compute_activity_segment_stats` with explicit distance bounds (`0..10000 m` and `total_distance_m-10000..total_distance_m`) for average `velocity_smooth`, `watts` if available, and `heart_rate`. Convert velocity to pace in the final answer; do not reduce raw streams in chat."
 - **Compare two sessions:** "Compare activity A and activity B — same workout, two weeks apart. Did the hard parts improve?"
 - **A Strava import specifically:** "Analyze my most recent Strava-imported activity. Identify genuine Strava imports by the `source` field — a Garmin or Wahoo device means a native upload, not a Strava import — state the blank-field policy first, and confirm the blank payload with `get_activity_details` rather than inferring it from the list."
 - **Leave a note:** add "If write tools are enabled, append a one-line summary as a comment on the activity." This uses [`add_activity_message`]({{< relref "/reference/tools#add_activity_message" >}}).
