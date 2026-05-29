@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -28,6 +28,7 @@
 - [x] Identify whether null readiness already appears in missing_fields and whether prompts instruct cautious fallback.
 - [x] Record available fallback fields and non-goals in STATUS.md Discoveries.
 - [x] Run targeted tests: `go test ./internal/tools ./internal/prompts`
+- [ ] Address R002: include all audited fallback/supporting wellness fields (`motivation`, `spO2`, `respiration`, `steps`, `vo2max`, `baevskySI`) in Discoveries or explicitly scope them out.
 
 ---
 
@@ -73,6 +74,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R001 | plan | 1 | APPROVE | `.reviews/R001-plan-step1.md` |
+| R002 | code | 1 | REVISE | `.reviews/R002-code-step1.md` |
 
 ---
 
@@ -107,3 +109,4 @@
 
 *Reserved for execution notes*
 | 2026-05-29 13:54 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-29 13:58 | Review R002 | code Step 1: UNKNOWN |
