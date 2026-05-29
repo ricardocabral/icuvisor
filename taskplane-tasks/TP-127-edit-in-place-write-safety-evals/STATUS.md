@@ -1,6 +1,6 @@
 # TP-127: Edit-in-place write safety evals — Status
 
-**Current Step:** Step 2: Add eval/adversarial coverage
+**Current Step:** Step 3: Harden guidance if necessary
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
@@ -44,9 +44,10 @@
 ---
 
 ### Step 3: Harden guidance if necessary
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Update concise tool descriptions or cookbook prompts only where tests show ambiguity.
+- [ ] Evaluate Step 2 eval/test results and decide whether concise tool descriptions or cookbook prompts still show ambiguity.
+- [ ] If ambiguity remains, update only the concise tool descriptions or cookbook prompts needed; if not, record the no-change rationale in STATUS Discoveries.
 - [ ] Do not add a model-controlled `confirm` flag or weaken registration-time gating.
 - [ ] Run targeted tests: `go test ./internal/tools`
 
