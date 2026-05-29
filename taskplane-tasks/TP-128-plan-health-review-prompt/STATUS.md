@@ -1,10 +1,10 @@
 # TP-128: Plan health review prompt — Status
 
-**Current Step:** Step 3: Document cookbook workflow
+**Current Step:** Step 2: Implement prompt and golden tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 2
 **Size:** M
 
@@ -34,7 +34,7 @@
 ---
 
 ### Step 2: Implement prompt and golden tests
-**Status:** ✅ Complete
+**Status:** 🟨 In Progress
 
 - [x] Add or update prompt text with transparent scoring/caveats, explicit missing-data handling, and no hidden black-box score unless computed from surfaced values.
 - [x] Add/update prompt registry golden tests.
@@ -44,7 +44,7 @@
 ---
 
 ### Step 3: Document cookbook workflow
-**Status:** 🟨 In Progress
+**Status:** ⬜ Not Started
 
 - [ ] Add cookbook guidance showing when to use weekly review vs plan-health review vs season planning.
 - [ ] Include caveats for deload weeks, planned races, and incomplete wellness/readiness data.
@@ -79,8 +79,9 @@
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | 1 | APPROVE | inline |
 | R003 | Code | 1 | APPROVE | inline |
-| R004 | Plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
-| R005 | Code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
+| R004 | Plan | 2 | REVISE | `.reviews/R004-plan-step2.md` |
+| R005 | Code | 2 | REVISE | `.reviews/R005-code-step2.md` |
+| R006 | Plan | 3 | REVISE | `.reviews/R006-plan-step3.md` |
 
 ---
 
@@ -121,3 +122,4 @@
 | 2026-05-29 15:22 | Review R003 | code Step 1: APPROVE |
 | 2026-05-29 15:24 | Review R004 | plan Step 2: APPROVE |
 | 2026-05-29 15:29 | Review R005 | code Step 2: APPROVE |
+| 2026-05-29 15:31 | Review R006 | plan Step 3: REVISE |
