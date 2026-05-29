@@ -12,7 +12,7 @@ import (
 
 const (
 	validateWorkoutName                    = "validate_workout"
-	validateWorkoutDescription             = "Validate an intervals.icu workout description, a structured workout_doc, or both, and return the canonical merged DSL that icuvisor would submit on a write. Read-only and athlete-independent; never hits the network and never rejects prose. Only malformed structured-step lines (lines starting with '- ' or a 'Nx' repeat header) surface as PARSE_ERROR. Free-text headers, comments, and notes pass through verbatim. Syntax reference: icuvisor://workout-syntax."
+	validateWorkoutDescription             = "Validate an intervals.icu workout description, a structured workout_doc, or both, and return the canonical merged DSL plus estimated duration that icuvisor would submit on a write. Use as a read-only preflight when DSL syntax or structured workout changes are uncertain, then use the canonical DSL and stats to preview total duration, key steps, target intensities, and load/distance/time changes before a write. Read-only and athlete-independent; never hits the network and never rejects prose. Only malformed structured-step lines (lines starting with '- ' or a 'Nx' repeat header) surface as PARSE_ERROR. Free-text headers, comments, and notes pass through verbatim. Syntax reference: icuvisor://workout-syntax."
 	invalidValidateWorkoutArgumentsMessage = "invalid validate_workout arguments; provide at least one of description (string) or workout_doc (object with steps[])"
 )
 
@@ -205,7 +205,7 @@ func validateWorkoutInputSchema() map[string]any {
 	return map[string]any{
 		"type":                 "object",
 		"additionalProperties": false,
-		"description":          "At least one of description or workout_doc is required. Both may be set in the same call: structured steps from workout_doc are merged into the prose from description following the merge rule reported in _meta.merge_rule.",
+		"description":          "At least one of description or workout_doc is required. Both may be set in the same call: structured steps from workout_doc are merged into the prose from description following the merge rule reported in _meta.merge_rule. Use this preflight when structured workout changes are uncertain and cite canonical_dsl plus stats.estimated_duration_seconds in the proposed-change preview before writing.",
 		"examples":             examples,
 		"input_examples":       examples,
 		"properties": map[string]any{
@@ -246,6 +246,6 @@ func validateWorkoutOutputSchema() map[string]any {
 	return map[string]any{
 		"type":                 "object",
 		"additionalProperties": true,
-		"description":          "Validation result with diagnostics split into errors/warnings, the canonical merged DSL that would be submitted on a write, and aggregate stats. valid=true iff errors is empty. Validation is never a precondition for writes; prose always passes through.",
+		"description":          "Validation result with diagnostics split into errors/warnings, the canonical merged DSL that would be submitted on a write, and aggregate stats including estimated duration. valid=true iff errors is empty. Validation is never a precondition for writes; prose always passes through.",
 	}
 }

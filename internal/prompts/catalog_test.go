@@ -157,6 +157,16 @@ func TestPlanningPromptsIncludeSeasonContextAndWriteGuardrails(t *testing.T) {
 					t.Fatalf("%s prompt missing %q:\n%s", tc.name, want, text)
 				}
 			}
+			if tc.name == "weekly planning" {
+				for _, want := range []string{
+					"total duration, key steps, target intensities, load/distance/time changes",
+					"what existing title/prose/tags/structured steps are preserved",
+				} {
+					if !strings.Contains(text, want) {
+						t.Fatalf("%s prompt missing workout preview guidance %q:\n%s", tc.name, want, text)
+					}
+				}
+			}
 		})
 	}
 }

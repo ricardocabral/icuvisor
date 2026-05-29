@@ -99,6 +99,14 @@ func TestWorkoutWriteDescriptionSchemaAdvertisesMergedWorkoutDoc(t *testing.T) {
 			if !strings.Contains(contractText, "may be supplied with workout_doc") && !strings.Contains(contractText, "merged with description when both are supplied") && !strings.Contains(contractText, "sentinel") {
 				t.Fatalf("%s schema contract lost merge/coexistence or sentinel guidance:\n%s", tool.Name, contractText)
 			}
+			for _, want := range []string{"preview", "total duration", "key steps", "target intensities", "load/distance/time", "preserved"} {
+				if !strings.Contains(contractText, want) {
+					t.Fatalf("%s schema contract missing preview guidance %q:\n%s", tool.Name, want, contractText)
+				}
+			}
+			if strings.Contains(contractText, "confirm") {
+				t.Fatalf("%s schema contract introduced model-controlled confirm wording:\n%s", tool.Name, contractText)
+			}
 		})
 	}
 }

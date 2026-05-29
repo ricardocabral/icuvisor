@@ -9,6 +9,18 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/workoutdoc"
 )
 
+func TestValidateWorkoutMetadataAdvertisesPreviewPreflight(t *testing.T) {
+	t.Parallel()
+
+	tool := newValidateWorkoutTool("test", false)
+	contractText := normalizeContractText(tool.Description + "\n" + validateWorkoutInputSchema()["description"].(string) + "\n" + validateWorkoutOutputSchema()["description"].(string))
+	for _, want := range []string{"read-only preflight", "structured workout changes", "preview total duration", "key steps", "target intensities", "load/distance/time changes"} {
+		if !strings.Contains(contractText, want) {
+			t.Fatalf("validate_workout contract missing %q:\n%s", want, contractText)
+		}
+	}
+}
+
 func TestValidateWorkoutDescriptionOnlyValidDSL(t *testing.T) {
 	t.Parallel()
 	resp := runValidateWorkout(t, `{"description":"Easy spin\n- 30m 60-70% HR"}`)
