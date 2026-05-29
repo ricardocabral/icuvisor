@@ -1,6 +1,6 @@
 # TP-121: Public positioning for structured local-first output — Status
 
-**Current Step:** Step 1: Add concise public differentiator copy
+**Current Step:** Step 2: Align docs if wording exposes drift
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 0
@@ -32,11 +32,11 @@
 ---
 
 ### Step 2: Align docs if wording exposes drift
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] PRD/security/client docs checked for conflicts
-- [ ] Smallest relevant doc updates made if needed
-- [ ] CHANGELOG docs note added if warranted
+- [x] PRD/security/client docs checked for conflicts (grep-reviewed PRD, SECURITY.md, and docs/clients for positioning conflicts)
+- [x] Smallest relevant doc updates made if needed (no PRD/security/client drift found; CHANGELOG updated for public README docs change)
+- [x] CHANGELOG docs note added if warranted
 
 ---
 
