@@ -40,7 +40,7 @@
 - [x] Add/update prompt registry golden tests.
 - [x] Ensure prompt asks for a reviewed proposal before any calendar writes.
 - [x] Run targeted tests: `go test ./internal/prompts`
-- [ ] Address R004/R005 review findings: verify registry/golden/contract invariant coverage, update MCP protocol prompt-list expectations to seven prompts, and run `go test ./internal/prompts ./internal/mcp`.
+- [x] Address R004/R005 review findings: verify registry/golden/contract invariant coverage, update MCP protocol prompt-list expectations to seven prompts, and run `go test ./internal/prompts ./internal/mcp`.
 
 ---
 
