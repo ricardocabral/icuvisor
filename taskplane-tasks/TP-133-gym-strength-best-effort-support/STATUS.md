@@ -1,7 +1,7 @@
 # TP-133: Gym and strength best-effort support plan — Status
 
 **Current Step:** Step 5: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-29
 **Review Level:** 1
 **Review Counter:** 4
@@ -60,11 +60,11 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified (verified `docs/upstream-gaps/strength-training.md` and `CHANGELOG.md` in TP-133 commits)
+- [x] "Check If Affected" docs reviewed (PRD and ROADMAP clarified existing upstream-dependent future scope without adding v1 commitments)
+- [x] Discoveries logged
 
 ---
 
@@ -80,6 +80,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | Current event support accepts documented categories plus custom pass-through values; `WORKOUT` requires an upstream activity `type`, and `NOTE` can carry free-text calendar annotations. PRD/Roadmap list strength only as upstream-dependent future scope/assumption. | Use docs guidance to recommend NOTE time blocks or simple supported WORKOUTs, not structured strength sets. | `internal/intervals/event_categories.go`, `internal/tools/add_or_update_event.go`, `docs/prd/PRD-icuvisor.md`, `ROADMAP.md` |
+| First-class strength tools need explicit upstream read/write endpoints, schema, response-shaping, write-safety, and round-trip evidence before implementation. | Captured as implementation criteria and linked from PRD/Roadmap so future work stays scoped. | `docs/upstream-gaps/strength-training.md`, `docs/prd/PRD-icuvisor.md`, `ROADMAP.md` |
 
 ---
 
