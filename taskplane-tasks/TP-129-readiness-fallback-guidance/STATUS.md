@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Add fallback tests or prompt guidance
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Add tests if missing for null readiness with present HRV/RHR/sleep/native fields.
 - [x] Update recovery/weekly prompts so assistants do not invent readiness scores and explain missingness before fallback interpretation.
@@ -77,6 +77,7 @@
 | R002 | code | 1 | REVISE | `.reviews/R002-code-step1.md` |
 | R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
 | R004 | plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
+| R005 | code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
 
 ---
 
@@ -114,3 +115,4 @@
 | 2026-05-29 13:58 | Review R002 | code Step 1: UNKNOWN |
 | 2026-05-29 14:01 | Review R003 | code Step 1: APPROVE |
 | 2026-05-29 14:04 | Review R004 | plan Step 2: APPROVE |
+| 2026-05-29 14:08 | Review R005 | code Step 2: APPROVE |
