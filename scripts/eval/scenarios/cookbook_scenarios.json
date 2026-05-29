@@ -228,6 +228,17 @@
       "anti_patterns": ["answers from get_activities session summaries only", "asks the user for an activity ID before trying date lookup", "skips get_activity_intervals and get_activity_splits", "fabricates split rows or per-rep metrics not returned by a tool"]
     },
     {
+      "id": "CB-ACT-03",
+      "recipe": "activity-retrospective",
+      "persona": "athlete",
+      "prompt": "Compare the first 10 km with the last 10 km of my most recent marathon or long run. Use icuvisor: find the activity, get details to determine total distance, translate the first segment to 0..10000 meters and the last segment to total_distance_m-10000..total_distance_m, then call compute_activity_segment_stats for average pace/velocity, power if available, and heart rate for each segment. Do not fetch raw activity streams or reduce samples in chat. If the activity is shorter than 20 km or streams are missing, say exactly what prevents the comparison.",
+      "expected_tools": ["get_activities", "get_activity_details", "compute_activity_segment_stats"],
+      "bonus_tools": ["get_activity_intervals", "get_extended_metrics"],
+      "forbidden_tools": ["get_activity_streams", "delete_activity", "delete_event"],
+      "must_address": ["the activity and total distance used", "the explicit first and last distance bounds", "first-vs-last pace or velocity, heart-rate, and power when available", "a clear unavailable-data explanation rather than an estimate"],
+      "anti_patterns": ["fetches raw streams and computes averages in chat", "uses a last-10-km segment without deriving it from total distance", "hallucinates pace, power, or heart-rate values when segment stats are unavailable"]
+    },
+    {
       "id": "CB-FTP-01",
       "recipe": "ftp-and-zones",
       "persona": "athlete",

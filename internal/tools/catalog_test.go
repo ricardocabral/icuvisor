@@ -92,7 +92,7 @@ func TestCatalogIncludesAnalyzerFamilyPlacement(t *testing.T) {
 
 	descriptors := descriptorNameSet(Catalog())
 	cases := map[string]string{
-		computeActivitySegmentStatsName: "Use when the prompt asks for an average, maximum, normalized power, or zone-time statistic over one explicit activity segment as the analyzer-family raw-stream exception",
+		computeActivitySegmentStatsName: "Use when the prompt asks for mean, median, p90, normalized power, intensity factor, drift, or decoupling over an explicit activity segment, including first-vs-last distance comparisons, as the analyzer-family raw-stream exception",
 		analyzeTrendName:                "Use when the prompt asks whether an analysis metric is trending up, trending down, or changing versus baseline",
 		analyzeDistributionName:         "Use when the prompt asks for an analysis metric's distribution, histogram, quantiles, or outliers",
 		analyzeCorrelationName:          "Use when the prompt asks whether two analysis metrics are correlated or lagged together",

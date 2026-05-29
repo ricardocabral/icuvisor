@@ -14,7 +14,7 @@ import (
 
 const (
 	computeActivitySegmentStatsName        = "compute_activity_segment_stats"
-	computeActivitySegmentStatsDescription = "Use when the prompt asks for an average, maximum, normalized power, or zone-time statistic over one explicit activity segment as the analyzer-family raw-stream exception; do not fetch get_activity_streams samples and reduce them in chat. Computes deterministic stats from canonical raw streams."
+	computeActivitySegmentStatsDescription = "Use when the prompt asks for mean, median, p90, normalized power, intensity factor, drift, or decoupling over an explicit activity segment, including first-vs-last distance comparisons, as the analyzer-family raw-stream exception; do not fetch get_activity_streams samples and reduce them in chat. Computes deterministic stats from canonical raw streams."
 	invalidActivitySegmentStatsMessage     = "invalid compute_activity_segment_stats arguments; provide activity_id, one stat, exactly one time or distance range, and required metric or ftp_watts only when applicable"
 	computeActivitySegmentStatsMessage     = "could not compute activity segment stats"
 )
@@ -198,7 +198,7 @@ func computeActivitySegmentStatsInputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"activity_id", "stat"}, "properties": map[string]any{
 		"activity_id":      map[string]any{"type": "string", "description": "Required intervals.icu activity ID whose canonical raw streams should be analyzed."},
 		"stat":             map[string]any{"type": "string", "enum": analysis.SegmentStatValues(), "description": "Single segment statistic to compute. Use one of mean, median, p90, decoupling, drift, np, or if."},
-		"metric":           map[string]any{"type": "string", "enum": analysis.SegmentMetricValues(), "description": "Canonical stream metric for mean/median/p90 only: watts, heart_rate, cadence, velocity_smooth, distance, or time. Omit for derived stats."},
+		"metric":           map[string]any{"type": "string", "enum": analysis.SegmentMetricValues(), "description": "Canonical stream metric for mean/median/p90 only: watts, heart_rate, cadence, velocity_smooth, distance, or time. Use velocity_smooth for pace comparisons and convert m/s to pace in the final answer. Omit for derived stats."},
 		"start_seconds":    map[string]any{"type": "number", "minimum": 0, "description": "Inclusive segment start in elapsed activity seconds. Provide with end_seconds and without distance bounds."},
 		"end_seconds":      map[string]any{"type": "number", "minimum": 0, "description": "Inclusive segment end in elapsed activity seconds; must be greater than start_seconds."},
 		"start_distance_m": map[string]any{"type": "number", "minimum": 0, "description": "Inclusive segment start distance in meters. Provide with end_distance_m and without time bounds."},

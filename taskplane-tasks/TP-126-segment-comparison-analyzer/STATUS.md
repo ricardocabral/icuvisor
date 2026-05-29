@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -34,10 +34,10 @@
 ### Step 2: Add segment-comparison eval/docs
 **Status:** 🟨 In Progress
 
-- [ ] Add an eval scenario for comparing first 10 km vs last 10 km that expects `compute_activity_segment_stats` rather than raw `get_activity_streams` reduction in chat.
-- [ ] Update activity retrospective cookbook guidance with a deterministic segment-comparison prompt.
-- [ ] If needed, tighten tool activation text without bloating core tool descriptions.
-- [ ] Run targeted tests: `make eval-validate` and `go test ./internal/tools`
+- [x] Add an eval scenario for comparing first 10 km vs last 10 km that expects `compute_activity_segment_stats` rather than raw `get_activity_streams` reduction in chat.
+- [x] Update activity retrospective cookbook guidance with a deterministic segment-comparison prompt.
+- [x] If needed, tighten tool activation text without bloating core tool descriptions.
+- [x] Run targeted tests: `make eval-validate` and `go test ./internal/tools`
 
 ---
 
@@ -110,3 +110,4 @@
 
 *Reserved for execution notes*
 | 2026-05-29 13:55 | Review R003 | code Step 1: APPROVE |
+| 2026-05-29 13:57 | Review R004 | plan Step 2: APPROVE |
