@@ -1,10 +1,10 @@
 # TP-122: Season planning prompt and context hardening — Status
 
-**Current Step:** Step 2: Implement prompt and golden-test updates
+**Current Step:** Step 3: Strengthen race-event write examples if needed
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Implement prompt and golden-test updates
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Prompt text updated or new prompt added
 - [x] Guardrails added against automatic calendar filling/ATP creation
@@ -43,7 +43,7 @@
 ---
 
 ### Step 3: Strengthen race-event write examples if needed
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Race-event input examples reviewed
 - [ ] Example/test strengthened if needed
@@ -99,6 +99,8 @@
 | 2026-05-29 13:20 | Step 1 started | Design prompt guidance surface |
 | 2026-05-29 13:27 | Step 1 completed | Plan and code reviews approved |
 | 2026-05-29 13:27 | Step 2 started | Prompt and golden-test updates |
+| 2026-05-29 13:33 | Step 2 completed | Code review approved |
+| 2026-05-29 13:33 | Step 3 started | Race-event write example hardening |
 
 ---
 
@@ -115,3 +117,4 @@
 | 2026-05-29 13:25 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-29 13:27 | Review R003 | code Step 1: APPROVE |
 | 2026-05-29 13:29 | Review R004 | plan Step 2: APPROVE |
+| 2026-05-29 13:34 | Review R005 | code Step 2: APPROVE |
