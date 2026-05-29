@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 
@@ -44,10 +44,10 @@
 ### Step 3: Harden descriptions or cookbook guidance
 **Status:** 🟨 In Progress
 
-- [ ] If gaps are found, update tool descriptions or cookbook text to make the list→detail/interval/splits path explicit, including `internal/tools/get_activity_streams.go` when split hints change.
-- [ ] Keep downstream `activity_id` hints concise: resolve described/date-based activities with `get_activities` over the athlete-local date window, then pass the returned `activity_id`.
-- [ ] If tool catalog text changes, regenerate generated tool docs/data with `make docs-tools` (or document why not needed before Step 5).
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/prompts` and `make eval-validate`
+- [x] If gaps are found, update tool descriptions or cookbook text to make the list→detail/interval/splits path explicit, including `internal/tools/get_activity_streams.go` when split hints change.
+- [x] Keep downstream `activity_id` hints concise: resolve described/date-based activities with `get_activities` over the athlete-local date window, then pass the returned `activity_id`.
+- [x] If tool catalog text changes, regenerate generated tool docs/data with `make docs-tools` (or document why not needed before Step 5).
+- [x] Run targeted tests: `go test ./internal/tools ./internal/prompts` and `make eval-validate`
 
 ---
 
@@ -80,6 +80,7 @@
 | R004 | Plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
 | R005 | Code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
 | R006 | Plan | 3 | REVISE | `.reviews/R006-plan-step3.md` |
+| R007 | Plan | 3 | APPROVE | `.reviews/R007-plan-step3.md` |
 
 ---
 
@@ -122,3 +123,4 @@ Plan review R006 required Step 3 to include split hinting in `internal/tools/get
 | 2026-05-29 13:29 | Review R004 | plan Step 2: APPROVE |
 | 2026-05-29 13:33 | Review R005 | code Step 2: APPROVE |
 | 2026-05-29 13:35 | Review R006 | plan Step 3: REVISE |
+| 2026-05-29 13:37 | Review R007 | plan Step 3: APPROVE |

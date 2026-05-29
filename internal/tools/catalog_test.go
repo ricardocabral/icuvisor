@@ -167,7 +167,7 @@ func TestCatalogSummariesUseFirstDescriptionSentence(t *testing.T) {
 		name string
 		want string
 	}{
-		{name: getActivitiesName, want: "Scan a local date window and return a paginated activity index: terse unit-disambiguated summary rows with IDs, source/device hints, tags, custom_fields, and Strava-unavailable markers."},
+		{name: getActivitiesName, want: "Scan an athlete-local date window and return a paginated activity index: terse unit-disambiguated summary rows with IDs, source/device hints, tags, custom_fields, and Strava-unavailable markers."},
 		{name: updateWellnessName, want: "Update one athlete-local wellness row with sparse manual fields: subjective scales, measurements, injury text, and locked; legacy feel remains in the input schema for compatibility but rejects with field_not_writable: feel (not accepted by intervals.icu wellness write), device-owned sleepScore rejects with field_not_writable: sleepScore (device-managed), and _native rejects with field_not_writable: _native (bridge-managed)."},
 	}
 

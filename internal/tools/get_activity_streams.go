@@ -15,8 +15,8 @@ import (
 const (
 	getActivityStreamsName        = "get_activity_streams"
 	getActivitySplitsName         = "get_activity_splits"
-	getActivityStreamsDescription = "Get canonical activity stream channels by activity_id. Streams are heavy: default returns only available stream metadata; include samples only with include_full:true or explicit keys."
-	getActivitySplitsDescription  = "Get manual or virtual per-km/per-mile activity splits. Uses manual intervals when present, otherwise derives virtual splits from distance/time streams and honors preferred_units."
+	getActivityStreamsDescription = "Get canonical activity stream channels by activity_id. For a described or date-based activity, resolve it with get_activities first and pass the returned activity_id. Streams are heavy: default returns only available stream metadata; include samples only with include_full:true or explicit keys."
+	getActivitySplitsDescription  = "Get manual or virtual per-km/per-mile activity splits by activity_id. For split/lap requests on a described or date-based activity, resolve it with get_activities over the athlete-local date window first. Uses manual intervals when present, otherwise derives virtual splits from distance/time streams and honors preferred_units."
 )
 
 // ActivityStreamsClient retrieves activity streams.

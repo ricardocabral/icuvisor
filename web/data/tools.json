@@ -20,7 +20,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "Scan a local date window and return a paginated activity index: terse unit-disambiguated summary rows with IDs, source/device hints, tags, custom_fields, and Strava-unavailable markers.",
+    "summary": "Scan an athlete-local date window and return a paginated activity index: terse unit-disambiguated summary rows with IDs, source/device hints, tags, custom_fields, and Strava-unavailable markers.",
     "anchor": "get_activities"
   },
   {
@@ -60,7 +60,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "Get manual or virtual per-km/per-mile activity splits.",
+    "summary": "Get manual or virtual per-km/per-mile activity splits by activity_id.",
     "anchor": "get_activity_splits"
   },
   {

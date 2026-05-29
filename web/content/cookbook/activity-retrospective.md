@@ -14,14 +14,15 @@ After a key session you want more than "nice ride". This recipe makes the assist
 
 ## The recipe
 
-You can name an activity by ID or just describe it — the assistant will look it up.
+You can name an activity by ID or just describe it — the assistant will look it up. For relative dates like "last Sunday," it should resolve the athlete-local date window with `get_activities`, choose the matching activity, then pass that `activity_id` to detail, interval, and split tools.
 
 ```text
 Give me a detailed retrospective of my most recent hard ride. Use icuvisor
 with my intervals.icu data.
 
-1. If I gave an activity ID, use it. Otherwise list my recent activities,
-   pick the one I described, and tell me which you chose.
+1. If I gave an activity ID, use it. Otherwise list my recent activities or
+   the requested athlete-local date window, pick the one I described, and tell
+   me which activity ID you chose.
 2. Get the activity details: sport, local start time, duration, distance,
    load, and source/device.
 3. Get the intervals or laps with get_activity_intervals, and the per-km or
@@ -78,6 +79,6 @@ For a specific surge or climb, [`compute_activity_segment_stats`]({{< relref "/r
 
 ## Why this prompt works
 
-- **Look-it-up step.** Letting the assistant resolve the activity with `get_activities` means you never paste raw data — which is what overruns the context window.
+- **Look-it-up step.** Letting the assistant resolve the activity with `get_activities` — including athlete-local date windows for phrases like "last Sunday" — means you never paste raw data or raw IDs, which is what overruns the context window.
 - **"Report only the ones actually present."** Extended metrics vary by device and sport. This line stops the assistant inventing a decoupling figure for a run with no power.
 - **Strava callout.** Strava-imported activities return blank fields by policy. Naming this up front turns a confusing "your power was 0 W" into an honest "this was a Strava import, so power is unavailable".
