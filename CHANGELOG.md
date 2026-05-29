@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added regression coverage and cookbook guidance for tag-aware, fueling-aware activity reads without requiring `include_full:true`.
 - Documented the strength-training upstream API gap and current best-effort gym support via simple calendar notes or supported events.
 - Cookbook eval scenarios now cover athlete-local date lookup before activity detail/interval/split analysis for prompts like race retrospectives and run split comparisons.
+- New read-only `resolve_calendar_dates` MCP tool returns deterministic athlete-local date and weekday anchors for today, tomorrow, future offsets, and supplied base dates so planning prompts do not rely on model date arithmetic.
 
 ### Changed
 

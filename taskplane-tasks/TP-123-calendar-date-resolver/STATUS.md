@@ -1,7 +1,7 @@
 # TP-123: Calendar date resolver and future date anchors — Status
 
 **Current Step:** Step 5: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-29
 **Review Level:** 2
 **Review Counter:** 11
@@ -66,11 +66,11 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -86,6 +86,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | Existing `get_today`, `get_activities`, and `get_events` expose current-day `_meta.as_of*` only when fetching data, but planning prompts need deterministic future anchors without requiring unrelated activity/event reads or model date arithmetic. | Add a small read-only `resolve_calendar_dates` tool that uses athlete timezone, an optional `base_date`, and integer offsets to return exact local dates/weekdays; keep non-goals limited to no calendar writes, no event inference, and no UTC/client-time inference. | Step 1 design |
+| Eval validation reads `web/data/tools.json`, not the Go registry directly, so scenarios expecting a newly added public tool fail until `make docs-tools` refreshes the generated website catalog. | Regenerated `web/data/tools.json` during Step 3 and kept `web/content/reference/tools.md` on its generated shortcode surface. | Step 3 eval/doc sync |
 
 ---
 

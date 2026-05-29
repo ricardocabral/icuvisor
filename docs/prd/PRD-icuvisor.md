@@ -190,6 +190,7 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 - `list_athletes`, `select_athlete` — coach mode.
 - `get_fitness` — CTL/ATL/TSB trends, taper projections.
 - `get_today` — one-call athlete-local daily digest for "how's today looking?": today's CTL/ATL/TSB, wellness, completed activities, planned events, and NOTE/race annotations, terse by default with `include_full` raw section detail.
+- `resolve_calendar_dates` — read-only athlete-local calendar resolver for today, tomorrow, N-day offsets, and supplied base dates; returns deterministic `date` + `weekday` anchors so assistants do not infer future weekday/date pairings from UTC or model arithmetic.
 - `get_best_efforts` — PRs across sports.
 - `get_power_curves` — mean-maximal power curves.
 - `get_hr_curves` — mean-maximal heart-rate curves, symmetric with `get_power_curves` for HR-duration best efforts.
