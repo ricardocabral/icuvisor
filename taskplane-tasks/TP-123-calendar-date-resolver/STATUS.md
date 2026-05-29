@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 2
 **Size:** M
 
@@ -45,7 +45,7 @@
 ---
 
 ### Step 3: Add activation guidance and eval coverage
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Update existing relative-future cookbook scenarios `CB-PLAN-02` and `CB-TAPER-01` so `resolve_calendar_dates` is an expected tool and must use returned athlete-local `date` + `weekday` values.
 - [x] Add an eval scenario for a known-bad weekday/date pairing such as “Monday May 26” with `resolve_calendar_dates` expected and model-arithmetic/UTC/client-time anti-patterns.
@@ -121,3 +121,4 @@ Plan review R003 further pinned the default-base injected clock conversion, exac
 | 2026-05-29 13:48 | Review R006 | code Step 2: APPROVE |
 | 2026-05-29 13:51 | Review R007 | plan Step 3: REVISE |
 | 2026-05-29 13:53 | Review R008 | plan Step 3: APPROVE |
+| 2026-05-29 13:59 | Review R009 | code Step 3: APPROVE |
