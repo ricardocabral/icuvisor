@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 2
 **Size:** M
 
@@ -38,6 +38,7 @@
 - [x] Recommend `validate_workout` preflight for uncertain DSL or structured workout changes.
 - [x] Do not introduce a model-controlled `confirm` override or bypass safety modes.
 - [x] Run targeted tests: `go test ./internal/tools ./internal/prompts`
+- [ ] Regenerate/update generated tool catalog artifacts after `validate_workout` summary changes (`web/data/tools.json`, `cmd/gendocs/testdata/tools.golden.json`).
 
 ---
 
@@ -76,6 +77,8 @@
 | R001 | plan | 1 | APPROVE | `.reviews/R001-plan-step1.md` |
 | R002 | code | 1 | REVISE | `.reviews/R002-code-step1.md` |
 | R003 | code | 1 | APPROVE | inline review_step response |
+| R004 | plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
+| R005 | code | 2 | REVISE | `.reviews/R005-code-step2.md` |
 
 ---
 
@@ -114,3 +117,4 @@
 | 2026-05-29 14:26 | Review R002 | code Step 1: UNKNOWN |
 | 2026-05-29 14:28 | Review R003 | code Step 1: APPROVE |
 | 2026-05-29 14:31 | Review R004 | plan Step 2: APPROVE |
+| 2026-05-29 14:47 | Review R005 | code Step 2: REVISE |
