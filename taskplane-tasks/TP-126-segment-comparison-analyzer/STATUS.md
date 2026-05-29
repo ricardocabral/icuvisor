@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -73,6 +73,8 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | plan | 1 | APPROVE | `.reviews/R001-plan-step1.md` |
+| R002 | code | 1 | REVISE | `.reviews/R002-code-step1.md` |
 
 ---
 
@@ -81,6 +83,9 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | `compute_activity_segment_stats` already supports deterministic distance-bounded segment stats over scalar metrics including `watts`, `heart_rate`, and `velocity_smooth`; terse responses include result + `_meta` without `series`, while `include_full` gates audit slices. A new higher-level helper is not warranted for TP-126; eval/docs/tests should harden activation for first-vs-last 10 km comparisons. | Use prompt/eval/test hardening; avoid broad API expansion. | `internal/tools/compute_activity_segment_stats.go`, `internal/analysis/segment_stats.go`, `internal/tools/compute_activity_segment_stats_test.go` |
+| "Last 10 km" must be translated by the workflow: call `get_activities` or `get_activity_details` for total distance (`distance_km` or `distance_mi` in preferred units), convert to meters, then call `compute_activity_segment_stats` with `start_distance_m=max(total_distance_m-10000, 0)` and `end_distance_m=total_distance_m`; first 10 km is `0..10000`. | Document in cookbook/eval; no helper needed unless future activation shows repeated failures. | `internal/tools/get_activities.go`, `internal/tools/get_activities_row.go`, `internal/tools/compute_activity_segment_stats.go` |
+| Description/schema mismatch found: tool description says "maximum" and "zone-time", but the schema enum supports `mean`, `median`, `p90`, `decoupling`, `drift`, `np`, and `if`. Pace wording also needs care: segment scalar supports `velocity_smooth` in m/s, not formatted pace, so final answers should convert velocity to pace when requested. | Tighten activation text in Step 2 without bloating the description. | `internal/tools/compute_activity_segment_stats.go` |
+| Current eval coverage has `compute_activity_segment_stats` only as a bonus tool in `CB-ACT-01`; no scenario currently requires first 10 km vs last 10 km segment comparisons or forbids chat-side raw-stream reduction for that use case. Existing tests cover one terse distance scalar and full decoupling audit, but do not compare first-vs-last distance windows. | Add eval/docs in Step 2 and first/last distance unit coverage in Step 3. | `scripts/eval/scenarios/cookbook_scenarios.json`, `internal/tools/compute_activity_segment_stats_test.go` |
 
 ---
 
@@ -103,4 +108,3 @@
 ## Notes
 
 *Reserved for execution notes*
-| 2026-05-29 13:49 | Review R001 | plan Step 1: APPROVE |
