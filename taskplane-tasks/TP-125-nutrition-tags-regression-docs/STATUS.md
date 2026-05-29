@@ -1,7 +1,7 @@
 # TP-125: Activity tags and fueling regression/docs pass — Status
 
-**Current Step:** Step 3: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 4: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-29
 **Review Level:** 1
 **Review Counter:** 4
@@ -53,11 +53,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -76,8 +76,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
-| `get_activity_details` lacks an empty-tags regression while `get_activities` already covers explicit empty arrays. | Add regression in Step 2. | `internal/tools/get_activity_details_test.go` |
-| Existing tag tests use `include_full:true`, so they verify raw full payload preservation but not default terse tag preservation. | Add default/no-`include_full` present-and-empty tag regressions in Step 2. | `internal/tools/get_activities_test.go`, `internal/tools/get_activity_details_test.go` |
+| `get_activity_details` lacked an empty-tags regression while `get_activities` already covered explicit empty arrays. | Regression added in Step 2. | `internal/tools/get_activity_details_test.go` |
+| Existing tag tests used `include_full:true`, so they verified raw full payload preservation but not default terse tag preservation. | Default/no-`include_full` present-and-empty tag regressions added in Step 2. | `internal/tools/get_activities_test.go`, `internal/tools/get_activity_details_test.go` |
 
 ---
 
@@ -96,6 +96,9 @@
 | 2026-05-29 | Lint | `make lint` passed with 0 issues. |
 | 2026-05-29 | Build | `make build` passed. |
 | 2026-05-29 | Verification failures | No failures observed in `make test`, `make lint`, or `make build`. |
+| 2026-05-29 | Must Update docs | `CHANGELOG.md` updated under `[Unreleased]`. |
+| 2026-05-29 | Check If Affected docs | Reviewed generated `web/content/reference/tools.md`; no catalog/schema changes in this task, so no edit needed. |
+| 2026-05-29 | Discoveries | Step 1/2 discoveries are logged with completed dispositions. |
 
 ---
 
