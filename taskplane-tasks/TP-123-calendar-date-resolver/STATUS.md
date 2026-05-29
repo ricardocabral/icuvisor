@@ -39,6 +39,8 @@
 - [x] Add tests covering current day, future day offsets, base_date parsing, DST/timezone boundaries, invalid input, registration metadata, and catalog membership.
 - [x] Update catalog/schema snapshots if the public tool surface changes.
 - [x] Run targeted tests: `go test ./internal/tools ./internal/toolcatalog`
+- [ ] Update stale public catalog guard surfaces for `resolve_calendar_dates` so full-suite catalog/safety tests pass.
+- [ ] Return an athlete-timezone-specific error for timezone load failures instead of the invalid-arguments message.
 
 ---
 
