@@ -1,7 +1,7 @@
 # TP-131: Workout change preview guidance — Status
 
 **Current Step:** Step 5: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-29
 **Review Level:** 2
 **Review Counter:** 12
@@ -63,11 +63,11 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -96,6 +96,7 @@
 |-----------|-------------|----------|
 | Existing guidance requires a reviewed proposal/approval before writes in weekly planning and the cookbook, and write tools already warn that description-only workout updates can replace structured steps. | Harden preview content by explicitly requiring a human-readable change preview: total duration, key steps, target intensities, load/distance/time deltas, and preserved fields before create/update/schedule writes. | internal/prompts/testdata/weekly_planning.md; web/content/cookbook/build-workouts.md; internal/tools/add_or_update_event.go; internal/tools/create_workout.go; internal/tools/update_workout.go |
 | `validate_workout` is read-only and reports canonical DSL plus estimated duration; current guidance recommends it only when syntax is uncertain. | Keep validate as preflight guidance for uncertain DSL/structured changes and use its output to support preview summaries, without making validation a write precondition or adding confirmation arguments. | internal/tools/validate_workout.go |
+| Check-if-affected docs reviewed: PRD workout write semantics already match this guidance and did not need behavior changes; the tool reference is generated from `web/data/tools.json`, which was regenerated after tool description changes. | No PRD edit; generated catalog artifacts updated. | docs/prd/PRD-icuvisor.md; web/content/reference/tools.md; web/data/tools.json |
 
 ---
 
