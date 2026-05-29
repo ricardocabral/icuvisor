@@ -37,9 +37,7 @@ Then give me:
 
 Rules: do not invent metrics that aren't available — if something is missing,
 say so. Keep subjective scales labeled correctly (sleep quality 1-4, feel 1-5).
-Tell me which icuvisor tool each key number came from. Treat planned deload or
-recovery weeks as intentional unless the compliance, wellness, or form data
-shows a problem.
+Tell me which icuvisor tool each key number came from.
 ```
 
 ## What icuvisor does
