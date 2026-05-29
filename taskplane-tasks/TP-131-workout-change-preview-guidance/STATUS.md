@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 2
 **Size:** M
 
@@ -43,11 +43,11 @@
 ---
 
 ### Step 3: Update cookbook examples
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Update build-workouts cookbook with before/after preview language and approval workflow.
-- [ ] Ensure examples distinguish prose description from structured `workout_doc`.
-- [ ] Run targeted tests/docs validation as available.
+- [x] Update build-workouts cookbook with before/after preview language and approval workflow.
+- [x] Ensure examples distinguish prose description from structured `workout_doc`.
+- [x] Run targeted tests/docs validation as available.
 
 ---
 
@@ -80,6 +80,7 @@
 | R004 | plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
 | R005 | code | 2 | REVISE | `.reviews/R005-code-step2.md` |
 | R006 | code | 2 | APPROVE | inline review_step response |
+| R007 | plan | 3 | APPROVE | `.reviews/R007-plan-step3.md` |
 
 ---
 
@@ -120,3 +121,4 @@
 | 2026-05-29 14:31 | Review R004 | plan Step 2: APPROVE |
 | 2026-05-29 14:47 | Review R005 | code Step 2: REVISE |
 | 2026-05-29 14:51 | Review R006 | code Step 2: APPROVE |
+| 2026-05-29 14:53 | Review R007 | plan Step 3: APPROVE |
