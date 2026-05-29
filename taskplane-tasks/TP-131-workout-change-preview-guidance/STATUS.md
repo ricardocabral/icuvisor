@@ -1,10 +1,10 @@
 # TP-131: Workout change preview guidance — Status
 
-**Current Step:** Step 3: Update cookbook examples
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 10
 **Iteration:** 2
 **Size:** M
 
@@ -43,7 +43,7 @@
 ---
 
 ### Step 3: Update cookbook examples
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Update build-workouts cookbook with before/after preview language and approval workflow.
 - [x] Ensure examples distinguish prose description from structured `workout_doc`.
@@ -83,6 +83,8 @@
 | R006 | code | 2 | APPROVE | inline review_step response |
 | R007 | plan | 3 | APPROVE | `.reviews/R007-plan-step3.md` |
 | R008 | code | 3 | REVISE | `.reviews/R008-code-step3.md` |
+| R009 | code | 3 | UNAVAILABLE | inline review_step response |
+| R010 | code | 3 | APPROVE | `.reviews/R010-code-step3.md` |
 
 ---
 
@@ -125,3 +127,4 @@
 | 2026-05-29 14:51 | Review R006 | code Step 2: APPROVE |
 | 2026-05-29 14:53 | Review R007 | plan Step 3: APPROVE |
 | 2026-05-29 14:56 | Review R008 | code Step 3: REVISE |
+| 2026-05-29 15:15 | Review R010 | code Step 3: APPROVE |
