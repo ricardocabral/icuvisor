@@ -1,6 +1,6 @@
 # TP-126: Deterministic segment-comparison analyzer workflow — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Audit current segment analyzer activation
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
@@ -13,7 +13,7 @@
 ---
 
 ### Step 0: Preflight
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Audit current segment analyzer activation
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Inspect `compute_activity_segment_stats` description/schema/tests and existing eval scenarios.
 - [ ] Confirm it supports distance-bounded first/last segment stats for pace/power/HR and exposes audit metadata without raw streams in terse mode.
