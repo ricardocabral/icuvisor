@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -44,9 +44,9 @@
 ### Step 3: Add missing tests for first/last distance segments
 **Status:** 🟨 In Progress
 
-- [ ] Add or extend unit tests for distance-bounded segment stats over first and last portions of a fixture stream.
-- [ ] Assert insufficient/missing stream metadata remains explicit and terse output does not dump raw stream samples.
-- [ ] Run targeted tests: `go test ./internal/tools`
+- [x] Add or extend unit tests for distance-bounded segment stats over first and last portions of a fixture stream.
+- [x] Assert insufficient/missing stream metadata remains explicit and terse output does not dump raw stream samples.
+- [x] Run targeted tests: `go test ./internal/tools`
 
 ---
 

@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"strings"
 	"testing"
 
@@ -41,6 +42,101 @@ func TestComputeActivitySegmentStatsHandlerScalarDistanceOmitsTimeFetch(t *testi
 	}
 	if got := strings.Join(client.params.Types, ","); got != "distance,watts" {
 		t.Fatalf("requested types = %q, want distance,watts", got)
+	}
+}
+
+func TestComputeActivitySegmentStatsHandlerFirstAndLastDistanceSegments(t *testing.T) {
+	rows := []intervals.ActivityStream{
+		{Type: "distance", Data: []float64{0, 5000, 10000, 20000, 32195, 42195}},
+		{Type: "velocity_smooth", Data: []float64{3.0, 3.1, 3.2, 3.3, 3.4, 3.5}},
+		{Type: "watts", Data: []float64{180, 200, 220, 240, 260, 280}},
+		{Type: "heartrate", Data: []float64{130, 135, 140, 145, 155, 160}},
+	}
+	cases := []struct {
+		name       string
+		metric     string
+		start      float64
+		end        float64
+		wantValue  float64
+		wantUnit   string
+		wantTypes  string
+		wantMetric string
+	}{
+		{name: "first 10 km pace velocity", metric: "velocity_smooth", start: 0, end: 10000, wantValue: 3.1, wantUnit: "m/s", wantTypes: "distance,velocity_smooth", wantMetric: "velocity_smooth"},
+		{name: "last 10 km pace velocity", metric: "velocity_smooth", start: 32195, end: 42195, wantValue: 3.45, wantUnit: "m/s", wantTypes: "distance,velocity_smooth", wantMetric: "velocity_smooth"},
+		{name: "first 10 km power", metric: "watts", start: 0, end: 10000, wantValue: 200, wantUnit: "W", wantTypes: "distance,watts", wantMetric: "watts"},
+		{name: "last 10 km power", metric: "watts", start: 32195, end: 42195, wantValue: 270, wantUnit: "W", wantTypes: "distance,watts", wantMetric: "watts"},
+		{name: "first 10 km heart rate", metric: "heart_rate", start: 0, end: 10000, wantValue: 135, wantUnit: "bpm", wantTypes: "distance,heartrate", wantMetric: "heart_rate"},
+		{name: "last 10 km heart rate", metric: "heart_rate", start: 32195, end: 42195, wantValue: 157.5, wantUnit: "bpm", wantTypes: "distance,heartrate", wantMetric: "heart_rate"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &segmentStatsStreamsClient{rows: rows}
+			handler := computeActivitySegmentStatsHandler(client, "test", false, responseShaping{})
+			args := map[string]any{"activity_id": "marathon1", "stat": "mean", "metric": tc.metric, "start_distance_m": tc.start, "end_distance_m": tc.end}
+			encoded, err := json.Marshal(args)
+			if err != nil {
+				t.Fatalf("json.Marshal args error = %v", err)
+			}
+			result, err := handler(context.Background(), Request{Arguments: encoded})
+			if err != nil {
+				t.Fatalf("handler error = %v", err)
+			}
+			payload := result.StructuredContent.(map[string]any)
+			if _, ok := payload["series"]; ok {
+				t.Fatalf("terse payload has raw series: %#v", payload["series"])
+			}
+			body := payload["result"].(map[string]any)
+			if body["value"] != tc.wantValue || body["unit"] != tc.wantUnit || body["metric"] != tc.wantMetric {
+				t.Fatalf("result body = %#v, want %v %s for %s", body, tc.wantValue, tc.wantUnit, tc.wantMetric)
+			}
+			segment := body["segment"].(map[string]any)
+			if segment["axis"] != "distance" || segment["start"] != tc.start || segment["end"] != tc.end {
+				t.Fatalf("segment = %#v, want distance %.0f..%.0f", segment, tc.start, tc.end)
+			}
+			if got := strings.Join(client.params.Types, ","); got != tc.wantTypes {
+				t.Fatalf("requested types = %q, want %s", got, tc.wantTypes)
+			}
+		})
+	}
+}
+
+func TestComputeActivitySegmentStatsHandlerDistanceInsufficientStaysTerse(t *testing.T) {
+	client := &segmentStatsStreamsClient{rows: []intervals.ActivityStream{
+		{Type: "distance", Data: []float64{0, 5000, 10000}},
+		{Type: "watts", Data: []float64{math.NaN(), math.NaN(), math.NaN()}},
+	}}
+	handler := computeActivitySegmentStatsHandler(client, "test", false, responseShaping{})
+	result, err := handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"a1","stat":"mean","metric":"watts","start_distance_m":0,"end_distance_m":10000}`)})
+	if err != nil {
+		t.Fatalf("handler error = %v", err)
+	}
+	payload := result.StructuredContent.(map[string]any)
+	if _, ok := payload["series"]; ok {
+		t.Fatalf("terse insufficient payload has raw series: %#v", payload["series"])
+	}
+	meta := payload["_meta"].(map[string]any)
+	if meta["insufficient_sample"] != true || meta["n"] != float64(0) {
+		t.Fatalf("_meta = %#v, want explicit insufficient n=0", meta)
+	}
+	body := payload["result"].(map[string]any)
+	if body["insufficient_sample"] != true || body["value"] != nil {
+		t.Fatalf("result body = %#v, want insufficient without value", body)
+	}
+	if got := strings.Join(client.params.Types, ","); got != "distance,watts" {
+		t.Fatalf("requested types = %q, want distance,watts", got)
+	}
+}
+
+func TestComputeActivitySegmentStatsHandlerDistanceMissingStreamMessageIncludesKey(t *testing.T) {
+	client := &segmentStatsStreamsClient{rows: []intervals.ActivityStream{{Type: "distance", Data: []float64{0, 5000, 10000}}}}
+	handler := computeActivitySegmentStatsHandler(client, "test", false, responseShaping{})
+	_, err := handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"a1","stat":"mean","metric":"heart_rate","start_distance_m":0,"end_distance_m":10000}`)})
+	if err == nil || !strings.Contains(err.Error(), "missing required activity stream for compute_activity_segment_stats: heart_rate") {
+		t.Fatalf("handler error = %v, want missing heart_rate public message", err)
+	}
+	if got := strings.Join(client.params.Types, ","); got != "distance,heartrate" {
+		t.Fatalf("requested types = %q, want distance,heartrate", got)
 	}
 }
 
