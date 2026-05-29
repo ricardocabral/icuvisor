@@ -207,6 +207,37 @@ func TestGetActivitiesTagEdgeCases(t *testing.T) {
 	assertKeyPresentNil(t, byID["null"]["full"].(map[string]any), "tags")
 }
 
+func TestGetActivitiesTagsPreservedInDefaultTerseResponse(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"present","name":"Tagged Ride","type":"Ride","start_date_local":"2026-01-01T07:00:00","tags":["tempo","indoor"]}`,
+		`{"id":"empty","name":"Empty Tags","type":"Ride","start_date_local":"2026-01-02T07:00:00","tags":[]}`,
+	}, "metric")
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	rows := resultMap(t, result)["activities"].([]any)
+	byID := map[string]map[string]any{}
+	for _, rawRow := range rows {
+		row := rawRow.(map[string]any)
+		byID[row["activity_id"].(string)] = row
+		assertKeyAbsent(t, row, "full")
+	}
+
+	presentTags := byID["present"]["tags"].([]any)
+	if len(presentTags) != 2 || presentTags[0] != "tempo" || presentTags[1] != "indoor" {
+		t.Fatalf("present tags = %#v, want preserved order in default terse response", presentTags)
+	}
+	emptyTags, ok := byID["empty"]["tags"].([]any)
+	if !ok || len(emptyTags) != 0 {
+		t.Fatalf("empty tags = %#v, want explicit empty array in default terse response", byID["empty"]["tags"])
+	}
+}
+
 func TestGetActivitiesActivityNutritionFields(t *testing.T) {
 	t.Parallel()
 

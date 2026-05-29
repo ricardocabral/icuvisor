@@ -24,7 +24,8 @@ with my intervals.icu data.
    the requested athlete-local date window, pick the one I described, and tell
    me which activity ID you chose.
 2. Get the activity details: sport, local start time, duration, distance,
-   load, and source/device.
+   load, tags, activity fueling (`carbs_ingested_g`, `carbs_used_g`),
+   and source/device.
 3. Get the intervals or laps with get_activity_intervals, and the per-km or
    per-mile splits.
 4. Get the time-in-zone for the session.
@@ -51,8 +52,8 @@ provide. Keep the answer under about 400 words, leading with the interval table.
 
 | Step | Tool                                                                                                                                                                    | Why                                                                                                                                                    |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1    | [`get_activities`]({{< relref "/reference/tools#get_activities" >}})                                                                                                    | Finds the activity and its ID when you describe it.                                                                                                    |
-| 2    | [`get_activity_details`]({{< relref "/reference/tools#get_activity_details" >}})                                                                                        | Sport, timing, load, device, Strava-import flag.                                                                                                       |
+| 1    | [`get_activities`]({{< relref "/reference/tools#get_activities" >}})                                                                                                    | Finds the activity and its ID when you describe it; terse rows include upstream tags when intervals.icu returns them.                                  |
+| 2    | [`get_activity_details`]({{< relref "/reference/tools#get_activity_details" >}})                                                                                        | Sport, timing, load, tags, activity fueling grams, device, Strava-import flag.                                                                         |
 | 3    | [`get_activity_intervals`]({{< relref "/reference/tools#get_activity_intervals" >}}) and [`get_activity_splits`]({{< relref "/reference/tools#get_activity_splits" >}}) | Per-rep and per-distance breakdown. `get_activity_intervals` also includes scalar interval `custom_fields` such as lactate when upstream returns them. |
 | 4    | [`get_activity_histogram`]({{< relref "/reference/tools#get_activity_histogram" >}})                                                                                    | Time-in-zone distribution for the session.                                                                                                             |
 | 5    | [`get_extended_metrics`]({{< relref "/reference/tools#get_extended_metrics" >}})                                                                                        | Decoupling, IF, VI — only those upstream actually fitted.                                                                                              |
@@ -61,7 +62,7 @@ For a specific surge or climb, [`compute_activity_segment_stats`]({{< relref "/r
 
 ## A good answer looks like
 
-> **Session:** Tuesday VO2 ride, 1h 12m, 38.4 km, load 95, recorded on a Wahoo head unit (`get_activity_details`) — direct upload, full data.
+> **Session:** Tuesday VO2 ride, 1h 12m, 38.4 km, load 95, tags `vo2` and `trainer`, recorded on a Wahoo head unit (`get_activity_details`) — direct upload, full data. Fueling fields show 72 g carbs ingested and 138 g used.
 >
 > **The work:** 5 x 4 min intervals (`get_activity_intervals`). Targets held well for reps 1-4 (308-314 W, target 310 W) but rep 5 faded to 291 W. Recoveries were on target.
 >

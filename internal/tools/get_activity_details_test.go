@@ -80,6 +80,55 @@ func TestGetActivityDetailsTagsPreserveOrderAndFullPayload(t *testing.T) {
 	}
 }
 
+func TestGetActivityDetailsTagsPreservedInDefaultTerseResponse(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		raw      string
+		wantTags []any
+	}{
+		{
+			name:     "present tags",
+			raw:      `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","tags":["tempo","coach"]}`,
+			wantTags: []any{"tempo", "coach"},
+		},
+		{
+			name:     "empty tags",
+			raw:      `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","tags":[]}`,
+			wantTags: []any{},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			activity := decodeActivityFixture(t, tc.raw)
+			client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
+			tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
+
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			activityMap := resultMap(t, result)["activity"].(map[string]any)
+			tags, ok := activityMap["tags"].([]any)
+			if !ok {
+				t.Fatalf("tags = %#v, want tag array in default terse response", activityMap["tags"])
+			}
+			if len(tags) != len(tc.wantTags) {
+				t.Fatalf("tags = %#v, want %#v", tags, tc.wantTags)
+			}
+			for i, want := range tc.wantTags {
+				if tags[i] != want {
+					t.Fatalf("tags = %#v, want %#v", tags, tc.wantTags)
+				}
+			}
+			assertKeyAbsent(t, activityMap, "full")
+		})
+	}
+}
+
 func TestGetActivityDetailsCaloriesBurnedSemantics(t *testing.T) {
 	t.Parallel()
 

@@ -4,8 +4,8 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
-**Review Counter:** 3
-**Iteration:** 1
+**Review Counter:** 4
+**Iteration:** 2
 **Size:** S
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -32,13 +32,13 @@
 ---
 
 ### Step 2: Fill regression or docs gaps
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Add missing regression tests rather than changing already-correct behavior, including default/no-`include_full` tag preservation for present and empty tags in `get_activities` and `get_activity_details`.
-- [ ] Update user-facing docs/cookbook text to mention tag-aware and fueling-aware activity reads where useful.
-- [ ] Update `CHANGELOG.md` under `[Unreleased]` for the added regression coverage and docs.
-- [ ] Avoid changing raw upstream field names; keep disambiguated grams suffixes.
-- [ ] Run targeted tests: `go test ./internal/tools`
+- [x] Add missing regression tests rather than changing already-correct behavior, including default/no-`include_full` tag preservation for present and empty tags in `get_activities` and `get_activity_details`.
+- [x] Update user-facing docs/cookbook text to mention tag-aware and fueling-aware activity reads where useful.
+- [x] Update `CHANGELOG.md` under `[Unreleased]` for the added regression coverage and docs.
+- [x] Avoid changing raw upstream field names; keep disambiguated grams suffixes.
+- [x] Run targeted tests: `go test ./internal/tools`
 
 ---
 
@@ -68,6 +68,7 @@
 | 1 | plan | 1 | APPROVE | — |
 | 2 | plan | 2 | REVISE | `.reviews/R002-plan-step2.md` |
 | 3 | plan | 2 | REVISE | `.reviews/R003-plan-step2.md` |
+| 4 | plan | 2 | APPROVE | — |
 
 ---
 
@@ -89,6 +90,8 @@
 | 2026-05-29 14:46 | Step 0 started | Preflight |
 | 2026-05-29 | Clean-room preflight | Used only task prompt, project docs, and local repository files; no GPL/copyleft competitor source opened. |
 | 2026-05-29 | Step 1 targeted tests | `go test ./internal/tools` passed (cached). |
+| 2026-05-29 15:13 | Worker iter 1 | done in 1663s, tools: 60 |
+| 2026-05-29 | Step 2 targeted tests | `go test ./internal/tools` passed. |
 
 ---
 
@@ -105,3 +108,4 @@
 | 2026-05-29 14:49 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-29 14:53 | Review R002 | plan Step 2: UNKNOWN |
 | 2026-05-29 14:54 | Review R003 | plan Step 2: REVISE |
+| 2026-05-29 14:56 | Review R004 | plan Step 2: APPROVE |
