@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 2
 **Size:** M
 
@@ -53,6 +53,7 @@
 - [x] Include caveats for deload weeks, planned races, and incomplete wellness/readiness data.
 - [x] Update MCP prompt/cookbook reference pages affected by adding `plan_health_review`, including `web/content/reference/resources-prompts.md` and `web/content/cookbook/_index.md`.
 - [x] Run targeted tests: `go test ./internal/prompts ./internal/mcp` plus docs build if available (`make web-build` or equivalent).
+- [ ] Address R010 docs review findings: keep deload/compliance/wellness caveat out of the base weekly-review recipe unless fetched, and fix season-plan wording/link for the prompt-library copy.
 
 ---
 
@@ -87,6 +88,8 @@
 | R006 | Plan | 3 | REVISE | `.reviews/R006-plan-step3.md` |
 | R007 | Code | 2 | REVISE | `.reviews/R007-code-step2.md` |
 | R008 | Code | 2 | APPROVE | `.reviews/R008-code-step2.md` |
+| R009 | Plan | 3 | APPROVE | `.reviews/R009-plan-step3.md` |
+| R010 | Code | 3 | REVISE | `.reviews/R010-code-step3.md` |
 
 ---
 
@@ -132,3 +135,4 @@ R006 Step 3 plan review identified Step 2 carry-over issues; recovered by revert
 | 2026-05-29 15:39 | Review R008 | code Step 2: APPROVE |
 | 2026-05-29 15:38 | Review R008 | code Step 2: APPROVE |
 | 2026-05-29 15:40 | Review R009 | plan Step 3: APPROVE |
+| 2026-05-29 15:46 | Review R010 | code Step 3: REVISE |
