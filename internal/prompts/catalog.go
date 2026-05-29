@@ -13,6 +13,7 @@ const (
 	RecoveryCheckName     = "recovery_check"
 	WeeklyPlanningName    = "weekly_planning"
 	WeeklyReviewName      = "weekly_review"
+	PlanHealthReviewName  = "plan_health_review"
 	RaceWeekTaperName     = "race_week_taper"
 	CoachRosterTriageName = "coach_roster_triage"
 )
@@ -132,6 +133,44 @@ func WeeklyReviewPrompt() Prompt {
 				"Do not call write or delete tools unless the user explicitly approves the exact change first.",
 			},
 			Return: "weekly review with wins, concerns, planned-vs-completed gaps, wellness caveats, load/intensity evidence, next-week preview when requested, and explicit follow-up questions before any write",
+		}),
+	}
+}
+
+// PlanHealthReviewPrompt guides transparent review of plan health and risk.
+func PlanHealthReviewPrompt() Prompt {
+	return Prompt{
+		Name:        PlanHealthReviewName,
+		Title:       "Plan health review",
+		Description: "Guide a transparent plan-health audit using adherence, load/form projection, wellness caveats, and race-date risk from deterministic tools.",
+		Arguments: []Argument{
+			{Name: "planned_start", Title: "Planned start", Description: "Optional athlete-local date string (YYYY-MM-DD) for the planned-window start; default today."},
+			{Name: "planned_end", Title: "Planned end", Description: "Optional athlete-local date string (YYYY-MM-DD) for the planned-window end; default 14 days after planned_start."},
+			{Name: "completed_lookback_days", Title: "Completed lookback days", Description: "Optional positive integer string for completed-work adherence context; default 14."},
+			{Name: "race_date", Title: "Race date", Description: "Optional athlete-local race date string (YYYY-MM-DD) for race-risk anchoring."},
+			{Name: "race_name", Title: "Race name", Description: "Optional race name string to disambiguate matching calendar events."},
+		},
+		Handler: staticPromptHandler(promptSpec{
+			Title:        "Plan health review",
+			DefaultScope: "review the next 14 athlete-local days, with a 14-day completed-work lookback, unless dates or lookback are supplied",
+			ArgOrder:     []string{"planned_start", "planned_end", "completed_lookback_days", "race_date", "race_name"},
+			Resources:    []string{"icuvisor://athlete-profile", "icuvisor://event-categories", "icuvisor://analysis-formulas"},
+			Tools:        []string{"get_athlete_profile", "get_events", "get_training_plan", "get_activities", "compute_compliance_rate", "get_fitness", "get_training_summary", "compute_load_balance", "get_fitness_projection", "get_wellness_data", "icuvisor_list_advanced_capabilities"},
+			Do: []string{
+				"Read profile first for timezone, units, sport settings, and today's athlete-local date; convert all windows before comparing days.",
+				"Read events and training plan for planned workouts and races; if no race event is found, say so and treat any supplied race_date as a scenario anchor only.",
+				"Use compute_compliance_rate for scheduled-vs-completed adherence, then get_fitness, get_training_summary, compute_load_balance, and get_fitness_projection for load/form trajectory and future assumptions.",
+				"Quote analyzer `_meta.method`, `_meta.assumptions`, `_meta.formula_ref`, missing-days, and sample-size caveats where present; call icuvisor_list_advanced_capabilities and name missing helpers when full-tool analyzers are unavailable.",
+				"Read recent wellness for sleep/readiness/HRV caveats; do not infer readiness when data is stale, absent, or missing key fields.",
+				"Treat planned deload or recovery weeks as intentional load reductions unless compliance, wellness, or form evidence shows a problem.",
+			},
+			Guardrails: []string{
+				"Do not request or accept intervals.icu API keys in chat.",
+				"Do not invent a black-box plan-health score; use only surfaced values and label risk low/medium/high with evidence.",
+				"Do not create a season plan, fill a calendar, or act as an autonomous physiology model.",
+				"Do not call write or delete tools unless the user has reviewed and approved the exact proposal first.",
+			},
+			Return: "data coverage, adherence, load/form trajectory, transparent risk table, deload/recovery caveats, race-date risk when anchored, and reviewed proposal/questions before any write",
 		}),
 	}
 }
