@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 2
 **Size:** M
 
@@ -46,7 +46,7 @@
 ---
 
 ### Step 3: Document cookbook workflow
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Confirm Step 2 carry-over is resolved with `go test ./internal/prompts ./internal/mcp` before docs work.
 - [x] Add cookbook guidance showing when to use weekly review vs plan-health review vs season planning.
@@ -90,6 +90,7 @@
 | R008 | Code | 2 | APPROVE | `.reviews/R008-code-step2.md` |
 | R009 | Plan | 3 | APPROVE | `.reviews/R009-plan-step3.md` |
 | R010 | Code | 3 | REVISE | `.reviews/R010-code-step3.md` |
+| R011 | Code | 3 | APPROVE | `.reviews/R011-code-step3.md` |
 
 ---
 
@@ -133,6 +134,10 @@ R006 Step 3 plan review identified Step 2 carry-over issues; recovered by revert
 | 2026-05-29 15:31 | Review R006 | plan Step 3: REVISE |
 | 2026-05-29 15:35 | Review R007 | code Step 2: REVISE |
 | 2026-05-29 15:39 | Review R008 | code Step 2: APPROVE |
+| 2026-05-29 15:45 | Review R009 | plan Step 3: APPROVE |
+| 2026-05-29 15:48 | Review R010 | code Step 3: REVISE |
+| 2026-05-29 15:52 | Review R011 | code Step 3: APPROVE |
 | 2026-05-29 15:38 | Review R008 | code Step 2: APPROVE |
 | 2026-05-29 15:40 | Review R009 | plan Step 3: APPROVE |
 | 2026-05-29 15:46 | Review R010 | code Step 3: REVISE |
+| 2026-05-29 15:49 | Review R011 | code Step 3: APPROVE |
