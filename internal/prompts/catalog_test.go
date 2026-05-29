@@ -118,6 +118,7 @@ func TestPlanHealthReviewIncludesTransparentRiskGuidance(t *testing.T) {
 		"get_fitness_projection",
 		"_meta.method",
 		"_meta.assumptions",
+		"Prefer terse default tool responses; use include_full only when the user asks or evidence is missing.",
 		"Do not invent a black-box plan-health score",
 		"no race event is found",
 		"reviewed and approved the exact proposal first",
