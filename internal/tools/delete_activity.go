@@ -15,7 +15,7 @@ const (
 	deleteActivityDescription             = "Delete one activity by activity_id. This destructive tool has no confirm argument and is registered only when ICUVISOR_DELETE_MODE=full."
 	invalidDeleteActivityArgumentsMessage = "invalid delete_activity arguments; provide activity_id only"
 	deleteActivityMessage                 = "could not delete activity; check intervals.icu credentials, activity ID, and delete-mode configuration"
-	deleteActivityEndpoint                = "/activity/{activityId}"
+	deleteActivityEndpoint                = "/activity/{activityId}/tombstone"
 )
 
 // ActivityDeleterClient retrieves and deletes activities for tools.

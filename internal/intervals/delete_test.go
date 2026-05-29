@@ -17,7 +17,7 @@ func TestDeleteMethodsSendDeletePaths(t *testing.T) {
 		wantPath string
 	}{
 		{name: "event", call: func(c *Client) error { return c.DeleteEvent(context.Background(), " e-1 ") }, wantPath: "/athlete/i12345/events/e-1"},
-		{name: "activity", call: func(c *Client) error { return c.DeleteActivity(context.Background(), " a-1 ") }, wantPath: "/activity/a-1"},
+		{name: "activity", call: func(c *Client) error { return c.DeleteActivity(context.Background(), " a-1 ") }, wantPath: "/activity/a-1/tombstone"},
 		{name: "custom item", call: func(c *Client) error { return c.DeleteCustomItem(context.Background(), " ci-1 ") }, wantPath: "/athlete/i12345/custom-item/ci-1"},
 		{name: "sport settings", call: func(c *Client) error { return c.DeleteSportSettings(context.Background(), " 7 ") }, wantPath: "/athlete/i12345/sport-settings/7"},
 		{name: "gear", call: func(c *Client) error { return c.DeleteGear(context.Background(), " g-1 ") }, wantPath: "/athlete/i12345/gear/g-1"},

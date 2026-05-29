@@ -1,0 +1,13 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "activity_id": {
+      "description": "Required opaque upstream activity ID to delete. This destructive operation has no confirm argument; the tool is registered only when ICUVISOR_DELETE_MODE=full.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "activity_id"
+  ],
+  "type": "object"
+}

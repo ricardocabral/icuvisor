@@ -97,15 +97,16 @@ func TestDeletePerIDToolsSuccessAndEcho(t *testing.T) {
 		name       string
 		tool       func(*fakeDeleteToolsClient) Tool
 		arguments  string
-		wantID     string
-		wantMetaID string
-		calls      func(*fakeDeleteToolsClient) []string
+		wantID       string
+		wantMetaID   string
+		wantEndpoint string
+		calls        func(*fakeDeleteToolsClient) []string
 	}{
-		{name: deleteEventName, tool: func(c *fakeDeleteToolsClient) Tool { return newDeleteEventTool(c, c, "test", "UTC", false) }, arguments: `{"event_id":" e-1 "}`, wantID: "e-1", wantMetaID: "event_id", calls: func(c *fakeDeleteToolsClient) []string { return c.deletedEventIDs }},
-		{name: deleteActivityName, tool: func(c *fakeDeleteToolsClient) Tool { return newDeleteActivityTool(c, c, "test", "UTC", false) }, arguments: `{"activity_id":" a-1 "}`, wantID: "a-1", wantMetaID: "activity_id", calls: func(c *fakeDeleteToolsClient) []string { return c.deletedActivityIDs }},
-		{name: deleteCustomItemName, tool: func(c *fakeDeleteToolsClient) Tool { return newDeleteCustomItemTool(c, c, "test", "UTC", false) }, arguments: `{"item_id":" ci-1 "}`, wantID: "ci-1", wantMetaID: "id", calls: func(c *fakeDeleteToolsClient) []string { return c.deletedCustomItemIDs }},
-		{name: deleteSportSettingsName, tool: func(c *fakeDeleteToolsClient) Tool { return newDeleteSportSettingsTool(c, c, "test", "UTC", false) }, arguments: `{"sport_settings_id":" 7 "}`, wantID: "7", wantMetaID: "sport_settings_id", calls: func(c *fakeDeleteToolsClient) []string { return c.deletedSportSettingsIDs }},
-		{name: deleteGearName, tool: func(c *fakeDeleteToolsClient) Tool { return newDeleteGearTool(c, c, "test", "UTC", false) }, arguments: `{"gear_id":" g-1 "}`, wantID: "g-1", wantMetaID: "gear_id", calls: func(c *fakeDeleteToolsClient) []string { return c.deletedGearIDs }},
+		{name: deleteEventName, tool: func(c *fakeDeleteToolsClient) Tool { return newDeleteEventTool(c, c, "test", "UTC", false) }, arguments: `{"event_id":" e-1 "}`, wantID: "e-1", wantMetaID: "event_id", wantEndpoint: deleteEventEndpoint, calls: func(c *fakeDeleteToolsClient) []string { return c.deletedEventIDs }},
+		{name: deleteActivityName, tool: func(c *fakeDeleteToolsClient) Tool { return newDeleteActivityTool(c, c, "test", "UTC", false) }, arguments: `{"activity_id":" a-1 "}`, wantID: "a-1", wantMetaID: "activity_id", wantEndpoint: deleteActivityEndpoint, calls: func(c *fakeDeleteToolsClient) []string { return c.deletedActivityIDs }},
+		{name: deleteCustomItemName, tool: func(c *fakeDeleteToolsClient) Tool { return newDeleteCustomItemTool(c, c, "test", "UTC", false) }, arguments: `{"item_id":" ci-1 "}`, wantID: "ci-1", wantMetaID: "id", wantEndpoint: deleteCustomItemEndpoint, calls: func(c *fakeDeleteToolsClient) []string { return c.deletedCustomItemIDs }},
+		{name: deleteSportSettingsName, tool: func(c *fakeDeleteToolsClient) Tool { return newDeleteSportSettingsTool(c, c, "test", "UTC", false) }, arguments: `{"sport_settings_id":" 7 "}`, wantID: "7", wantMetaID: "sport_settings_id", wantEndpoint: deleteSportSettingsEndpoint, calls: func(c *fakeDeleteToolsClient) []string { return c.deletedSportSettingsIDs }},
+		{name: deleteGearName, tool: func(c *fakeDeleteToolsClient) Tool { return newDeleteGearTool(c, c, "test", "UTC", false) }, arguments: `{"gear_id":" g-1 "}`, wantID: "g-1", wantMetaID: "gear_id", wantEndpoint: deleteGearEndpoint, calls: func(c *fakeDeleteToolsClient) []string { return c.deletedGearIDs }},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -125,6 +126,9 @@ func TestDeletePerIDToolsSuccessAndEcho(t *testing.T) {
 				t.Fatalf("response = %#v, want deleted_id/status", out)
 			}
 			meta := out["_meta"].(map[string]any)
+			if meta["source_endpoint"] != tc.wantEndpoint {
+				t.Fatalf("_meta.source_endpoint = %v, want %s", meta["source_endpoint"], tc.wantEndpoint)
+			}
 			deleted := meta["deleted"].(map[string]any)
 			if deleted[tc.wantMetaID] == nil || strings.TrimSpace(deleted[tc.wantMetaID].(string)) == "" {
 				t.Fatalf("_meta.deleted = %#v, missing %s", deleted, tc.wantMetaID)

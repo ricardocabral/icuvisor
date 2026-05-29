@@ -27,7 +27,7 @@ func (c *Client) DeleteActivity(ctx context.Context, activityID string) error {
 	if err := c.ensureActivityIDTarget(ctx, activityID); err != nil {
 		return fmt.Errorf("deleting activity %s: %w", activityID, err)
 	}
-	if err := c.doNoJSON(ctx, "activity", activityID); err != nil {
+	if err := c.doNoJSON(ctx, "activity", activityID, "tombstone"); err != nil {
 		return fmt.Errorf("deleting activity %s: %w", activityID, err)
 	}
 	return nil
