@@ -23,10 +23,12 @@ my intervals.icu data.
 2. Check the intervals.icu workout-syntax reference, and read one or two
    existing library workouts as format examples.
 3. Draft this workout: [DESCRIBE IT — e.g. VO2max bike session, 5x4min at
-   110% FTP with 4min recoveries, plus warm-up and cool-down]. Show it in
-   intervals.icu workout syntax and explain the structure before saving.
-4. When I approve, either save it to my workout library or schedule it as a
-   calendar event on [DATE]. Tell me which you did and confirm the planned load.
+   110% FTP with 4min recoveries, plus warm-up and cool-down]. Before saving,
+   show a proposed-change preview with the total duration, key steps, target
+   intensities, planned load/distance/time changes, and anything being preserved.
+4. Ask for approval of the exact preview. Only after I approve, either save it
+   to my workout library or schedule it as a calendar event on [DATE]. Tell me
+   which you did and report the planned load.
 
 Rules: get the DSL right — correct repeat syntax, steps not bullets, targets
 as percentages of my threshold. Use structured `workout_doc` only for endurance
@@ -49,7 +51,7 @@ structured-step summaries, then continue with the rest.
 | 3 | — | Drafting happens in the chat; nothing is written yet. |
 | 4 | [`create_workout`]({{< relref "/reference/tools#create_workout" >}}) or [`add_or_update_event`]({{< relref "/reference/tools#add_or_update_event" >}}) | Saves to the library or schedules it — gated on write mode. |
 
-To revise an existing template, name it and the assistant uses [`update_workout`]({{< relref "/reference/tools#update_workout" >}}). On updates, supplied `description` text replaces the upstream template description/DSL rather than appending a note. If the existing template has structured steps you want to keep, ask the assistant to include the desired `workout_doc` explicitly and use `<!-- icuvisor:steps -->` to place the serialized steps around any prose. For bulk edits, avoid parallel writes until one representative readback confirms `_meta.workout_doc_warning` is absent or understood and `workout_doc_summary` still shows the expected steps.
+To revise an existing template, name it and the assistant uses [`update_workout`]({{< relref "/reference/tools#update_workout" >}}). On updates, supplied `description` text is prose in the same upstream description/DSL field; it replaces that field rather than appending a note. `workout_doc` is the structured step plan that icuvisor serializes into intervals.icu workout syntax. If the existing template has structured steps you want to keep, ask the assistant to include the desired `workout_doc` explicitly and use `<!-- icuvisor:steps -->` to place the serialized steps around any prose. When the structure or DSL is uncertain, have the assistant run [`validate_workout`]({{< relref "/reference/tools#validate_workout" >}}) first and use the returned canonical DSL plus estimated duration in the preview. For bulk edits, avoid parallel writes until one representative readback confirms `_meta.workout_doc_warning` is absent or understood and `workout_doc_summary` still shows the expected steps.
 
 ## A good answer looks like
 
@@ -63,9 +65,9 @@ To revise an existing template, name it and the assistant uses [`update_workout`
 > Cooldown 10m 50% FTP
 > ```
 >
-> Structure: 15 min progressive warm-up, then 5 work intervals of 4 min at 110% FTP (≈310 W for your 282 W FTP) with equal 4 min recoveries, then a 10 min cool-down. Estimated duration 53 min, estimated load ~78.
+> Preview: total duration 53 min; key steps are a 15 min progressive warm-up, 5 × 4 min at 110% FTP (≈310 W for your 282 W FTP) with 4 min recoveries at 50% FTP, and a 10 min cool-down. Planned load is ~78. This is a new workout, so no existing template fields are being overwritten or preserved.
 >
-> Say "save to library" and I will create it with `create_workout`, or "schedule for Tuesday" and I will place it on your calendar with `add_or_update_event`. I will not overwrite anything that already exists.
+> Say "save to library" and I will create it with `create_workout`, or "schedule for Tuesday" and I will place it on your calendar with `add_or_update_event`. I will not write anything until you approve this exact preview.
 
 ## Variations
 
