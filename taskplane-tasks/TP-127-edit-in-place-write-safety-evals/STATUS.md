@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -24,11 +24,11 @@
 ### Step 1: Audit write/delete guidance
 **Status:** 🟨 In Progress
 
-- [ ] Inspect create/update/delete workout and event tool descriptions, schemas, and safety tests, including `create_workout` as the unsafe recreate side.
-- [ ] Inspect registration-time delete gating coverage in `internal/safety/adversarial_test.go` and decide whether `go test ./internal/safety` is needed.
-- [ ] Identify whether existing descriptions already prefer update/edit in place and where eval coverage is missing.
-- [ ] Record the current safety contract and any token-budget tradeoff in STATUS.md Discoveries.
-- [ ] Run targeted tests: `go test ./internal/tools`
+- [x] Inspect create/update/delete workout and event tool descriptions, schemas, and safety tests, including `create_workout` as the unsafe recreate side.
+- [x] Inspect registration-time delete gating coverage in `internal/safety/adversarial_test.go` and decide whether `go test ./internal/safety` is needed.
+- [x] Identify whether existing descriptions already prefer update/edit in place and where eval coverage is missing.
+- [x] Record the current safety contract and any token-budget tradeoff in STATUS.md Discoveries.
+- [x] Run targeted tests: `go test ./internal/tools`
 
 ---
 
@@ -80,6 +80,9 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Existing write guidance already distinguishes in-place updates from destructive deletes: `add_or_update_event` updates when `event_id` is present and says it never deletes; `update_workout` is sparse by `workout_id`; delete tools are registered only in full delete mode and expose no `confirm`. | Preserve and add eval coverage before changing wording. | `internal/tools/add_or_update_event.go`, `internal/tools/update_workout.go`, `internal/tools/delete_event.go`, `internal/tools/delete_workout.go` |
+| `create_workout` currently describes initial template creation but does not explicitly warn against using create to modify an existing template; this is a concise-description tradeoff to avoid bloating tool metadata. | Consider a terse warning only if Step 2 eval shows ambiguity. | `internal/tools/create_workout.go` |
+| Existing eval/adversarial coverage covers safe-mode delete unavailability and no-confirm schemas, but cookbook scenarios do not cover changing tomorrow's existing workout/event in place. | Add explicit edit-in-place scenario in Step 2. | `docs/safety/adversarial-prompts.md`, `scripts/eval/scenarios/cookbook_scenarios.json`, `internal/safety/adversarial_test.go` |
 
 ---
 
@@ -104,3 +107,4 @@
 - Step 1 plan review R001 requested explicit `create_workout` audit coverage and registration-time delete gating coverage.
 
 | 2026-05-29 14:10 | Review R001 | plan Step 1: REVISE |
+| 2026-05-29 14:11 | Review R002 | plan Step 1: APPROVE |
