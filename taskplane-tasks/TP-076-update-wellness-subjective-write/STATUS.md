@@ -1,7 +1,7 @@
 # TP-076-update-wellness-subjective-write — Status
 
-**Current Step:** Step 1: Live probe to isolate the rejection
-**Status:** 🔵 Ready for Execution
+**Current Step:** Closed by operator
+**Status:** ✅ Closed (operator accepted documented cleanup limitation)
 **Last Updated:** 2026-05-27
 **Review Level:** 2
 **Review Counter:** 13
@@ -24,7 +24,7 @@
 - [x] Run out-of-process probes starting from the production client shape (`PUT /athlete/{id}/wellness/{YYYY-MM-DD}` with sparse body) and bisect subjective fields/combinations.
 - [x] Vary date format, method, and athlete scoping only if the production client shape fails before field-specific evidence.
 - [x] Record the exact accepted minimal payload and rejected payload; save sanitized request/response fixtures for the implemented shape.
-- [ ] Restore the pre-probe row on the test athlete and verify with `get_wellness_data`/direct GET.
+- [x] Operator closed the task without further live cleanup; the pre-probe row restoration/verification limitation remains documented below.
 
 ### Discoveries
 
@@ -37,6 +37,7 @@
 - Iteration 5 blocker confirmation: no additional live wellness writes, DELETE attempts, endpoint probes, or new probe-row creation were performed because supervisor/operator steering explicitly forbids them; the final unchecked cleanup checkbox cannot be completed truthfully without external manual cleanup.
 - Iteration 1 restart blocker confirmation (2026-05-20): resumed at the same first unchecked Step 1 cleanup checkbox. No additional live wellness writes, DELETE attempts, endpoint probes, direct GETs, or new probe-row creation were performed because prior supervisor/operator steering explicitly says to let TP-076 fail; the checkbox remains impossible to complete truthfully without external manual cleanup or documented operator acceptance of the residual test-athlete contamination.
 - 2026-05-27 operator update: prior no-live-cleanup steering is explicitly superseded. Next worker should use `.env-dev` test athlete credentials to perform the remaining cleanup/verification work only, preserving credential hygiene and sanitized logging.
+- 2026-05-27 operator close: operator requested closing TP-076 despite the documented cleanup limitation. No further live API calls were made during closure.
 
 ### Step 2: Add a failing test
 
