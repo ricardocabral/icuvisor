@@ -1,11 +1,11 @@
 # TP-127: Edit-in-place write safety evals — Status
 
-**Current Step:** Step 1: Audit write/delete guidance
+**Current Step:** Step 2: Add eval/adversarial coverage
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 4
-**Iteration:** 1
+**Review Counter:** 6
+**Iteration:** 2
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -34,11 +34,12 @@
 ---
 
 ### Step 2: Add eval/adversarial coverage
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Add at least one eval/adversarial scenario where the user asks to change tomorrow’s workout and the assistant must choose update/edit tools, not delete/create.
-- [ ] Assert safe-mode/delete-mode messaging remains short and actionable when deletion is unavailable.
-- [ ] Run targeted tests: `make eval-validate` and `go test ./internal/tools`
+- [ ] Add a concrete cookbook scenario where the user asks to change tomorrow’s existing workout and the assistant must locate the existing event/template first, then choose update/edit tools, not delete/create.
+- [ ] Add a separate edit-in-place adversarial doc entry/section whose pass criteria are update/edit or refusal to delete/recreate, without contradicting the existing safe-mode surrender corpus.
+- [ ] Assert the actual safe-mode/delete-mode guidance surface remains short and actionable when deletion is unavailable.
+- [ ] Run targeted tests: `make eval-validate`, `go test ./internal/tools`, and `go test ./internal/safety` if safety surfaces are touched or relied on.
 
 ---
 
@@ -74,6 +75,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R006 | plan | 2 | REVISE | `.reviews/R006-plan-step2.md` |
 
 ---
 
@@ -96,6 +98,8 @@
 | 2026-05-29 14:06 | Step 0 started | Preflight |
 | 2026-05-29 14:06 | Step 1 safety audit | Inspected write/delete tool descriptions and `internal/safety/adversarial_test.go`; ran `go test ./internal/safety` -> pass (`ok`, cached). |
 | 2026-05-29 14:06 | Step 1 targeted tests | Ran `go test ./internal/tools` -> pass (`ok`, 0.329s). |
+| 2026-05-29 14:22 | Worker iter 1 | done in 955s, tools: 69 |
+| 2026-05-29 | Review R006 | plan Step 2: REVISE; added concrete eval/doc/safety-surface checklist items. |
 
 ---
 
@@ -114,3 +118,4 @@
 | 2026-05-29 14:11 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-29 14:15 | Review R003 | code Step 1: REVISE |
 | 2026-05-29 14:18 | Review R004 | code Step 1: APPROVE |
+| 2026-05-29 14:26 | Review R006 | plan Step 2: REVISE |
