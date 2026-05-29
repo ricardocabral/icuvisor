@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -48,6 +48,7 @@
 - [x] Keep downstream `activity_id` hints concise: resolve described/date-based activities with `get_activities` over the athlete-local date window, then pass the returned `activity_id`.
 - [x] If tool catalog text changes, regenerate generated tool docs/data with `make docs-tools` (or document why not needed before Step 5).
 - [x] Run targeted tests: `go test ./internal/tools ./internal/prompts` and `make eval-validate`
+- [ ] R008: Update `cmd/gendocs/testdata/tools.golden.json` for changed generated catalog summaries and verify `go test ./cmd/gendocs`.
 
 ---
 
@@ -81,6 +82,7 @@
 | R005 | Code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
 | R006 | Plan | 3 | REVISE | `.reviews/R006-plan-step3.md` |
 | R007 | Plan | 3 | APPROVE | `.reviews/R007-plan-step3.md` |
+| R008 | Code | 3 | REVISE | `.reviews/R008-code-step3.md` |
 
 ---
 
@@ -117,6 +119,8 @@ Plan review R001 required adding `get_activity_splits` / `internal/tools/get_act
 Step 1 inspection identified three routing gaps: detail/interval/splits tool descriptions require `activity_id` but do not remind assistants to resolve described/date-based activities through `get_activities`; activity-retrospective cookbook says to list recent activities when no ID is supplied but does not explicitly say to query the athlete-local date window for relative dates like "last Sunday"; existing eval scenarios lack a race-by-date and splits/reps-by-date regression.
 
 Plan review R006 required Step 3 to include split hinting in `internal/tools/get_activity_streams.go`, concise athlete-local date-window ID-routing wording, and generated tool docs/data sync if tool catalog descriptions change.
+
+Code review R008 found stale `cmd/gendocs/testdata/tools.golden.json` summaries after catalog text changes; update the golden fixture and run `go test ./cmd/gendocs`.
 | 2026-05-29 13:22 | Review R001 | plan Step 1: REVISE |
 | 2026-05-29 13:24 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-29 13:27 | Review R003 | code Step 1: APPROVE |
@@ -124,3 +128,4 @@ Plan review R006 required Step 3 to include split hinting in `internal/tools/get
 | 2026-05-29 13:33 | Review R005 | code Step 2: APPROVE |
 | 2026-05-29 13:35 | Review R006 | plan Step 3: REVISE |
 | 2026-05-29 13:37 | Review R007 | plan Step 3: APPROVE |
+| 2026-05-29 13:42 | Review R008 | code Step 3: REVISE |
