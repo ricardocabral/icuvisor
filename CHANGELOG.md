@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hardened the `weekly_planning`, `weekly_review`, and `race_week_taper` MCP prompts so season/race planning gathers race priority/date context, active plans, planned events, current load, recent completion/compliance, and explicit approval before any calendar writes.
 - Expanded `add_or_update_event` race input examples to cover `RACE_A`, `RACE_B`, and `RACE_C` with sport type, date, distance, expected duration, and target load.
 
+### Fixed
+
+- `delete_activity` now calls Intervals.icu's activity tombstone endpoint and reports matching `source_endpoint` metadata, preserving delete-mode gating and target-athlete safety checks.
+
 ## [0.1.5] - 2026-05-27
 
 ### Added
