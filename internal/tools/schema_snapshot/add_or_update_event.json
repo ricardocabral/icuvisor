@@ -71,6 +71,20 @@
       }
     },
     {
+      "category": "RACE_A",
+      "date": "2026-09-13",
+      "description": "A race. Confirm taper, fueling, pacing, and weather plan before adding workouts around it.",
+      "distance_meters": 42195,
+      "elapsed_time_seconds": 10800,
+      "name": "Goal marathon",
+      "tags": [
+        "race",
+        "goal-race"
+      ],
+      "target_load": 210,
+      "type": "Run"
+    },
+    {
       "category": "RACE_B",
       "date": "2026-06-21",
       "description": "B race. Practice breakfast, warm-up, and even pacing.",
@@ -83,7 +97,22 @@
         "race",
         "tune-up"
       ],
+      "target_load": 85,
       "type": "Run"
+    },
+    {
+      "category": "RACE_C",
+      "date": "2026-05-30",
+      "description": "C race. Treat as skills practice; keep surrounding plan priority higher.",
+      "distance_meters": 40000,
+      "moving_time_seconds": 5400,
+      "name": "Local criterium practice",
+      "tags": [
+        "race",
+        "practice"
+      ],
+      "target_load": 95,
+      "type": "Ride"
     }
   ],
   "input_examples": [
@@ -157,6 +186,20 @@
       }
     },
     {
+      "category": "RACE_A",
+      "date": "2026-09-13",
+      "description": "A race. Confirm taper, fueling, pacing, and weather plan before adding workouts around it.",
+      "distance_meters": 42195,
+      "elapsed_time_seconds": 10800,
+      "name": "Goal marathon",
+      "tags": [
+        "race",
+        "goal-race"
+      ],
+      "target_load": 210,
+      "type": "Run"
+    },
+    {
       "category": "RACE_B",
       "date": "2026-06-21",
       "description": "B race. Practice breakfast, warm-up, and even pacing.",
@@ -169,7 +212,22 @@
         "race",
         "tune-up"
       ],
+      "target_load": 85,
       "type": "Run"
+    },
+    {
+      "category": "RACE_C",
+      "date": "2026-05-30",
+      "description": "C race. Treat as skills practice; keep surrounding plan priority higher.",
+      "distance_meters": 40000,
+      "moving_time_seconds": 5400,
+      "name": "Local criterium practice",
+      "tags": [
+        "race",
+        "practice"
+      ],
+      "target_load": 95,
+      "type": "Ride"
     }
   ],
   "properties": {
