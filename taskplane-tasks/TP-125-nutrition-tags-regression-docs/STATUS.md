@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 
@@ -34,7 +34,7 @@
 ### Step 2: Fill regression or docs gaps
 **Status:** 🟨 In Progress
 
-- [ ] Add missing regression tests rather than changing already-correct behavior.
+- [ ] Add missing regression tests rather than changing already-correct behavior, including default/no-`include_full` tag preservation for present and empty tags in `get_activities` and `get_activity_details`.
 - [ ] Update user-facing docs/cookbook text to mention tag-aware and fueling-aware activity reads where useful.
 - [ ] Avoid changing raw upstream field names; keep disambiguated grams suffixes.
 - [ ] Run targeted tests: `go test ./internal/tools`
@@ -65,6 +65,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | 1 | plan | 1 | APPROVE | — |
+| 2 | plan | 2 | REVISE | `.reviews/R002-plan-step2.md` |
 
 ---
 
@@ -73,6 +74,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | `get_activity_details` lacks an empty-tags regression while `get_activities` already covers explicit empty arrays. | Add regression in Step 2. | `internal/tools/get_activity_details_test.go` |
+| Existing tag tests use `include_full:true`, so they verify raw full payload preservation but not default terse tag preservation. | Add default/no-`include_full` present-and-empty tag regressions in Step 2. | `internal/tools/get_activities_test.go`, `internal/tools/get_activity_details_test.go` |
 
 ---
 
@@ -99,3 +101,4 @@
 - Step 1 audit: `get_activities` covers present and empty tags plus activity fueling fields; `get_activity_details` covers present tags and fueling fields but does not yet cover empty tags.
 - Step 1 audit: `get_today` covers tags on completed activities, planned workout events, and annotations in `TestGetTodayDigestUsesAthleteLocalDateAndSourceShapes`.
 | 2026-05-29 14:49 | Review R001 | plan Step 1: APPROVE |
+| 2026-05-29 14:53 | Review R002 | plan Step 2: UNKNOWN |
