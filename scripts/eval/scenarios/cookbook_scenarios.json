@@ -410,6 +410,41 @@
       ]
     },
     {
+      "id": "CB-WORKOUT-03",
+      "recipe": "build-workouts",
+      "persona": "athlete",
+      "prompt": "Change the existing scheduled workout on my calendar tomorrow to 4x6min at threshold with 3min easy recoveries, keeping the same date and sport. Use icuvisor: resolve tomorrow in my athlete timezone, find tomorrow's existing workout event, then edit that existing event_id in place. Do not delete it, do not create a replacement event, and do not create or update a workout-library template.",
+      "expected_tools": [
+        "resolve_calendar_dates",
+        "get_events",
+        "add_or_update_event"
+      ],
+      "bonus_tools": [
+        "get_athlete_profile"
+      ],
+      "forbidden_tools": [
+        "create_workout",
+        "update_workout",
+        "delete_workout",
+        "delete_event",
+        "delete_events_by_date_range",
+        "apply_training_plan"
+      ],
+      "must_address": [
+        "resolves tomorrow with resolve_calendar_dates before querying events",
+        "finds the existing tomorrow workout event before writing",
+        "uses add_or_update_event with the existing event_id to update the scheduled calendar workout in place",
+        "keeps the workout on tomorrow's date and preserves the sport unless the existing event data requires correction",
+        "does not delete the original event, create a replacement event, or mutate a workout-library template"
+      ],
+      "anti_patterns": [
+        "deletes and recreates the calendar event",
+        "creates or updates a workout-library template instead of editing the scheduled calendar event",
+        "writes before identifying the existing event_id",
+        "duplicates tomorrow's workout instead of updating it"
+      ]
+    },
+    {
       "id": "CB-TAPER-01",
       "recipe": "race-week-taper",
       "persona": "athlete",

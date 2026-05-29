@@ -80,6 +80,39 @@ func TestListAdvancedCapabilitiesOutputFromCatalog(t *testing.T) {
 	}
 }
 
+func TestListAdvancedCapabilitiesSafeModeDeleteGuidance(t *testing.T) {
+	registrar := &collectingRegistrar{}
+	client := newNoNetworkIntervalsClient(t)
+	if err := NewRegistryWithOptions(client, RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeSafe)}).Register(context.Background(), registrar); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+	tool := findTool(t, registrar.tools, listAdvancedCapabilitiesName)
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+
+	payload := advancedCapabilitiesResult(t, result)
+	instruction := payload.EnableInstruction
+	for _, want := range []string{"ICUVISOR_TOOLSET=full", "ICUVISOR_DELETE_MODE=full", "server environment", "restart icuvisor"} {
+		if !strings.Contains(instruction, want) {
+			t.Fatalf("enable_instruction = %q, missing %q", instruction, want)
+		}
+	}
+	if len(instruction) > 280 {
+		t.Fatalf("enable_instruction too long (%d chars): %q", len(instruction), instruction)
+	}
+	if strings.Contains(strings.ToLower(resultText(t, result)), "confirm") {
+		t.Fatalf("delete guidance implies a model-controlled confirmation path: %s", resultText(t, result))
+	}
+	deleteModeNote := payload.Meta.DeleteModeNote
+	for _, want := range []string{"requirement=delete", "ICUVISOR_DELETE_MODE=full", "write tools require delete mode safe or full"} {
+		if !strings.Contains(deleteModeNote, want) {
+			t.Fatalf("delete_mode_note = %q, missing %q", deleteModeNote, want)
+		}
+	}
+}
+
 func fullOnlyAnalyzerFamilyNames(catalog []Tool) []string {
 	analyzerFamily := make(map[string]struct{}, len(analyzerFamilyCatalogNames()))
 	for _, name := range analyzerFamilyCatalogNames() {
