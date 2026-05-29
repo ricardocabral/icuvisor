@@ -318,7 +318,7 @@ jobs:
     needs: release-windows
     permissions:
       contents: write
-      id-token: write  # cosign keyless OIDC
+      id-token: write # cosign keyless OIDC
     steps:
       - uses: actions/checkout@v6
         with:

@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-05-20
 **Status:** Active
-**Next Task ID:** TP-103
+**Next Task ID:** TP-134
 
 ---
 
@@ -124,6 +124,40 @@ Scaffolded 2026-05-20 from operator-requested Desktop Extension and SSE-transpor
 | ------ | ------------------------------------------------------- | ----------------------------- |
 | TP-101 | ICUvisor Desktop Extension (`.mcpb`) for Claude Desktop | TP-037, TP-078, external spec |
 | TP-102 | SSE transport decision for remote-client compatibility  | TP-033, external research     |
+
+---
+
+## Competitive follow-up — 2026-05-29 upstream MCP review (TP-118 … TP-122)
+
+Scaffolded 2026-05-29 from public GitHub issues/PRs/metadata in competing intervals.icu MCP servers reviewed over the prior 7 days. Clean-room rule applies: tasks may use public behavior signals and upstream API/docs, but must not read or copy GPL/copyleft competitor source.
+
+| ID     | Title                                                     | Depends on |
+| ------ | --------------------------------------------------------- | ---------- |
+| TP-118 | Activity tombstone delete endpoint                         | —          |
+| TP-119 | Workout percent FTP regression                             | —          |
+| TP-120 | Unit label audit for work, calories, and hydration         | —          |
+| TP-121 | Public positioning for structured local-first output       | —          |
+| TP-122 | Season planning prompt and context hardening               | —          |
+
+---
+
+## Forum follow-up — 2026-05-29 AI coach thread review (TP-123 … TP-133)
+
+Scaffolded 2026-05-29 from public intervals.icu forum comments over the prior 4 days across IcuSync, Montis, LeCoach, IntervalCoach, and MyTrainPal threads. Clean-room rule applies: tasks may use public product behavior signals and upstream API/docs, but must not read or copy GPL/copyleft competitor source.
+
+| ID     | Title                                           | Depends on |
+| ------ | ----------------------------------------------- | ---------- |
+| TP-123 | Calendar date resolver and future date anchors  | —          |
+| TP-124 | Activity date resolution and detail-routing evals | —        |
+| TP-125 | Activity tags and fueling regression/docs pass  | —          |
+| TP-126 | Deterministic segment-comparison analyzer workflow | —       |
+| TP-127 | Edit-in-place write safety evals                | —          |
+| TP-128 | Plan health review prompt                       | —          |
+| TP-129 | Readiness fallback guidance for null upstream readiness | —  |
+| TP-130 | Token-safe workout library positioning          | —          |
+| TP-131 | Workout change preview guidance                 | —          |
+| TP-132 | Multiple same-day events regression pack        | —          |
+| TP-133 | Gym and strength best-effort support plan       | —          |
 
 ---
 
