@@ -1,7 +1,7 @@
 # TP-121: Public positioning for structured local-first output — Status
 
-**Current Step:** Step 3: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 4: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-29
 **Review Level:** 0
 **Review Counter:** 0
@@ -50,11 +50,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified (README.md changed in Step 1)
+- [x] "Check If Affected" docs reviewed (PRD, SECURITY.md, docs/clients, and CHANGELOG reviewed; CHANGELOG updated)
+- [x] Discoveries logged
 
 ---
 
@@ -69,6 +69,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| No new out-of-scope discoveries during this docs-only positioning pass | No action needed | TP-121 Step 4 |
 
 ---
 
