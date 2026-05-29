@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 2
 **Size:** M
 
@@ -46,10 +46,10 @@
 ### Step 3: Harden guidance if necessary
 **Status:** 🟨 In Progress
 
-- [ ] Evaluate Step 2 eval/test results and decide whether concise tool descriptions or cookbook prompts still show ambiguity.
-- [ ] If ambiguity remains, update only the concise tool descriptions or cookbook prompts needed; if not, record the no-change rationale in STATUS Discoveries.
-- [ ] Do not add a model-controlled `confirm` flag or weaken registration-time gating.
-- [ ] Run targeted tests: `go test ./internal/tools`
+- [x] Evaluate Step 2 eval/test results and decide whether concise tool descriptions or cookbook prompts still show ambiguity.
+- [x] If ambiguity remains, update only the concise tool descriptions or cookbook prompts needed; if not, record the no-change rationale in STATUS Discoveries.
+- [x] Do not add a model-controlled `confirm` flag or weaken registration-time gating.
+- [x] Run targeted tests: `go test ./internal/tools`
 
 ---
 
@@ -90,6 +90,7 @@
 | Existing write guidance already distinguishes in-place updates from destructive deletes: `add_or_update_event` updates when `event_id` is present and says it never deletes; `update_workout` is sparse by `workout_id`; delete tools are registered only in full delete mode and expose no `confirm`. | Preserve and add eval coverage before changing wording. | `internal/tools/add_or_update_event.go`, `internal/tools/update_workout.go`, `internal/tools/delete_event.go`, `internal/tools/delete_workout.go` |
 | `create_workout` currently describes initial template creation but does not explicitly warn against using create to modify an existing template; this is a concise-description tradeoff to avoid bloating tool metadata. | Consider a terse warning only if Step 2 eval shows ambiguity. | `internal/tools/create_workout.go` |
 | Existing eval/adversarial coverage covers safe-mode delete unavailability and no-confirm schemas, but cookbook scenarios do not cover changing tomorrow's existing workout/event in place. `go test ./internal/safety` was run because the audit relies on registration-time gating; result: pass (`ok github.com/ricardocabral/icuvisor/internal/safety (cached)`). | Add explicit edit-in-place scenario in Step 2. | `docs/safety/adversarial-prompts.md`, `scripts/eval/scenarios/cookbook_scenarios.json`, `internal/safety/adversarial_test.go` |
+| Step 2 coverage now pins the calendar-event path (`resolve_calendar_dates`/`get_events` -> `add_or_update_event` with existing `event_id`) and forbids create/update-library/delete recreate tools; `icuvisor_list_advanced_capabilities` test covers short server-config-only delete enablement guidance. | No further Step 3 wording hardening needed; preserve concise tool metadata unless future evals show ambiguity. | `scripts/eval/scenarios/cookbook_scenarios.json`, `internal/tools/list_advanced_capabilities_test.go` |
 
 ---
 
@@ -108,6 +109,10 @@
 | 2026-05-29 | Review R008 | plan Step 2: APPROVE. |
 | 2026-05-29 | Step 2 targeted tests | `make eval-validate` -> OK (21 scenarios, 59 tools); `go test ./internal/tools` -> ok 0.272s; `go test ./internal/safety` -> ok cached. |
 | 2026-05-29 | Review R009 | code Step 2: APPROVE. |
+| 2026-05-29 | Review Step 3 plan | reviewer unavailable; proceeding with hydrated plan. |
+| 2026-05-29 | Step 3 guidance evaluation | Step 2 scenario pins calendar read-before-write and forbidden recreate tools; targeted tests passed, so no additional ambiguity found in concise descriptions/cookbook prompts. |
+| 2026-05-29 | Step 3 gating verification | No Step 3 diffs under `internal/tools` or `internal/safety`; existing no-confirm tests remain in place. |
+| 2026-05-29 | Step 3 targeted tests | `go test ./internal/tools` -> ok cached. |
 | 2026-05-29 14:39 | Exit intercept reprompt | Supervisor provided instructions (1095 chars) — reprompting worker |
 
 ---
