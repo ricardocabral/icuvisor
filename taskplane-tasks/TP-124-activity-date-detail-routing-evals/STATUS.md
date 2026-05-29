@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -24,7 +24,7 @@
 ### Step 1: Map current routing hints
 **Status:** 🟨 In Progress
 
-- [ ] Inspect `get_activities`, `get_activity_details`, `get_activity_intervals`, cookbook prompts, and eval scenarios.
+- [ ] Inspect `get_activities`, `get_activity_details`, `get_activity_intervals`, `get_activity_splits`, cookbook prompts, prompt testdata, and eval scenarios.
 - [ ] Identify where prompts/tool descriptions fail to instruct list-by-date before detail/interval fetch.
 - [ ] Record any gaps and chosen changes in STATUS.md Discoveries.
 - [ ] Run targeted tests: `go test ./internal/tools ./internal/prompts`
@@ -73,6 +73,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -101,4 +102,5 @@
 
 ## Notes
 
-*Reserved for execution notes*
+Plan review R001 required adding `get_activity_splits` / `internal/tools/get_activity_streams.go` to the Step 1 mapping scope and separating date, ID-routing, and split-vs-interval discoveries.
+| 2026-05-29 13:22 | Review R001 | plan Step 1: REVISE |
