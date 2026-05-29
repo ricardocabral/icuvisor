@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 2
 **Size:** M
 
@@ -48,11 +48,11 @@
 ### Step 3: Document cookbook workflow
 **Status:** 🟨 In Progress
 
-- [ ] Confirm Step 2 carry-over is resolved with `go test ./internal/prompts ./internal/mcp` before docs work.
-- [ ] Add cookbook guidance showing when to use weekly review vs plan-health review vs season planning.
-- [ ] Include caveats for deload weeks, planned races, and incomplete wellness/readiness data.
-- [ ] Update MCP prompt/cookbook reference pages affected by adding `plan_health_review`, including `web/content/reference/resources-prompts.md` and `web/content/cookbook/_index.md`.
-- [ ] Run targeted tests: `go test ./internal/prompts ./internal/mcp` plus docs build if available (`make web-build` or equivalent).
+- [x] Confirm Step 2 carry-over is resolved with `go test ./internal/prompts ./internal/mcp` before docs work.
+- [x] Add cookbook guidance showing when to use weekly review vs plan-health review vs season planning.
+- [x] Include caveats for deload weeks, planned races, and incomplete wellness/readiness data.
+- [x] Update MCP prompt/cookbook reference pages affected by adding `plan_health_review`, including `web/content/reference/resources-prompts.md` and `web/content/cookbook/_index.md`.
+- [x] Run targeted tests: `go test ./internal/prompts ./internal/mcp` plus docs build if available (`make web-build` or equivalent).
 
 ---
 
@@ -131,3 +131,4 @@ R006 Step 3 plan review identified Step 2 carry-over issues; recovered by revert
 | 2026-05-29 15:35 | Review R007 | code Step 2: REVISE |
 | 2026-05-29 15:39 | Review R008 | code Step 2: APPROVE |
 | 2026-05-29 15:38 | Review R008 | code Step 2: APPROVE |
+| 2026-05-29 15:40 | Review R009 | plan Step 3: APPROVE |

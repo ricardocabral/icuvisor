@@ -93,6 +93,10 @@ Compare what I completed this week against what was planned. Where did I fall sh
 ```
 
 ```text
+Run a transparent plan-health review for the next 14 days. Read my planned events/training plan, compare recent planned-vs-completed adherence, check load/form trajectory and get_fitness_projection assumptions, and caveat missing wellness/readiness data. Treat deload or recovery weeks as intentional unless the evidence says otherwise. If no race event is found, say so and treat any race date I supplied as a scenario anchor. Do not invent a black-box score or write to my calendar; show any proposed change for review first.
+```
+
+```text
 What's on my calendar between [DATE] and [DATE]? Group by category and total the planned load.
 ```
 

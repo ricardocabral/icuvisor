@@ -12,6 +12,8 @@ Asking an assistant to "make me a training plan" in one shot produces a generic 
 - At the start of a season, to lay out base/build/peak/taper blocks.
 - After a goal event, to plan the next macrocycle.
 
+Do not use this workflow for a quick health check of an already-written plan. For that, use the `plan_health_review` MCP prompt or the prompt-library copy below: it audits planned-vs-completed adherence, load/form trajectory, deload/recovery-week caveats, missing wellness/readiness data, and race-date risk without designing a new season.
+
 ## The recipe
 
 Send the stages as **separate messages**. Wait for each before sending the next.
@@ -37,7 +39,8 @@ race, hilly]. Design a periodized plan from now to race day:
 - State a target CTL for race day.
 Use get_fitness_projection to check the CTL path is realistic given my
 current fitness and the ramp you chose. Present the plan as a week-by-week
-table. Do not write anything to my calendar yet.
+table. Do not write anything to my calendar yet. If wellness/readiness data is
+missing, do not use it as evidence for or against the plan.
 ```
 
 ### Stage 3 — schedule
@@ -84,9 +87,10 @@ Stage 2 should produce something like:
 - **Apply a library plan:** if a structured plan already exists, ask the assistant to use [`apply_training_plan`]({{< relref "/reference/tools#apply_training_plan" >}}) instead of authoring one.
 - **Gym or strength blocks:** ask for a `NOTE` such as "Gym — 45 min strength and mobility" or a simple supported calendar workout type if your account has one; detailed exercises, sets, reps, and loads are future scope until intervals.icu exposes a documented strength-training API.
 - **Re-plan mid-season:** "I missed two weeks to illness — re-assess and adjust the remaining blocks."
+- **Audit without re-planning:** use `plan_health_review` to check whether the current calendar still makes sense. Deload or recovery weeks should be treated as intentional load reductions unless adherence, wellness, or form evidence says otherwise; a race date supplied by the user is only a scenario anchor if no matching race event is found.
 
 ## Why this prompt works
 
 - **Three stages, three messages.** Keeps each tool burst small and gives you a checkpoint before any write — the opposite of a single mega-prompt that gets interrupted.
 - **`get_fitness_projection` as a reality check.** The assistant proposes a ramp; the tool tests whether the CTL path is actually reachable, so the plan is not just plausible prose.
-- **Schedule last, week by week.** Calendar writes are [gated]({{< relref "/reference/safety-modes" >}}) and hard to undo in bulk. Incremental scheduling keeps you in control, and the first write/readback catches cases where a description update would replace structured workout steps if the desired `workout_doc` was omitted.
+- **Schedule last, week by week.** Calendar writes are [gated]({{< relref "/reference/safety-modes" >}}) and hard to undo in bulk. Incremental scheduling keeps you in control, and the first write/readback catches cases where a description update would replace structured workout steps if the desired `workout_doc` was omitted. For plan-health reviews, stop at a reviewed proposal: no calendar write should happen until the exact change has been shown and approved.

@@ -17,10 +17,10 @@ The projection seeds CTL, ATL, and TSB from the athlete-local `start_date` retur
 
 ## The assumptions are part of the answer
 
-Because the result depends entirely on its assumptions, the tool reports them back to you. `_meta.assumptions` records the scenario it ran: horizon length, weekly ramp percentage, recovery-week cadence and load, the number of explicit planned loads supplied, and the CTL/ATL time constants. `_meta.boundaries` records the limits: the horizon is capped at 180 days, no hidden upstream periodization fields are read, and explicit `planned_daily_loads` replace the modelled ramp only on the dates they cover.
+Because the result depends entirely on its assumptions, the tool reports them back to you. `_meta.assumptions` records the scenario it ran: horizon length, weekly ramp percentage, recovery-week cadence and load, the number of explicit planned loads supplied, and the CTL/ATL time constants. `_meta.boundaries` records the limits: the horizon is capped at 180 days, no hidden upstream periodization fields are read, and explicit `planned_daily_loads` replace the modelled ramp only on the dates they cover. Plan-health reviews should quote those assumptions instead of collapsing them into an opaque score.
 
 Treat those fields as the fine print of the projection. If a scenario assumed a 5%-per-week ramp and you would never train that way, the curve is answering a different question than the one you asked — change the assumption and run it again.
 
 ## Reading the output
 
-By default the tool returns only the summary. Set `include_full: true` to get the daily projected CTL/ATL/TSB curve — see [Terse by default]({{< relref "terse-by-default" >}}) for when that opt-in is worth the extra tokens.
+By default the tool returns only the summary. Set `include_full: true` to get the daily projected CTL/ATL/TSB curve — see [Terse by default]({{< relref "terse-by-default" >}}) for when that opt-in is worth the extra tokens. If wellness/readiness or race-event data is missing, the projection does not fill it in; the assistant should say what is missing and treat a user-supplied race date as a scenario anchor when no matching race event is found.

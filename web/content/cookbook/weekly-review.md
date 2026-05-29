@@ -12,6 +12,8 @@ A weekly review is the most common thing athletes ask an AI assistant for. This 
 - After a heavy block, to see whether form is trending into a hole.
 - Any time you want a load-and-intensity readout instead of eyeballing charts.
 
+Use `weekly_review` for a retrospective closeout and optional next-week preview. Use `plan_health_review` when the question is whether the current plan still looks safe and realistic: planned-vs-completed adherence, load/form trajectory, planned deloads, race-date risk, and missing wellness/readiness caveats. Use the [season and block plan]({{< relref "season-and-block-plan" >}}) workflow for 8+ week plan design or scheduling.
+
 ## The recipe
 
 Copy this, set the window, and send it as one message.
@@ -35,7 +37,9 @@ Then give me:
 
 Rules: do not invent metrics that aren't available — if something is missing,
 say so. Keep subjective scales labeled correctly (sleep quality 1-4, feel 1-5).
-Tell me which icuvisor tool each key number came from.
+Tell me which icuvisor tool each key number came from. Treat planned deload or
+recovery weeks as intentional unless the compliance, wellness, or form data
+shows a problem.
 ```
 
 ## What icuvisor does
@@ -66,6 +70,7 @@ Every number is tagged with the tool it came from, and nothing is asserted that 
 
 ## Variations
 
+- **Plan-health review:** ask for `plan_health_review` when you want a transparent audit of the upcoming plan. Require evidence for any risk label, caveat missing wellness/readiness data, and ask the assistant to state when a race date is only a scenario anchor because no race event was found.
 - **Monthly review:** change the window to "the last 28 days" and ask for the polarization trend week-over-week.
 - **Compare two periods:** "Compare the last 14 days with the 14 days before — what changed in load and intensity?"
 - **Sport-specific:** add "Only consider rides" or "Only consider runs" to scope the summary.
@@ -77,5 +82,5 @@ Every number is tagged with the tool it came from, and nothing is asserted that 
 - **"Tell me which tool each number came from"** makes the answer auditable, so you can spot a wrong number instead of trusting a fluent paragraph.
 
 {{< callout type="info" >}}
-If your client supports [MCP prompts]({{< relref "/reference/resources-prompts" >}}), `training_analysis` and `weekly_planning` cover this workflow with server-side guardrails.
+If your client supports [MCP prompts]({{< relref "/reference/resources-prompts" >}}), `weekly_review` covers this retrospective workflow with server-side guardrails, and `plan_health_review` covers the current-plan risk audit without introducing an opaque score.
 {{< /callout >}}
