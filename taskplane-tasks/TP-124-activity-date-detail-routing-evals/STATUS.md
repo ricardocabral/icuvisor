@@ -1,10 +1,10 @@
 # TP-124: Activity date resolution and detail-routing evals — Status
 
-**Current Step:** Step 4: Testing & Verification
+**Current Step:** Step 5: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 1
 **Size:** M
 
@@ -53,7 +53,7 @@
 ---
 
 ### Step 4: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] FULL test suite passing: `make test`
 - [x] Lint passes or pre-existing linter limitations are documented: `make lint`
@@ -63,7 +63,7 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] "Must Update" docs modified
 - [ ] "Check If Affected" docs reviewed
@@ -85,6 +85,7 @@
 | R008 | Code | 3 | REVISE | `.reviews/R008-code-step3.md` |
 | R009 | Code | 3 | APPROVE | `.reviews/R009-code-step3.md` |
 | R010 | Plan | 4 | APPROVE | `.reviews/R010-plan-step4.md` |
+| R011 | Code | 4 | APPROVE | `.reviews/R011-code-step4.md` |
 
 ---
 
@@ -133,3 +134,4 @@ Code review R008 found stale `cmd/gendocs/testdata/tools.golden.json` summaries 
 | 2026-05-29 13:42 | Review R008 | code Step 3: REVISE |
 | 2026-05-29 13:45 | Review R009 | code Step 3: APPROVE |
 | 2026-05-29 13:47 | Review R010 | plan Step 4: APPROVE |
+| 2026-05-29 13:49 | Review R011 | code Step 4: APPROVE |
