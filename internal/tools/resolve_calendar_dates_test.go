@@ -121,6 +121,24 @@ func TestResolveCalendarDatesRejectsInvalidInput(t *testing.T) {
 	}
 }
 
+func TestResolveCalendarDatesReportsInvalidTimezone(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeProfileClient{profile: intervals.AthleteWithSportSettings{Timezone: "Mars/Olympus_Mons"}}
+	tool := newResolveCalendarDatesToolWithClock(client, "test", "UTC", false, fixedCalendarClock(time.Date(2026, 5, 25, 2, 30, 0, 0, time.UTC)))
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err == nil {
+		t.Fatal("Handler() error = nil, want invalid timezone")
+	}
+	if !strings.Contains(err.Error(), fetchResolveCalendarDatesMessage) {
+		t.Fatalf("error = %v, want timezone guidance", err)
+	}
+	if strings.Contains(err.Error(), invalidResolveCalendarDatesMessage) {
+		t.Fatalf("error = %v, want timezone guidance instead of invalid arguments", err)
+	}
+}
+
 func fixedCalendarClock(now time.Time) func() time.Time {
 	return func() time.Time { return now }
 }
