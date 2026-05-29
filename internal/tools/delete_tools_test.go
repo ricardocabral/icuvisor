@@ -94,9 +94,9 @@ func TestDeletePerIDToolsSuccessAndEcho(t *testing.T) {
 
 	profile := intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{ID: 7, Type: "Ride", FTP: 280, LTHR: 172}}}
 	tests := []struct {
-		name       string
-		tool       func(*fakeDeleteToolsClient) Tool
-		arguments  string
+		name         string
+		tool         func(*fakeDeleteToolsClient) Tool
+		arguments    string
 		wantID       string
 		wantMetaID   string
 		wantEndpoint string
