@@ -1,6 +1,6 @@
 # TP-125: Activity tags and fueling regression/docs pass — Status
 
-**Current Step:** Step 2: Fill regression or docs gaps
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
@@ -43,12 +43,12 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] FULL test suite passing: `make test`
-- [ ] Lint passes or pre-existing linter limitations are documented: `make lint`
-- [ ] Build passes: `make build`
-- [ ] All failures fixed or clearly documented as pre-existing
+- [x] FULL test suite passing: `make test`
+- [x] Lint passes or pre-existing linter limitations are documented: `make lint`
+- [x] Build passes: `make build`
+- [x] All failures fixed or clearly documented as pre-existing
 
 ---
 
@@ -92,6 +92,10 @@
 | 2026-05-29 | Step 1 targeted tests | `go test ./internal/tools` passed (cached). |
 | 2026-05-29 15:13 | Worker iter 1 | done in 1663s, tools: 60 |
 | 2026-05-29 | Step 2 targeted tests | `go test ./internal/tools` passed. |
+| 2026-05-29 | Full test suite | `make test` passed. |
+| 2026-05-29 | Lint | `make lint` passed with 0 issues. |
+| 2026-05-29 | Build | `make build` passed. |
+| 2026-05-29 | Verification failures | No failures observed in `make test`, `make lint`, or `make build`. |
 
 ---
 
