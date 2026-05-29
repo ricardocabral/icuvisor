@@ -468,7 +468,7 @@
     "group": "workout-library",
     "tier": "core",
     "safety": "read",
-    "summary": "Validate an intervals.icu workout description, a structured workout_doc, or both, and return the canonical merged DSL that icuvisor would submit on a write.",
+    "summary": "Validate an intervals.icu workout description, a structured workout_doc, or both, and return the canonical merged DSL plus estimated duration that icuvisor would submit on a write.",
     "anchor": "validate_workout"
   }
 ]

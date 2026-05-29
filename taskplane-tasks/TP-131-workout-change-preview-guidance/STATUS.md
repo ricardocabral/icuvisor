@@ -38,7 +38,7 @@
 - [x] Recommend `validate_workout` preflight for uncertain DSL or structured workout changes.
 - [x] Do not introduce a model-controlled `confirm` override or bypass safety modes.
 - [x] Run targeted tests: `go test ./internal/tools ./internal/prompts`
-- [ ] Regenerate/update generated tool catalog artifacts after `validate_workout` summary changes (`web/data/tools.json`, `cmd/gendocs/testdata/tools.golden.json`).
+- [x] Regenerate/update generated tool catalog artifacts after `validate_workout` summary changes (`web/data/tools.json`, `cmd/gendocs/testdata/tools.golden.json`).
 
 ---
 
