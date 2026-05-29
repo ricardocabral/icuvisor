@@ -1,6 +1,6 @@
 # TP-123: Calendar date resolver and future date anchors — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Design deterministic date surface
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
@@ -22,12 +22,12 @@
 ---
 
 ### Step 1: Design deterministic date surface
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Inspect existing `_meta.as_of`, `get_today`, `get_activities`, `get_events`, and prompt guidance for date anchors.
-- [ ] Decide whether to add a small read-only tool such as `resolve_calendar_dates` or to harden existing date metadata/prompts without a new tool.
-- [ ] Document the chosen surface and non-goals in STATUS.md Discoveries, including why it avoids model date arithmetic.
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/toolcatalog`
+- [x] Inspect existing `_meta.as_of`, `get_today`, `get_activities`, `get_events`, and prompt guidance for date anchors.
+- [x] Decide whether to add a small read-only tool such as `resolve_calendar_dates` or to harden existing date metadata/prompts without a new tool.
+- [x] Document the chosen surface and non-goals in STATUS.md Discoveries, including why it avoids model date arithmetic.
+- [x] Run targeted tests: `go test ./internal/tools ./internal/toolcatalog`
 
 ---
 
@@ -81,6 +81,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Existing `get_today`, `get_activities`, and `get_events` expose current-day `_meta.as_of*` only when fetching data, but planning prompts need deterministic future anchors without requiring unrelated activity/event reads or model date arithmetic. | Add a small read-only `resolve_calendar_dates` tool that uses athlete timezone, an optional `base_date`, and integer offsets to return exact local dates/weekdays; keep non-goals limited to no calendar writes, no event inference, and no UTC/client-time inference. | Step 1 design |
 
 ---
 
