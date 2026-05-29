@@ -12,12 +12,13 @@ icuvisor is terse by default so routine questions fit comfortably in a conversat
 - Response metadata explains scales and units when the assistant needs them.
 - Small scalar custom fields that are useful in routine analysis stay in terse mode when they are safe to name directly. For example, `get_activity_intervals` returns manually-entered interval fields such as lactate under each row's `custom_fields` map when intervals.icu includes them.
 - Heavy payloads, such as raw samples and full raw upstream objects, require an explicit `include_full: true` argument on tools that support it.
+- Workout-library reads are shaped to find the right folder first and inspect folder-scoped examples instead of sending every template into the conversation.
 
 ## What `include_full` means
 
 `include_full` is an opt-in for detail. Use it when you are debugging, when the user explicitly asks for raw fields, or when the terse response is missing evidence needed for the answer.
 
-It is not a "better answer" switch. Full payloads can be much larger and can make weaker or smaller-context models more likely to lose the thread.
+It is not a "better answer" switch. Full payloads can be much larger and can make weaker or smaller-context models more likely to lose the thread. Because icuvisor runs locally against your intervals.icu account, it can fetch the next precise slice on demand instead of preloading broad libraries or raw streams before the assistant knows which details matter.
 
 ## Toolset tiers are part of the same idea
 

@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** S
 
@@ -33,11 +33,11 @@
 ### Step 2: Add docs/eval hardening
 **Status:** 🟨 In Progress
 
-- [ ] Update build-workouts cookbook to recommend folder-filtered library queries, sampling one or two examples, and leaving `include_full` off until a specific template is selected; do not claim page/page-token support.
-- [ ] Add a focused large-payload regression test proving default workout-library folder responses omit raw `workout_doc`/description payloads and `include_full:true` preserves raw detail only by opt-in.
-- [ ] Update terse-by-default docs to mention the local/token-safe advantage without naming or disparaging competitors.
-- [ ] Update CHANGELOG.md for docs/test hardening.
-- [ ] Run targeted tests: `go test ./internal/tools`
+- [x] Update build-workouts cookbook to recommend folder-filtered library queries, sampling one or two examples, and leaving `include_full` off until a specific template is selected; do not claim page/page-token support.
+- [x] Add a focused large-payload regression test proving default workout-library folder responses omit raw `workout_doc`/description payloads and `include_full:true` preserves raw detail only by opt-in.
+- [x] Update terse-by-default docs to mention the local/token-safe advantage without naming or disparaging competitors.
+- [x] Update CHANGELOG.md for docs/test hardening.
+- [x] Run targeted tests: `go test ./internal/tools`
 
 ---
 
@@ -98,3 +98,4 @@ Plan review Step 2 adjustment: avoid claiming pagination controls for workout fo
 
 | 2026-05-29 15:49 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-29 15:52 | Review R002 | plan Step 2: UNKNOWN |
+| 2026-05-29 15:55 | Review R003 | plan Step 2: APPROVE |

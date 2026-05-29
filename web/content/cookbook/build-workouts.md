@@ -20,8 +20,10 @@ Build me a structured workout and put it on my calendar. Use icuvisor with
 my intervals.icu data.
 
 1. Read my athlete profile so all targets use my zones, FTP, and threshold.
-2. Check the intervals.icu workout-syntax reference, and read one or two
-   existing library workouts as format examples.
+2. Check the intervals.icu workout-syntax reference. Use get_workout_library to
+   choose the relevant folder, then use get_workouts_in_folder for that folder
+   and read one or two terse examples. Keep include_full off unless you need the
+   full source for a specific template.
 3. Draft this workout: [DESCRIBE IT — e.g. VO2max bike session, 5x4min at
    110% FTP with 4min recoveries, plus warm-up and cool-down]. Before saving,
    show a proposed-change preview with the total duration, key steps, target
@@ -36,9 +38,12 @@ workouts supported by the intervals.icu DSL. If I ask for gym or strength work,
 schedule a simple `NOTE` time block or a free-text supported calendar event;
 do not invent exercises, sets, reps, or loads as structured workout steps unless
 my intervals.icu account exposes documented strength-training support. Do not
-overwrite an existing library workout; create a new one unless I explicitly name
-one to update. For multiple calendar or library writes, validate one
-representative workout, write one, read it back, check warnings and
+dump the whole workout library into the chat: pick the relevant folder first,
+sample only one or two examples, and use `include_full:true` only after selecting
+a specific template that needs raw source detail. Do not overwrite an existing
+library workout; create a new one unless I explicitly name one to update. For
+multiple calendar or library writes, validate one representative workout, write
+one, read it back, check warnings and
 structured-step summaries, then continue with the rest.
 ```
 
@@ -47,7 +52,7 @@ structured-step summaries, then continue with the rest.
 | Step | Tool / resource | Why |
 | --- | --- | --- |
 | 1 | [`get_athlete_profile`]({{< relref "/reference/tools#get_athlete_profile" >}}) | Targets resolve to your actual FTP and zones. |
-| 2 | `icuvisor://workout-syntax` resource + [`get_workout_library`]({{< relref "/reference/tools#get_workout_library" >}}) / [`get_workouts_in_folder`]({{< relref "/reference/tools#get_workouts_in_folder" >}}) | The DSL spec plus real examples to copy the format from. |
+| 2 | `icuvisor://workout-syntax` resource + [`get_workout_library`]({{< relref "/reference/tools#get_workout_library" >}}) / [`get_workouts_in_folder`]({{< relref "/reference/tools#get_workouts_in_folder" >}}) | The DSL spec plus folder-scoped, terse examples to copy the format from without flooding the chat. |
 | 3 | — | Drafting happens in the chat; nothing is written yet. |
 | 4 | [`create_workout`]({{< relref "/reference/tools#create_workout" >}}) or [`add_or_update_event`]({{< relref "/reference/tools#add_or_update_event" >}}) | Saves to the library or schedules it — gated on write mode. |
 
@@ -89,7 +94,7 @@ For an existing-template edit, the assistant should make the delta just as expli
 
 ## Why this prompt works
 
-- **Read the syntax reference first.** The `icuvisor://workout-syntax` resource is the authoritative DSL spec. Forcing the assistant to consult it — plus real library examples — is what fixes the broken repeat/bullet syntax users hit.
+- **Read the syntax reference first.** The `icuvisor://workout-syntax` resource is the authoritative DSL spec. Forcing the assistant to consult it — plus one or two folder-filtered library examples — is what fixes the broken repeat/bullet syntax users hit without wasting context on unrelated templates.
 - **Draft, then save.** Showing the workout in the chat before any write means you catch a wrong target before it lands on your calendar.
 - **"Create, don't overwrite."** Without this, an assistant may update the closest-matching library workout. The explicit rule protects your existing templates; for any intentional bulk or template edit, read and retain structured steps explicitly instead of sending description-only prose.
 

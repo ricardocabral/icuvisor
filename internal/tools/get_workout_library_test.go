@@ -190,6 +190,71 @@ func TestGetWorkoutsInFolderHidesWorkoutDocByDefault(t *testing.T) {
 	}
 }
 
+func TestGetWorkoutsInFolderDefaultOmitsLargeRawPayloads(t *testing.T) {
+	t.Parallel()
+
+	largeDescription := strings.Repeat("coach note ", 600)
+	largeStepNote := strings.Repeat("hold form ", 600)
+	client := &fakeWorkoutLibraryClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		workouts: decodeToolWorkouts(t,
+			`{"id":1,"name":"Big Tempo","description":`+quoteJSON(t, largeDescription)+`,"type":"Ride","folder_id":20,"workout_doc":{"steps":[{"duration":600,"text":`+quoteJSON(t, largeStepNote)+`}]}}`,
+			`{"id":2,"name":"Big VO2","description":`+quoteJSON(t, largeDescription)+`,"type":"Ride","folder_id":20,"workout_doc":{"steps":[{"duration":300,"text":`+quoteJSON(t, largeStepNote)+`}]}}`,
+		),
+	}
+	tool := newGetWorkoutsInFolderTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"folder_id":"20"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	rows := out["workouts"].([]any)
+	if len(rows) != 2 {
+		t.Fatalf("rows = %d, want 2", len(rows))
+	}
+	encoded, err := json.Marshal(out)
+	if err != nil {
+		t.Fatalf("marshal default output: %v", err)
+	}
+	if strings.Contains(string(encoded), largeDescription) || strings.Contains(string(encoded), largeStepNote) {
+		t.Fatalf("default response leaked large raw payload: %s", encoded)
+	}
+	for _, got := range rows {
+		row := got.(map[string]any)
+		if _, ok := row["description"]; ok {
+			t.Fatalf("description present by default: %#v", row)
+		}
+		if _, ok := row["workout_doc"]; ok {
+			t.Fatalf("workout_doc present by default: %#v", row)
+		}
+		if _, ok := row["workout_doc_summary"]; !ok {
+			t.Fatalf("workout_doc_summary missing: %#v", row)
+		}
+	}
+
+	fullResult, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"folder_id":"20","include_full":true}`)})
+	if err != nil {
+		t.Fatalf("Handler(include_full) error = %v", err)
+	}
+	fullEncoded, err := json.Marshal(resultMap(t, fullResult))
+	if err != nil {
+		t.Fatalf("marshal full output: %v", err)
+	}
+	if !strings.Contains(string(fullEncoded), largeDescription) || !strings.Contains(string(fullEncoded), largeStepNote) {
+		t.Fatalf("include_full response omitted raw payload detail: %s", fullEncoded)
+	}
+}
+
+func quoteJSON(t *testing.T, value string) string {
+	t.Helper()
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("quote json: %v", err)
+	}
+	return string(encoded)
+}
+
 func decodeToolWorkoutFolders(t *testing.T, raws ...string) []intervals.WorkoutFolder {
 	t.Helper()
 	folders := make([]intervals.WorkoutFolder, 0, len(raws))
