@@ -54,9 +54,9 @@
 ### Step 4: Documentation & Delivery
 **Status:** 🟨 In Progress
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -72,7 +72,8 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | Workout-library audit found `get_workout_library` returns folders by default and only fetches top-level workouts on opt-in; `get_workouts_in_folder` requires `folder_id`, filters server results client-side, and uses `include_full` for raw docs. No explicit page-size/page-token pagination exists for folder workouts; token safety currently relies on folder scoping and terse shaping. | Inform Step 2 docs/test hardening. | `internal/tools/get_workout_library.go`; `internal/tools/get_workouts_in_folder.go`; `internal/tools/get_workout_library_test.go` |
-| Existing tests verify `get_workout_library` does not expose raw `workout_doc`, does not fetch workouts by default, and `get_workouts_in_folder` hides `workout_doc`/description unless `include_full:true`; they do not include a large-payload regression fixture proving many raw docs stay hidden. | Add focused test in Step 2. | `internal/tools/get_workout_library_test.go` |
+| Existing tests verify `get_workout_library` does not expose raw `workout_doc`, does not fetch workouts by default, and `get_workouts_in_folder` hides `workout_doc`/description unless `include_full:true`; they did not include a large-payload regression fixture proving many raw docs stay hidden. | Added focused test in Step 2. | `internal/tools/get_workout_library_test.go` |
+| Check-if-affected docs reviewed: `docs/kr5-benchmark.md` has measured benchmark results, but this task made no measured token-claim changes; `web/content/reference/tools.md` had no direct generated reference match for these tool names and was not manually edited because tool metadata did not change. | No doc changes needed. | `docs/kr5-benchmark.md`; `web/content/reference/tools.md` |
 
 ---
 
