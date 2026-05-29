@@ -1,10 +1,10 @@
 # TP-124: Activity date resolution and detail-routing evals — Status
 
-**Current Step:** Step 2: Add eval scenarios
+**Current Step:** Step 3: Harden descriptions or cookbook guidance
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -32,7 +32,7 @@
 ---
 
 ### Step 2: Add eval scenarios
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Add at least one eval scenario for “analyze my race last Sunday” that requires activity-date lookup then detail/interval fetch.
 - [x] Add one scenario for “show/compare lap splits or reps for my run on [date]” that must not stop at session summaries.
@@ -42,7 +42,7 @@
 ---
 
 ### Step 3: Harden descriptions or cookbook guidance
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] If gaps are found, update tool descriptions or cookbook text to make the list→detail/interval path explicit.
 - [ ] Avoid adding broad tool-description tokens unless the eval requires them; prefer concise activation hints.
@@ -77,6 +77,7 @@
 | R002 | Plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | Code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
 | R004 | Plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
+| R005 | Code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
 
 ---
 
@@ -115,3 +116,4 @@ Step 1 inspection identified three routing gaps: detail/interval/splits tool des
 | 2026-05-29 13:24 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-29 13:27 | Review R003 | code Step 1: APPROVE |
 | 2026-05-29 13:29 | Review R004 | plan Step 2: APPROVE |
+| 2026-05-29 13:33 | Review R005 | code Step 2: APPROVE |
