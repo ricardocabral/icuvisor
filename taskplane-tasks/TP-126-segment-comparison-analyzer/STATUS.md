@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -24,10 +24,10 @@
 ### Step 1: Audit current segment analyzer activation
 **Status:** 🟨 In Progress
 
-- [ ] Inspect `compute_activity_segment_stats` description/schema/tests and existing eval scenarios.
-- [ ] Confirm it supports distance-bounded first/last segment stats for pace/power/HR and exposes audit metadata without raw streams in terse mode.
-- [ ] Record whether a higher-level helper is warranted or whether prompt/eval hardening is sufficient.
-- [ ] Run targeted tests: `go test ./internal/tools`
+- [x] Inspect `compute_activity_segment_stats` description/schema/tests and existing eval scenarios.
+- [x] Confirm it supports distance-bounded first/last segment stats for pace/power/HR and exposes audit metadata without raw streams in terse mode.
+- [x] Record whether a higher-level helper is warranted or whether prompt/eval hardening is sufficient.
+- [x] Run targeted tests: `go test ./internal/tools`
 
 ---
 
@@ -80,6 +80,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| `compute_activity_segment_stats` already supports deterministic distance-bounded segment stats over scalar metrics including `watts`, `heart_rate`, and `velocity_smooth`; terse responses include result + `_meta` without `series`, while `include_full` gates audit slices. A new higher-level helper is not warranted for TP-126; eval/docs/tests should harden activation for first-vs-last 10 km comparisons. | Use prompt/eval/test hardening; avoid broad API expansion. | `internal/tools/compute_activity_segment_stats.go`, `internal/analysis/segment_stats.go`, `internal/tools/compute_activity_segment_stats_test.go` |
 
 ---
 
@@ -102,3 +103,4 @@
 ## Notes
 
 *Reserved for execution notes*
+| 2026-05-29 13:49 | Review R001 | plan Step 1: APPROVE |
