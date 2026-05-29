@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 2
 **Size:** M
 
@@ -34,7 +34,7 @@
 ---
 
 ### Step 2: Implement prompt and golden tests
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Add or update prompt text with transparent scoring/caveats, explicit missing-data handling, and no hidden black-box score unless computed from surfaced values.
 - [x] Add/update prompt registry golden tests.
@@ -78,6 +78,8 @@
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | 1 | APPROVE | inline |
 | R003 | Code | 1 | APPROVE | inline |
+| R004 | Plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
+| R005 | Code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
 
 ---
 
@@ -117,3 +119,4 @@
 | 2026-05-29 15:20 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-29 15:22 | Review R003 | code Step 1: APPROVE |
 | 2026-05-29 15:24 | Review R004 | plan Step 2: APPROVE |
+| 2026-05-29 15:29 | Review R005 | code Step 2: APPROVE |
