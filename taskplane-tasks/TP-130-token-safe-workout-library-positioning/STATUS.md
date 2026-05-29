@@ -1,6 +1,6 @@
 # TP-130: Token-safe workout library positioning — Status
 
-**Current Step:** Step 2: Add docs/eval hardening
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
@@ -31,7 +31,7 @@
 ---
 
 ### Step 2: Add docs/eval hardening
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Update build-workouts cookbook to recommend folder-filtered library queries, sampling one or two examples, and leaving `include_full` off until a specific template is selected; do not claim page/page-token support.
 - [x] Add a focused large-payload regression test proving default workout-library folder responses omit raw `workout_doc`/description payloads and `include_full:true` preserves raw detail only by opt-in.
@@ -42,7 +42,7 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing: `make test`
 - [ ] Lint passes or pre-existing linter limitations are documented: `make lint`
