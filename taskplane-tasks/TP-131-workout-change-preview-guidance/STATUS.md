@@ -110,6 +110,8 @@
 | 2026-05-29 14:19 | Step 1 plan review | APPROVE; see `.reviews/R001-plan-step1.md` |
 | 2026-05-29 14:20 | Step 1 targeted tests | `go test ./internal/tools ./internal/prompts` passed (`ok` for both packages, cached) |
 | 2026-05-29 14:40 | Worker iter 1 | done in 1312s, tools: 52 |
+| 2026-05-29 15:21 | Worker iter 2 | done in 2472s, tools: 147 |
+| 2026-05-29 15:21 | Task complete | .DONE created |
 
 ---
 
