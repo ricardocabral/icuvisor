@@ -107,5 +107,4 @@
 | 2026-05-29 14:25 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-29 14:28 | Review R002 | plan Step 2: APPROVE |
 | 2026-05-29 14:31 | Review R003 | plan Step 3: APPROVE |
-| 2026-05-29 | Review R004 | plan Step 4: APPROVE |
 | 2026-05-29 14:42 | Review R004 | plan Step 4: APPROVE |
