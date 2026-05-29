@@ -1,10 +1,10 @@
 # TP-122: Season planning prompt and context hardening — Status
 
-**Current Step:** Step 1: Design the safe season-planning guidance surface
+**Current Step:** Step 2: Implement prompt and golden-test updates
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Design the safe season-planning guidance surface
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Existing planning/taper/review prompts inspected
 - [x] Enhance-existing vs new-prompt approach decided
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Implement prompt and golden-test updates
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Prompt text updated or new prompt added
 - [ ] Guardrails added against automatic calendar filling/ATP creation
@@ -97,6 +97,8 @@
 | 2026-05-29 13:19 | Step 0 started | Preflight |
 | 2026-05-29 13:20 | Step 0 completed | Required files, dependencies, and clean-room guardrail confirmed |
 | 2026-05-29 13:20 | Step 1 started | Design prompt guidance surface |
+| 2026-05-29 13:27 | Step 1 completed | Plan and code reviews approved |
+| 2026-05-29 13:27 | Step 2 started | Prompt and golden-test updates |
 
 ---
 
@@ -110,3 +112,5 @@
 
 *Reserved for execution notes*
 | 2026-05-29 13:22 | Review R001 | plan Step 1: REVISE |
+| 2026-05-29 13:25 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-29 13:27 | Review R003 | code Step 1: APPROVE |
