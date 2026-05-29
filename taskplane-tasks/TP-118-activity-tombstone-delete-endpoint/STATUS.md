@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** S
 
@@ -37,8 +37,9 @@
 
 - [ ] Client path/method updated if needed
 - [ ] httptest coverage asserts exact method/path and target-athlete safety
-- [ ] Tool metadata/schema snapshots updated if affected
-- [ ] Targeted tests run
+- [ ] Tool metadata/source-endpoint response updated and asserted if affected
+- [ ] Tool schema snapshot added or updated if affected
+- [ ] Targeted tests run with selector covering `DeleteMethods|ActivityIDEndpointsRequireResolvedTargetOwnership|DeleteTools|delete_activity|Schema`
 
 ---
 
@@ -67,6 +68,8 @@
 |---|------|------|---------|------|
 | R001 | Plan | Step 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | Step 1 | APPROVE | `.reviews/R002-plan-step1.md` |
+| R003 | Code | Step 1 | APPROVE | `.reviews/R003-code-step1.md` |
+| R004 | Plan | Step 2 | REVISE | `.reviews/R004-plan-step2.md` |
 
 ---
 
@@ -99,6 +102,8 @@
 ## Notes
 
 Plan review R001 requires Step 1 tests to include `DeleteMethods|ActivityIDEndpointsRequireResolvedTargetOwnership` coverage and discoveries to explicitly note `/api/v1` base URL handling.
+Plan review R004 requires Step 2 tests to include intervals endpoint/safety selectors and requires locking `delete_activity` `_meta.source_endpoint` if the endpoint changes.
 | 2026-05-29 15:25 | Review R001 | plan Step 1: REVISE |
 | 2026-05-29 15:26 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-29 15:29 | Review R003 | code Step 1: APPROVE |
+| 2026-05-29 15:32 | Review R004 | plan Step 2: REVISE |
