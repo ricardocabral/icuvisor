@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** S
 
@@ -36,6 +36,7 @@
 
 - [ ] Add missing regression tests rather than changing already-correct behavior, including default/no-`include_full` tag preservation for present and empty tags in `get_activities` and `get_activity_details`.
 - [ ] Update user-facing docs/cookbook text to mention tag-aware and fueling-aware activity reads where useful.
+- [ ] Update `CHANGELOG.md` under `[Unreleased]` for the added regression coverage and docs.
 - [ ] Avoid changing raw upstream field names; keep disambiguated grams suffixes.
 - [ ] Run targeted tests: `go test ./internal/tools`
 
@@ -66,6 +67,7 @@
 |---|------|------|---------|------|
 | 1 | plan | 1 | APPROVE | — |
 | 2 | plan | 2 | REVISE | `.reviews/R002-plan-step2.md` |
+| 3 | plan | 2 | REVISE | `.reviews/R003-plan-step2.md` |
 
 ---
 
@@ -102,3 +104,4 @@
 - Step 1 audit: `get_today` covers tags on completed activities, planned workout events, and annotations in `TestGetTodayDigestUsesAthleteLocalDateAndSourceShapes`.
 | 2026-05-29 14:49 | Review R001 | plan Step 1: APPROVE |
 | 2026-05-29 14:53 | Review R002 | plan Step 2: UNKNOWN |
+| 2026-05-29 14:54 | Review R003 | plan Step 2: REVISE |
