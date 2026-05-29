@@ -1,10 +1,10 @@
 # TP-127: Edit-in-place write safety evals — Status
 
-**Current Step:** Step 3: Harden guidance if necessary
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 11
+**Review Counter:** 12
 **Iteration:** 2
 **Size:** M
 
@@ -54,12 +54,12 @@
 ---
 
 ### Step 4: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] FULL test suite passing: `make test`
-- [ ] Lint passes or pre-existing linter limitations are documented: `make lint`
-- [ ] Build passes: `make build`
-- [ ] All failures fixed or clearly documented as pre-existing
+- [x] FULL test suite passing: `make test`
+- [x] Lint passes or pre-existing linter limitations are documented: `make lint`
+- [x] Build passes: `make build`
+- [x] All failures fixed or clearly documented as pre-existing
 
 ---
 
@@ -116,6 +116,11 @@
 | 2026-05-29 | Step 3 gating verification | No Step 3 diffs under `internal/tools` or `internal/safety`; existing no-confirm tests remain in place. |
 | 2026-05-29 | Step 3 targeted tests | `go test ./internal/tools` -> ok cached. |
 | 2026-05-29 | Review R011 | code Step 3: APPROVE. |
+| 2026-05-29 | Review R012 | plan Step 4: APPROVE. |
+| 2026-05-29 | Step 4 full tests | `make test` -> pass (`go test ./...`, all packages ok/cached or no test files). |
+| 2026-05-29 | Step 4 lint | `make lint` -> pass (0 issues). |
+| 2026-05-29 | Step 4 build | `make build` -> pass; built `bin/icuvisor`. |
+| 2026-05-29 | Step 4 failure review | No test, lint, or build failures to fix or document. |
 | 2026-05-29 14:39 | Exit intercept reprompt | Supervisor provided instructions (1095 chars) — reprompting worker |
 
 ---
@@ -144,3 +149,4 @@
 | 2026-05-29 14:45 | Review R010 | plan Step 3: UNAVAILABLE |
 | 2026-05-29 14:47 | Review R011 | code Step 3: APPROVE |
 | 2026-05-29 14:49 | Review R011 | code Step 3: APPROVE |
+| 2026-05-29 14:51 | Review R012 | plan Step 4: APPROVE |
