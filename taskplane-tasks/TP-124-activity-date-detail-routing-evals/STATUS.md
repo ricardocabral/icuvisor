@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -24,10 +24,10 @@
 ### Step 1: Map current routing hints
 **Status:** 🟨 In Progress
 
-- [ ] Inspect `get_activities`, `get_activity_details`, `get_activity_intervals`, `get_activity_splits`, cookbook prompts, prompt testdata, and eval scenarios.
-- [ ] Identify where prompts/tool descriptions fail to instruct list-by-date before detail/interval fetch.
-- [ ] Record any gaps and chosen changes in STATUS.md Discoveries.
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/prompts`
+- [x] Inspect `get_activities`, `get_activity_details`, `get_activity_intervals`, `get_activity_splits`, cookbook prompts, prompt testdata, and eval scenarios.
+- [x] Identify where prompts/tool descriptions fail to instruct list-by-date before detail/interval fetch.
+- [x] Record any gaps and chosen changes in STATUS.md Discoveries.
+- [x] Run targeted tests: `go test ./internal/tools ./internal/prompts`
 
 ---
 
@@ -74,6 +74,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
+| R002 | Plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 
 ---
 
@@ -81,6 +82,9 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Relative-date prompts like "last Sunday" need explicit athlete-local date-window resolution before selecting an activity ID. | Add eval coverage and concise cookbook/tool hints where needed. | `get_activities` description/schema; `web/content/cookbook/activity-retrospective.md`; `scripts/eval/scenarios/cookbook_scenarios.json` |
+| Detail, intervals, and splits tools all require `activity_id`; only `get_activities` currently hints it should precede detail/interval/splits fetches, so ID-routing is one-sided. | Harden concise activation hints on activity detail/interval/splits descriptions or cookbook guidance. | `internal/tools/get_activity_details.go`; `internal/tools/get_activity_streams.go` |
+| Existing cookbook evals include most-recent activity/test scans but not race-by-date detail analysis or splits/reps-by-date scenarios. | Add two routing eval scenarios with expected list→detail/interval/splits ordering and anti-patterns. | `scripts/eval/scenarios/cookbook_scenarios.json` |
 
 ---
 
@@ -103,4 +107,7 @@
 ## Notes
 
 Plan review R001 required adding `get_activity_splits` / `internal/tools/get_activity_streams.go` to the Step 1 mapping scope and separating date, ID-routing, and split-vs-interval discoveries.
+
+Step 1 inspection identified three routing gaps: detail/interval/splits tool descriptions require `activity_id` but do not remind assistants to resolve described/date-based activities through `get_activities`; activity-retrospective cookbook says to list recent activities when no ID is supplied but does not explicitly say to query the athlete-local date window for relative dates like "last Sunday"; existing eval scenarios lack a race-by-date and splits/reps-by-date regression.
 | 2026-05-29 13:22 | Review R001 | plan Step 1: REVISE |
+| 2026-05-29 13:24 | Review R002 | plan Step 1: APPROVE |
