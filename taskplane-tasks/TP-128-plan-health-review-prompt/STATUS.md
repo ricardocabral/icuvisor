@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 2
 **Size:** M
 
@@ -41,6 +41,7 @@
 - [x] Ensure prompt asks for a reviewed proposal before any calendar writes.
 - [x] Run targeted tests: `go test ./internal/prompts`
 - [x] Address R004/R005 review findings: verify registry/golden/contract invariant coverage, update MCP protocol prompt-list expectations to seven prompts, and run `go test ./internal/prompts ./internal/mcp`.
+- [ ] Address R007 review findings: restore terse/include_full guardrail in `plan_health_review`, cover it in tests/golden, and correct review history notes for R004/R005/R007.
 
 ---
 
@@ -83,6 +84,7 @@
 | R004 | Plan | 2 | REVISE | `.reviews/R004-plan-step2.md` |
 | R005 | Code | 2 | REVISE | `.reviews/R005-code-step2.md` |
 | R006 | Plan | 3 | REVISE | `.reviews/R006-plan-step3.md` |
+| R007 | Code | 2 | REVISE | `.reviews/R007-code-step2.md` |
 
 ---
 
@@ -121,6 +123,7 @@ R006 Step 3 plan review identified Step 2 carry-over issues; recovered by revert
 | 2026-05-29 15:17 | Review R001 | plan Step 1: REVISE |
 | 2026-05-29 15:20 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-29 15:22 | Review R003 | code Step 1: APPROVE |
-| 2026-05-29 15:24 | Review R004 | plan Step 2: APPROVE |
-| 2026-05-29 15:29 | Review R005 | code Step 2: APPROVE |
+| 2026-05-29 15:24 | Review R004 | plan Step 2: REVISE |
+| 2026-05-29 15:29 | Review R005 | code Step 2: REVISE |
 | 2026-05-29 15:31 | Review R006 | plan Step 3: REVISE |
+| 2026-05-29 15:35 | Review R007 | code Step 2: REVISE |
