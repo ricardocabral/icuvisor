@@ -1,6 +1,6 @@
 # TP-128: Plan health review prompt — Status
 
-**Current Step:** Step 2: Implement prompt and golden tests
+**Current Step:** Step 3: Document cookbook workflow
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
@@ -44,10 +44,11 @@
 ---
 
 ### Step 3: Document cookbook workflow
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Add cookbook guidance showing when to use weekly review vs plan-health review vs season planning.
 - [ ] Include caveats for deload weeks, planned races, and incomplete wellness/readiness data.
+- [ ] Update MCP prompt/cookbook reference pages affected by adding `plan_health_review`.
 - [ ] Run targeted tests: `make test` or relevant docs validation if available.
 
 ---
