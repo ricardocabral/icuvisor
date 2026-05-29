@@ -1,6 +1,6 @@
 # TP-130: Token-safe workout library positioning — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Audit workout-library response shape
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
@@ -13,7 +13,7 @@
 ---
 
 ### Step 0: Preflight
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Audit workout-library response shape
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Inspect workout-library tools/tests for pagination, terse default, and folder scoping.
 - [ ] Record whether existing tests protect against huge raw payloads and `include_full` behavior.
