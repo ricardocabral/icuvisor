@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -24,11 +24,11 @@
 ### Step 1: Design the safe season-planning guidance surface
 **Status:** 🟨 In Progress
 
-- [ ] Existing planning/taper/review prompts inspected
-- [ ] Enhance-existing vs new-prompt approach decided
-- [ ] Deterministic existing tools selected; ATP writer excluded
-- [ ] Approach and non-goals recorded in Discoveries
-- [ ] Prompt tests run
+- [x] Existing planning/taper/review prompts inspected
+- [x] Enhance-existing vs new-prompt approach decided
+- [x] Deterministic existing tools selected; ATP writer excluded
+- [x] Approach and non-goals recorded in Discoveries
+- [x] Prompt tests run
 
 ---
 
@@ -83,6 +83,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Step 1 design: enhance existing prompts instead of adding a seventh `season_planning` prompt; strengthen `weekly_planning` as the season/race planning entry point, with lighter race-priority/compliance context in `race_week_taper` and `weekly_review`. | Avoids PRD prompt-catalog churn and keeps the guidance surface within the existing registry/golden-test pattern. | internal/prompts/catalog.go |
+| Planning guidance will cite existing deterministic reads/analyzers only: `get_events`, `get_training_plan`, `get_fitness`, `get_training_summary`, `compute_compliance_rate`, and `icuvisor_list_advanced_capabilities`; `get_training_plan` and `compute_compliance_rate` may be unavailable in core toolsets, so prompts must tell assistants to list capabilities and proceed from events/fitness/summary when absent. | Do not add or imply an ATP/season calendar writer; do not automatically fill the calendar, create ATP notes, or call write/delete tools before the user approves exact changes. | internal/prompts/catalog.go |
 
 ---
 
@@ -107,3 +109,4 @@
 ## Notes
 
 *Reserved for execution notes*
+| 2026-05-29 13:22 | Review R001 | plan Step 1: REVISE |
