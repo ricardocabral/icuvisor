@@ -1,10 +1,10 @@
 # TP-126: Deterministic segment-comparison analyzer workflow — Status
 
-**Current Step:** Step 1: Audit current segment analyzer activation
+**Current Step:** Step 2: Add segment-comparison eval/docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Audit current segment analyzer activation
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Inspect `compute_activity_segment_stats` description/schema/tests and existing eval scenarios.
 - [x] Confirm it supports distance-bounded first/last segment stats for pace/power/HR and exposes audit metadata without raw streams in terse mode.
@@ -32,7 +32,7 @@
 ---
 
 ### Step 2: Add segment-comparison eval/docs
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Add an eval scenario for comparing first 10 km vs last 10 km that expects `compute_activity_segment_stats` rather than raw `get_activity_streams` reduction in chat.
 - [ ] Update activity retrospective cookbook guidance with a deterministic segment-comparison prompt.
@@ -75,6 +75,7 @@
 |---|------|------|---------|------|
 | R001 | plan | 1 | APPROVE | `.reviews/R001-plan-step1.md` |
 | R002 | code | 1 | REVISE | `.reviews/R002-code-step1.md` |
+| R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
 
 ---
 
@@ -108,3 +109,4 @@
 ## Notes
 
 *Reserved for execution notes*
+| 2026-05-29 13:55 | Review R003 | code Step 1: APPROVE |
