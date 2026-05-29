@@ -48,7 +48,7 @@
 - [x] Update build-workouts cookbook with before/after preview language and approval workflow.
 - [x] Ensure examples distinguish prose description from structured `workout_doc`.
 - [x] Run targeted tests/docs validation as available.
-- [ ] Add a concrete existing-template before/after update preview showing duration, key intervals, intensity targets, load/distance/time deltas, and preserved fields before approval.
+- [x] Add a concrete existing-template before/after update preview showing duration, key intervals, intensity targets, load/distance/time deltas, and preserved fields before approval.
 
 ---
 

@@ -69,6 +69,17 @@ To revise an existing template, name it and the assistant uses [`update_workout`
 >
 > Say "save to library" and I will create it with `create_workout`, or "schedule for Tuesday" and I will place it on your calendar with `add_or_update_event`. I will not write anything until you approve this exact preview.
 
+For an existing-template edit, the assistant should make the delta just as explicit:
+
+> Before I call `update_workout`, here is the proposed update to `Sweet Spot Builder`:
+>
+> - **Current:** 60 min total, 3 × 10 min at 88-92% FTP, 5 min recoveries at 55% FTP, load 68.
+> - **Proposed:** 70 min total, 4 × 10 min at 88-92% FTP, same 5 min recoveries at 55% FTP, load about 78.
+> - **Delta:** +10 min, +1 sweet-spot interval, +10 load, no distance target change.
+> - **Preserved:** title, sport, folder, tags, warm-up/cool-down structure, recovery intensity, and the existing prose note about cadence.
+>
+> If you approve this exact before/after preview, I will send `update_workout` with the full desired `workout_doc` so the structured steps are preserved instead of replacing them with prose-only text.
+
 ## Variations
 
 - **Library only:** "...just save it to my 'VO2' folder, do not schedule it."
