@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documented the strength-training upstream API gap and current best-effort gym support via simple calendar notes or supported events.
 - Cookbook eval scenarios now cover athlete-local date lookup before activity detail/interval/split analysis for prompts like race retrospectives and run split comparisons.
 - New read-only `resolve_calendar_dates` MCP tool returns deterministic athlete-local date and weekday anchors for today, tomorrow, future offsets, and supplied base dates so planning prompts do not rely on model date arithmetic.
+- Safety eval/adversarial coverage now checks that assistants edit tomorrow's scheduled workout in place via the existing calendar event instead of deleting, recreating, or mutating workout-library templates.
 
 ### Changed
 

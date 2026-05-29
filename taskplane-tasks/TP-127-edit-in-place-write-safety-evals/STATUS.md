@@ -1,7 +1,7 @@
 # TP-127: Edit-in-place write safety evals — Status
 
-**Current Step:** Step 4: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 5: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-29
 **Review Level:** 2
 **Review Counter:** 13
@@ -64,11 +64,11 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -124,6 +124,9 @@
 | 2026-05-29 | Step 4 build | `make build` -> pass; built `bin/icuvisor`. |
 | 2026-05-29 | Step 4 failure review | No test, lint, or build failures to fix or document. |
 | 2026-05-29 | Review R013 | code Step 4: APPROVE. |
+| 2026-05-29 | Step 5 changelog | Updated `CHANGELOG.md` Unreleased Added with edit-in-place safety eval/adversarial coverage. |
+| 2026-05-29 | Step 5 affected docs review | Reviewed `docs/prd/PRD-icuvisor.md` and `web/content/explain/safety-modes.md`; no update needed because public write/delete behavior and user-facing safety-mode wording did not change. |
+| 2026-05-29 | Task completion | All steps complete; full test, lint, and build gates passed. |
 | 2026-05-29 14:39 | Exit intercept reprompt | Supervisor provided instructions (1095 chars) — reprompting worker |
 
 ---
