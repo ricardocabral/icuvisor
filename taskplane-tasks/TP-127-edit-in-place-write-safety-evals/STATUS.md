@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 2
 **Size:** M
 
@@ -36,10 +36,10 @@
 ### Step 2: Add eval/adversarial coverage
 **Status:** 🟨 In Progress
 
-- [ ] Add a concrete cookbook scenario where the user asks to change tomorrow’s existing workout and the assistant must locate the existing event/template first, then choose update/edit tools, not delete/create.
+- [ ] Add a concrete cookbook scenario for changing tomorrow’s scheduled calendar workout: expected read-before-write tools are `resolve_calendar_dates`/`get_events` then `add_or_update_event` with the existing `event_id`; forbidden tools include `create_workout`, `update_workout`, `delete_workout`, `delete_event`, and `delete_events_by_date_range`.
 - [ ] Add a separate edit-in-place adversarial doc entry/section whose pass criteria are update/edit or refusal to delete/recreate, without contradicting the existing safe-mode surrender corpus.
-- [ ] Assert the actual safe-mode/delete-mode guidance surface remains short and actionable when deletion is unavailable.
-- [ ] Run targeted tests: `make eval-validate`, `go test ./internal/tools`, and `go test ./internal/safety` if safety surfaces are touched or relied on.
+- [ ] Assert `icuvisor_list_advanced_capabilities` safe-mode guidance remains short, actionable, and server-config-only when deletion is unavailable; rely on the existing safety registration matrix for delete-tool absence.
+- [ ] Run targeted tests: `make eval-validate`, `go test ./internal/tools`, and `go test ./internal/safety`.
 
 ---
 
@@ -76,6 +76,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R006 | plan | 2 | REVISE | `.reviews/R006-plan-step2.md` |
+| R007 | plan | 2 | REVISE | `.reviews/R007-plan-step2.md` |
 
 ---
 
@@ -100,6 +101,7 @@
 | 2026-05-29 14:06 | Step 1 targeted tests | Ran `go test ./internal/tools` -> pass (`ok`, 0.329s). |
 | 2026-05-29 14:22 | Worker iter 1 | done in 955s, tools: 69 |
 | 2026-05-29 | Review R006 | plan Step 2: REVISE; added concrete eval/doc/safety-surface checklist items. |
+| 2026-05-29 | Review R007 | plan Step 2: REVISE; pinned calendar-event update path and advanced-capabilities guidance test surface. |
 
 ---
 
@@ -119,3 +121,5 @@
 | 2026-05-29 14:15 | Review R003 | code Step 1: REVISE |
 | 2026-05-29 14:18 | Review R004 | code Step 1: APPROVE |
 | 2026-05-29 14:26 | Review R006 | plan Step 2: REVISE |
+| 2026-05-29 14:29 | Review R007 | plan Step 2: REVISE |
+| 2026-05-29 14:28 | Review R007 | plan Step 2: REVISE |
