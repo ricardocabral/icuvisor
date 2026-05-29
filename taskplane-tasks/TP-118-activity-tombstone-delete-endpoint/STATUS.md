@@ -1,7 +1,7 @@
 # TP-118: Activity tombstone delete endpoint — Status
 
 **Current Step:** Step 4: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-29
 **Review Level:** 2
 **Review Counter:** 8
@@ -54,11 +54,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `CHANGELOG.md` updated if needed
-- [ ] Roadmap/PRD checked if affected
-- [ ] Discoveries logged
+- [x] `CHANGELOG.md` updated if needed
+- [x] Roadmap/PRD checked if affected
+- [x] Discoveries logged
 
 ---
 
@@ -85,6 +85,7 @@
 | `DeleteActivity` should issue `DELETE /activity/{id}/tombstone` because the newly observed public Intervals.icu OpenAPI path is more specific for activity deletion than the existing direct `/activity/{id}` path. No fallback is planned because destructive retries against multiple endpoints would broaden deletion semantics without documented need. | Implement in Step 2 and lock with exact-path httptest coverage. | `internal/intervals/delete.go`, `internal/intervals/delete_test.go` |
 | The observed upstream path includes `/api/v1`, but `config.DefaultAPIBaseURL` and test base URLs already represent the API root; client calls must pass relative path parts `activity`, `{id}`, `tombstone`, yielding `/activity/{id}/tombstone` in httptest and `/api/v1/activity/{id}/tombstone` against the default base URL. | Assert the relative request path in Step 2; do not duplicate `/api/v1`. | `internal/intervals/client.go`, `internal/intervals/delete_test.go` |
 | `delete_activity` input schema was not previously included in schema snapshots; adding it required adding the tool to the schema-stability allowlist. Running the snapshot generator also showed unrelated pre-existing drift in `add_or_update_event.json`, which was not included in this task's Step 2 changes. | Keep the focused delete_activity snapshot; revisit unrelated snapshot drift separately if the schema-stability command is part of a later gate. | `internal/toolchecks/schema_stability.go`, `internal/tools/schema_snapshot/delete_activity.json` |
+| ROADMAP and PRD destructive-operation safety wording were checked; the tombstone endpoint change does not change public delete/write scope or env-var gating semantics. | No ROADMAP/PRD edits needed. | `ROADMAP.md`, `docs/prd/PRD-icuvisor.md` |
 
 ---
 
