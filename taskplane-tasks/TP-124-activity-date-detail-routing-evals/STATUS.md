@@ -1,10 +1,10 @@
 # TP-124: Activity date resolution and detail-routing evals — Status
 
-**Current Step:** Step 1: Map current routing hints
+**Current Step:** Step 2: Add eval scenarios
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -34,10 +34,10 @@
 ### Step 2: Add eval scenarios
 **Status:** 🟨 In Progress
 
-- [ ] Add at least one eval scenario for “analyze my race last Sunday” that requires activity-date lookup then detail/interval fetch.
-- [ ] Add one scenario for “show/compare lap splits or reps for my run on [date]” that must not stop at session summaries.
-- [ ] Validate expected tool-use ordering and grounding rubric.
-- [ ] Run targeted tests: `make eval-validate`
+- [x] Add at least one eval scenario for “analyze my race last Sunday” that requires activity-date lookup then detail/interval fetch.
+- [x] Add one scenario for “show/compare lap splits or reps for my run on [date]” that must not stop at session summaries.
+- [x] Validate expected tool-use ordering and grounding rubric.
+- [x] Run targeted tests: `make eval-validate`
 
 ---
 
@@ -76,6 +76,7 @@
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | Code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
+| R004 | Plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
 
 ---
 
@@ -113,3 +114,4 @@ Step 1 inspection identified three routing gaps: detail/interval/splits tool des
 | 2026-05-29 13:22 | Review R001 | plan Step 1: REVISE |
 | 2026-05-29 13:24 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-29 13:27 | Review R003 | code Step 1: APPROVE |
+| 2026-05-29 13:29 | Review R004 | plan Step 2: APPROVE |

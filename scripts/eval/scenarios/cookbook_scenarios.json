@@ -82,6 +82,28 @@
       "anti_patterns": ["reports power, HR, or pace numbers for a blank Strava import", "claims a 0 W average instead of saying the data is unavailable"]
     },
     {
+      "id": "CB-ACT-03",
+      "recipe": "activity-retrospective",
+      "persona": "athlete",
+      "prompt": "Analyze my race last Sunday. Use icuvisor with my intervals.icu data: first resolve last Sunday in my athlete-local timezone, list activities for that date window, choose the race activity if one exists, then fetch its details and intervals before analyzing it. If there is no activity or no race-like activity on that date, say so plainly and stop. Include which activity ID/name you selected, pacing and effort evidence from details/intervals, any unavailable data caveats, and two race takeaways. Do not ask me for an activity ID.",
+      "expected_tools": ["get_activities", "get_activity_details", "get_activity_intervals"],
+      "bonus_tools": ["get_activity_splits", "get_activity_histogram", "get_extended_metrics", "get_athlete_profile"],
+      "forbidden_tools": ["delete_activity", "delete_event", "delete_workout"],
+      "must_address": ["resolves last Sunday as an athlete-local activity date before selecting an ID", "identifies the chosen race activity or says none was found", "uses detail and interval evidence for the analysis", "names unavailable or missing data instead of guessing", "two concrete race takeaways"],
+      "anti_patterns": ["asks the user for an activity ID before trying get_activities", "claims no activity exists without querying the last-Sunday date window", "analyzes a race from get_activities summaries only", "calls get_activity_details or get_activity_intervals before resolving the activity with get_activities"]
+    },
+    {
+      "id": "CB-ACT-04",
+      "recipe": "activity-retrospective",
+      "persona": "athlete",
+      "prompt": "Show and compare the lap splits or reps for my run last Wednesday. Use icuvisor: resolve last Wednesday in my athlete-local timezone, list activities for that date window, pick the run, then fetch intervals and per-distance splits for that activity. Give a compact table comparing each rep/lap/split with distance, duration, pace, and heart-rate or power when returned. If the activity has no manual reps/laps, say that and use get_activity_splits for virtual splits; do not stop at the session summary.",
+      "expected_tools": ["get_activities", "get_activity_intervals", "get_activity_splits"],
+      "bonus_tools": ["get_activity_details", "get_athlete_profile"],
+      "forbidden_tools": ["delete_activity", "delete_event", "delete_workout"],
+      "must_address": ["resolves the athlete-local date and selected run before requesting reps or splits", "compares lap/rep/split rows rather than only session-level metrics", "states whether rows came from intervals or virtual splits", "names missing HR/power/pace fields instead of estimating"],
+      "anti_patterns": ["answers from get_activities session summaries only", "asks the user for an activity ID before trying date lookup", "skips get_activity_intervals and get_activity_splits", "fabricates split rows or per-rep metrics not returned by a tool"]
+    },
+    {
       "id": "CB-FTP-01",
       "recipe": "ftp-and-zones",
       "persona": "athlete",
