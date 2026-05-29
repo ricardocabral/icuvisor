@@ -126,7 +126,7 @@ func decodeResolveCalendarDatesRequest(raw json.RawMessage) (resolveCalendarDate
 func shapeResolveCalendarDates(args resolveCalendarDatesRequest, now func() time.Time, timezoneName string) (resolveCalendarDatesResponse, error) {
 	loc, err := time.LoadLocation(timezoneName)
 	if err != nil {
-		return resolveCalendarDatesResponse{}, fmt.Errorf("%w: loading timezone %q: %v", errResolveCalendarDatesTimezone, timezoneName, err)
+		return resolveCalendarDatesResponse{}, fmt.Errorf("%w: loading timezone %q: %w", errResolveCalendarDatesTimezone, timezoneName, err)
 	}
 	base, err := resolveCalendarBaseDate(args.BaseDate, now, loc)
 	if err != nil {

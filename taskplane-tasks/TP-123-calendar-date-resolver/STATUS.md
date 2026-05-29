@@ -1,10 +1,10 @@
 # TP-123: Calendar date resolver and future date anchors — Status
 
-**Current Step:** Step 3: Add activation guidance and eval coverage
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 2
 **Size:** M
 
@@ -56,12 +56,12 @@
 ---
 
 ### Step 4: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] FULL test suite passing: `make test`
-- [ ] Lint passes or pre-existing linter limitations are documented: `make lint`
-- [ ] Build passes: `make build`
-- [ ] All failures fixed or clearly documented as pre-existing
+- [x] FULL test suite passing: `make test`
+- [x] Lint passes or pre-existing linter limitations are documented: `make lint`
+- [x] Build passes: `make build`
+- [x] All failures fixed or clearly documented as pre-existing
 
 ---
 
@@ -122,3 +122,4 @@ Plan review R003 further pinned the default-base injected clock conversion, exac
 | 2026-05-29 13:51 | Review R007 | plan Step 3: REVISE |
 | 2026-05-29 13:53 | Review R008 | plan Step 3: APPROVE |
 | 2026-05-29 13:59 | Review R009 | code Step 3: APPROVE |
+| 2026-05-29 14:01 | Review R010 | plan Step 4: APPROVE |
