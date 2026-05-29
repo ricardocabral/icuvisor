@@ -1,10 +1,10 @@
 # TP-132: Multiple same-day events regression pack — Status
 
-**Current Step:** Step 1: Audit same-day event handling
+**Current Step:** Step 2: Add regression coverage
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -22,17 +22,17 @@
 ---
 
 ### Step 1: Audit same-day event handling
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Inspect `get_today` and `get_events` shaping/tests for multiple same-day planned workouts, notes, and races.
-- [ ] Confirm athlete-local date filtering does not collapse rows by date.
-- [ ] Record missing cases in STATUS.md Discoveries.
-- [ ] Run targeted tests: `go test ./internal/tools`
+- [x] Inspect `get_today` and `get_events` shaping/tests for multiple same-day planned workouts, notes, and races.
+- [x] Confirm athlete-local date filtering does not collapse rows by date.
+- [x] Record missing cases in STATUS.md Discoveries.
+- [x] Run targeted tests: `go test ./internal/tools`
 
 ---
 
 ### Step 2: Add regression coverage
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Add tests with at least two WORKOUT events on the same date plus optional NOTE/race annotations.
 - [ ] Assert both entries are present, separately identifiable, and not overwritten by map/date grouping.
@@ -71,6 +71,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Existing same-day event shaping appends rows and stable-sorts by `start_date_local` then `event_id`; no date-keyed map collapse found in production shaping. | Add regression tests because current tests cover one workout plus NOTE/race only, not multiple same-day workouts. | `internal/tools/get_today.go`, `internal/tools/get_events.go`, `internal/tools/get_today_test.go`, `internal/tools/get_events_training_plan_test.go` |
+| Athlete-local date filtering requests bounded upstream date ranges (`Oldest`/`Newest`) and preserves each returned event row; response code does not group or overwrite by date. | Cover requested same-day/tomorrow ranges with duplicate local-date workouts in tests. | `internal/tools/get_today.go:120`, `internal/tools/get_events.go:117`, `internal/tools/get_events.go:176` |
 
 ---
 
@@ -93,3 +95,4 @@
 ## Notes
 
 *Reserved for execution notes*
+| 2026-05-29 16:06 | Review R001 | plan Step 1: APPROVE |
