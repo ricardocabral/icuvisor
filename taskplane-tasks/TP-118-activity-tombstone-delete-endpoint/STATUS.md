@@ -1,10 +1,10 @@
 # TP-118: Activity tombstone delete endpoint — Status
 
-**Current Step:** Step 1: Determine the correct activity deletion contract
+**Current Step:** Step 2: Implement and lock the endpoint behavior
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-05-29
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** S
 
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Determine the correct activity deletion contract
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Existing delete implementation and tests inspected
 - [x] Public upstream evidence checked without competitor source
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Implement and lock the endpoint behavior
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Client path/method updated if needed
 - [ ] httptest coverage asserts exact method/path and target-athlete safety
@@ -101,3 +101,4 @@
 Plan review R001 requires Step 1 tests to include `DeleteMethods|ActivityIDEndpointsRequireResolvedTargetOwnership` coverage and discoveries to explicitly note `/api/v1` base URL handling.
 | 2026-05-29 15:25 | Review R001 | plan Step 1: REVISE |
 | 2026-05-29 15:26 | Review R002 | plan Step 1: APPROVE |
+| 2026-05-29 15:29 | Review R003 | code Step 1: APPROVE |
