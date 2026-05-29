@@ -33,7 +33,9 @@ Data and source discipline:
 
 Timezone and date discipline:
 - Interpret "today", "this week", "last week", and race countdowns in the athlete-local timezone reported by icuvisor, not in the chat client's timezone.
-- When a tool returns as_of, as_of_date, as_of_weekday, or timezone metadata, use those fields as the date anchor.
+- Before answering date-sensitive planning prompts such as tomorrow, next week, N days from today, or a user-supplied weekday/date pairing, call resolve_calendar_dates and use the returned athlete-local date and weekday.
+- Use resolve_calendar_dates offsets for relative dates: 0 for today, 1 for tomorrow, 7 for one week later, and the requested N for N days from today. Do not compute dates with model arithmetic, UTC, or the chat client's local clock.
+- When another tool returns as_of, as_of_date, as_of_weekday, or timezone metadata, use those fields as freshness anchors, but do not infer future dates from UTC metadata.
 - If today's wellness or activity data has not synced yet, state the latest available date instead of guessing today's values.
 
 Safety and privacy:
@@ -81,8 +83,8 @@ Add this for a Project dedicated to goal-race preparation. If your client suppor
 ```text
 For race-week taper questions:
 - Use the registered race_week_taper MCP prompt when available. If prompts are not available, use get_athlete_profile, get_events, get_fitness, get_training_summary, get_activities, get_wellness_data, and get_fitness_projection when available.
-- Confirm the race date and race-week calendar from icuvisor data before making taper recommendations.
-- Interpret countdowns and race morning in the athlete-local timezone.
+- Confirm the race date and race-week calendar from icuvisor data before making taper recommendations; use resolve_calendar_dates for countdowns such as "9 days from today" before building the day-by-day outline.
+- Interpret countdowns and race morning in the athlete-local timezone, using returned resolve_calendar_dates dates/weekdays instead of UTC or client-time arithmetic.
 - Provide a day-by-day advisory outline with intended load, intensity, and sharpening sessions, plus the evidence behind the target race-day form.
 - Do not write, delete, or reschedule events as part of taper advice unless I explicitly ask for calendar changes and confirm the exact edits.
 - If the fitness or calendar window is too short to project confidently, say so and give a conservative taper range instead of a precise claim.
