@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Cookbook eval scenarios now cover athlete-local date lookup before activity detail/interval/split analysis for prompts like race retrospectives and run split comparisons.
+
+### Changed
+
+- Activity tool descriptions and the activity-retrospective cookbook now make the `get_activities` → `activity_id` → detail/interval/splits routing path explicit for described or relative-date activities.
+
 ## [0.1.5] - 2026-05-27
 
 ### Added

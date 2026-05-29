@@ -1,7 +1,7 @@
 # TP-124: Activity date resolution and detail-routing evals — Status
 
 **Current Step:** Step 5: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-05-29
 **Review Level:** 2
 **Review Counter:** 11
@@ -63,11 +63,11 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -96,6 +96,7 @@
 | Relative-date prompts like "last Sunday" need explicit athlete-local date-window resolution before selecting an activity ID. | Add eval coverage and concise cookbook/tool hints where needed. | `get_activities` description/schema; `web/content/cookbook/activity-retrospective.md`; `scripts/eval/scenarios/cookbook_scenarios.json` |
 | Detail, intervals, and splits tools all require `activity_id`; only `get_activities` currently hints it should precede detail/interval/splits fetches, so ID-routing is one-sided. | Harden concise activation hints on activity detail/interval/splits descriptions or cookbook guidance. | `internal/tools/get_activity_details.go`; `internal/tools/get_activity_streams.go` |
 | Existing cookbook evals include most-recent activity/test scans but not race-by-date detail analysis or splits/reps-by-date scenarios. | Add two routing eval scenarios with expected list→detail/interval/splits ordering and anti-patterns. | `scripts/eval/scenarios/cookbook_scenarios.json` |
+| Changing the first sentence of tool descriptions affects both generated website data and gendocs golden fixtures. | Ran `make docs-tools`, updated `cmd/gendocs/testdata/tools.golden.json`, and verified `go test ./cmd/gendocs`. | `web/data/tools.json`; `cmd/gendocs/testdata/tools.golden.json` |
 
 ---
 
@@ -124,6 +125,8 @@ Step 1 inspection identified three routing gaps: detail/interval/splits tool des
 Plan review R006 required Step 3 to include split hinting in `internal/tools/get_activity_streams.go`, concise athlete-local date-window ID-routing wording, and generated tool docs/data sync if tool catalog descriptions change.
 
 Code review R008 found stale `cmd/gendocs/testdata/tools.golden.json` summaries after catalog text changes; update the golden fixture and run `go test ./cmd/gendocs`.
+
+Documentation review: `web/content/cookbook/activity-retrospective.md` was updated for user-facing routing guidance; tool catalog text was regenerated into `web/data/tools.json`; `web/content/reference/tools.md` is a checked static page and required no direct edit.
 | 2026-05-29 13:22 | Review R001 | plan Step 1: REVISE |
 | 2026-05-29 13:24 | Review R002 | plan Step 1: APPROVE |
 | 2026-05-29 13:27 | Review R003 | code Step 1: APPROVE |
