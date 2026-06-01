@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-06-01
+
+### Fixed
+
+- Windows standalone binaries now embed the IANA timezone database so valid zones like `Europe/Madrid`, `Europe/Paris`, and `Europe/Brussels` are accepted during startup. (#37)
+
 ## [0.1.6] - 2026-05-29
 
 ### Added
