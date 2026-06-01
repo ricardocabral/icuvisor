@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"os"
+	_ "time/tzdata"
 
 	"github.com/ricardocabral/icuvisor/internal/app"
 )
