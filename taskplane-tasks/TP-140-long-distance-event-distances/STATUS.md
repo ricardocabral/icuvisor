@@ -1,11 +1,11 @@
 # TP-140: Long-distance event distance regression coverage — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
+**Current Step:** Step 1: Audit event distance handling
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** S
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -13,16 +13,16 @@
 ---
 
 ### Step 0: Preflight
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Required files and paths exist
-- [ ] Dependencies satisfied
-- [ ] Confirm no GPL/copyleft competitor source is opened or copied; use only public forum behavior signals and project docs.
+- [x] Required files and paths exist
+- [x] Dependencies satisfied
+- [x] Confirm no GPL/copyleft competitor source is opened or copied; use only public forum behavior signals and project docs.
 
 ---
 
 ### Step 1: Audit event distance handling
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Inspect event write/read validation for distance limits, units, and load/target-load wording.
 - [ ] Confirm whether any Icuvisor-local cap below 1200 km exists; record upstream-only constraints in STATUS.md.
@@ -74,3 +74,6 @@
 
 | Date | Review Type | Result | Notes |
 |------|-------------|--------|-------|
+
+| 2026-06-03 16:07 | Task started | Runtime V2 lane-runner execution |
+| 2026-06-03 16:07 | Step 0 started | Preflight |
