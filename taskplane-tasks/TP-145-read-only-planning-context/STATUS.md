@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -35,8 +35,9 @@
 ---
 
 ### Step 2: Implement get_planning_context
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
+- [ ] R004 choose catalog group, tier-test update scope, and deterministic clock injection pattern
 - [ ] Add the tool using existing intervals client methods and response shaping patterns
 - [ ] Return week events/workouts, active training-plan summary, current/recent fitness context, upcoming race context, and caveats without creating/updating/deleting calendar items
 - [ ] Register the tool in the catalog/toolcatalog with appropriate core/full tier placement
@@ -80,6 +81,7 @@
 | R001 | Plan | Step 1 | REVISE | .reviews/R001-plan-step1.md |
 | R002 | Plan | Step 1 | REVISE | .reviews/R002-plan-step1.md |
 | R003 | Plan | Step 1 | APPROVE | inline |
+| R004 | Plan | Step 2 | REVISE | .reviews/R004-plan-step2.md |
 
 ---
 
@@ -101,4 +103,6 @@
 | 2026-06-03 16:19 | R002 event limits/caveats/full scope | Week events fetch `week_start..week_end` with `Limit: 500`; race scan fetches `as_of_date..as_of_date+84 days` with `Limit: 500` and filters `RACE`/`RACE_*`. Because upstream applies the limit, `len(events) >= 500` is treated as `*_may_be_truncated`, surfaced in `_meta.truncation` and caveat codes `week_events_may_be_truncated` / `upcoming_races_may_be_truncated`. Empty week emits `no_week_events` and, because workouts are empty, `no_week_workouts`; a non-empty week without `WORKOUT` emits only `no_week_workouts`. No race rows after filtering emits `no_upcoming_races` unless race scan may be truncated, in which case include both caveats. `include_full:true` only adds per-event `full`, fitness row `full`, and raw training-plan assignment/nested payloads; default omits raw upstream payloads in all sections. Implementation must compose read-only client methods directly: `GetAthleteProfile`, `ListEvents`, `GetTrainingPlan`, `ListAthleteSummary`; no create/update/delete methods. |
 | 2026-06-03 16:14 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-06-03 16:17 | Review R002 | plan Step 1: REVISE |
+| 2026-06-03 16:20 | R004 plan review | Reviewer requested Step 2-specific integration choices: catalog group, catalog_tiers_test update scope, and deterministic clock injection before implementation. |
 | 2026-06-03 16:20 | Review R003 | plan Step 1: APPROVE |
+| 2026-06-03 16:22 | Review R004 | plan Step 2: UNKNOWN |
