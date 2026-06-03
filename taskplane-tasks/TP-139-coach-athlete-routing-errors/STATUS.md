@@ -3,7 +3,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -21,10 +21,11 @@
 ### Step 1: Audit coach/local athlete routing
 **Status:** 🟨 In Progress
 
-- [ ] Inspect `internal/coach`, athlete ID normalization, `list_athletes`, and `select_athlete` behavior.
-- [ ] Identify where unauthorized coached-athlete access currently becomes generic upstream errors or ambiguous state.
-- [ ] Define expected public error messages that do not leak credentials or raw sensitive identifiers.
-- [ ] Run targeted tests: `go test ./internal/coach ./internal/config ./internal/tools`.
+- [ ] Inspect `internal/coach`, athlete ID normalization, `list_athletes`, `select_athlete`, and MCP registration/routing behavior.
+- [ ] Identify where unauthorized coached-athlete access, local-mode athlete targeting, or tool ACL failures currently become generic upstream errors or ambiguous state.
+- [ ] Define expected public error message classes for invalid athlete ID format, unauthorized/not-configured athletes, and selected-athlete tool denial without leaking credentials or raw sensitive identifiers.
+- [ ] Document an audit matrix in STATUS.md mapping entrypoint, current behavior, ambiguous failure, expected message, and Step 2 target.
+- [ ] Run targeted tests: `go test ./internal/coach ./internal/config ./internal/tools ./internal/mcp`.
 
 ---
 
@@ -74,3 +75,5 @@
 
 | 2026-06-03 15:43 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 15:43 | Step 0 started | Preflight |
+| 2026-06-03 | Plan Review | REVISE | Step 1 plan expanded to include MCP registration/routing layer, local-mode behavior, concrete audit matrix, and distinct public message classes. |
+| 2026-06-03 15:45 | Review R001 | plan Step 1: UNKNOWN |
