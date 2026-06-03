@@ -59,6 +59,9 @@ func TestToolSets(t *testing.T) {
 	if !IsKnownTool(GetHRCurves) || !IsAthleteScopedTool(GetHRCurves) {
 		t.Fatal("get_hr_curves should be known and athlete-scoped")
 	}
+	if !IsKnownTool(GetPlanningContext) || !IsAthleteScopedTool(GetPlanningContext) {
+		t.Fatal("get_planning_context should be known and athlete-scoped")
+	}
 	if !IsKnownTool(GetPaceCurves) || !IsAthleteScopedTool(GetPaceCurves) {
 		t.Fatal("get_pace_curves should be known and athlete-scoped")
 	}

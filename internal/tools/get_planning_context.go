@@ -16,7 +16,7 @@ import (
 
 const (
 	getPlanningContextName        = "get_planning_context"
-	getPlanningContextDescription = "Fetch read-only weekly planning context: athlete-local week events/workouts, active training-plan assignment summary, current fitness context, upcoming races, and caveats. This does not create an ATP, fill a calendar, or call write/delete tools; include_full widens source read payloads only."
+	getPlanningContextDescription = "Fetch read-only weekly planning context without creating an ATP or calendar writes: athlete-local week events/workouts, active training-plan assignment summary, current fitness context, upcoming races, and caveats. This does not fill a calendar or call write/delete tools; include_full widens source read payloads only."
 	fetchPlanningContextMessage   = "could not fetch planning context; check intervals.icu credentials, athlete ID, timezone, and date window"
 
 	planningContextEventLimit     = 500
