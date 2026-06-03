@@ -63,11 +63,12 @@ func RecoveryCheckPrompt() Prompt {
 			Do: []string{
 				"Read wellness first; preserve sleepQuality 1-4 and sleepScore 0-100 as separate fields.",
 				"Check HRV, resting HR, readiness, fatigue, soreness, mood, and any `_meta.stale`, `_meta.missing_fields`, or provenance warnings.",
+				"When readiness is present, cite `_meta.provenance.readiness.source` and `native_scale`; treat Garmin Body Battery, Oura readiness, Polar nightly recharge/ANS charge, WHOOP recovery, and unknown upstream readiness as provider-native signals, not a universal recovery score.",
 				"If readiness is missing or null, say that plainly before interpreting other signals; do not invent a readiness score.",
 				"Use HRV, resting HR, sleepSecs, sleepQuality (1-4), sleepScore (0-100), fatigue, soreness, stress, feel, mood, motivation, and available `_native` provider fields only as cautious supporting evidence.",
 				"Use fitness only to contextualize recent load; do not turn recovery into a full training analysis.",
 			},
-			Return: "green/yellow/red recovery guidance, the main evidence, stale or missing fields, readiness-score absence when applicable, and a 24-48h training adjustment",
+			Return: "green/yellow/red recovery guidance, the main evidence with provider/source labels, stale or missing fields, readiness-score absence when applicable, and a 24-48h training adjustment",
 		}),
 	}
 }
@@ -133,7 +134,8 @@ func WeeklyReviewPrompt() Prompt {
 				"Use compute_load_balance and compute_compliance_rate when available; otherwise call icuvisor_list_advanced_capabilities, continue from available reads, and name the missing helper.",
 				"Review activities, race/other events, and training plan for planned-versus-completed work; include race date/priority when relevant and the upcoming-week preview only when include_next_week is true or the user asks.",
 				"Use wellness data for sleep/readiness/HRV context; check `_meta.stale`, `_meta.missing_fields`, and provenance warnings.",
-				"If readiness is missing, null, stale, or absent, say that explicitly and do not infer or backfill a readiness score; use HRV, resting HR, sleep duration/quality/score, subjective fatigue/soreness/stress/feel/mood/motivation, and available `_native` provider fields as cautious supporting context only.",
+				"When readiness is present, cite `_meta.provenance.readiness.source` and `native_scale`; treat Garmin Body Battery, Oura readiness, Polar nightly recharge/ANS charge, WHOOP recovery, and unknown upstream readiness as provider-native signals, not a universal recovery score.",
+				"If readiness is missing, null, stale, or absent, say that explicitly and do not invent, infer, or backfill a readiness score; use HRV, resting HR, sleep duration/quality/score, subjective fatigue/soreness/stress/feel/mood/motivation, and available `_native` provider fields as cautious supporting context only.",
 				"Use analyze_trend only for specific trend questions; keep raw activity rows terse unless evidence is missing.",
 			},
 			Guardrails: []string{
@@ -142,7 +144,7 @@ func WeeklyReviewPrompt() Prompt {
 				"Do not call write or delete tools unless the user explicitly approves the exact change first.",
 				"Do not auto-fill calendars or create ATP notes from the review; propose exact changes for user approval first.",
 			},
-			Return: "weekly review with wins, concerns, planned-vs-completed gaps, wellness caveats, load/intensity evidence, next-week preview when requested, and explicit follow-up questions before any write",
+			Return: "weekly review with wins, concerns, planned-vs-completed gaps, wellness caveats with provider/source labels, load/intensity evidence, next-week preview when requested, and explicit follow-up questions before any write",
 		}),
 	}
 }

@@ -1,10 +1,10 @@
 # TP-142: Readiness provenance labels and recovery wording guardrails — Status
 
-**Current Step:** Step 1: Audit readiness/recovery wording
+**Current Step:** Step 2: Add provenance and prompt regressions
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 
@@ -32,12 +32,12 @@
 ---
 
 ### Step 2: Add provenance and prompt regressions
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Add or strengthen tests that `_meta.provenance.readiness.native_scale` is provider-specific and visible when readiness is present.
-- [ ] Update prompt wording/golden tests so assistants cite provider/source and do not invent a readiness score when missing or stale.
-- [ ] Ensure terse defaults remain compact and null stripping does not remove required provenance.
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/prompts`.
+- [x] Add or strengthen tests that `_meta.provenance.readiness.native_scale` is provider-specific and visible when readiness is present.
+- [x] Update prompt wording/golden tests so assistants cite provider/source and do not invent a readiness score when missing or stale.
+- [x] Ensure terse defaults remain compact and null stripping does not remove required provenance.
+- [x] Run targeted tests: `go test ./internal/tools ./internal/prompts`.
 
 ---
 
@@ -77,7 +77,9 @@
 | Date | Review Type | Result | Notes |
 |------|-------------|--------|-------|
 
+| 2026-06-03 16:17 | Plan review | Step 2 APPROVE |
 | 2026-06-03 16:16 | Plan review | Step 1 APPROVE |
 | 2026-06-03 16:15 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 16:15 | Step 0 started | Preflight |
 | 2026-06-03 16:17 | Review R001 | plan Step 1: APPROVE |
+| 2026-06-03 16:20 | Review R002 | plan Step 2: APPROVE |
