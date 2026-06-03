@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -28,6 +28,7 @@
 - [x] Ensure normal tests do not hit the network; any live fetch must be opt-in or confined to CI schedule/manual workflow
 - [x] Define output that highlights added/removed OpenAPI paths and creates a human-triage artifact without auto-implementing endpoints
 - [x] Plan-review checkpoint completed before implementation
+- [ ] Address R001 plan feedback by using a testable OpenAPI diff package/command layout rather than logic only in a build-ignored root script
 
 ---
 
@@ -71,7 +72,9 @@
 
 <!-- Workers log durable discoveries here. -->
 
-| 2026-06-03 | Step 1 design | Add a standalone `scripts/diff_openapi_endpoints.go` with offline fixture-friendly `-baseline`/`-latest` inputs and opt-in `-latest-url` fetching, plus a manual/scheduled GitHub workflow that writes a Markdown triage summary. Normal `make test` remains offline because tests use local fixtures only. Output reports added/removed path keys and next triage steps; it must not generate tools or auto-implement endpoints. |
+| 2026-06-03 | Step 1 design | Add a testable `scripts/openapidiff/` Go package/command with offline fixture-friendly `-baseline`/`-latest` inputs and opt-in `-latest-url` fetching, plus a manual/scheduled GitHub workflow that writes a Markdown triage summary. Normal `make test` remains offline because tests use local fixtures only. Output reports added/removed path keys and next triage steps; it must not generate tools or auto-implement endpoints. |
 
 | 2026-06-03 16:11 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 16:11 | Step 0 started | Preflight |
+| 2026-06-03 | R001 plan review | Requested testable layout instead of logic only in a root build-ignored script; revised plan to `scripts/openapidiff/` normal package/command. |
+| 2026-06-03 16:14 | Review R001 | plan Step 1: REVISE |
