@@ -1,11 +1,11 @@
 # TP-151: Event external_id idempotency — Status
 
-**Current Step:** Step 4: Refresh schemas, routing, and docs
+**Current Step:** Step 5: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 13
-**Iteration:** 4
+**Review Counter:** 14
+**Iteration:** 5
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -71,12 +71,12 @@
 ---
 
 ### Step 5: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] FULL test suite passing
-- [ ] Lint passes
-- [ ] All failures fixed
-- [ ] Build passes
+- [x] FULL test suite passing
+- [x] Lint passes
+- [x] All failures fixed
+- [x] Build passes
 
 ---
 
@@ -106,6 +106,7 @@
 | R011 | Plan | Step 4 | REVISE | `.reviews/R011-plan-step4.md` |
 | R012 | Plan | Step 4 | APPROVE | `.reviews/R012-plan-step4.md` |
 | R013 | Code | Step 4 | APPROVE | `.reviews/R013-code-step4.md` |
+| R014 | Plan | Step 5 | APPROVE | `.reviews/R014-plan-step5.md` |
 
 ---
 
@@ -141,6 +142,11 @@
 | 2026-06-03 | Review R011 | plan Step 4: REVISE; docs/changelog plan expanded |
 | 2026-06-03 | Review R012 | plan Step 4: APPROVE |
 | 2026-06-03 | Review R013 | code Step 4: APPROVE |
+| 2026-06-03 | Step 5 started | Testing & Verification |
+| 2026-06-03 | Review R014 | plan Step 5: APPROVE |
+| 2026-06-03 | Step 5 failure triage | No failures remained after the passing full-suite and lint gates; no code fixes required before build verification |
+| 2026-06-03 | Step 5 build | `make build` passed |
+| 2026-06-03 23:04 | Worker iter 4 | done in 747s, tools: 60 |
 
 ---
 
@@ -174,3 +180,4 @@
 | 2026-06-03 22:54 | Review R011 | plan Step 4: REVISE |
 | 2026-06-03 22:58 | Review R012 | plan Step 4: APPROVE |
 | 2026-06-03 23:02 | Review R013 | code Step 4: APPROVE |
+| 2026-06-03 23:03 | Review R014 | plan Step 5: APPROVE |
