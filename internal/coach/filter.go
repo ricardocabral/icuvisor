@@ -74,7 +74,7 @@ func (f ToolFilter) ResolveTarget(suppliedAthleteID, defaultAthleteID, selectedA
 	}
 	normalized, err := normalize(targetAthleteID)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", ErrInvalidAthleteID, err)
+		return "", fmt.Errorf("%w: %w", ErrInvalidAthleteID, err)
 	}
 	if !f.evaluator.HasAthlete(normalized) {
 		return "", ErrAthleteNotAuthorized

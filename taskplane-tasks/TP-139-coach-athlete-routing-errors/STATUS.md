@@ -1,9 +1,9 @@
 # TP-139: Coach-mode athlete routing and authorization errors — Status
-**Current Step:** Step 2: Add routing/error tests and hardening
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -41,12 +41,12 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Run FULL test suite: `make test`
-- [ ] Run lint: `make lint`
-- [ ] Fix all failures or document pre-existing unrelated failures with exact command output
-- [ ] Build passes: `make build`
+- [x] Run FULL test suite: `make test`
+- [x] Run lint: `make lint`
+- [x] Fix all failures or document pre-existing unrelated failures with exact command output
+- [x] Build passes: `make build`
 
 ---
 
@@ -73,6 +73,10 @@
 | 2026-06-03 | Step 2 | Added registry coverage that tool input schemas do not expose credential/API-key parameters; existing MCP ACL visibility tests continue to assert hidden tools stay absent. | Protects against model-controlled credentials while preserving coach ACL catalog filtering. |
 | 2026-06-03 | Step 2 | Targeted hardening tests passed: `go test ./internal/coach ./internal/config ./internal/tools ./internal/mcp`. | Coach routing changes are green across touched packages. |
 | 2026-06-03 | Step 2 | Revised `select_athlete` to use strict argument decoding and added a regression that `api_key` is rejected without changing selected athlete state. | Addresses R005 code review; targeted tests still pass. |
+| 2026-06-03 | Step 3 | Full test suite passed: `make test`. | Quality gate test phase is green. |
+| 2026-06-03 | Step 3 | Lint passed after changing an error wrap in `coach.ToolFilter.ResolveTarget` to use `%w`: `make lint`. | No lint issues remain. |
+| 2026-06-03 | Step 3 | Fixed the only observed quality-gate failure (`errorlint` on non-wrapping `%v`); no pre-existing unrelated failures were observed. | All verification failures addressed in-scope. |
+| 2026-06-03 | Step 3 | Build passed: `make build`. | Binary builds after routing hardening. |
 
 ## Audit Matrix
 
@@ -107,3 +111,4 @@
 | 2026-06-03 15:52 | Review R004 | plan Step 2: APPROVE |
 | 2026-06-03 15:59 | Review R005 | code Step 2: REVISE |
 | 2026-06-03 16:02 | Review R006 | code Step 2: APPROVE |
+| 2026-06-03 16:03 | Review R007 | plan Step 3: APPROVE |
