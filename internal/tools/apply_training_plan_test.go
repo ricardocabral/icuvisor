@@ -167,6 +167,68 @@ func TestApplyTrainingPlanReplaceExistingRequiresFullAndDeletesBeforeCreate(t *t
 	}
 }
 
+func TestApplyTrainingPlanRepeatedApplySkipsExactExistingPlanEvents(t *testing.T) {
+	t.Parallel()
+
+	client := newApplyTrainingPlanTestClient(t)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-repeat","name":"Tempo","type":"Ride","folder_id":"plan-1","day":1,"description":"Tempo prescription","tags":["tempo"],"indoor":true,"icu_training_load":75,"moving_time":3600}`)
+	client.events = decodeToolEvents(t, `{"id":"evt-repeat","category":"WORKOUT","type":"Ride","name":"Tempo","start_date_local":"2026-06-01T00:00:00","description":"Tempo prescription","tags":["tempo"],"indoor":true,"load_target":75,"time_target":3600}`)
+	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":false,"conflict_policy":"skip_existing"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.writeCalls) != 0 {
+		t.Fatalf("write calls = %#v, want repeated apply to skip exact duplicate", client.writeCalls)
+	}
+	out := resultMap(t, result)
+	meta := out["_meta"].(map[string]any)
+	if meta["created_count"] != float64(0) {
+		t.Fatalf("meta = %#v, want no created duplicates", meta)
+	}
+	skipped := meta["skipped"].([]any)
+	if len(skipped) != 1 {
+		t.Fatalf("skipped = %#v, want exact duplicate skipped", skipped)
+	}
+	conflicts := skipped[0].(map[string]any)["conflicts"].([]any)
+	if len(conflicts) != 1 || conflicts[0].(map[string]any)["reason"] != "duplicate_existing_event" {
+		t.Fatalf("conflicts = %#v, want duplicate_existing_event", conflicts)
+	}
+}
+
+func TestApplyTrainingPlanSkipsDuplicateSameDayPlannedEvents(t *testing.T) {
+	t.Parallel()
+
+	client := newApplyTrainingPlanTestClient(t)
+	client.workouts = decodeToolWorkouts(t,
+		`{"id":"w-am","name":"AM Ride","type":"Ride","folder_id":"plan-1","day":1,"description":"Endurance"}`,
+		`{"id":"w-pm","name":"PM Ride","type":"Ride","folder_id":"plan-1","day":1,"description":"More endurance"}`,
+	)
+	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":false,"conflict_policy":"skip_existing"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.writeCalls) != 0 {
+		t.Fatalf("write calls = %#v, want duplicate same-day plan entries skipped", client.writeCalls)
+	}
+	out := resultMap(t, result)
+	rows := out["proposed_events"].([]any)
+	for _, raw := range rows {
+		conflicts := raw.(map[string]any)["conflicts"].([]any)
+		if len(conflicts) != 1 || conflicts[0].(map[string]any)["reason"] != "duplicate_plan_date" {
+			t.Fatalf("proposed row = %#v, want duplicate_plan_date conflict", raw)
+		}
+	}
+	meta := out["_meta"].(map[string]any)
+	skipped := meta["skipped"].([]any)
+	if len(skipped) != 2 {
+		t.Fatalf("skipped = %#v, want both duplicate same-day planned events skipped", skipped)
+	}
+}
+
 func TestApplyTrainingPlanRejectsPlanWithoutRelativeDayMetadata(t *testing.T) {
 	t.Parallel()
 

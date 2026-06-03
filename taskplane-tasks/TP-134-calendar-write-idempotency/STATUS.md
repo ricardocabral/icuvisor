@@ -3,7 +3,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -31,10 +31,10 @@
 ### Step 2: Implement duplicate prevention or explicit duplicate warnings
 **Status:** 🟨 In Progress
 
-- [ ] Add tests for repeated `apply_training_plan` calls against the same plan/date range and for duplicate same-day planned events.
-- [ ] Implement deduplication, stable skip behavior, idempotency keys/metadata, or explicit duplicate warnings using existing upstream fields only.
-- [ ] Ensure dry-run output makes potential duplicate/conflict outcomes clear before any write.
-- [ ] Run targeted tests: `go test ./internal/tools`.
+- [x] Add tests for repeated `apply_training_plan` calls against the same plan/date range and for duplicate same-day planned events.
+- [x] Implement deduplication, stable skip behavior, idempotency keys/metadata, or explicit duplicate warnings using existing upstream fields only.
+- [x] Ensure dry-run output makes potential duplicate/conflict outcomes clear before any write.
+- [x] Run targeted tests: `go test ./internal/tools`.
 
 ---
 
@@ -79,3 +79,4 @@
 | 2026-06-03 15:43 | Step 0 started | Preflight |
 | 2026-06-03 15:45 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-03 15:48 | Review R002 | code Step 1: APPROVE |
+| 2026-06-03 15:49 | Review R003 | plan Step 2: APPROVE |

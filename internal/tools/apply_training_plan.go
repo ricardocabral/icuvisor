@@ -165,43 +165,49 @@ func applyTrainingPlan(ctx context.Context, client ApplyTrainingPlanClient, args
 	}
 	oldest := planned[0].Date
 	newest := planned[len(planned)-1].Date
-	conflictsByDate, err := fetchApplyTrainingPlanConflicts(ctx, client, oldest, newest)
+	eventsByDate, err := fetchApplyTrainingPlanEvents(ctx, client, oldest, newest)
 	if err != nil {
 		return applyTrainingPlanResponse{}, err
 	}
+	planDateConflicts := applyTrainingPlanDateConflicts(planned)
 	payload := applyTrainingPlanResponse{ProposedEvents: make([]applyTrainingPlanProposedEvent, 0, len(planned)), Meta: applyTrainingPlanMeta{PlanID: args.PlanID, StartDate: args.StartDate, DryRun: dryRun, ConflictPolicy: args.ConflictPolicy, Skipped: []applyTrainingPlanSkipped{}, DeleteMode: capabilityOrSafe(capability).Mode(), Timezone: timezoneName}}
 	for _, plannedWorkout := range planned {
 		workout := plannedWorkout.Workout
-		conflicts := conflictsByDate[plannedWorkout.Date]
-		if conflicts == nil {
-			conflicts = []applyTrainingPlanConflict{}
+		params, err := eventParamsFromPlanWorkout(plannedWorkout.Date, workout)
+		if err != nil {
+			return applyTrainingPlanResponse{}, err
 		}
+		conflicts := applyTrainingPlanConflictsForParams(params, eventsByDate[plannedWorkout.Date], planDateConflicts[plannedWorkout.Date])
 		row := applyTrainingPlanProposedEvent{Date: plannedWorkout.Date, WorkoutID: workout.ID, Name: stringValue(workout.Name), Sport: stringValue(workout.Type), Conflicts: conflicts}
 		payload.ProposedEvents = append(payload.ProposedEvents, row)
 		if dryRun {
 			continue
 		}
-		if len(conflicts) > 0 && args.ConflictPolicy == applyTrainingPlanConflictSkip {
-			payload.Meta.Skipped = append(payload.Meta.Skipped, applyTrainingPlanSkipped{Date: row.Date, WorkoutID: row.WorkoutID, Conflicts: conflicts})
+		currentConflicts := conflicts
+		if len(currentConflicts) == 0 {
+			currentEvents, err := client.ListEvents(ctx, intervals.ListEventsParams{Oldest: plannedWorkout.Date, Newest: plannedWorkout.Date, Limit: maxEventsLimit})
+			if err != nil {
+				return applyTrainingPlanResponse{}, fmt.Errorf("preflighting event create for %s: %w", plannedWorkout.Date, err)
+			}
+			currentConflicts = applyTrainingPlanConflictsForParams(params, currentEvents, nil)
+		}
+		if len(currentConflicts) > 0 && shouldSkipApplyTrainingPlanConflicts(currentConflicts, args.ConflictPolicy) {
+			payload.Meta.Skipped = append(payload.Meta.Skipped, applyTrainingPlanSkipped{Date: row.Date, WorkoutID: row.WorkoutID, Conflicts: currentConflicts})
 			continue
 		}
-		if len(conflicts) > 0 && args.ConflictPolicy == applyTrainingPlanConflictReplace {
+		if len(currentConflicts) > 0 && args.ConflictPolicy == applyTrainingPlanConflictReplace {
 			deleter, ok := client.(EventDeleterClient)
 			if !ok {
 				return applyTrainingPlanResponse{}, errors.New("replace_existing requires an event delete client")
 			}
-			replaced := applyTrainingPlanReplaced{Date: row.Date, WorkoutID: row.WorkoutID, DeletedEventIDs: make([]string, 0, len(conflicts))}
-			for _, conflict := range conflicts {
+			replaced := applyTrainingPlanReplaced{Date: row.Date, WorkoutID: row.WorkoutID, DeletedEventIDs: make([]string, 0, len(currentConflicts))}
+			for _, conflict := range currentConflicts {
 				if err := deleter.DeleteEvent(ctx, conflict.EventID); err != nil {
 					return applyTrainingPlanResponse{}, fmt.Errorf("deleting conflicting event %s: %w", conflict.EventID, err)
 				}
 				replaced.DeletedEventIDs = append(replaced.DeletedEventIDs, conflict.EventID)
 			}
 			payload.Meta.Replaced = append(payload.Meta.Replaced, replaced)
-		}
-		params, err := eventParamsFromPlanWorkout(plannedWorkout.Date, workout)
-		if err != nil {
-			return applyTrainingPlanResponse{}, err
 		}
 		created, err := client.AddOrUpdateEvent(ctx, params)
 		if err != nil {
@@ -303,23 +309,60 @@ func anyPositiveInt(value any) (int, bool) {
 	return 0, false
 }
 
-func fetchApplyTrainingPlanConflicts(ctx context.Context, client ApplyTrainingPlanClient, oldest string, newest string) (map[string][]applyTrainingPlanConflict, error) {
+func fetchApplyTrainingPlanEvents(ctx context.Context, client ApplyTrainingPlanClient, oldest string, newest string) (map[string][]intervals.Event, error) {
 	events, err := client.ListEvents(ctx, intervals.ListEventsParams{Oldest: oldest, Newest: newest, Limit: maxEventsLimit})
 	if err != nil {
 		return nil, fmt.Errorf("fetching calendar conflicts: %w", err)
 	}
-	conflictsByDate := map[string][]applyTrainingPlanConflict{}
+	eventsByDate := map[string][]intervals.Event{}
 	for _, event := range events {
 		date := eventDateOnly(event)
 		if date == "" {
 			continue
 		}
-		conflictsByDate[date] = append(conflictsByDate[date], applyTrainingPlanConflict{EventID: event.ID, Reason: "existing_event_on_date"})
+		eventsByDate[date] = append(eventsByDate[date], event)
 	}
-	for date := range conflictsByDate {
-		sort.SliceStable(conflictsByDate[date], func(i, j int) bool { return conflictsByDate[date][i].EventID < conflictsByDate[date][j].EventID })
+	return eventsByDate, nil
+}
+
+func applyTrainingPlanDateConflicts(planned []applyTrainingPlanWorkout) map[string][]applyTrainingPlanConflict {
+	counts := map[string]int{}
+	for _, plannedWorkout := range planned {
+		counts[plannedWorkout.Date]++
 	}
-	return conflictsByDate, nil
+	conflicts := map[string][]applyTrainingPlanConflict{}
+	for date, count := range counts {
+		if count > 1 {
+			conflicts[date] = []applyTrainingPlanConflict{{Reason: "duplicate_plan_date"}}
+		}
+	}
+	return conflicts
+}
+
+func applyTrainingPlanConflictsForParams(params intervals.WriteEventParams, events []intervals.Event, extraConflicts []applyTrainingPlanConflict) []applyTrainingPlanConflict {
+	conflicts := eventCreatePreflightFromEvents(params, events, extraConflicts).Conflicts
+	if conflicts == nil {
+		return []applyTrainingPlanConflict{}
+	}
+	sort.SliceStable(conflicts, func(i, j int) bool {
+		if conflicts[i].EventID != conflicts[j].EventID {
+			return conflicts[i].EventID < conflicts[j].EventID
+		}
+		return conflicts[i].Reason < conflicts[j].Reason
+	})
+	return conflicts
+}
+
+func shouldSkipApplyTrainingPlanConflicts(conflicts []applyTrainingPlanConflict, conflictPolicy string) bool {
+	if conflictPolicy == applyTrainingPlanConflictSkip {
+		return true
+	}
+	for _, conflict := range conflicts {
+		if conflict.Reason == "duplicate_existing_event" || conflict.Reason == "duplicate_plan_date" {
+			return true
+		}
+	}
+	return false
 }
 
 func eventDateOnly(event intervals.Event) string {

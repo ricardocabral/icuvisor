@@ -15,14 +15,21 @@ import (
 
 type fakeEventWriterClient struct {
 	fakeProfileClient
-	event intervals.Event
-	calls []intervals.WriteEventParams
-	err   error
+	event     intervals.Event
+	events    []intervals.Event
+	calls     []intervals.WriteEventParams
+	listCalls []intervals.ListEventsParams
+	err       error
 }
 
 func (f *fakeEventWriterClient) AddOrUpdateEvent(ctx context.Context, params intervals.WriteEventParams) (intervals.Event, error) {
 	f.calls = append(f.calls, params)
 	return f.event, f.err
+}
+
+func (f *fakeEventWriterClient) ListEvents(ctx context.Context, params intervals.ListEventsParams) ([]intervals.Event, error) {
+	f.listCalls = append(f.listCalls, params)
+	return append([]intervals.Event(nil), f.events...), nil
 }
 
 func TestAddOrUpdateEventCreatePreservesFreeTextTagsAndReadShape(t *testing.T) {
@@ -75,6 +82,38 @@ func TestAddOrUpdateEventCreatePreservesFreeTextTagsAndReadShape(t *testing.T) {
 	if meta["operation"] != "create" || meta["date"] != "2026-06-01" || meta["timezone"] != "America/Sao_Paulo" {
 		t.Fatalf("meta = %#v, want create metadata", meta)
 	}
+}
+
+func TestAddOrUpdateEventCreateSkipsExactSameDayDuplicate(t *testing.T) {
+	t.Parallel()
+
+	description := "Tempo prescription"
+	client := &fakeEventWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		events:            decodeToolEvents(t, `{"id":"evt-existing","category":"WORKOUT","type":"Ride","name":"Tempo","start_date_local":"2026-06-01T00:00:00","description":"Tempo prescription","tags":["tempo"],"indoor":true,"load_target":75,"distance_target":30000,"time_target":3600}`),
+	}
+	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-06-01","category":"WORKOUT","type":"Ride","name":"Tempo","description":"Tempo prescription","tags":["tempo"],"indoor":true,"target_load":75,"distance_meters":30000,"moving_time_seconds":3600}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 0 {
+		t.Fatalf("write calls = %#v, want duplicate create skipped", client.calls)
+	}
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-06-01" || client.listCalls[0].Newest != "2026-06-01" {
+		t.Fatalf("ListEvents calls = %#v, want same-day duplicate preflight", client.listCalls)
+	}
+	out := resultMap(t, result)
+	row := out["event"].(map[string]any)
+	if row["event_id"] != "evt-existing" {
+		t.Fatalf("event row = %#v, want existing duplicate", row)
+	}
+	meta := out["_meta"].(map[string]any)
+	if meta["operation"] != "skip_duplicate" || meta["duplicate_event_id"] != "evt-existing" {
+		t.Fatalf("meta = %#v, want duplicate skip metadata", meta)
+	}
+	_ = description
 }
 
 func TestAddOrUpdateEventStripsSparseNullsAndPreservesRawFull(t *testing.T) {
