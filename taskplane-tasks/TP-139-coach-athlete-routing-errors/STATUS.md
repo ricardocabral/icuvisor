@@ -1,5 +1,5 @@
 # TP-139: Coach-mode athlete routing and authorization errors — Status
-**Current Step:** Step 1: Audit coach/local athlete routing
+**Current Step:** Step 2: Add routing/error tests and hardening
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
@@ -30,11 +30,11 @@
 ---
 
 ### Step 2: Add routing/error tests and hardening
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Add tests for normalized `i123`/numeric athlete IDs, unauthorized coached-athlete selection, and local-athlete fallback when coach mode is not active.
-- [ ] Implement explicit authorization/routing errors where tests reveal ambiguity.
-- [ ] Ensure tool catalog/ACL behavior still hides disallowed tools and does not accept API keys in chat/tool parameters.
+- [ ] Add unit/protocol tests for normalized `i123`/numeric athlete IDs, unauthorized coached-athlete selection, coach target resolution, and local-athlete fallback/rejection when coach mode is not active.
+- [ ] Implement explicit routing error types/messages for invalid athlete ID format, unauthorized/not-configured roster athletes, per-athlete tool denial, and local-mode athlete targeting.
+- [ ] Ensure tool catalog/ACL behavior still hides disallowed tools and schemas do not expose or accept API keys in chat/tool parameters.
 - [ ] Run targeted tests: `go test ./internal/coach ./internal/config ./internal/tools ./internal/mcp`.
 
 ---
