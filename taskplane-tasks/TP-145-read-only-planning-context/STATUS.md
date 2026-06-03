@@ -1,10 +1,10 @@
 # TP-145: Read-only planning context tool — Status
 
-**Current Step:** Step 1: Design read-only planning context contract
+**Current Step:** Step 2: Implement get_planning_context
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Design read-only planning context contract
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Inventory existing tool/client patterns for get_today, get_training_plan, get_events, get_fitness, and prompt planning guidance
 - [x] Define a terse default response with `_meta.source_tools`, timezone/as-of, week window, and no write behavior
@@ -30,7 +30,7 @@
 - [x] R001 justify toolset tier placement and stable caveat/validation contract
 - [x] R002 define bounded current fitness window and future week_start behavior
 - [x] R002 define event/race fetch limits, truncation metadata, caveat conditions, and include_full scope
-- [ ] Plan-review checkpoint completed before implementation
+- [x] Plan-review checkpoint completed before implementation
 
 ---
 
@@ -79,6 +79,7 @@
 |---|------|------|---------|------|
 | R001 | Plan | Step 1 | REVISE | .reviews/R001-plan-step1.md |
 | R002 | Plan | Step 1 | REVISE | .reviews/R002-plan-step1.md |
+| R003 | Plan | Step 1 | APPROVE | inline |
 
 ---
 
@@ -100,3 +101,4 @@
 | 2026-06-03 16:19 | R002 event limits/caveats/full scope | Week events fetch `week_start..week_end` with `Limit: 500`; race scan fetches `as_of_date..as_of_date+84 days` with `Limit: 500` and filters `RACE`/`RACE_*`. Because upstream applies the limit, `len(events) >= 500` is treated as `*_may_be_truncated`, surfaced in `_meta.truncation` and caveat codes `week_events_may_be_truncated` / `upcoming_races_may_be_truncated`. Empty week emits `no_week_events` and, because workouts are empty, `no_week_workouts`; a non-empty week without `WORKOUT` emits only `no_week_workouts`. No race rows after filtering emits `no_upcoming_races` unless race scan may be truncated, in which case include both caveats. `include_full:true` only adds per-event `full`, fitness row `full`, and raw training-plan assignment/nested payloads; default omits raw upstream payloads in all sections. Implementation must compose read-only client methods directly: `GetAthleteProfile`, `ListEvents`, `GetTrainingPlan`, `ListAthleteSummary`; no create/update/delete methods. |
 | 2026-06-03 16:14 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-06-03 16:17 | Review R002 | plan Step 1: REVISE |
+| 2026-06-03 16:20 | Review R003 | plan Step 1: APPROVE |
