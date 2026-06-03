@@ -1,6 +1,6 @@
 # TP-138: Weekly report timezone and stale-data guardrails — Status
 **Current Step:** Step 4: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-03
 **Review Level:** 1
 **Review Counter:** 3
@@ -49,11 +49,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged in STATUS.md
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged in STATUS.md
 
 ---
 
@@ -62,6 +62,7 @@
 | Date | Step | Finding | Impact |
 |------|------|---------|--------|
 | 2026-06-03 | Step 1 | Weekly and plan-health prompts already require athlete-local timezone/date conversion and `_meta.stale` caveats, and tool tests cover current-day `_meta.as_of` inclusion/exclusion. They do not explicitly forbid mixing wellness rows after the requested report window or treating current-day `_meta.as_of` as partial-day context only. | Step 2 should harden prompt text and golden/regression assertions; no tool `_meta.as_of` edge case found so far. |
+| 2026-06-03 | Step 4 | PRD prompt catalog description remains materially accurate; dogfood prompt scenarios benefit from an explicit stale/current-day weekly-report check. `make lint` also exposed a gosec file-permission issue in `scripts/openapidiff`, fixed by writing output files with mode `0600`. | Updated CHANGELOG and dogfood prompt docs; no PRD change needed. |
 
 ## Blockers
 
