@@ -1,5 +1,5 @@
 # TP-134: Calendar write idempotency and duplicate prevention — Status
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Audit write retry and duplicate behavior
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
@@ -19,7 +19,7 @@
 ---
 
 ### Step 1: Audit write retry and duplicate behavior
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Inspect `apply_training_plan` and `add_or_update_event` for retry, repeated-call, and concurrent-call behavior.
 - [ ] Identify whether duplicate detection can be done deterministically from existing event fields before writes.
