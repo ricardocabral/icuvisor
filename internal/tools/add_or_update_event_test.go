@@ -116,6 +116,33 @@ func TestAddOrUpdateEventCreateSkipsExactSameDayDuplicate(t *testing.T) {
 	_ = description
 }
 
+func TestAddOrUpdateEventCreateWarnsInsteadOfSkippingNonExactSameDayEvent(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		events:            decodeToolEvents(t, `{"id":"evt-other","category":"WORKOUT","type":"Ride","name":"Different workout","start_date_local":"2026-06-01T00:00:00","load_target":80}`),
+		event:             decodeToolEvents(t, `{"id":"evt-created","category":"WORKOUT","type":"Ride","start_date_local":"2026-06-01T00:00:00"}`)[0],
+	}
+	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-06-01","category":"WORKOUT","type":"Ride"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 {
+		t.Fatalf("write calls = %#v, want non-exact same-day event to warn and create", client.calls)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["operation"] != "create" || meta["duplicate_warning"] == nil {
+		t.Fatalf("meta = %#v, want create with duplicate warning", meta)
+	}
+	conflicts := meta["same_day_conflicts"].([]any)
+	if len(conflicts) != 1 || conflicts[0].(map[string]any)["event_id"] != "evt-other" {
+		t.Fatalf("same_day_conflicts = %#v, want existing non-exact event", conflicts)
+	}
+}
+
 func TestAddOrUpdateEventStripsSparseNullsAndPreservesRawFull(t *testing.T) {
 	t.Parallel()
 

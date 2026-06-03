@@ -269,35 +269,60 @@ func eventMatchesWriteParams(event intervals.Event, params intervals.WriteEventP
 	if !sameText(firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"])), params.Category) {
 		return false
 	}
-	if strings.TrimSpace(params.Type) != "" && !sameText(stringValue(event.Type), params.Type) {
+	if !sameText(stringValue(event.Type), params.Type) {
 		return false
 	}
-	if strings.TrimSpace(params.Name) != "" && strings.TrimSpace(stringValue(event.Name)) != strings.TrimSpace(params.Name) {
+	if strings.TrimSpace(stringValue(event.Name)) != strings.TrimSpace(params.Name) {
 		return false
 	}
-	if params.Description != nil && stringValue(event.Description) != *params.Description {
-		return false
-	}
-	if params.Indoor != nil && (event.Indoor == nil || *event.Indoor != *params.Indoor) {
-		return false
-	}
-	if params.TargetLoad != nil && !sameOptionalFloat(*params.TargetLoad, event.LoadTarget, event.TrainingLoad) {
-		return false
-	}
-	if params.DistanceMeters != nil && !sameOptionalFloat(*params.DistanceMeters, event.DistanceTarget, event.Distance) {
-		return false
-	}
-	if params.MovingTimeSeconds != nil && !sameOptionalInt(*params.MovingTimeSeconds, event.TimeTarget, event.MovingTime) {
-		return false
-	}
-	if params.ElapsedTimeSeconds != nil && !sameOptionalInt(*params.ElapsedTimeSeconds, event.ElapsedTimeTarget, event.ElapsedTime) {
-		return false
-	}
-	if params.TagsSet || len(params.Tags) > 0 {
-		tags := eventTags(event.Raw)
-		if tags == nil || !sameStringSlice(*tags, params.Tags) {
+	if params.Description != nil {
+		if stringValue(event.Description) != *params.Description {
 			return false
 		}
+	} else if stringValue(event.Description) != "" {
+		return false
+	}
+	if params.Indoor != nil {
+		if event.Indoor == nil || *event.Indoor != *params.Indoor {
+			return false
+		}
+	} else if event.Indoor != nil && *event.Indoor {
+		return false
+	}
+	if params.TargetLoad != nil {
+		if !sameOptionalFloat(*params.TargetLoad, event.LoadTarget, event.TrainingLoad) {
+			return false
+		}
+	} else if nonZeroOptionalFloat(event.LoadTarget, event.TrainingLoad) {
+		return false
+	}
+	if params.DistanceMeters != nil {
+		if !sameOptionalFloat(*params.DistanceMeters, event.DistanceTarget, event.Distance) {
+			return false
+		}
+	} else if nonZeroOptionalFloat(event.DistanceTarget, event.Distance) {
+		return false
+	}
+	if params.MovingTimeSeconds != nil {
+		if !sameOptionalInt(*params.MovingTimeSeconds, event.TimeTarget, event.MovingTime) {
+			return false
+		}
+	} else if nonZeroOptionalInt(event.TimeTarget, event.MovingTime) {
+		return false
+	}
+	if params.ElapsedTimeSeconds != nil {
+		if !sameOptionalInt(*params.ElapsedTimeSeconds, event.ElapsedTimeTarget, event.ElapsedTime) {
+			return false
+		}
+	} else if nonZeroOptionalInt(event.ElapsedTimeTarget, event.ElapsedTime) {
+		return false
+	}
+	eventTagValues := []string{}
+	if tags := eventTags(event.Raw); tags != nil {
+		eventTagValues = *tags
+	}
+	if !sameStringSlice(eventTagValues, params.Tags) {
+		return false
 	}
 	return true
 }
@@ -319,6 +344,24 @@ func sameOptionalInt(want int, values ...*int) bool {
 	for _, value := range values {
 		if value != nil {
 			return *value == want
+		}
+	}
+	return false
+}
+
+func nonZeroOptionalFloat(values ...*float64) bool {
+	for _, value := range values {
+		if value != nil && *value != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func nonZeroOptionalInt(values ...*int) bool {
+	for _, value := range values {
+		if value != nil && *value != 0 {
+			return true
 		}
 	}
 	return false

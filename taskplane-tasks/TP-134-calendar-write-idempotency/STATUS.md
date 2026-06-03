@@ -35,7 +35,7 @@
 - [x] Implement deduplication, stable skip behavior, idempotency keys/metadata, or explicit duplicate warnings using existing upstream fields only.
 - [x] Ensure dry-run output makes potential duplicate/conflict outcomes clear before any write.
 - [x] Run targeted tests: `go test ./internal/tools`.
-- [ ] Fix R004: exact duplicate matching must compare the full writable create shape, treating omitted create fields as absent/empty rather than wildcards.
+- [x] Fix R004: exact duplicate matching must compare the full writable create shape, treating omitted create fields as absent/empty rather than wildcards.
 
 ---
 
