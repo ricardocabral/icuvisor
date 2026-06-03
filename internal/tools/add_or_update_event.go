@@ -290,31 +290,31 @@ func eventMatchesWriteParams(event intervals.Event, params intervals.WriteEventP
 		return false
 	}
 	if params.TargetLoad != nil {
-		if !sameOptionalFloat(*params.TargetLoad, event.LoadTarget, event.TrainingLoad) {
+		if !sameOptionalFloat(*params.TargetLoad, event.LoadTarget) {
 			return false
 		}
-	} else if nonZeroOptionalFloat(event.LoadTarget, event.TrainingLoad) {
+	} else if nonZeroOptionalFloat(event.LoadTarget) {
 		return false
 	}
 	if params.DistanceMeters != nil {
-		if !sameOptionalFloat(*params.DistanceMeters, event.DistanceTarget, event.Distance) {
+		if !sameOptionalFloat(*params.DistanceMeters, event.DistanceTarget) {
 			return false
 		}
-	} else if nonZeroOptionalFloat(event.DistanceTarget, event.Distance) {
+	} else if nonZeroOptionalFloat(event.DistanceTarget) {
 		return false
 	}
 	if params.MovingTimeSeconds != nil {
-		if !sameOptionalInt(*params.MovingTimeSeconds, event.TimeTarget, event.MovingTime) {
+		if !sameOptionalInt(*params.MovingTimeSeconds, event.TimeTarget) {
 			return false
 		}
-	} else if nonZeroOptionalInt(event.TimeTarget, event.MovingTime) {
+	} else if nonZeroOptionalInt(event.TimeTarget) {
 		return false
 	}
 	if params.ElapsedTimeSeconds != nil {
-		if !sameOptionalInt(*params.ElapsedTimeSeconds, event.ElapsedTimeTarget, event.ElapsedTime) {
+		if !sameOptionalInt(*params.ElapsedTimeSeconds, event.ElapsedTimeTarget) {
 			return false
 		}
-	} else if nonZeroOptionalInt(event.ElapsedTimeTarget, event.ElapsedTime) {
+	} else if nonZeroOptionalInt(event.ElapsedTimeTarget) {
 		return false
 	}
 	eventTagValues := []string{}
