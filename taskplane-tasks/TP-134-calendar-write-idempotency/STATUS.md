@@ -3,7 +3,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -21,10 +21,10 @@
 ### Step 1: Audit write retry and duplicate behavior
 **Status:** 🟨 In Progress
 
-- [ ] Inspect `apply_training_plan` and `add_or_update_event` for retry, repeated-call, and concurrent-call behavior.
-- [ ] Identify whether duplicate detection can be done deterministically from existing event fields before writes.
-- [ ] Record the chosen idempotency contract and any upstream limitations in STATUS.md Discoveries.
-- [ ] Run targeted tests: `go test ./internal/tools`.
+- [x] Inspect `apply_training_plan` and `add_or_update_event` for retry, repeated-call, and concurrent-call behavior.
+- [x] Identify whether duplicate detection can be done deterministically from existing event fields before writes.
+- [x] Record the chosen idempotency contract and any upstream limitations in STATUS.md Discoveries.
+- [x] Run targeted tests: `go test ./internal/tools`.
 
 ---
 
@@ -61,6 +61,7 @@
 
 | Date | Step | Finding | Impact |
 |------|------|---------|--------|
+| 2026-06-03 | Step 1 | Current client retry policy never retries POST creates, but PUT updates may retry; `apply_training_plan` preflights calendar conflicts once, then creates, so repeated calls skip only after upstream-created events are visible; same-plan duplicate days and concurrent calls can both pass the initial preflight. | Chosen contract: use deterministic same-day duplicate/conflict detection from upstream event fields (date, category, type, name, targets, tags, indoor, description/workout_doc summary) before each create, skip exact matches, warn/skip same-day conflicts for `skip_existing`, and keep unavoidable concurrent race limits explicit because upstream exposes no compare-and-set create or unique idempotency key. |
 
 ## Blockers
 
@@ -74,3 +75,4 @@
 
 | 2026-06-03 15:43 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 15:43 | Step 0 started | Preflight |
+| 2026-06-03 15:45 | Review R001 | plan Step 1: APPROVE |
