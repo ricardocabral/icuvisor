@@ -2,6 +2,8 @@ package tools
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,6 +25,8 @@ const (
 	applyTrainingPlanMessage                 = "could not apply training plan; check intervals.icu credentials, athlete ID, plan ID, date range, and delete-mode configuration"
 	applyTrainingPlanConflictSkip            = "skip_existing"
 	applyTrainingPlanConflictReplace         = "replace_existing"
+	applyTrainingPlanExternalIDPrefix        = "icuvisor-plan-v1-"
+	applyTrainingPlanExternalIDDigestLength  = 24
 )
 
 // ApplyTrainingPlanClient fetches workout-library plan content, reads calendar conflicts, and writes events.
@@ -46,11 +50,12 @@ type applyTrainingPlanResponse struct {
 }
 
 type applyTrainingPlanProposedEvent struct {
-	Date      string                      `json:"date"`
-	WorkoutID string                      `json:"workout_id"`
-	Name      string                      `json:"name,omitempty"`
-	Sport     string                      `json:"sport,omitempty"`
-	Conflicts []applyTrainingPlanConflict `json:"conflicts"`
+	Date       string                      `json:"date"`
+	WorkoutID  string                      `json:"workout_id"`
+	ExternalID string                      `json:"external_id"`
+	Name       string                      `json:"name,omitempty"`
+	Sport      string                      `json:"sport,omitempty"`
+	Conflicts  []applyTrainingPlanConflict `json:"conflicts"`
 }
 
 type applyTrainingPlanConflict struct {
@@ -179,12 +184,12 @@ func applyTrainingPlan(ctx context.Context, client ApplyTrainingPlanClient, args
 	payload := applyTrainingPlanResponse{ProposedEvents: make([]applyTrainingPlanProposedEvent, 0, len(planned)), Meta: applyTrainingPlanMeta{PlanID: args.PlanID, StartDate: args.StartDate, DryRun: dryRun, ConflictPolicy: args.ConflictPolicy, Skipped: []applyTrainingPlanSkipped{}, DeleteMode: capabilityOrSafe(capability).Mode(), Timezone: timezoneName}}
 	for _, plannedWorkout := range planned {
 		workout := plannedWorkout.Workout
-		params, err := eventParamsFromPlanWorkout(plannedWorkout.Date, workout)
+		params, err := eventParamsFromPlanWorkout(args.PlanID, args.StartDate, plannedWorkout.Date, plannedWorkout.Day, workout)
 		if err != nil {
 			return applyTrainingPlanResponse{}, err
 		}
 		conflicts := applyTrainingPlanConflictsForParams(params, eventsByDate[plannedWorkout.Date], planDateConflicts[plannedWorkout.Date])
-		row := applyTrainingPlanProposedEvent{Date: plannedWorkout.Date, WorkoutID: workout.ID, Name: stringValue(workout.Name), Sport: stringValue(workout.Type), Conflicts: conflicts}
+		row := applyTrainingPlanProposedEvent{Date: plannedWorkout.Date, WorkoutID: workout.ID, ExternalID: params.ExternalID, Name: stringValue(workout.Name), Sport: stringValue(workout.Type), Conflicts: conflicts}
 		payload.ProposedEvents = append(payload.ProposedEvents, row)
 		if dryRun {
 			continue
@@ -353,7 +358,10 @@ func applyTrainingPlanConflictsForParams(params intervals.WriteEventParams, even
 			continue
 		}
 		conflict := applyTrainingPlanConflictFromEvent(event, "existing_event_on_date")
-		if eventMatchesWriteParams(event, params) {
+		if eventMatchesExternalID(event, params.ExternalID) {
+			conflict.Reason = "matching_external_id"
+			conflict.Protected = true
+		} else if eventMatchesWriteParams(event, params) {
 			conflict.Reason = "duplicate_existing_event"
 			conflict.Protected = true
 		}
@@ -382,7 +390,7 @@ func applyTrainingPlanConflictFromEvent(event intervals.Event, reason string) ap
 }
 
 func applyTrainingPlanConflictProtected(conflict applyTrainingPlanConflict) bool {
-	if conflict.Reason == "duplicate_existing_event" || conflict.Reason == "duplicate_plan_date" {
+	if conflict.Reason == "duplicate_existing_event" || conflict.Reason == "duplicate_plan_date" || conflict.Reason == "matching_external_id" {
 		return true
 	}
 	return !strings.EqualFold(strings.TrimSpace(conflict.Category), "WORKOUT")
@@ -420,9 +428,9 @@ func eventDateOnly(event intervals.Event) string {
 	return ""
 }
 
-func eventParamsFromPlanWorkout(date string, workout intervals.Workout) (intervals.WriteEventParams, error) {
+func eventParamsFromPlanWorkout(planID string, startDate string, date string, relativeDay int, workout intervals.Workout) (intervals.WriteEventParams, error) {
 	trainingLoad := workoutTrainingLoad(workout)
-	args := addOrUpdateEventRequest{Date: date, Category: "WORKOUT", Type: stringValue(workout.Type), Name: stringValue(workout.Name), Tags: append([]string(nil), workout.Tags...), Indoor: workout.Indoor, TargetLoad: trainingLoad, DistanceMeters: workout.Distance, MovingTimeSeconds: workout.MovingTime}
+	args := addOrUpdateEventRequest{Date: date, ExternalID: applyTrainingPlanExternalID(planID, startDate, workout.ID, relativeDay, date), Category: "WORKOUT", Type: stringValue(workout.Type), Name: stringValue(workout.Name), Tags: append([]string(nil), workout.Tags...), Indoor: workout.Indoor, TargetLoad: trainingLoad, DistanceMeters: workout.Distance, MovingTimeSeconds: workout.MovingTime}
 	if workout.WorkoutDoc != nil {
 		doc, err := workoutDocFromAny(workout.WorkoutDoc)
 		if err != nil {
@@ -437,6 +445,18 @@ func eventParamsFromPlanWorkout(date string, workout intervals.Workout) (interva
 		return intervals.WriteEventParams{}, fmt.Errorf("building event params for workout %s: %w", workout.ID, err)
 	}
 	return params, nil
+}
+
+func applyTrainingPlanExternalID(planID string, startDate string, workoutID string, relativeDay int, eventDate string) string {
+	parts := []string{
+		"plan_id=" + strings.TrimSpace(planID),
+		"start_date=" + strings.TrimSpace(startDate),
+		"workout_id=" + strings.TrimSpace(workoutID),
+		"relative_day=" + strconv.Itoa(relativeDay),
+		"event_date=" + strings.TrimSpace(eventDate),
+	}
+	digest := sha256.Sum256([]byte(strings.Join(parts, "\n")))
+	return applyTrainingPlanExternalIDPrefix + hex.EncodeToString(digest[:])[:applyTrainingPlanExternalIDDigestLength]
 }
 
 func workoutTrainingLoad(workout intervals.Workout) *float64 {
@@ -495,5 +515,5 @@ func applyTrainingPlanInputExamples() []map[string]any {
 }
 
 func applyTrainingPlanOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Training-plan apply preview or write result with per-day proposed events, conflict markers that include event_id/date/category/type/name/reason/protected fields when available, created event rows, and _meta created/skipped/replaced/delete-mode counts. replace_existing reports protected races, notes, unavailable-like blocks, duplicate workouts, duplicate plan dates, and unknown non-workout categories instead of deleting them."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Training-plan apply preview or write result with per-day proposed events that include hashed icuvisor-owned external_id values for retry review, conflict markers that include event_id/date/category/type/name/reason/protected fields when available, created event rows, and _meta created/skipped/replaced/delete-mode counts. replace_existing reports protected races, notes, unavailable-like blocks, matching external_id retries, duplicate workouts, duplicate plan dates, and unknown non-workout categories instead of deleting them."}
 }
