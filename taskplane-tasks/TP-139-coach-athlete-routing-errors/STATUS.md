@@ -3,7 +3,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -32,10 +32,10 @@
 ### Step 2: Add routing/error tests and hardening
 **Status:** 🟨 In Progress
 
-- [ ] Add unit/protocol tests for normalized `i123`/numeric athlete IDs, unauthorized coached-athlete selection, coach target resolution, and local-athlete fallback/rejection when coach mode is not active.
-- [ ] Implement explicit routing error types/messages for invalid athlete ID format, unauthorized/not-configured roster athletes, per-athlete tool denial, and local-mode athlete targeting.
-- [ ] Ensure tool catalog/ACL behavior still hides disallowed tools and schemas do not expose or accept API keys in chat/tool parameters.
-- [ ] Run targeted tests: `go test ./internal/coach ./internal/config ./internal/tools ./internal/mcp`.
+- [x] Add unit/protocol tests for normalized `i123`/numeric athlete IDs, unauthorized coached-athlete selection, coach target resolution, and local-athlete fallback/rejection when coach mode is not active.
+- [x] Implement explicit routing error types/messages for invalid athlete ID format, unauthorized/not-configured roster athletes, per-athlete tool denial, and local-mode athlete targeting.
+- [x] Ensure tool catalog/ACL behavior still hides disallowed tools and schemas do not expose or accept API keys in chat/tool parameters.
+- [x] Run targeted tests: `go test ./internal/coach ./internal/config ./internal/tools ./internal/mcp`.
 
 ---
 
@@ -67,6 +67,10 @@
 | 2026-06-03 | Step 1 | Local mode does not inject `athlete_id` into schemas and `resolveToolTarget` returns before local `resolveAthleteID`; extra `athlete_id` reaches strict tool decoders as an unknown field rather than a dedicated routing error. | Step 2 should verify local-mode fallback rejects model-supplied athlete targeting before upstream calls with an actionable message and no credential/API-key parameter path. |
 | 2026-06-03 | Step 1 | Expected public routing messages: invalid format -> `invalid athlete_id; use format i12345 or 12345`; unauthorized/not-configured -> `athlete_id is not authorized for this icuvisor coach roster`; ACL denial -> `tool is not allowed for the selected athlete`; local mode supplied target -> `athlete_id is only supported when coach mode is enabled`. | Messages are short, actionable, and avoid echoing credentials or raw target IDs; Step 2 tests can assert exact text or stable substrings. |
 | 2026-06-03 | Step 1 | Targeted audit tests passed: `go test ./internal/coach ./internal/config ./internal/tools ./internal/mcp`. | Baseline is green before Step 2 behavior changes. |
+| 2026-06-03 | Step 2 | Added/updated coach filter, select_athlete, and MCP protocol tests for numeric/prefixed normalization, unauthorized targets, ACL denial, and local-mode fallback/rejection. | Regression coverage now pins explicit routing behavior before delivery. |
+| 2026-06-03 | Step 2 | Implemented coach routing sentinel errors plus public messages for invalid athlete_id format, unauthorized roster target, selected-athlete tool denial, and local-mode athlete_id override. | Client-facing failures are actionable without echoing athlete IDs or credentials. |
+| 2026-06-03 | Step 2 | Added registry coverage that tool input schemas do not expose credential/API-key parameters; existing MCP ACL visibility tests continue to assert hidden tools stay absent. | Protects against model-controlled credentials while preserving coach ACL catalog filtering. |
+| 2026-06-03 | Step 2 | Targeted hardening tests passed: `go test ./internal/coach ./internal/config ./internal/tools ./internal/mcp`. | Coach routing changes are green across touched packages. |
 
 ## Audit Matrix
 
@@ -96,3 +100,4 @@
 | 2026-06-03 15:45 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-06-03 15:46 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-03 15:50 | Review R003 | code Step 1: APPROVE |
+| 2026-06-03 15:52 | Review R004 | plan Step 2: APPROVE |

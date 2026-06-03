@@ -36,34 +36,34 @@ func schemaWithAthleteID(schema any) any {
 	return out
 }
 
-func stripAthleteID(raw json.RawMessage) (json.RawMessage, string, error) {
+func stripAthleteID(raw json.RawMessage) (json.RawMessage, string, bool, error) {
 	trimmed := strings.TrimSpace(string(raw))
 	if trimmed == "" || trimmed == "null" {
-		return raw, "", nil
+		return raw, "", false, nil
 	}
 	if !strings.HasPrefix(trimmed, "{") {
-		return nil, "", errors.New("arguments must be an object")
+		return nil, "", false, errors.New("arguments must be an object")
 	}
 	var fields map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &fields); err != nil {
-		return nil, "", err
+		return nil, "", false, err
 	}
 	athleteRaw, ok := fields["athlete_id"]
 	if !ok {
-		return raw, "", nil
+		return raw, "", false, nil
 	}
 	delete(fields, "athlete_id")
 	var athleteID string
 	if len(athleteRaw) > 0 && strings.TrimSpace(string(athleteRaw)) != "null" {
 		if err := json.Unmarshal(athleteRaw, &athleteID); err != nil {
-			return nil, "", err
+			return nil, "", true, err
 		}
 	}
 	cleaned, err := json.Marshal(fields)
 	if err != nil {
-		return nil, "", err
+		return nil, "", true, err
 	}
-	return cleaned, athleteID, nil
+	return cleaned, athleteID, true, nil
 }
 
 func validateToolset(tool tools.Tool) error {

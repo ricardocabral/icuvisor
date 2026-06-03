@@ -41,6 +41,31 @@ func TestRegistryWithIntervalsClientRegistersFullCatalog(t *testing.T) {
 	}
 }
 
+func TestRegisteredToolSchemasDoNotExposeCredentialParameters(t *testing.T) {
+	t.Parallel()
+
+	registrar := &collectingRegistrar{}
+	registry := NewRegistryWithOptions(newNoNetworkIntervalsClient(t), RegistryOptions{
+		Version:          "test",
+		TimezoneFallback: "UTC",
+		Capability:       safety.NewCapability(safety.ModeFull),
+		Toolset:          safety.ToolsetFull,
+	})
+	if err := registry.Register(context.Background(), registrar); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+
+	for _, tool := range registrar.tools {
+		schema, _ := tool.InputSchema.(map[string]any)
+		properties, _ := schema["properties"].(map[string]any)
+		for _, forbidden := range []string{"api_key", "apikey", "token", "credential", "credential_ref"} {
+			if _, ok := properties[forbidden]; ok {
+				t.Fatalf("tool %s exposes forbidden credential parameter %q", tool.Name, forbidden)
+			}
+		}
+	}
+}
+
 func TestRegisteredAthleteScopedToolsMatchSharedCatalog(t *testing.T) {
 	t.Parallel()
 

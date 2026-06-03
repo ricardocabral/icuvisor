@@ -771,6 +771,33 @@ func TestProtocolCoachToolsAbsentWhenCoachModeOff(t *testing.T) {
 	}
 }
 
+func TestProtocolLocalModeRejectsAthleteIDOverrideAndUsesConfiguredAthlete(t *testing.T) {
+	t.Parallel()
+
+	cfg := config.Config{AthleteID: "i111"}
+	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: cfg, Registry: coachACLTestRegistry{}, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	defer cleanup()
+
+	result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: map[string]any{}})
+	if err != nil || result.IsError {
+		t.Fatalf("local default CallTool() = %#v err=%v, want configured athlete fallback", result, err)
+	}
+	if text := result.Content[0].(*sdkmcp.TextContent).Text; !strings.Contains(text, `"target_athlete_id":"i111"`) {
+		t.Fatalf("local default CallTool() text = %s, want configured target i111", text)
+	}
+
+	rejected, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: map[string]any{"athlete_id": "i222"}})
+	if err != nil {
+		t.Fatalf("local override CallTool() protocol error = %v", err)
+	}
+	if !rejected.IsError {
+		t.Fatalf("local override IsError = false, want true")
+	}
+	if text := rejected.Content[0].(*sdkmcp.TextContent).Text; text != localModeAthleteTargetMessage {
+		t.Fatalf("local override error text = %q, want %q", text, localModeAthleteTargetMessage)
+	}
+}
+
 func TestProtocolSelectAthleteUpdatesVisibleCatalogAndListAthletes(t *testing.T) {
 	t.Parallel()
 
@@ -961,8 +988,8 @@ func TestProtocolGateCompositionTruthTable(t *testing.T) {
 							if !call.IsError {
 								t.Fatalf("CallTool(%s) IsError = false, want coach ACL veto", representative.name)
 							}
-							if text := call.Content[0].(*sdkmcp.TextContent).Text; text != invalidTargetAthleteMessage {
-								t.Fatalf("CallTool(%s) error text = %q, want %q", representative.name, text, invalidTargetAthleteMessage)
+							if text := call.Content[0].(*sdkmcp.TextContent).Text; text != toolNotAllowedForAthleteMessage {
+								t.Fatalf("CallTool(%s) error text = %q, want %q", representative.name, text, toolNotAllowedForAthleteMessage)
 							}
 						}
 					})
@@ -1194,8 +1221,8 @@ func TestProtocolCoachModeEndToEndRoutesSelectedDefaultAndOverrideTargets(t *tes
 		if !result.IsError {
 			t.Fatalf("CallTool(%s) IsError = false, want read-only coach ACL denial", denied.name)
 		}
-		if text := result.Content[0].(*sdkmcp.TextContent).Text; text != invalidTargetAthleteMessage {
-			t.Fatalf("CallTool(%s) error text = %q, want %q", denied.name, text, invalidTargetAthleteMessage)
+		if text := result.Content[0].(*sdkmcp.TextContent).Text; text != toolNotAllowedForAthleteMessage {
+			t.Fatalf("CallTool(%s) error text = %q, want %q", denied.name, text, toolNotAllowedForAthleteMessage)
 		}
 	}
 	if afterDenied := upstreamRequests.Load(); afterDenied != beforeDenied {
@@ -1209,21 +1236,27 @@ func TestProtocolAthleteIDRejectionMessageIsEnumerationSafe(t *testing.T) {
 	ctx, session, cleanup := connectTestClientWithOptions(t, Options{Config: coachACLTestConfig(), Registry: coachACLTestRegistry{}, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
 	defer cleanup()
 
-	for _, args := range []map[string]any{
-		{"athlete_id": "not-an-id"},
-		{"athlete_id": "i999"},
+	for _, tc := range []struct {
+		name string
+		args map[string]any
+		want string
+	}{
+		{name: "invalid format", args: map[string]any{"athlete_id": "not-an-id"}, want: invalidTargetAthleteFormatMessage},
+		{name: "unauthorized roster target", args: map[string]any{"athlete_id": "i999"}, want: unauthorizedTargetAthleteMessage},
 	} {
-		result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: args})
-		if err != nil {
-			t.Fatalf("CallTool() protocol error = %v", err)
-		}
-		if !result.IsError {
-			t.Fatalf("CallTool(%v) IsError = false, want true", args)
-		}
-		text := result.Content[0].(*sdkmcp.TextContent).Text
-		if text != invalidTargetAthleteMessage {
-			t.Fatalf("CallTool(%v) error text = %q, want enumeration-safe message", args, text)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.GetAthleteProfile, Arguments: tc.args})
+			if err != nil {
+				t.Fatalf("CallTool() protocol error = %v", err)
+			}
+			if !result.IsError {
+				t.Fatalf("CallTool(%v) IsError = false, want true", tc.args)
+			}
+			text := result.Content[0].(*sdkmcp.TextContent).Text
+			if text != tc.want {
+				t.Fatalf("CallTool(%v) error text = %q, want %q", tc.args, text, tc.want)
+			}
+		})
 	}
 }
 

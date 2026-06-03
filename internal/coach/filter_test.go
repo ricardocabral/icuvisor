@@ -111,13 +111,13 @@ func TestToolFilterResolveTarget(t *testing.T) {
 	if got != "i111" {
 		t.Fatalf("ResolveTarget(override) = %q, want i111", got)
 	}
-	if _, err := filter.ResolveTarget("i333", "i111", "", toolcatalog.GetAthleteProfile, normalize); err == nil {
-		t.Fatal("ResolveTarget(out of roster) error = nil, want error")
+	if _, err := filter.ResolveTarget("i333", "i111", "", toolcatalog.GetAthleteProfile, normalize); !errors.Is(err, ErrAthleteNotAuthorized) {
+		t.Fatalf("ResolveTarget(out of roster) error = %v, want ErrAthleteNotAuthorized", err)
 	}
-	if _, err := filter.ResolveTarget("bad", "i111", "", toolcatalog.GetAthleteProfile, normalize); err == nil {
-		t.Fatal("ResolveTarget(bad) error = nil, want error")
+	if _, err := filter.ResolveTarget("bad", "i111", "", toolcatalog.GetAthleteProfile, normalize); !errors.Is(err, ErrInvalidAthleteID) {
+		t.Fatalf("ResolveTarget(bad) error = %v, want ErrInvalidAthleteID", err)
 	}
-	if _, err := filter.ResolveTarget("i111", "i111", "", toolcatalog.GetPowerCurves, normalize); err == nil {
-		t.Fatal("ResolveTarget(ACL denied) error = nil, want error")
+	if _, err := filter.ResolveTarget("i111", "i111", "", toolcatalog.GetPowerCurves, normalize); !errors.Is(err, ErrToolNotAllowed) {
+		t.Fatalf("ResolveTarget(ACL denied) error = %v, want ErrToolNotAllowed", err)
 	}
 }

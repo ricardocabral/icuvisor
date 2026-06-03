@@ -2,10 +2,20 @@ package coach
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/toolcatalog"
+)
+
+var (
+	// ErrInvalidAthleteID reports a malformed athlete_id routing argument.
+	ErrInvalidAthleteID = errors.New("invalid athlete_id")
+	// ErrAthleteNotAuthorized reports a target that is not in the configured coach roster.
+	ErrAthleteNotAuthorized = errors.New("athlete_id not authorized")
+	// ErrToolNotAllowed reports a per-athlete ACL denial for the selected target.
+	ErrToolNotAllowed = errors.New("tool not allowed for athlete")
 )
 
 // AthleteIDNormalizer canonicalizes an athlete ID string.
@@ -63,11 +73,15 @@ func (f ToolFilter) ResolveTarget(suppliedAthleteID, defaultAthleteID, selectedA
 		targetAthleteID = strings.TrimSpace(defaultAthleteID)
 	}
 	normalized, err := normalize(targetAthleteID)
-	if err != nil || !f.evaluator.HasAthlete(normalized) {
-		return "", errors.New("invalid target athlete")
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", ErrInvalidAthleteID, err)
 	}
-	if err := f.evaluator.MustEvaluate(normalized, toolName); err != nil {
-		return "", err
+	if !f.evaluator.HasAthlete(normalized) {
+		return "", ErrAthleteNotAuthorized
+	}
+	allowed, reason := f.evaluator.Evaluate(normalized, toolName)
+	if !allowed {
+		return "", fmt.Errorf("%w: %s", ErrToolNotAllowed, reason)
 	}
 	return normalized, nil
 }

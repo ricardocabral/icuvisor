@@ -45,11 +45,14 @@ func selectAthleteHandler(evaluator coach.Evaluator) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		var args selectAthleteRequest
 		if err := json.Unmarshal(req.Arguments, &args); err != nil {
-			return Result{}, NewUserError(invalidCoachAthleteTargetMessage, err)
+			return Result{}, NewUserError(invalidCoachAthleteFormatMessage, err)
 		}
 		normalized, err := config.NormalizeAthleteID(args.AthleteID)
-		if err != nil || !evaluator.HasAthlete(normalized) {
-			return Result{}, NewUserError(invalidCoachAthleteTargetMessage, err)
+		if err != nil {
+			return Result{}, NewUserError(invalidCoachAthleteFormatMessage, err)
+		}
+		if !evaluator.HasAthlete(normalized) {
+			return Result{}, NewUserError(unauthorizedCoachAthleteMessage, nil)
 		}
 		selection, ok := coach.SelectionContextFromContext(ctx)
 		if !ok || selection.Store == nil {
@@ -78,4 +81,6 @@ func visibleToolsForAthlete(evaluator coach.Evaluator, athleteID string) []strin
 	return out
 }
 
-const invalidCoachAthleteTargetMessage = "invalid athlete_id; use a configured target athlete"
+const invalidCoachAthleteFormatMessage = "invalid athlete_id; use format i12345 or 12345"
+
+const unauthorizedCoachAthleteMessage = "athlete_id is not authorized for this icuvisor coach roster"
