@@ -1,5 +1,5 @@
 # TP-134: Calendar write idempotency and duplicate prevention — Status
-**Current Step:** Step 1: Audit write retry and duplicate behavior
+**Current Step:** Step 2: Implement duplicate prevention or explicit duplicate warnings
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
@@ -29,7 +29,7 @@
 ---
 
 ### Step 2: Implement duplicate prevention or explicit duplicate warnings
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Add tests for repeated `apply_training_plan` calls against the same plan/date range and for duplicate same-day planned events.
 - [ ] Implement deduplication, stable skip behavior, idempotency keys/metadata, or explicit duplicate warnings using existing upstream fields only.
