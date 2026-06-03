@@ -3,7 +3,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -19,7 +19,7 @@
 ---
 
 ### Step 1: Audit conflict shape and replace policy
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Inspect `fetchApplyTrainingPlanConflicts` and `replace_existing` deletion behavior.
 - [x] Confirm how event category/type/name/date are available from existing event rows and upstream raw fields.
@@ -83,3 +83,5 @@
 | 2026-06-03 17:12 | Step 0 started | Preflight |
 | 2026-06-03 17:14 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-03 17:16 | Review R002 | code Step 1: REVISE | Missing exact conflict-flow details and concrete protected taxonomy; revision checkboxes added. |
+| 2026-06-03 17:18 | Review R003 | code Step 1: APPROVE | Conflict-flow and taxonomy clarifications approved. |
+| 2026-06-03 17:18 | Review R003 | code Step 1: APPROVE |
