@@ -1,10 +1,10 @@
 # TP-150: Workout DSL metric suffix from sport priority — Status
 
-**Current Step:** Step 3: Refresh schemas and user guidance
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 2
 **Size:** M
 
@@ -46,7 +46,7 @@
 ---
 
 ### Step 3: Refresh schemas and user guidance
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Tool descriptions/schema wording updated if needed
 - [x] Schema snapshots regenerated if needed
@@ -84,6 +84,8 @@
 | R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
 | R004 | plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
 | R005 | code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
+| R006 | plan | 3 | APPROVE | `.reviews/R006-plan-step3.md` |
+| R007 | code | 3 | APPROVE | `.reviews/R007-code-step3.md` |
 
 ---
 
@@ -128,3 +130,4 @@
 | 2026-06-03 21:38 | Review R004 | plan Step 2: APPROVE |
 | 2026-06-03 21:46 | Review R005 | code Step 2: APPROVE |
 | 2026-06-03 21:48 | Review R006 | plan Step 3: APPROVE |
+| 2026-06-03 21:52 | Review R007 | code Step 3: APPROVE |
