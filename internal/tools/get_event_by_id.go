@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 )
 
 const (
@@ -77,7 +78,7 @@ func getEventByIDHandler(client EventByIDClient, profileClient ProfileClient, ve
 		if err != nil {
 			return Result{}, NewUserError(invalidGetEventByIDArgumentsMessage, err)
 		}
-		unitSystem, timezoneName, err := toolProfile(ctx, profileClient, timezoneFallback)
+		profile, unitSystem, timezoneName, err := toolProfileDetails(ctx, profileClient, timezoneFallback)
 		if err != nil {
 			return Result{}, NewUserError(fetchEventByIDMessage, err)
 		}
@@ -87,7 +88,7 @@ func getEventByIDHandler(client EventByIDClient, profileClient ProfileClient, ve
 
 		event, err := client.GetEvent(ctx, args.EventID)
 		if err == nil {
-			payload, shapeErr := shapeGetEventByIDDetailResponse(event, args.IncludeFull, timezoneName)
+			payload, shapeErr := shapeGetEventByIDDetailResponse(event, args.IncludeFull, timezoneName, profile, unitSystem)
 			if shapeErr != nil {
 				return Result{}, fmt.Errorf("shaping get_event_by_id detail response: %w", shapeErr)
 			}
@@ -112,7 +113,7 @@ func getEventByIDHandler(client EventByIDClient, profileClient ProfileClient, ve
 			}
 			return Result{}, NewUserError(fetchEventByIDMessage, err)
 		}
-		payload, err := shapeGetEventByIDScanResponse(events, args, timezoneName, scanRange)
+		payload, err := shapeGetEventByIDScanResponse(events, args, timezoneName, scanRange, profile, unitSystem)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_event_by_id fallback response: %w", err)
 		}
@@ -185,15 +186,15 @@ func validateEventByIDRange(oldest string, newest string) error {
 	return nil
 }
 
-func shapeGetEventByIDDetailResponse(event intervals.Event, includeFull bool, timezoneName string) (getEventByIDResponse, error) {
-	row, err := eventRow(event, includeFull, timezoneName)
+func shapeGetEventByIDDetailResponse(event intervals.Event, includeFull bool, timezoneName string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) (getEventByIDResponse, error) {
+	row, err := eventRow(event, includeFull, timezoneName, workoutPreviewContextForEvent(event, profile, unitSystem))
 	if err != nil {
 		return getEventByIDResponse{}, err
 	}
 	return getEventByIDResponse{Event: &row, Meta: getEventByIDMeta{Source: "detail", Recovered: false, Timezone: timezoneName, IncludeFull: includeFull}}, nil
 }
 
-func shapeGetEventByIDScanResponse(events []intervals.Event, args getEventByIDRequest, timezoneName string, scanRange dateRangeMeta) (getEventByIDResponse, error) {
+func shapeGetEventByIDScanResponse(events []intervals.Event, args getEventByIDRequest, timezoneName string, scanRange dateRangeMeta, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) (getEventByIDResponse, error) {
 	truncated := len(events) > fallbackEventByIDLimit
 	if truncated {
 		events = events[:fallbackEventByIDLimit]
@@ -203,7 +204,7 @@ func shapeGetEventByIDScanResponse(events []intervals.Event, args getEventByIDRe
 		if normalizedEventID(event) != args.EventID {
 			continue
 		}
-		row, err := eventRow(event, args.IncludeFull, timezoneName)
+		row, err := eventRow(event, args.IncludeFull, timezoneName, workoutPreviewContextForEvent(event, profile, unitSystem))
 		if err != nil {
 			return getEventByIDResponse{}, err
 		}

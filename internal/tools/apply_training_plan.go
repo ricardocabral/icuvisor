@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/workoutdoc"
 )
@@ -98,14 +99,14 @@ func applyTrainingPlanHandler(client ApplyTrainingPlanClient, profileClient Prof
 		if err != nil {
 			return Result{}, NewUserError(invalidApplyTrainingPlanArgumentsMessage, err)
 		}
-		unitSystem, timezoneName, err := toolProfile(ctx, profileClient, timezoneFallback)
+		profile, unitSystem, timezoneName, err := toolProfileDetails(ctx, profileClient, timezoneFallback)
 		if err != nil {
 			return Result{}, NewUserError(applyTrainingPlanMessage, err)
 		}
 		if client == nil {
 			return Result{}, NewUserError(applyTrainingPlanMessage, errors.New("missing apply training plan client"))
 		}
-		payload, err := applyTrainingPlan(ctx, client, args, timezoneName, capabilityOrSafe(capability))
+		payload, err := applyTrainingPlan(ctx, client, args, timezoneName, profile, unitSystem, capabilityOrSafe(capability))
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
@@ -151,7 +152,7 @@ func decodeApplyTrainingPlanRequest(raw json.RawMessage, capability safety.Capab
 	return args, nil
 }
 
-func applyTrainingPlan(ctx context.Context, client ApplyTrainingPlanClient, args applyTrainingPlanRequest, timezoneName string, capability safety.Capability) (applyTrainingPlanResponse, error) {
+func applyTrainingPlan(ctx context.Context, client ApplyTrainingPlanClient, args applyTrainingPlanRequest, timezoneName string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem, capability safety.Capability) (applyTrainingPlanResponse, error) {
 	planned, err := planWorkoutsForApply(ctx, client, args.PlanID, args.StartDate)
 	if err != nil {
 		return applyTrainingPlanResponse{}, err
@@ -207,7 +208,7 @@ func applyTrainingPlan(ctx context.Context, client ApplyTrainingPlanClient, args
 		if err != nil {
 			return applyTrainingPlanResponse{}, fmt.Errorf("creating event for workout %s on %s: %w", workout.ID, plannedWorkout.Date, err)
 		}
-		createdRow, err := eventRow(created, false, timezoneName)
+		createdRow, err := eventRow(created, false, timezoneName, workoutPreviewContextForEvent(created, profile, unitSystem))
 		if err != nil {
 			return applyTrainingPlanResponse{}, err
 		}

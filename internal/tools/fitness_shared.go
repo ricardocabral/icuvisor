@@ -118,13 +118,19 @@ func valueAtBucket(xs []float64, values []float64, bucket int) (float64, int, bo
 }
 
 func toolProfile(ctx context.Context, profileClient ProfileClient, timezoneFallback string) (response.UnitSystem, string, error) {
+	profile, unitSystem, timezone, err := toolProfileDetails(ctx, profileClient, timezoneFallback)
+	_ = profile
+	return unitSystem, timezone, err
+}
+
+func toolProfileDetails(ctx context.Context, profileClient ProfileClient, timezoneFallback string) (intervals.AthleteWithSportSettings, response.UnitSystem, string, error) {
 	profile, err := profileClient.GetAthleteProfile(ctx)
 	if err != nil {
-		return "", "", err
+		return intervals.AthleteWithSportSettings{}, "", "", err
 	}
 	unitSystem := profileUnitSystem(profile)
 	timezone := profileTimezone(profile.Timezone, timezoneFallback)
-	return unitSystem, timezone, nil
+	return profile, unitSystem, timezone, nil
 }
 
 func encodeShaped(payload any, includeFull bool, rowCollections []string, version string, debugMetadata bool, queryType string, unitSystem response.UnitSystem, shaping ...responseShaping) (Result, error) {

@@ -104,6 +104,37 @@ func TestGetWorkoutLibraryFoldersAndTopLevelWorkouts(t *testing.T) {
 	}
 }
 
+func TestGetWorkoutLibraryResolvesPercentFTPTopLevelWorkoutTargetPreview(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWorkoutLibraryClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Types: []string{"Ride"}, FTP: 300}}}},
+		workouts:          decodeToolWorkouts(t, `{"id":1,"name":"FTP Blocks","type":"Ride","workout_doc":{"steps":[{"description":"Threshold","duration":600,"power":{"value":105,"units":"PERCENT_FTP"}}]}}`),
+	}
+	tool := newGetWorkoutLibraryTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"include_top_level_workouts":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if client.calls != 1 {
+		t.Fatalf("profile calls = %d, want one call reused for units and target previews", client.calls)
+	}
+	row := resultMap(t, result)["workouts"].([]any)[0].(map[string]any)
+	summary := row["workout_doc_summary"].(map[string]any)
+	previews := summary["target_previews"].([]any)
+	if len(previews) != 1 {
+		t.Fatalf("target_previews = %#v, want one resolved FTP preview", previews)
+	}
+	preview := previews[0].(map[string]any)
+	if preview["target"] != "105% FTP" || preview["preview"] != "315 W" || preview["basis"] != "ftp 300 W" {
+		t.Fatalf("preview = %#v, want compact FTP watts resolution", preview)
+	}
+	if _, ok := row["workout_doc"]; ok {
+		t.Fatalf("raw workout_doc leaked in top-level workout row: %#v", row)
+	}
+}
+
 func TestGetWorkoutLibraryEmptyDoesNotFetchWorkoutsByDefault(t *testing.T) {
 	t.Parallel()
 
@@ -163,6 +194,55 @@ func TestGetWorkoutsInFolderFiltersAndPreservesWorkoutDocWithIncludeFull(t *test
 	if meta["folder_id"] != "20" || meta["include_full"] != true || meta["count"] != float64(1) {
 		t.Fatalf("meta = %#v, want folder/include_full/count", meta)
 	}
+}
+
+func TestGetWorkoutsInFolderResolvesHRAndPaceTargetPreviews(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWorkoutLibraryClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Types: []string{"Run"}, LTHR: 170, MaxHR: 190, ThresholdPace: 300, PaceUnits: "MINS_KM"}}}},
+		workouts: decodeToolWorkouts(t,
+			`{"id":2,"name":"Run Targets","type":"Run","folder_id":20,"workout_doc":{"steps":[{"description":"Tempo HR","duration":600,"hr":{"min":95,"max":99,"units":"PERCENT_LTHR"}},{"description":"Cruise","duration":600,"pace":{"value":95,"units":"PERCENT_THRESHOLD"}}]}}`,
+		),
+	}
+	tool := newGetWorkoutsInFolderTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"folder_id":"20"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	summary := resultMap(t, result)["workouts"].([]any)[0].(map[string]any)["workout_doc_summary"].(map[string]any)
+	previews := summary["target_previews"].([]any)
+	if len(previews) != 2 {
+		t.Fatalf("target_previews = %#v, want HR and pace previews", previews)
+	}
+	hr := previews[0].(map[string]any)
+	if hr["family"] != "hr" || hr["target"] != "95-99% LTHR" || hr["preview"] != "162-168 bpm" || hr["basis"] != "lthr 170 bpm" {
+		t.Fatalf("hr preview = %#v, want LTHR bpm resolution", hr)
+	}
+	pace := previews[1].(map[string]any)
+	if pace["family"] != "pace" || pace["target"] != "95% Pace" || pace["preview"] != "5:16/km" || pace["basis"] != "threshold pace 5:00/km" {
+		t.Fatalf("pace preview = %#v, want threshold pace resolution", pace)
+	}
+}
+
+func TestGetWorkoutsInFolderOmitsUnsupportedTargetPreviews(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWorkoutLibraryClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Types: []string{"Ride"}}}}},
+		workouts: decodeToolWorkouts(t,
+			`{"id":2,"name":"Unsupported","type":"Ride","folder_id":20,"workout_doc":{"steps":[{"description":"No FTP","duration":600,"power":{"value":90,"units":"PERCENT_FTP"}},{"description":"Absolute","duration":300,"power":{"value":220,"units":"WATTS"}},{"description":"Text","duration":300,"pace":{"text":"Marathon Pace"}}]}}`,
+		),
+	}
+	tool := newGetWorkoutsInFolderTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"folder_id":"20"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	summary := resultMap(t, result)["workouts"].([]any)[0].(map[string]any)["workout_doc_summary"].(map[string]any)
+	assertKeyAbsent(t, summary, "target_previews")
 }
 
 func TestGetWorkoutsInFolderHidesWorkoutDocByDefault(t *testing.T) {

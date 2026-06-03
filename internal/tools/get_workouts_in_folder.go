@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 )
 
 const (
@@ -63,7 +64,7 @@ func getWorkoutsInFolderHandler(client WorkoutLibraryClient, profileClient Profi
 		if err != nil {
 			return Result{}, NewUserError(invalidGetWorkoutsInFolderArgumentsMessage, err)
 		}
-		unitSystem, _, err := toolProfile(ctx, profileClient, timezoneFallback)
+		profile, unitSystem, _, err := toolProfileDetails(ctx, profileClient, timezoneFallback)
 		if err != nil {
 			return Result{}, NewUserError(fetchWorkoutsInFolderMessage, err)
 		}
@@ -77,7 +78,7 @@ func getWorkoutsInFolderHandler(client WorkoutLibraryClient, profileClient Profi
 			}
 			return Result{}, NewUserError(fetchWorkoutsInFolderMessage, err)
 		}
-		payload := shapeGetWorkoutsInFolderResponse(workouts, args)
+		payload := shapeGetWorkoutsInFolderResponse(workouts, args, profile, unitSystem)
 		return encodeShaped(payload, args.IncludeFull, []string{"workouts"}, version, debugMetadata, getWorkoutsInFolderName, unitSystem, shapeCfg)
 	}
 }
@@ -99,13 +100,13 @@ func decodeGetWorkoutsInFolderRequest(raw json.RawMessage) (getWorkoutsInFolderR
 	return args, nil
 }
 
-func shapeGetWorkoutsInFolderResponse(workouts []intervals.Workout, args getWorkoutsInFolderRequest) getWorkoutsInFolderResponse {
+func shapeGetWorkoutsInFolderResponse(workouts []intervals.Workout, args getWorkoutsInFolderRequest, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) getWorkoutsInFolderResponse {
 	rows := make([]workoutInFolderRow, 0)
 	for _, workout := range workouts {
 		if workoutFolderID(workout) != args.FolderID {
 			continue
 		}
-		rows = append(rows, workoutInFolderToRow(workout, args.IncludeFull))
+		rows = append(rows, workoutInFolderToRow(workout, args.IncludeFull, workoutPreviewContextForWorkout(workout, profile, unitSystem)))
 	}
 	sort.SliceStable(rows, func(i, j int) bool {
 		if rows[i].Name != rows[j].Name {
@@ -116,13 +117,13 @@ func shapeGetWorkoutsInFolderResponse(workouts []intervals.Workout, args getWork
 	return getWorkoutsInFolderResponse{Workouts: rows, Meta: getWorkoutsInFolderMeta{SourceEndpoint: workoutLibraryWorkoutsEndpoint, FolderID: args.FolderID, Count: len(rows), IncludeFull: args.IncludeFull, DefaultPayloadScope: "terse workout rows with structured-step summaries; raw workout_doc requires include_full:true"}}
 }
 
-func workoutInFolderToRow(workout intervals.Workout, includeFull bool) workoutInFolderRow {
+func workoutInFolderToRow(workout intervals.Workout, includeFull bool, previewContexts ...workoutTargetPreviewContext) workoutInFolderRow {
 	row := workoutInFolderRow{WorkoutID: workout.ID, Name: stringValue(workout.Name), Sport: stringValue(workout.Type), FolderID: workoutFolderID(workout), TrainingLoad: intValue(workout.TrainingLoad), MovingTimeSeconds: intValue(workout.MovingTime), DistanceMeters: workout.Distance, Target: stringValue(workout.Target), Targets: workout.Targets, Tags: workout.Tags, Indoor: workout.Indoor}
 	if includeFull {
 		row.Description = stringValue(workout.Description)
 	}
 	if workout.WorkoutDoc != nil {
-		row.WorkoutDocSummary = workoutDocSummary(workout.WorkoutDoc)
+		row.WorkoutDocSummary = workoutDocSummary(workout.WorkoutDoc, previewContexts...)
 		if includeFull {
 			row.WorkoutDoc = workout.WorkoutDoc
 		}

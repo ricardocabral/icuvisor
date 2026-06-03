@@ -1,9 +1,9 @@
 # TP-137: Resolved workout target previews for planned workouts — Status
-**Current Step:** Step 1: Design compact resolved-target shape
+**Current Step:** Step 2: Implement target previews and tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 2
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -30,12 +30,12 @@
 ---
 
 ### Step 2: Implement target previews and tests
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Add tests for `% FTP` planned workout targets resolving to watts from profile FTP.
-- [ ] Add tests or explicit omissions for HR threshold, pace threshold, missing profile threshold, and non-numeric/text targets.
-- [ ] Implement compact preview fields while preserving terse-by-default and `include_full` behavior.
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/workoutdoc`.
+- [x] Add tests for `% FTP` planned workout targets resolving to watts from profile FTP.
+- [x] Add tests or explicit omissions for HR threshold, pace threshold, missing profile threshold, and non-numeric/text targets.
+- [x] Implement compact preview fields while preserving terse-by-default and `include_full` behavior.
+- [x] Run targeted tests: `go test ./internal/tools ./internal/workoutdoc`.
 
 ---
 
@@ -87,3 +87,4 @@
 
 | 2026-06-03 15:49 | Worker iter 1 | done in 394s, tools: 39 |
 | 2026-06-03 15:51 | Review R003 | code Step 1: APPROVE |
+| 2026-06-03 15:53 | Review R004 | plan Step 2: APPROVE |
