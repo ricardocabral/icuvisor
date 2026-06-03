@@ -1,11 +1,11 @@
 # TP-149: OpenAPI endpoint-diff triage automation — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
+**Current Step:** Step 1: Design endpoint-diff triage workflow
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it.
@@ -13,11 +13,11 @@
 ---
 
 ### Step 0: Preflight
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Required files and paths exist
-- [ ] Dependencies satisfied
-- [ ] Clean-room constraint confirmed
+- [x] Required files and paths exist
+- [x] Dependencies satisfied
+- [x] Clean-room constraint confirmed
 
 ---
 
@@ -70,3 +70,6 @@
 ## Discoveries
 
 <!-- Workers log durable discoveries here. -->
+
+| 2026-06-03 16:11 | Task started | Runtime V2 lane-runner execution |
+| 2026-06-03 16:11 | Step 0 started | Preflight |
