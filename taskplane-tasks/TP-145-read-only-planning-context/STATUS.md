@@ -1,10 +1,10 @@
 # TP-145: Read-only planning context tool — Status
 
-**Current Step:** Step 2: Implement get_planning_context
+**Current Step:** Step 3: Add tests and docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -35,13 +35,13 @@
 ---
 
 ### Step 2: Implement get_planning_context
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] R004 choose catalog group, tier-test update scope, and deterministic clock injection pattern
-- [ ] Add the tool using existing intervals client methods and response shaping patterns
-- [ ] Return week events/workouts, active training-plan summary, current/recent fitness context, upcoming race context, and caveats without creating/updating/deleting calendar items
-- [ ] Register the tool in the catalog/toolcatalog with appropriate core/full tier placement
-- [ ] Add input and output schema descriptions that clearly distinguish planning context from ATP creation
+- [x] Add the tool using existing intervals client methods and response shaping patterns
+- [x] Return week events/workouts, active training-plan summary, current/recent fitness context, upcoming race context, and caveats without creating/updating/deleting calendar items
+- [x] Register the tool in the catalog/toolcatalog with appropriate core/full tier placement
+- [x] Add input and output schema descriptions that clearly distinguish planning context from ATP creation
 
 ---
 
@@ -82,6 +82,7 @@
 | R002 | Plan | Step 1 | REVISE | .reviews/R002-plan-step1.md |
 | R003 | Plan | Step 1 | APPROVE | inline |
 | R004 | Plan | Step 2 | REVISE | .reviews/R004-plan-step2.md |
+| R005 | Plan | Step 2 | APPROVE | inline |
 
 ---
 
@@ -105,5 +106,7 @@
 | 2026-06-03 16:17 | Review R002 | plan Step 1: REVISE |
 | 2026-06-03 16:20 | R004 plan review | Reviewer requested Step 2-specific integration choices: catalog group, catalog_tiers_test update scope, and deterministic clock injection before implementation. |
 | 2026-06-03 16:21 | R004 Step 2 integration plan | Catalog group: `workout-library`, because the tool is full-tier specifically due to active training-plan context and belongs next to `get_training_plan`/`apply_training_plan` rather than widening the existing events group. Update `internal/tools/catalog_tiers_test.go` to assert `get_planning_context` is `safety.ToolsetFull`; update `internal/toolcatalog/catalog.go` constants and athlete-scoped list. Implement `newGetPlanningContextToolWithClock(..., now func() time.Time, ...)` matching `get_today`/`get_events` so default week anchoring, as-of metadata, current fitness window, and race scan window are deterministic in tests. |
+| 2026-06-03 16:21 | Review R005 | plan Step 2: APPROVE |
 | 2026-06-03 16:20 | Review R003 | plan Step 1: APPROVE |
 | 2026-06-03 16:22 | Review R004 | plan Step 2: UNKNOWN |
+| 2026-06-03 16:25 | Review R005 | plan Step 2: APPROVE |
