@@ -22,12 +22,12 @@
 ---
 
 ### Step 1: Design endpoint-diff triage workflow
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Inspect existing scripts/workflows and decide whether to add a standalone script, scheduled workflow, or documented manual command
-- [ ] Ensure normal tests do not hit the network; any live fetch must be opt-in or confined to CI schedule/manual workflow
-- [ ] Define output that highlights added/removed OpenAPI paths and creates a human-triage artifact without auto-implementing endpoints
-- [ ] Plan-review checkpoint completed before implementation
+- [x] Inspect existing scripts/workflows and decide whether to add a standalone script, scheduled workflow, or documented manual command
+- [x] Ensure normal tests do not hit the network; any live fetch must be opt-in or confined to CI schedule/manual workflow
+- [x] Define output that highlights added/removed OpenAPI paths and creates a human-triage artifact without auto-implementing endpoints
+- [x] Plan-review checkpoint completed before implementation
 
 ---
 
@@ -70,6 +70,8 @@
 ## Discoveries
 
 <!-- Workers log durable discoveries here. -->
+
+| 2026-06-03 | Step 1 design | Add a standalone `scripts/diff_openapi_endpoints.go` with offline fixture-friendly `-baseline`/`-latest` inputs and opt-in `-latest-url` fetching, plus a manual/scheduled GitHub workflow that writes a Markdown triage summary. Normal `make test` remains offline because tests use local fixtures only. Output reports added/removed path keys and next triage steps; it must not generate tools or auto-implement endpoints. |
 
 | 2026-06-03 16:11 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 16:11 | Step 0 started | Preflight |
