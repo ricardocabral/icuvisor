@@ -1,7 +1,7 @@
 # TP-141: Running pace-zone unit and label audit — Status
 
 **Current Step:** Step 4: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-03
 **Review Level:** 1
 **Review Counter:** 3
@@ -52,11 +52,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged in STATUS.md
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged in STATUS.md
 
 ---
 
@@ -66,6 +66,7 @@
 |------|------|---------|--------|
 | 2026-06-03 | Step 1 | Existing read tests cover MINS_KM and MINS_MILE output shaping, and write schema exposes seconds_per_km/seconds_per_mile, but update_sport_settings has a regression only for seconds_per_km input conversion. | Step 2 should add a seconds_per_mile input conversion regression. |
 | 2026-06-03 | Step 1 | Response field names and athlete profile _meta.pace_convention are clear that pace values are seconds per distance; update_sport_settings zone boundary schema says "seconds in the sport pace unit" but does not explicitly say "not speed" or name seconds_per_km/seconds_per_mile examples. | Step 2 should tighten LLM-facing wording for pace-zone boundaries if changed tests touch schema wording. |
+| 2026-06-03 | Step 4 | Reviewed PRD sport-settings and per-athlete unit-normalization sections; code changes only clarify existing schema wording and add regressions, with no material contract change. | PRD update not needed. |
 
 ## Blockers
 
@@ -87,6 +88,8 @@
 | 2026-06-03 16:52 | Step 3 started | Testing & Verification |
 | 2026-06-03 16:52 | Step 3 complete | make test, make lint, and make build passed. |
 | 2026-06-03 16:52 | Step 4 started | Documentation & Delivery |
+| 2026-06-03 16:52 | Step 4 complete | CHANGELOG updated; PRD reviewed with no material contract change; discoveries logged. |
+| 2026-06-03 16:52 | Task complete | All steps complete; make test, make lint, and make build passed. |
 | 2026-06-03 16:54 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-03 16:57 | Review R002 | plan Step 2: APPROVE |
 | 2026-06-03 17:01 | Review R003 | plan Step 3: APPROVE |
