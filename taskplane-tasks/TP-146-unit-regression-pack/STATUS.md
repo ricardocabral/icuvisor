@@ -74,3 +74,5 @@
 | 2026-06-03 | Coverage audit | Existing tests cover activity `calories_burned` semantics and zero preservation in `get_activities`, activity-detail nutrition disambiguation/include_full raw preservation, wellness nutrition disambiguation and hydration non-null/null handling, response KCAL/KJ pass-through, and extended-metrics Joules-to-kJ conversion/unit metadata. Missing regression assertions: extended-metrics raw Joule/W' upstream field names are absent from terse outputs; zero-valued Joule-derived kJ fields are preserved; wellness zero-valued `kcalConsumed`/`hydration`/`hydrationVolume` are preserved while ambiguous raw kcal names remain absent. |
 | 2026-06-03 | Documentation review | Must Update list is empty for TP-146; no required docs were modified because this is a regression-test-only change. |
 | 2026-06-03 | Affected docs review | CHANGELOG.md, README.md, PRD, and ROADMAP are unaffected: added tests only, with no behavior, capability, product-scope, or phasing changes. |
+| 2026-06-03 16:43 | Worker iter 1 | done in 325s, tools: 68 |
+| 2026-06-03 16:43 | Task complete | .DONE created |
