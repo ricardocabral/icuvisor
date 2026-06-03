@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-05-20
 **Status:** Active
-**Next Task ID:** TP-134
+**Next Task ID:** TP-150
 
 ---
 
@@ -158,6 +158,40 @@ Scaffolded 2026-05-29 from public intervals.icu forum comments over the prior 4 
 | TP-131 | Workout change preview guidance                 | —          |
 | TP-132 | Multiple same-day events regression pack        | —          |
 | TP-133 | Gym and strength best-effort support plan       | —          |
+
+---
+
+## Forum follow-up — 2026-06-03 AI coach thread review (TP-134 … TP-143)
+
+Scaffolded 2026-06-03 from public intervals.icu forum comments over the prior 4 days across IcuSync, AskMyCoach, Montis, LeCoach, IntervalCoach, MyTrainPal, and related AI-coach threads. Clean-room rule applies: tasks may use public product behavior signals and upstream API/docs, but must not read or copy GPL/copyleft competitor source.
+
+| ID     | Title                                                   | Depends on |
+| ------ | ------------------------------------------------------- | ---------- |
+| TP-134 | Calendar write idempotency and duplicate prevention     | —          |
+| TP-135 | Apply training plan conflict protection for non-workout calendar items | TP-134 |
+| TP-136 | Activity interval-source clarity in details and routing | —          |
+| TP-137 | Resolved workout target previews for planned workouts   | —          |
+| TP-138 | Weekly report timezone and stale-data guardrails        | —          |
+| TP-139 | Coach-mode athlete routing and authorization errors     | —          |
+| TP-140 | Long-distance event distance regression coverage        | —          |
+| TP-141 | Running pace-zone unit and label audit                  | —          |
+| TP-142 | Readiness provenance labels and recovery wording guardrails | —       |
+| TP-143 | Workout repeat header syntax regression                 | —          |
+
+---
+
+## Competitive follow-up — 2026-06-03 upstream MCP review (TP-144 … TP-149)
+
+Scaffolded 2026-06-03 from public GitHub issues/PRs/metadata in competing intervals.icu MCP servers reviewed over the prior 7 days. Clean-room rule applies: tasks may use public behavior signals and upstream API/docs, but must not read or copy GPL/copyleft competitor source.
+
+| ID     | Title                                                   | Depends on |
+| ------ | ------------------------------------------------------- | ---------- |
+| TP-144 | VirtualRide activity regression coverage                | —          |
+| TP-145 | Read-only planning context tool                         | —          |
+| TP-146 | Unit regression pack for work, calories, and hydration  | —          |
+| TP-147 | Race-event routing evals for `add_or_update_event`      | —          |
+| TP-148 | Public positioning for gear resolution and unit-safe output | —      |
+| TP-149 | OpenAPI endpoint-diff triage automation                 | —          |
 
 ---
 
