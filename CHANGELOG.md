@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added a Codex CLI connection guide covering `codex mcp add`, `config.toml`, safe non-secret environment configuration, and MCP verification.
 
+### Changed
+
+- README positioning now calls out gear-name resolution status and unit-safe output labels for activity fuel, wellness intake, and scale legends.
+
 ### Fixed
 
 - Added WorkoutDoc repeat-header regression coverage so repeat blocks serialize as canonical `3x` or `<description> 3x` headers and dashed malformed variants are rejected during parsing/validation.
