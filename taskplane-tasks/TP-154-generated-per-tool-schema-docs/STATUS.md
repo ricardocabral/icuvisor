@@ -1,10 +1,10 @@
 # TP-154: Generated per-tool schema docs — Status
 
-**Current Step:** Step 1: Design generated docs data shape
+**Current Step:** Step 2: Implement generator and tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Design generated docs data shape
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] R001 plan feedback addressed in concrete design notes
 - [x] Data-file strategy decided
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Implement generator and tests
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Generator emits per-tool schema/reference data
 - [ ] Deterministic checks/tests added
@@ -105,6 +105,9 @@
 | 2026-06-03 23:08 | Step 0 started | Preflight |
 | 2026-06-03 | Step 0 completed | `make docs-tools` regenerates summary-only `web/data/tools.json` via `cmd/gendocs --out`; no extra services/dependencies required |
 | 2026-06-03 | Step 1 started | Design generated docs data shape |
+| 2026-06-03 | Step 1 plan reviewed | R001 requested concrete design notes; R002 approved updated plan |
+| 2026-06-03 | Step 1 code reviewed | Approved |
+| 2026-06-03 | Step 2 started | Implement generator and tests |
 
 ---
 
@@ -128,3 +131,4 @@
 
 | 2026-06-03 23:10 | Review R001 | plan Step 1: REVISE |
 | 2026-06-03 23:12 | Review R002 | plan Step 1: APPROVE |
+| 2026-06-03 23:13 | Review R003 | code Step 1: APPROVE |
