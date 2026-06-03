@@ -29,6 +29,33 @@
       "notes": "Write/update event routing should use the event upsert tool."
     },
     {
+      "id": "race-a-event-create",
+      "prompt": "Create an A race on 2026-09-13 called City Championship with a 40 km road race goal note.",
+      "expected_first_tool": "add_or_update_event",
+      "catalog_mode": "core_safe",
+      "toolset": "core",
+      "delete_mode": "safe",
+      "notes": "Race creation is a calendar event write; use add_or_update_event with category RACE_A, not a separate add_race_event tool. No separate add_race_event tool is required or exposed."
+    },
+    {
+      "id": "race-b-event-create",
+      "prompt": "Add a B priority gravel race to my calendar for 2026-08-22 named Ridge Gravel, with expected duration around five hours.",
+      "expected_first_tool": "add_or_update_event",
+      "catalog_mode": "core_safe",
+      "toolset": "core",
+      "delete_mode": "safe",
+      "notes": "B-race scheduling should route to the generic event upsert tool using category RACE_B; do not require a dedicated add_race_event tool."
+    },
+    {
+      "id": "race-c-event-create",
+      "prompt": "Put a C race tune-up 10K run called Riverside Tune Up on 2026-07-05 on my intervals calendar.",
+      "expected_first_tool": "add_or_update_event",
+      "catalog_mode": "core_safe",
+      "toolset": "core",
+      "delete_mode": "safe",
+      "notes": "C-race prompts are event writes and should use add_or_update_event with category RACE_C; add_race_event should not be invented."
+    },
+    {
       "id": "event-delete-hidden-in-safe-mode",
       "prompt": "Delete the calendar event evt-789 from my intervals.icu calendar.",
       "expected_first_tool": null,

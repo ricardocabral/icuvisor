@@ -19,8 +19,8 @@ func TestLoadFixture(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadFixture() error = %v", err)
 	}
-	if len(fixture.Cases) < 8 {
-		t.Fatalf("loaded %d cases, want at least 8", len(fixture.Cases))
+	if len(fixture.Cases) < 11 {
+		t.Fatalf("loaded %d cases, want at least 11", len(fixture.Cases))
 	}
 	seen := map[string]Case{}
 	for _, c := range fixture.Cases {
@@ -34,6 +34,17 @@ func TestLoadFixture(t *testing.T) {
 	}
 	if got := seen["event-delete-full-mode"].ExpectedFirstTool; got == nil || *got != toolcatalog.DeleteEvent {
 		t.Fatalf("full-mode delete expected tool = %v, want %s", got, toolcatalog.DeleteEvent)
+	}
+	for _, id := range []string{"race-a-event-create", "race-b-event-create", "race-c-event-create"} {
+		if got := seen[id].ExpectedFirstTool; got == nil || *got != toolcatalog.AddOrUpdateEvent {
+			t.Fatalf("%s expected tool = %v, want %s", id, got, toolcatalog.AddOrUpdateEvent)
+		}
+		if !strings.Contains(seen[id].Notes, "add_race_event") {
+			t.Fatalf("%s notes = %q, want add_race_event negative fixture note", id, seen[id].Notes)
+		}
+	}
+	if _, ok := knownToolSet()["add_race_event"]; ok {
+		t.Fatal("known tool set unexpectedly includes add_race_event; race cases should route to add_or_update_event")
 	}
 }
 

@@ -1,6 +1,6 @@
 # TP-147: Race-event routing evals for add_or_update_event — Status
 
-**Current Step:** Step 1: Add race-event routing cases
+**Current Step:** Step 99: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 0
@@ -22,17 +22,17 @@
 ---
 
 ### Step 1: Add race-event routing cases
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Find the existing tool-routing fixture/test pattern
-- [ ] Add prompts for creating A/B/C races and assert the expected first tool is `add_or_update_event`
-- [ ] Include a negative assertion or fixture note that a separate `add_race_event` tool should not be required
-- [ ] Run targeted tests: `go test ./internal/toolrouting ./internal/prompts -run 'Race|Routing|Fixture'`
+- [x] Find the existing tool-routing fixture/test pattern
+- [x] Add prompts for creating A/B/C races and assert the expected first tool is `add_or_update_event`
+- [x] Include a negative assertion or fixture note that a separate `add_race_event` tool should not be required
+- [x] Run targeted tests: `go test ./internal/toolrouting ./internal/prompts -run 'Race|Routing|Fixture'`
 
 ---
 
 ### Step 99: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Targeted tests passing
 - [ ] FULL test suite passing
@@ -65,3 +65,5 @@
 | 2026-06-03 17:03 | Step 0 started | Preflight |
 | 2026-06-03 17:04 | Preflight complete | Required task files, scoped source paths, Go module, and clean-room constraint confirmed without reading competitor source. |
 | 2026-06-03 17:04 | Step 1 started | Add race-event routing cases |
+| 2026-06-03 17:08 | Step 1 complete | Added A/B/C race create routing fixture cases, negative add_race_event assertion/note, and targeted routing/prompt tests passed. |
+| 2026-06-03 17:08 | Step 99 started | Testing & Verification |
