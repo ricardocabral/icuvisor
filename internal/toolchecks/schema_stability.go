@@ -12,8 +12,12 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ricardocabral/icuvisor/internal/coach"
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/mcp"
+	"github.com/ricardocabral/icuvisor/internal/safety"
+	"github.com/ricardocabral/icuvisor/internal/toolcatalog"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
@@ -48,45 +52,10 @@ func (schemaCatalogRoundTripper) RoundTrip(*http.Request) (*http.Response, error
 	return nil, fmt.Errorf("schema catalog generation must not perform HTTP")
 }
 
-var schemaCatalogToolNames = map[string]struct{}{
-	"add_activity_message":                {},
-	"add_or_update_event":                 {},
-	"apply_training_plan":                 {},
-	"create_workout":                      {},
-	"delete_activity":                     {},
-	"delete_workout":                      {},
-	"get_activities":                      {},
-	"get_activity_details":                {},
-	"get_activity_intervals":              {},
-	"get_activity_messages":               {},
-	"get_activity_splits":                 {},
-	"get_activity_streams":                {},
-	"get_athlete_profile":                 {},
-	"get_best_efforts":                    {},
-	"get_custom_item_by_id":               {},
-	"get_custom_items":                    {},
-	"get_event_by_id":                     {},
-	"get_events":                          {},
-	"get_extended_metrics":                {},
-	"get_fitness":                         {},
-	"get_hr_curves":                       {},
-	"get_pace_curves":                     {},
-	"get_power_curves":                    {},
-	"get_today":                           {},
-	"get_training_plan":                   {},
-	"get_training_summary":                {},
-	"get_wellness_data":                   {},
-	"get_workout_library":                 {},
-	"get_workouts_in_folder":              {},
-	"icuvisor_list_advanced_capabilities": {},
-	"link_activity_to_event":              {},
-	"resolve_calendar_dates":              {},
-	"set_activity_intervals":              {},
-	"update_activity":                     {},
-	"update_sport_settings":               {},
-	"update_wellness":                     {},
-	"update_workout":                      {},
-}
+// schemaCatalogToolExclusions documents registered public tools that are intentionally
+// omitted from schema snapshots. TP-153 snapshots every registered tool, so this is
+// currently empty; future exclusions must include a durable reason and remain rare.
+var schemaCatalogToolExclusions = map[string]string{}
 
 func generateSchemaCatalogTools(ctx context.Context) ([]tools.Tool, error) {
 	if err := ctx.Err(); err != nil {
@@ -105,15 +74,29 @@ func generateSchemaCatalogTools(ctx context.Context) ([]tools.Tool, error) {
 		return nil, fmt.Errorf("creating schema catalog client: %w", err)
 	}
 	registrar := &schemaRegistrar{}
-	registry := tools.NewRegistryWithOptions(client, tools.RegistryOptions{Version: "snapshot", TimezoneFallback: "UTC"})
+	registry := tools.NewRegistryWithOptions(client, tools.RegistryOptions{
+		Version:          "snapshot",
+		TimezoneFallback: "UTC",
+		Capability:       safety.NewCapability(safety.ModeFull),
+		Toolset:          safety.ToolsetFull,
+		CoachModeEnabled: true,
+		CoachConfig: coach.Config{
+			DefaultAthleteID: "i12345",
+			Athletes:         []coach.Athlete{{ID: "i12345", Label: "Snapshot Athlete", AllowedTools: []string{"*"}}},
+		},
+	})
 	if err := registry.Register(ctx, registrar); err != nil {
 		return nil, fmt.Errorf("registering tools: %w", err)
 	}
-	filtered := make([]tools.Tool, 0, len(schemaCatalogToolNames))
+	filtered := make([]tools.Tool, 0, len(registrar.tools))
 	for _, tool := range registrar.tools {
-		if _, ok := schemaCatalogToolNames[tool.Name]; ok {
-			filtered = append(filtered, tool)
+		if _, excluded := schemaCatalogToolExclusions[tool.Name]; excluded {
+			continue
 		}
+		if toolcatalog.IsAthleteScopedTool(tool.Name) {
+			tool.InputSchema = mcp.SchemaWithAthleteID(tool.InputSchema)
+		}
+		filtered = append(filtered, tool)
 	}
 	return filtered, nil
 }
