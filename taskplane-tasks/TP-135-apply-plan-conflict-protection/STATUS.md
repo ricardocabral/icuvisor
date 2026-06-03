@@ -1,10 +1,10 @@
 # TP-135: Apply training plan conflict protection for non-workout calendar items — Status
-**Current Step:** Step 3: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 4: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-03
 **Review Level:** 2
 **Review Counter:** 8
-**Iteration:** 1
+**Iteration:** 2
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
 ---
@@ -56,11 +56,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged in STATUS.md
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged in STATUS.md
 
 ---
 
@@ -73,6 +73,7 @@
 | 2026-06-03 | Step 1 | `replace_existing` currently deletes every conflict returned by preflight, because `shouldSkipApplyTrainingPlanConflicts` only protects `duplicate_existing_event` and `duplicate_plan_date`. | Step 2 must delete only classified replaceable workout conflicts and skip/report days with any protected conflict. |
 | 2026-06-03 | Step 1 | Safe taxonomy for Step 2: replaceable = existing event with category `WORKOUT` and reason `existing_event_on_date`; protected = reason `duplicate_existing_event`, reason `duplicate_plan_date`, any non-`WORKOUT` category, missing/unknown category, documented races `RACE_A`/`RACE_B`/`RACE_C`, annotations `NOTE`/`PLAN`, unavailable-like blocks `HOLIDAY`/`SICK`/`INJURED`, and model/goal markers `SET_EFTP`/`FITNESS_DAYS`/`SEASON_START`/`TARGET`/`SET_FITNESS`. | Conservative default protects custom upstream categories and known non-workout calendar items; no server-side policy exists in this task to delete them. |
 | 2026-06-03 | Step 1 | `intervals.Event` exposes typed `Category`, `Type`, `Name`, `StartDateLocal`, and preserved `Raw`; `eventRow` already falls back to raw `category` and `eventDateOnly` falls back to raw `start_date_local`/`start_date`. | Conflict output can include category/type/name/date fields without new interval client fields. |
+| 2026-06-03 | Step 4 | `apply_training_plan` now has a user-visible protected-conflict contract, so PRD §7.2.C and the v0.3 dogfood apply prompts were affected in addition to the changelog. | Delivery docs now describe category/type/name/date conflict details and protected-note/race/unavailable `replace_existing` expectations. |
 
 ## Blockers
 
@@ -100,3 +101,6 @@
 | 2026-06-03 17:28 | Review R006 | code Step 2: APPROVE |
 | 2026-06-03 17:28 | Review R007 | plan Step 3: APPROVE |
 | 2026-06-03 17:31 | Review R008 | code Step 3: APPROVE |
+
+| 2026-06-03 17:31 | Worker iter 1 | done in 1184s, tools: 116 |
+| 2026-06-03 17:31 | Step 4 started | Documentation & Delivery |
