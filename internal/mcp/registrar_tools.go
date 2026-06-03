@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -24,7 +23,13 @@ const genericToolErrorMessage = "tool failed; try again or check icuvisor logs"
 
 const invalidInputToolErrorMessage = "invalid tool arguments; check the inputs and try again"
 
-const invalidTargetAthleteMessage = "invalid athlete_id; use a configured target athlete"
+const invalidTargetAthleteFormatMessage = "invalid athlete_id; use format i12345 or 12345"
+
+const unauthorizedTargetAthleteMessage = "athlete_id is not authorized for this icuvisor coach roster"
+
+const toolNotAllowedForAthleteMessage = "tool is not allowed for the selected athlete"
+
+const localModeAthleteTargetMessage = "athlete_id is only supported when coach mode is enabled"
 
 func capabilityOrSafe(capability safety.Capability) safety.Capability {
 	if capability != nil {
@@ -212,34 +217,41 @@ func (r *safeRegistrar) withSelection(ctx context.Context, session *sdkmcp.Serve
 }
 
 func (r *safeRegistrar) resolveToolTarget(ctx context.Context, toolName string, raw json.RawMessage) (context.Context, json.RawMessage, error) {
-	if !r.config.CoachModeEnabled() || !toolcatalog.IsAthleteScopedTool(toolName) {
+	if !toolcatalog.IsAthleteScopedTool(toolName) {
 		return ctx, raw, nil
 	}
-	arguments, suppliedAthleteID, err := stripAthleteID(raw)
+	arguments, suppliedAthleteID, suppliedAthleteIDPresent, err := stripAthleteID(raw)
 	if err != nil {
-		return ctx, nil, tools.NewUserError(invalidTargetAthleteMessage, err)
+		return ctx, nil, tools.NewUserError(invalidTargetAthleteFormatMessage, err)
+	}
+	if !r.config.CoachModeEnabled() {
+		if suppliedAthleteIDPresent {
+			return ctx, nil, tools.NewUserError(localModeAthleteTargetMessage, nil)
+		}
+		return intervals.WithTargetAthleteID(ctx, r.config.AthleteID), raw, nil
 	}
 	targetAthleteID, err := r.resolveAthleteID(ctx, toolName, suppliedAthleteID)
 	if err != nil {
-		return ctx, nil, tools.NewUserError(invalidTargetAthleteMessage, err)
+		return ctx, nil, tools.NewUserError(publicAthleteRoutingMessage(err), err)
 	}
 	return intervals.WithTargetAthleteID(ctx, targetAthleteID), arguments, nil
 }
 
 func (r *safeRegistrar) resolveAthleteID(ctx context.Context, toolName string, suppliedAthleteID string) (string, error) {
-	if r.config.CoachModeEnabled() {
-		return r.coachFilter.ResolveTarget(suppliedAthleteID, r.config.Coach.DefaultAthleteID, r.selectedAthleteID(ctx), toolName, config.NormalizeAthleteID)
+	return r.coachFilter.ResolveTarget(suppliedAthleteID, r.config.Coach.DefaultAthleteID, r.selectedAthleteID(ctx), toolName, config.NormalizeAthleteID)
+}
+
+func publicAthleteRoutingMessage(err error) string {
+	switch {
+	case errors.Is(err, coach.ErrInvalidAthleteID):
+		return invalidTargetAthleteFormatMessage
+	case errors.Is(err, coach.ErrToolNotAllowed):
+		return toolNotAllowedForAthleteMessage
+	case errors.Is(err, coach.ErrAthleteNotAuthorized):
+		return unauthorizedTargetAthleteMessage
+	default:
+		return unauthorizedTargetAthleteMessage
 	}
-	configured := r.config.AthleteID
-	targetAthleteID := strings.TrimSpace(suppliedAthleteID)
-	if targetAthleteID == "" {
-		return configured, nil
-	}
-	normalized, err := config.NormalizeAthleteID(targetAthleteID)
-	if err != nil || normalized != configured {
-		return "", errors.New("invalid target athlete")
-	}
-	return normalized, nil
 }
 
 func (r *safeRegistrar) selectedAthleteID(ctx context.Context) string {
