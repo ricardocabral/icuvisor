@@ -1,6 +1,6 @@
 # TP-148: Public positioning for gear resolution and unit-safe output — Status
 
-**Current Step:** Step 1: Improve public positioning copy
+**Current Step:** Step 2: Verify docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 0
@@ -32,11 +32,11 @@
 ---
 
 ### Step 2: Verify docs
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Run markdown/link checks if available or at least inspect rendered Markdown structure
-- [ ] Confirm claims match implemented tools and tests
-- [ ] Run targeted command if available: `make test` is optional for docs-only, but required if code changed
+- [x] Run markdown/link checks if available or at least inspect rendered Markdown structure
+- [x] Confirm claims match implemented tools and tests
+- [x] Run targeted command if available: `make test` is optional for docs-only, but required if code changed
 
 ---
 
@@ -74,3 +74,6 @@
 | 2026-06-03 16:43 | Step 0 started | Preflight |
 | 2026-06-03 16:44 | Step 1 docs surface review | README contains public capability positioning; docs grep found detailed internal/threat/upstream docs but no broader public user-facing capability page in task scope. |
 | 2026-06-03 16:48 | README positioning guardrail | Added only behavior-specific copy for gear resolution and unit-safe output; grep confirmed no new claims about coaching quality or automatic calendar planning. |
+| 2026-06-03 16:49 | Markdown structure check | No markdown/link target or markdownlint binary found; README fenced-code balance passed and heading outline renders as expected. |
+| 2026-06-03 16:50 | Claim verification | README gear/unit claims matched internal/tools activity gear fields/resolution statuses, get_gear_list, activity calories_burned/carbs fields, wellness kcal_consumed/scale metadata, and targeted go test ./internal/tools ./internal/intervals ./internal/response passed. |
+| 2026-06-03 16:51 | Docs-only test decision | No code files changed for TP-148, so make test is optional in Step 2; targeted package tests were still run for claim evidence. |
