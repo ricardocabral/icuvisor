@@ -62,6 +62,10 @@ func catalogTools() []Tool {
 		coachModeEnabled: true,
 	})
 	tools = append(tools, newListAdvancedCapabilitiesTool(tools, safety.ToolsetFull, shaping))
+	diagnosticCatalog := effectiveDiagnosticCatalog(tools, safety.NewCapability(safety.ModeFull), safety.ToolsetFull)
+	if diagnosticTool, err := newCheckServerVersionTool("catalog", diagnosticCatalog, safety.ModeFull, safety.ToolsetFull, shaping); err == nil {
+		tools = append(tools, diagnosticTool)
+	}
 	return tools
 }
 
@@ -162,7 +166,7 @@ func toolCatalogGroup(name string) string {
 		return "custom-items"
 	case listAthletesName, selectAthleteName:
 		return "coach"
-	case listAdvancedCapabilitiesName:
+	case listAdvancedCapabilitiesName, checkServerVersionName:
 		return "meta"
 	default:
 		return ""

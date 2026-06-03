@@ -50,6 +50,9 @@ func TestToolSets(t *testing.T) {
 	if !IsKnownTool(ICUvisorListAdvancedCapabilities) || IsAthleteScopedTool(ICUvisorListAdvancedCapabilities) {
 		t.Fatal("advanced capabilities should be known but outside per-athlete ACLs")
 	}
+	if !IsKnownTool(ICUvisorCheckServerVersion) || IsAthleteScopedTool(ICUvisorCheckServerVersion) {
+		t.Fatal("server version diagnostic should be known but outside per-athlete ACLs")
+	}
 	if !IsAthleteScopedTool(GetAthleteProfile) {
 		t.Fatal("get_athlete_profile should be athlete-scoped")
 	}

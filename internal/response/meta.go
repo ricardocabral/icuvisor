@@ -16,6 +16,12 @@ var catalogRuntime = struct {
 	firstSeen *catalogSnapshot
 }{current: catalogSnapshot{CatalogHash: defaultCatalogHash}}
 
+// RuntimeCatalogMetadataSnapshot is the current non-secret server/catalog metadata.
+type RuntimeCatalogMetadataSnapshot struct {
+	Version     string
+	CatalogHash string
+}
+
 type catalogSnapshot struct {
 	Version     string
 	CatalogHash string
@@ -39,6 +45,14 @@ func SetRuntimeCatalogMetadata(version string, catalogHash string) {
 	catalogRuntime.Lock()
 	defer catalogRuntime.Unlock()
 	catalogRuntime.current = catalogSnapshot{Version: normalizeVersion(version), CatalogHash: normalizeCatalogHash(catalogHash)}
+}
+
+// RuntimeCatalogMetadata returns the current non-secret server/catalog metadata.
+func RuntimeCatalogMetadata() RuntimeCatalogMetadataSnapshot {
+	catalogRuntime.Lock()
+	defer catalogRuntime.Unlock()
+	current := catalogRuntime.current
+	return RuntimeCatalogMetadataSnapshot{Version: normalizeVersion(current.Version), CatalogHash: normalizeCatalogHash(current.CatalogHash)}
 }
 
 func resetRuntimeCatalogMetadataForTest() {

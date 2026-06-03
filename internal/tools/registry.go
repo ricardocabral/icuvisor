@@ -134,11 +134,16 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 		}
 	}
 	advancedTool := newListAdvancedCapabilitiesTool(filteredCatalog(collector.tools, r.catalogFilter), r.toolset, shaping)
-	if !toolcatalog.IsKnownTool(advancedTool.Name) {
-		return fmt.Errorf("registering %s: not present in shared tool catalog", advancedTool.Name)
+	if err := add(advancedTool); err != nil {
+		return err
 	}
-	if err := collector.downstream.AddTool(advancedTool); err != nil {
-		return fmt.Errorf("registering %s: %w", advancedTool.Name, err)
+	diagnosticCatalog := effectiveDiagnosticCatalog(filteredCatalog(collector.tools, r.catalogFilter), r.capability, r.toolset)
+	diagnosticTool, err := newCheckServerVersionTool(r.version, diagnosticCatalog, r.deleteMode, r.toolset, shaping)
+	if err != nil {
+		return fmt.Errorf("building %s: %w", checkServerVersionName, err)
+	}
+	if err := add(diagnosticTool); err != nil {
+		return err
 	}
 	return nil
 }

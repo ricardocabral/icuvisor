@@ -54,6 +54,7 @@ const (
 	GetTrainingSummary               = "get_training_summary"
 	GetWellnessData                  = "get_wellness_data"
 	GetWorkoutLibrary                = "get_workout_library"
+	ICUvisorCheckServerVersion       = "icuvisor_check_server_version"
 	GetWorkoutsInFolder              = "get_workouts_in_folder"
 	ICUvisorListAdvancedCapabilities = "icuvisor_list_advanced_capabilities"
 	LinkActivityToEvent              = "link_activity_to_event"
@@ -128,7 +129,7 @@ var athleteScopedToolNames = []string{
 	UpdateWorkout,
 }
 
-var allToolNames = append(append([]string{}, athleteScopedToolNames...), ICUvisorListAdvancedCapabilities, ListAthletes, SelectAthlete, ValidateWorkout)
+var allToolNames = append(append([]string{}, athleteScopedToolNames...), ICUvisorCheckServerVersion, ICUvisorListAdvancedCapabilities, ListAthletes, SelectAthlete, ValidateWorkout)
 
 // AthleteScopedToolNames returns the canonical sorted names accepted by per-athlete ACLs.
 func AthleteScopedToolNames() []string {
