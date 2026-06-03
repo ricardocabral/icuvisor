@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Hardened readiness provenance prompts and regressions so Garmin Body Battery, Oura readiness, Polar nightly recharge/ANS charge, WHOOP recovery, and unknown upstream readiness are cited with provider/source labels instead of as generic recovery scores.
 - Added regression coverage so long-distance calendar race/event distances such as 1,200 km are accepted and preserved in meters without false load auto-calculation claims.
 - Hardened coach-mode athlete routing errors so invalid athlete IDs, unauthorized roster targets, per-athlete ACL denials, and local-mode athlete overrides fail explicitly without accepting credential-like tool parameters.
 
