@@ -1,10 +1,10 @@
 # TP-150: Workout DSL metric suffix from sport priority — Status
 
-**Current Step:** Step 2: Implement and test metric suffix behavior
+**Current Step:** Step 3: Refresh schemas and user guidance
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 2
 **Size:** M
 
@@ -35,7 +35,7 @@
 ---
 
 ### Step 2: Implement and test metric suffix behavior
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Add Run `POWER_HR_PACE` regression test
 - [x] Add HR-primary / pace-primary coverage where applicable
@@ -83,6 +83,7 @@
 | R002 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
 | R004 | plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
+| R005 | code | 2 | APPROVE | `.reviews/R005-code-step2.md` |
 
 ---
 
@@ -125,3 +126,4 @@
 | 2026-06-03 21:35 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-03 21:36 | Review R003 | code Step 1: APPROVE |
 | 2026-06-03 21:38 | Review R004 | plan Step 2: APPROVE |
+| 2026-06-03 21:46 | Review R005 | code Step 2: APPROVE |
