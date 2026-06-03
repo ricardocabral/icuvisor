@@ -74,3 +74,5 @@
 | 2026-06-03 17:14 | Discovery | Existing add_or_update_event schema/examples already cover RACE_A/RACE_B/RACE_C; TP-147 only needed routing fixture/test coverage and no runtime tool description changes. |
 | 2026-06-03 17:14 | Step 100 complete | Documentation requirements reviewed and discoveries logged. |
 | 2026-06-03 17:14 | Task complete | All steps complete; tests and build passed. |
+| 2026-06-03 17:07 | Worker iter 1 | done in 270s, tools: 63 |
+| 2026-06-03 17:07 | Task complete | .DONE created |
