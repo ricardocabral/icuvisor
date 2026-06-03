@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -24,6 +24,7 @@
 ### Step 1: Design generated docs data shape
 **Status:** 🟨 In Progress
 
+- [ ] R001 plan feedback addressed in concrete design notes
 - [ ] Data-file strategy decided
 - [ ] Concise schema projection defined
 - [ ] Nested schema/example handling decided
@@ -115,4 +116,14 @@
 
 ## Notes
 
-*Reserved for execution notes*
+### Step 1 design notes
+
+- **Generator target:** extend `cmd/gendocs` rather than adding a separate scripts generator. `make docs-tools` should continue to be the single workflow and will call `go run ./cmd/gendocs --out web/data/tools.json`, with a new optional/default schema-data output path written by the same command. Update `cmd/gendocs/main_test.go` golden coverage rather than moving generation to `scripts/*`.
+- **Data-file strategy:** add separate generated `web/data/tool_schemas.json` keyed by tool name. Keep `web/data/tools.json` summary-only for the existing table and use the new data file only for per-tool argument/example details. This avoids bloating the summary catalog and keeps Hugo lookups straightforward.
+- **Projection contract:** each tool entry should include `name`, `description`, `arguments`, and `examples`. Each argument includes `name`, `required`, `type`, `description`, optional `enum`, optional `default`, optional `format`, optional `items`, optional `properties`/`children` summary for object fields, and optional `additional_properties`. Types are normalized from JSON Schema primitives; arrays summarize item type; `anyOf`/`oneOf`/nullable are represented as joined type labels (for example `string | null`) without copying raw branch schemas.
+- **Nested/large schemas:** include only one nested level of child summaries for object-heavy fields. `workout_doc` should show its top-level object fields and required flags, but not fully recurse through every nested interval step. Custom item `content` and other free-form/additionalProperties-heavy objects should show the field description plus an `additional_properties`/summary marker rather than dumping arbitrary JSON schemas.
+- **Examples policy:** derive examples from schema `input_examples` (falling back to `examples` only if the mirror exists without `input_examples`). Preserve examples in generated JSON for write tools, capped to a small deterministic count (2 examples per tool) and intended for Hugo `<details>` rendering so the table remains readable. Do not synthesize examples or include runtime values.
+- **Safety/determinism:** generate from the full registered catalog with full delete capability, coach mode enabled, no HTTP calls, sorted tools/arguments, stable JSON indentation, and no local paths or secrets. Placeholder IDs already present in catalog examples such as `12345`, `event-123`, or `folder-abc` are acceptable only as synthetic examples; no configured athlete IDs/API keys should be read or emitted.
+
+
+| 2026-06-03 23:10 | Review R001 | plan Step 1: REVISE |
