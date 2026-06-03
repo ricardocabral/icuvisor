@@ -1,6 +1,10 @@
 {
   "additionalProperties": false,
   "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "duration_seconds": {
       "description": "Power curve buckets to return. Defaults to 5,15,30,60,300,1200,3600 seconds.",
       "items": {

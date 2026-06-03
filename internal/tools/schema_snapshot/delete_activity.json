@@ -4,6 +4,10 @@
     "activity_id": {
       "description": "Required opaque upstream activity ID to delete. This destructive operation has no confirm argument; the tool is registered only when ICUVISOR_DELETE_MODE=full.",
       "type": "string"
+    },
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
     }
   },
   "required": [

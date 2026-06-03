@@ -5,10 +5,13 @@
       "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
       "type": "string"
     },
-    "item_type": {
-      "description": "Optional upstream custom-item type filter, for example FITNESS_CHART, INPUT_FIELD, ACTIVITY_FIELD, ACTIVITY_STREAM, ACTIVITY_PANEL, ACTIVITY_HISTOGRAM, ACTIVITY_MAP, ACTIVITY_HEATMAP, TRACE_CHART, FITNESS_TABLE, or ZONES.",
+    "sport_settings_id": {
+      "description": "Required opaque upstream sport-settings ID to delete. This destructive operation has no confirm argument; the tool is registered only when ICUVISOR_DELETE_MODE=full.",
       "type": "string"
     }
   },
+  "required": [
+    "sport_settings_id"
+  ],
   "type": "object"
 }

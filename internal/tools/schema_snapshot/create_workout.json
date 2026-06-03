@@ -161,6 +161,10 @@
     }
   ],
   "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "description": {
       "description": "Optional free-text prose for the initial upstream workout description/DSL. This is part of the single upstream description/DSL field, not separate append-only notes. Preserved verbatim. May be supplied with workout_doc; use the \u003c!-- icuvisor:steps --\u003e sentinel on its own line to choose where serialized steps are inserted.",
       "type": "string"

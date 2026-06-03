@@ -37,11 +37,16 @@
     }
   ],
   "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "conflict_policy": {
       "default": "skip_existing",
       "description": "skip_existing leaves days with calendar conflicts untouched. replace_existing deletes only pure same-day WORKOUT conflicts before creating plan workouts and is accepted only when ICUVISOR_DELETE_MODE=full; days with protected conflicts such as duplicate workouts, races, notes, holidays, sick/injured blocks, or unknown non-workout categories are skipped and reported.",
       "enum": [
-        "skip_existing"
+        "skip_existing",
+        "replace_existing"
       ],
       "type": "string"
     },

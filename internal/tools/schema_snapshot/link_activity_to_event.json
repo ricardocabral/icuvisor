@@ -5,6 +5,10 @@
       "description": "Required intervals.icu activity ID to pair. Surrounding whitespace is trimmed; IDs are otherwise preserved exactly.",
       "type": "string"
     },
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "event_id": {
       "description": "Required numeric intervals.icu planned event ID to set as the activity paired_event_id. Surrounding whitespace is trimmed.",
       "type": "string"

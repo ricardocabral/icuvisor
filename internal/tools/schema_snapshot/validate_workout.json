@@ -1,0 +1,113 @@
+{
+  "additionalProperties": false,
+  "description": "At least one of description or workout_doc is required. Both may be set in the same call: structured steps from workout_doc are merged into the prose from description following the merge rule reported in _meta.merge_rule. Use this preflight when structured workout changes are uncertain and cite canonical_dsl plus stats.estimated_duration_seconds in the proposed-change preview before writing.",
+  "examples": [
+    {
+      "description": "Easy Zone 2 spin.\n- 60m 60-70% HR"
+    },
+    {
+      "description": "Threshold day. Keep cadence above 85.\n\u003c!-- icuvisor:steps --\u003e\nCool down well.",
+      "workout_doc": {
+        "steps": [
+          {
+            "description": "Warm up",
+            "duration": 600,
+            "power": {
+              "units": "PERCENT_FTP",
+              "value": 60
+            }
+          },
+          {
+            "reps": 3,
+            "steps": [
+              {
+                "duration": 480,
+                "power": {
+                  "max": 100,
+                  "min": 95,
+                  "units": "PERCENT_FTP"
+                }
+              },
+              {
+                "description": "Recovery",
+                "duration": 240,
+                "power": {
+                  "units": "PERCENT_FTP",
+                  "value": 50
+                }
+              }
+            ]
+          },
+          {
+            "description": "Cool down",
+            "duration": 600,
+            "power": {
+              "units": "PERCENT_FTP",
+              "value": 50
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "input_examples": [
+    {
+      "description": "Easy Zone 2 spin.\n- 60m 60-70% HR"
+    },
+    {
+      "description": "Threshold day. Keep cadence above 85.\n\u003c!-- icuvisor:steps --\u003e\nCool down well.",
+      "workout_doc": {
+        "steps": [
+          {
+            "description": "Warm up",
+            "duration": 600,
+            "power": {
+              "units": "PERCENT_FTP",
+              "value": 60
+            }
+          },
+          {
+            "reps": 3,
+            "steps": [
+              {
+                "duration": 480,
+                "power": {
+                  "max": 100,
+                  "min": 95,
+                  "units": "PERCENT_FTP"
+                }
+              },
+              {
+                "description": "Recovery",
+                "duration": 240,
+                "power": {
+                  "units": "PERCENT_FTP",
+                  "value": 50
+                }
+              }
+            ]
+          },
+          {
+            "description": "Cool down",
+            "duration": 600,
+            "power": {
+              "units": "PERCENT_FTP",
+              "value": 50
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "properties": {
+    "description": {
+      "description": "Optional free-text intervals.icu description. Prose, headers, comments, and any line the DSL parser does not recognize as a structured step pass through verbatim. Embed the sentinel '\u003c!-- icuvisor:steps --\u003e' on its own line to control where structured steps from workout_doc are inserted in the merged canonical DSL. Structured-step lines start with '- ' or are 'Nx' repeat headers; dashed repeat-like lines such as '-3 x' are also validated so malformed repeat syntax surfaces as PARSE_ERROR. Syntax reference: icuvisor://workout-syntax.",
+      "type": "string"
+    },
+    "workout_doc": {
+      "description": "Optional structured WorkoutDoc with a steps[] array. Validated via the same Serialize path that write tools use. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Mutually compatible with description; when both contain structured steps, workout_doc wins and the response surfaces a STEP_SOURCES_OVERRIDDEN warning.",
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

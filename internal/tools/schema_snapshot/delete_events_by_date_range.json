@@ -1,0 +1,26 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "category": {
+      "description": "Optional upstream event category filter. Omit to delete all event categories in the bounded date range.",
+      "type": "string"
+    },
+    "end_date": {
+      "description": "Required athlete-local end date YYYY-MM-DD. Same-day ranges are allowed; range size is capped at 31 inclusive days.",
+      "type": "string"
+    },
+    "start_date": {
+      "description": "Required athlete-local start date YYYY-MM-DD. Open-ended ranges are rejected.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "start_date",
+    "end_date"
+  ],
+  "type": "object"
+}
