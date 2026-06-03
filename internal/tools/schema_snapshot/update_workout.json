@@ -94,7 +94,7 @@
       "type": "string"
     },
     "sport": {
-      "description": "Optional replacement upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Omit to leave unchanged.",
+      "description": "Optional replacement upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Omit to leave unchanged. Include with workout_doc when icuvisor should use athlete sport settings to disambiguate zone target suffixes.",
       "type": "string"
     },
     "tags": {
@@ -105,7 +105,7 @@
       "type": "array"
     },
     "workout_doc": {
-      "description": "Optional replacement structured WorkoutDoc for the upstream workout description/DSL. Serialized and merged with description when both are supplied; empty steps clear structured content. Include the desired steps when changing prose so the replacement description/DSL preserves workout structure. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Syntax reference: icuvisor://workout-syntax.",
+      "description": "Optional replacement structured WorkoutDoc for the upstream workout description/DSL. Serialized and merged with description when both are supplied; empty steps clear structured content. Include the desired steps when changing prose so the replacement description/DSL preserves workout structure. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Include sport in the same request when zone targets should be serialized using athlete sport settings; otherwise workout_doc uses the no-sport serializer. Syntax reference: icuvisor://workout-syntax.",
       "type": "object"
     },
     "workout_id": {
