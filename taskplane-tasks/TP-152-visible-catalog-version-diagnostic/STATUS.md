@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** S
 
@@ -42,6 +42,10 @@
 - [ ] Catalog/hash tests updated
 - [ ] No-network behavior confirmed
 - [ ] Targeted tests passing
+- [ ] Live catalog hash source and no-arg handler plan documented
+- [ ] Fingerprint helper/package boundary and self-reference normalization documented
+- [ ] Effective catalog/registration order and shared catalog membership documented
+- [ ] Step 2 test coverage plan documented
 
 ---
 
@@ -82,6 +86,7 @@
 | R001 | Plan | Step 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | Step 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | Code | Step 1 | APPROVE | `.reviews/R003-code-step1.md` |
+| R004 | Plan | Step 2 | REVISE | `.reviews/R004-plan-step2.md` |
 
 ---
 
@@ -118,6 +123,15 @@
 - Test plan: add same-version drift coverage showing `description_catalog_fingerprint` changes when a catalog description/schema changes even when `server_version` is unchanged.
 - Privacy boundary: the tool has no intervals client dependency, no arguments, and returns no API key, athlete ID, filesystem path, username, raw env value, or network-derived data.
 - R002 implementation notes: runtime `catalog_hash` must come from metadata after `NewServer` computes it; keep fingerprint helper out of an `internal/tools` <-> `internal/mcp` import cycle; mirror visible description fields in response with unambiguous names; document/test any coach dynamic visibility limitation.
+
+### Step 2 implementation plan
+- Add `response.RuntimeCatalogMetadata()` as a locked getter returning normalized current version/hash; the diagnostic handler calls this at request time for live `catalog_hash`, never a registration placeholder.
+- Implement `internal/tools/check_server_version.go` with no-argument validation, `newCheckServerVersionTool(version, descriptionFingerprint, deleteMode, toolset, shaping...)`, visible description fields, and a response containing `server_version`, `catalog_hash`, `description_server_version`, `description_catalog_fingerprint`, `toolset`, `delete_mode`, `status: compare_visible_description`, `action`, and `_meta` source details.
+- Keep the fingerprint helper in `internal/tools` to avoid a tools<->mcp cycle. It hashes the effective `Tool` records (name, description, input schema, output schema) with the diagnostic description's injected fingerprint value normalized to a sentinel token before hashing.
+- Register base tools first, then `icuvisor_list_advanced_capabilities`, then compute/register `icuvisor_check_server_version`; fingerprint input includes tools that pass known capability/delete-mode and toolset gates plus the diagnostic tool. Coach per-athlete dynamic ACL filtering is not included in this static description fingerprint; tests/docs will state it is a catalog-mode fingerprint, while live `catalog_hash` remains authoritative for the server's exposed catalog.
+- Update `internal/toolcatalog/catalog.go` with `ICUvisorCheckServerVersion`, include it in `allToolNames`, keep it out of `athleteScopedToolNames`, add it to the `meta` group in `internal/tools/catalog.go`, and update tier/catalog expectations.
+- Tests: output shape and no-leak/no-network handler tests; same-version fingerprint drift on description/schema changes; catalog hash sensitivity to diagnostic description/schema; shared catalog membership/descriptor group tests; targeted `go test ./internal/tools ./internal/toolcatalog ./internal/mcp ./internal/response -run 'Check|Catalog|Schema|Advanced'`.
 | 2026-06-03 23:02 | Review R001 | plan Step 1: REVISE |
 | 2026-06-03 23:06 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-03 23:07 | Review R003 | code Step 1: APPROVE |
+| 2026-06-03 23:08 | Review R004 | plan Step 2: REVISE |
