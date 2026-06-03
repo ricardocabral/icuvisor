@@ -1,10 +1,10 @@
 # TP-150: Workout DSL metric suffix from sport priority — Status
 
-**Current Step:** Step 1: Design the sport-aware suffix boundary
+**Current Step:** Step 2: Implement and test metric suffix behavior
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Design the sport-aware suffix boundary
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Decide implementation boundary for suffix selection
 - [x] Preserve no-sport-context serializer behavior
@@ -35,7 +35,7 @@
 ---
 
 ### Step 2: Implement and test metric suffix behavior
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Add Run `POWER_HR_PACE` regression test
 - [ ] Add HR-primary / pace-primary coverage where applicable
@@ -80,6 +80,7 @@
 |---|------|------|---------|------|
 | R001 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
+| R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
 
 ---
 
@@ -119,3 +120,4 @@
 - R001 resolution (`apply_training_plan`): keep it in scope. `applyTrainingPlan` already has athlete profile and each template's `type`; pass profile/sport-derived serialization options through `eventParamsFromPlanWorkout`/`eventWriteParams` so applied calendar events get the same sport-aware zone suffixes as direct planned workout writes.
 | 2026-06-03 21:33 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-06-03 21:35 | Review R002 | plan Step 1: APPROVE |
+| 2026-06-03 21:36 | Review R003 | code Step 1: APPROVE |
