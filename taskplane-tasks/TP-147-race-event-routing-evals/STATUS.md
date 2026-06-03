@@ -1,6 +1,6 @@
 # TP-147: Race-event routing evals for add_or_update_event — Status
 
-**Current Step:** Step 99: Testing & Verification
+**Current Step:** Step 100: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 0
@@ -32,17 +32,17 @@
 ---
 
 ### Step 99: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Targeted tests passing
-- [ ] FULL test suite passing
-- [ ] Build passes if code changed
-- [ ] All failures fixed
+- [x] Targeted tests passing
+- [x] FULL test suite passing
+- [x] Build passes if code changed
+- [x] All failures fixed
 
 ---
 
 ### Step 100: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Must-update docs modified
 - [ ] Check-if-affected docs reviewed
@@ -67,3 +67,5 @@
 | 2026-06-03 17:04 | Step 1 started | Add race-event routing cases |
 | 2026-06-03 17:08 | Step 1 complete | Added A/B/C race create routing fixture cases, negative add_race_event assertion/note, and targeted routing/prompt tests passed. |
 | 2026-06-03 17:08 | Step 99 started | Testing & Verification |
+| 2026-06-03 17:11 | Step 99 complete | Targeted routing/prompt tests, make test, and make build all passed. |
+| 2026-06-03 17:11 | Step 100 started | Documentation & Delivery |
