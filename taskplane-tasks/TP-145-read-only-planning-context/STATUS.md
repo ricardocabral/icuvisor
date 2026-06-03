@@ -1,10 +1,10 @@
 # TP-145: Read-only planning context tool — Status
 
-**Current Step:** Step 99: Testing & Verification
+**Current Step:** Step 100: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -57,12 +57,12 @@
 ---
 
 ### Step 99: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Targeted tests passing
-- [ ] FULL test suite passing
-- [ ] Build passes if code changed
-- [ ] All failures fixed
+- [x] Targeted tests passing
+- [x] FULL test suite passing
+- [x] Build passes if code changed
+- [x] All failures fixed
 
 ---
 
@@ -86,6 +86,7 @@
 | R005 | Plan | Step 2 | APPROVE | inline |
 | R006 | Plan | Step 3 | REVISE | .reviews/R006-plan-step3.md |
 | R007 | Plan | Step 3 | APPROVE | inline |
+| R008 | Plan | Step 99 | APPROVE | inline |
 
 ---
 
@@ -114,8 +115,11 @@
 | 2026-06-03 16:24 | R006 Step 3 test/docs matrix | Handler tests will use a deterministic fake planning client and table/scenario cases for: terse default with no `full`, exact `_meta.source_tools`, read-only/write flags, planning scope, counts and windows; `include_full:true` widening only event/fitness/training-plan raw payloads; default upcoming Monday, supplied mid-week normalization, invalid week_start user error, and future week_start with current 7-day fitness calls; week/race ListEvents calls using Limit 500 and exact ranges; WORKOUT/RACE/RACE_*/NOTE/unknown classification and upcoming_races filtering; empty/partial/truncation caveat codes including read_only_no_atp, no_week_events, no_week_workouts, no_active_training_plan, partial_training_plan_summary, no_fitness_rows, no_upcoming_races, week_events_may_be_truncated, and upcoming_races_may_be_truncated. Catalog tests must assert full tier, workout-library group, toolcatalog known name, and athlete ACL scope. Docs: update CHANGELOG; inspect README for public tool list; run `make docs-tools` if README/web generated catalog data is expected to change. |
 | 2026-06-03 16:24 | Review R007 | plan Step 3: APPROVE |
 | 2026-06-03 16:30 | Step 3 docs decision | CHANGELOG updated for user-visible `get_planning_context`; `make docs-tools` regenerated `web/data/tools.json`. README was reviewed and does not contain an inline public tool list, only a pointer to the website catalog and developer command list, so no README edit was needed. |
+| 2026-06-03 16:31 | Review R008 | plan Step 99: APPROVE |
+| 2026-06-03 16:36 | Step 99 verification | `go test ./internal/tools ./internal/toolcatalog`, `make test`, and `make build` pass. Initial full-suite failures were stale gendocs golden data and safety static catalog counts; fixed by updating generated golden data and safety catalog expectations for `get_planning_context`. |
 | 2026-06-03 16:20 | Review R003 | plan Step 1: APPROVE |
 | 2026-06-03 16:22 | Review R004 | plan Step 2: UNKNOWN |
 | 2026-06-03 16:25 | Review R005 | plan Step 2: APPROVE |
 | 2026-06-03 16:30 | Review R006 | plan Step 3: UNKNOWN |
 | 2026-06-03 16:32 | Review R007 | plan Step 3: APPROVE |
+| 2026-06-03 16:38 | Review R008 | plan Step 99: APPROVE |
