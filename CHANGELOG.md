@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added a Codex CLI connection guide covering `codex mcp add`, `config.toml`, safe non-secret environment configuration, and MCP verification.
+- Added calendar-write regression coverage for repeated `apply_training_plan` calls and same-day duplicate planned events.
+
+### Fixed
+
+- `add_or_update_event` and `apply_training_plan` now preflight same-day calendar events, skip exact duplicate creates, and surface same-day conflict warnings/metadata to reduce duplicate workouts during retries.
 
 ## [0.1.7] - 2026-06-01
 
