@@ -1,7 +1,7 @@
 # TP-143: Workout repeat header syntax regression — Status
 
-**Current Step:** Step 3: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 4: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-03
 **Review Level:** 1
 **Review Counter:** 3
@@ -52,11 +52,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged in STATUS.md
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged in STATUS.md
 
 ---
 
@@ -65,6 +65,7 @@
 | Date | Step | Finding | Impact |
 |------|------|---------|--------|
 | 2026-06-03 | Step 1 | WorkoutDoc golden fixture covers described repeat header `Main Set 3x`, and validate/create workout tests exercise repeat workout_doc, but there is no explicit bare `3x` regression, no malformed `-3 x` / `- 3x` validation case, and add_or_update_event serializes a non-repeat fixture. | Step 2 should add focused repeat syntax regressions across workoutdoc and at least one write tool. |
+| 2026-06-03 | Step 4 | Reviewed PRD and v0.3 dogfood prompts; existing PRD already states repeats are `Nx`, and dogfood W-03 already includes repeat structured workout coverage. | No changes needed beyond CHANGELOG for this regression task. |
 
 ## Blockers
 
