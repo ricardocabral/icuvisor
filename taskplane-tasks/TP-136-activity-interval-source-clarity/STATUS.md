@@ -1,9 +1,9 @@
 # TP-136: Activity interval-source clarity in details and routing — Status
-**Current Step:** Step 2: Implement clarity and regression coverage
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** S
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -39,12 +39,12 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Run FULL test suite: `make test`
-- [ ] Run lint: `make lint`
-- [ ] Fix all failures or document pre-existing unrelated failures with exact command output
-- [ ] Build passes: `make build`
+- [x] Run FULL test suite: `make test`
+- [x] Run lint: `make lint`
+- [x] Fix all failures or document pre-existing unrelated failures with exact command output
+- [x] Build passes: `make build`
 
 ---
 
@@ -77,3 +77,4 @@
 | 2026-06-03 16:41 | Step 0 started | Preflight |
 | 2026-06-03 16:43 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-03 16:47 | Review R002 | plan Step 2: APPROVE |
+| 2026-06-03 16:50 | Review R003 | plan Step 3: APPROVE |
