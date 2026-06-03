@@ -25,8 +25,8 @@
 - [x] Confirm how event category/type/name/date are available from existing event rows and upstream raw fields.
 - [x] Define a safe conflict taxonomy in STATUS.md: workout conflicts vs protected annotations/races/unavailable items.
 - [x] Run targeted tests: `go test ./internal/tools`.
-- [ ] R002: Record the exact conflict-flow code path, duplicate short-circuit, and non-dry-run re-preflight behavior.
-- [ ] R002: Make the taxonomy explicit enough to implement, including default protection for non-WORKOUT categories and concrete race/unavailable-like categories.
+- [x] R002: Record the exact conflict-flow code path, duplicate short-circuit, and non-dry-run re-preflight behavior.
+- [x] R002: Make the taxonomy explicit enough to implement, including default protection for non-WORKOUT categories and concrete race/unavailable-like categories.
 
 ---
 
@@ -63,7 +63,10 @@
 
 | Date | Step | Finding | Impact |
 |------|------|---------|--------|
-| 2026-06-03 | Step 1 | Conflict preflight currently treats every same-day event as `existing_event_on_date`; exact matching workout writes become `duplicate_existing_event`, duplicate plan rows become `duplicate_plan_date`, and `replace_existing` deletes every current conflict before creating. | Safe taxonomy: replaceable conflicts are existing WORKOUT events that are not exact duplicates; protected conflicts are exact duplicates, duplicate plan dates, NOTE events, RACE events, and UNAVAILABLE-like calendar annotations/blocks. |
+| 2026-06-03 | Step 1 | Exact conflict flow is `fetchApplyTrainingPlanEvents` (one range `ListEvents`) -> `applyTrainingPlanConflictsForParams` -> `eventCreatePreflightFromEvents`; during non-dry-run, if the initial conflict list is empty, each day is re-read and re-preflighted immediately before create. | Step 2 must apply protected-conflict classification to both the initial range preflight and the per-day re-preflight path. |
+| 2026-06-03 | Step 1 | `eventCreatePreflightFromEvents` currently returns immediately on `duplicate_existing_event`, replacing the accumulated conflict list and dropping any other same-day rows. | Step 2 must not let an exact workout duplicate hide protected NOTE/race/unavailable rows on mixed days. |
+| 2026-06-03 | Step 1 | `replace_existing` currently deletes every conflict returned by preflight, because `shouldSkipApplyTrainingPlanConflicts` only protects `duplicate_existing_event` and `duplicate_plan_date`. | Step 2 must delete only classified replaceable workout conflicts and skip/report days with any protected conflict. |
+| 2026-06-03 | Step 1 | Safe taxonomy for Step 2: replaceable = existing event with category `WORKOUT` and reason `existing_event_on_date`; protected = reason `duplicate_existing_event`, reason `duplicate_plan_date`, any non-`WORKOUT` category, missing/unknown category, documented races `RACE_A`/`RACE_B`/`RACE_C`, annotations `NOTE`/`PLAN`, unavailable-like blocks `HOLIDAY`/`SICK`/`INJURED`, and model/goal markers `SET_EFTP`/`FITNESS_DAYS`/`SEASON_START`/`TARGET`/`SET_FITNESS`. | Conservative default protects custom upstream categories and known non-workout calendar items; no server-side policy exists in this task to delete them. |
 | 2026-06-03 | Step 1 | `intervals.Event` exposes typed `Category`, `Type`, `Name`, `StartDateLocal`, and preserved `Raw`; `eventRow` already falls back to raw `category` and `eventDateOnly` falls back to raw `start_date_local`/`start_date`. | Conflict output can include category/type/name/date fields without new interval client fields. |
 
 ## Blockers
