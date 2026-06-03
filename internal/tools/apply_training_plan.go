@@ -18,7 +18,7 @@ import (
 
 const (
 	applyTrainingPlanName                    = "apply_training_plan"
-	applyTrainingPlanDescription             = "Apply a workout-library training plan to the athlete calendar from an anchor start date. Defaults to dry_run:true, fetches plan workouts server-side by plan_id, marks conflicts, and only replaces existing events when ICUVISOR_DELETE_MODE=full."
+	applyTrainingPlanDescription             = "Apply a workout-library training plan to the athlete calendar from an anchor start date. Defaults to dry_run:true, fetches plan workouts server-side by plan_id, marks conflicts with category/type/name/date details, and only replaces existing workout events when ICUVISOR_DELETE_MODE=full while protecting races, notes, and unavailable-like calendar items."
 	invalidApplyTrainingPlanArgumentsMessage = "invalid apply_training_plan arguments; provide plan_id, start_date YYYY-MM-DD, optional dry_run, and conflict_policy skip_existing or replace_existing"
 	applyTrainingPlanMessage                 = "could not apply training plan; check intervals.icu credentials, athlete ID, plan ID, date range, and delete-mode configuration"
 	applyTrainingPlanConflictSkip            = "skip_existing"
@@ -54,8 +54,13 @@ type applyTrainingPlanProposedEvent struct {
 }
 
 type applyTrainingPlanConflict struct {
-	EventID string `json:"event_id"`
-	Reason  string `json:"reason"`
+	EventID   string `json:"event_id,omitempty"`
+	Date      string `json:"date,omitempty"`
+	Category  string `json:"category,omitempty"`
+	Type      string `json:"type,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Reason    string `json:"reason"`
+	Protected bool   `json:"protected"`
 }
 
 type applyTrainingPlanSkipped struct {
@@ -197,12 +202,13 @@ func applyTrainingPlan(ctx context.Context, client ApplyTrainingPlanClient, args
 			continue
 		}
 		if len(currentConflicts) > 0 && args.ConflictPolicy == applyTrainingPlanConflictReplace {
+			replaceableConflicts := applyTrainingPlanReplaceableConflicts(currentConflicts)
 			deleter, ok := client.(EventDeleterClient)
 			if !ok {
 				return applyTrainingPlanResponse{}, errors.New("replace_existing requires an event delete client")
 			}
-			replaced := applyTrainingPlanReplaced{Date: row.Date, WorkoutID: row.WorkoutID, DeletedEventIDs: make([]string, 0, len(currentConflicts))}
-			for _, conflict := range currentConflicts {
+			replaced := applyTrainingPlanReplaced{Date: row.Date, WorkoutID: row.WorkoutID, DeletedEventIDs: make([]string, 0, len(replaceableConflicts))}
+			for _, conflict := range replaceableConflicts {
 				if err := deleter.DeleteEvent(ctx, conflict.EventID); err != nil {
 					return applyTrainingPlanResponse{}, fmt.Errorf("deleting conflicting event %s: %w", conflict.EventID, err)
 				}
@@ -334,18 +340,32 @@ func applyTrainingPlanDateConflicts(planned []applyTrainingPlanWorkout) map[stri
 	conflicts := map[string][]applyTrainingPlanConflict{}
 	for date, count := range counts {
 		if count > 1 {
-			conflicts[date] = []applyTrainingPlanConflict{{Reason: "duplicate_plan_date"}}
+			conflicts[date] = []applyTrainingPlanConflict{{Date: date, Reason: "duplicate_plan_date", Protected: true}}
 		}
 	}
 	return conflicts
 }
 
 func applyTrainingPlanConflictsForParams(params intervals.WriteEventParams, events []intervals.Event, extraConflicts []applyTrainingPlanConflict) []applyTrainingPlanConflict {
-	conflicts := eventCreatePreflightFromEvents(params, events, extraConflicts).Conflicts
+	conflicts := append([]applyTrainingPlanConflict(nil), extraConflicts...)
+	for _, event := range events {
+		if eventDateOnly(event) != params.Date {
+			continue
+		}
+		conflict := applyTrainingPlanConflictFromEvent(event, "existing_event_on_date")
+		if eventMatchesWriteParams(event, params) {
+			conflict.Reason = "duplicate_existing_event"
+			conflict.Protected = true
+		}
+		conflicts = append(conflicts, conflict)
+	}
 	if conflicts == nil {
 		return []applyTrainingPlanConflict{}
 	}
 	sort.SliceStable(conflicts, func(i, j int) bool {
+		if conflicts[i].Date != conflicts[j].Date {
+			return conflicts[i].Date < conflicts[j].Date
+		}
 		if conflicts[i].EventID != conflicts[j].EventID {
 			return conflicts[i].EventID < conflicts[j].EventID
 		}
@@ -354,12 +374,36 @@ func applyTrainingPlanConflictsForParams(params intervals.WriteEventParams, even
 	return conflicts
 }
 
+func applyTrainingPlanConflictFromEvent(event intervals.Event, reason string) applyTrainingPlanConflict {
+	category := firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"]))
+	conflict := applyTrainingPlanConflict{EventID: event.ID, Date: eventDateOnly(event), Category: category, Type: firstNonEmpty(stringValue(event.Type), anyString(event.Raw["type"])), Name: firstNonEmpty(stringValue(event.Name), anyString(event.Raw["name"])), Reason: reason}
+	conflict.Protected = applyTrainingPlanConflictProtected(conflict)
+	return conflict
+}
+
+func applyTrainingPlanConflictProtected(conflict applyTrainingPlanConflict) bool {
+	if conflict.Reason == "duplicate_existing_event" || conflict.Reason == "duplicate_plan_date" {
+		return true
+	}
+	return !strings.EqualFold(strings.TrimSpace(conflict.Category), "WORKOUT")
+}
+
+func applyTrainingPlanReplaceableConflicts(conflicts []applyTrainingPlanConflict) []applyTrainingPlanConflict {
+	replaceable := make([]applyTrainingPlanConflict, 0, len(conflicts))
+	for _, conflict := range conflicts {
+		if conflict.EventID != "" && !conflict.Protected && conflict.Reason == "existing_event_on_date" && strings.EqualFold(strings.TrimSpace(conflict.Category), "WORKOUT") {
+			replaceable = append(replaceable, conflict)
+		}
+	}
+	return replaceable
+}
+
 func shouldSkipApplyTrainingPlanConflicts(conflicts []applyTrainingPlanConflict, conflictPolicy string) bool {
 	if conflictPolicy == applyTrainingPlanConflictSkip {
 		return true
 	}
 	for _, conflict := range conflicts {
-		if conflict.Reason == "duplicate_existing_event" || conflict.Reason == "duplicate_plan_date" {
+		if conflict.Protected {
 			return true
 		}
 	}
@@ -425,7 +469,7 @@ func applyTrainingPlanInputSchema(capability safety.Capability) map[string]any {
 		"plan_id":         map[string]any{"type": "string", "description": "Required workout-library folder/plan ID to fetch server-side. Do not pass plan contents in tool arguments."},
 		"start_date":      map[string]any{"type": "string", "description": "Required athlete-local YYYY-MM-DD anchor date; workout day 1 is applied to this date and later plan days are relative to it."},
 		"dry_run":         map[string]any{"type": "boolean", "default": true, "description": "Safety default is true, even in safe mode. Set dry_run:false explicitly to create or replace calendar events."},
-		"conflict_policy": map[string]any{"type": "string", "default": applyTrainingPlanConflictSkip, "enum": conflictEnum, "description": "skip_existing leaves days with calendar conflicts untouched. replace_existing deletes conflicting events before creating plan workouts and is accepted only when ICUVISOR_DELETE_MODE=full."},
+		"conflict_policy": map[string]any{"type": "string", "default": applyTrainingPlanConflictSkip, "enum": conflictEnum, "description": "skip_existing leaves days with calendar conflicts untouched. replace_existing deletes only pure same-day WORKOUT conflicts before creating plan workouts and is accepted only when ICUVISOR_DELETE_MODE=full; days with protected conflicts such as duplicate workouts, races, notes, holidays, sick/injured blocks, or unknown non-workout categories are skipped and reported."},
 	}}
 }
 
@@ -451,5 +495,5 @@ func applyTrainingPlanInputExamples() []map[string]any {
 }
 
 func applyTrainingPlanOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Training-plan apply preview or write result with per-day proposed events, conflict markers, created event rows, and _meta created/skipped/replaced/delete-mode counts."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Training-plan apply preview or write result with per-day proposed events, conflict markers that include event_id/date/category/type/name/reason/protected fields when available, created event rows, and _meta created/skipped/replaced/delete-mode counts. replace_existing reports protected races, notes, unavailable-like blocks, duplicate workouts, duplicate plan dates, and unknown non-workout categories instead of deleting them."}
 }
