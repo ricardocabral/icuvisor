@@ -1,10 +1,10 @@
 # TP-140: Long-distance event distance regression coverage — Status
 
-**Current Step:** Step 3: Testing & Verification
+**Current Step:** Step 4: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** S
 
@@ -42,17 +42,17 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Run FULL test suite: `make test`
-- [ ] Run lint: `make lint`
-- [ ] Fix all failures or document pre-existing unrelated failures with exact command output
-- [ ] Build passes: `make build`
+- [x] Run FULL test suite: `make test`
+- [x] Run lint: `make lint`
+- [x] Fix all failures or document pre-existing unrelated failures with exact command output
+- [x] Build passes: `make build`
 
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] "Must Update" docs modified
 - [ ] "Check If Affected" docs reviewed
@@ -79,8 +79,10 @@
 |------|-------------|--------|-------|
 | 2026-06-03 | Step 1 plan | APPROVE | Plan review approved before audit implementation. |
 | 2026-06-03 | Step 2 plan | APPROVE | Plan review approved before adding regression tests. |
+| 2026-06-03 | Step 3 plan | APPROVE | Plan review approved before full verification. |
 
 | 2026-06-03 16:07 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 16:07 | Step 0 started | Preflight |
 | 2026-06-03 16:08 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-03 16:11 | Review R002 | plan Step 2: APPROVE |
+| 2026-06-03 16:13 | Review R003 | plan Step 3: APPROVE |
