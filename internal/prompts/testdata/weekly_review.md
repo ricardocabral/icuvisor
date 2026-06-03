@@ -4,10 +4,11 @@ Resources: icuvisor://athlete-profile, icuvisor://event-categories.
 Tools: get_athlete_profile, get_wellness_data, get_fitness, get_training_summary, get_activities, get_events, get_training_plan, compute_zone_time, compute_load_balance, compute_compliance_rate, analyze_trend, icuvisor_list_advanced_capabilities.
 Do:
 - Read profile first to establish athlete-local timezone, current date, sport settings, and units; compare days only after converting to athlete-local dates.
+- Define the athlete-local review window before reading data; do not include wellness, activities, or summary rows after that end date unless the user requested next-week or current-day context.
 - Use fitness, training summary, and compute_zone_time to summarize load, volume, intensity mix, and fatigue/freshness changes.
 - Use compute_load_balance and compute_compliance_rate when available; otherwise call icuvisor_list_advanced_capabilities, continue from available reads, and name the missing helper.
 - Review activities, race/other events, and training plan for planned-versus-completed work; include race date/priority when relevant and the upcoming-week preview only when include_next_week is true or the user asks.
-- Use wellness data for sleep/readiness/HRV context; check `_meta.stale`, `_meta.missing_fields`, and provenance warnings.
+- Use wellness data for sleep/readiness/HRV context; check `_meta.stale`, `_meta.missing_fields`, provenance warnings, and treat current-day `_meta.as_of` as partial-day context only.
 - If readiness is missing, null, stale, or absent, say that explicitly and do not infer or backfill a readiness score; use HRV, resting HR, sleep duration/quality/score, subjective fatigue/soreness/stress/feel/mood/motivation, and available `_native` provider fields as cautious supporting context only.
 - Use analyze_trend only for specific trend questions; keep raw activity rows terse unless evidence is missing.
 Guardrails:

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/workoutdoc"
 )
 
@@ -59,7 +60,7 @@ func createWorkoutHandler(client WorkoutCreatorClient, profileClient ProfileClie
 		if err != nil {
 			return Result{}, NewUserError(invalidCreateWorkoutArgumentsMessage, err)
 		}
-		unitSystem, _, err := toolProfile(ctx, profileClient, timezoneFallback)
+		profile, unitSystem, _, err := toolProfileDetails(ctx, profileClient, timezoneFallback)
 		if err != nil {
 			return Result{}, NewUserError(createWorkoutMessage, err)
 		}
@@ -77,7 +78,7 @@ func createWorkoutHandler(client WorkoutCreatorClient, profileClient ProfileClie
 			}
 			return Result{}, NewUserError(createWorkoutMessage, err)
 		}
-		payload := shapeCreateWorkoutResponse(workout, args, uploaded)
+		payload := shapeCreateWorkoutResponse(workout, args, uploaded, profile, unitSystem)
 		return encodeShaped(payload, false, nil, version, debugMetadata, createWorkoutName, unitSystem, shapeCfg)
 	}
 }
@@ -124,9 +125,9 @@ func createWorkoutParams(args createWorkoutRequest) (intervals.WriteWorkoutParam
 	return params, "description_dsl", nil
 }
 
-func shapeCreateWorkoutResponse(workout intervals.Workout, args createWorkoutRequest, workoutDocUploaded string) createWorkoutResponse {
+func shapeCreateWorkoutResponse(workout intervals.Workout, args createWorkoutRequest, workoutDocUploaded string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) createWorkoutResponse {
 	uploadedSteps := args.WorkoutDoc != nil && len(args.WorkoutDoc.Steps) > 0
-	return createWorkoutResponse{Workout: workoutToRow(workout, false), Meta: createWorkoutMeta{Operation: "create", SourceEndpoint: workoutLibraryWorkoutsEndpoint, FolderID: args.FolderID, Sport: args.Sport, Tags: append([]string(nil), args.Tags...), WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, workout.WorkoutDoc), DefaultPayloadScope: "same terse workout row shape used by get_workout_library/get_workouts_in_folder; raw workout_doc remains summarized"}}
+	return createWorkoutResponse{Workout: workoutToRow(workout, false, workoutPreviewContextForWorkout(workout, profile, unitSystem)), Meta: createWorkoutMeta{Operation: "create", SourceEndpoint: workoutLibraryWorkoutsEndpoint, FolderID: args.FolderID, Sport: args.Sport, Tags: append([]string(nil), args.Tags...), WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, workout.WorkoutDoc), DefaultPayloadScope: "same terse workout row shape used by get_workout_library/get_workouts_in_folder; raw workout_doc remains summarized"}}
 }
 
 func createWorkoutInputSchema() map[string]any {

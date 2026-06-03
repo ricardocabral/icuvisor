@@ -122,7 +122,7 @@ func getTodayHandler(client todayClient, profileClient ProfileClient, gearClient
 			return todayFetchError(err)
 		}
 
-		payload, err := shapeGetTodayResponse(todayDigestInputs{today: today, asOf: asOf, timezone: asOf.Timezone, includeFull: args.IncludeFull, unitSystem: unitSystem, fitnessRows: fitnessRows, wellnessRows: wellness, activities: activities, gearResolutions: gearResolutions, customFieldCodes: customFieldCodes, events: events})
+		payload, err := shapeGetTodayResponse(todayDigestInputs{today: today, asOf: asOf, timezone: asOf.Timezone, includeFull: args.IncludeFull, unitSystem: unitSystem, profile: profile, fitnessRows: fitnessRows, wellnessRows: wellness, activities: activities, gearResolutions: gearResolutions, customFieldCodes: customFieldCodes, events: events})
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_today response: %w", err)
 		}
@@ -154,6 +154,7 @@ type todayDigestInputs struct {
 	timezone         string
 	includeFull      bool
 	unitSystem       response.UnitSystem
+	profile          intervals.AthleteWithSportSettings
 	fitnessRows      []intervals.SummaryWithCats
 	wellnessRows     []intervals.Wellness
 	activities       []intervals.Activity
@@ -167,7 +168,7 @@ func shapeGetTodayResponse(in todayDigestInputs) (getTodayResponse, error) {
 	for _, activity := range in.activities {
 		completed = append(completed, activityRow(activity, in.includeFull, in.timezone, in.unitSystem, in.gearResolutions[activity.ID], in.customFieldCodes))
 	}
-	planned, annotations, err := splitTodayEvents(in.events, in.includeFull, in.timezone)
+	planned, annotations, err := splitTodayEvents(in.events, in.includeFull, in.timezone, in.profile, in.unitSystem)
 	if err != nil {
 		return getTodayResponse{}, err
 	}
@@ -191,11 +192,11 @@ func shapeGetTodayResponse(in todayDigestInputs) (getTodayResponse, error) {
 	}, nil
 }
 
-func splitTodayEvents(events []intervals.Event, includeFull bool, timezoneName string) ([]getEventsRow, []getEventsRow, error) {
+func splitTodayEvents(events []intervals.Event, includeFull bool, timezoneName string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) ([]getEventsRow, []getEventsRow, error) {
 	planned := make([]getEventsRow, 0, len(events))
 	annotations := make([]getEventsRow, 0, len(events))
 	for _, event := range events {
-		row, err := eventRow(event, includeFull, timezoneName)
+		row, err := eventRow(event, includeFull, timezoneName, workoutPreviewContextForEvent(event, profile, unitSystem))
 		if err != nil {
 			return nil, nil, err
 		}

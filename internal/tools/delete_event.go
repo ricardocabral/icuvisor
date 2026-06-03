@@ -39,7 +39,7 @@ func deleteEventHandler(client EventDeleterClient, profileClient ProfileClient, 
 		if err != nil {
 			return Result{}, NewUserError(invalidDeleteEventArgumentsMessage, err)
 		}
-		unitSystem, timezoneName, err := toolProfile(ctx, profileClient, timezoneFallback)
+		profile, unitSystem, timezoneName, err := toolProfileDetails(ctx, profileClient, timezoneFallback)
 		if err != nil {
 			return Result{}, NewUserError(deleteEventMessage, err)
 		}
@@ -53,7 +53,7 @@ func deleteEventHandler(client EventDeleterClient, profileClient ProfileClient, 
 			}
 			return Result{}, NewUserError(deleteEventMessage, err)
 		}
-		before, err := eventDeleteEcho(event, args.EventID, timezoneName)
+		before, err := eventDeleteEcho(event, args.EventID, timezoneName, workoutPreviewContextForEvent(event, profile, unitSystem))
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping delete_event before echo: %w", err)
 		}
