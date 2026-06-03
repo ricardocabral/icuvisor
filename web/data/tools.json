@@ -432,6 +432,14 @@
     "anchor": "delete_workout"
   },
   {
+    "name": "get_planning_context",
+    "group": "workout-library",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Fetch read-only weekly planning context without creating an ATP or calendar writes: athlete-local week events/workouts, active training-plan assignment summary, current fitness context, upcoming races, and caveats.",
+    "anchor": "get_planning_context"
+  },
+  {
     "name": "get_training_plan",
     "group": "workout-library",
     "tier": "full",

@@ -87,6 +87,21 @@ func TestCatalogMatchesRegistryAndPRDRegisteredTools(t *testing.T) {
 	}
 }
 
+func TestCatalogIncludesPlanningContextPlacement(t *testing.T) {
+	t.Parallel()
+
+	descriptor, exists := descriptorNameSet(Catalog())[getPlanningContextName]
+	if !exists {
+		t.Fatalf("Catalog() missing %q", getPlanningContextName)
+	}
+	if descriptor.Group != "workout-library" || descriptor.Tier != string(safety.ToolsetFull) {
+		t.Fatalf("descriptor = %#v, want workout-library/full", descriptor)
+	}
+	if !strings.Contains(descriptor.Summary, "Fetch read-only weekly planning context") || !strings.Contains(descriptor.Summary, "without creating an ATP") {
+		t.Fatalf("summary = %q, want read-only planning/no-ATP language", descriptor.Summary)
+	}
+}
+
 func TestCatalogIncludesAnalyzerFamilyPlacement(t *testing.T) {
 	t.Parallel()
 
