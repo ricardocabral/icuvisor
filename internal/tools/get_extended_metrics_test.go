@@ -242,15 +242,53 @@ func TestExtendedMetricsJouleFieldsConvertToKilojoules(t *testing.T) {
 	if metrics["joules_above_ftp_kj"] != float64(42) || metrics["strain_score_w_prime_kj"] != float64(19.5) {
 		t.Fatalf("activity joule conversions = %#v, want raw joules divided to kJ", metrics)
 	}
+	for _, key := range []string{"icu_joules_above_ftp", "ss_w_prime", "joules_above_ftp", "w_prime_balance"} {
+		if _, ok := metrics[key]; ok {
+			t.Fatalf("activity metrics emitted raw/ambiguous Joule key %s: %#v", key, metrics)
+		}
+	}
 	intervalRows := payload["intervals"].([]any)
 	first := intervalRows[0].(map[string]any)
 	if first["w_prime_balance_start_kj"] != float64(20.1) || first["w_prime_balance_end_kj"] != float64(18.3) || first["joules_above_ftp_kj"] != float64(18) {
 		t.Fatalf("interval joule conversions = %#v, want raw joules divided to kJ", first)
 	}
+	for _, key := range []string{"wbal_start", "wbal_end", "joules_above_ftp", "joules"} {
+		if _, ok := first[key]; ok {
+			t.Fatalf("interval row emitted raw/ambiguous Joule key %s: %#v", key, first)
+		}
+	}
 	units := payload["_meta"].(map[string]any)["extended_metric_units"].(map[string]any)
 	for _, key := range []string{"joules_above_ftp_kj", "strain_score_w_prime_kj", "w_prime_balance_start_kj", "w_prime_balance_end_kj"} {
 		if units[key] != "KJ" {
 			t.Fatalf("extended_metric_units[%s] = %v, want KJ in %#v", key, units[key], units)
+		}
+	}
+}
+
+func TestExtendedMetricsJouleDerivedZeroValuesStayExplicitKJ(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeExtendedMetricsClient(t)
+	client.activity = decodeExtendedMetricsActivity(t, `{"id":"activity-zero-j","name":"Ride","icu_joules_above_ftp":0,"ss_w_prime":0}`)
+	client.intervals = decodeExtendedMetricsIntervals(t, `{"id":"activity-zero-j","analyzed":true,"icu_intervals":[{"id":"i-zero","label":"Recovery","wbal_start":0,"wbal_end":0,"joules_above_ftp":0}]}`)
+	client.powerErr = intervals.ErrNotFound
+	tool := newGetExtendedMetricsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"activity-zero-j"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	payload := resultMap(t, result)
+	metrics := payload["metrics"].(map[string]any)
+	for _, key := range []string{"joules_above_ftp_kj", "strain_score_w_prime_kj"} {
+		if metrics[key] != float64(0) {
+			t.Fatalf("metrics[%s] = %v, want explicit zero kJ in %#v", key, metrics[key], metrics)
+		}
+	}
+	first := payload["intervals"].([]any)[0].(map[string]any)
+	for _, key := range []string{"w_prime_balance_start_kj", "w_prime_balance_end_kj", "joules_above_ftp_kj"} {
+		if first[key] != float64(0) {
+			t.Fatalf("interval[%s] = %v, want explicit zero kJ in %#v", key, first[key], first)
 		}
 	}
 }

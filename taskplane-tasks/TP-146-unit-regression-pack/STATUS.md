@@ -32,10 +32,10 @@
 ### Step 2: Add unit regression tests
 **Status:** 🟨 In Progress
 
-- [ ] Add or tighten tests for raw Joules emitted only as explicit kJ-derived fields where applicable
-- [ ] Add or tighten tests for wellness `kcalConsumed` and `hydrationVolume` unit semantics
-- [ ] Assert zero values are preserved and ambiguous raw field names are not emitted in terse responses
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/response ./internal/analysis -run 'Joule|Calories|Hydration|Unit'`
+- [x] Add or tighten tests for raw Joules emitted only as explicit kJ-derived fields where applicable
+- [x] Add or tighten tests for wellness `kcalConsumed` and `hydrationVolume` unit semantics
+- [x] Assert zero values are preserved and ambiguous raw field names are not emitted in terse responses
+- [x] Run targeted tests: `go test ./internal/tools ./internal/response ./internal/analysis -run 'Joule|Calories|Hydration|Unit'`
 
 ---
 

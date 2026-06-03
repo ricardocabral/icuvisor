@@ -469,6 +469,28 @@ func TestGetWellnessDataHydrationSemanticsAndIncludeFull(t *testing.T) {
 	}
 }
 
+func TestGetWellnessDataCaloriesAndHydrationZeroValuesArePreserved(t *testing.T) {
+	t.Parallel()
+
+	row := shapedInlineWellnessRow(t, `{"id":"2026-05-18","kcalConsumed":0,"hydration":0,"hydrationVolume":0}`, false)
+	for _, key := range []string{"calories_intake", "hydration", "hydrationVolume"} {
+		if row[key] != float64(0) {
+			t.Fatalf("row[%s] = %v, want explicit zero in %+v", key, row[key], row)
+		}
+	}
+	for _, key := range []string{"kcalConsumed", "calories", "calories_total", "hydration_ml", "hydration_liters", "hydration_volume"} {
+		if _, ok := row[key]; ok {
+			t.Fatalf("zero wellness row emitted ambiguous/renamed key %s: %+v", key, row)
+		}
+	}
+	semantics := row["_meta"].(map[string]any)["field_semantics"].(map[string]any)
+	for _, key := range []string{"calories_intake", "hydration", "hydrationVolume"} {
+		if label, ok := semantics[key].(string); !ok || label == "" {
+			t.Fatalf("field_semantics[%s] = %#v in %+v", key, semantics[key], semantics)
+		}
+	}
+}
+
 func TestGetWellnessDataNullHydrationDoesNotEmitSemantics(t *testing.T) {
 	t.Parallel()
 
