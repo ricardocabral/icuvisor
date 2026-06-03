@@ -1,6 +1,6 @@
 # TP-148: Public positioning for gear resolution and unit-safe output — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Improve public positioning copy
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 0
@@ -22,12 +22,12 @@
 ---
 
 ### Step 1: Improve public positioning copy
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Review README and docs surfaces that explain capabilities
-- [ ] Add concise, accurate copy for gear-name resolution: bike/shoe names when upstream gear IDs can be resolved, with explicit unresolved status
-- [ ] Add concise, accurate copy for unit-safe output: unit-labeled fields, calories burned vs consumed, scale legends
-- [ ] Avoid unsupported claims about coaching quality, hosted features, or automatic calendar planning
+- [x] Review README and docs surfaces that explain capabilities
+- [x] Add concise, accurate copy for gear-name resolution: bike/shoe names when upstream gear IDs can be resolved, with explicit unresolved status
+- [x] Add concise, accurate copy for unit-safe output: unit-labeled fields, calories burned vs consumed, scale legends
+- [x] Avoid unsupported claims about coaching quality, hosted features, or automatic calendar planning
 
 ---
 
@@ -72,3 +72,5 @@
 
 | 2026-06-03 16:43 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 16:43 | Step 0 started | Preflight |
+| 2026-06-03 16:44 | Step 1 docs surface review | README contains public capability positioning; docs grep found detailed internal/threat/upstream docs but no broader public user-facing capability page in task scope. |
+| 2026-06-03 16:48 | README positioning guardrail | Added only behavior-specific copy for gear resolution and unit-safe output; grep confirmed no new claims about coaching quality or automatic calendar planning. |

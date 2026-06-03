@@ -24,7 +24,8 @@ icuvisor is designed to keep training-data access simple, local, and easy for an
 - **Local-first by default:** your intervals.icu API key is read by the local `icuvisor` process from the OS keychain or an explicit headless fallback, not passed as an MCP tool argument.
 - **One binary to install:** the server ships as a Go binary with shell installers and package-manager paths, so setup does not depend on a language runtime in the user's AI chat.
 - **Structured, terse responses:** read tools return compact JSON-shaped results by default, with fuller payloads behind explicit `include_full` options for cases such as raw streams.
-- **Units and scales are explicit:** distances, paces, wellness scales, and related fields use unit-labelled names or `_meta` legends so the model does not have to infer whether a value is kilometres, miles, or a 1-5 rating.
+- **Gear names when they are knowable:** activity summaries and details include `gear_id` plus `gear_name` for bikes, shoes, and other gear when intervals.icu exposes a resolvable gear item; unresolved IDs keep an explicit `gear_resolution` status instead of inventing a name.
+- **Units and scales are explicit:** distances, paces, work, hydration, and related fields use unit-labelled names or `_meta` legends so the model does not have to infer whether a value is kilometres, miles, kilojoules, or a 1-5 rating. Activity fuel fields distinguish active `calories_burned`, athlete-logged `carbs_ingested_g`, upstream `carbs_used_g`, and wellness `kcal_consumed` intake.
 - **Delete safety is outside the model's reach:** destructive tools are registered only when the process-level `ICUVISOR_DELETE_MODE` allows them; there is no per-call `confirm` argument for the assistant to invent.
 
 The fastest path on Linux, macOS (without Homebrew), WSL, and CI is the shell installer:
