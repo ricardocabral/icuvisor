@@ -4,8 +4,8 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 3
-**Iteration:** 1
+**Review Counter:** 4
+**Iteration:** 2
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -35,10 +35,10 @@
 ### Step 2: Implement generator and tests
 **Status:** 🟨 In Progress
 
-- [ ] Generator emits per-tool schema/reference data
-- [ ] Deterministic checks/tests added
-- [ ] No-network stable generation preserved
-- [ ] Targeted tests passing
+- [x] Generator emits per-tool schema/reference data
+- [x] Deterministic checks/tests added
+- [x] No-network stable generation preserved
+- [x] Targeted tests passing
 
 ---
 
@@ -108,6 +108,7 @@
 | 2026-06-03 | Step 1 plan reviewed | R001 requested concrete design notes; R002 approved updated plan |
 | 2026-06-03 | Step 1 code reviewed | Approved |
 | 2026-06-03 | Step 2 started | Implement generator and tests |
+| 2026-06-03 23:24 | Worker iter 1 | done in 987s, tools: 57 |
 
 ---
 
@@ -132,3 +133,4 @@
 | 2026-06-03 23:10 | Review R001 | plan Step 1: REVISE |
 | 2026-06-03 23:12 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-03 23:13 | Review R003 | code Step 1: APPROVE |
+| 2026-06-03 23:14 | Review R004 | plan Step 2: APPROVE |

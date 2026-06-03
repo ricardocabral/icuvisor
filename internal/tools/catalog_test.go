@@ -277,3 +277,47 @@ func missingNames(want map[string]ToolDescriptor, got map[string]ToolDescriptor)
 	slices.Sort(missing)
 	return missing
 }
+
+func TestSchemaCatalogProjection(t *testing.T) {
+	t.Parallel()
+
+	catalog := SchemaCatalog()
+	if len(catalog) == 0 {
+		t.Fatal("SchemaCatalog() returned no tools")
+	}
+	activityDetails := catalog[getActivityDetailsName]
+	if !schemaCatalogHasArgument(activityDetails.Arguments, "include_full") {
+		t.Fatalf("%s schema missing include_full: %#v", getActivityDetailsName, activityDetails.Arguments)
+	}
+	event := catalog[addOrUpdateEventName]
+	if !schemaCatalogHasArgument(event.Arguments, "date") || !schemaCatalogHasArgument(event.Arguments, "category") {
+		t.Fatalf("%s schema missing date/category: %#v", addOrUpdateEventName, event.Arguments)
+	}
+	if len(event.Examples) == 0 || len(event.Examples) > maxCatalogInputExamples {
+		t.Fatalf("%s examples length = %d, want 1..%d", addOrUpdateEventName, len(event.Examples), maxCatalogInputExamples)
+	}
+	workout := catalog[createWorkoutName]
+	workoutDoc, ok := schemaCatalogArgumentByName(workout.Arguments, "workout_doc")
+	if !ok || workoutDoc.Type != "object" || workoutDoc.AdditionalProperties == "" {
+		t.Fatalf("%s workout_doc = %#v, want object with additional_properties summary", createWorkoutName, workoutDoc)
+	}
+	settings := catalog[updateSportSettingsName]
+	thresholdPace, ok := schemaCatalogArgumentByName(settings.Arguments, "threshold_pace")
+	if !ok || len(thresholdPace.Children) == 0 || !schemaCatalogHasArgument(thresholdPace.Children, "unit") {
+		t.Fatalf("%s threshold_pace = %#v, want child summaries including unit", updateSportSettingsName, thresholdPace)
+	}
+}
+
+func schemaCatalogHasArgument(args []ToolSchemaArgument, name string) bool {
+	_, ok := schemaCatalogArgumentByName(args, name)
+	return ok
+}
+
+func schemaCatalogArgumentByName(args []ToolSchemaArgument, name string) (ToolSchemaArgument, bool) {
+	for _, arg := range args {
+		if arg.Name == name {
+			return arg, true
+		}
+	}
+	return ToolSchemaArgument{}, false
+}

@@ -10,7 +10,10 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
-const defaultToolsOut = "web/data/tools.json"
+const (
+	defaultToolsOut   = "web/data/tools.json"
+	defaultSchemasOut = "web/data/tool_schemas.json"
+)
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -23,25 +26,32 @@ func run(args []string) error {
 	flags := flag.NewFlagSet("gendocs", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	out := flags.String("out", defaultToolsOut, "path to write generated tool catalog JSON")
+	schemasOut := flags.String("schemas-out", defaultSchemasOut, "path to write generated per-tool schema JSON")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
 	if flags.NArg() != 0 {
 		return fmt.Errorf("unexpected arguments: %v", flags.Args())
 	}
-	return writeToolsCatalog(*out, tools.Catalog())
+	if err := writeJSONFile(*out, tools.Catalog(), "tool catalog"); err != nil {
+		return err
+	}
+	return writeJSONFile(*schemasOut, tools.SchemaCatalog(), "tool schema catalog")
 }
 
-func writeToolsCatalog(out string, catalog []tools.ToolDescriptor) error {
+func writeJSONFile(out string, value any, label string) error {
 	if out == "" {
-		return fmt.Errorf("missing --out path")
+		return fmt.Errorf("missing output path for %s", label)
 	}
-	data, err := json.MarshalIndent(catalog, "", "  ")
+	data, err := json.MarshalIndent(value, "", "  ")
 	if err != nil {
-		return fmt.Errorf("marshal tool catalog: %w", err)
+		return fmt.Errorf("marshal %s: %w", label, err)
 	}
 	data = append(data, '\n')
+	return writeFileAtomic(out, data)
+}
 
+func writeFileAtomic(out string, data []byte) error {
 	dir := filepath.Dir(out)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("create output directory: %w", err)
