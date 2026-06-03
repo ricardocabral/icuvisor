@@ -1,9 +1,9 @@
 # TP-135: Apply training plan conflict protection for non-workout calendar items — Status
-**Current Step:** Step 2: Add protected-conflict behavior and tests
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -46,12 +46,12 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Run FULL test suite: `make test`
-- [ ] Run lint: `make lint`
-- [ ] Fix all failures or document pre-existing unrelated failures with exact command output
-- [ ] Build passes: `make build`
+- [x] Run FULL test suite: `make test`
+- [x] Run lint: `make lint`
+- [x] Fix all failures or document pre-existing unrelated failures with exact command output
+- [x] Build passes: `make build`
 
 ---
 
@@ -92,7 +92,9 @@
 | 2026-06-03 17:19 | Review R004 | plan Step 2: REVISE | Expanded Step 2 plan for protected-day decisions, both preflight paths, duplicate short-circuit, concrete tests, and docs. |
 | 2026-06-03 17:20 | Review R005 | plan Step 2: APPROVE | Expanded Step 2 plan approved. |
 | 2026-06-03 17:25 | Review R006 | code Step 2: APPROVE | Protected conflict implementation approved. |
+| 2026-06-03 17:26 | Review R007 | plan Step 3: APPROVE | Verification plan approved. |
 | 2026-06-03 17:18 | Review R003 | code Step 1: APPROVE |
 | 2026-06-03 17:20 | Review R004 | plan Step 2: UNKNOWN |
 | 2026-06-03 17:21 | Review R005 | plan Step 2: APPROVE |
 | 2026-06-03 17:28 | Review R006 | code Step 2: APPROVE |
+| 2026-06-03 17:28 | Review R007 | plan Step 3: APPROVE |
