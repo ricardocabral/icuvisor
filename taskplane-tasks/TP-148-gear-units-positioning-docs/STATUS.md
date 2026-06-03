@@ -1,6 +1,6 @@
 # TP-148: Public positioning for gear resolution and unit-safe output — Status
 
-**Current Step:** Step 2: Verify docs
+**Current Step:** Step 99: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 0
@@ -41,12 +41,12 @@
 ---
 
 ### Step 99: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Targeted tests passing
-- [ ] FULL test suite passing
-- [ ] Build passes if code changed
-- [ ] All failures fixed
+- [x] Targeted tests passing
+- [x] FULL test suite passing
+- [x] Build passes if code changed
+- [x] All failures fixed
 
 ---
 
@@ -77,3 +77,7 @@
 | 2026-06-03 16:49 | Markdown structure check | No markdown/link target or markdownlint binary found; README fenced-code balance passed and heading outline renders as expected. |
 | 2026-06-03 16:50 | Claim verification | README gear/unit claims matched internal/tools activity gear fields/resolution statuses, get_gear_list, activity calories_burned/carbs fields, wellness kcal_consumed/scale metadata, and targeted go test ./internal/tools ./internal/intervals ./internal/response passed. |
 | 2026-06-03 16:51 | Docs-only test decision | No code files changed for TP-148, so make test is optional in Step 2; targeted package tests were still run for claim evidence. |
+| 2026-06-03 16:52 | Targeted tests | go test ./internal/tools ./internal/intervals ./internal/response passed. |
+| 2026-06-03 16:53 | Full suite | make test passed. |
+| 2026-06-03 16:54 | Build gate | Build not required because only README.md and STATUS.md changed; no code files changed. |
+| 2026-06-03 16:54 | Failure status | No test failures observed; no fixes needed. |
