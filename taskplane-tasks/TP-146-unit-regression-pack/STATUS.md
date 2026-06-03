@@ -24,8 +24,8 @@
 ### Step 1: Audit current unit coverage
 **Status:** 🟨 In Progress
 
-- [ ] Locate existing tests for extended metrics Joules/kJ, wellness kcal/hydration, activity calories semantics, and unit metadata
-- [ ] Identify missing regression assertions without duplicating existing coverage
+- [x] Locate existing tests for extended metrics Joules/kJ, wellness kcal/hydration, activity calories semantics, and unit metadata
+- [x] Identify missing regression assertions without duplicating existing coverage
 
 ---
 
@@ -71,3 +71,4 @@
 
 | 2026-06-03 16:38 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 16:38 | Step 0 started | Preflight |
+| 2026-06-03 | Coverage audit | Existing tests cover activity `calories_burned` semantics and zero preservation in `get_activities`, activity-detail nutrition disambiguation/include_full raw preservation, wellness nutrition disambiguation and hydration non-null/null handling, response KCAL/KJ pass-through, and extended-metrics Joules-to-kJ conversion/unit metadata. Missing regression assertions: extended-metrics raw Joule/W' upstream field names are absent from terse outputs; zero-valued Joule-derived kJ fields are preserved; wellness zero-valued `kcalConsumed`/`hydration`/`hydrationVolume` are preserved while ambiguous raw kcal names remain absent. |
