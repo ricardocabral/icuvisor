@@ -29,7 +29,7 @@
 ---
 
 ### Step 2: Add prompt and regression coverage
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Update weekly/plan-health prompt guidance to anchor all report windows in athlete-local dates and treat current-day `_meta.as_of` as partial-day context only.
 - [ ] Add or strengthen golden tests so stale/current-day caveats are preserved in prompt output.
