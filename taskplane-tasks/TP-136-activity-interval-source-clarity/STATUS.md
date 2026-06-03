@@ -1,9 +1,9 @@
 # TP-136: Activity interval-source clarity in details and routing — Status
-**Current Step:** Step 1: Audit current interval-source exposure
+**Current Step:** Step 2: Implement clarity and regression coverage
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -29,12 +29,12 @@
 ---
 
 ### Step 2: Implement clarity and regression coverage
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Add or update tests showing device-lap/auto-lap/structured-workout source metadata is surfaced or routed correctly.
-- [ ] Update tool descriptions/schema snapshots as needed so assistants know to call `get_activity_intervals` before analyzing laps/reps.
-- [ ] Ensure terse defaults stay compact and `include_full` remains the raw-payload opt-in.
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/analysis`.
+- [x] Add or update tests showing device-lap/auto-lap/structured-workout source metadata is surfaced or routed correctly.
+- [x] Update tool descriptions/schema snapshots as needed so assistants know to call `get_activity_intervals` before analyzing laps/reps.
+- [x] Ensure terse defaults stay compact and `include_full` remains the raw-payload opt-in.
+- [x] Run targeted tests: `go test ./internal/tools ./internal/analysis`.
 
 ---
 
@@ -76,3 +76,4 @@
 | 2026-06-03 16:41 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 16:41 | Step 0 started | Preflight |
 | 2026-06-03 16:43 | Review R001 | plan Step 1: APPROVE |
+| 2026-06-03 16:47 | Review R002 | plan Step 2: APPROVE |
