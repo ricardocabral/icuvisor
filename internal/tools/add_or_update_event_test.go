@@ -143,6 +143,33 @@ func TestAddOrUpdateEventCreateWarnsInsteadOfSkippingNonExactSameDayEvent(t *tes
 	}
 }
 
+func TestAddOrUpdateEventCreateDoesNotTreatActualMetricsAsTargetDuplicate(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		events:            decodeToolEvents(t, `{"id":"evt-actual","category":"WORKOUT","type":"Ride","name":"Tempo","start_date_local":"2026-06-01T00:00:00","icu_training_load":75,"distance":30000,"moving_time":3600}`),
+		event:             decodeToolEvents(t, `{"id":"evt-created","category":"WORKOUT","type":"Ride","name":"Tempo","start_date_local":"2026-06-01T00:00:00","load_target":75,"distance_target":30000,"time_target":3600}`)[0],
+	}
+	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-06-01","category":"WORKOUT","type":"Ride","name":"Tempo","target_load":75,"distance_meters":30000,"moving_time_seconds":3600}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 {
+		t.Fatalf("write calls = %#v, want actual metrics without target fields to warn and create", client.calls)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["operation"] != "create" || meta["duplicate_event_id"] != nil {
+		t.Fatalf("meta = %#v, want create rather than duplicate skip", meta)
+	}
+	conflicts := meta["same_day_conflicts"].([]any)
+	if len(conflicts) != 1 || conflicts[0].(map[string]any)["event_id"] != "evt-actual" {
+		t.Fatalf("same_day_conflicts = %#v, want actual-metric event conflict", conflicts)
+	}
+}
+
 func TestAddOrUpdateEventStripsSparseNullsAndPreservesRawFull(t *testing.T) {
 	t.Parallel()
 

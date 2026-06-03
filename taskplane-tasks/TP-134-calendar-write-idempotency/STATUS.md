@@ -36,7 +36,7 @@
 - [x] Ensure dry-run output makes potential duplicate/conflict outcomes clear before any write.
 - [x] Run targeted tests: `go test ./internal/tools`.
 - [x] Fix R004: exact duplicate matching must compare the full writable create shape, treating omitted create fields as absent/empty rather than wildcards.
-- [ ] Fix R005: exact duplicate matching must compare writable target fields only and treat matching actual/completed metrics without targets as conflicts/warnings.
+- [x] Fix R005: exact duplicate matching must compare writable target fields only and treat matching actual/completed metrics without targets as conflicts/warnings.
 
 ---
 
