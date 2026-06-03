@@ -1,5 +1,5 @@
 # TP-137: Resolved workout target previews for planned workouts — Status
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Design compact resolved-target shape
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
@@ -10,7 +10,7 @@
 ---
 
 ### Step 0: Preflight
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -19,7 +19,7 @@
 ---
 
 ### Step 1: Design compact resolved-target shape
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Audit event/workout read rows and `workout_doc_summary` to find the least-bloated place for target previews.
 - [ ] Use athlete profile thresholds/units only when already available or cheaply fetchable; avoid extra heavy calls or raw payload expansion.
