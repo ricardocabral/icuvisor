@@ -13,7 +13,7 @@ import (
 
 const (
 	listAdvancedCapabilitiesName        = "icuvisor_list_advanced_capabilities"
-	listAdvancedCapabilitiesDescription = "Discover tools hidden from the default core catalog (including delete operations such as delete_event and delete_activity) and explain how to enable them via server env vars ICUVISOR_TOOLSET=full and ICUVISOR_DELETE_MODE=full. These gates are server-config only; the LLM cannot bypass them at call time. This tool makes no intervals.icu API calls."
+	listAdvancedCapabilitiesDescription = "Use only when the user asks what other icuvisor tools are available or when a requested advanced/delete capability is not visible in the current tool catalog. If a specific visible tool can satisfy the request, call that tool instead. Explains server env gates such as ICUVISOR_TOOLSET=full and ICUVISOR_DELETE_MODE=full; the LLM cannot bypass them at call time. This tool makes no intervals.icu API calls."
 	listAdvancedCapabilitiesInstruction = "Set ICUVISOR_TOOLSET=full in the MCP client/server environment to expose the full icuvisor toolset, and ICUVISOR_DELETE_MODE=full to additionally enable delete tools (default safe registers writes only; none disables both). restart icuvisor after changing either."
 )
 

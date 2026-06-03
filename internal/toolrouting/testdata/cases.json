@@ -58,11 +58,11 @@
     {
       "id": "event-delete-hidden-in-safe-mode",
       "prompt": "Delete the calendar event evt-789 from my intervals.icu calendar.",
-      "expected_first_tool": null,
+      "expected_first_tool": "icuvisor_list_advanced_capabilities",
       "catalog_mode": "full_safe",
       "toolset": "full",
       "delete_mode": "safe",
-      "notes": "Safe delete mode must not expose delete_event; the expected first action is no tool rather than a write workaround."
+      "notes": "Safe delete mode must not expose delete_event; the discoverability tool is acceptable because it explains the server-side ICUVISOR_DELETE_MODE=full gate without offering a model-controlled workaround."
     },
     {
       "id": "event-delete-full-mode",
@@ -75,30 +75,30 @@
     },
     {
       "id": "workout-library-list",
-      "prompt": "Find workouts in my workout library folder called Base Plans.",
+      "prompt": "Find workouts in my workout library folder with folder_id folder-base-plans.",
       "expected_first_tool": "get_workouts_in_folder",
       "catalog_mode": "full_safe",
       "toolset": "full",
       "delete_mode": "safe",
-      "notes": "Workout-library read case with a folder should use the folder-specific listing."
+      "notes": "Workout-library read case with a known folder_id should use the folder-specific listing; folder-name lookup belongs to get_workout_library first."
     },
     {
       "id": "workout-library-create-full",
-      "prompt": "Create a reusable workout named Sweet Spot Builder in my library with 3x10 minutes at 90 percent FTP.",
+      "prompt": "Create a reusable Ride workout template named Easy Spin in workout-library folder folder-build-1 with description '60m easy aerobic endurance; synthetic routing eval'.",
       "expected_first_tool": "create_workout",
       "catalog_mode": "full_safe",
       "toolset": "full",
       "delete_mode": "safe",
-      "notes": "Full toolset write case for workout-library CRUD."
+      "notes": "Full toolset write case for workout-library CRUD with required sport and folder_id present; natural-language workout-structure prompts may reasonably validate_workout first."
     },
     {
       "id": "training-distribution-analyzer",
-      "prompt": "Was my training distribution polarized or threshold-heavy over the last 8 weeks?",
+      "prompt": "Was my training distribution polarized or threshold-heavy from 2026-04-01 through 2026-05-27?",
       "expected_first_tool": "compute_load_balance",
       "catalog_mode": "full_safe",
       "toolset": "full",
       "delete_mode": "safe",
-      "notes": "Analyzer helper should handle training-distribution classification."
+      "notes": "Analyzer helper should handle training-distribution classification when concrete athlete-local dates are already supplied; relative-date prompts may reasonably resolve dates first."
     }
   ]
 }

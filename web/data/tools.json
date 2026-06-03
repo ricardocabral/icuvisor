@@ -348,7 +348,7 @@
     "group": "meta",
     "tier": "core",
     "safety": "read",
-    "summary": "Discover tools hidden from the default core catalog (including delete operations such as delete_event and delete_activity) and explain how to enable them via server env vars ICUVISOR_TOOLSET=full and ICUVISOR_DELETE_MODE=full.",
+    "summary": "Use only when the user asks what other icuvisor tools are available or when a requested advanced/delete capability is not visible in the current tool catalog.",
     "anchor": "icuvisor_list_advanced_capabilities"
   },
   {
