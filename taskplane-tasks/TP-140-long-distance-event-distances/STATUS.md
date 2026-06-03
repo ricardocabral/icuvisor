@@ -1,7 +1,7 @@
 # TP-140: Long-distance event distance regression coverage — Status
 
 **Current Step:** Step 4: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-03
 **Review Level:** 1
 **Review Counter:** 3
@@ -52,11 +52,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged in STATUS.md
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged in STATUS.md
 
 ---
 
@@ -67,6 +67,7 @@
 | 2026-06-03 | Step 1 | Event write validation only rejects negative `distance_meters`/`target_load`; no Icuvisor-local maximum distance cap found in `internal/tools` or `internal/intervals`. Writes send `distance_meters` as upstream `distance_target` and reads preserve upstream `distance`/`distance_target` as meter-valued float fields. | Long-distance acceptance is governed by upstream intervals.icu constraints; regression tests should prove Icuvisor preserves 1200 km values locally. |
 | 2026-06-03 | Step 1 | Response/schema wording says `target_load` is optional planned load when supported upstream and `distance_meters` is optional planned distance; no response metadata claims Icuvisor calculates load from distance/duration. | Add assertions around response rows/metadata to prevent false auto-load wording from being introduced. |
 | 2026-06-03 | Step 2 | No arbitrary local cap required removal; new tool-level regression tests cover 1,200,000 meter create/update/read paths so future caps below randonneuring distances fail fast. | Upstream errors remain passed through by existing write error handling; local code continues not to reject high non-negative distances. |
+| 2026-06-03 | Step 4 | Reviewed `docs/prd/PRD-icuvisor.md`; no material product contract change was needed because event tools already describe calendar event read/write behavior without imposing a distance maximum. | Changelog is sufficient user-visible documentation for this regression coverage. |
 
 ## Blockers
 
