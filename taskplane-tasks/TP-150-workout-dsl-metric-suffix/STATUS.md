@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -28,9 +28,9 @@
 - [x] Preserve no-sport-context serializer behavior
 - [x] Define expected suffix behavior for primary metric orders
 - [x] Document upstream ambiguity in STATUS.md
-- [ ] Decide and document `workout_order` decode/source
-- [ ] Decide and document `update_workout` missing-sport fallback
-- [ ] Decide and document `apply_training_plan` planned-write coverage
+- [x] Decide and document `workout_order` decode/source
+- [x] Decide and document `update_workout` missing-sport fallback
+- [x] Decide and document `apply_training_plan` planned-write coverage
 
 ---
 
@@ -79,6 +79,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R001 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
+| R002 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 
 ---
 
@@ -113,4 +114,8 @@
 - No-sport-context behavior: existing `workoutdoc.Serialize` and `workoutdoc.MergeDescription` remain unchanged, so resources, validators, activity-interval writes, and tests that lack sport settings continue to emit bare power zones (`Z2`).
 - Sport-aware suffix expectation: when a known planned-workout sport setting exposes `workout_order` (`POWER_HR_PACE`, `HR_POWER_PACE`, or `PACE_HR_POWER`), zone targets serialize with explicit metric suffixes by target family: power `Z2 Power`/`Z2-Z3 Power`, heart rate `Z2 HR`/`Z2-Z3 HR`, pace `Z2 Pace`/`Z2-Z3 Pace`. The order identifies that the upstream sport has metric priority context; icuvisor avoids relying on whichever family upstream treats as bare default.
 - R001 plan review requires explicit decisions for decoding `workout_order`, `update_workout` without sport, and `apply_training_plan` write coverage before Step 2.
+- R001 resolution (`workout_order` source): add `WorkoutOrder string `json:"workout_order"`` to `intervals.SportSettings` and table-test JSON decoding. A tool-layer helper will select a sport setting by exact `type` or membership in `types`, normalize only known values (`POWER_HR_PACE`, `HR_POWER_PACE`, `PACE_HR_POWER`), and return zero options for missing/unknown orders.
+- R001 resolution (`update_workout` no sport): `update_workout` will use sport-aware serialization only when the request supplies `sport`; otherwise it intentionally falls back to existing bare serialization because the sparse update path has no existing workout fetch in scope. The schema/docs will tell callers to include `sport` with `workout_doc` when they need sport-aware metric suffixes.
+- R001 resolution (`apply_training_plan`): keep it in scope. `applyTrainingPlan` already has athlete profile and each template's `type`; pass profile/sport-derived serialization options through `eventParamsFromPlanWorkout`/`eventWriteParams` so applied calendar events get the same sport-aware zone suffixes as direct planned workout writes.
 | 2026-06-03 21:33 | Review R001 | plan Step 1: UNKNOWN |
+| 2026-06-03 21:35 | Review R002 | plan Step 1: APPROVE |
