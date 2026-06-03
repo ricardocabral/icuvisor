@@ -2,7 +2,6 @@ package tools
 
 import (
 	"context"
-	"encoding/json"
 	"slices"
 	"sort"
 
@@ -43,9 +42,9 @@ func selectAthleteInputSchema() map[string]any {
 
 func selectAthleteHandler(evaluator coach.Evaluator) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
-		var args selectAthleteRequest
-		if err := json.Unmarshal(req.Arguments, &args); err != nil {
-			return Result{}, NewUserError(invalidCoachAthleteFormatMessage, err)
+		args, err := DecodeStrict[selectAthleteRequest](req.Arguments)
+		if err != nil {
+			return Result{}, NewUserError(invalidSelectAthleteArgumentsMessage, err)
 		}
 		normalized, err := config.NormalizeAthleteID(args.AthleteID)
 		if err != nil {
@@ -80,6 +79,8 @@ func visibleToolsForAthlete(evaluator coach.Evaluator, athleteID string) []strin
 	sort.Strings(out)
 	return out
 }
+
+const invalidSelectAthleteArgumentsMessage = "invalid select_athlete arguments; use only athlete_id"
 
 const invalidCoachAthleteFormatMessage = "invalid athlete_id; use format i12345 or 12345"
 

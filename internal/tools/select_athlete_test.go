@@ -42,3 +42,23 @@ func TestSelectAthleteNormalizesAndRejectsUnauthorizedTargets(t *testing.T) {
 		t.Fatalf("unauthorized target public error = %q, %v; err=%v", message, ok, err)
 	}
 }
+
+func TestSelectAthleteRejectsCredentialLikeExtraFieldsWithoutChangingSelection(t *testing.T) {
+	t.Parallel()
+
+	cfg := coach.Config{DefaultAthleteID: "i123", Athletes: []coach.Athlete{
+		{ID: "i123", AllowedTools: []string{toolcatalog.GetAthleteProfile}},
+		{ID: "456", AllowedTools: []string{toolcatalog.GetPowerCurves}},
+	}}
+	tool := newSelectAthleteTool(cfg)
+	store := coach.NewSelectionStore(cfg.DefaultAthleteID)
+	ctx := coach.WithSelectionContext(context.Background(), coach.SelectionContext{Store: store, Key: "test-session", Scope: "session"})
+
+	_, err := tool.Handler(ctx, Request{Name: tool.Name, Arguments: json.RawMessage(`{"athlete_id":"456","api_key":"secret"}`)})
+	if message, ok := PublicErrorMessage(err); !ok || message != invalidSelectAthleteArgumentsMessage {
+		t.Fatalf("credential field public error = %q, %v; err=%v", message, ok, err)
+	}
+	if got := store.Selected("test-session"); got != "i123" {
+		t.Fatalf("selected athlete after rejected credential field = %q, want default i123", got)
+	}
+}

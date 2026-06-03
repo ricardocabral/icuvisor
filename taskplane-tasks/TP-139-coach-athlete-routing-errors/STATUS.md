@@ -36,7 +36,7 @@
 - [x] Implement explicit routing error types/messages for invalid athlete ID format, unauthorized/not-configured roster athletes, per-athlete tool denial, and local-mode athlete targeting.
 - [x] Ensure tool catalog/ACL behavior still hides disallowed tools and schemas do not expose or accept API keys in chat/tool parameters.
 - [x] Run targeted tests: `go test ./internal/coach ./internal/config ./internal/tools ./internal/mcp`.
-- [ ] Revise `select_athlete` runtime decoding to reject credential-like extra parameters without changing selected athlete.
+- [x] Revise `select_athlete` runtime decoding to reject credential-like extra parameters without changing selected athlete.
 
 ---
 
@@ -72,6 +72,7 @@
 | 2026-06-03 | Step 2 | Implemented coach routing sentinel errors plus public messages for invalid athlete_id format, unauthorized roster target, selected-athlete tool denial, and local-mode athlete_id override. | Client-facing failures are actionable without echoing athlete IDs or credentials. |
 | 2026-06-03 | Step 2 | Added registry coverage that tool input schemas do not expose credential/API-key parameters; existing MCP ACL visibility tests continue to assert hidden tools stay absent. | Protects against model-controlled credentials while preserving coach ACL catalog filtering. |
 | 2026-06-03 | Step 2 | Targeted hardening tests passed: `go test ./internal/coach ./internal/config ./internal/tools ./internal/mcp`. | Coach routing changes are green across touched packages. |
+| 2026-06-03 | Step 2 | Revised `select_athlete` to use strict argument decoding and added a regression that `api_key` is rejected without changing selected athlete state. | Addresses R005 code review; targeted tests still pass. |
 
 ## Audit Matrix
 
