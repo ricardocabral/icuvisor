@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Expanded MCP tool schema snapshots to cover the full coach-enabled, full-capability registry so newly registered public tools cannot miss drift checks silently.
+
 ## [0.1.8] - 2026-06-03
 
 ### Added

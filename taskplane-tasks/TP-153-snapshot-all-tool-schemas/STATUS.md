@@ -1,7 +1,7 @@
 # TP-153: Snapshot every registered MCP tool schema — Status
 
-**Current Step:** Step 4: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 5: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-03
 **Review Level:** 1
 **Review Counter:** 4
@@ -62,12 +62,12 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Final snapshot policy summarized
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Final snapshot policy summarized
 
 ---
 
@@ -87,6 +87,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | Current schema snapshot whitelist covers 37 of 60 full-mode coach-enabled registered tools; the 23 missing names are analyzer/planning additions, remaining custom/settings/delete helpers, gear helpers, validate_workout, and coach tools. | Step 1 policy input; Step 2 guard must derive coverage from the live full registry rather than a curated subset. | internal/toolchecks/schema_stability.go |
+| Full-mode coach schema generation changes existing snapshots by injecting optional `athlete_id` and surfacing full-delete/write schema variants such as `replace_existing`; this is intentional baseline widening rather than public runtime drift for safe/solo modes. | Captured in snapshot policy notes and CHANGELOG developer-facing entry. | internal/tools/schema_snapshot/*.json |
 
 ---
 
@@ -106,6 +107,7 @@
 | 2026-06-03 21:45 | Step 3 plan reviewed | APPROVE |
 | 2026-06-03 21:50 | Step 4 started | Full verification |
 | 2026-06-03 21:50 | Step 4 plan reviewed | APPROVE |
+| 2026-06-03 22:00 | Step 5 completed | CHANGELOG updated; affected docs reviewed; final full-mode coach schema snapshot policy summarized. |
 | 2026-06-03 21:38 | Worker iter 1 | done in 603s, tools: 65 |
 
 ---
@@ -125,6 +127,8 @@
 - Step 3 snapshot review: 60 JSON snapshots are parseable; grep found no API keys/secrets/local filesystem paths, only expected schema terms such as `next_page_token`, `credentials`, and `icuvisor://workout-syntax`; canonical generator ordering was verified by diffing two temp generations.
 - Step 3 noise policy: no structural coverage was weakened; snapshot churn is accepted as the intentional broad full-mode coach baseline (coach `athlete_id` injection plus newly covered tools), while description/example text remains snapshotted to catch client-visible schema drift.
 - Step 4 verification: `make test` and `make lint` completed with zero failures before build verification.
+- Step 5 docs review: `web/content/reference/tools.md` remains accurate because generated catalog assumptions did not change; `CONTRIBUTING.md` already documents `go run ./scripts/snapshot_tool_schemas.go`, so no new contributor workflow command is needed.
+- Final snapshot policy: schema snapshots are generated from the full-capability, full-toolset, coach-enabled registry with no exclusions; athlete-scoped tools include the optional coach `athlete_id` selector, and any future exclusion must be explicit and reasoned in `schemaCatalogToolExclusions`.
 | 2026-06-03 21:32 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-03 21:35 | Review R002 | plan Step 2: APPROVE |
 | 2026-06-03 21:45 | Review R003 | plan Step 3: APPROVE |
