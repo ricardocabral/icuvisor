@@ -4,8 +4,8 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 3
-**Iteration:** 1
+**Review Counter:** 4
+**Iteration:** 3
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -35,11 +35,11 @@
 ### Step 2: Implement event write/read support
 **Status:** 🟨 In Progress
 
-- [ ] WriteEventParams and payload support external_id
-- [ ] add_or_update_event schema/decoder/handler supports external_id
-- [ ] Create/update and preflight tests added
-- [ ] Event row exposure implemented/tested as decided
-- [ ] Targeted tests passing
+- [x] WriteEventParams and payload support external_id
+- [x] add_or_update_event schema/decoder/handler supports external_id
+- [x] Create/update and preflight tests added
+- [x] Event row exposure implemented/tested as decided
+- [x] Targeted tests passing
 
 ---
 
@@ -90,6 +90,7 @@
 | R001 | Plan | Step 1 | REVISE (tool returned APPROVE, review file says not approved) | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | Step 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | Code | Step 1 | APPROVE | `.reviews/R003-code-step1.md` |
+| R004 | Plan | Step 2 | APPROVE | `.reviews/R004-plan-step2.md` |
 
 ---
 
@@ -113,6 +114,8 @@
 | 2026-06-03 | Step 1 started | Design external_id contract |
 | 2026-06-03 | Step 1 reviewed | R002 plan and R003 code APPROVE |
 | 2026-06-03 | Step 2 started | Implement event write/read support |
+| 2026-06-03 21:38 | Worker iter 1 | done in 644s, tools: 61 |
+| 2026-06-03 21:39 | Worker iter 2 | done in 66s, tools: 18 |
 
 ---
 
@@ -131,8 +134,10 @@
 - Event read rows will expose `external_id` in terse mode when upstream returns it, and full mode will continue to include the raw payload. This is useful audit metadata for idempotent writes, low-token, and already exposed for activities in terse rows.
 - Create preflight remains conservative. For creates with `external_id`, a same-day event with the same `external_id` is treated as an idempotent duplicate even if other writable fields drift; the response should skip creating another event and identify the existing event. Differing or missing `external_id` does not disable the existing exact writable-field duplicate check. Cross-day external-id lookups are not added because the list API is date-windowed and `apply_training_plan` IDs include the event date. Dry-run/proposed plan rows will show the hashed `external_id` for review; raw plan/workout IDs are not embedded in the key.
 - R002 non-blocking implementation notes: pin hash input serialization/digest length in code/tests; include duplicate warning/existing event ID when external-ID preflight skips a drifted body; keep dry-run external_id exposure explicit in tests.
+- R004 Step 2 plan notes: preserve trim/omit/no-clear semantics; test POST bulk-array and PUT single-object body shapes; make external-ID preflight behavior explicit; cover terse row omission/exposure; update add_or_update_event description away from “no idempotency key” wording.
 
 *Reserved for execution notes*
 | 2026-06-03 21:30 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-03 21:33 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-03 21:35 | Review R003 | code Step 1: APPROVE |
+| 2026-06-03 21:37 | Review R004 | plan Step 2: APPROVE |

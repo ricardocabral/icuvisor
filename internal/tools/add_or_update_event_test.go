@@ -84,6 +84,59 @@ func TestAddOrUpdateEventCreatePreservesFreeTextTagsAndReadShape(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateEventMapsExternalIDArgument(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		event:             decodeToolEvents(t, `{"id":"evt-ext","external_id":"icuvisor-test-ext","category":"WORKOUT","type":"Ride","name":"Tempo","start_date_local":"2026-06-01"}`)[0],
+	}
+	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-06-01","category":"WORKOUT","type":"Ride","name":"Tempo","external_id":" icuvisor-test-ext "}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 || client.calls[0].ExternalID != "icuvisor-test-ext" {
+		t.Fatalf("write calls = %#v, want trimmed external_id mapped", client.calls)
+	}
+	row := resultMap(t, result)["event"].(map[string]any)
+	if row["external_id"] != "icuvisor-test-ext" {
+		t.Fatalf("event row = %#v, want external_id exposed", row)
+	}
+}
+
+func TestAddOrUpdateEventCreateSkipsSameDayMatchingExternalID(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		events:            decodeToolEvents(t, `{"id":"evt-existing-ext","external_id":"icuvisor-ext-1","category":"WORKOUT","type":"Ride","name":"Older body","start_date_local":"2026-06-01T00:00:00","load_target":42}`),
+	}
+	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-06-01","category":"WORKOUT","type":"Ride","name":"Retried body","external_id":"icuvisor-ext-1","target_load":75}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 0 {
+		t.Fatalf("write calls = %#v, want matching external_id create skipped", client.calls)
+	}
+	out := resultMap(t, result)
+	row := out["event"].(map[string]any)
+	if row["event_id"] != "evt-existing-ext" || row["external_id"] != "icuvisor-ext-1" {
+		t.Fatalf("event row = %#v, want existing external_id duplicate", row)
+	}
+	meta := out["_meta"].(map[string]any)
+	if meta["operation"] != "skip_duplicate" || meta["duplicate_event_id"] != "evt-existing-ext" || meta["duplicate_warning"] != duplicateExternalIDSkippedWarning {
+		t.Fatalf("meta = %#v, want external_id duplicate skip metadata", meta)
+	}
+	conflicts := meta["same_day_conflicts"].([]any)
+	if len(conflicts) != 1 || conflicts[0].(map[string]any)["reason"] != "matching_external_id" || conflicts[0].(map[string]any)["date"] != "2026-06-01" {
+		t.Fatalf("same_day_conflicts = %#v, want matching_external_id conflict", conflicts)
+	}
+}
+
 func TestAddOrUpdateEventCreateSkipsExactSameDayDuplicate(t *testing.T) {
 	t.Parallel()
 
@@ -302,12 +355,12 @@ func TestAddOrUpdateEventUpdateUsesEventID(t *testing.T) {
 	}
 	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
 
-	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"event_id":" evt-2 ","date":"2026-07-01","category":"RACE","name":"Updated race"}`)})
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"event_id":" evt-2 ","external_id":" ext-updated ","date":"2026-07-01","category":"RACE","name":"Updated race"}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
-	if len(client.calls) != 1 || client.calls[0].EventID != "evt-2" {
-		t.Fatalf("write calls = %#v, want trimmed event_id update", client.calls)
+	if len(client.calls) != 1 || client.calls[0].EventID != "evt-2" || client.calls[0].ExternalID != "ext-updated" {
+		t.Fatalf("write calls = %#v, want trimmed event_id and external_id update", client.calls)
 	}
 	out := resultMap(t, result)
 	meta := out["_meta"].(map[string]any)
@@ -541,7 +594,7 @@ func TestAddOrUpdateEventRegistrationMetadata(t *testing.T) {
 		t.Fatalf("description = %q, want non-destructive language without confirm", tool.Description)
 	}
 	props := tool.InputSchema.(map[string]any)["properties"].(map[string]any)
-	for _, name := range []string{"date", "event_id", "category", "type", "name", "description", "workout_doc", "tags", "indoor", "target_load", "distance_meters", "moving_time_seconds", "elapsed_time_seconds"} {
+	for _, name := range []string{"date", "event_id", "external_id", "category", "type", "name", "description", "workout_doc", "tags", "indoor", "target_load", "distance_meters", "moving_time_seconds", "elapsed_time_seconds"} {
 		if _, ok := props[name]; !ok {
 			t.Fatalf("schema missing %s", name)
 		}

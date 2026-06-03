@@ -27,6 +27,7 @@ type ListEventsParams struct {
 // WriteEventParams contains writable calendar event fields.
 type WriteEventParams struct {
 	EventID            string
+	ExternalID         string
 	Date               string
 	Category           string
 	Type               string
@@ -46,6 +47,7 @@ type Event struct {
 	Raw map[string]any `json:"-"`
 
 	ID                string   `json:"-"`
+	ExternalID        *string  `json:"external_id"`
 	Name              *string  `json:"name"`
 	Type              *string  `json:"type"`
 	Category          *string  `json:"category"`
@@ -156,6 +158,7 @@ func (c *Client) AddOrUpdateEvent(ctx context.Context, params WriteEventParams) 
 
 type writeEventPayload struct {
 	StartDateLocal    string    `json:"start_date_local"`
+	ExternalID        string    `json:"external_id,omitempty"`
 	Category          string    `json:"category"`
 	Type              string    `json:"type,omitempty"`
 	Name              string    `json:"name,omitempty"`
@@ -179,6 +182,7 @@ func writeEventBody(params WriteEventParams) (writeEventPayload, error) {
 	}
 	body := writeEventPayload{
 		StartDateLocal:    writeEventStartDateLocal(date, category),
+		ExternalID:        strings.TrimSpace(params.ExternalID),
 		Category:          category,
 		Type:              strings.TrimSpace(params.Type),
 		Name:              strings.TrimSpace(params.Name),

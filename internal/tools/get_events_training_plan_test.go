@@ -69,7 +69,7 @@ func TestGetEventsTerseRowsTimezoneAndCategory(t *testing.T) {
 
 	client := &fakeEventsTrainingPlanClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
-		events:            decodeToolEvents(t, `{"id":123,"name":"Tempo","category":"WORKOUT","type":"Ride","start_date_local":"2026-01-03","end_date_local":"2026-01-03","description":"3x tempo","tags":["tempo","coach"],"indoor":true,"updated":"2026-01-03T12:00:00Z","plan_applied":"2026-01-02T12:00:00Z","calendar_id":"cal-1","training_plan_id":456,"icu_training_load":75,"distance":30000,"moving_time":3600,"workout_doc":{"steps":[{"duration":600}]}}`),
+		events:            decodeToolEvents(t, `{"id":123,"external_id":"icuvisor-audit-123","name":"Tempo","category":"WORKOUT","type":"Ride","start_date_local":"2026-01-03","end_date_local":"2026-01-03","description":"3x tempo","tags":["tempo","coach"],"indoor":true,"updated":"2026-01-03T12:00:00Z","plan_applied":"2026-01-02T12:00:00Z","calendar_id":"cal-1","training_plan_id":456,"icu_training_load":75,"distance":30000,"moving_time":3600,"workout_doc":{"steps":[{"duration":600}]}}`),
 	}
 	tool := newGetEventsTool(client, client, "test", "UTC", false)
 
@@ -87,8 +87,8 @@ func TestGetEventsTerseRowsTimezoneAndCategory(t *testing.T) {
 	out := resultMap(t, result)
 	rows := out["events"].([]any)
 	row := rows[0].(map[string]any)
-	if row["event_id"] != "123" || row["category"] != "WORKOUT" {
-		t.Fatalf("row id/category = %#v/%#v, want string id and raw category", row["event_id"], row["category"])
+	if row["event_id"] != "123" || row["external_id"] != "icuvisor-audit-123" || row["category"] != "WORKOUT" {
+		t.Fatalf("row id/external_id/category = %#v/%#v/%#v, want string ids and raw category", row["event_id"], row["external_id"], row["category"])
 	}
 	if row["indoor"] != true {
 		t.Fatalf("indoor = %#v, want true", row["indoor"])
@@ -167,6 +167,7 @@ func TestGetEventsPreservesLongDistanceRaceMeters(t *testing.T) {
 	if row["distance_meters"] != brevetDistanceMeters || row["distance_target_meters"] != brevetDistanceMeters {
 		t.Fatalf("row = %#v, want untruncated 1200 km distance and target distance", row)
 	}
+	assertKeyAbsent(t, row, "external_id")
 	assertKeyAbsent(t, row, "icu_training_load")
 	assertKeyAbsent(t, row, "load_target")
 	lowerText := strings.ToLower(resultText(t, result))
