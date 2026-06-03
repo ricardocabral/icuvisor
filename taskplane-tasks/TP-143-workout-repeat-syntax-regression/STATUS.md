@@ -1,10 +1,10 @@
 # TP-143: Workout repeat header syntax regression — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Audit repeat serialization and validation
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -22,12 +22,12 @@
 ---
 
 ### Step 1: Audit repeat serialization and validation
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Inspect WorkoutDoc serialize/parse/validate tests for repeat headers with and without descriptions.
-- [ ] Confirm write-tool tests exercise repeat blocks through validation and event/workout serialization.
-- [ ] Record any missing edge cases in STATUS.md Discoveries.
-- [ ] Run targeted tests: `go test ./internal/workoutdoc ./internal/tools`.
+- [x] Inspect WorkoutDoc serialize/parse/validate tests for repeat headers with and without descriptions.
+- [x] Confirm write-tool tests exercise repeat blocks through validation and event/workout serialization.
+- [x] Record any missing edge cases in STATUS.md Discoveries.
+- [x] Run targeted tests: `go test ./internal/workoutdoc ./internal/tools`.
 
 ---
 
@@ -64,6 +64,7 @@
 
 | Date | Step | Finding | Impact |
 |------|------|---------|--------|
+| 2026-06-03 | Step 1 | WorkoutDoc golden fixture covers described repeat header `Main Set 3x`, and validate/create workout tests exercise repeat workout_doc, but there is no explicit bare `3x` regression, no malformed `-3 x` / `- 3x` validation case, and add_or_update_event serializes a non-repeat fixture. | Step 2 should add focused repeat syntax regressions across workoutdoc and at least one write tool. |
 
 ## Blockers
 
@@ -77,3 +78,4 @@
 
 | 2026-06-03 16:27 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 16:27 | Step 0 started | Preflight |
+| 2026-06-03 16:29 | Review R001 | plan Step 1: APPROVE |
