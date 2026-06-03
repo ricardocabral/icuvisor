@@ -48,7 +48,7 @@
 ### Step 3: Add tests and docs
 **Status:** 🟨 In Progress
 
-- [ ] R006 expand handler matrix for full contract, clock/window/call, classification, caveat, and truncation cases
+- [x] R006 expand handler matrix for full contract, clock/window/call, classification, caveat, and truncation cases
 - [ ] Add table-driven handler tests for terse default, include_full behavior, source_tools metadata, timezone/week window handling, and empty-data caveats
 - [ ] Add catalog/registration tests for full tier, workout-library group, toolcatalog known name, and athlete ACL scope
 - [ ] Update CHANGELOG and README/catalog docs if user-visible
@@ -110,6 +110,7 @@
 | 2026-06-03 16:21 | R004 Step 2 integration plan | Catalog group: `workout-library`, because the tool is full-tier specifically due to active training-plan context and belongs next to `get_training_plan`/`apply_training_plan` rather than widening the existing events group. Update `internal/tools/catalog_tiers_test.go` to assert `get_planning_context` is `safety.ToolsetFull`; update `internal/toolcatalog/catalog.go` constants and athlete-scoped list. Implement `newGetPlanningContextToolWithClock(..., now func() time.Time, ...)` matching `get_today`/`get_events` so default week anchoring, as-of metadata, current fitness window, and race scan window are deterministic in tests. |
 | 2026-06-03 16:21 | Review R005 | plan Step 2: APPROVE |
 | 2026-06-03 16:23 | R006 plan review | Reviewer requested explicit Step 3 handler matrix, required catalog/registration assertions, and docs-generation decision before writing tests/docs. |
+| 2026-06-03 16:24 | R006 Step 3 test/docs matrix | Handler tests will use a deterministic fake planning client and table/scenario cases for: terse default with no `full`, exact `_meta.source_tools`, read-only/write flags, planning scope, counts and windows; `include_full:true` widening only event/fitness/training-plan raw payloads; default upcoming Monday, supplied mid-week normalization, invalid week_start user error, and future week_start with current 7-day fitness calls; week/race ListEvents calls using Limit 500 and exact ranges; WORKOUT/RACE/RACE_*/NOTE/unknown classification and upcoming_races filtering; empty/partial/truncation caveat codes including read_only_no_atp, no_week_events, no_week_workouts, no_active_training_plan, partial_training_plan_summary, no_fitness_rows, no_upcoming_races, week_events_may_be_truncated, and upcoming_races_may_be_truncated. Catalog tests must assert full tier, workout-library group, toolcatalog known name, and athlete ACL scope. Docs: update CHANGELOG; inspect README for public tool list; run `make docs-tools` if README/web generated catalog data is expected to change. |
 | 2026-06-03 16:20 | Review R003 | plan Step 1: APPROVE |
 | 2026-06-03 16:22 | Review R004 | plan Step 2: UNKNOWN |
 | 2026-06-03 16:25 | Review R005 | plan Step 2: APPROVE |
