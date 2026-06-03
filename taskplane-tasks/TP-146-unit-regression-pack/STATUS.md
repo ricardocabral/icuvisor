@@ -1,6 +1,6 @@
 # TP-146: Unit regression pack for work, calories, and hydration — Status
 
-**Current Step:** Step 1: Audit current unit coverage
+**Current Step:** Step 2: Add unit regression tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 0
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Audit current unit coverage
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Locate existing tests for extended metrics Joules/kJ, wellness kcal/hydration, activity calories semantics, and unit metadata
 - [x] Identify missing regression assertions without duplicating existing coverage
@@ -30,7 +30,7 @@
 ---
 
 ### Step 2: Add unit regression tests
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Add or tighten tests for raw Joules emitted only as explicit kJ-derived fields where applicable
 - [ ] Add or tighten tests for wellness `kcalConsumed` and `hydrationVolume` unit semantics
