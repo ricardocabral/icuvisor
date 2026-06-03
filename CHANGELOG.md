@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Added regression coverage so long-distance calendar race/event distances such as 1,200 km are accepted and preserved in meters without false load auto-calculation claims.
 - Hardened coach-mode athlete routing errors so invalid athlete IDs, unauthorized roster targets, per-athlete ACL denials, and local-mode athlete overrides fail explicitly without accepting credential-like tool parameters.
 
 ## [0.1.7] - 2026-06-01
