@@ -1,11 +1,11 @@
 # TP-151: Event external_id idempotency — Status
 
-**Current Step:** Step 3: Make apply_training_plan retry-safer
+**Current Step:** Step 4: Refresh schemas, routing, and docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 9
-**Iteration:** 3
+**Review Counter:** 11
+**Iteration:** 4
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -58,12 +58,15 @@
 ---
 
 ### Step 4: Refresh schemas, routing, and docs
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Schema snapshots regenerated
-- [ ] Tool-routing expectations updated if affected
+- [x] Schema snapshots regenerated
+- [x] Tool-routing expectations updated if affected
+- [ ] Build-workouts documents optional manual external_id usage, stable non-provider namespaces, no secrets, blank ignored/no-clear behavior, and best-effort retry caveats
+- [ ] Season-and-block-plan documents deterministic apply_training_plan external IDs, retry review visibility, and same-day/upstream caveats
+- [ ] Schema snapshot expectation recorded: only add_or_update_event input schema changes; apply_training_plan snapshot is unchanged because its input schema did not change
+- [ ] CHANGELOG updated under [Unreleased] with add_or_update_event.external_id and deterministic apply_training_plan external IDs
 - [ ] User docs updated if affected
-- [ ] CHANGELOG updated
 
 ---
 
@@ -100,6 +103,7 @@
 | R007 | Plan | Step 3 | APPROVE | `.reviews/R007-plan-step3.md` |
 | R008 | Code | Step 3 | UNAVAILABLE | _(reviewer produced no file)_ |
 | R009 | Code | Step 3 | UNAVAILABLE | _(reviewer produced no file)_ |
+| R011 | Plan | Step 4 | REVISE | `.reviews/R011-plan-step4.md` |
 
 ---
 
@@ -129,6 +133,9 @@
 | 2026-06-03 | Step 3 started | Make apply_training_plan retry-safer |
 | 2026-06-03 | Step 3 plan reviewed | R007 plan APPROVE |
 | 2026-06-03 | Step 3 code review attempted | R008/R009 unavailable; proceeding per review protocol |
+| 2026-06-03 | Step 4 started | Refresh schemas, routing, and docs |
+| 2026-06-03 22:52 | Worker iter 3 | done in 4335s, tools: 113 |
+| 2026-06-03 | Review R011 | plan Step 4: REVISE; docs/changelog plan expanded |
 
 ---
 
@@ -149,6 +156,7 @@
 - R002 non-blocking implementation notes: pin hash input serialization/digest length in code/tests; include duplicate warning/existing event ID when external-ID preflight skips a drifted body; keep dry-run external_id exposure explicit in tests.
 - R004 Step 2 plan notes: preserve trim/omit/no-clear semantics; test POST bulk-array and PUT single-object body shapes; make external-ID preflight behavior explicit; cover terse row omission/exposure; update add_or_update_event description away from “no idempotency key” wording.
 - R006 Step 3 plan revision: protect matching external_id conflicts before replace_existing deletes same-day workouts; pin canonical hash tuple serialization/digest length; expose hashed proposed external_id in dry-run without raw plan/workout IDs.
+- R011 Step 4 plan revision: docs must explicitly cover manual `external_id` usage in build-workouts, deterministic `icuvisor-plan-v1-...` IDs in season/apply workflows, conservative caveats/no-clear semantics, and `[Unreleased]` changelog wording. Schema snapshot expectation is that `add_or_update_event.json` changes while `apply_training_plan.json` remains unchanged because only output/proposed metadata changed.
 
 *Reserved for execution notes*
 | 2026-06-03 21:30 | Review R001 | plan Step 1: APPROVE |
@@ -158,3 +166,4 @@
 | 2026-06-03 21:45 | Review R005 | code Step 2: APPROVE |
 | 2026-06-03 21:47 | Review R006 | plan Step 3: REVISE |
 | 2026-06-03 21:48 | Review R007 | plan Step 3: APPROVE |
+| 2026-06-03 22:54 | Review R011 | plan Step 4: REVISE |
