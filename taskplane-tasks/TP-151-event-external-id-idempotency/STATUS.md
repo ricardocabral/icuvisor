@@ -1,7 +1,7 @@
 # TP-151: Event external_id idempotency — Status
 
-**Current Step:** Step 5: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 6: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-03
 **Review Level:** 2
 **Review Counter:** 15
@@ -81,12 +81,12 @@
 ---
 
 ### Step 6: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Remaining caveats summarized
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Remaining caveats summarized
 
 ---
 
@@ -118,6 +118,7 @@
 | Current event write path has no typed `external_id`: `WriteEventParams`/`writeEventPayload` omit it; `add_or_update_event` request/schema omit it; event reads preserve raw payloads but terse rows do not expose `external_id`; `apply_training_plan` creates events without idempotency keys and relies on same-day duplicate matching. | Drives Step 1 contract and Step 2/3 implementation. | `internal/intervals/events.go`, `internal/tools/add_or_update_event.go`, `internal/tools/get_events.go`, `internal/tools/apply_training_plan.go` |
 | Upstream acceptance/clear semantics for event `external_id` are not live-probed in this task; treat it as a best-effort idempotency key, keep same-day duplicate preflight, avoid clear/null semantics, and document retry caveats. | Conservative implementation and docs caveat. | Step 1 design |
 | Schema regeneration changes only `add_or_update_event.json`; `apply_training_plan.json` is unchanged because deterministic external IDs are output/proposed-event behavior and do not alter the tool input schema. | Avoids chasing a nonexistent snapshot diff during review. | `internal/tools/schema_snapshot/` |
+| Final verification passed with `make test`, `make lint`, and `make build`; documentation updates are limited to changelog and affected cookbook guidance. | Supports delivery summary and merge verification. | Step 5/6 execution log |
 
 ---
 
@@ -148,6 +149,12 @@
 | 2026-06-03 | Step 5 failure triage | No failures remained after the passing full-suite and lint gates; no code fixes required before build verification |
 | 2026-06-03 | Step 5 build | `make build` passed |
 | 2026-06-03 | Review R015 | code Step 5: APPROVE |
+| 2026-06-03 | Step 6 started | Documentation & Delivery |
+| 2026-06-03 | Step 6 must-update docs | `CHANGELOG.md` [Unreleased] records `external_id` write support and deterministic plan external IDs |
+| 2026-06-03 | Step 6 affected-docs review | `build-workouts.md` and `season-and-block-plan.md` cover retry-safe IDs; PRD review found no required product-contract update |
+| 2026-06-03 | Step 6 discoveries | Final verification/documentation discovery added to STATUS.md |
+| 2026-06-03 | Step 6 caveats | Remaining best-effort upstream idempotency and no-clear caveats summarized in STATUS.md |
+| 2026-06-03 | Step 6 completed | Documentation and delivery status finalized |
 | 2026-06-03 23:04 | Worker iter 4 | done in 747s, tools: 60 |
 
 ---
@@ -159,6 +166,12 @@
 ---
 
 ## Notes
+
+### Delivery caveats
+
+- Event `external_id` support remains a best-effort upstream idempotency aid: icuvisor forwards non-empty IDs and exposes them for audit, but this task did not live-probe upstream uniqueness or clear/null semantics.
+- Blank manual `external_id` input is ignored rather than used to clear an upstream value.
+- `apply_training_plan` deterministic IDs are scoped to the plan/start/workout/day/date tuple and still pair with same-day preflight behavior; upstream near-concurrent duplicate handling cannot be guaranteed beyond intervals.icu behavior.
 
 ### Step 1 external_id contract
 
