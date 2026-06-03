@@ -29,8 +29,8 @@ func TestLoadFixture(t *testing.T) {
 	if got := seen["activity-details-read"].ExpectedFirstTool; got == nil || *got != toolcatalog.GetActivityDetails {
 		t.Fatalf("activity details expected tool = %v, want %s", got, toolcatalog.GetActivityDetails)
 	}
-	if got := seen["event-delete-hidden-in-safe-mode"].ExpectedFirstTool; got != nil {
-		t.Fatalf("safe-mode delete expected tool = %v, want nil no-tool", *got)
+	if got := seen["event-delete-hidden-in-safe-mode"].ExpectedFirstTool; got == nil || *got != toolcatalog.ICUvisorListAdvancedCapabilities {
+		t.Fatalf("safe-mode delete expected tool = %v, want %s", got, toolcatalog.ICUvisorListAdvancedCapabilities)
 	}
 	if got := seen["event-delete-full-mode"].ExpectedFirstTool; got == nil || *got != toolcatalog.DeleteEvent {
 		t.Fatalf("full-mode delete expected tool = %v, want %s", got, toolcatalog.DeleteEvent)

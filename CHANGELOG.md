@@ -19,22 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Activity read tool descriptions now route lap/rep execution analysis through `get_activity_intervals` and its `_meta.interval_source` / `_meta.auto_lap_suspected` signals, so assistants do not infer structured-workout execution from `get_activity_details` alone.
+- Hardened weekly-review and plan-health prompts so assistants anchor report windows in athlete-local dates, keep post-window wellness out of completed-period evidence, and label current-day `_meta.as_of` data as partial-day context.
+- README positioning now calls out gear-name resolution status and unit-safe output labels for activity fuel, wellness intake, and scale legends.
+- Updated tool-routing smoke fixtures to match current preparatory lookup/date-resolution behavior and clarified advanced-capabilities routing guidance so it does not steal requests from visible tools.
 
 ### Fixed
 
 - `apply_training_plan` now protects races, notes, holidays, sick/injured blocks, and unknown non-workout calendar items during `replace_existing`, reporting conflict category/type/name/date details instead of deleting protected days.
 - `add_or_update_event` and `apply_training_plan` now preflight same-day calendar events, skip exact duplicate creates, and surface same-day conflict warnings/metadata to reduce duplicate workouts during retries.
-
-### Changed
-
-- Hardened weekly-review and plan-health prompts so assistants anchor report windows in athlete-local dates, keep post-window wellness out of completed-period evidence, and label current-day `_meta.as_of` data as partial-day context.
-
-### Changed
-
-- README positioning now calls out gear-name resolution status and unit-safe output labels for activity fuel, wellness intake, and scale legends.
-
-### Fixed
-
 - Added WorkoutDoc repeat-header regression coverage so repeat blocks serialize as canonical `3x` or `<description> 3x` headers and dashed malformed variants are rejected during parsing/validation.
 - Hardened readiness provenance prompts and regressions so Garmin Body Battery, Oura readiness, Polar nightly recharge/ANS charge, WHOOP recovery, and unknown upstream readiness are cited with provider/source labels instead of as generic recovery scores.
 - Added regression coverage so long-distance calendar race/event distances such as 1,200 km are accepted and preserved in meters without false load auto-calculation claims.
