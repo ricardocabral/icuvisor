@@ -61,7 +61,7 @@ func run(baselinePath, latestPath, latestURL, outputPath string) error {
 		fmt.Print(markdown)
 		return nil
 	}
-	if err := os.WriteFile(outputPath, []byte(markdown), 0o644); err != nil {
+	if err := os.WriteFile(outputPath, []byte(markdown), 0o600); err != nil {
 		return fmt.Errorf("writing output %s: %w", outputPath, err)
 	}
 	return nil
