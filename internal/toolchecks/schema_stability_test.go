@@ -9,14 +9,43 @@ import (
 	"testing"
 )
 
-func TestGenerateSchemaSnapshotsIncludesWriteTools(t *testing.T) {
+func TestGenerateSchemaSnapshotsCoversFullCoachRegistry(t *testing.T) {
 	generated, err := GenerateSchemaSnapshots(t.Context())
 	if err != nil {
 		t.Fatalf("GenerateSchemaSnapshots() error = %v", err)
 	}
-	for _, name := range []string{"add_or_update_event", "link_activity_to_event", "add_activity_message"} {
+	if len(generated) != 60 {
+		t.Fatalf("GenerateSchemaSnapshots() count = %d, want 60 full-mode coach-enabled registered tools", len(generated))
+	}
+	for _, name := range []string{
+		"add_or_update_event",
+		"analyze_trend",
+		"compute_activity_segment_stats",
+		"compute_zone_time",
+		"create_custom_item",
+		"delete_event",
+		"delete_gear",
+		"get_gear_list",
+		"get_planning_context",
+		"link_activity_to_event",
+		"list_athletes",
+		"select_athlete",
+		"validate_workout",
+	} {
 		if _, ok := generated[name]; !ok {
-			t.Fatalf("generated snapshots missing %s; write tools must be represented in schema catalog", name)
+			t.Fatalf("generated snapshots missing %s; full registry tools must be represented in schema catalog", name)
+		}
+	}
+	profileProps := properties(generated["get_athlete_profile"].Schema)
+	if _, ok := profileProps["athlete_id"]; !ok {
+		t.Fatalf("get_athlete_profile snapshot schema missing coach-mode athlete_id selector: %#v", generated["get_athlete_profile"].Schema)
+	}
+}
+
+func TestSchemaCatalogToolExclusionsHaveReasons(t *testing.T) {
+	for name, reason := range schemaCatalogToolExclusions {
+		if strings.TrimSpace(name) == "" || strings.TrimSpace(reason) == "" {
+			t.Fatalf("schemaCatalogToolExclusions must use non-empty tool names and reasons: %q => %q", name, reason)
 		}
 	}
 }
@@ -43,6 +72,23 @@ func TestCheckSnapshotFreshness(t *testing.T) {
 	}
 	if !report.OK() {
 		t.Fatalf("CheckSnapshotFreshness() failures = %#v, want pass", report.Failures)
+	}
+}
+
+func TestCheckSnapshotFreshnessFailsWhenGeneratedToolHasNoCommittedSnapshot(t *testing.T) {
+	currentDir := t.TempDir()
+	generated := map[string]Snapshot{
+		"get_example": testSnapshot(t, "get_example", map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{"activity_id": map[string]any{"type": "string"}}}),
+		"get_missing": testSnapshot(t, "get_missing", map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{}}),
+	}
+	writeTestSnapshot(t, currentDir, generated["get_example"])
+
+	report, err := CheckSnapshotFreshness(currentDir, generated)
+	if err != nil {
+		t.Fatalf("CheckSnapshotFreshness() error = %v", err)
+	}
+	if report.OK() || !hasFailureKind(report, "missing-current-snapshot") {
+		t.Fatalf("CheckSnapshotFreshness() failures = %#v, want missing-current-snapshot", report.Failures)
 	}
 }
 

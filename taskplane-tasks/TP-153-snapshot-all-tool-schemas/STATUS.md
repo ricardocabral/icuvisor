@@ -5,7 +5,7 @@
 **Last Updated:** 2026-06-03
 **Review Level:** 1
 **Review Counter:** 2
-**Iteration:** 1
+**Iteration:** 2
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -32,12 +32,12 @@
 ---
 
 ### Step 2: Implement full coverage guard
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Whitelist replaced/extended to prevent silent gaps
-- [ ] Missing-snapshot tests added
-- [ ] No-network deterministic generation preserved
-- [ ] Targeted tests passing
+- [x] Whitelist replaced/extended to prevent silent gaps
+- [x] Missing-snapshot tests added
+- [x] No-network deterministic generation preserved
+- [x] Targeted tests passing
 
 ---
 
@@ -100,6 +100,7 @@
 | 2026-06-03 21:40 | Step 1 completed | Plan review APPROVE; policy is full-mode, coach-enabled, no public-tool exclusions. |
 | 2026-06-03 21:40 | Step 2 started | Full coverage guard implementation |
 | 2026-06-03 21:41 | Step 2 plan reviewed | APPROVE |
+| 2026-06-03 21:38 | Worker iter 1 | done in 603s, tools: 65 |
 
 ---
 

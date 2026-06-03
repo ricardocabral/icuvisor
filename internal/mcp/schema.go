@@ -17,7 +17,8 @@ const athleteIDArgumentDescription = "Target athlete; defaults to selected athle
 
 var snakeCaseToolName = regexp.MustCompile(`^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$`)
 
-func schemaWithAthleteID(schema any) any {
+// SchemaWithAthleteID returns schema with the coach-mode athlete_id selector added.
+func SchemaWithAthleteID(schema any) any {
 	asMap, ok := schema.(map[string]any)
 	if !ok {
 		return schema

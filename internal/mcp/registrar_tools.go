@@ -196,7 +196,7 @@ func (r *safeRegistrar) prepareTool(tool tools.Tool) tools.Tool {
 	if !r.config.CoachModeEnabled() || !toolcatalog.IsAthleteScopedTool(tool.Name) {
 		return tool
 	}
-	tool.InputSchema = schemaWithAthleteID(tool.InputSchema)
+	tool.InputSchema = SchemaWithAthleteID(tool.InputSchema)
 	return tool
 }
 
