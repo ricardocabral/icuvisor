@@ -1,11 +1,11 @@
 # TP-150: Workout DSL metric suffix from sport priority — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
+**Current Step:** Step 1: Design the sport-aware suffix boundary
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -13,16 +13,16 @@
 ---
 
 ### Step 0: Preflight
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Required files and paths exist
-- [ ] Dependencies satisfied
-- [ ] Confirm current tests lock bare power-zone serialization
+- [x] Required files and paths exist
+- [x] Dependencies satisfied
+- [x] Confirm current tests lock bare power-zone serialization
 
 ---
 
 ### Step 1: Design the sport-aware suffix boundary
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Decide implementation boundary for suffix selection
 - [ ] Preserve no-sport-context serializer behavior
@@ -90,6 +90,8 @@
 | Timestamp | Action | Outcome |
 |-----------|--------|---------|
 | 2026-06-03 | Task staged | PROMPT.md and STATUS.md created |
+| 2026-06-03 21:28 | Task started | Runtime V2 lane-runner execution |
+| 2026-06-03 21:28 | Step 0 started | Preflight |
 
 ---
 
@@ -101,4 +103,4 @@
 
 ## Notes
 
-*Reserved for execution notes*
+- Step 0 evidence: `go test ./internal/workoutdoc -run TestSerializeTargetUnitSemantics -count=1` passed and existing case `POWER_ZONE` expects bare `Z2`.
