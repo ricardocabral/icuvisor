@@ -1,6 +1,6 @@
 # TP-152: Visible catalog/version diagnostic tool — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Design diagnostic contract
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
@@ -13,7 +13,7 @@
 ---
 
 ### Step 0: Preflight
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Design diagnostic contract
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Stable tool name chosen
 - [ ] Response shape defined
