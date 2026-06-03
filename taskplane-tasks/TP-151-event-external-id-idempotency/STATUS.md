@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 3
 **Size:** M
 
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Implement event write/read support
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] WriteEventParams and payload support external_id
 - [x] add_or_update_event schema/decoder/handler supports external_id
@@ -91,6 +91,7 @@
 | R002 | Plan | Step 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | Code | Step 1 | APPROVE | `.reviews/R003-code-step1.md` |
 | R004 | Plan | Step 2 | APPROVE | `.reviews/R004-plan-step2.md` |
+| R005 | Code | Step 2 | APPROVE | `.reviews/R005-code-step2.md` |
 
 ---
 
@@ -116,6 +117,7 @@
 | 2026-06-03 | Step 2 started | Implement event write/read support |
 | 2026-06-03 21:38 | Worker iter 1 | done in 644s, tools: 61 |
 | 2026-06-03 21:39 | Worker iter 2 | done in 66s, tools: 18 |
+| 2026-06-03 | Step 2 reviewed | R005 code APPROVE |
 
 ---
 
@@ -141,3 +143,4 @@
 | 2026-06-03 21:33 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-03 21:35 | Review R003 | code Step 1: APPROVE |
 | 2026-06-03 21:37 | Review R004 | plan Step 2: APPROVE |
+| 2026-06-03 21:45 | Review R005 | code Step 2: APPROVE |
