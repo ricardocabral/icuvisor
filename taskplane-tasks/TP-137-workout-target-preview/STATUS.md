@@ -3,7 +3,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 2
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -30,7 +30,7 @@
 ---
 
 ### Step 2: Implement target previews and tests
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Add tests for `% FTP` planned workout targets resolving to watts from profile FTP.
 - [x] Add tests or explicit omissions for HR threshold, pace threshold, missing profile threshold, and non-numeric/text targets.
@@ -84,7 +84,10 @@
 | 2026-06-03 15:46 | Review R001 | plan Step 1: REVISE | Added concrete shape, call-site, profile, conversion, and test-scope plan in Discoveries. |
 | 2026-06-03 15:49 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-03 | Review | code Step 1: APPROVE |
+| 2026-06-03 | Review | plan Step 2: APPROVE |
+| 2026-06-03 | Review | code Step 2: APPROVE |
 
 | 2026-06-03 15:49 | Worker iter 1 | done in 394s, tools: 39 |
 | 2026-06-03 15:51 | Review R003 | code Step 1: APPROVE |
 | 2026-06-03 15:53 | Review R004 | plan Step 2: APPROVE |
+| 2026-06-03 16:06 | Review R005 | code Step 2: APPROVE |
