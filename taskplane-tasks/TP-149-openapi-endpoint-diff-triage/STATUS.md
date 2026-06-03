@@ -28,7 +28,7 @@
 - [x] Ensure normal tests do not hit the network; any live fetch must be opt-in or confined to CI schedule/manual workflow
 - [x] Define output that highlights added/removed OpenAPI paths and creates a human-triage artifact without auto-implementing endpoints
 - [x] Plan-review checkpoint completed before implementation
-- [ ] Address R001 plan feedback by using a testable OpenAPI diff package/command layout rather than logic only in a build-ignored root script
+- [x] Address R001 plan feedback by using a testable OpenAPI diff package/command layout rather than logic only in a build-ignored root script
 
 ---
 
