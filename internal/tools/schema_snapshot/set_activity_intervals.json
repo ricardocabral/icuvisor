@@ -5,6 +5,10 @@
       "description": "Required intervals.icu activity ID whose interval structure will be (re)written. Surrounding whitespace is trimmed; the i-prefix is preserved verbatim.",
       "type": "string"
     },
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "include_full": {
       "default": false,
       "description": "When true, include the raw upstream updated-activity payload under full; default returns a terse confirmation.",

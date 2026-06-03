@@ -1,6 +1,10 @@
 {
   "additionalProperties": false,
   "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "include_top_level_workouts": {
       "default": false,
       "description": "When true, also fetch all library workouts and include only those without a folder_id as top-level workout templates.",

@@ -1,0 +1,13 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete to select for this session. Format: i12345 or 12345.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "athlete_id"
+  ],
+  "type": "object"
+}

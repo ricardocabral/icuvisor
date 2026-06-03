@@ -1,10 +1,10 @@
 # TP-153: Snapshot every registered MCP tool schema — Status
 
-**Current Step:** Step 2: Implement full coverage guard
+**Current Step:** Step 3: Regenerate snapshots and review churn
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 2
 **Size:** M
 
@@ -42,12 +42,12 @@
 ---
 
 ### Step 3: Regenerate snapshots and review churn
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Snapshots regenerated
-- [ ] Added/changed snapshots reviewed for secrets/paths/ordering
-- [ ] Noise policy documented if needed
-- [ ] Targeted tests passing after refresh
+- [x] Snapshots regenerated
+- [x] Added/changed snapshots reviewed for secrets/paths/ordering
+- [x] Noise policy documented if needed
+- [x] Targeted tests passing after refresh
 
 ---
 
@@ -77,6 +77,7 @@
 |---|------|------|---------|------|
 | 1 | plan | 1 | APPROVE | inline review_step |
 | 2 | plan | 2 | APPROVE | inline review_step |
+| 3 | plan | 3 | APPROVE | inline review_step |
 
 ---
 
@@ -100,6 +101,8 @@
 | 2026-06-03 21:40 | Step 1 completed | Plan review APPROVE; policy is full-mode, coach-enabled, no public-tool exclusions. |
 | 2026-06-03 21:40 | Step 2 started | Full coverage guard implementation |
 | 2026-06-03 21:41 | Step 2 plan reviewed | APPROVE |
+| 2026-06-03 21:45 | Step 3 started | Snapshot refresh and churn review |
+| 2026-06-03 21:45 | Step 3 plan reviewed | APPROVE |
 | 2026-06-03 21:38 | Worker iter 1 | done in 603s, tools: 65 |
 
 ---
@@ -116,5 +119,9 @@
 - Step 1 mode policy: generate and enforce snapshots from the full toolset with full delete/write capability so every public tool that can be registered is covered in a single canonical schema set; safe/core mode filtering is a registration policy and should not shrink schema drift coverage.
 - Step 1 coach policy: enable coach mode during snapshot generation and include coach-only tools (`list_athletes`, `select_athlete`) plus the injected `athlete_id` argument in snapshots. This intentionally snapshots the broadest public schema; solo-mode schemas are subsets and remain protected because removing or changing a baseline property fails stability checks.
 - Step 1 exclusions policy: no registered public MCP tools are intentionally excluded for TP-153. If a future generated schema must be excluded, Step 2 should require an explicit reason and test-enforce that the exclusion is not silent.
+- Step 3 snapshot review: 60 JSON snapshots are parseable; grep found no API keys/secrets/local filesystem paths, only expected schema terms such as `next_page_token`, `credentials`, and `icuvisor://workout-syntax`; canonical generator ordering was verified by diffing two temp generations.
+- Step 3 noise policy: no structural coverage was weakened; snapshot churn is accepted as the intentional broad full-mode coach baseline (coach `athlete_id` injection plus newly covered tools), while description/example text remains snapshotted to catch client-visible schema drift.
 | 2026-06-03 21:32 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-03 21:35 | Review R002 | plan Step 2: APPROVE |
+| 2026-06-03 21:45 | Review R003 | plan Step 3: APPROVE |
+| 2026-06-03 21:40 | Review R003 | plan Step 3: APPROVE |

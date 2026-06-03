@@ -1,0 +1,42 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "end_date": {
+      "description": "Athlete-local inclusive end date YYYY-MM-DD.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include per-source audit rows. Default returns aggregate zones/buckets only.",
+      "type": "boolean"
+    },
+    "sport": {
+      "description": "Optional exact case-insensitive activity sport/type filter.",
+      "type": "string"
+    },
+    "start_date": {
+      "description": "Athlete-local inclusive start date YYYY-MM-DD.",
+      "type": "string"
+    },
+    "zone_metric": {
+      "default": "power",
+      "description": "Precomputed zone family to aggregate; raw streams are never fetched as fallback.",
+      "enum": [
+        "power",
+        "heart_rate",
+        "pace"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "start_date",
+    "end_date",
+    "zone_metric"
+  ],
+  "type": "object"
+}

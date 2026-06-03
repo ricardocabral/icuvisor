@@ -1,0 +1,86 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "horizon_date": {
+      "description": "Optional athlete-local YYYY-MM-DD end date; provide either horizon_date or horizon_days, not both.",
+      "type": "string"
+    },
+    "horizon_days": {
+      "default": 42,
+      "description": "Optional number of days after start_date to simulate.",
+      "maximum": 180,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include the projected daily CTL/ATL/TSB curve series.",
+      "type": "boolean"
+    },
+    "model": {
+      "default": "deterministic_ctl_atl_tsb",
+      "description": "Closed enum. Free-form physiology models are rejected; this tool only supports deterministic CTL/ATL/TSB impulse-response projection.",
+      "enum": [
+        "deterministic_ctl_atl_tsb"
+      ],
+      "type": "string"
+    },
+    "planned_daily_loads": {
+      "description": "Optional explicit planned training load values by athlete-local date; these replace modeled ramp load for matching dates.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "description": "Athlete-local YYYY-MM-DD date after start_date and within the horizon.",
+            "type": "string"
+          },
+          "training_load": {
+            "description": "Planned daily training load/TSS-equivalent stress for this date.",
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "training_load"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "recovery_week_cadence": {
+      "default": 4,
+      "description": "Every Nth week uses recovery_week_load_pct of modeled load; use 0 to disable recovery weeks.",
+      "maximum": 12,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "recovery_week_load_pct": {
+      "default": 60,
+      "description": "Percent of modeled load used during recovery weeks.",
+      "maximum": 100,
+      "minimum": 0,
+      "type": "number"
+    },
+    "start_date": {
+      "description": "Athlete-local YYYY-MM-DD date whose get_fitness CTL/ATL/TSB values seed the projection.",
+      "type": "string"
+    },
+    "weekly_ramp_pct": {
+      "default": 5,
+      "description": "Week-over-week percent change applied to modeled daily load when planned_daily_loads does not specify a day.",
+      "maximum": 50,
+      "minimum": -50,
+      "type": "number"
+    }
+  },
+  "required": [
+    "start_date"
+  ],
+  "type": "object"
+}

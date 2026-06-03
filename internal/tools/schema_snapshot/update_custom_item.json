@@ -1,0 +1,103 @@
+{
+  "additionalProperties": false,
+  "examples": [
+    {
+      "item_id": "custom-item-example-3",
+      "name": "Training load trend - coach view"
+    },
+    {
+      "content": {
+        "layout": {
+          "height": 300
+        }
+      },
+      "description": "Updated description for the coach dashboard.",
+      "item_id": "custom-item-example-4",
+      "visibility": "PRIVATE"
+    },
+    {
+      "content": {
+        "series": [
+          {
+            "color": "orange",
+            "field": "atl"
+          }
+        ]
+      },
+      "hide_script": true,
+      "index": 30,
+      "item_id": "custom-item-example-5"
+    }
+  ],
+  "input_examples": [
+    {
+      "item_id": "custom-item-example-3",
+      "name": "Training load trend - coach view"
+    },
+    {
+      "content": {
+        "layout": {
+          "height": 300
+        }
+      },
+      "description": "Updated description for the coach dashboard.",
+      "item_id": "custom-item-example-4",
+      "visibility": "PRIVATE"
+    },
+    {
+      "content": {
+        "series": [
+          {
+            "color": "orange",
+            "field": "atl"
+          }
+        ]
+      },
+      "hide_script": true,
+      "index": 30,
+      "item_id": "custom-item-example-5"
+    }
+  ],
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "content": {
+      "description": "Optional sparse content patch. Validated against the existing item_type schema, then merged so omitted keys stay untouched; see icuvisor://custom-item-schemas.",
+      "type": "object"
+    },
+    "description": {
+      "description": "Optional replacement custom item description. Omit to leave unchanged; empty strings are preserved when intentionally supplied.",
+      "type": "string"
+    },
+    "hide_script": {
+      "description": "Optional replacement upstream hide_script flag. Omit to leave unchanged.",
+      "type": "boolean"
+    },
+    "image": {
+      "description": "Optional replacement upstream image identifier or URL when supported by the custom-item type. Omit to leave unchanged.",
+      "type": "string"
+    },
+    "index": {
+      "description": "Optional replacement display/order index. Omit to leave unchanged.",
+      "type": "integer"
+    },
+    "item_id": {
+      "description": "Required intervals.icu custom item ID to update. Surrounding whitespace is trimmed.",
+      "type": "string"
+    },
+    "name": {
+      "description": "Optional replacement custom item name. Omit to leave unchanged.",
+      "type": "string"
+    },
+    "visibility": {
+      "description": "Optional replacement upstream visibility value. Omit to leave unchanged.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "item_id"
+  ],
+  "type": "object"
+}

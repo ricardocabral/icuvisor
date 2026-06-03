@@ -81,6 +81,10 @@
     }
   ],
   "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "description": {
       "description": "Optional replacement for the upstream workout description/DSL, not append-only notes. Omit to leave unchanged. Supplying description without workout_doc can replace existing structured steps; provide the desired workout_doc to preserve or merge structure. May be supplied with workout_doc; use the \u003c!-- icuvisor:steps --\u003e sentinel on its own line to choose where serialized steps are inserted. Empty strings without workout_doc are rejected to avoid accidentally clearing structured workout content.",
       "type": "string"

@@ -1,0 +1,153 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "bucket_count": {
+      "default": 10,
+      "description": "Number of equal-width histogram buckets when buckets is omitted.",
+      "maximum": 50,
+      "minimum": 2,
+      "type": "integer"
+    },
+    "buckets": {
+      "description": "Optional numeric bucket boundaries; values outside are counted below_range/above_range.",
+      "items": {
+        "type": "number"
+      },
+      "type": "array"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include sampled values; terse mode omits raw rows.",
+      "type": "boolean"
+    },
+    "metric": {
+      "description": "Metric to summarize. analysis_metric enum; choose one canonical value such as ctl, atl, tsb, weekly_tss, hrv, sleep_secs, if, or vi. Safe aliases are accepted by the server, but schemas enumerate canonical values only. Expressions such as ctl/atl are not supported.",
+      "enum": [
+        "abdomen",
+        "aerobic_decoupling_percent",
+        "atl",
+        "atl_load",
+        "average_cadence_rpm",
+        "average_heart_rate_bpm",
+        "average_power_watts",
+        "average_speed_kmh",
+        "average_speed_mph",
+        "avg_sleeping_hr",
+        "baevsky_si",
+        "blood_glucose",
+        "body_fat",
+        "calories_burned",
+        "carbohydrates",
+        "cardiac_decoupling_percent",
+        "compliance_pct",
+        "ctl",
+        "ctl_load",
+        "dfa_alpha1",
+        "diastolic",
+        "distance_km",
+        "distance_m",
+        "distance_mi",
+        "duration_seconds",
+        "elapsed_time_seconds",
+        "elevation_gain_m",
+        "elevation_loss_m",
+        "fat_total",
+        "fatigue",
+        "feel",
+        "hr_load",
+        "hrv",
+        "hrv_sdnn",
+        "hydration",
+        "hydration_volume",
+        "if",
+        "joules_above_ftp_kj",
+        "kcal_consumed",
+        "lactate",
+        "left_right_balance_percent",
+        "max_heart_rate_bpm",
+        "max_speed_kmh",
+        "max_speed_mph",
+        "mood",
+        "motivation",
+        "moving_time_seconds",
+        "pace_load",
+        "pace_seconds_per_km",
+        "pace_seconds_per_mile",
+        "polarization_index",
+        "power_load",
+        "protein",
+        "pw_hr",
+        "ramp",
+        "readiness",
+        "respiration",
+        "rhr",
+        "rpe",
+        "session_rpe",
+        "sleep_quality",
+        "sleep_score",
+        "sleep_secs",
+        "soreness",
+        "sp_o2",
+        "steps",
+        "strain_score",
+        "stress",
+        "stride_length_m",
+        "systolic",
+        "time_in_zones_total_seconds",
+        "time_seconds",
+        "training_load",
+        "trimp",
+        "tsb",
+        "vi",
+        "vo2max",
+        "w_prime_balance_end_kj",
+        "w_prime_balance_start_kj",
+        "weekly_hours",
+        "weekly_tss",
+        "weight"
+      ],
+      "type": "string"
+    },
+    "quantiles": {
+      "description": "Quantiles to compute; defaults to 0.25, 0.5, 0.75.",
+      "items": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "type": "array"
+    },
+    "sport": {
+      "description": "Optional sport/category filter for activity-backed metrics.",
+      "type": "string"
+    },
+    "window": {
+      "additionalProperties": false,
+      "description": "Inclusive athlete-local window.",
+      "properties": {
+        "end_date": {
+          "description": "Inclusive athlete-local end date YYYY-MM-DD.",
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Inclusive athlete-local start date YYYY-MM-DD.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_date",
+        "end_date"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "metric",
+    "window"
+  ],
+  "type": "object"
+}

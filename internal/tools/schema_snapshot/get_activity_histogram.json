@@ -1,0 +1,32 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "activity_id": {
+      "description": "Required intervals.icu activity ID whose stream distribution should be summarized.",
+      "type": "string"
+    },
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, preserve diagnostic metadata. Raw stream samples are never returned by this histogram tool.",
+      "type": "boolean"
+    },
+    "metric": {
+      "description": "Histogram metric enum for a single activity; schemas enumerate canonical values only. Safe aliases such as power, hr, heart_rate, and pace are accepted by the server.",
+      "enum": [
+        "heart_rate_bpm",
+        "pace_seconds_per_km",
+        "power_watts"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "activity_id",
+    "metric"
+  ],
+  "type": "object"
+}

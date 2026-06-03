@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw source read payloads only: event full fields, fitness row full fields, and raw active training-plan assignment/nested payloads. This does not enable ATP creation or calendar writes.",
+      "type": "boolean"
+    },
+    "week_start": {
+      "description": "Optional athlete-local YYYY-MM-DD date anchoring the planning week. The supplied date is normalized backward to Monday; omit to use the upcoming athlete-local Monday, with today used when today is Monday.",
+      "type": "string"
+    }
+  },
+  "type": "object"
+}

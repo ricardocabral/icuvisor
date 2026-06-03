@@ -1,0 +1,73 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "activity_id": {
+      "description": "Required intervals.icu activity ID whose canonical raw streams should be analyzed.",
+      "type": "string"
+    },
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "end_distance_m": {
+      "description": "Inclusive segment end distance in meters; must be greater than start_distance_m.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "end_seconds": {
+      "description": "Inclusive segment end in elapsed activity seconds; must be greater than start_seconds.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "ftp_watts": {
+      "description": "Required for stat=if only; positive athlete FTP in watts used as NP / FTP denominator.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include only sliced/calculation inputs needed to audit this stat. Terse mode never returns raw stream samples.",
+      "type": "boolean"
+    },
+    "metric": {
+      "description": "Canonical stream metric for mean/median/p90 only: watts, heart_rate, cadence, velocity_smooth, distance, or time. Use velocity_smooth for pace comparisons and convert m/s to pace in the final answer. Omit for derived stats.",
+      "enum": [
+        "cadence",
+        "distance",
+        "heart_rate",
+        "time",
+        "velocity_smooth",
+        "watts"
+      ],
+      "type": "string"
+    },
+    "start_distance_m": {
+      "description": "Inclusive segment start distance in meters. Provide with end_distance_m and without time bounds.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "start_seconds": {
+      "description": "Inclusive segment start in elapsed activity seconds. Provide with end_seconds and without distance bounds.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "stat": {
+      "description": "Single segment statistic to compute. Use one of mean, median, p90, decoupling, drift, np, or if.",
+      "enum": [
+        "decoupling",
+        "drift",
+        "if",
+        "mean",
+        "median",
+        "np",
+        "p90"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "activity_id",
+    "stat"
+  ],
+  "type": "object"
+}

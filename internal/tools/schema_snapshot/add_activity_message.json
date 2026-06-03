@@ -5,6 +5,10 @@
       "description": "Required intervals.icu activity ID to append a message/comment to. Surrounding whitespace is trimmed.",
       "type": "string"
     },
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "include_full": {
       "default": false,
       "description": "When true, include the raw upstream add-message response under full; default returns a terse append confirmation.",
