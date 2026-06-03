@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -46,10 +46,11 @@
 ---
 
 ### Step 3: Add tests and docs
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
+- [ ] R006 expand handler matrix for full contract, clock/window/call, classification, caveat, and truncation cases
 - [ ] Add table-driven handler tests for terse default, include_full behavior, source_tools metadata, timezone/week window handling, and empty-data caveats
-- [ ] Add catalog/registration tests if needed
+- [ ] Add catalog/registration tests for full tier, workout-library group, toolcatalog known name, and athlete ACL scope
 - [ ] Update CHANGELOG and README/catalog docs if user-visible
 - [ ] Run targeted tests: `go test ./internal/tools ./internal/toolcatalog`
 
@@ -83,6 +84,7 @@
 | R003 | Plan | Step 1 | APPROVE | inline |
 | R004 | Plan | Step 2 | REVISE | .reviews/R004-plan-step2.md |
 | R005 | Plan | Step 2 | APPROVE | inline |
+| R006 | Plan | Step 3 | REVISE | .reviews/R006-plan-step3.md |
 
 ---
 
@@ -107,6 +109,8 @@
 | 2026-06-03 16:20 | R004 plan review | Reviewer requested Step 2-specific integration choices: catalog group, catalog_tiers_test update scope, and deterministic clock injection before implementation. |
 | 2026-06-03 16:21 | R004 Step 2 integration plan | Catalog group: `workout-library`, because the tool is full-tier specifically due to active training-plan context and belongs next to `get_training_plan`/`apply_training_plan` rather than widening the existing events group. Update `internal/tools/catalog_tiers_test.go` to assert `get_planning_context` is `safety.ToolsetFull`; update `internal/toolcatalog/catalog.go` constants and athlete-scoped list. Implement `newGetPlanningContextToolWithClock(..., now func() time.Time, ...)` matching `get_today`/`get_events` so default week anchoring, as-of metadata, current fitness window, and race scan window are deterministic in tests. |
 | 2026-06-03 16:21 | Review R005 | plan Step 2: APPROVE |
+| 2026-06-03 16:23 | R006 plan review | Reviewer requested explicit Step 3 handler matrix, required catalog/registration assertions, and docs-generation decision before writing tests/docs. |
 | 2026-06-03 16:20 | Review R003 | plan Step 1: APPROVE |
 | 2026-06-03 16:22 | Review R004 | plan Step 2: UNKNOWN |
 | 2026-06-03 16:25 | Review R005 | plan Step 2: APPROVE |
+| 2026-06-03 16:30 | Review R006 | plan Step 3: UNKNOWN |
