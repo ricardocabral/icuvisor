@@ -1,6 +1,6 @@
 # TP-146: Unit regression pack for work, calories, and hydration — Status
 
-**Current Step:** Step 2: Add unit regression tests
+**Current Step:** Step 99: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 0
@@ -30,7 +30,7 @@
 ---
 
 ### Step 2: Add unit regression tests
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Add or tighten tests for raw Joules emitted only as explicit kJ-derived fields where applicable
 - [x] Add or tighten tests for wellness `kcalConsumed` and `hydrationVolume` unit semantics
@@ -40,7 +40,7 @@
 ---
 
 ### Step 99: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Targeted tests passing
 - [ ] FULL test suite passing
