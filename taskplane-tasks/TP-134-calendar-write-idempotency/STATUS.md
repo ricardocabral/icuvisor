@@ -1,5 +1,5 @@
 # TP-134: Calendar write idempotency and duplicate prevention — Status
-**Current Step:** Step 2: Implement duplicate prevention or explicit duplicate warnings
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
@@ -41,7 +41,7 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Run FULL test suite: `make test`
 - [ ] Run lint: `make lint`
