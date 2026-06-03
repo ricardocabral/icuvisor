@@ -14,8 +14,10 @@ import (
 
 const (
 	addOrUpdateEventName                    = "add_or_update_event"
-	addOrUpdateEventDescription             = "Create or update a non-destructive calendar event such as a planned workout, race, or note. Omitting event_id creates a new event; providing event_id updates that event without deleting or replacing unrelated events; use delete_event to remove. Before workout creates or updates, present a human-readable preview for user approval that covers total duration, key steps, target intensities, load/distance/time changes, and what existing title/prose/tags/structured steps are preserved. `description` is a replacement for the upstream event description/DSL, not append-only notes; omit it on updates to leave the current description unchanged. For WORKOUT updates, supplying `description` without `workout_doc` can replace existing structured steps; include the desired `workout_doc` to preserve or merge structure. When both are supplied, icuvisor merges them into the upstream description DSL and the `<!-- icuvisor:steps -->` sentinel controls serialized-step placement. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
+	addOrUpdateEventDescription             = "Create or update a non-destructive calendar event such as a planned workout, race, or note. Omitting event_id creates a new event; providing event_id updates that event without deleting or replacing unrelated events; use delete_event to remove. Creates preflight same-day calendar events and skip exact duplicates when upstream fields already match, but upstream has no compare-and-set idempotency key so near-concurrent creates can still race. Before workout creates or updates, present a human-readable preview for user approval that covers total duration, key steps, target intensities, load/distance/time changes, and what existing title/prose/tags/structured steps are preserved. `description` is a replacement for the upstream event description/DSL, not append-only notes; omit it on updates to leave the current description unchanged. For WORKOUT updates, supplying `description` without `workout_doc` can replace existing structured steps; include the desired `workout_doc` to preserve or merge structure. When both are supplied, icuvisor merges them into the upstream description DSL and the `<!-- icuvisor:steps -->` sentinel controls serialized-step placement. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
 	descriptionOnlyWorkoutWarning           = "Description was written without workout_doc; if this item previously had structured steps, they may have been replaced. Include workout_doc when preserving or merging workout structure."
+	sameDayConflictWarning                  = "Same-day calendar events already exist; verify this create is not an unintended duplicate."
+	duplicateCreateSkippedWarning           = "Skipped create because an existing same-day event already matches the requested writable fields."
 	invalidAddOrUpdateEventArgumentsMessage = "invalid add_or_update_event arguments; provide date as athlete-local YYYY-MM-DD, category, type for WORKOUT events, name for NOTE creates, and optional event_id for updates"
 	writeEventMessage                       = "could not write event; check intervals.icu credentials, athlete ID, event ID, and writable event fields"
 )
@@ -50,13 +52,25 @@ type addOrUpdateEventResponse struct {
 }
 
 type addOrUpdateEventMeta struct {
-	Operation                     string `json:"operation"`
-	Date                          string `json:"date"`
-	Timezone                      string `json:"timezone"`
-	WorkoutDocUploaded            string `json:"workout_doc_uploaded,omitempty"`
-	WorkoutDocWarning             string `json:"workout_doc_warning,omitempty"`
-	DescriptionOnlyWorkoutWarning string `json:"description_only_workout_warning,omitempty"`
-	IncludeFull                   bool   `json:"include_full"`
+	Operation                     string                      `json:"operation"`
+	Date                          string                      `json:"date"`
+	Timezone                      string                      `json:"timezone"`
+	WorkoutDocUploaded            string                      `json:"workout_doc_uploaded,omitempty"`
+	WorkoutDocWarning             string                      `json:"workout_doc_warning,omitempty"`
+	DescriptionOnlyWorkoutWarning string                      `json:"description_only_workout_warning,omitempty"`
+	DuplicateWarning              string                      `json:"duplicate_warning,omitempty"`
+	DuplicateEventID              string                      `json:"duplicate_event_id,omitempty"`
+	SameDayConflicts              []applyTrainingPlanConflict `json:"same_day_conflicts,omitempty"`
+	IncludeFull                   bool                        `json:"include_full"`
+}
+
+type eventCreatePreflightResult struct {
+	Duplicate *intervals.Event
+	Conflicts []applyTrainingPlanConflict
+}
+
+type eventCalendarReaderClient interface {
+	ListEvents(context.Context, intervals.ListEventsParams) ([]intervals.Event, error)
 }
 
 func newAddOrUpdateEventTool(client EventWriterClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -81,6 +95,23 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 		if err != nil {
 			return Result{}, NewUserError(invalidAddOrUpdateEventArgumentsMessage, err)
 		}
+		var preflight eventCreatePreflightResult
+		if args.EventID == "" {
+			preflight, err = preflightEventCreateDuplicate(ctx, client, params)
+			if err != nil {
+				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					return Result{}, err
+				}
+				return Result{}, NewUserError(writeEventMessage, err)
+			}
+			if preflight.Duplicate != nil {
+				payload, err := shapeAddOrUpdateEventResponse(*preflight.Duplicate, args, timezoneName, workoutDocUploaded, profile, unitSystem, preflight)
+				if err != nil {
+					return Result{}, fmt.Errorf("shaping add_or_update_event duplicate response: %w", err)
+				}
+				return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, addOrUpdateEventName, unitSystem, shapeCfg)
+			}
+		}
 		event, err := client.AddOrUpdateEvent(ctx, params)
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
@@ -88,7 +119,7 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 			}
 			return Result{}, NewUserError(writeEventMessage, err)
 		}
-		payload, err := shapeAddOrUpdateEventResponse(event, args, timezoneName, workoutDocUploaded, profile, unitSystem)
+		payload, err := shapeAddOrUpdateEventResponse(event, args, timezoneName, workoutDocUploaded, profile, unitSystem, preflight)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping add_or_update_event response: %w", err)
 		}
@@ -174,7 +205,7 @@ func eventWriteParams(args addOrUpdateEventRequest) (intervals.WriteEventParams,
 	return params, "description_dsl", nil
 }
 
-func shapeAddOrUpdateEventResponse(event intervals.Event, args addOrUpdateEventRequest, timezoneName string, workoutDocUploaded string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) (addOrUpdateEventResponse, error) {
+func shapeAddOrUpdateEventResponse(event intervals.Event, args addOrUpdateEventRequest, timezoneName string, workoutDocUploaded string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem, preflight eventCreatePreflightResult) (addOrUpdateEventResponse, error) {
 	row, err := eventRow(event, args.IncludeFull, timezoneName, workoutPreviewContextForEvent(event, profile, unitSystem))
 	if err != nil {
 		return addOrUpdateEventResponse{}, err
@@ -184,7 +215,16 @@ func shapeAddOrUpdateEventResponse(event intervals.Event, args addOrUpdateEventR
 		operation = "update"
 	}
 	uploadedSteps := args.WorkoutDoc != nil && len(args.WorkoutDoc.Steps) > 0
-	return addOrUpdateEventResponse{Event: row, Meta: addOrUpdateEventMeta{Operation: operation, Date: args.Date, Timezone: timezoneName, WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, event.WorkoutDoc), DescriptionOnlyWorkoutWarning: addOrUpdateEventDescriptionOnlyWorkoutWarning(args), IncludeFull: args.IncludeFull}}, nil
+	meta := addOrUpdateEventMeta{Operation: operation, Date: args.Date, Timezone: timezoneName, WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, event.WorkoutDoc), DescriptionOnlyWorkoutWarning: addOrUpdateEventDescriptionOnlyWorkoutWarning(args), IncludeFull: args.IncludeFull}
+	if preflight.Duplicate != nil {
+		meta.Operation = "skip_duplicate"
+		meta.DuplicateEventID = preflight.Duplicate.ID
+		meta.DuplicateWarning = duplicateCreateSkippedWarning
+	} else if len(preflight.Conflicts) > 0 {
+		meta.DuplicateWarning = sameDayConflictWarning
+		meta.SameDayConflicts = preflight.Conflicts
+	}
+	return addOrUpdateEventResponse{Event: row, Meta: meta}, nil
 }
 
 func addOrUpdateEventDescriptionOnlyWorkoutWarning(args addOrUpdateEventRequest) string {
@@ -192,6 +232,152 @@ func addOrUpdateEventDescriptionOnlyWorkoutWarning(args addOrUpdateEventRequest)
 		return ""
 	}
 	return descriptionOnlyWorkoutWarning
+}
+
+func preflightEventCreateDuplicate(ctx context.Context, client EventWriterClient, params intervals.WriteEventParams) (eventCreatePreflightResult, error) {
+	reader, ok := client.(eventCalendarReaderClient)
+	if !ok {
+		return eventCreatePreflightResult{}, nil
+	}
+	events, err := reader.ListEvents(ctx, intervals.ListEventsParams{Oldest: params.Date, Newest: params.Date, Limit: maxEventsLimit})
+	if err != nil {
+		return eventCreatePreflightResult{}, fmt.Errorf("preflighting same-day events: %w", err)
+	}
+	return eventCreatePreflightFromEvents(params, events, nil), nil
+}
+
+func eventCreatePreflightFromEvents(params intervals.WriteEventParams, events []intervals.Event, extraConflicts []applyTrainingPlanConflict) eventCreatePreflightResult {
+	result := eventCreatePreflightResult{Conflicts: append([]applyTrainingPlanConflict(nil), extraConflicts...)}
+	for _, event := range events {
+		if eventDateOnly(event) != params.Date {
+			continue
+		}
+		if eventMatchesWriteParams(event, params) {
+			duplicate := event
+			result.Duplicate = &duplicate
+			result.Conflicts = []applyTrainingPlanConflict{{EventID: event.ID, Reason: "duplicate_existing_event"}}
+			return result
+		}
+		result.Conflicts = append(result.Conflicts, applyTrainingPlanConflict{EventID: event.ID, Reason: "existing_event_on_date"})
+	}
+	return result
+}
+
+func eventMatchesWriteParams(event intervals.Event, params intervals.WriteEventParams) bool {
+	if eventDateOnly(event) != strings.TrimSpace(params.Date) {
+		return false
+	}
+	if !sameText(firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"])), params.Category) {
+		return false
+	}
+	if !sameText(stringValue(event.Type), params.Type) {
+		return false
+	}
+	if strings.TrimSpace(stringValue(event.Name)) != strings.TrimSpace(params.Name) {
+		return false
+	}
+	if params.Description != nil {
+		if stringValue(event.Description) != *params.Description {
+			return false
+		}
+	} else if stringValue(event.Description) != "" {
+		return false
+	}
+	if params.Indoor != nil {
+		if event.Indoor == nil || *event.Indoor != *params.Indoor {
+			return false
+		}
+	} else if event.Indoor != nil && *event.Indoor {
+		return false
+	}
+	if params.TargetLoad != nil {
+		if !sameOptionalFloat(*params.TargetLoad, event.LoadTarget) {
+			return false
+		}
+	} else if nonZeroOptionalFloat(event.LoadTarget) {
+		return false
+	}
+	if params.DistanceMeters != nil {
+		if !sameOptionalFloat(*params.DistanceMeters, event.DistanceTarget) {
+			return false
+		}
+	} else if nonZeroOptionalFloat(event.DistanceTarget) {
+		return false
+	}
+	if params.MovingTimeSeconds != nil {
+		if !sameOptionalInt(*params.MovingTimeSeconds, event.TimeTarget) {
+			return false
+		}
+	} else if nonZeroOptionalInt(event.TimeTarget) {
+		return false
+	}
+	if params.ElapsedTimeSeconds != nil {
+		if !sameOptionalInt(*params.ElapsedTimeSeconds, event.ElapsedTimeTarget) {
+			return false
+		}
+	} else if nonZeroOptionalInt(event.ElapsedTimeTarget) {
+		return false
+	}
+	eventTagValues := []string{}
+	if tags := eventTags(event.Raw); tags != nil {
+		eventTagValues = *tags
+	}
+	if !sameStringSlice(eventTagValues, params.Tags) {
+		return false
+	}
+	return true
+}
+
+func sameText(left string, right string) bool {
+	return strings.EqualFold(strings.TrimSpace(left), strings.TrimSpace(right))
+}
+
+func sameOptionalFloat(want float64, values ...*float64) bool {
+	for _, value := range values {
+		if value != nil {
+			return *value == want
+		}
+	}
+	return false
+}
+
+func sameOptionalInt(want int, values ...*int) bool {
+	for _, value := range values {
+		if value != nil {
+			return *value == want
+		}
+	}
+	return false
+}
+
+func nonZeroOptionalFloat(values ...*float64) bool {
+	for _, value := range values {
+		if value != nil && *value != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func nonZeroOptionalInt(values ...*int) bool {
+	for _, value := range values {
+		if value != nil && *value != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func sameStringSlice(left []string, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for idx := range left {
+		if left[idx] != right[idx] {
+			return false
+		}
+	}
+	return true
 }
 
 func addOrUpdateEventInputSchema() map[string]any {

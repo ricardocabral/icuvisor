@@ -11,7 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added maintainer OpenAPI endpoint-diff tooling, workflow automation, and triage documentation for spotting upstream intervals.icu path changes.
 - Added compact `workout_doc_summary.target_previews` on planned workout/event rows, resolving supported `% FTP`, `% LTHR`/`% HR`, and threshold-pace targets from existing athlete sport settings without exposing raw workout docs by default.
+- Added running threshold-pace and pace-zone regression coverage for seconds-per-kilometer/seconds-per-mile conversions and Run pace-zone boundary/name round trips.
+- Added read-only `get_planning_context` MCP tool for weekly planning context, combining week events/workouts, active training-plan summary, current fitness context, upcoming races, caveats, and no-ATP/no-write metadata.
 - Added a Codex CLI connection guide covering `codex mcp add`, `config.toml`, safe non-secret environment configuration, and MCP verification.
+- Added calendar-write regression coverage for repeated `apply_training_plan` calls and same-day duplicate planned events.
+
+### Changed
+
+- Activity read tool descriptions now route lap/rep execution analysis through `get_activity_intervals` and its `_meta.interval_source` / `_meta.auto_lap_suspected` signals, so assistants do not infer structured-workout execution from `get_activity_details` alone.
+
+### Fixed
+
+- `add_or_update_event` and `apply_training_plan` now preflight same-day calendar events, skip exact duplicate creates, and surface same-day conflict warnings/metadata to reduce duplicate workouts during retries.
 
 ### Changed
 

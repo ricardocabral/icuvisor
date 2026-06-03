@@ -58,6 +58,33 @@ func TestActivityReadToolsRegistration(t *testing.T) {
 	findTool(t, registrar.tools, getActivityMessagesName)
 }
 
+func TestActivityReadToolDescriptionsRouteLapAnalysisToIntervals(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}}
+	detailsTool := newGetActivityDetailsToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
+	intervalsTool := newGetActivityIntervalsTool(client, client, "test", false)
+
+	detailsDescription := strings.ToLower(detailsTool.Description)
+	for _, want := range []string{"get_activity_intervals", "laps", "reps", "interval_source"} {
+		if !strings.Contains(detailsDescription, want) {
+			t.Fatalf("details description = %q, want routing hint %q", detailsTool.Description, want)
+		}
+	}
+	intervalsDescription := strings.ToLower(intervalsTool.Description)
+	for _, want := range []string{"interval_source", "structured_workout", "device_laps", "auto_lap_suspected"} {
+		if !strings.Contains(intervalsDescription, want) {
+			t.Fatalf("intervals description = %q, want source hint %q", intervalsTool.Description, want)
+		}
+	}
+	outputDescription := strings.ToLower(activityReadOutputSchema()["description"].(string))
+	for _, want := range []string{"get_activity_intervals", "interval_source", "auto_lap_suspected"} {
+		if !strings.Contains(outputDescription, want) {
+			t.Fatalf("output schema description = %q, want source hint %q", outputDescription, want)
+		}
+	}
+}
+
 func TestGetActivityDetailsTagsPreserveOrderAndFullPayload(t *testing.T) {
 	t.Parallel()
 
@@ -442,10 +469,12 @@ func TestGetActivityIntervalsSourceMetadata(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Handler() error = %v", err)
 			}
-			meta := resultMap(t, result)["_meta"].(map[string]any)
+			payload := resultMap(t, result)
+			meta := payload["_meta"].(map[string]any)
 			if meta["interval_source"] != tc.wantSource || meta["auto_lap_suspected"] != tc.wantSuspected {
 				t.Fatalf("_meta = %#v, want source %q suspected %v", meta, tc.wantSource, tc.wantSuspected)
 			}
+			assertKeyAbsent(t, payload, "full")
 		})
 	}
 }
