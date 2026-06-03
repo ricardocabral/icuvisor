@@ -39,6 +39,7 @@
 
 - [ ] Add Run `POWER_HR_PACE` regression test
 - [ ] Add HR-primary / pace-primary coverage where applicable
+- [ ] Add `workout_order` decode/helper coverage and update apply-training-plan path coverage
 - [ ] Implement minimal behavior change
 - [ ] Targeted tests passing
 
