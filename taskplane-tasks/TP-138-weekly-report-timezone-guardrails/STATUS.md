@@ -19,7 +19,7 @@
 ---
 
 ### Step 1: Audit weekly/date-window safeguards
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Inspect prompt text and tests for weekly review, plan-health review, wellness reads, and `_meta.as_of`.
 - [ ] Identify whether prompts explicitly forbid including wellness after the requested report window.
