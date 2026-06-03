@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -28,6 +28,8 @@
 - [x] Define a terse default response with `_meta.source_tools`, timezone/as-of, week window, and no write behavior
 - [x] R001 define deterministic week anchor/window, exact fitness and race windows, and event classification rules
 - [x] R001 justify toolset tier placement and stable caveat/validation contract
+- [ ] R002 define bounded current fitness window and future week_start behavior
+- [ ] R002 define event/race fetch limits, truncation metadata, caveat conditions, and include_full scope
 - [ ] Plan-review checkpoint completed before implementation
 
 ---
@@ -76,6 +78,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R001 | Plan | Step 1 | REVISE | .reviews/R001-plan-step1.md |
+| R002 | Plan | Step 1 | REVISE | .reviews/R002-plan-step1.md |
 
 ---
 
@@ -91,4 +94,6 @@
 | 2026-06-03 16:14 | R001 plan review | Reviewer requested exact default week anchor, tier rationale, exact fitness/race windows, event classification rules, caveat codes, and week_start validation before implementation. |
 | 2026-06-03 16:15 | R001 deterministic windows/classification | Default window: upcoming athlete-local Monday-Sunday week computed from profile timezone and current clock; if today is Monday, use today's Monday as the start (not the following week). Supplied `week_start` is trimmed, must be YYYY-MM-DD, and is normalized backward to that date's Monday. `week.end_date = week.start_date + 6 days`. Fitness context fetches exactly `week_start - 7 days` through `as_of_date` inclusive and returns terse sorted rows plus `current` as the latest row on/before as_of_date. Upcoming races fetch from `as_of_date` through `as_of_date + 84 days` inclusive and include categories `RACE` and any category with `RACE_` prefix. Week event classification: category `WORKOUT` goes to `planned_workouts`; `RACE`/`RACE_*` goes to `races`; `NOTE` goes to `notes`; all other known/unknown categories go to `other_events` preserving upstream category. |
 | 2026-06-03 16:16 | R001 tier/caveat contract | Tier decision supersedes the initial core-tier note: implement as full-tier because it composes `get_training_plan`, a current full-tier source, and should not widen core visibility of training-plan assignment summaries without a separate toolset policy decision. Stable caveat codes: `no_active_training_plan`, `no_week_workouts`, `no_week_events`, `no_upcoming_races`, `no_fitness_rows`, `read_only_no_atp`, and `partial_training_plan_summary` when nested plan summary is absent. `_meta.source_tools` includes `get_athlete_profile` for timezone/as-of context plus `get_events`, `get_training_plan`, and `get_fitness`; `_meta` also exposes `read_only: true`, `writes_performed: false`, `planning_scope: context_only`, `week_window`, `fitness_window`, `race_window`, counts, and `caveat_codes`. Invalid `week_start` returns a short user-facing error. |
+| 2026-06-03 16:17 | R002 plan review | Reviewer requested a bounded current-fitness window independent of future/historical week_start drift, explicit week-event/race fetch limits, truncation metadata/caveats, exact caveat-code conditions, and include_full section scope. |
 | 2026-06-03 16:14 | Review R001 | plan Step 1: UNKNOWN |
+| 2026-06-03 16:17 | Review R002 | plan Step 1: REVISE |
