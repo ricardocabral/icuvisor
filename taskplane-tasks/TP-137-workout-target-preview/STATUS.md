@@ -1,9 +1,9 @@
 # TP-137: Resolved workout target previews for planned workouts — Status
-**Current Step:** Step 2: Implement target previews and tests
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 2
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -40,8 +40,9 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
+- [ ] Run formatting/import-order check: `make fmt-check`
 - [ ] Run FULL test suite: `make test`
 - [ ] Run lint: `make lint`
 - [ ] Fix all failures or document pre-existing unrelated failures with exact command output
@@ -86,8 +87,10 @@
 | 2026-06-03 | Review | code Step 1: APPROVE |
 | 2026-06-03 | Review | plan Step 2: APPROVE |
 | 2026-06-03 | Review | code Step 2: APPROVE |
+| 2026-06-03 | Review | plan Step 3: REVISE | Added explicit `make fmt-check` gate before full suite/lint/build. |
 
 | 2026-06-03 15:49 | Worker iter 1 | done in 394s, tools: 39 |
 | 2026-06-03 15:51 | Review R003 | code Step 1: APPROVE |
 | 2026-06-03 15:53 | Review R004 | plan Step 2: APPROVE |
 | 2026-06-03 16:06 | Review R005 | code Step 2: APPROVE |
+| 2026-06-03 16:07 | Review R006 | plan Step 3: REVISE |
