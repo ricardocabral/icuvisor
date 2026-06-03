@@ -103,7 +103,7 @@ func getEventsHandler(client EventsClient, profileClient ProfileClient, version 
 		if err != nil {
 			return Result{}, NewUserError(invalidGetEventsArgumentsMessage, err)
 		}
-		unitSystem, timezoneName, err := toolProfile(ctx, profileClient, timezoneFallback)
+		profile, unitSystem, timezoneName, err := toolProfileDetails(ctx, profileClient, timezoneFallback)
 		if err != nil {
 			return Result{}, NewUserError(fetchEventsMessage, err)
 		}
@@ -121,7 +121,7 @@ func getEventsHandler(client EventsClient, profileClient ProfileClient, version 
 			}
 			return Result{}, NewUserError(fetchEventsMessage, err)
 		}
-		payload, err := shapeGetEventsResponse(events, args, timezoneName, asOfMeta)
+		payload, err := shapeGetEventsResponse(events, args, timezoneName, asOfMeta, profile, unitSystem)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_events response: %w", err)
 		}
@@ -163,7 +163,7 @@ func decodeGetEventsRequest(raw json.RawMessage) (getEventsRequest, error) {
 	return args, nil
 }
 
-func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, timezoneName string, asOfMeta *response.AsOfMetadata) (getEventsResponse, error) {
+func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, timezoneName string, asOfMeta *response.AsOfMetadata, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) (getEventsResponse, error) {
 	limit := args.Limit
 	if limit <= 0 {
 		limit = defaultEventsLimit
@@ -175,7 +175,7 @@ func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, tim
 
 	rows := make([]getEventsRow, 0, len(events))
 	for _, event := range events {
-		row, err := eventRow(event, args.IncludeFull, timezoneName)
+		row, err := eventRow(event, args.IncludeFull, timezoneName, workoutPreviewContextForEvent(event, profile, unitSystem))
 		if err != nil {
 			return getEventsResponse{}, err
 		}
@@ -197,7 +197,7 @@ func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, tim
 	return getEventsResponse{Events: rows, Meta: meta}, nil
 }
 
-func eventRow(event intervals.Event, includeFull bool, timezoneName string) (getEventsRow, error) {
+func eventRow(event intervals.Event, includeFull bool, timezoneName string, previewContexts ...workoutTargetPreviewContext) (getEventsRow, error) {
 	row := getEventsRow{EventID: event.ID, Category: firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"])), Type: stringValue(event.Type), Name: stringValue(event.Name), StartDateLocal: stringValue(event.StartDateLocal), EndDateLocal: stringValue(event.EndDateLocal), Description: stringValue(event.Description), Indoor: event.Indoor, TrainingLoad: event.TrainingLoad, LoadTarget: event.LoadTarget, DistanceMeters: event.Distance, DistanceTargetMeters: event.DistanceTarget, MovingTimeSeconds: intValue(event.MovingTime), TimeTargetSeconds: intValue(event.TimeTarget), ElapsedTimeSeconds: intValue(event.ElapsedTime), ElapsedTimeTargetSeconds: intValue(event.ElapsedTimeTarget), TrainingPlanID: anyString(firstRaw(event.Raw, "training_plan_id", "plan_id")), CalendarID: anyString(event.CalendarID), PlanApplied: stringValue(event.PlanApplied), Updated: stringValue(event.Updated), Tags: eventTags(event.Raw)}
 	if row.CalendarID == "" {
 		row.CalendarID = anyString(event.Raw["calendar_id"])
@@ -217,7 +217,7 @@ func eventRow(event intervals.Event, includeFull bool, timezoneName string) (get
 		row.UpdatedLocal = rendered
 	}
 	if event.WorkoutDoc != nil {
-		row.WorkoutDocSummary = workoutDocSummary(event.WorkoutDoc)
+		row.WorkoutDocSummary = workoutDocSummary(event.WorkoutDoc, previewContexts...)
 	}
 	if includeFull {
 		row.Full = cloneJSONMap(event.Raw)
@@ -257,8 +257,11 @@ func renderEventTimestamp(value string, timezoneName string) (string, error) {
 	return "", nil
 }
 
-func workoutDocSummary(value any) *workoutDocSummaryRow {
+func workoutDocSummary(value any, previewContexts ...workoutTargetPreviewContext) *workoutDocSummaryRow {
 	summary := &workoutDocSummaryRow{Present: true}
+	if len(previewContexts) > 0 {
+		summary.TargetPreviews = workoutTargetPreviews(value, previewContexts[0])
+	}
 	if typed, ok := value.(map[string]any); ok {
 		keys := make([]string, 0, len(typed))
 		for key := range typed {

@@ -1,0 +1,45 @@
+name: OpenAPI endpoint diff
+
+on:
+  workflow_dispatch:
+    inputs:
+      latest_url:
+        description: intervals.icu OpenAPI JSON URL to compare against the pinned baseline
+        required: true
+        default: https://intervals.icu/api/openapi.json
+  schedule:
+    - cron: '17 9 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  INTERVALS_OPENAPI_URL: https://intervals.icu/api/openapi.json
+
+jobs:
+  endpoint-diff:
+    name: Compare OpenAPI endpoint paths
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Generate endpoint diff report
+        shell: bash
+        env:
+          DISPATCH_URL: ${{ github.event.inputs.latest_url }}
+        run: |
+          set -euo pipefail
+          latest_url="${DISPATCH_URL:-$INTERVALS_OPENAPI_URL}"
+          go run ./scripts/openapidiff \
+            -baseline scripts/openapidiff/baseline/intervals-openapi.json \
+            -latest-url "$latest_url" \
+            -output openapi-endpoint-diff.md
+          cat openapi-endpoint-diff.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload endpoint diff report
+        uses: actions/upload-artifact@v5
+        with:
+          name: openapi-endpoint-diff
+          path: openapi-endpoint-diff.md

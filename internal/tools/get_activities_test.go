@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -235,6 +236,37 @@ func TestGetActivitiesTagsPreservedInDefaultTerseResponse(t *testing.T) {
 	emptyTags, ok := byID["empty"]["tags"].([]any)
 	if !ok || len(emptyTags) != 0 {
 		t.Fatalf("empty tags = %#v, want explicit empty array in default terse response", byID["empty"]["tags"])
+	}
+}
+
+func TestGetActivitiesPreservesVirtualRideInDefaultTerseResponse(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"virtual1","name":"Indoor Zwift","type":"VirtualRide","start_date_local":"2026-01-04T07:00:00","distance":20000,"moving_time":2400,"average_speed":8.333333}`,
+		`{"id":"ride1","name":"Outdoor Ride","type":"Ride","start_date_local":"2026-01-03T07:00:00","distance":30000,"moving_time":3600}`,
+	}, "metric")
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	rows := resultMap(t, result)["activities"].([]any)
+	byID := map[string]map[string]any{}
+	for _, rawRow := range rows {
+		row := rawRow.(map[string]any)
+		byID[row["activity_id"].(string)] = row
+	}
+	virtualRide, ok := byID["virtual1"]
+	if !ok {
+		t.Fatalf("activity IDs = %#v, want virtual1 retained by default filters", slices.Collect(maps.Keys(byID)))
+	}
+	if got := virtualRide["sport"]; got != "VirtualRide" {
+		t.Fatalf("virtual sport = %v, want VirtualRide", got)
+	}
+	if _, ok := virtualRide["pace_seconds_per_km"]; ok {
+		t.Fatalf("virtual row = %#v, want no run pace for VirtualRide", virtualRide)
 	}
 }
 

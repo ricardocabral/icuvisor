@@ -38,11 +38,11 @@ func structToJSONMap(value any) (map[string]any, error) {
 	return out, nil
 }
 
-func eventDeleteEcho(event intervals.Event, eventID string, timezoneName string) (map[string]any, error) {
+func eventDeleteEcho(event intervals.Event, eventID string, timezoneName string, previewContexts ...workoutTargetPreviewContext) (map[string]any, error) {
 	if event.ID == "" {
 		event.ID = eventID
 	}
-	row, err := eventRow(event, false, timezoneName)
+	row, err := eventRow(event, false, timezoneName, previewContexts...)
 	if err != nil {
 		return nil, err
 	}

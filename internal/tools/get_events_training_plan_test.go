@@ -113,6 +113,37 @@ func TestGetEventsTerseRowsTimezoneAndCategory(t *testing.T) {
 	}
 }
 
+func TestGetEventsResolvesPercentFTPWorkoutTargetPreview(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Types: []string{"Ride"}, FTP: 250}}}},
+		events:            decodeToolEvents(t, `{"id":"ftp","name":"Sweet Spot","category":"WORKOUT","type":"Ride","start_date_local":"2026-01-03","workout_doc":{"steps":[{"description":"Sweet spot","duration":600,"power":{"min":88,"max":94,"units":"PERCENT_FTP"}}]}}`),
+	}
+	tool := newGetEventsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-03","newest":"2026-01-03"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if client.calls != 1 {
+		t.Fatalf("profile calls = %d, want one call reused for units and target previews", client.calls)
+	}
+	row := resultMap(t, result)["events"].([]any)[0].(map[string]any)
+	summary := row["workout_doc_summary"].(map[string]any)
+	previews := summary["target_previews"].([]any)
+	if len(previews) != 1 {
+		t.Fatalf("target_previews = %#v, want one resolved FTP preview", previews)
+	}
+	preview := previews[0].(map[string]any)
+	if preview["path"] != "1" || preview["family"] != "power" || preview["target"] != "88-94% FTP" || preview["preview"] != "220-235 W" || preview["basis"] != "ftp 250 W" {
+		t.Fatalf("preview = %#v, want compact FTP watts resolution", preview)
+	}
+	if _, ok := row["workout_doc"]; ok {
+		t.Fatalf("raw workout_doc leaked in terse row: %#v", row)
+	}
+}
+
 func TestGetEventsPreservesMultipleSameDayEvents(t *testing.T) {
 	t.Parallel()
 

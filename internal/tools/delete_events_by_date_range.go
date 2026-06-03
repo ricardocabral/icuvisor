@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 )
 
 const (
@@ -63,7 +64,7 @@ func deleteEventsByDateRangeHandler(client EventsByDateRangeDeleterClient, profi
 		if err != nil {
 			return Result{}, NewUserError(invalidDeleteEventsByDateRangeArgumentsMessage, err)
 		}
-		unitSystem, timezoneName, err := toolProfile(ctx, profileClient, timezoneFallback)
+		profile, unitSystem, timezoneName, err := toolProfileDetails(ctx, profileClient, timezoneFallback)
 		if err != nil {
 			return Result{}, NewUserError(deleteEventsByDateRangeMessage, err)
 		}
@@ -78,7 +79,7 @@ func deleteEventsByDateRangeHandler(client EventsByDateRangeDeleterClient, profi
 			}
 			return Result{}, NewUserError(deleteEventsByDateRangeMessage, err)
 		}
-		before, ids, err := eventDeleteRangeEchoes(events, timezoneName)
+		before, ids, err := eventDeleteRangeEchoes(events, timezoneName, profile, unitSystem)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping delete_events_by_date_range before echoes: %w", err)
 		}
@@ -122,7 +123,7 @@ func decodeDeleteEventsByDateRangeRequest(raw json.RawMessage) (deleteEventsByDa
 	return args, nil
 }
 
-func eventDeleteRangeEchoes(events []intervals.Event, timezoneName string) ([]map[string]any, []string, error) {
+func eventDeleteRangeEchoes(events []intervals.Event, timezoneName string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) ([]map[string]any, []string, error) {
 	type pair struct {
 		id   string
 		echo map[string]any
@@ -133,7 +134,7 @@ func eventDeleteRangeEchoes(events []intervals.Event, timezoneName string) ([]ma
 		if id == "" {
 			return nil, nil, errors.New("listed event is missing an ID")
 		}
-		echo, err := eventDeleteEcho(event, id, timezoneName)
+		echo, err := eventDeleteEcho(event, id, timezoneName, workoutPreviewContextForEvent(event, profile, unitSystem))
 		if err != nil {
 			return nil, nil, err
 		}

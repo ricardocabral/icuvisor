@@ -1,0 +1,30 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "intervals.icu API path baseline for icuvisor triage",
+    "version": "2026-06-03"
+  },
+  "paths": {
+    "/api/v1/athlete/{id}": {},
+    "/api/v1/athlete/{id}/activities": {},
+    "/api/v1/athlete/{id}/athlete-summary.json": {},
+    "/api/v1/athlete/{id}/custom-item": {},
+    "/api/v1/athlete/{id}/custom-item/{itemId}": {},
+    "/api/v1/athlete/{id}/events": {},
+    "/api/v1/athlete/{id}/events/{eventId}": {},
+    "/api/v1/athlete/{id}/events/bulk": {},
+    "/api/v1/athlete/{id}/folders": {},
+    "/api/v1/athlete/{id}/gear": {},
+    "/api/v1/athlete/{id}/gear/{gearId}": {},
+    "/api/v1/athlete/{id}/hr-curves.json": {},
+    "/api/v1/athlete/{id}/pace-curves.json": {},
+    "/api/v1/athlete/{id}/power-curves.json": {},
+    "/api/v1/athlete/{id}/sport-settings/{sportSettingsId}": {},
+    "/api/v1/athlete/{id}/sport-settings/{sportSettingsId}/apply": {},
+    "/api/v1/athlete/{id}/training-plan": {},
+    "/api/v1/athlete/{id}/wellness.json": {},
+    "/api/v1/athlete/{id}/wellness/{date}": {},
+    "/api/v1/athlete/{id}/workouts": {},
+    "/api/v1/athlete/{id}/workouts/{workoutId}": {}
+  }
+}

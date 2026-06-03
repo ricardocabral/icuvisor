@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 )
 
 const (
@@ -82,7 +83,7 @@ func getWorkoutLibraryHandler(client WorkoutLibraryClient, profileClient Profile
 		if err != nil {
 			return Result{}, NewUserError(invalidGetWorkoutLibraryArgumentsMessage, err)
 		}
-		unitSystem, _, err := toolProfile(ctx, profileClient, timezoneFallback)
+		profile, unitSystem, _, err := toolProfileDetails(ctx, profileClient, timezoneFallback)
 		if err != nil {
 			return Result{}, NewUserError(fetchWorkoutLibraryMessage, err)
 		}
@@ -106,7 +107,7 @@ func getWorkoutLibraryHandler(client WorkoutLibraryClient, profileClient Profile
 				return Result{}, NewUserError(fetchWorkoutLibraryMessage, err)
 			}
 		}
-		payload := shapeGetWorkoutLibraryResponse(folders, workouts, args.IncludeTopLevelWorkouts)
+		payload := shapeGetWorkoutLibraryResponse(folders, workouts, args.IncludeTopLevelWorkouts, profile, unitSystem)
 		return encodeShaped(payload, false, []string{"folders", "workouts"}, version, debugMetadata, getWorkoutLibraryName, unitSystem, shapeCfg)
 	}
 }
@@ -124,7 +125,7 @@ func decodeGetWorkoutLibraryRequest(raw json.RawMessage) (getWorkoutLibraryReque
 	return args, nil
 }
 
-func shapeGetWorkoutLibraryResponse(folders []intervals.WorkoutFolder, workouts []intervals.Workout, includeTopLevelWorkouts bool) getWorkoutLibraryResponse {
+func shapeGetWorkoutLibraryResponse(folders []intervals.WorkoutFolder, workouts []intervals.Workout, includeTopLevelWorkouts bool, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) getWorkoutLibraryResponse {
 	folderRows := make([]workoutFolderRow, 0, len(folders))
 	for _, folder := range folders {
 		folderRows = append(folderRows, workoutFolderToRow(folder))
@@ -143,7 +144,7 @@ func shapeGetWorkoutLibraryResponse(folders []intervals.WorkoutFolder, workouts 
 			if workoutFolderID(workout) != "" {
 				continue
 			}
-			workoutRows = append(workoutRows, workoutToRow(workout, false))
+			workoutRows = append(workoutRows, workoutToRow(workout, false, workoutPreviewContextForWorkout(workout, profile, unitSystem)))
 		}
 		sort.SliceStable(workoutRows, func(i, j int) bool {
 			if workoutRows[i].Name != workoutRows[j].Name {
@@ -176,10 +177,10 @@ func folderSports(folder intervals.WorkoutFolder) []string {
 	return sports
 }
 
-func workoutToRow(workout intervals.Workout, includeFull bool) workoutTemplateRow {
+func workoutToRow(workout intervals.Workout, includeFull bool, previewContexts ...workoutTargetPreviewContext) workoutTemplateRow {
 	row := workoutTemplateRow{WorkoutID: workout.ID, Name: stringValue(workout.Name), Sport: stringValue(workout.Type), FolderID: workoutFolderID(workout), TrainingLoad: intValue(workout.TrainingLoad), MovingTimeSeconds: intValue(workout.MovingTime), DistanceMeters: workout.Distance, Target: stringValue(workout.Target), Targets: workout.Targets, Tags: workout.Tags, Indoor: workout.Indoor, Description: stringValue(workout.Description)}
 	if workout.WorkoutDoc != nil {
-		row.WorkoutDocSummary = workoutDocSummary(workout.WorkoutDoc)
+		row.WorkoutDocSummary = workoutDocSummary(workout.WorkoutDoc, previewContexts...)
 	}
 	if includeFull {
 		row.Full = rawJSONMap(workout.Raw)

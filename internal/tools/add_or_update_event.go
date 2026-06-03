@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/workoutdoc"
 )
 
@@ -69,7 +70,7 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 		if err != nil {
 			return Result{}, NewUserError(invalidAddOrUpdateEventArgumentsMessage, err)
 		}
-		unitSystem, timezoneName, err := toolProfile(ctx, profileClient, timezoneFallback)
+		profile, unitSystem, timezoneName, err := toolProfileDetails(ctx, profileClient, timezoneFallback)
 		if err != nil {
 			return Result{}, NewUserError(writeEventMessage, err)
 		}
@@ -87,7 +88,7 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 			}
 			return Result{}, NewUserError(writeEventMessage, err)
 		}
-		payload, err := shapeAddOrUpdateEventResponse(event, args, timezoneName, workoutDocUploaded)
+		payload, err := shapeAddOrUpdateEventResponse(event, args, timezoneName, workoutDocUploaded, profile, unitSystem)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping add_or_update_event response: %w", err)
 		}
@@ -173,8 +174,8 @@ func eventWriteParams(args addOrUpdateEventRequest) (intervals.WriteEventParams,
 	return params, "description_dsl", nil
 }
 
-func shapeAddOrUpdateEventResponse(event intervals.Event, args addOrUpdateEventRequest, timezoneName string, workoutDocUploaded string) (addOrUpdateEventResponse, error) {
-	row, err := eventRow(event, args.IncludeFull, timezoneName)
+func shapeAddOrUpdateEventResponse(event intervals.Event, args addOrUpdateEventRequest, timezoneName string, workoutDocUploaded string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) (addOrUpdateEventResponse, error) {
+	row, err := eventRow(event, args.IncludeFull, timezoneName, workoutPreviewContextForEvent(event, profile, unitSystem))
 	if err != nil {
 		return addOrUpdateEventResponse{}, err
 	}

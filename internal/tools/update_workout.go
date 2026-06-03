@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/workoutdoc"
 )
 
@@ -68,7 +69,7 @@ func updateWorkoutHandler(client WorkoutUpdaterClient, profileClient ProfileClie
 		if err != nil {
 			return Result{}, NewUserError(invalidUpdateWorkoutArgumentsMessage, err)
 		}
-		unitSystem, _, err := toolProfile(ctx, profileClient, timezoneFallback)
+		profile, unitSystem, _, err := toolProfileDetails(ctx, profileClient, timezoneFallback)
 		if err != nil {
 			return Result{}, NewUserError(updateWorkoutMessage, err)
 		}
@@ -86,7 +87,7 @@ func updateWorkoutHandler(client WorkoutUpdaterClient, profileClient ProfileClie
 			}
 			return Result{}, NewUserError(updateWorkoutMessage, err)
 		}
-		payload := shapeUpdateWorkoutResponse(workout, args, uploaded)
+		payload := shapeUpdateWorkoutResponse(workout, args, uploaded, profile, unitSystem)
 		return encodeShaped(payload, false, nil, version, debugMetadata, updateWorkoutName, unitSystem, shapeCfg)
 	}
 }
@@ -166,9 +167,9 @@ func updateWorkoutParams(args updateWorkoutRequest) (intervals.WriteWorkoutParam
 	return params, "description_dsl", nil
 }
 
-func shapeUpdateWorkoutResponse(workout intervals.Workout, args updateWorkoutRequest, workoutDocUploaded string) updateWorkoutResponse {
+func shapeUpdateWorkoutResponse(workout intervals.Workout, args updateWorkoutRequest, workoutDocUploaded string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) updateWorkoutResponse {
 	uploadedSteps := args.WorkoutDoc != nil && len(args.WorkoutDoc.Steps) > 0
-	return updateWorkoutResponse{Workout: workoutToRow(workout, false), Meta: updateWorkoutMeta{Operation: "update", SourceEndpoint: workoutLibraryWorkoutsEndpoint, WorkoutID: args.WorkoutID, FieldsUpdated: updateWorkoutFieldsUpdated(args), WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, workout.WorkoutDoc), DescriptionOnlyWorkoutWarning: updateWorkoutDescriptionOnlyWorkoutWarning(args), DefaultPayloadScope: "same terse workout row shape used by get_workout_library/get_workouts_in_folder; raw workout_doc remains summarized"}}
+	return updateWorkoutResponse{Workout: workoutToRow(workout, false, workoutPreviewContextForWorkout(workout, profile, unitSystem)), Meta: updateWorkoutMeta{Operation: "update", SourceEndpoint: workoutLibraryWorkoutsEndpoint, WorkoutID: args.WorkoutID, FieldsUpdated: updateWorkoutFieldsUpdated(args), WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, workout.WorkoutDoc), DescriptionOnlyWorkoutWarning: updateWorkoutDescriptionOnlyWorkoutWarning(args), DefaultPayloadScope: "same terse workout row shape used by get_workout_library/get_workouts_in_folder; raw workout_doc remains summarized"}}
 }
 
 func updateWorkoutDescriptionOnlyWorkoutWarning(args updateWorkoutRequest) string {

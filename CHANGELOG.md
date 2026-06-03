@@ -9,7 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added maintainer OpenAPI endpoint-diff tooling, workflow automation, and triage documentation for spotting upstream intervals.icu path changes.
+- Added compact `workout_doc_summary.target_previews` on planned workout/event rows, resolving supported `% FTP`, `% LTHR`/`% HR`, and threshold-pace targets from existing athlete sport settings without exposing raw workout docs by default.
 - Added a Codex CLI connection guide covering `codex mcp add`, `config.toml`, safe non-secret environment configuration, and MCP verification.
+
+### Changed
+
+- Hardened weekly-review and plan-health prompts so assistants anchor report windows in athlete-local dates, keep post-window wellness out of completed-period evidence, and label current-day `_meta.as_of` data as partial-day context.
 
 ## [0.1.7] - 2026-06-01
 
