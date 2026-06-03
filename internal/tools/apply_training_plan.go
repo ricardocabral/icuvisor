@@ -179,7 +179,7 @@ func applyTrainingPlan(ctx context.Context, client ApplyTrainingPlanClient, args
 	payload := applyTrainingPlanResponse{ProposedEvents: make([]applyTrainingPlanProposedEvent, 0, len(planned)), Meta: applyTrainingPlanMeta{PlanID: args.PlanID, StartDate: args.StartDate, DryRun: dryRun, ConflictPolicy: args.ConflictPolicy, Skipped: []applyTrainingPlanSkipped{}, DeleteMode: capabilityOrSafe(capability).Mode(), Timezone: timezoneName}}
 	for _, plannedWorkout := range planned {
 		workout := plannedWorkout.Workout
-		params, err := eventParamsFromPlanWorkout(plannedWorkout.Date, workout)
+		params, err := eventParamsFromPlanWorkout(plannedWorkout.Date, workout, profile)
 		if err != nil {
 			return applyTrainingPlanResponse{}, err
 		}
@@ -420,7 +420,7 @@ func eventDateOnly(event intervals.Event) string {
 	return ""
 }
 
-func eventParamsFromPlanWorkout(date string, workout intervals.Workout) (intervals.WriteEventParams, error) {
+func eventParamsFromPlanWorkout(date string, workout intervals.Workout, profile intervals.AthleteWithSportSettings) (intervals.WriteEventParams, error) {
 	trainingLoad := workoutTrainingLoad(workout)
 	args := addOrUpdateEventRequest{Date: date, Category: "WORKOUT", Type: stringValue(workout.Type), Name: stringValue(workout.Name), Tags: append([]string(nil), workout.Tags...), Indoor: workout.Indoor, TargetLoad: trainingLoad, DistanceMeters: workout.Distance, MovingTimeSeconds: workout.MovingTime}
 	if workout.WorkoutDoc != nil {
@@ -432,7 +432,7 @@ func eventParamsFromPlanWorkout(date string, workout intervals.Workout) (interva
 	} else if workout.Description != nil {
 		args.Description = workout.Description
 	}
-	params, _, err := eventWriteParams(args)
+	params, _, err := eventWriteParams(args, workoutDocSerializeOptionsForSport(profile, args.Type))
 	if err != nil {
 		return intervals.WriteEventParams{}, fmt.Errorf("building event params for workout %s: %w", workout.ID, err)
 	}

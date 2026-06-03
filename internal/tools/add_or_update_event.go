@@ -91,7 +91,7 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 		if client == nil {
 			return Result{}, NewUserError(writeEventMessage, errors.New("missing event writer client"))
 		}
-		params, workoutDocUploaded, err := eventWriteParams(args)
+		params, workoutDocUploaded, err := eventWriteParams(args, workoutDocSerializeOptionsForSport(profile, args.Type))
 		if err != nil {
 			return Result{}, NewUserError(invalidAddOrUpdateEventArgumentsMessage, err)
 		}
@@ -174,7 +174,7 @@ func decodeAddOrUpdateEventRequest(raw json.RawMessage) (addOrUpdateEventRequest
 	return args, nil
 }
 
-func eventWriteParams(args addOrUpdateEventRequest) (intervals.WriteEventParams, string, error) {
+func eventWriteParams(args addOrUpdateEventRequest, options workoutdoc.SerializeOptions) (intervals.WriteEventParams, string, error) {
 	params := intervals.WriteEventParams{
 		EventID:            args.EventID,
 		Date:               args.Date,
@@ -197,7 +197,7 @@ func eventWriteParams(args addOrUpdateEventRequest) (intervals.WriteEventParams,
 	if args.Description != nil {
 		prose = *args.Description
 	}
-	dsl, err := workoutdoc.MergeDescription(prose, *args.WorkoutDoc)
+	dsl, err := workoutdoc.MergeDescriptionWithOptions(prose, *args.WorkoutDoc, options)
 	if err != nil {
 		return intervals.WriteEventParams{}, "", fmt.Errorf("merging workout_doc with description: %w", err)
 	}

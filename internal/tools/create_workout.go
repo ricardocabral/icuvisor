@@ -67,7 +67,7 @@ func createWorkoutHandler(client WorkoutCreatorClient, profileClient ProfileClie
 		if client == nil {
 			return Result{}, NewUserError(createWorkoutMessage, errors.New("missing workout creator client"))
 		}
-		params, uploaded, err := createWorkoutParams(args)
+		params, uploaded, err := createWorkoutParams(args, workoutDocSerializeOptionsForSport(profile, args.Sport))
 		if err != nil {
 			return Result{}, NewUserError(invalidCreateWorkoutArgumentsMessage, err)
 		}
@@ -108,7 +108,7 @@ func decodeCreateWorkoutRequest(raw json.RawMessage) (createWorkoutRequest, erro
 	return args, nil
 }
 
-func createWorkoutParams(args createWorkoutRequest) (intervals.WriteWorkoutParams, string, error) {
+func createWorkoutParams(args createWorkoutRequest, options workoutdoc.SerializeOptions) (intervals.WriteWorkoutParams, string, error) {
 	params := intervals.WriteWorkoutParams{Name: args.Name, FolderID: args.FolderID, Description: args.Description, Tags: append([]string(nil), args.Tags...), Sport: args.Sport}
 	if args.WorkoutDoc == nil {
 		return params, "", nil
@@ -117,7 +117,7 @@ func createWorkoutParams(args createWorkoutRequest) (intervals.WriteWorkoutParam
 	if args.Description != nil {
 		prose = *args.Description
 	}
-	dsl, err := workoutdoc.MergeDescription(prose, *args.WorkoutDoc)
+	dsl, err := workoutdoc.MergeDescriptionWithOptions(prose, *args.WorkoutDoc, options)
 	if err != nil {
 		return intervals.WriteWorkoutParams{}, "", fmt.Errorf("merging workout_doc with description: %w", err)
 	}

@@ -4,8 +4,8 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 3
-**Iteration:** 1
+**Review Counter:** 4
+**Iteration:** 2
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -37,11 +37,11 @@
 ### Step 2: Implement and test metric suffix behavior
 **Status:** 🟨 In Progress
 
-- [ ] Add Run `POWER_HR_PACE` regression test
-- [ ] Add HR-primary / pace-primary coverage where applicable
-- [ ] Add `workout_order` decode/helper coverage and update apply-training-plan path coverage
-- [ ] Implement minimal behavior change
-- [ ] Targeted tests passing
+- [x] Add Run `POWER_HR_PACE` regression test
+- [x] Add HR-primary / pace-primary coverage where applicable
+- [x] Add `workout_order` decode/helper coverage and update apply-training-plan path coverage
+- [x] Implement minimal behavior change
+- [x] Targeted tests passing
 
 ---
 
@@ -82,6 +82,7 @@
 | R001 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | code | 1 | APPROVE | `.reviews/R003-code-step1.md` |
+| R004 | plan | 2 | APPROVE | `.reviews/R004-plan-step2.md` |
 
 ---
 
@@ -100,6 +101,7 @@
 | 2026-06-03 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-06-03 21:28 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 21:28 | Step 0 started | Preflight |
+| 2026-06-03 21:42 | Worker iter 1 | done in 883s, tools: 105 |
 
 ---
 
@@ -122,3 +124,4 @@
 | 2026-06-03 21:33 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-06-03 21:35 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-03 21:36 | Review R003 | code Step 1: APPROVE |
+| 2026-06-03 21:38 | Review R004 | plan Step 2: APPROVE |

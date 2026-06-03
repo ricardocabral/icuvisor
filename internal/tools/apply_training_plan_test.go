@@ -417,6 +417,28 @@ func conflictsByEventID(conflicts []any) map[string]map[string]any {
 	return byID
 }
 
+func TestApplyTrainingPlanUsesWorkoutSportOrderForWorkoutDocSerialization(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeApplyTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Type: "Run", Types: []string{"Run"}, WorkoutOrder: "POWER_HR_PACE"}}}},
+		folders:           decodeToolWorkoutFolders(t, `{"id":"plan-1","type":"PLAN","name":"Run plan"}`),
+		workouts:          decodeToolWorkouts(t, `{"id":"w-run","name":"Run Power","type":"Run","folder_id":"plan-1","day":1,"workout_doc":{"steps":[{"description":"Endurance","duration":900,"power":{"value":2,"units":"POWER_ZONE"}}]}}`),
+	}
+	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":false}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.writeCalls) != 1 || client.writeCalls[0].Description == nil {
+		t.Fatalf("write calls = %#v, want one planned workout write with description", client.writeCalls)
+	}
+	if got, want := *client.writeCalls[0].Description, "- Endurance 15m Z2 Power"; got != want {
+		t.Fatalf("description DSL = %q, want %q", got, want)
+	}
+}
+
 func newApplyTrainingPlanTestClient(t *testing.T) *fakeApplyTrainingPlanClient {
 	t.Helper()
 	return &fakeApplyTrainingPlanClient{

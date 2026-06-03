@@ -76,7 +76,7 @@ func updateWorkoutHandler(client WorkoutUpdaterClient, profileClient ProfileClie
 		if client == nil {
 			return Result{}, NewUserError(updateWorkoutMessage, errors.New("missing workout updater client"))
 		}
-		params, uploaded, err := updateWorkoutParams(args)
+		params, uploaded, err := updateWorkoutParams(args, updateWorkoutSerializeOptions(profile, args))
 		if err != nil {
 			return Result{}, NewUserError(invalidUpdateWorkoutArgumentsMessage, err)
 		}
@@ -146,7 +146,7 @@ func rawObjectFields(raw json.RawMessage) (map[string]bool, error) {
 	return out, nil
 }
 
-func updateWorkoutParams(args updateWorkoutRequest) (intervals.WriteWorkoutParams, string, error) {
+func updateWorkoutParams(args updateWorkoutRequest, options workoutdoc.SerializeOptions) (intervals.WriteWorkoutParams, string, error) {
 	params := intervals.WriteWorkoutParams{WorkoutID: args.WorkoutID, Name: args.Name, NameSet: args.nameProvided, FolderID: args.FolderID, FolderIDSet: args.folderIDProvided, Description: args.Description, DescriptionSet: args.descriptionProvided, Tags: append([]string(nil), args.Tags...), TagsSet: args.tagsProvided, Sport: args.Sport, SportSet: args.sportProvided}
 	if !args.workoutDocProvided {
 		return params, "", nil
@@ -158,7 +158,7 @@ func updateWorkoutParams(args updateWorkoutRequest) (intervals.WriteWorkoutParam
 	if args.Description != nil {
 		prose = *args.Description
 	}
-	dsl, err := workoutdoc.MergeDescription(prose, *args.WorkoutDoc)
+	dsl, err := workoutdoc.MergeDescriptionWithOptions(prose, *args.WorkoutDoc, options)
 	if err != nil {
 		return intervals.WriteWorkoutParams{}, "", fmt.Errorf("merging workout_doc with description: %w", err)
 	}
