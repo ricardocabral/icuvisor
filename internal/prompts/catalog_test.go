@@ -77,6 +77,29 @@ func TestRenderedPromptsGolden(t *testing.T) {
 	}
 }
 
+func TestReadinessPromptsRequireProviderNativeLabels(t *testing.T) {
+	t.Parallel()
+
+	for _, prompt := range []Prompt{RecoveryCheckPrompt(), WeeklyReviewPrompt()} {
+		text := renderPromptText(t, prompt, nil)
+		for _, want := range []string{
+			"_meta.provenance.readiness.source",
+			"native_scale",
+			"Garmin Body Battery",
+			"Oura readiness",
+			"Polar nightly recharge/ANS charge",
+			"WHOOP recovery",
+			"not a universal recovery score",
+			"do not invent",
+			"readiness score",
+		} {
+			if !strings.Contains(text, want) {
+				t.Fatalf("%s prompt missing %q:\n%s", prompt.Name, want, text)
+			}
+		}
+	}
+}
+
 func TestWeeklyReviewRendersExplicitArguments(t *testing.T) {
 	t.Parallel()
 

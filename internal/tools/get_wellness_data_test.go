@@ -171,6 +171,106 @@ func TestGetWellnessDataFixtures(t *testing.T) {
 	}
 }
 
+func TestGetWellnessDataReadinessProvenanceNativeScaleIsProviderSpecific(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		raw        string
+		wantSource string
+		wantScale  string
+	}{
+		{
+			name: "garmin body battery",
+			raw: `{
+				"id":"2026-05-15",
+				"readiness":64,
+				"provider":"Garmin Connect",
+				"bridge_fetched_at":"2026-05-15T00:00:00Z",
+				"garmin":{"body_battery_min":31,"body_battery_max":82}
+			}`,
+			wantSource: "garmin",
+			wantScale:  "0-100 Garmin Body Battery",
+		},
+		{
+			name: "oura readiness score",
+			raw: `{
+				"id":"2026-05-15",
+				"readiness":71,
+				"provider":"Oura Ring",
+				"bridge_fetched_at":"2026-05-15T00:00:00Z",
+				"oura":{"readiness_score":71}
+			}`,
+			wantSource: "oura",
+			wantScale:  "0-100 Oura readiness score",
+		},
+		{
+			name: "polar nightly recharge",
+			raw: `{
+				"id":"2026-05-15",
+				"readiness":5,
+				"provider":"Polar Flow",
+				"bridge_fetched_at":"2026-05-15T00:00:00Z",
+				"polar":{"nightly_recharge_status":5}
+			}`,
+			wantSource: "polar",
+			wantScale:  "1-6 Polar nightly_recharge_status",
+		},
+		{
+			name: "polar ans charge",
+			raw: `{
+				"id":"2026-05-15",
+				"readiness":6.5,
+				"provider":"Polar Flow",
+				"bridge_fetched_at":"2026-05-15T00:00:00Z",
+				"polar":{"ans_charge":6.5}
+			}`,
+			wantSource: "polar",
+			wantScale:  "-10 to +10 Polar ans_charge",
+		},
+		{
+			name: "whoop recovery score",
+			raw: `{
+				"id":"2026-05-15",
+				"readiness":66,
+				"provider":"WHOOP",
+				"bridge_fetched_at":"2026-05-15T00:00:00Z",
+				"whoop":{"recovery_score":66}
+			}`,
+			wantSource: "whoop",
+			wantScale:  "0-100 WHOOP recovery score",
+		},
+		{
+			name: "unknown upstream readiness",
+			raw: `{
+				"id":"2026-05-15",
+				"readiness":52,
+				"bridge_fetched_at":"2026-05-15T00:00:00Z"
+			}`,
+			wantSource: "unknown",
+			wantScale:  "unknown",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			row := shapedInlineWellnessRow(t, tt.raw, false)
+			if row["readiness"] == nil {
+				t.Fatalf("terse row missing readiness: %+v", row)
+			}
+			if _, ok := row["full"]; ok {
+				t.Fatalf("terse row unexpectedly included full payload: %+v", row)
+			}
+			prov := provenanceFor(t, row, "readiness")
+			if prov["source"] != tt.wantSource || prov["native_scale"] != tt.wantScale || prov["fetched_at"] != "2026-05-15T00:00:00Z" {
+				t.Fatalf("readiness provenance = %+v, want source %s scale %s", prov, tt.wantSource, tt.wantScale)
+			}
+		})
+	}
+}
+
 func TestGetWellnessDataCurrentDayRangeAddsAsOfMetadata(t *testing.T) {
 	t.Parallel()
 
@@ -366,6 +466,28 @@ func TestGetWellnessDataHydrationSemanticsAndIncludeFull(t *testing.T) {
 	full := fullRow["full"].(map[string]any)
 	if full["hydration"] != float64(3) || full["hydrationVolume"] != 1.75 {
 		t.Fatalf("full raw hydration = %+v, want upstream names preserved under full", full)
+	}
+}
+
+func TestGetWellnessDataCaloriesAndHydrationZeroValuesArePreserved(t *testing.T) {
+	t.Parallel()
+
+	row := shapedInlineWellnessRow(t, `{"id":"2026-05-18","kcalConsumed":0,"hydration":0,"hydrationVolume":0}`, false)
+	for _, key := range []string{"calories_intake", "hydration", "hydrationVolume"} {
+		if row[key] != float64(0) {
+			t.Fatalf("row[%s] = %v, want explicit zero in %+v", key, row[key], row)
+		}
+	}
+	for _, key := range []string{"kcalConsumed", "calories", "calories_total", "hydration_ml", "hydration_liters", "hydration_volume"} {
+		if _, ok := row[key]; ok {
+			t.Fatalf("zero wellness row emitted ambiguous/renamed key %s: %+v", key, row)
+		}
+	}
+	semantics := row["_meta"].(map[string]any)["field_semantics"].(map[string]any)
+	for _, key := range []string{"calories_intake", "hydration", "hydrationVolume"} {
+		if label, ok := semantics[key].(string); !ok || label == "" {
+			t.Fatalf("field_semantics[%s] = %#v in %+v", key, semantics[key], semantics)
+		}
 	}
 }
 

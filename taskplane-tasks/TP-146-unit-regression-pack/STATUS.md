@@ -1,11 +1,11 @@
 # TP-146: Unit regression pack for work, calories, and hydration — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
+**Current Step:** Step 100: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-03
 **Review Level:** 0
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** S
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it.
@@ -13,48 +13,48 @@
 ---
 
 ### Step 0: Preflight
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Required files and paths exist
-- [ ] Dependencies satisfied
-- [ ] Clean-room constraint confirmed
+- [x] Required files and paths exist
+- [x] Dependencies satisfied
+- [x] Clean-room constraint confirmed
 
 ---
 
 ### Step 1: Audit current unit coverage
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Locate existing tests for extended metrics Joules/kJ, wellness kcal/hydration, activity calories semantics, and unit metadata
-- [ ] Identify missing regression assertions without duplicating existing coverage
+- [x] Locate existing tests for extended metrics Joules/kJ, wellness kcal/hydration, activity calories semantics, and unit metadata
+- [x] Identify missing regression assertions without duplicating existing coverage
 
 ---
 
 ### Step 2: Add unit regression tests
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Add or tighten tests for raw Joules emitted only as explicit kJ-derived fields where applicable
-- [ ] Add or tighten tests for wellness `kcalConsumed` and `hydrationVolume` unit semantics
-- [ ] Assert zero values are preserved and ambiguous raw field names are not emitted in terse responses
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/response ./internal/analysis -run 'Joule|Calories|Hydration|Unit'`
+- [x] Add or tighten tests for raw Joules emitted only as explicit kJ-derived fields where applicable
+- [x] Add or tighten tests for wellness `kcalConsumed` and `hydrationVolume` unit semantics
+- [x] Assert zero values are preserved and ambiguous raw field names are not emitted in terse responses
+- [x] Run targeted tests: `go test ./internal/tools ./internal/response ./internal/analysis -run 'Joule|Calories|Hydration|Unit'`
 
 ---
 
 ### Step 99: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Targeted tests passing
-- [ ] FULL test suite passing
-- [ ] Build passes if code changed
-- [ ] All failures fixed
+- [x] Targeted tests passing
+- [x] FULL test suite passing
+- [x] Build passes if code changed
+- [x] All failures fixed
 
 ---
 
 ### Step 100: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Must-update docs modified
-- [ ] Check-if-affected docs reviewed
-- [ ] Discoveries logged
+- [x] Must-update docs modified
+- [x] Check-if-affected docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -68,3 +68,11 @@
 ## Discoveries
 
 <!-- Workers log durable discoveries here. -->
+
+| 2026-06-03 16:38 | Task started | Runtime V2 lane-runner execution |
+| 2026-06-03 16:38 | Step 0 started | Preflight |
+| 2026-06-03 | Coverage audit | Existing tests cover activity `calories_burned` semantics and zero preservation in `get_activities`, activity-detail nutrition disambiguation/include_full raw preservation, wellness nutrition disambiguation and hydration non-null/null handling, response KCAL/KJ pass-through, and extended-metrics Joules-to-kJ conversion/unit metadata. Missing regression assertions: extended-metrics raw Joule/W' upstream field names are absent from terse outputs; zero-valued Joule-derived kJ fields are preserved; wellness zero-valued `kcalConsumed`/`hydration`/`hydrationVolume` are preserved while ambiguous raw kcal names remain absent. |
+| 2026-06-03 | Documentation review | Must Update list is empty for TP-146; no required docs were modified because this is a regression-test-only change. |
+| 2026-06-03 | Affected docs review | CHANGELOG.md, README.md, PRD, and ROADMAP are unaffected: added tests only, with no behavior, capability, product-scope, or phasing changes. |
+| 2026-06-03 16:43 | Worker iter 1 | done in 325s, tools: 68 |
+| 2026-06-03 16:43 | Task complete | .DONE created |

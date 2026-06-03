@@ -144,6 +144,39 @@ func TestGetEventsResolvesPercentFTPWorkoutTargetPreview(t *testing.T) {
 	}
 }
 
+func TestGetEventsPreservesLongDistanceRaceMeters(t *testing.T) {
+	t.Parallel()
+
+	const brevetDistanceMeters = 1_200_000.0
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		events:            decodeToolEvents(t, `{"id":"evt-1200","name":"1200 km brevet","category":"RACE","start_date_local":"2026-08-01","distance":1200000,"distance_target":1200000}`),
+	}
+	tool := newGetEventsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-08-01","newest":"2026-08-01","category":"RACE"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	rows := out["events"].([]any)
+	if len(rows) != 1 {
+		t.Fatalf("rows = %d, want one long-distance race", len(rows))
+	}
+	row := rows[0].(map[string]any)
+	if row["distance_meters"] != brevetDistanceMeters || row["distance_target_meters"] != brevetDistanceMeters {
+		t.Fatalf("row = %#v, want untruncated 1200 km distance and target distance", row)
+	}
+	assertKeyAbsent(t, row, "icu_training_load")
+	assertKeyAbsent(t, row, "load_target")
+	lowerText := strings.ToLower(resultText(t, result))
+	for _, forbidden := range []string{"auto-load", "autocalc", "auto calculated", "auto-calculated", "calculated load"} {
+		if strings.Contains(lowerText, forbidden) {
+			t.Fatalf("result text contains false auto-load wording %q: %s", forbidden, lowerText)
+		}
+	}
+}
+
 func TestGetEventsPreservesMultipleSameDayEvents(t *testing.T) {
 	t.Parallel()
 

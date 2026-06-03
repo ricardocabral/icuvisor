@@ -170,6 +170,54 @@ func TestAddOrUpdateEventCreateDoesNotTreatActualMetricsAsTargetDuplicate(t *tes
 	}
 }
 
+func TestAddOrUpdateEventAcceptsLongDistanceRaceMeters(t *testing.T) {
+	t.Parallel()
+
+	const brevetDistanceMeters = 1_200_000.0
+	client := &fakeEventWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		event:             decodeToolEvents(t, `{"id":"evt-1200","category":"RACE","name":"1200 km brevet","start_date_local":"2026-08-01","distance_target":1200000}`)[0],
+	}
+	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+
+	createResult, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-08-01","category":"RACE","name":"1200 km brevet","distance_meters":1200000}`)})
+	if err != nil {
+		t.Fatalf("Handler(create) error = %v", err)
+	}
+	updateResult, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-08-01","event_id":"evt-1200","category":"RACE","name":"1200 km brevet","distance_meters":1200000}`)})
+	if err != nil {
+		t.Fatalf("Handler(update) error = %v", err)
+	}
+	if len(client.calls) != 2 {
+		t.Fatalf("write calls = %d, want create and update", len(client.calls))
+	}
+	if client.calls[0].EventID != "" || client.calls[1].EventID != "evt-1200" {
+		t.Fatalf("event IDs = %q/%q, want create then update", client.calls[0].EventID, client.calls[1].EventID)
+	}
+	for idx, call := range client.calls {
+		if call.DistanceMeters == nil || *call.DistanceMeters != brevetDistanceMeters {
+			t.Fatalf("call %d distance_meters = %#v, want 1200 km in meters", idx, call.DistanceMeters)
+		}
+		if call.TargetLoad != nil {
+			t.Fatalf("call %d target_load = %#v, want omitted rather than auto-calculated", idx, call.TargetLoad)
+		}
+	}
+	for _, result := range []Result{createResult, updateResult} {
+		out := resultMap(t, result)
+		row := out["event"].(map[string]any)
+		if row["distance_target_meters"] != brevetDistanceMeters {
+			t.Fatalf("event row = %#v, want untruncated 1200 km target distance", row)
+		}
+		assertKeyAbsent(t, row, "load_target")
+		lowerText := strings.ToLower(resultText(t, result))
+		for _, forbidden := range []string{"auto-load", "autocalc", "auto calculated", "auto-calculated", "calculated load"} {
+			if strings.Contains(lowerText, forbidden) {
+				t.Fatalf("result text contains false auto-load wording %q: %s", forbidden, lowerText)
+			}
+		}
+	}
+}
+
 func TestAddOrUpdateEventStripsSparseNullsAndPreservesRawFull(t *testing.T) {
 	t.Parallel()
 
@@ -345,11 +393,11 @@ func TestAddOrUpdateEventCanClearTags(t *testing.T) {
 	}
 }
 
-func TestAddOrUpdateEventSerializesWorkoutDocGoldenFixture(t *testing.T) {
+func TestAddOrUpdateEventSerializesRepeatWorkoutDocGoldenFixture(t *testing.T) {
 	t.Parallel()
 
-	structured := readWorkoutDocFixture(t, "01-steady-power-cadence-structured.json")
-	wantDSL := strings.TrimRight(readTextFixture(t, "01-steady-power-cadence-dsl.txt"), "\n")
+	structured := readWorkoutDocFixture(t, "02-repeat-recovery-structured.json")
+	wantDSL := strings.TrimRight(readTextFixture(t, "02-repeat-recovery-dsl.txt"), "\n")
 	client := &fakeEventWriterClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
 		event:             decodeToolEvents(t, `{"id":"evt-3","category":"WORKOUT","name":"Golden","start_date_local":"2026-08-01","workout_doc":{"steps":[{"duration":600}]}}`)[0],
@@ -371,6 +419,10 @@ func TestAddOrUpdateEventSerializesWorkoutDocGoldenFixture(t *testing.T) {
 	call := client.calls[0]
 	if call.Description == nil || *call.Description != wantDSL {
 		t.Fatalf("Description = %#v, want golden DSL %q", call.Description, wantDSL)
+	}
+	firstLine, _, _ := strings.Cut(*call.Description, "\n")
+	if firstLine != "Main Set 3x" || strings.HasPrefix(firstLine, "-") {
+		t.Fatalf("repeat header = %q, want canonical header without leading dash", firstLine)
 	}
 	out := resultMap(t, result)
 	meta := out["_meta"].(map[string]any)
