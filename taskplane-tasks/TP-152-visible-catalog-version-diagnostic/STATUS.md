@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -28,6 +28,9 @@
 - [ ] Response shape defined
 - [ ] Description baseline strategy decided
 - [ ] No-secret/no-athlete boundary confirmed
+- [ ] Description catalog fingerprint contract defined
+- [ ] Mismatch/status semantics clarified
+- [ ] Same-version fingerprint drift test plan captured
 
 ---
 
@@ -76,6 +79,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | Plan | Step 1 | REVISE | `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -104,4 +108,9 @@
 
 ## Notes
 
-*Reserved for execution notes*
+### Step 1 design plan
+- Tool name: `icuvisor_check_server_version`; no conflict with existing `toolcatalog` names and the `icuvisor_` prefix matches the existing meta-tool namespace.
+- Response shape: no-argument read-only response with top-level `server_version`, `catalog_hash`, `toolset`, `delete_mode`, `description_server_version`, `status`, and `action`; `_meta` repeats non-secret diagnostic source fields only.
+- Description baseline: generate the tool description at registration with the available server version plus active toolset/delete-mode and a comparable `description_catalog_fingerprint`. The fingerprint is a deterministic SHA-256 over the active catalog records with the diagnostic tool description normalized to a stable sentinel before injecting the fingerprint token. The response returns both the live runtime `catalog_hash` and the same comparable `description_catalog_fingerprint`; assistants compare visible description fields to response fields when clients hide `_meta`.
+- Privacy boundary: the tool has no intervals client dependency, no arguments, and returns no API key, athlete ID, filesystem path, username, raw env value, or network-derived data.
+| 2026-06-03 23:02 | Review R001 | plan Step 1: REVISE |
