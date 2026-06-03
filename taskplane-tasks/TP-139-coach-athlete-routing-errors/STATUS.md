@@ -1,5 +1,5 @@
 # TP-139: Coach-mode athlete routing and authorization errors — Status
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Audit coach/local athlete routing
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
@@ -19,7 +19,7 @@
 ---
 
 ### Step 1: Audit coach/local athlete routing
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Inspect `internal/coach`, athlete ID normalization, `list_athletes`, and `select_athlete` behavior.
 - [ ] Identify where unauthorized coached-athlete access currently becomes generic upstream errors or ambiguous state.
