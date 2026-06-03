@@ -1,6 +1,6 @@
 # TP-139: Coach-mode athlete routing and authorization errors — Status
-**Current Step:** Step 3: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 4: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-03
 **Review Level:** 2
 **Review Counter:** 8
@@ -51,11 +51,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged in STATUS.md
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged in STATUS.md
 
 ---
 
@@ -77,6 +77,10 @@
 | 2026-06-03 | Step 3 | Lint passed after changing an error wrap in `coach.ToolFilter.ResolveTarget` to use `%w`: `make lint`. | No lint issues remain. |
 | 2026-06-03 | Step 3 | Fixed the only observed quality-gate failure (`errorlint` on non-wrapping `%v`); no pre-existing unrelated failures were observed. | All verification failures addressed in-scope. |
 | 2026-06-03 | Step 3 | Build passed: `make build`. | Binary builds after routing hardening. |
+| 2026-06-03 | Step 4 | Updated `CHANGELOG.md` under `[Unreleased]` with coach-mode routing/error hardening. | Must-update documentation requirement satisfied. |
+| 2026-06-03 | Step 4 | Reviewed `docs/prd/PRD-icuvisor.md` and `ROADMAP.md` coach-mode references; no updates needed because behavior remains within existing local-key, per-athlete ACL, and no-tool-credential contracts. | Check-if-affected documentation requirement satisfied. |
+| 2026-06-03 | Step 4 | STATUS.md discoveries and audit matrix document routing ambiguity, expected public messages, tests run, and documentation decisions. | Delivery notes are captured for crash recovery and review. |
+| 2026-06-03 | Step 4 | Re-ran full suite after documentation/status completion: `make test` passed. | Final delivery test evidence is current. |
 
 ## Audit Matrix
 
