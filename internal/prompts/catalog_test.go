@@ -97,6 +97,8 @@ func TestWeeklyReviewIncludesFallbackAndSafetyGuidance(t *testing.T) {
 	text := renderPromptText(t, WeeklyReviewPrompt(), nil)
 	for _, want := range []string{
 		"athlete-local timezone",
+		"do not include wellness, activities, or summary rows after that end date",
+		"current-day `_meta.as_of` as partial-day context only",
 		"icuvisor_list_advanced_capabilities",
 		"_meta.stale",
 		"provenance warnings",
@@ -117,6 +119,9 @@ func TestPlanHealthReviewIncludesTransparentRiskGuidance(t *testing.T) {
 		"icuvisor://analysis-formulas",
 		"compute_compliance_rate",
 		"get_fitness_projection",
+		"completed-lookback, planned-window, and race-scenario dates",
+		"do not mix current-day or post-window wellness into completed adherence evidence",
+		"current-day `_meta.as_of` as partial-day context only",
 		"_meta.method",
 		"_meta.assumptions",
 		"Prefer terse default tool responses; use include_full only when the user asks or evidence is missing.",
