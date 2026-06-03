@@ -1,6 +1,6 @@
 # TP-146: Unit regression pack for work, calories, and hydration — Status
 
-**Current Step:** Step 99: Testing & Verification
+**Current Step:** Step 100: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 0
@@ -40,7 +40,7 @@
 ---
 
 ### Step 99: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Targeted tests passing
 - [x] FULL test suite passing
@@ -50,7 +50,7 @@
 ---
 
 ### Step 100: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Must-update docs modified
 - [ ] Check-if-affected docs reviewed
