@@ -77,6 +77,54 @@ func TestAddOrUpdateEventCreatePreservesFreeTextTagsAndReadShape(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateEventAcceptsLongDistanceRaceMeters(t *testing.T) {
+	t.Parallel()
+
+	const brevetDistanceMeters = 1_200_000.0
+	client := &fakeEventWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		event:             decodeToolEvents(t, `{"id":"evt-1200","category":"RACE","name":"1200 km brevet","start_date_local":"2026-08-01","distance_target":1200000}`)[0],
+	}
+	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+
+	createResult, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-08-01","category":"RACE","name":"1200 km brevet","distance_meters":1200000}`)})
+	if err != nil {
+		t.Fatalf("Handler(create) error = %v", err)
+	}
+	updateResult, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-08-01","event_id":"evt-1200","category":"RACE","name":"1200 km brevet","distance_meters":1200000}`)})
+	if err != nil {
+		t.Fatalf("Handler(update) error = %v", err)
+	}
+	if len(client.calls) != 2 {
+		t.Fatalf("write calls = %d, want create and update", len(client.calls))
+	}
+	if client.calls[0].EventID != "" || client.calls[1].EventID != "evt-1200" {
+		t.Fatalf("event IDs = %q/%q, want create then update", client.calls[0].EventID, client.calls[1].EventID)
+	}
+	for idx, call := range client.calls {
+		if call.DistanceMeters == nil || *call.DistanceMeters != brevetDistanceMeters {
+			t.Fatalf("call %d distance_meters = %#v, want 1200 km in meters", idx, call.DistanceMeters)
+		}
+		if call.TargetLoad != nil {
+			t.Fatalf("call %d target_load = %#v, want omitted rather than auto-calculated", idx, call.TargetLoad)
+		}
+	}
+	for _, result := range []Result{createResult, updateResult} {
+		out := resultMap(t, result)
+		row := out["event"].(map[string]any)
+		if row["distance_target_meters"] != brevetDistanceMeters {
+			t.Fatalf("event row = %#v, want untruncated 1200 km target distance", row)
+		}
+		assertKeyAbsent(t, row, "load_target")
+		lowerText := strings.ToLower(resultText(t, result))
+		for _, forbidden := range []string{"auto-load", "autocalc", "auto calculated", "auto-calculated", "calculated load"} {
+			if strings.Contains(lowerText, forbidden) {
+				t.Fatalf("result text contains false auto-load wording %q: %s", forbidden, lowerText)
+			}
+		}
+	}
+}
+
 func TestAddOrUpdateEventStripsSparseNullsAndPreservesRawFull(t *testing.T) {
 	t.Parallel()
 
