@@ -1,6 +1,6 @@
 # TP-150: Workout DSL metric suffix from sport priority — Status
 
-**Current Step:** Step 4: Testing & Verification
+**Current Step:** Step 5: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
@@ -66,12 +66,12 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Clean-room behavior source summarized
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Clean-room behavior source summarized
 
 ---
 
@@ -94,6 +94,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | Upstream public behavior confirms explicit metric suffixes avoid zone-family ambiguity, but this task does not include authoritative upstream docs for when bare `Z2` is safe for each `workout_order`. | Implement sport-aware writes with explicit zone family suffixes whenever supported workout order context is known; preserve existing bare serializer for no-context callers. | Step 1 design |
+| Documentation review found the product contract already covers canonical WorkoutDoc serialization; the user-facing cookbook needed the operational guidance, while PRD/resource reference did not need a behavior-contract change. | Updated cookbook and changelog; left PRD and resources-prompts unchanged after review. | Step 5 delivery |
 
 ---
 
@@ -118,6 +119,9 @@
 
 ## Notes
 
+- Step 5 evidence: Must-update docs satisfied by CHANGELOG.md `[Unreleased]` fixed entry for planned workout writes emitting explicit zone metric suffixes from athlete sport settings.
+- Step 5 evidence: Check-if-affected docs reviewed: `web/content/cookbook/build-workouts.md` updated with zone-suffix/update-workout sport guidance; `web/content/reference/resources-prompts.md` and `docs/prd/PRD-icuvisor.md` reviewed with no product contract/reference table change needed.
+- Step 5 clean-room summary: implementation was derived from icuvisor's existing WorkoutDoc serializer/tests plus the task's public upstream behavior signal that planned Run workouts with ambiguous sport metric priority require explicit zone-family suffixes such as `Z2 Power`, `Z2 HR`, or `Z2 Pace`; no external/copyleft implementation code was used.
 - Step 0 evidence: `go test ./internal/workoutdoc -run TestSerializeTargetUnitSemantics -count=1` passed and existing case `POWER_ZONE` expects bare `Z2`.
 - Step 1 boundary: add an options-aware WorkoutDoc serialization path in `internal/workoutdoc` (for example `SerializeWithOptions`/`MergeDescriptionWithOptions`) and have planned-workout write call sites pass the target sport's `workout_order` from the athlete profile; keep suffix rendering centralized in the serializer rather than duplicating string rewrites in each tool.
 - No-sport-context behavior: existing `workoutdoc.Serialize` and `workoutdoc.MergeDescription` remain unchanged, so resources, validators, activity-interval writes, and tests that lack sport settings continue to emit bare power zones (`Z2`).
