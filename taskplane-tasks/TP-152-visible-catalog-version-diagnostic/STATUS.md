@@ -1,10 +1,10 @@
 # TP-152: Visible catalog/version diagnostic tool — Status
 
-**Current Step:** Step 2: Implement tool and tests
+**Current Step:** Step 3: Update generated docs and stale-catalog guidance
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 2
 **Size:** S
 
@@ -50,10 +50,13 @@
 ---
 
 ### Step 3: Update generated docs and stale-catalog guidance
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Tool docs/catalog regenerated
+- [ ] Generated catalog data verified for the meta-tool entry
 - [ ] Upgrade/troubleshooting docs updated
+- [ ] Exact diagnostic comparison fields documented without comparing fingerprint to live catalog hash
+- [ ] Reconnect versus new-conversation actions documented
 - [ ] CHANGELOG updated
 - [ ] Privacy wording verified
 
@@ -89,6 +92,7 @@
 | R004 | Plan | Step 2 | REVISE | `.reviews/R004-plan-step2.md` |
 | R005 | Plan | Step 2 | APPROVE | `.reviews/R005-plan-step2.md` |
 | R006 | Code | Step 2 | UNAVAILABLE | n/a |
+| R007 | Plan | Step 3 | REVISE | `.reviews/R007-plan-step3.md` |
 
 ---
 
@@ -134,9 +138,18 @@
 - Register base tools first, then `icuvisor_list_advanced_capabilities`, then compute/register `icuvisor_check_server_version`; fingerprint input includes tools that pass known capability/delete-mode and toolset gates plus the diagnostic tool. Coach per-athlete dynamic ACL filtering is not included in this static description fingerprint; tests/docs will state it is a catalog-mode fingerprint, while live `catalog_hash` remains authoritative for the server's exposed catalog.
 - Update `internal/toolcatalog/catalog.go` with `ICUvisorCheckServerVersion`, include it in `allToolNames`, keep it out of `athleteScopedToolNames`, add it to the `meta` group in `internal/tools/catalog.go`, and update tier/catalog expectations.
 - Tests: output shape and no-leak/no-network handler tests; same-version fingerprint drift on description/schema changes; catalog hash sensitivity to diagnostic description/schema; shared catalog membership/descriptor group tests; targeted `go test ./internal/tools ./internal/toolcatalog ./internal/mcp ./internal/response -run 'Check|Catalog|Schema|Advanced'`.
+
+### Step 3 docs plan
+- Run `make docs-tools`, then verify `web/data/tools.json` contains `icuvisor_check_server_version` in the `meta` group; treat `web/content/reference/tools.md` as generated-shortcode surrounding prose only and do not hand-edit unless needed.
+- Update `web/content/guides/after-upgrade.md` with both paths: visible `_meta.schema_changed` means start a new conversation, and clients that hide `_meta` can call `icuvisor_check_server_version` after reconnect/reload to compare visible description baselines.
+- Update `web/content/guides/troubleshooting.md` stale-catalog steps with exact field comparisons: visible `description_server_version`, `description_catalog_fingerprint`, `description_toolset`, and `description_delete_mode` versus response `server_version`, `description_catalog_fingerprint`, `toolset`, and `delete_mode`; do not compare `description_catalog_fingerprint` with live `catalog_hash`.
+- Document actions clearly: reconnect/reload MCP tools when visible description fields differ from the diagnostic response, and start a new conversation when `_meta.schema_changed` is visible or stale schemas/context persist after reconnecting.
+- Add a `[Unreleased]` changelog entry under `Added` for the local, read-only diagnostic and verify wording avoids telemetry, cloud checks, credential upload, filesystem inspection, intervals.icu API calls, athlete-data exposure, or claims that the server automatically detects stale client state.
 | 2026-06-03 23:02 | Review R001 | plan Step 1: REVISE |
 | 2026-06-03 23:06 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-03 23:07 | Review R003 | code Step 1: APPROVE |
 | 2026-06-03 23:08 | Review R004 | plan Step 2: REVISE |
 | 2026-06-03 23:11 | Review R005 | plan Step 2: APPROVE |
 | 2026-06-03 23:32 | Review R006 | code Step 2: UNAVAILABLE; proceeded with targeted tests passing |
+| 2026-06-03 23:33 | Review R007 | plan Step 3: REVISE |
+| 2026-06-03 23:36 | Review R007 | plan Step 3: REVISE |
