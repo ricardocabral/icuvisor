@@ -1,10 +1,10 @@
 # TP-152: Visible catalog/version diagnostic tool — Status
 
-**Current Step:** Step 1: Design diagnostic contract
+**Current Step:** Step 2: Implement tool and tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** S
 
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Design diagnostic contract
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Stable tool name chosen
 - [x] Response shape defined
@@ -35,7 +35,7 @@
 ---
 
 ### Step 2: Implement tool and tests
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Core read-only diagnostic registered
 - [ ] Output/no-leak tests added
@@ -81,6 +81,7 @@
 |---|------|------|---------|------|
 | R001 | Plan | Step 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | Step 1 | APPROVE | `.reviews/R002-plan-step1.md` |
+| R003 | Code | Step 1 | APPROVE | `.reviews/R003-code-step1.md` |
 
 ---
 
@@ -119,3 +120,4 @@
 - R002 implementation notes: runtime `catalog_hash` must come from metadata after `NewServer` computes it; keep fingerprint helper out of an `internal/tools` <-> `internal/mcp` import cycle; mirror visible description fields in response with unambiguous names; document/test any coach dynamic visibility limitation.
 | 2026-06-03 23:02 | Review R001 | plan Step 1: REVISE |
 | 2026-06-03 23:06 | Review R002 | plan Step 1: APPROVE |
+| 2026-06-03 23:07 | Review R003 | code Step 1: APPROVE |
