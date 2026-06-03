@@ -33,9 +33,12 @@ my intervals.icu data.
    which you did and report the planned load.
 
 Rules: get the DSL right — correct repeat syntax, steps not bullets, targets
-as percentages of my threshold. Use structured `workout_doc` only for endurance
-workouts supported by the intervals.icu DSL. If I ask for gym or strength work,
-schedule a simple `NOTE` time block or a free-text supported calendar event;
+as percentages of my threshold. For zone targets, rely on icuvisor's structured
+`workout_doc` serializer so planned-workout DSL uses my sport settings and adds
+metric suffixes like `Z2 Power`, `Z2 HR`, or `Z2 Pace` when needed. Use
+structured `workout_doc` only for endurance workouts supported by the
+intervals.icu DSL. If I ask for gym or strength work, schedule a simple `NOTE`
+time block or a free-text supported calendar event;
 do not invent exercises, sets, reps, or loads as structured workout steps unless
 my intervals.icu account exposes documented strength-training support. Do not
 dump the whole workout library into the chat: pick the relevant folder first,
@@ -56,7 +59,7 @@ structured-step summaries, then continue with the rest.
 | 3 | — | Drafting happens in the chat; nothing is written yet. |
 | 4 | [`create_workout`]({{< relref "/reference/tools#create_workout" >}}) or [`add_or_update_event`]({{< relref "/reference/tools#add_or_update_event" >}}) | Saves to the library or schedules it — gated on write mode. |
 
-To revise an existing template, name it and the assistant uses [`update_workout`]({{< relref "/reference/tools#update_workout" >}}). On updates, supplied `description` text is prose in the same upstream description/DSL field; it replaces that field rather than appending a note. `workout_doc` is the structured step plan that icuvisor serializes into intervals.icu workout syntax. If the existing template has structured steps you want to keep, ask the assistant to include the desired `workout_doc` explicitly and use `<!-- icuvisor:steps -->` to place the serialized steps around any prose. When the structure or DSL is uncertain, have the assistant run [`validate_workout`]({{< relref "/reference/tools#validate_workout" >}}) first and use the returned canonical DSL plus estimated duration in the preview. For bulk edits, avoid parallel writes until one representative readback confirms `_meta.workout_doc_warning` is absent or understood and `workout_doc_summary` still shows the expected steps.
+To revise an existing template, name it and the assistant uses [`update_workout`]({{< relref "/reference/tools#update_workout" >}}). On updates, supplied `description` text is prose in the same upstream description/DSL field; it replaces that field rather than appending a note. `workout_doc` is the structured step plan that icuvisor serializes into intervals.icu workout syntax. If the existing template has structured steps you want to keep, ask the assistant to include the desired `workout_doc` explicitly and use `<!-- icuvisor:steps -->` to place the serialized steps around any prose. When `update_workout` changes `workout_doc` for a sport where zone targets are ambiguous, include the template `sport` in the same request so icuvisor can apply the athlete's sport priority settings. When the structure or DSL is uncertain, have the assistant run [`validate_workout`]({{< relref "/reference/tools#validate_workout" >}}) first and use the returned canonical DSL plus estimated duration in the preview. For bulk edits, avoid parallel writes until one representative readback confirms `_meta.workout_doc_warning` is absent or understood and `workout_doc_summary` still shows the expected steps.
 
 ## A good answer looks like
 

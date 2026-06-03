@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Planned workout writes from `add_or_update_event`, `create_workout`, `update_workout`, and `apply_training_plan` now use athlete sport settings to emit explicit zone metric suffixes (`Z2 Power`, `Z2 HR`, `Z2 Pace`) when the upstream sport priority order would make bare zones ambiguous.
+
 ## [0.1.8] - 2026-06-03
 
 ### Added
