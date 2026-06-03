@@ -1,10 +1,10 @@
 # TP-154: Generated per-tool schema docs — Status
 
-**Current Step:** Step 3: Render docs and refine UX
+**Current Step:** Step 4: Update contributor/user guidance
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 2
 **Size:** M
 
@@ -53,12 +53,13 @@
 ---
 
 ### Step 4: Update contributor/user guidance
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Workflow docs updated if changed
+- [ ] Generated-file workflow/help docs mention both `web/data/tools.json` and `web/data/tool_schemas.json`, or rationale recorded for no contributor-doc change
+- [ ] Stale-generation guard covers `web/data/tool_schemas.json`, or caveat/follow-up recorded
 - [ ] CHANGELOG updated
-- [ ] Internal-only exposure reviewed
-- [ ] TP-153 caveat/dependency recorded if applicable
+- [ ] Internal-only exposure reviewed by comparing schema keys with catalog names
+- [ ] TP-153 caveat/dependency recorded: docs generation projects from live registry, not schema snapshots
 
 ---
 
@@ -109,6 +110,7 @@
 | 2026-06-03 | Step 1 code reviewed | Approved |
 | 2026-06-03 | Step 2 started | Implement generator and tests |
 | 2026-06-03 | Step 3 started | Render docs and refine UX |
+| 2026-06-03 | Step 4 started | Update contributor/user guidance |
 | 2026-06-03 23:24 | Worker iter 1 | done in 987s, tools: 57 |
 
 ---
@@ -138,3 +140,4 @@
 | 2026-06-03 23:33 | Review R005 | code Step 2: APPROVE |
 | 2026-06-03 23:36 | Review R006 | plan Step 3: APPROVE |
 | 2026-06-03 23:41 | Review R007 | code Step 3: APPROVE |
+| 2026-06-03 23:43 | Review R008 | plan Step 4: REVISE |
