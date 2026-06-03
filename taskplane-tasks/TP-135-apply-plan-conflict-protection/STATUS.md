@@ -3,7 +3,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -31,7 +31,7 @@
 ---
 
 ### Step 2: Add protected-conflict behavior and tests
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Extend conflict output to include enough category/type/name information for LLMs to explain why a day was skipped.
 - [x] Ensure `replace_existing` deletes only intended workout conflicts; protected NOTE, RACE, and UNAVAILABLE-like events are skipped/reported unless a clearly named server-side policy is added.
@@ -91,6 +91,8 @@
 | 2026-06-03 17:18 | Review R003 | code Step 1: APPROVE | Conflict-flow and taxonomy clarifications approved. |
 | 2026-06-03 17:19 | Review R004 | plan Step 2: REVISE | Expanded Step 2 plan for protected-day decisions, both preflight paths, duplicate short-circuit, concrete tests, and docs. |
 | 2026-06-03 17:20 | Review R005 | plan Step 2: APPROVE | Expanded Step 2 plan approved. |
+| 2026-06-03 17:25 | Review R006 | code Step 2: APPROVE | Protected conflict implementation approved. |
 | 2026-06-03 17:18 | Review R003 | code Step 1: APPROVE |
 | 2026-06-03 17:20 | Review R004 | plan Step 2: UNKNOWN |
 | 2026-06-03 17:21 | Review R005 | plan Step 2: APPROVE |
+| 2026-06-03 17:28 | Review R006 | code Step 2: APPROVE |
