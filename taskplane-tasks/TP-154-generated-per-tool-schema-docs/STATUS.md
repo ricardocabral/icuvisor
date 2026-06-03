@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 2
 **Size:** M
 
@@ -55,11 +55,11 @@
 ### Step 4: Update contributor/user guidance
 **Status:** 🟨 In Progress
 
-- [ ] Generated-file workflow/help docs mention both `web/data/tools.json` and `web/data/tool_schemas.json`, or rationale recorded for no contributor-doc change
-- [ ] Stale-generation guard covers `web/data/tool_schemas.json`, or caveat/follow-up recorded
-- [ ] CHANGELOG updated
-- [ ] Internal-only exposure reviewed by comparing schema keys with catalog names
-- [ ] TP-153 caveat/dependency recorded: docs generation projects from live registry, not schema snapshots
+- [x] Generated-file workflow/help docs mention both `web/data/tools.json` and `web/data/tool_schemas.json`, or rationale recorded for no contributor-doc change
+- [x] Stale-generation guard covers `web/data/tool_schemas.json`, or caveat/follow-up recorded
+- [x] CHANGELOG updated
+- [x] Internal-only exposure reviewed by comparing schema keys with catalog names
+- [x] TP-153 caveat/dependency recorded: docs generation projects from live registry, not schema snapshots
 
 ---
 
@@ -123,6 +123,12 @@
 
 ## Notes
 
+### Step 4 guidance notes
+
+- `README.md`, `web/README.md`, and `Makefile` now describe `make docs-tools` as regenerating both website catalog and schema data. `CONTRIBUTING.md` remains unchanged because its schema-snapshot workflow (`scripts/snapshot_tool_schemas.go`) is separate from generated website docs data.
+- Internal exposure check: `web/data/tools.json` names and `web/data/tool_schemas.json` keys both contain 60 tools with no missing or extra schema entries.
+- TP-153 caveat: generated website docs project directly from the live registered catalog via `tools.SchemaCatalog()`, not from `internal/tools/schema_snapshot` files. Future snapshot-policy work should not make docs generation depend on stale snapshots without a reviewed design change.
+
 ### Step 1 design notes
 
 - **Generator target:** extend `cmd/gendocs` rather than adding a separate scripts generator. `make docs-tools` should continue to be the single workflow and will call `go run ./cmd/gendocs --out web/data/tools.json`, with a new optional/default schema-data output path written by the same command. Update `cmd/gendocs/main_test.go` golden coverage rather than moving generation to `scripts/*`.
@@ -141,3 +147,4 @@
 | 2026-06-03 23:36 | Review R006 | plan Step 3: APPROVE |
 | 2026-06-03 23:41 | Review R007 | code Step 3: APPROVE |
 | 2026-06-03 23:43 | Review R008 | plan Step 4: REVISE |
+| 2026-06-03 23:44 | Review R009 | plan Step 4: APPROVE |

@@ -97,7 +97,7 @@ make test-race   # tests with the race detector
 make lint        # golangci-lint
 make check       # fmt-check + vet + lint + test-race (run before pushing)
 make snapshot    # local goreleaser snapshot
-make docs-tools  # regenerate website tool catalog data
+make docs-tools  # regenerate website tool catalog/schema data
 make help        # list all targets
 ```
 

@@ -87,7 +87,7 @@ clean: web-clean ## Remove build artifacts (binary + site)
 
 # ---- generated docs ----------------------------------------------------------
 
-docs-tools: ## Regenerate web/data/tools.json from the tool registry
+docs-tools: ## Regenerate website tool catalog and schema data from the tool registry
 	$(GO) run ./cmd/gendocs --out web/data/tools.json
 
 eval-validate: ## Validate cookbook eval scenarios against the tool catalog
