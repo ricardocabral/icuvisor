@@ -1,10 +1,10 @@
 # TP-154: Generated per-tool schema docs — Status
 
-**Current Step:** Step 2: Implement generator and tests
+**Current Step:** Step 3: Render docs and refine UX
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 2
 **Size:** M
 
@@ -43,12 +43,12 @@
 ---
 
 ### Step 3: Render docs and refine UX
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Reference rendering updated
-- [ ] Write-tool examples visible or linked/expandable
-- [ ] Page readability checked
-- [ ] Docs generation/build checked or caveat recorded
+- [x] Reference rendering updated
+- [x] Write-tool examples visible or linked/expandable
+- [x] Page readability checked
+- [x] Docs generation/build checked or caveat recorded
 
 ---
 
@@ -108,6 +108,7 @@
 | 2026-06-03 | Step 1 plan reviewed | R001 requested concrete design notes; R002 approved updated plan |
 | 2026-06-03 | Step 1 code reviewed | Approved |
 | 2026-06-03 | Step 2 started | Implement generator and tests |
+| 2026-06-03 | Step 3 started | Render docs and refine UX |
 | 2026-06-03 23:24 | Worker iter 1 | done in 987s, tools: 57 |
 
 ---
@@ -135,3 +136,4 @@
 | 2026-06-03 23:13 | Review R003 | code Step 1: APPROVE |
 | 2026-06-03 23:14 | Review R004 | plan Step 2: APPROVE |
 | 2026-06-03 23:33 | Review R005 | code Step 2: APPROVE |
+| 2026-06-03 23:36 | Review R006 | plan Step 3: APPROVE |
