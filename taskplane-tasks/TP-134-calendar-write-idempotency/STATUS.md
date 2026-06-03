@@ -3,7 +3,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -35,6 +35,7 @@
 - [x] Implement deduplication, stable skip behavior, idempotency keys/metadata, or explicit duplicate warnings using existing upstream fields only.
 - [x] Ensure dry-run output makes potential duplicate/conflict outcomes clear before any write.
 - [x] Run targeted tests: `go test ./internal/tools`.
+- [ ] Fix R004: exact duplicate matching must compare the full writable create shape, treating omitted create fields as absent/empty rather than wildcards.
 
 ---
 
@@ -74,9 +75,11 @@
 |------|-------------|--------|-------|
 | 2026-06-03 | Step 1 plan | APPROVE | Audit plan approved. |
 | 2026-06-03 | Step 1 code | APPROVE | Audit findings and targeted tests approved. |
+| 2026-06-03 | Step 2 code | REVISE | R004: exact duplicate matching used omitted create fields as wildcards. |
 
 | 2026-06-03 15:43 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 15:43 | Step 0 started | Preflight |
 | 2026-06-03 15:45 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-03 15:48 | Review R002 | code Step 1: APPROVE |
 | 2026-06-03 15:49 | Review R003 | plan Step 2: APPROVE |
+| 2026-06-03 15:57 | Review R004 | code Step 2: REVISE |
