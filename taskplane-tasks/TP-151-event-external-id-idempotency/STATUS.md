@@ -1,10 +1,10 @@
 # TP-151: Event external_id idempotency — Status
 
-**Current Step:** Step 1: Design external_id contract
+**Current Step:** Step 2: Implement event write/read support
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Design external_id contract
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Create/update/omit/clear semantics decided
 - [x] apply_training_plan deterministic ID strategy decided
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Implement event write/read support
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] WriteEventParams and payload support external_id
 - [ ] add_or_update_event schema/decoder/handler supports external_id
@@ -89,6 +89,7 @@
 |---|------|------|---------|------|
 | R001 | Plan | Step 1 | REVISE (tool returned APPROVE, review file says not approved) | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | Step 1 | APPROVE | `.reviews/R002-plan-step1.md` |
+| R003 | Code | Step 1 | APPROVE | `.reviews/R003-code-step1.md` |
 
 ---
 
@@ -110,6 +111,8 @@
 | 2026-06-03 21:28 | Step 0 started | Preflight |
 | 2026-06-03 | Step 0 completed | Required files, dependencies, and current external_id handling identified |
 | 2026-06-03 | Step 1 started | Design external_id contract |
+| 2026-06-03 | Step 1 reviewed | R002 plan and R003 code APPROVE |
+| 2026-06-03 | Step 2 started | Implement event write/read support |
 
 ---
 
@@ -132,3 +135,4 @@
 *Reserved for execution notes*
 | 2026-06-03 21:30 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-03 21:33 | Review R002 | plan Step 1: APPROVE |
+| 2026-06-03 21:35 | Review R003 | code Step 1: APPROVE |
