@@ -3,7 +3,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -36,6 +36,7 @@
 - [x] Implement explicit routing error types/messages for invalid athlete ID format, unauthorized/not-configured roster athletes, per-athlete tool denial, and local-mode athlete targeting.
 - [x] Ensure tool catalog/ACL behavior still hides disallowed tools and schemas do not expose or accept API keys in chat/tool parameters.
 - [x] Run targeted tests: `go test ./internal/coach ./internal/config ./internal/tools ./internal/mcp`.
+- [ ] Revise `select_athlete` runtime decoding to reject credential-like extra parameters without changing selected athlete.
 
 ---
 
@@ -97,7 +98,9 @@
 | 2026-06-03 15:43 | Step 0 started | Preflight |
 | 2026-06-03 | Plan Review | REVISE | Step 1 plan expanded to include MCP registration/routing layer, local-mode behavior, concrete audit matrix, and distinct public message classes. |
 | 2026-06-03 | Code Review | APPROVE | Step 1 audit deliverable approved. |
+| 2026-06-03 | Code Review | REVISE | Step 2 reviewer found `select_athlete` schema hides credential fields but runtime JSON decoding silently accepts extra `api_key`-like fields. |
 | 2026-06-03 15:45 | Review R001 | plan Step 1: UNKNOWN |
 | 2026-06-03 15:46 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-03 15:50 | Review R003 | code Step 1: APPROVE |
 | 2026-06-03 15:52 | Review R004 | plan Step 2: APPROVE |
+| 2026-06-03 15:59 | Review R005 | code Step 2: REVISE |
