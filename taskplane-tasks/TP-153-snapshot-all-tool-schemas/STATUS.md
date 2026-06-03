@@ -1,10 +1,10 @@
 # TP-153: Snapshot every registered MCP tool schema — Status
 
-**Current Step:** Step 3: Regenerate snapshots and review churn
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 2
 **Size:** M
 
@@ -52,12 +52,12 @@
 ---
 
 ### Step 4: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] FULL test suite passing
-- [ ] Lint passes
-- [ ] All failures fixed
-- [ ] Build passes
+- [x] FULL test suite passing
+- [x] Lint passes
+- [x] All failures fixed
+- [x] Build passes
 
 ---
 
@@ -78,6 +78,7 @@
 | 1 | plan | 1 | APPROVE | inline review_step |
 | 2 | plan | 2 | APPROVE | inline review_step |
 | 3 | plan | 3 | APPROVE | inline review_step |
+| 4 | plan | 4 | APPROVE | inline review_step |
 
 ---
 
@@ -103,6 +104,8 @@
 | 2026-06-03 21:41 | Step 2 plan reviewed | APPROVE |
 | 2026-06-03 21:45 | Step 3 started | Snapshot refresh and churn review |
 | 2026-06-03 21:45 | Step 3 plan reviewed | APPROVE |
+| 2026-06-03 21:50 | Step 4 started | Full verification |
+| 2026-06-03 21:50 | Step 4 plan reviewed | APPROVE |
 | 2026-06-03 21:38 | Worker iter 1 | done in 603s, tools: 65 |
 
 ---
@@ -121,7 +124,10 @@
 - Step 1 exclusions policy: no registered public MCP tools are intentionally excluded for TP-153. If a future generated schema must be excluded, Step 2 should require an explicit reason and test-enforce that the exclusion is not silent.
 - Step 3 snapshot review: 60 JSON snapshots are parseable; grep found no API keys/secrets/local filesystem paths, only expected schema terms such as `next_page_token`, `credentials`, and `icuvisor://workout-syntax`; canonical generator ordering was verified by diffing two temp generations.
 - Step 3 noise policy: no structural coverage was weakened; snapshot churn is accepted as the intentional broad full-mode coach baseline (coach `athlete_id` injection plus newly covered tools), while description/example text remains snapshotted to catch client-visible schema drift.
+- Step 4 verification: `make test` and `make lint` completed with zero failures before build verification.
 | 2026-06-03 21:32 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-03 21:35 | Review R002 | plan Step 2: APPROVE |
 | 2026-06-03 21:45 | Review R003 | plan Step 3: APPROVE |
+| 2026-06-03 21:50 | Review R004 | plan Step 4: APPROVE |
 | 2026-06-03 21:40 | Review R003 | plan Step 3: APPROVE |
+| 2026-06-03 21:42 | Review R004 | plan Step 4: APPROVE |
