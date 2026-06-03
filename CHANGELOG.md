@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a Codex CLI connection guide covering `codex mcp add`, `config.toml`, safe non-secret environment configuration, and MCP verification.
 - Added calendar-write regression coverage for repeated `apply_training_plan` calls and same-day duplicate planned events.
 
+### Changed
+
+- Activity read tool descriptions now route lap/rep execution analysis through `get_activity_intervals` and its `_meta.interval_source` / `_meta.auto_lap_suspected` signals, so assistants do not infer structured-workout execution from `get_activity_details` alone.
+
 ### Fixed
 
 - `add_or_update_event` and `apply_training_plan` now preflight same-day calendar events, skip exact duplicate creates, and surface same-day conflict warnings/metadata to reduce duplicate workouts during retries.
