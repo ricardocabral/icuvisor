@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -26,6 +26,8 @@
 
 - [x] Inventory existing tool/client patterns for get_today, get_training_plan, get_events, get_fitness, and prompt planning guidance
 - [x] Define a terse default response with `_meta.source_tools`, timezone/as-of, week window, and no write behavior
+- [ ] R001 define deterministic week anchor/window, exact fitness and race windows, and event classification rules
+- [ ] R001 justify toolset tier placement and stable caveat/validation contract
 - [ ] Plan-review checkpoint completed before implementation
 
 ---
@@ -73,6 +75,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | Plan | Step 1 | REVISE | .reviews/R001-plan-step1.md |
 
 ---
 
@@ -85,3 +88,5 @@
 | 2026-06-03 16:11 | Preflight findings | Required task files, repo context, go.mod, and package dependencies are present; clean-room constraint confirmed from public behavior signal only. |
 | 2026-06-03 16:12 | Step 1 design inventory | get_today composes profile timezone/as-of plus fitness/wellness/activities/events and records `_meta.source_tools`; get_training_plan is full-tier and returns assignment + lightweight plan summary with raw nested payloads only under include_full; get_events uses athlete-local bounded windows, category/limit/resolve, eventRow, sorting, and as-of metadata only when the requested range includes today; get_fitness fetches athlete summary rows and shapes CTL/ATL/TSB; weekly_planning/plan_health/race_taper prompts require reading events, training plan, fitness/summary/activity context, ask/confirm anchors, and explicitly avoid auto-filling calendars or ATP creation. |
 | 2026-06-03 16:13 | Step 1 response contract | get_planning_context should be core-tier, read-only, no required args, optional `week_start` (athlete-local Monday or any date normalized to that week's Monday), optional `include_full`. Default response: `week` with start/end/as_of/timezone; `week_events` terse event rows split into planned workouts vs races/other events; `training_plan` as the existing assignment summary/unavailable shape; `fitness_context` with current row plus recent 7-day rows or a compact summary; `upcoming_races` from the week plus near-future window; `caveats` for no active plan, no week events/workouts, no fitness rows, and read-only/no ATP behavior. `_meta` must include `source_tools: [get_events,get_training_plan,get_fitness]`, `include_full`, section counts, week window, as_of metadata, and `read_only: true` / `writes_performed: false`. |
+| 2026-06-03 16:14 | R001 plan review | Reviewer requested exact default week anchor, tier rationale, exact fitness/race windows, event classification rules, caveat codes, and week_start validation before implementation. |
+| 2026-06-03 16:14 | Review R001 | plan Step 1: UNKNOWN |
