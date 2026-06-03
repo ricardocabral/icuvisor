@@ -109,10 +109,10 @@ func renderMarkdown(diff endpointDiff, baselineSource, latestSource string) stri
 	var b strings.Builder
 	b.WriteString("# intervals.icu OpenAPI endpoint diff\n\n")
 	b.WriteString("This report compares only OpenAPI `paths` keys. It is a human triage aid; it does not approve product scope or auto-generate icuvisor tools.\n\n")
-	b.WriteString(fmt.Sprintf("- Baseline: `%s`\n", baselineSource))
-	b.WriteString(fmt.Sprintf("- Latest: `%s`\n", latestSource))
-	b.WriteString(fmt.Sprintf("- Added paths: %d\n", len(diff.Added)))
-	b.WriteString(fmt.Sprintf("- Removed paths: %d\n\n", len(diff.Removed)))
+	fmt.Fprintf(&b, "- Baseline: `%s`\n", baselineSource)
+	fmt.Fprintf(&b, "- Latest: `%s`\n", latestSource)
+	fmt.Fprintf(&b, "- Added paths: %d\n", len(diff.Added))
+	fmt.Fprintf(&b, "- Removed paths: %d\n\n", len(diff.Removed))
 
 	writePathSection(&b, "Added paths", diff.Added, "No added endpoint paths detected.")
 	writePathSection(&b, "Removed paths", diff.Removed, "No removed endpoint paths detected.")

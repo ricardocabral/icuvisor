@@ -112,10 +112,10 @@
     },
     "threshold_pace": {
       "additionalProperties": false,
-      "description": "Threshold pace with an explicit unit; seconds_per_km is 4:15/km as 255.",
+      "description": "Threshold pace with an explicit pace-duration unit; seconds_per_km is 4:15/km as 255 and seconds_per_mile is 8:00/mi as 480.",
       "properties": {
         "unit": {
-          "description": "Unit for threshold_pace value.",
+          "description": "Pace-duration unit for threshold_pace value.",
           "enum": [
             "seconds_per_km",
             "seconds_per_mile",
@@ -127,7 +127,7 @@
           "type": "string"
         },
         "value": {
-          "description": "Threshold pace numeric value in the provided unit.",
+          "description": "Threshold pace duration in the provided unit, not speed.",
           "exclusiveMinimum": 0,
           "type": "number"
         }
@@ -144,7 +144,7 @@
         "additionalProperties": false,
         "properties": {
           "boundaries": {
-            "description": "Ordered zone boundary values: watts for power, bpm for hr, seconds in the sport pace unit for pace.",
+            "description": "Ordered zone boundary values: watts for power, bpm for hr, and pace durations in seconds per sport pace distance for pace (for example seconds_per_km or seconds_per_mile), not speed.",
             "items": {
               "minimum": 0,
               "type": "number"
