@@ -82,3 +82,32 @@ func TestUpdateSportSettingsFullModeAppliesZonesAndResponseMeta(t *testing.T) {
 		t.Fatalf("units = %#v, want unit metadata", units)
 	}
 }
+
+func TestUpdateSportSettingsFullModeRoundTripsRunPaceZones(t *testing.T) {
+	client := newFakeSportSettingsClient(intervals.SportSettings{ID: 8, Type: "Run", Types: []string{"Run"}, PaceUnits: "MINS_MILE"})
+	client.setting = intervals.SportSettings{ID: 8, Type: "Run", PaceUnits: "MINS_MILE", PaceZones: []float64{480, 420}, PaceZoneNames: []string{"Aerobic", "Threshold"}}
+	tool := newUpdateSportSettingsTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeFull), responseShaping{deleteMode: safety.ModeFull, toolset: safety.ToolsetCore})
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"sport":"Run","effective_date":"2026-05-01","zones":[{"kind":"pace","boundaries":[480,420],"names":["Aerobic","Threshold"]}]}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 || !client.calls[0].ZonesProvided || len(client.calls[0].Zones) != 1 {
+		t.Fatalf("write calls = %#v, want one gated pace-zone overwrite", client.calls)
+	}
+	zone := client.calls[0].Zones[0]
+	if zone.Kind != "pace" || len(zone.Boundaries) != 2 || zone.Boundaries[0] != 480 || zone.Boundaries[1] != 420 || len(zone.Names) != 2 || zone.Names[0] != "Aerobic" || zone.Names[1] != "Threshold" {
+		t.Fatalf("pace zone call = %#v, want boundary/name round trip", zone)
+	}
+	payload := resultMap(t, result)
+	settings := payload["sport_settings"].(map[string]any)
+	zones := settings["zones"].([]any)
+	echo := zones[0].(map[string]any)
+	if echo["kind"] != "pace" || echo["boundaries"].([]any)[0] != 480.0 || echo["names"].([]any)[1] != "Threshold" || settings["zone_definitions_overwritten"] != true {
+		t.Fatalf("settings = %#v, want pace-zone boundary/name echo", settings)
+	}
+	meta := payload["_meta"].(map[string]any)
+	if meta["delete_mode"] != "full" || meta["zones_provided"] != true {
+		t.Fatalf("meta = %#v, want full-mode zone metadata", meta)
+	}
+}

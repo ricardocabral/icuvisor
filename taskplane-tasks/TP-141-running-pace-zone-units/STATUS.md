@@ -1,10 +1,10 @@
 # TP-141: Running pace-zone unit and label audit — Status
 
-**Current Step:** Step 2: Add pace-zone regressions and wording fixes
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 
@@ -32,17 +32,17 @@
 ---
 
 ### Step 2: Add pace-zone regressions and wording fixes
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Add missing tests for Run threshold pace conversion and pace zone boundary/name round trips.
-- [ ] Update schema descriptions or response labels if they could be misread as speed rather than pace seconds per distance.
-- [ ] Ensure zone overwrite behavior remains gated by `ICUVISOR_DELETE_MODE=full` where applicable.
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/units`.
+- [x] Add missing tests for Run threshold pace conversion and pace zone boundary/name round trips.
+- [x] Update schema descriptions or response labels if they could be misread as speed rather than pace seconds per distance.
+- [x] Ensure zone overwrite behavior remains gated by `ICUVISOR_DELETE_MODE=full` where applicable.
+- [x] Run targeted tests: `go test ./internal/tools ./internal/units`.
 
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Run FULL test suite: `make test`
 - [ ] Run lint: `make lint`
@@ -83,4 +83,7 @@
 | 2026-06-03 16:52 | Step 1 started | Audit run pace read/write coverage |
 | 2026-06-03 16:52 | Step 1 complete | Audit found missing seconds_per_mile input and pace-zone round-trip regressions; targeted tests passed. |
 | 2026-06-03 16:52 | Step 2 started | Add pace-zone regressions and wording fixes |
+| 2026-06-03 16:52 | Step 2 complete | Added seconds_per_mile threshold pace and Run pace-zone round-trip regressions; tightened pace-duration schema wording; targeted tests passed. |
+| 2026-06-03 16:52 | Step 3 started | Testing & Verification |
 | 2026-06-03 16:54 | Review R001 | plan Step 1: APPROVE |
+| 2026-06-03 16:57 | Review R002 | plan Step 2: APPROVE |
