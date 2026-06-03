@@ -1,10 +1,10 @@
 # TP-149: OpenAPI endpoint-diff triage automation — Status
 
-**Current Step:** Step 1: Design endpoint-diff triage workflow
+**Current Step:** Step 2: Implement OpenAPI diff tooling
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Design endpoint-diff triage workflow
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Inspect existing scripts/workflows and decide whether to add a standalone script, scheduled workflow, or documented manual command
 - [x] Ensure normal tests do not hit the network; any live fetch must be opt-in or confined to CI schedule/manual workflow
@@ -65,6 +65,8 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| 1 | plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
+| 2 | plan | 1 | APPROVE | inline |
 
 ---
 
@@ -78,3 +80,4 @@
 | 2026-06-03 16:11 | Step 0 started | Preflight |
 | 2026-06-03 | R001 plan review | Requested testable layout instead of logic only in a root build-ignored script; revised plan to `scripts/openapidiff/` normal package/command. |
 | 2026-06-03 16:14 | Review R001 | plan Step 1: REVISE |
+| 2026-06-03 16:15 | Review R002 | plan Step 1: APPROVE |
