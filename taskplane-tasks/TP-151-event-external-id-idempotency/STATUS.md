@@ -1,10 +1,10 @@
 # TP-151: Event external_id idempotency — Status
 
-**Current Step:** Step 2: Implement event write/read support
+**Current Step:** Step 3: Make apply_training_plan retry-safer
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 3
 **Size:** M
 
@@ -44,9 +44,13 @@
 ---
 
 ### Step 3: Make apply_training_plan retry-safer
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Stable plan event external IDs generated
+- [ ] Deterministic external-ID helper contract pinned with canonical tuple serialization and digest-length tests
+- [ ] Plan ID/start date/workout ID/relative day/event date tuple threaded into event creation
+- [ ] Existing matching external_id conflicts are protected before replace_existing deletes same-day workouts
+- [ ] Dry-run proposed events expose hashed non-leaking external_id
 - [ ] Repeated apply payload stability tests added
 - [ ] Dry-run metadata reviewed for safety/usefulness
 - [ ] Targeted tests passing
@@ -92,6 +96,7 @@
 | R003 | Code | Step 1 | APPROVE | `.reviews/R003-code-step1.md` |
 | R004 | Plan | Step 2 | APPROVE | `.reviews/R004-plan-step2.md` |
 | R005 | Code | Step 2 | APPROVE | `.reviews/R005-code-step2.md` |
+| R006 | Plan | Step 3 | REVISE | `.reviews/R006-plan-step3.md` |
 
 ---
 
@@ -118,6 +123,7 @@
 | 2026-06-03 21:38 | Worker iter 1 | done in 644s, tools: 61 |
 | 2026-06-03 21:39 | Worker iter 2 | done in 66s, tools: 18 |
 | 2026-06-03 | Step 2 reviewed | R005 code APPROVE |
+| 2026-06-03 | Step 3 started | Make apply_training_plan retry-safer |
 
 ---
 
@@ -137,6 +143,7 @@
 - Create preflight remains conservative. For creates with `external_id`, a same-day event with the same `external_id` is treated as an idempotent duplicate even if other writable fields drift; the response should skip creating another event and identify the existing event. Differing or missing `external_id` does not disable the existing exact writable-field duplicate check. Cross-day external-id lookups are not added because the list API is date-windowed and `apply_training_plan` IDs include the event date. Dry-run/proposed plan rows will show the hashed `external_id` for review; raw plan/workout IDs are not embedded in the key.
 - R002 non-blocking implementation notes: pin hash input serialization/digest length in code/tests; include duplicate warning/existing event ID when external-ID preflight skips a drifted body; keep dry-run external_id exposure explicit in tests.
 - R004 Step 2 plan notes: preserve trim/omit/no-clear semantics; test POST bulk-array and PUT single-object body shapes; make external-ID preflight behavior explicit; cover terse row omission/exposure; update add_or_update_event description away from “no idempotency key” wording.
+- R006 Step 3 plan revision: protect matching external_id conflicts before replace_existing deletes same-day workouts; pin canonical hash tuple serialization/digest length; expose hashed proposed external_id in dry-run without raw plan/workout IDs.
 
 *Reserved for execution notes*
 | 2026-06-03 21:30 | Review R001 | plan Step 1: APPROVE |
@@ -144,3 +151,4 @@
 | 2026-06-03 21:35 | Review R003 | code Step 1: APPROVE |
 | 2026-06-03 21:37 | Review R004 | plan Step 2: APPROVE |
 | 2026-06-03 21:45 | Review R005 | code Step 2: APPROVE |
+| 2026-06-03 21:47 | Review R006 | plan Step 3: REVISE |
