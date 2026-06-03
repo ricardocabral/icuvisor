@@ -24,10 +24,10 @@
 ### Step 1: Decide snapshot coverage policy
 **Status:** 🟨 In Progress
 
-- [ ] Live catalog compared to current whitelist
-- [ ] Mode coverage policy decided
-- [ ] Coach-mode injected schema policy decided
-- [ ] Intentional exclusions documented if any
+- [x] Live catalog compared to current whitelist
+- [x] Mode coverage policy decided
+- [x] Coach-mode injected schema policy decided
+- [x] Intentional exclusions documented if any
 
 ---
 
@@ -82,6 +82,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Current schema snapshot whitelist covers 37 of 60 full-mode coach-enabled registered tools; the 23 missing names are analyzer/planning additions, remaining custom/settings/delete helpers, gear helpers, validate_workout, and coach tools. | Step 1 policy input; Step 2 guard must derive coverage from the live full registry rather than a curated subset. | internal/toolchecks/schema_stability.go |
 
 ---
 
@@ -106,3 +107,6 @@
 ## Notes
 
 - Preflight counts: full-mode coach-enabled registry currently registers 60 tools; `schemaCatalogToolNames` and committed `internal/tools/schema_snapshot/*.json` currently contain 37 matching snapshots.
+- Step 1 mode policy: generate and enforce snapshots from the full toolset with full delete/write capability so every public tool that can be registered is covered in a single canonical schema set; safe/core mode filtering is a registration policy and should not shrink schema drift coverage.
+- Step 1 coach policy: enable coach mode during snapshot generation and include coach-only tools (`list_athletes`, `select_athlete`) plus the injected `athlete_id` argument in snapshots. This intentionally snapshots the broadest public schema; solo-mode schemas are subsets and remain protected because removing or changing a baseline property fails stability checks.
+- Step 1 exclusions policy: no registered public MCP tools are intentionally excluded for TP-153. If a future generated schema must be excluded, Step 2 should require an explicit reason and test-enforce that the exclusion is not silent.
