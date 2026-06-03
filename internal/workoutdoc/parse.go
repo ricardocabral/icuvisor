@@ -57,6 +57,9 @@ func parseLines(lines []string, index int, depth int) ([]Step, int, error) {
 			return nil, index, fmt.Errorf("unexpected indentation on workout line %q", strings.TrimSpace(line))
 		}
 		trimmed := strings.TrimSpace(line)
+		if malformedRepeatHeaderRE.MatchString(trimmed) {
+			return nil, index, fmt.Errorf("repeat header must be written as '3x' or '<description> 3x' without a leading dash: %q", trimmed)
+		}
 		if match := repeatLineRE.FindStringSubmatch(trimmed); match != nil {
 			reps, _ := strconv.Atoi(match[2])
 			description := strings.TrimSpace(match[1])

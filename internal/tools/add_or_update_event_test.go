@@ -300,11 +300,11 @@ func TestAddOrUpdateEventCanClearTags(t *testing.T) {
 	}
 }
 
-func TestAddOrUpdateEventSerializesWorkoutDocGoldenFixture(t *testing.T) {
+func TestAddOrUpdateEventSerializesRepeatWorkoutDocGoldenFixture(t *testing.T) {
 	t.Parallel()
 
-	structured := readWorkoutDocFixture(t, "01-steady-power-cadence-structured.json")
-	wantDSL := strings.TrimRight(readTextFixture(t, "01-steady-power-cadence-dsl.txt"), "\n")
+	structured := readWorkoutDocFixture(t, "02-repeat-recovery-structured.json")
+	wantDSL := strings.TrimRight(readTextFixture(t, "02-repeat-recovery-dsl.txt"), "\n")
 	client := &fakeEventWriterClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
 		event:             decodeToolEvents(t, `{"id":"evt-3","category":"WORKOUT","name":"Golden","start_date_local":"2026-08-01","workout_doc":{"steps":[{"duration":600}]}}`)[0],
@@ -326,6 +326,10 @@ func TestAddOrUpdateEventSerializesWorkoutDocGoldenFixture(t *testing.T) {
 	call := client.calls[0]
 	if call.Description == nil || *call.Description != wantDSL {
 		t.Fatalf("Description = %#v, want golden DSL %q", call.Description, wantDSL)
+	}
+	firstLine, _, _ := strings.Cut(*call.Description, "\n")
+	if firstLine != "Main Set 3x" || strings.HasPrefix(firstLine, "-") {
+		t.Fatalf("repeat header = %q, want canonical header without leading dash", firstLine)
 	}
 	out := resultMap(t, result)
 	meta := out["_meta"].(map[string]any)

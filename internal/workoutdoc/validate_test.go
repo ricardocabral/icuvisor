@@ -63,6 +63,27 @@ func TestValidateDescriptionMalformedStepLine(t *testing.T) {
 	}
 }
 
+func TestValidateDescriptionMalformedRepeatHeaders(t *testing.T) {
+	t.Parallel()
+
+	for _, input := range []string{"-3 x\n  - 1m RPE 2", "- 3x\n  - 1m RPE 2"} {
+		t.Run(input, func(t *testing.T) {
+			t.Parallel()
+
+			got := ValidateDescription(input)
+			if got.StructuredStepLines == 0 {
+				t.Fatalf("StructuredStepLines = 0, want malformed repeat-like line treated as structured")
+			}
+			if len(got.Errors) == 0 {
+				t.Fatal("expected PARSE_ERROR, got none")
+			}
+			if got.Errors[0].Code != "PARSE_ERROR" {
+				t.Fatalf("Error code = %q, want PARSE_ERROR", got.Errors[0].Code)
+			}
+		})
+	}
+}
+
 func TestValidateDescriptionMultipleStepBlocksReported(t *testing.T) {
 	t.Parallel()
 	got := ValidateDescription("- 10m 60%\nProse interlude.\n- 20m 70%")

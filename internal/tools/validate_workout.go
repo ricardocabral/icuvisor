@@ -12,7 +12,7 @@ import (
 
 const (
 	validateWorkoutName                    = "validate_workout"
-	validateWorkoutDescription             = "Validate an intervals.icu workout description, a structured workout_doc, or both, and return the canonical merged DSL plus estimated duration that icuvisor would submit on a write. Use as a read-only preflight when DSL syntax or structured workout changes are uncertain, then use the canonical DSL and stats to preview total duration, key steps, target intensities, and load/distance/time changes before a write. Read-only and athlete-independent; never hits the network and never rejects prose. Only malformed structured-step lines (lines starting with '- ' or a 'Nx' repeat header) surface as PARSE_ERROR. Free-text headers, comments, and notes pass through verbatim. Syntax reference: icuvisor://workout-syntax."
+	validateWorkoutDescription             = "Validate an intervals.icu workout description, a structured workout_doc, or both, and return the canonical merged DSL plus estimated duration that icuvisor would submit on a write. Use as a read-only preflight when DSL syntax or structured workout changes are uncertain, then use the canonical DSL and stats to preview total duration, key steps, target intensities, and load/distance/time changes before a write. Read-only and athlete-independent; never hits the network and never rejects prose. Only malformed structured-step lines (lines starting with '- ', a 'Nx' repeat header, or dashed repeat-like text such as '-3 x') surface as PARSE_ERROR. Free-text headers, comments, and notes pass through verbatim. Syntax reference: icuvisor://workout-syntax."
 	invalidValidateWorkoutArgumentsMessage = "invalid validate_workout arguments; provide at least one of description (string) or workout_doc (object with steps[])"
 )
 
@@ -211,7 +211,7 @@ func validateWorkoutInputSchema() map[string]any {
 		"properties": map[string]any{
 			"description": map[string]any{
 				"type":        "string",
-				"description": "Optional free-text intervals.icu description. Prose, headers, comments, and any line the DSL parser does not recognize as a structured step pass through verbatim. Embed the sentinel '" + workoutdoc.StepsSentinel + "' on its own line to control where structured steps from workout_doc are inserted in the merged canonical DSL. Structured-step lines start with '- ' or are 'Nx' repeat headers — those are validated; malformed ones surface as PARSE_ERROR. Syntax reference: icuvisor://workout-syntax.",
+				"description": "Optional free-text intervals.icu description. Prose, headers, comments, and any line the DSL parser does not recognize as a structured step pass through verbatim. Embed the sentinel '" + workoutdoc.StepsSentinel + "' on its own line to control where structured steps from workout_doc are inserted in the merged canonical DSL. Structured-step lines start with '- ' or are 'Nx' repeat headers; dashed repeat-like lines such as '-3 x' are also validated so malformed repeat syntax surfaces as PARSE_ERROR. Syntax reference: icuvisor://workout-syntax.",
 			},
 			"workout_doc": map[string]any{
 				"type":        "object",

@@ -45,11 +45,16 @@ type ValidationResult struct {
 
 // repeatHeaderRE matches a "Nx" repeat header, optionally prefixed by a
 // description like "Main set 3x". Mirrors the parser's repeatLineRE.
-var repeatHeaderRE = regexp.MustCompile(`^(?:.*?\S\s+)?[1-9][0-9]*x$`)
+var (
+	repeatHeaderRE          = regexp.MustCompile(`^(?:.*?\S\s+)?[1-9][0-9]*x$`)
+	malformedRepeatHeaderRE = regexp.MustCompile(`^-\s*[1-9][0-9]*\s*x$`)
+)
 
 // IsStructuredStepLine reports whether a single description line would be
 // treated by the intervals.icu DSL parser as a structured-step line (either a
-// "- ..." step or an "Nx" repeat header). Pure prose lines return false.
+// "- ..." step or an "Nx" repeat header). Repeat-looking dashed headers are
+// also treated as structured so validation can reject them instead of passing
+// them through as prose.
 func IsStructuredStepLine(line string) bool {
 	trimmed := strings.TrimSpace(line)
 	if trimmed == "" {
@@ -58,7 +63,7 @@ func IsStructuredStepLine(line string) bool {
 	if strings.HasPrefix(trimmed, "- ") {
 		return true
 	}
-	return repeatHeaderRE.MatchString(trimmed)
+	return repeatHeaderRE.MatchString(trimmed) || malformedRepeatHeaderRE.MatchString(trimmed)
 }
 
 // ValidateDescription scans a free-text intervals.icu description, validates

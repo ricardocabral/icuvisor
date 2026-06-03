@@ -50,6 +50,50 @@ func TestGoldenRoundTripStructuredSerializeParse(t *testing.T) {
 	}
 }
 
+func TestSerializeRepeatHeadersAreCanonical(t *testing.T) {
+	t.Parallel()
+
+	child := []Step{{Duration: 300, Power: targetValue(95, "PERCENT_FTP")}}
+	for _, tc := range []struct {
+		name string
+		step Step
+		want string
+	}{
+		{name: "bare", step: Step{Reps: 3, Steps: child}, want: "3x\n  - 5m 95%"},
+		{name: "described", step: Step{Description: "Main Set", Reps: 3, Steps: child}, want: "Main Set 3x\n  - 5m 95%"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := Serialize(WorkoutDoc{Steps: []Step{tc.step}})
+			if err != nil {
+				t.Fatalf("Serialize() error = %v", err)
+			}
+			if got != tc.want {
+				t.Fatalf("Serialize() = %q, want %q", got, tc.want)
+			}
+			firstLine, _, _ := strings.Cut(got, "\n")
+			if strings.HasPrefix(firstLine, "-") {
+				t.Fatalf("repeat header = %q, want no leading dash", firstLine)
+			}
+		})
+	}
+}
+
+func TestParseRejectsDashedRepeatHeaders(t *testing.T) {
+	t.Parallel()
+
+	for _, input := range []string{"-3 x\n  - 1m RPE 2", "- 3x\n  - 1m RPE 2"} {
+		t.Run(input, func(t *testing.T) {
+			t.Parallel()
+
+			if _, err := Parse(input); err == nil {
+				t.Fatal("Parse() error = nil, want malformed repeat header error")
+			}
+		})
+	}
+}
+
 func TestSerializeTargetUnitSemantics(t *testing.T) {
 	t.Parallel()
 

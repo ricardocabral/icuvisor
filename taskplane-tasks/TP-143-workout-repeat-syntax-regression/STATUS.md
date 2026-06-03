@@ -1,10 +1,10 @@
 # TP-143: Workout repeat header syntax regression — Status
 
-**Current Step:** Step 1: Audit repeat serialization and validation
+**Current Step:** Step 2: Add repeat syntax regressions
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 
@@ -32,12 +32,12 @@
 ---
 
 ### Step 2: Add repeat syntax regressions
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Add tests asserting repeat headers serialize as `3x` or `<description> 3x` without a leading dash.
-- [ ] Add parse/validate coverage rejecting or warning on malformed `-3 x` / `- 3x` style lines when appropriate.
-- [ ] Add at least one write-tool regression showing a repeat workout_doc produces canonical DSL.
-- [ ] Run targeted tests: `go test ./internal/workoutdoc ./internal/tools`.
+- [x] Add tests asserting repeat headers serialize as `3x` or `<description> 3x` without a leading dash.
+- [x] Add parse/validate coverage rejecting or warning on malformed `-3 x` / `- 3x` style lines when appropriate.
+- [x] Add at least one write-tool regression showing a repeat workout_doc produces canonical DSL.
+- [x] Run targeted tests: `go test ./internal/workoutdoc ./internal/tools`.
 
 ---
 
@@ -79,3 +79,4 @@
 | 2026-06-03 16:27 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-03 16:27 | Step 0 started | Preflight |
 | 2026-06-03 16:29 | Review R001 | plan Step 1: APPROVE |
+| 2026-06-03 16:31 | Review R002 | plan Step 2: APPROVE |
