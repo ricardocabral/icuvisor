@@ -17,6 +17,7 @@ type fakeApplyTrainingPlanClient struct {
 	folders     []intervals.WorkoutFolder
 	workouts    []intervals.Workout
 	events      []intervals.Event
+	eventPages  [][]intervals.Event
 	created     []intervals.Event
 	listCalls   []intervals.ListEventsParams
 	writeCalls  []intervals.WriteEventParams
@@ -33,6 +34,10 @@ func (f *fakeApplyTrainingPlanClient) ListLibraryWorkouts(ctx context.Context) (
 
 func (f *fakeApplyTrainingPlanClient) ListEvents(ctx context.Context, params intervals.ListEventsParams) ([]intervals.Event, error) {
 	f.listCalls = append(f.listCalls, params)
+	idx := len(f.listCalls) - 1
+	if idx < len(f.eventPages) {
+		return append([]intervals.Event(nil), f.eventPages[idx]...), nil
+	}
 	return append([]intervals.Event(nil), f.events...), nil
 }
 
@@ -167,6 +172,142 @@ func TestApplyTrainingPlanReplaceExistingRequiresFullAndDeletesBeforeCreate(t *t
 	}
 }
 
+func TestApplyTrainingPlanReplaceExistingProtectsMixedNonWorkoutConflicts(t *testing.T) {
+	t.Parallel()
+
+	client := newApplyTrainingPlanTestClient(t)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1}`)
+	client.events = decodeToolEvents(t,
+		`{"id":"evt-workout","category":"WORKOUT","type":"Ride","name":"Old workout","start_date_local":"2026-06-01T00:00:00"}`,
+		`{"id":"evt-note","category":"NOTE","type":"Note","name":"Travel note","start_date_local":"2026-06-01T00:00:00"}`,
+		`{"id":"evt-race","category":"RACE_A","type":"Ride","name":"A race","start_date_local":"2026-06-01"}`,
+		`{"id":"evt-holiday","category":"HOLIDAY","type":"Unavailable","name":"Out of office","start_date_local":"2026-06-01"}`,
+	)
+	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeFull), responseShaping{deleteMode: safety.ModeFull, toolset: safety.ToolsetCore})
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":false,"conflict_policy":"replace_existing"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.deleteCalls) != 0 || len(client.writeCalls) != 0 {
+		t.Fatalf("deletes=%#v writes=%#v, want mixed protected day untouched", client.deleteCalls, client.writeCalls)
+	}
+	out := resultMap(t, result)
+	meta := out["_meta"].(map[string]any)
+	if meta["created_count"] != float64(0) {
+		t.Fatalf("meta = %#v, want no created events", meta)
+	}
+	skipped := meta["skipped"].([]any)
+	if len(skipped) != 1 {
+		t.Fatalf("skipped = %#v, want one skipped protected day", skipped)
+	}
+	conflicts := skipped[0].(map[string]any)["conflicts"].([]any)
+	if len(conflicts) != 4 {
+		t.Fatalf("conflicts = %#v, want workout plus three protected conflicts", conflicts)
+	}
+	byID := conflictsByEventID(conflicts)
+	if byID["evt-workout"]["protected"] != false || byID["evt-workout"]["category"] != "WORKOUT" {
+		t.Fatalf("workout conflict = %#v, want replaceable WORKOUT detail", byID["evt-workout"])
+	}
+	for _, id := range []string{"evt-note", "evt-race", "evt-holiday"} {
+		conflict := byID[id]
+		if conflict["protected"] != true || conflict["date"] != "2026-06-01" || conflict["category"] == "" || conflict["name"] == "" || conflict["type"] == "" {
+			t.Fatalf("conflict %s = %#v, want protected category/type/name/date details", id, conflict)
+		}
+	}
+}
+
+func TestApplyTrainingPlanRepeatedApplyReportsExactDuplicateAndProtectedRows(t *testing.T) {
+	t.Parallel()
+
+	client := newApplyTrainingPlanTestClient(t)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-repeat","name":"Tempo","type":"Ride","folder_id":"plan-1","day":1,"description":"Tempo prescription","tags":["tempo"],"indoor":true,"icu_training_load":75,"moving_time":3600}`)
+	client.events = decodeToolEvents(t,
+		`{"id":"evt-repeat","category":"WORKOUT","type":"Ride","name":"Tempo","start_date_local":"2026-06-01T00:00:00","description":"Tempo prescription","tags":["tempo"],"indoor":true,"load_target":75,"time_target":3600}`,
+		`{"id":"evt-note","category":"NOTE","type":"Note","name":"Do not delete","start_date_local":"2026-06-01T00:00:00"}`,
+	)
+	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":false,"conflict_policy":"skip_existing"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.writeCalls) != 0 {
+		t.Fatalf("write calls = %#v, want exact duplicate plus protected row skipped", client.writeCalls)
+	}
+	out := resultMap(t, result)
+	skipped := out["_meta"].(map[string]any)["skipped"].([]any)
+	conflicts := skipped[0].(map[string]any)["conflicts"].([]any)
+	if len(conflicts) != 2 {
+		t.Fatalf("conflicts = %#v, want exact duplicate and note", conflicts)
+	}
+	byID := conflictsByEventID(conflicts)
+	if byID["evt-repeat"]["reason"] != "duplicate_existing_event" || byID["evt-repeat"]["protected"] != true {
+		t.Fatalf("duplicate conflict = %#v, want protected duplicate", byID["evt-repeat"])
+	}
+	if byID["evt-note"]["category"] != "NOTE" || byID["evt-note"]["protected"] != true {
+		t.Fatalf("note conflict = %#v, want protected NOTE", byID["evt-note"])
+	}
+}
+
+func TestApplyTrainingPlanReplaceExistingProtectsRepreflightOnlyConflicts(t *testing.T) {
+	t.Parallel()
+
+	client := newApplyTrainingPlanTestClient(t)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1}`)
+	client.eventPages = [][]intervals.Event{
+		{},
+		decodeToolEvents(t, `{"id":"evt-sick","category":"SICK","type":"Unavailable","name":"Sick","start_date_local":"2026-06-01"}`),
+	}
+	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeFull), responseShaping{deleteMode: safety.ModeFull, toolset: safety.ToolsetCore})
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":false,"conflict_policy":"replace_existing"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.listCalls) != 2 {
+		t.Fatalf("ListEvents calls = %#v, want initial range and per-day re-preflight", client.listCalls)
+	}
+	if len(client.deleteCalls) != 0 || len(client.writeCalls) != 0 {
+		t.Fatalf("deletes=%#v writes=%#v, want re-preflight protected conflict untouched", client.deleteCalls, client.writeCalls)
+	}
+	conflicts := resultMap(t, result)["_meta"].(map[string]any)["skipped"].([]any)[0].(map[string]any)["conflicts"].([]any)
+	if conflict := conflicts[0].(map[string]any); conflict["category"] != "SICK" || conflict["protected"] != true {
+		t.Fatalf("conflict = %#v, want protected SICK conflict", conflict)
+	}
+}
+
+func TestApplyTrainingPlanConflictsProtectRawAndMissingCategories(t *testing.T) {
+	t.Parallel()
+
+	client := newApplyTrainingPlanTestClient(t)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1}`)
+	client.events = []intervals.Event{
+		{ID: "evt-raw-note", Raw: map[string]any{"category": "NOTE", "type": "Note", "name": "Raw note", "start_date_local": "2026-06-01T00:00:00"}},
+		{ID: "evt-missing-category", Name: ptrString("Mystery"), Type: ptrString("Other"), StartDateLocal: ptrString("2026-06-01T00:00:00"), Raw: map[string]any{}},
+	}
+	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeFull), responseShaping{deleteMode: safety.ModeFull, toolset: safety.ToolsetCore})
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":false,"conflict_policy":"replace_existing"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.deleteCalls) != 0 || len(client.writeCalls) != 0 {
+		t.Fatalf("deletes=%#v writes=%#v, want raw/missing category conflicts protected", client.deleteCalls, client.writeCalls)
+	}
+	conflicts := resultMap(t, result)["_meta"].(map[string]any)["skipped"].([]any)[0].(map[string]any)["conflicts"].([]any)
+	byID := conflictsByEventID(conflicts)
+	if byID["evt-raw-note"]["category"] != "NOTE" || byID["evt-raw-note"]["protected"] != true {
+		t.Fatalf("raw note conflict = %#v, want raw category fallback", byID["evt-raw-note"])
+	}
+	if _, ok := byID["evt-missing-category"]["category"]; ok {
+		t.Fatalf("missing category conflict = %#v, want category omitted", byID["evt-missing-category"])
+	}
+	if byID["evt-missing-category"]["protected"] != true {
+		t.Fatalf("missing category conflict = %#v, want protected", byID["evt-missing-category"])
+	}
+}
+
 func TestApplyTrainingPlanRepeatedApplySkipsExactExistingPlanEvents(t *testing.T) {
 	t.Parallel()
 
@@ -263,6 +404,17 @@ func TestApplyTrainingPlanRegistrationMetadata(t *testing.T) {
 	if !reflect.DeepEqual(enum, []string{applyTrainingPlanConflictSkip}) {
 		t.Fatalf("safe conflict enum = %#v, want skip_existing only", enum)
 	}
+}
+
+func conflictsByEventID(conflicts []any) map[string]map[string]any {
+	byID := map[string]map[string]any{}
+	for _, raw := range conflicts {
+		conflict := raw.(map[string]any)
+		if eventID, ok := conflict["event_id"].(string); ok {
+			byID[eventID] = conflict
+		}
+	}
+	return byID
 }
 
 func newApplyTrainingPlanTestClient(t *testing.T) *fakeApplyTrainingPlanClient {

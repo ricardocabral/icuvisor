@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `apply_training_plan` now protects races, notes, holidays, sick/injured blocks, and unknown non-workout calendar items during `replace_existing`, reporting conflict category/type/name/date details instead of deleting protected days.
 - `add_or_update_event` and `apply_training_plan` now preflight same-day calendar events, skip exact duplicate creates, and surface same-day conflict warnings/metadata to reduce duplicate workouts during retries.
 
 ### Changed

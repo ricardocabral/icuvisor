@@ -3,7 +3,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -33,15 +33,15 @@
 ### Step 2: Add protected-conflict behavior and tests
 **Status:** 🟨 In Progress
 
-- [ ] Extend conflict output to include enough category/type/name information for LLMs to explain why a day was skipped.
-- [ ] Ensure `replace_existing` deletes only intended workout conflicts; protected NOTE, RACE, and UNAVAILABLE-like events are skipped/reported unless a clearly named server-side policy is added.
-- [ ] Add tests for mixed calendar days containing a workout plus NOTE/race/unavailable event.
-- [ ] R004: Implement the protected-day decision so `replace_existing` skips/reports any day with a protected conflict and only deletes pure replaceable WORKOUT conflicts.
-- [ ] R004: Apply the same classification to initial range preflight and non-dry-run per-day re-preflight before create.
-- [ ] R004: Ensure exact workout duplicates do not hide other same-day protected rows, preferably with apply-plan-specific conflict building/partitioning.
-- [ ] R004: Add concrete tests for mixed protected days, pure workout replacement, exact duplicate plus protected row, re-preflight-only protected conflict, conflict detail fields, raw-category fallback, and missing-category protection.
-- [ ] R004: Update output schema/description and CHANGELOG coverage for the user-visible conflict contract.
-- [ ] Run targeted tests: `go test ./internal/tools`.
+- [x] Extend conflict output to include enough category/type/name information for LLMs to explain why a day was skipped.
+- [x] Ensure `replace_existing` deletes only intended workout conflicts; protected NOTE, RACE, and UNAVAILABLE-like events are skipped/reported unless a clearly named server-side policy is added.
+- [x] Add tests for mixed calendar days containing a workout plus NOTE/race/unavailable event.
+- [x] R004: Implement the protected-day decision so `replace_existing` skips/reports any day with a protected conflict and only deletes pure replaceable WORKOUT conflicts.
+- [x] R004: Apply the same classification to initial range preflight and non-dry-run per-day re-preflight before create.
+- [x] R004: Ensure exact workout duplicates do not hide other same-day protected rows, preferably with apply-plan-specific conflict building/partitioning.
+- [x] R004: Add concrete tests for mixed protected days, pure workout replacement, exact duplicate plus protected row, re-preflight-only protected conflict, conflict detail fields, raw-category fallback, and missing-category protection.
+- [x] R004: Update output schema/description and CHANGELOG coverage for the user-visible conflict contract.
+- [x] Run targeted tests: `go test ./internal/tools`.
 
 ---
 
@@ -90,5 +90,7 @@
 | 2026-06-03 17:16 | Review R002 | code Step 1: REVISE | Missing exact conflict-flow details and concrete protected taxonomy; revision checkboxes added. |
 | 2026-06-03 17:18 | Review R003 | code Step 1: APPROVE | Conflict-flow and taxonomy clarifications approved. |
 | 2026-06-03 17:19 | Review R004 | plan Step 2: REVISE | Expanded Step 2 plan for protected-day decisions, both preflight paths, duplicate short-circuit, concrete tests, and docs. |
+| 2026-06-03 17:20 | Review R005 | plan Step 2: APPROVE | Expanded Step 2 plan approved. |
 | 2026-06-03 17:18 | Review R003 | code Step 1: APPROVE |
 | 2026-06-03 17:20 | Review R004 | plan Step 2: UNKNOWN |
+| 2026-06-03 17:21 | Review R005 | plan Step 2: APPROVE |
