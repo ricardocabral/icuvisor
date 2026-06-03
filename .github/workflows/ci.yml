@@ -87,8 +87,8 @@ jobs:
         run: |
           set -euo pipefail
           make docs-tools
-          if ! git diff --exit-code -- web/data/tools.json; then
-            echo "web/data/tools.json is stale. Run 'make docs-tools' and commit the result."
+          if ! git diff --exit-code -- web/data/tools.json web/data/tool_schemas.json; then
+            echo "web/data/tools.json or web/data/tool_schemas.json is stale. Run 'make docs-tools' and commit the result."
             exit 1
           fi
 
