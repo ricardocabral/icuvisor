@@ -1,10 +1,10 @@
 # TP-141: Running pace-zone unit and label audit — Status
 
-**Current Step:** Step 1: Audit run pace read/write coverage
+**Current Step:** Step 2: Add pace-zone regressions and wording fixes
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -22,17 +22,17 @@
 ---
 
 ### Step 1: Audit run pace read/write coverage
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Inspect athlete-profile and sport-settings tests for threshold pace, pace units, and pace-zone names.
-- [ ] Confirm tests cover both `seconds_per_km` and `seconds_per_mile` inputs and upstream pace unit output.
-- [ ] Record any ambiguous LLM-facing wording or missing scale/unit metadata in STATUS.md.
-- [ ] Run targeted tests: `go test ./internal/tools ./internal/units`.
+- [x] Inspect athlete-profile and sport-settings tests for threshold pace, pace units, and pace-zone names.
+- [x] Confirm tests cover both `seconds_per_km` and `seconds_per_mile` inputs and upstream pace unit output.
+- [x] Record any ambiguous LLM-facing wording or missing scale/unit metadata in STATUS.md.
+- [x] Run targeted tests: `go test ./internal/tools ./internal/units`.
 
 ---
 
 ### Step 2: Add pace-zone regressions and wording fixes
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Add missing tests for Run threshold pace conversion and pace zone boundary/name round trips.
 - [ ] Update schema descriptions or response labels if they could be misread as speed rather than pace seconds per distance.
@@ -64,6 +64,8 @@
 
 | Date | Step | Finding | Impact |
 |------|------|---------|--------|
+| 2026-06-03 | Step 1 | Existing read tests cover MINS_KM and MINS_MILE output shaping, and write schema exposes seconds_per_km/seconds_per_mile, but update_sport_settings has a regression only for seconds_per_km input conversion. | Step 2 should add a seconds_per_mile input conversion regression. |
+| 2026-06-03 | Step 1 | Response field names and athlete profile _meta.pace_convention are clear that pace values are seconds per distance; update_sport_settings zone boundary schema says "seconds in the sport pace unit" but does not explicitly say "not speed" or name seconds_per_km/seconds_per_mile examples. | Step 2 should tighten LLM-facing wording for pace-zone boundaries if changed tests touch schema wording. |
 
 ## Blockers
 
@@ -79,3 +81,6 @@
 | 2026-06-03 16:52 | Step 0 started | Preflight |
 | 2026-06-03 16:52 | Step 0 complete | Preflight passed: required files exist; go list succeeded for target packages; clean-room constraint acknowledged. |
 | 2026-06-03 16:52 | Step 1 started | Audit run pace read/write coverage |
+| 2026-06-03 16:52 | Step 1 complete | Audit found missing seconds_per_mile input and pace-zone round-trip regressions; targeted tests passed. |
+| 2026-06-03 16:52 | Step 2 started | Add pace-zone regressions and wording fixes |
+| 2026-06-03 16:54 | Review R001 | plan Step 1: APPROVE |
