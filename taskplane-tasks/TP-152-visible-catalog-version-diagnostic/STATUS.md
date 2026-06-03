@@ -1,7 +1,7 @@
 # TP-152: Visible catalog/version diagnostic tool — Status
 
-**Current Step:** Step 4: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 5: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-03
 **Review Level:** 2
 **Review Counter:** 11
@@ -73,12 +73,12 @@
 ---
 
 ### Step 5: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Client-specific caveats noted
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Client-specific caveats noted
 
 ---
 
@@ -104,6 +104,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| No out-of-scope discoveries. | n/a | n/a |
 
 ---
 
@@ -149,6 +150,11 @@
 - Update `web/content/guides/troubleshooting.md` stale-catalog steps with exact field comparisons: visible `description_server_version`, `description_catalog_fingerprint`, `description_toolset`, and `description_delete_mode` versus response `server_version`, `description_catalog_fingerprint`, `toolset`, and `delete_mode`; do not compare `description_catalog_fingerprint` with live `catalog_hash`.
 - Document actions clearly: reconnect/reload MCP tools when visible description fields differ from the diagnostic response, and start a new conversation when `_meta.schema_changed` is visible or stale schemas/context persist after reconnecting.
 - Add a `[Unreleased]` changelog entry under `Added` for the local, read-only diagnostic and verify wording avoids telemetry, cloud checks, credential upload, filesystem inspection, intervals.icu API calls, athlete-data exposure, or claims that the server automatically detects stale client state.
+
+### Step 5 delivery notes
+- Checked `web/content/reference/tools.md`: it is a generated catalog shortcode wrapper; no prose change needed because `web/data/tools.json` now carries the new meta tool.
+- Checked `README.md`: existing user guidance points readers to the website for the tool catalog and stale-catalog troubleshooting; no top-level diagnostic mention needed.
+- Client caveat documented generically: some MCP clients hide `_meta` and use different reconnect/reload labels, so docs recommend `icuvisor_check_server_version` as the visible-description fallback after reconnecting.
 | 2026-06-03 23:02 | Review R001 | plan Step 1: REVISE |
 | 2026-06-03 23:06 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-03 23:07 | Review R003 | code Step 1: APPROVE |
