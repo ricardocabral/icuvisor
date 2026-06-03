@@ -1,6 +1,6 @@
 # TP-144: VirtualRide activity regression coverage — Status
 
-**Current Step:** Step 1: Add VirtualRide activity regression coverage
+**Current Step:** Step 99: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 0
@@ -22,17 +22,17 @@
 ---
 
 ### Step 1: Add VirtualRide activity regression coverage
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Add or update a get_activities fixture/test containing an upstream activity with `type: "VirtualRide"`
-- [ ] Assert terse shaping preserves `sport`/type as VirtualRide and does not collapse it to Ride
-- [ ] Assert the row remains present under the current default filters
-- [ ] Run targeted tests: `go test ./internal/tools -run 'TestGetActivities|VirtualRide'`
+- [x] Add or update a get_activities fixture/test containing an upstream activity with `type: "VirtualRide"`
+- [x] Assert terse shaping preserves `sport`/type as VirtualRide and does not collapse it to Ride
+- [x] Assert the row remains present under the current default filters
+- [x] Run targeted tests: `go test ./internal/tools -run 'TestGetActivities|VirtualRide'`
 
 ---
 
 ### Step 99: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Targeted tests passing
 - [ ] FULL test suite passing
