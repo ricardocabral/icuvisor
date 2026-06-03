@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 11
+**Review Counter:** 12
 **Iteration:** 4
 **Size:** M
 
@@ -62,11 +62,11 @@
 
 - [x] Schema snapshots regenerated
 - [x] Tool-routing expectations updated if affected
-- [ ] Build-workouts documents optional manual external_id usage, stable non-provider namespaces, no secrets, blank ignored/no-clear behavior, and best-effort retry caveats
-- [ ] Season-and-block-plan documents deterministic apply_training_plan external IDs, retry review visibility, and same-day/upstream caveats
-- [ ] Schema snapshot expectation recorded: only add_or_update_event input schema changes; apply_training_plan snapshot is unchanged because its input schema did not change
-- [ ] CHANGELOG updated under [Unreleased] with add_or_update_event.external_id and deterministic apply_training_plan external IDs
-- [ ] User docs updated if affected
+- [x] Build-workouts documents optional manual external_id usage, stable non-provider namespaces, no secrets, blank ignored/no-clear behavior, and best-effort retry caveats
+- [x] Season-and-block-plan documents deterministic apply_training_plan external IDs, retry review visibility, and same-day/upstream caveats
+- [x] Schema snapshot expectation recorded: only add_or_update_event input schema changes; apply_training_plan snapshot is unchanged because its input schema did not change
+- [x] CHANGELOG updated under [Unreleased] with add_or_update_event.external_id and deterministic apply_training_plan external IDs
+- [x] User docs updated if affected
 
 ---
 
@@ -104,6 +104,7 @@
 | R008 | Code | Step 3 | UNAVAILABLE | _(reviewer produced no file)_ |
 | R009 | Code | Step 3 | UNAVAILABLE | _(reviewer produced no file)_ |
 | R011 | Plan | Step 4 | REVISE | `.reviews/R011-plan-step4.md` |
+| R012 | Plan | Step 4 | APPROVE | `.reviews/R012-plan-step4.md` |
 
 ---
 
@@ -113,6 +114,7 @@
 |-----------|-------------|----------|
 | Current event write path has no typed `external_id`: `WriteEventParams`/`writeEventPayload` omit it; `add_or_update_event` request/schema omit it; event reads preserve raw payloads but terse rows do not expose `external_id`; `apply_training_plan` creates events without idempotency keys and relies on same-day duplicate matching. | Drives Step 1 contract and Step 2/3 implementation. | `internal/intervals/events.go`, `internal/tools/add_or_update_event.go`, `internal/tools/get_events.go`, `internal/tools/apply_training_plan.go` |
 | Upstream acceptance/clear semantics for event `external_id` are not live-probed in this task; treat it as a best-effort idempotency key, keep same-day duplicate preflight, avoid clear/null semantics, and document retry caveats. | Conservative implementation and docs caveat. | Step 1 design |
+| Schema regeneration changes only `add_or_update_event.json`; `apply_training_plan.json` is unchanged because deterministic external IDs are output/proposed-event behavior and do not alter the tool input schema. | Avoids chasing a nonexistent snapshot diff during review. | `internal/tools/schema_snapshot/` |
 
 ---
 
@@ -136,6 +138,7 @@
 | 2026-06-03 | Step 4 started | Refresh schemas, routing, and docs |
 | 2026-06-03 22:52 | Worker iter 3 | done in 4335s, tools: 113 |
 | 2026-06-03 | Review R011 | plan Step 4: REVISE; docs/changelog plan expanded |
+| 2026-06-03 | Review R012 | plan Step 4: APPROVE |
 
 ---
 
@@ -167,3 +170,4 @@
 | 2026-06-03 21:47 | Review R006 | plan Step 3: REVISE |
 | 2026-06-03 21:48 | Review R007 | plan Step 3: APPROVE |
 | 2026-06-03 22:54 | Review R011 | plan Step 4: REVISE |
+| 2026-06-03 22:58 | Review R012 | plan Step 4: APPROVE |

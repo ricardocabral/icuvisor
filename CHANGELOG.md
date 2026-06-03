@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added optional `add_or_update_event.external_id` support for retry-safer calendar writes, including terse event-read audit visibility and conservative blank/no-clear semantics.
+- Added deterministic `icuvisor-plan-v1-...` external IDs for `apply_training_plan` events so repeated applies are safer and matching existing plan events are protected during replacement while preserving same-day/upstream idempotency caveats.
+
 ## [0.1.8] - 2026-06-03
 
 ### Added
