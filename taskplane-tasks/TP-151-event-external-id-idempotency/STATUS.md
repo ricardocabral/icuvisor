@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -24,10 +24,11 @@
 ### Step 1: Design external_id contract
 **Status:** 🟨 In Progress
 
-- [ ] Create/update/omit/clear semantics decided
-- [ ] apply_training_plan deterministic ID strategy decided
-- [ ] Event read-row exposure decided
-- [ ] Upstream uncertainty recorded
+- [x] Create/update/omit/clear semantics decided
+- [x] apply_training_plan deterministic ID strategy decided
+- [x] Event read-row exposure decided
+- [x] Upstream uncertainty recorded
+- [x] Retry/preflight behavior with external_id decided
 
 ---
 
@@ -86,6 +87,8 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | Plan | Step 1 | REVISE (tool returned APPROVE, review file says not approved) | `.reviews/R001-plan-step1.md` |
+| R002 | Plan | Step 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 
 ---
 
@@ -94,6 +97,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | Current event write path has no typed `external_id`: `WriteEventParams`/`writeEventPayload` omit it; `add_or_update_event` request/schema omit it; event reads preserve raw payloads but terse rows do not expose `external_id`; `apply_training_plan` creates events without idempotency keys and relies on same-day duplicate matching. | Drives Step 1 contract and Step 2/3 implementation. | `internal/intervals/events.go`, `internal/tools/add_or_update_event.go`, `internal/tools/get_events.go`, `internal/tools/apply_training_plan.go` |
+| Upstream acceptance/clear semantics for event `external_id` are not live-probed in this task; treat it as a best-effort idempotency key, keep same-day duplicate preflight, avoid clear/null semantics, and document retry caveats. | Conservative implementation and docs caveat. | Step 1 design |
 
 ---
 
@@ -117,4 +121,14 @@
 
 ## Notes
 
+### Step 1 external_id contract
+
+- `add_or_update_event.external_id` is an optional, trimmed non-empty string idempotency key. Creates and updates forward a provided value as upstream `external_id`. Omitting it leaves the payload unchanged; empty/whitespace input is treated as omit. Clearing an existing upstream value is not exposed because upstream clear/null semantics are unproven, and sending empty strings could accidentally create a durable bad key.
+- `apply_training_plan` will generate icuvisor-owned deterministic IDs with prefix `icuvisor-plan-v1-` plus a SHA-256-derived hex digest of `(plan_id, start_date, workout_id, relative_day, event_date)`. The hash avoids leaking raw plan/workout IDs in the upstream key, the prefix avoids known provider-owned prefixes such as `strava-`/`hevy-`, and including the anchor start date prevents collisions when the same library plan is applied to different blocks.
+- Event read rows will expose `external_id` in terse mode when upstream returns it, and full mode will continue to include the raw payload. This is useful audit metadata for idempotent writes, low-token, and already exposed for activities in terse rows.
+- Create preflight remains conservative. For creates with `external_id`, a same-day event with the same `external_id` is treated as an idempotent duplicate even if other writable fields drift; the response should skip creating another event and identify the existing event. Differing or missing `external_id` does not disable the existing exact writable-field duplicate check. Cross-day external-id lookups are not added because the list API is date-windowed and `apply_training_plan` IDs include the event date. Dry-run/proposed plan rows will show the hashed `external_id` for review; raw plan/workout IDs are not embedded in the key.
+- R002 non-blocking implementation notes: pin hash input serialization/digest length in code/tests; include duplicate warning/existing event ID when external-ID preflight skips a drifted body; keep dry-run external_id exposure explicit in tests.
+
 *Reserved for execution notes*
+| 2026-06-03 21:30 | Review R001 | plan Step 1: APPROVE |
+| 2026-06-03 21:33 | Review R002 | plan Step 1: APPROVE |
