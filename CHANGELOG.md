@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added a Codex CLI connection guide covering `codex mcp add`, `config.toml`, safe non-secret environment configuration, and MCP verification.
+
 ## [0.1.7] - 2026-06-01
 
 ### Fixed
