@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added a Codex CLI connection guide covering `codex mcp add`, `config.toml`, safe non-secret environment configuration, and MCP verification.
 
+### Fixed
+
+- Hardened coach-mode athlete routing errors so invalid athlete IDs, unauthorized roster targets, per-athlete ACL denials, and local-mode athlete overrides fail explicitly without accepting credential-like tool parameters.
+
 ## [0.1.7] - 2026-06-01
 
 ### Fixed
