@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 3
 **Size:** M
 
@@ -46,14 +46,14 @@
 ### Step 3: Make apply_training_plan retry-safer
 **Status:** 🟨 In Progress
 
-- [ ] Stable plan event external IDs generated
-- [ ] Deterministic external-ID helper contract pinned with canonical tuple serialization and digest-length tests
-- [ ] Plan ID/start date/workout ID/relative day/event date tuple threaded into event creation
-- [ ] Existing matching external_id conflicts are protected before replace_existing deletes same-day workouts
-- [ ] Dry-run proposed events expose hashed non-leaking external_id
-- [ ] Repeated apply payload stability tests added
-- [ ] Dry-run metadata reviewed for safety/usefulness
-- [ ] Targeted tests passing
+- [x] Stable plan event external IDs generated
+- [x] Deterministic external-ID helper contract pinned with canonical tuple serialization and digest-length tests
+- [x] Plan ID/start date/workout ID/relative day/event date tuple threaded into event creation
+- [x] Existing matching external_id conflicts are protected before replace_existing deletes same-day workouts
+- [x] Dry-run proposed events expose hashed non-leaking external_id
+- [x] Repeated apply payload stability tests added
+- [x] Dry-run metadata reviewed for safety/usefulness
+- [x] Targeted tests passing
 
 ---
 
@@ -97,6 +97,7 @@
 | R004 | Plan | Step 2 | APPROVE | `.reviews/R004-plan-step2.md` |
 | R005 | Code | Step 2 | APPROVE | `.reviews/R005-code-step2.md` |
 | R006 | Plan | Step 3 | REVISE | `.reviews/R006-plan-step3.md` |
+| R007 | Plan | Step 3 | APPROVE | `.reviews/R007-plan-step3.md` |
 
 ---
 
@@ -124,6 +125,7 @@
 | 2026-06-03 21:39 | Worker iter 2 | done in 66s, tools: 18 |
 | 2026-06-03 | Step 2 reviewed | R005 code APPROVE |
 | 2026-06-03 | Step 3 started | Make apply_training_plan retry-safer |
+| 2026-06-03 | Step 3 plan reviewed | R007 plan APPROVE |
 
 ---
 
@@ -152,3 +154,4 @@
 | 2026-06-03 21:37 | Review R004 | plan Step 2: APPROVE |
 | 2026-06-03 21:45 | Review R005 | code Step 2: APPROVE |
 | 2026-06-03 21:47 | Review R006 | plan Step 3: REVISE |
+| 2026-06-03 21:48 | Review R007 | plan Step 3: APPROVE |
