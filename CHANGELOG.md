@@ -20,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Activity read tool descriptions now route lap/rep execution analysis through `get_activity_intervals` and its `_meta.interval_source` / `_meta.auto_lap_suspected` signals, so assistants do not infer structured-workout execution from `get_activity_details` alone.
 - Hardened weekly-review and plan-health prompts so assistants anchor report windows in athlete-local dates, keep post-window wellness out of completed-period evidence, and label current-day `_meta.as_of` data as partial-day context.
-- README positioning now calls out gear-name resolution status and unit-safe output labels for activity fuel, wellness intake, and scale legends.
 - Updated tool-routing smoke fixtures to match current preparatory lookup/date-resolution behavior and clarified advanced-capabilities routing guidance so it does not steal requests from visible tools.
 
 ### Fixed
