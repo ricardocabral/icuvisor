@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 9
 **Iteration:** 3
 **Size:** M
 
@@ -44,7 +44,7 @@
 ---
 
 ### Step 3: Make apply_training_plan retry-safer
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Stable plan event external IDs generated
 - [x] Deterministic external-ID helper contract pinned with canonical tuple serialization and digest-length tests
@@ -98,6 +98,8 @@
 | R005 | Code | Step 2 | APPROVE | `.reviews/R005-code-step2.md` |
 | R006 | Plan | Step 3 | REVISE | `.reviews/R006-plan-step3.md` |
 | R007 | Plan | Step 3 | APPROVE | `.reviews/R007-plan-step3.md` |
+| R008 | Code | Step 3 | UNAVAILABLE | _(reviewer produced no file)_ |
+| R009 | Code | Step 3 | UNAVAILABLE | _(reviewer produced no file)_ |
 
 ---
 
@@ -126,6 +128,7 @@
 | 2026-06-03 | Step 2 reviewed | R005 code APPROVE |
 | 2026-06-03 | Step 3 started | Make apply_training_plan retry-safer |
 | 2026-06-03 | Step 3 plan reviewed | R007 plan APPROVE |
+| 2026-06-03 | Step 3 code review attempted | R008/R009 unavailable; proceeding per review protocol |
 
 ---
 
