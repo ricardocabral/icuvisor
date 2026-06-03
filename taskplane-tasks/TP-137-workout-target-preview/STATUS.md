@@ -1,6 +1,6 @@
 # TP-137: Resolved workout target previews for planned workouts — Status
-**Current Step:** Step 3: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 4: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-03
 **Review Level:** 2
 **Review Counter:** 8
@@ -51,11 +51,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged in STATUS.md
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged in STATUS.md
 
 ---
 
@@ -69,6 +69,7 @@
 | 2026-06-03 | Step 1 | Conversion rules: support numeric scalar/range/ramp bounds for `% FTP` to rounded watts (`ftp * percent / 100`), `% LTHR` to bpm (`lthr * percent / 100`), `% HR`/`% max HR` to bpm (`max_hr * percent / 100`), and threshold pace percent to preferred pace using speed-percent semantics (`target_seconds = threshold_seconds * 100 / percent`, so >100% is faster). Preserve path/repeat context for nested/repeated steps without expanding full raw steps. | Gives explicit formulas and avoids misrepresenting pace percentages. |
 | 2026-06-03 | Step 1 | Omission rules: omit previews for missing/zero thresholds, unmatched sport settings, non-numeric/text targets, RPE/cadence/freeride, absolute watts/bpm/pace values, zones (power/HR/pace zone boundaries are future work to avoid open-ended zone ambiguity), invalid pace units, zero/negative pace percentages, and unrecognized workout_doc structures. | Unsupported targets fail closed with no misleading nulls. |
 | 2026-06-03 | Step 1 | Unsupported target cases verified against workoutdoc syntax: `PERCENT_FTP`, `PERCENT_LTHR`, `PERCENT_HR`/`PERCENT_MAX_HR`, and `PERCENT_THRESHOLD`/pace aliases are the only planned preview inputs; absolute `WATTS`/`BPM`/`PACE`, zones, RPE, cadence, freeride, and text pace labels remain summarized only. `target_previews` is omitted instead of set to null or `[]` whenever all targets omit. | Gives Step 2 a closed list of positive and negative test expectations. |
+| 2026-06-03 | Step 4 | Documentation review: `CHANGELOG.md` updated; `docs/prd/PRD-icuvisor.md` updated because read rows gained `workout_doc_summary.target_previews`; `docs/internal/forum-announcement.md` was listed for conditional review but does not exist in this worktree and the change is not a launch talking point. | Delivery docs cover the user-visible response shape without creating new doc structure. |
 
 ## Blockers
 

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added compact `workout_doc_summary.target_previews` on planned workout/event rows, resolving supported `% FTP`, `% LTHR`/`% HR`, and threshold-pace targets from existing athlete sport settings without exposing raw workout docs by default.
 - Added a Codex CLI connection guide covering `codex mcp add`, `config.toml`, safe non-secret environment configuration, and MCP verification.
 
 ## [0.1.7] - 2026-06-01
