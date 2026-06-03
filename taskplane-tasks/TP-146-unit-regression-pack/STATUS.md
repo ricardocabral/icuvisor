@@ -1,6 +1,6 @@
 # TP-146: Unit regression pack for work, calories, and hydration — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Audit current unit coverage
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 0
@@ -13,7 +13,7 @@
 ---
 
 ### Step 0: Preflight
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -22,7 +22,7 @@
 ---
 
 ### Step 1: Audit current unit coverage
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Locate existing tests for extended metrics Joules/kJ, wellness kcal/hydration, activity calories semantics, and unit metadata
 - [ ] Identify missing regression assertions without duplicating existing coverage
