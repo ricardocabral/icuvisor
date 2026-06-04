@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -59,6 +60,28 @@ func (f *fakeApplyTrainingPlanClient) AddOrUpdateEvent(ctx context.Context, para
 	return intervals.Event{ID: "created"}, nil
 }
 
+func TestApplyTrainingPlanExternalIDHelperUsesStableNonLeakingTuple(t *testing.T) {
+	t.Parallel()
+
+	got := applyTrainingPlanExternalID(" plan-1 ", " 2026-06-01 ", " w-1 ", 1, " 2026-06-01 ")
+	if got != "icuvisor-plan-v1-59e810cb4de57b9c080b6094" {
+		t.Fatalf("external ID = %q, want pinned digest", got)
+	}
+	if len(strings.TrimPrefix(got, applyTrainingPlanExternalIDPrefix)) != applyTrainingPlanExternalIDDigestLength {
+		t.Fatalf("external ID = %q, want %d hex digest chars", got, applyTrainingPlanExternalIDDigestLength)
+	}
+	for _, leaked := range []string{"plan-1", "w-1", "2026-06-01"} {
+		if strings.Contains(got, leaked) {
+			t.Fatalf("external ID %q leaks raw tuple value %q", got, leaked)
+		}
+	}
+	changedStart := applyTrainingPlanExternalID("plan-1", "2026-06-08", "w-1", 1, "2026-06-08")
+	changedEvent := applyTrainingPlanExternalID("plan-1", "2026-06-01", "w-1", 8, "2026-06-08")
+	if changedStart == got || changedEvent == got || changedStart == changedEvent {
+		t.Fatalf("variant IDs = %#v, %#v, %#v; want start/event date changes to affect digest", got, changedStart, changedEvent)
+	}
+}
+
 func TestApplyTrainingPlanDryRunProposesEventsWithConflictMarkersAndNoWrites(t *testing.T) {
 	t.Parallel()
 
@@ -82,13 +105,16 @@ func TestApplyTrainingPlanDryRunProposesEventsWithConflictMarkersAndNoWrites(t *
 		t.Fatalf("proposed_events count = %d, want 2", len(rows))
 	}
 	first := rows[0].(map[string]any)
-	if first["date"] != "2026-06-01" || first["workout_id"] != "w-1" || len(first["conflicts"].([]any)) != 0 {
-		t.Fatalf("first proposed event = %#v, want conflict-free day 1", first)
+	if first["date"] != "2026-06-01" || first["workout_id"] != "w-1" || first["external_id"] != "icuvisor-plan-v1-59e810cb4de57b9c080b6094" || len(first["conflicts"].([]any)) != 0 {
+		t.Fatalf("first proposed event = %#v, want conflict-free day 1 with hashed external_id", first)
+	}
+	if strings.Contains(first["external_id"].(string), "plan-1") || strings.Contains(first["external_id"].(string), "w-1") {
+		t.Fatalf("first proposed external_id = %q, want non-leaking hash", first["external_id"])
 	}
 	second := rows[1].(map[string]any)
 	conflicts := second["conflicts"].([]any)
-	if second["date"] != "2026-06-02" || second["workout_id"] != "w-2" || len(conflicts) != 1 {
-		t.Fatalf("second proposed event = %#v, want one conflict", second)
+	if second["date"] != "2026-06-02" || second["workout_id"] != "w-2" || second["external_id"] != "icuvisor-plan-v1-1a23c60312c45077bea0e60a" || len(conflicts) != 1 {
+		t.Fatalf("second proposed event = %#v, want one conflict and hashed external_id", second)
 	}
 	if conflict := conflicts[0].(map[string]any); conflict["event_id"] != "evt-conflict" || conflict["reason"] != "existing_event_on_date" {
 		t.Fatalf("conflict = %#v, want event_id/reason", conflict)
@@ -96,6 +122,37 @@ func TestApplyTrainingPlanDryRunProposesEventsWithConflictMarkersAndNoWrites(t *
 	meta := out["_meta"].(map[string]any)
 	if meta["dry_run"] != true || meta["created_count"] != float64(0) || meta["delete_mode"] != "safe" {
 		t.Fatalf("meta = %#v, want dry_run safety metadata", meta)
+	}
+}
+
+func TestApplyTrainingPlanRepeatedApplyPayloadsUseStableExternalIDs(t *testing.T) {
+	t.Parallel()
+
+	makeCall := func(t *testing.T, dryRun bool) (map[string]any, []intervals.WriteEventParams) {
+		t.Helper()
+		client := newApplyTrainingPlanTestClient(t)
+		client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1,"icu_training_load":45,"moving_time":3600}`)
+		tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
+		rawArgs := `{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":` + strconv.FormatBool(dryRun) + `,"conflict_policy":"skip_existing"}`
+		result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(rawArgs)})
+		if err != nil {
+			t.Fatalf("Handler() error = %v", err)
+		}
+		row := resultMap(t, result)["proposed_events"].([]any)[0].(map[string]any)
+		return row, append([]intervals.WriteEventParams(nil), client.writeCalls...)
+	}
+
+	dryRow, dryWrites := makeCall(t, true)
+	applyRow1, writes1 := makeCall(t, false)
+	applyRow2, writes2 := makeCall(t, false)
+	if len(dryWrites) != 0 || len(writes1) != 1 || len(writes2) != 1 {
+		t.Fatalf("write counts dry=%d apply1=%d apply2=%d, want dry-run no writes and repeated apply writes", len(dryWrites), len(writes1), len(writes2))
+	}
+	if dryRow["external_id"] != writes1[0].ExternalID || applyRow1["external_id"] != writes1[0].ExternalID || applyRow2["external_id"] != writes2[0].ExternalID || writes1[0].ExternalID != writes2[0].ExternalID {
+		t.Fatalf("external IDs dry=%#v applyRows=%#v/%#v writes=%#v/%#v, want stable across dry-run and repeated apply", dryRow["external_id"], applyRow1["external_id"], applyRow2["external_id"], writes1[0].ExternalID, writes2[0].ExternalID)
+	}
+	if writes1[0].Date != writes2[0].Date || writes1[0].Name != writes2[0].Name || writes1[0].Type != writes2[0].Type || writes1[0].Category != writes2[0].Category {
+		t.Fatalf("write payloads = %#v/%#v, want stable repeated apply fields", writes1[0], writes2[0])
 	}
 }
 
@@ -118,8 +175,8 @@ func TestApplyTrainingPlanApplySkipExistingCreatesOnlyConflictFreeDays(t *testin
 		t.Fatalf("write calls = %d, want only conflict-free day", len(client.writeCalls))
 	}
 	call := client.writeCalls[0]
-	if call.Date != "2026-06-01" || call.Category != "WORKOUT" || call.Type != "Ride" || call.Name != "Endurance" || call.Indoor == nil || !*call.Indoor || call.TargetLoad == nil || *call.TargetLoad != 45 || call.MovingTimeSeconds == nil || *call.MovingTimeSeconds != 3600 {
-		t.Fatalf("write call = %#v, want event params from add_or_update_event internals", call)
+	if call.Date != "2026-06-01" || call.ExternalID != "icuvisor-plan-v1-59e810cb4de57b9c080b6094" || call.Category != "WORKOUT" || call.Type != "Ride" || call.Name != "Endurance" || call.Indoor == nil || !*call.Indoor || call.TargetLoad == nil || *call.TargetLoad != 45 || call.MovingTimeSeconds == nil || *call.MovingTimeSeconds != 3600 {
+		t.Fatalf("write call = %#v, want external_id plus event params from add_or_update_event internals", call)
 	}
 	out := resultMap(t, result)
 	created := out["created_events"].([]any)[0].(map[string]any)
@@ -169,6 +226,33 @@ func TestApplyTrainingPlanReplaceExistingRequiresFullAndDeletesBeforeCreate(t *t
 	replaced := meta["replaced"].([]any)
 	if len(replaced) != 1 || replaced[0].(map[string]any)["date"] != "2026-06-01" {
 		t.Fatalf("replaced = %#v, want replaced day metadata", replaced)
+	}
+}
+
+func TestApplyTrainingPlanReplaceExistingProtectsMatchingExternalIDRetry(t *testing.T) {
+	t.Parallel()
+
+	client := newApplyTrainingPlanTestClient(t)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1,"icu_training_load":45}`)
+	client.events = decodeToolEvents(t, `{"id":"evt-retry","external_id":"icuvisor-plan-v1-59e810cb4de57b9c080b6094","category":"WORKOUT","type":"Ride","name":"Drifted retry body","start_date_local":"2026-06-01T00:00:00","load_target":99}`)
+	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeFull), responseShaping{deleteMode: safety.ModeFull, toolset: safety.ToolsetCore})
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":false,"conflict_policy":"replace_existing"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.deleteCalls) != 0 || len(client.writeCalls) != 0 {
+		t.Fatalf("deletes=%#v writes=%#v, want matching external_id retry protected from replace_existing", client.deleteCalls, client.writeCalls)
+	}
+	out := resultMap(t, result)
+	row := out["proposed_events"].([]any)[0].(map[string]any)
+	if row["external_id"] != "icuvisor-plan-v1-59e810cb4de57b9c080b6094" {
+		t.Fatalf("proposed row = %#v, want deterministic external_id", row)
+	}
+	conflicts := out["_meta"].(map[string]any)["skipped"].([]any)[0].(map[string]any)["conflicts"].([]any)
+	conflict := conflicts[0].(map[string]any)
+	if conflict["event_id"] != "evt-retry" || conflict["reason"] != "matching_external_id" || conflict["protected"] != true {
+		t.Fatalf("conflict = %#v, want protected matching_external_id", conflict)
 	}
 }
 

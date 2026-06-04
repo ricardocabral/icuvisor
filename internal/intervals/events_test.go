@@ -345,12 +345,12 @@ func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
 	moving := 3600
 	elapsed := 3900
 	indoor := true
-	created, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{Date: "2026-06-01", Category: "WORKOUT", Type: "VirtualRide", Name: "Tempo", Description: &description, Tags: []string{"tempo", "coach"}, Indoor: &indoor, TargetLoad: &targetLoad, DistanceMeters: &distance, MovingTimeSeconds: &moving, ElapsedTimeSeconds: &elapsed})
+	created, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{ExternalID: " ext-create ", Date: "2026-06-01", Category: "WORKOUT", Type: "VirtualRide", Name: "Tempo", Description: &description, Tags: []string{"tempo", "coach"}, Indoor: &indoor, TargetLoad: &targetLoad, DistanceMeters: &distance, MovingTimeSeconds: &moving, ElapsedTimeSeconds: &elapsed})
 	if err != nil {
 		t.Fatalf("AddOrUpdateEvent(create) error = %v", err)
 	}
 	indoorFalse := false
-	updated, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: " evt-9 ", Date: "2026-06-02", Category: "WORKOUT", Type: "Ride", Indoor: &indoorFalse})
+	updated, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: " evt-9 ", ExternalID: "ext-update", Date: "2026-06-02", Category: "WORKOUT", Type: "Ride", Indoor: &indoorFalse})
 	if err != nil {
 		t.Fatalf("AddOrUpdateEvent(update) error = %v", err)
 	}
@@ -368,7 +368,7 @@ func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
 		t.Fatalf("create body = %#v, want single-event bulk payload", requests[0].body)
 	}
 	body := createBatch[0].(map[string]any)
-	if body["start_date_local"] != "2026-06-01T00:00:00" || body["category"] != "WORKOUT" || body["type"] != "VirtualRide" || body["name"] != "Tempo" || body["description"] != description || body["indoor"] != true {
+	if body["start_date_local"] != "2026-06-01T00:00:00" || body["external_id"] != "ext-create" || body["category"] != "WORKOUT" || body["type"] != "VirtualRide" || body["name"] != "Tempo" || body["description"] != description || body["indoor"] != true {
 		t.Fatalf("create body = %#v, want mapped event fields", body)
 	}
 	if _, ok := body["workout_doc"]; ok {
@@ -393,8 +393,31 @@ func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
 		t.Fatalf("update request = %#v, want PUT athlete events/{id}", requests[1])
 	}
 	updateBody := requests[1].body.(map[string]any)
-	if updateBody["indoor"] != false {
-		t.Fatalf("update body = %#v, want explicit indoor=false", updateBody)
+	if updateBody["external_id"] != "ext-update" || updateBody["indoor"] != false {
+		t.Fatalf("update body = %#v, want external_id plus explicit indoor=false", updateBody)
+	}
+}
+
+func TestAddOrUpdateEventOmitsBlankExternalID(t *testing.T) {
+	t.Parallel()
+
+	var body map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"evt-blank","category":"WORKOUT","start_date_local":"2026-06-02"}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	_, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: "evt-blank", ExternalID: "   ", Date: "2026-06-02", Category: "WORKOUT", Type: "Ride"})
+	if err != nil {
+		t.Fatalf("AddOrUpdateEvent() error = %v", err)
+	}
+	if _, ok := body["external_id"]; ok {
+		t.Fatalf("update body includes blank external_id: %#v", body)
 	}
 }
 

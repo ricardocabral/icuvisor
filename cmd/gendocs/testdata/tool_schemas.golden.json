@@ -1,0 +1,2903 @@
+{
+  "add_activity_message": {
+    "name": "add_activity_message",
+    "description": "Append a non-destructive comment/message to one activity when write tools are enabled.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu activity ID to append a message/comment to. Surrounding whitespace is trimmed."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include the raw upstream add-message response under full; default returns a terse append confirmation.",
+        "default": false
+      },
+      {
+        "name": "message",
+        "required": true,
+        "type": "string",
+        "description": "Required free-text message/comment content. Must be non-empty after trimming; the body is sent as content and is not logged by icuvisor."
+      }
+    ]
+  },
+  "add_or_update_event": {
+    "name": "add_or_update_event",
+    "description": "Create or update a non-destructive calendar event such as a planned workout, race, or note.",
+    "arguments": [
+      {
+        "name": "category",
+        "required": true,
+        "type": "string",
+        "description": "Required upstream event category. Documented upstream categories include WORKOUT, RACE_A, RACE_B, RACE_C, NOTE, PLAN, HOLIDAY, SICK, INJURED, SET_EFTP, FITNESS_DAYS, SEASON_START, TARGET, SET_FITNESS; see icuvisor://event-categories. Custom athlete/account category values are passed through."
+      },
+      {
+        "name": "date",
+        "required": true,
+        "type": "string",
+        "description": "Required athlete-local event date as YYYY-MM-DD; interpreted in the configured athlete timezone."
+      },
+      {
+        "name": "description",
+        "required": false,
+        "type": "string",
+        "description": "Optional replacement for the upstream event description/DSL, not append-only notes. Omit on updates to leave unchanged. For WORKOUT updates, supplying description without workout_doc can replace existing structured steps; include the desired workout_doc to preserve or merge structure. Preserved verbatim, including whitespace and line breaks. May be supplied with workout_doc; use the \u003c!-- icuvisor:steps --\u003e sentinel on its own line to choose where serialized steps are inserted."
+      },
+      {
+        "name": "distance_meters",
+        "required": false,
+        "type": "number",
+        "description": "Optional planned distance in meters when supported upstream."
+      },
+      {
+        "name": "elapsed_time_seconds",
+        "required": false,
+        "type": "integer",
+        "description": "Optional planned elapsed duration in seconds when supported upstream."
+      },
+      {
+        "name": "event_id",
+        "required": false,
+        "type": "string",
+        "description": "Optional upstream event ID to update. Omit to create a new event; this tool never deletes events."
+      },
+      {
+        "name": "external_id",
+        "required": false,
+        "type": "string",
+        "description": "Optional non-empty upstream idempotency key. Surrounding whitespace is trimmed; omit or pass blank to leave external_id unchanged/unset. Clearing an existing upstream external_id is not supported."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include the raw upstream event payload under event.full; default response matches get_event_by_id's terse event shape.",
+        "default": false
+      },
+      {
+        "name": "indoor",
+        "required": false,
+        "type": "boolean",
+        "description": "Optional planned-event indoor/trainer flag. Set true for indoor trainer rides; commonly paired with type VirtualRide, but this boolean controls intervals.icu's Indoor toggle."
+      },
+      {
+        "name": "moving_time_seconds",
+        "required": false,
+        "type": "integer",
+        "description": "Optional planned moving duration in seconds when supported upstream."
+      },
+      {
+        "name": "name",
+        "required": false,
+        "type": "string",
+        "description": "Event title/name shown on the athlete calendar. Required when creating NOTE events; optional for other supported writes and updates unless upstream requires it."
+      },
+      {
+        "name": "tags",
+        "required": false,
+        "type": "array",
+        "description": "Optional replacement event tags, in caller-provided order. Omit to leave unchanged on updates; provide [] to clear all tags.",
+        "items": {
+          "required": false,
+          "type": "string"
+        }
+      },
+      {
+        "name": "target_load",
+        "required": false,
+        "type": "number",
+        "description": "Optional planned training load / TSS equivalent when supported upstream."
+      },
+      {
+        "name": "type",
+        "required": false,
+        "type": "string",
+        "description": "Required for WORKOUT events: upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Surrounding whitespace is trimmed. Used with athlete sport settings to disambiguate structured workout_doc zone targets."
+      },
+      {
+        "name": "workout_doc",
+        "required": false,
+        "type": "object",
+        "description": "Optional structured WorkoutDoc. Serialized to the upstream workout DSL and merged with description when both are supplied. For WORKOUT updates, include the desired structured steps when changing prose so the replacement description/DSL preserves the workout structure. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Zone targets are serialized using the WORKOUT type and athlete sport settings, adding metric suffixes such as Z2 Power, Z2 HR, or Z2 Pace when needed. Syntax reference: icuvisor://workout-syntax.",
+        "additional_properties": "allowed"
+      }
+    ],
+    "examples": [
+      {
+        "category": "NOTE",
+        "date": "2026-06-12",
+        "description": "Breakfast: oatmeal and banana. Lunch: rice bowl. Carry 90 g carbs/hour for the long ride.",
+        "name": "Race-week nutrition plan"
+      },
+      {
+        "category": "NOTE",
+        "date": "2026-06-15",
+        "description": "Flight lands at 14:20. Pack pedals, charger, spare cleats, bottles, and race license.",
+        "name": "Travel logistics"
+      }
+    ]
+  },
+  "analyze_correlation": {
+    "name": "analyze_correlation",
+    "description": "Use when the prompt asks whether two analysis metrics are correlated or lagged together; do not fetch get_* rows or streams and reduce them in chat.",
+    "arguments": [
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include paired samples; terse mode omits raw rows.",
+        "default": false
+      },
+      {
+        "name": "lag_days",
+        "required": false,
+        "type": "integer",
+        "description": "Positive lag pairs x on D with y on D+lag.",
+        "default": 0
+      },
+      {
+        "name": "method",
+        "required": false,
+        "type": "string",
+        "enum": [
+          "pearson",
+          "spearman"
+        ],
+        "default": "pearson"
+      },
+      {
+        "name": "metric_x",
+        "required": true,
+        "type": "string",
+        "description": "X metric. analysis_metric enum; choose one canonical value such as ctl, atl, tsb, weekly_tss, hrv, sleep_secs, if, or vi. Safe aliases are accepted by the server, but schemas enumerate canonical values only. Expressions such as ctl/atl are not supported.",
+        "enum": [
+          "abdomen",
+          "aerobic_decoupling_percent",
+          "atl",
+          "atl_load",
+          "average_cadence_rpm",
+          "average_heart_rate_bpm",
+          "average_power_watts",
+          "average_speed_kmh",
+          "average_speed_mph",
+          "avg_sleeping_hr",
+          "baevsky_si",
+          "blood_glucose",
+          "body_fat",
+          "calories_burned",
+          "carbohydrates",
+          "cardiac_decoupling_percent",
+          "compliance_pct",
+          "ctl",
+          "ctl_load",
+          "dfa_alpha1",
+          "diastolic",
+          "distance_km",
+          "distance_m",
+          "distance_mi",
+          "duration_seconds",
+          "elapsed_time_seconds",
+          "elevation_gain_m",
+          "elevation_loss_m",
+          "fat_total",
+          "fatigue",
+          "feel",
+          "hr_load",
+          "hrv",
+          "hrv_sdnn",
+          "hydration",
+          "hydration_volume",
+          "if",
+          "joules_above_ftp_kj",
+          "kcal_consumed",
+          "lactate",
+          "left_right_balance_percent",
+          "max_heart_rate_bpm",
+          "max_speed_kmh",
+          "max_speed_mph",
+          "mood",
+          "motivation",
+          "moving_time_seconds",
+          "pace_load",
+          "pace_seconds_per_km",
+          "pace_seconds_per_mile",
+          "polarization_index",
+          "power_load",
+          "protein",
+          "pw_hr",
+          "ramp",
+          "readiness",
+          "respiration",
+          "rhr",
+          "rpe",
+          "session_rpe",
+          "sleep_quality",
+          "sleep_score",
+          "sleep_secs",
+          "soreness",
+          "sp_o2",
+          "steps",
+          "strain_score",
+          "stress",
+          "stride_length_m",
+          "systolic",
+          "time_in_zones_total_seconds",
+          "time_seconds",
+          "training_load",
+          "trimp",
+          "tsb",
+          "vi",
+          "vo2max",
+          "w_prime_balance_end_kj",
+          "w_prime_balance_start_kj",
+          "weekly_hours",
+          "weekly_tss",
+          "weight"
+        ]
+      },
+      {
+        "name": "metric_y",
+        "required": true,
+        "type": "string",
+        "description": "Y metric. analysis_metric enum; choose one canonical value such as ctl, atl, tsb, weekly_tss, hrv, sleep_secs, if, or vi. Safe aliases are accepted by the server, but schemas enumerate canonical values only. Expressions such as ctl/atl are not supported.",
+        "enum": [
+          "abdomen",
+          "aerobic_decoupling_percent",
+          "atl",
+          "atl_load",
+          "average_cadence_rpm",
+          "average_heart_rate_bpm",
+          "average_power_watts",
+          "average_speed_kmh",
+          "average_speed_mph",
+          "avg_sleeping_hr",
+          "baevsky_si",
+          "blood_glucose",
+          "body_fat",
+          "calories_burned",
+          "carbohydrates",
+          "cardiac_decoupling_percent",
+          "compliance_pct",
+          "ctl",
+          "ctl_load",
+          "dfa_alpha1",
+          "diastolic",
+          "distance_km",
+          "distance_m",
+          "distance_mi",
+          "duration_seconds",
+          "elapsed_time_seconds",
+          "elevation_gain_m",
+          "elevation_loss_m",
+          "fat_total",
+          "fatigue",
+          "feel",
+          "hr_load",
+          "hrv",
+          "hrv_sdnn",
+          "hydration",
+          "hydration_volume",
+          "if",
+          "joules_above_ftp_kj",
+          "kcal_consumed",
+          "lactate",
+          "left_right_balance_percent",
+          "max_heart_rate_bpm",
+          "max_speed_kmh",
+          "max_speed_mph",
+          "mood",
+          "motivation",
+          "moving_time_seconds",
+          "pace_load",
+          "pace_seconds_per_km",
+          "pace_seconds_per_mile",
+          "polarization_index",
+          "power_load",
+          "protein",
+          "pw_hr",
+          "ramp",
+          "readiness",
+          "respiration",
+          "rhr",
+          "rpe",
+          "session_rpe",
+          "sleep_quality",
+          "sleep_score",
+          "sleep_secs",
+          "soreness",
+          "sp_o2",
+          "steps",
+          "strain_score",
+          "stress",
+          "stride_length_m",
+          "systolic",
+          "time_in_zones_total_seconds",
+          "time_seconds",
+          "training_load",
+          "trimp",
+          "tsb",
+          "vi",
+          "vo2max",
+          "w_prime_balance_end_kj",
+          "w_prime_balance_start_kj",
+          "weekly_hours",
+          "weekly_tss",
+          "weight"
+        ]
+      },
+      {
+        "name": "pairing_grain",
+        "required": false,
+        "type": "string",
+        "enum": [
+          "daily",
+          "activity"
+        ],
+        "default": "daily"
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Optional sport/category filter for activity-backed metrics."
+      },
+      {
+        "name": "window",
+        "required": true,
+        "type": "object",
+        "description": "Inclusive athlete-local anchor window for metric_x.",
+        "children": [
+          {
+            "name": "end_date",
+            "required": true,
+            "type": "string",
+            "description": "Inclusive athlete-local end date YYYY-MM-DD."
+          },
+          {
+            "name": "start_date",
+            "required": true,
+            "type": "string",
+            "description": "Inclusive athlete-local start date YYYY-MM-DD."
+          }
+        ]
+      }
+    ]
+  },
+  "analyze_distribution": {
+    "name": "analyze_distribution",
+    "description": "Use when the prompt asks for an analysis metric's distribution, histogram, quantiles, or outliers; do not fetch get_* rows or streams and reduce them in chat.",
+    "arguments": [
+      {
+        "name": "bucket_count",
+        "required": false,
+        "type": "integer",
+        "description": "Number of equal-width histogram buckets when buckets is omitted.",
+        "default": 10
+      },
+      {
+        "name": "buckets",
+        "required": false,
+        "type": "array",
+        "description": "Optional numeric bucket boundaries; values outside are counted below_range/above_range.",
+        "items": {
+          "required": false,
+          "type": "number"
+        }
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include sampled values; terse mode omits raw rows.",
+        "default": false
+      },
+      {
+        "name": "metric",
+        "required": true,
+        "type": "string",
+        "description": "Metric to summarize. analysis_metric enum; choose one canonical value such as ctl, atl, tsb, weekly_tss, hrv, sleep_secs, if, or vi. Safe aliases are accepted by the server, but schemas enumerate canonical values only. Expressions such as ctl/atl are not supported.",
+        "enum": [
+          "abdomen",
+          "aerobic_decoupling_percent",
+          "atl",
+          "atl_load",
+          "average_cadence_rpm",
+          "average_heart_rate_bpm",
+          "average_power_watts",
+          "average_speed_kmh",
+          "average_speed_mph",
+          "avg_sleeping_hr",
+          "baevsky_si",
+          "blood_glucose",
+          "body_fat",
+          "calories_burned",
+          "carbohydrates",
+          "cardiac_decoupling_percent",
+          "compliance_pct",
+          "ctl",
+          "ctl_load",
+          "dfa_alpha1",
+          "diastolic",
+          "distance_km",
+          "distance_m",
+          "distance_mi",
+          "duration_seconds",
+          "elapsed_time_seconds",
+          "elevation_gain_m",
+          "elevation_loss_m",
+          "fat_total",
+          "fatigue",
+          "feel",
+          "hr_load",
+          "hrv",
+          "hrv_sdnn",
+          "hydration",
+          "hydration_volume",
+          "if",
+          "joules_above_ftp_kj",
+          "kcal_consumed",
+          "lactate",
+          "left_right_balance_percent",
+          "max_heart_rate_bpm",
+          "max_speed_kmh",
+          "max_speed_mph",
+          "mood",
+          "motivation",
+          "moving_time_seconds",
+          "pace_load",
+          "pace_seconds_per_km",
+          "pace_seconds_per_mile",
+          "polarization_index",
+          "power_load",
+          "protein",
+          "pw_hr",
+          "ramp",
+          "readiness",
+          "respiration",
+          "rhr",
+          "rpe",
+          "session_rpe",
+          "sleep_quality",
+          "sleep_score",
+          "sleep_secs",
+          "soreness",
+          "sp_o2",
+          "steps",
+          "strain_score",
+          "stress",
+          "stride_length_m",
+          "systolic",
+          "time_in_zones_total_seconds",
+          "time_seconds",
+          "training_load",
+          "trimp",
+          "tsb",
+          "vi",
+          "vo2max",
+          "w_prime_balance_end_kj",
+          "w_prime_balance_start_kj",
+          "weekly_hours",
+          "weekly_tss",
+          "weight"
+        ]
+      },
+      {
+        "name": "quantiles",
+        "required": false,
+        "type": "array",
+        "description": "Quantiles to compute; defaults to 0.25, 0.5, 0.75.",
+        "items": {
+          "required": false,
+          "type": "number"
+        }
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Optional sport/category filter for activity-backed metrics."
+      },
+      {
+        "name": "window",
+        "required": true,
+        "type": "object",
+        "description": "Inclusive athlete-local window.",
+        "children": [
+          {
+            "name": "end_date",
+            "required": true,
+            "type": "string",
+            "description": "Inclusive athlete-local end date YYYY-MM-DD."
+          },
+          {
+            "name": "start_date",
+            "required": true,
+            "type": "string",
+            "description": "Inclusive athlete-local start date YYYY-MM-DD."
+          }
+        ]
+      }
+    ]
+  },
+  "analyze_efforts_delta": {
+    "name": "analyze_efforts_delta",
+    "description": "Use when the prompt asks whether best-effort power, heart-rate, or pace buckets changed versus baseline; do not fetch get_* rows or streams and reduce them in chat.",
+    "arguments": [
+      {
+        "name": "baseline_window",
+        "required": false,
+        "type": "object",
+        "description": "Optional baseline inclusive athlete-local window; defaults to same length immediately before current_window.",
+        "children": [
+          {
+            "name": "end_date",
+            "required": true,
+            "type": "string",
+            "description": "Inclusive athlete-local end date YYYY-MM-DD."
+          },
+          {
+            "name": "start_date",
+            "required": true,
+            "type": "string",
+            "description": "Inclusive athlete-local start date YYYY-MM-DD."
+          }
+        ]
+      },
+      {
+        "name": "current_window",
+        "required": true,
+        "type": "object",
+        "description": "Current inclusive athlete-local best-efforts window.",
+        "children": [
+          {
+            "name": "end_date",
+            "required": true,
+            "type": "string",
+            "description": "Inclusive athlete-local end date YYYY-MM-DD."
+          },
+          {
+            "name": "start_date",
+            "required": true,
+            "type": "string",
+            "description": "Inclusive athlete-local start date YYYY-MM-DD."
+          }
+        ]
+      },
+      {
+        "name": "distance_meters",
+        "required": false,
+        "type": "array",
+        "description": "Required for pace; invalid for power or heart_rate.",
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      },
+      {
+        "name": "duration_seconds",
+        "required": false,
+        "type": "array",
+        "description": "Required/defaulted for power or heart_rate; invalid for pace.",
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      },
+      {
+        "name": "effort_family",
+        "required": true,
+        "type": "string",
+        "enum": [
+          "power",
+          "heart_rate",
+          "pace"
+        ]
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include current/baseline bucket series; terse mode omits raw curve arrays.",
+        "default": false
+      },
+      {
+        "name": "sport",
+        "required": true,
+        "type": "string",
+        "description": "Intervals.icu sport/type to compare, e.g. Ride or Run."
+      }
+    ]
+  },
+  "analyze_trend": {
+    "name": "analyze_trend",
+    "description": "Use when the prompt asks whether an analysis metric is trending up, trending down, or changing versus baseline; do not fetch get_* rows or streams and reduce them in chat.",
+    "arguments": [
+      {
+        "name": "baseline_window",
+        "required": false,
+        "type": "object",
+        "description": "Optional baseline inclusive athlete-local window; defaults to same length immediately before window.",
+        "children": [
+          {
+            "name": "end_date",
+            "required": true,
+            "type": "string",
+            "description": "Inclusive athlete-local end date YYYY-MM-DD."
+          },
+          {
+            "name": "start_date",
+            "required": true,
+            "type": "string",
+            "description": "Inclusive athlete-local start date YYYY-MM-DD."
+          }
+        ]
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include sampled series and rolling means; terse mode omits raw rows.",
+        "default": false
+      },
+      {
+        "name": "metric",
+        "required": true,
+        "type": "string",
+        "description": "Metric to trend. analysis_metric enum; choose one canonical value such as ctl, atl, tsb, weekly_tss, hrv, sleep_secs, if, or vi. Safe aliases are accepted by the server, but schemas enumerate canonical values only. Expressions such as ctl/atl are not supported.",
+        "enum": [
+          "abdomen",
+          "aerobic_decoupling_percent",
+          "atl",
+          "atl_load",
+          "average_cadence_rpm",
+          "average_heart_rate_bpm",
+          "average_power_watts",
+          "average_speed_kmh",
+          "average_speed_mph",
+          "avg_sleeping_hr",
+          "baevsky_si",
+          "blood_glucose",
+          "body_fat",
+          "calories_burned",
+          "carbohydrates",
+          "cardiac_decoupling_percent",
+          "compliance_pct",
+          "ctl",
+          "ctl_load",
+          "dfa_alpha1",
+          "diastolic",
+          "distance_km",
+          "distance_m",
+          "distance_mi",
+          "duration_seconds",
+          "elapsed_time_seconds",
+          "elevation_gain_m",
+          "elevation_loss_m",
+          "fat_total",
+          "fatigue",
+          "feel",
+          "hr_load",
+          "hrv",
+          "hrv_sdnn",
+          "hydration",
+          "hydration_volume",
+          "if",
+          "joules_above_ftp_kj",
+          "kcal_consumed",
+          "lactate",
+          "left_right_balance_percent",
+          "max_heart_rate_bpm",
+          "max_speed_kmh",
+          "max_speed_mph",
+          "mood",
+          "motivation",
+          "moving_time_seconds",
+          "pace_load",
+          "pace_seconds_per_km",
+          "pace_seconds_per_mile",
+          "polarization_index",
+          "power_load",
+          "protein",
+          "pw_hr",
+          "ramp",
+          "readiness",
+          "respiration",
+          "rhr",
+          "rpe",
+          "session_rpe",
+          "sleep_quality",
+          "sleep_score",
+          "sleep_secs",
+          "soreness",
+          "sp_o2",
+          "steps",
+          "strain_score",
+          "stress",
+          "stride_length_m",
+          "systolic",
+          "time_in_zones_total_seconds",
+          "time_seconds",
+          "training_load",
+          "trimp",
+          "tsb",
+          "vi",
+          "vo2max",
+          "w_prime_balance_end_kj",
+          "w_prime_balance_start_kj",
+          "weekly_hours",
+          "weekly_tss",
+          "weight"
+        ]
+      },
+      {
+        "name": "rolling_window_days",
+        "required": false,
+        "type": "integer",
+        "description": "Trailing usable-sample rolling mean window. Must not exceed current window; weekly metrics require multiples of 7.",
+        "default": 7
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Optional sport/category filter for activity-backed metrics."
+      },
+      {
+        "name": "window",
+        "required": true,
+        "type": "object",
+        "description": "Current inclusive athlete-local window.",
+        "children": [
+          {
+            "name": "end_date",
+            "required": true,
+            "type": "string",
+            "description": "Inclusive athlete-local end date YYYY-MM-DD."
+          },
+          {
+            "name": "start_date",
+            "required": true,
+            "type": "string",
+            "description": "Inclusive athlete-local start date YYYY-MM-DD."
+          }
+        ]
+      }
+    ]
+  },
+  "apply_training_plan": {
+    "name": "apply_training_plan",
+    "description": "Apply a workout-library training plan to the athlete calendar from an anchor start date.",
+    "arguments": [
+      {
+        "name": "conflict_policy",
+        "required": false,
+        "type": "string",
+        "description": "skip_existing leaves days with calendar conflicts untouched. replace_existing deletes only pure same-day WORKOUT conflicts before creating plan workouts and is accepted only when ICUVISOR_DELETE_MODE=full; days with protected conflicts such as duplicate workouts, races, notes, holidays, sick/injured blocks, or unknown non-workout categories are skipped and reported.",
+        "enum": [
+          "skip_existing",
+          "replace_existing"
+        ],
+        "default": "skip_existing"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "type": "boolean",
+        "description": "Safety default is true, even in safe mode. Set dry_run:false explicitly to create or replace calendar events.",
+        "default": true
+      },
+      {
+        "name": "plan_id",
+        "required": true,
+        "type": "string",
+        "description": "Required workout-library folder/plan ID to fetch server-side. Do not pass plan contents in tool arguments."
+      },
+      {
+        "name": "start_date",
+        "required": true,
+        "type": "string",
+        "description": "Required athlete-local YYYY-MM-DD anchor date; workout day 1 is applied to this date and later plan days are relative to it."
+      }
+    ],
+    "examples": [
+      {
+        "plan_id": "plan-base-8",
+        "start_date": "2026-07-06"
+      },
+      {
+        "conflict_policy": "skip_existing",
+        "dry_run": true,
+        "plan_id": "plan-build-12",
+        "start_date": "2026-08-03"
+      }
+    ]
+  },
+  "compute_activity_segment_stats": {
+    "name": "compute_activity_segment_stats",
+    "description": "Use when the prompt asks for mean, median, p90, normalized power, intensity factor, drift, or decoupling over an explicit activity segment, including first-vs-last distance comparisons, as the analyzer-family raw-stream exception; do not fetch get_activity_streams samples and reduce them in chat.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu activity ID whose canonical raw streams should be analyzed."
+      },
+      {
+        "name": "end_distance_m",
+        "required": false,
+        "type": "number",
+        "description": "Inclusive segment end distance in meters; must be greater than start_distance_m."
+      },
+      {
+        "name": "end_seconds",
+        "required": false,
+        "type": "number",
+        "description": "Inclusive segment end in elapsed activity seconds; must be greater than start_seconds."
+      },
+      {
+        "name": "ftp_watts",
+        "required": false,
+        "type": "number",
+        "description": "Required for stat=if only; positive athlete FTP in watts used as NP / FTP denominator."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include only sliced/calculation inputs needed to audit this stat. Terse mode never returns raw stream samples.",
+        "default": false
+      },
+      {
+        "name": "metric",
+        "required": false,
+        "type": "string",
+        "description": "Canonical stream metric for mean/median/p90 only: watts, heart_rate, cadence, velocity_smooth, distance, or time. Use velocity_smooth for pace comparisons and convert m/s to pace in the final answer. Omit for derived stats.",
+        "enum": [
+          "cadence",
+          "distance",
+          "heart_rate",
+          "time",
+          "velocity_smooth",
+          "watts"
+        ]
+      },
+      {
+        "name": "start_distance_m",
+        "required": false,
+        "type": "number",
+        "description": "Inclusive segment start distance in meters. Provide with end_distance_m and without time bounds."
+      },
+      {
+        "name": "start_seconds",
+        "required": false,
+        "type": "number",
+        "description": "Inclusive segment start in elapsed activity seconds. Provide with end_seconds and without distance bounds."
+      },
+      {
+        "name": "stat",
+        "required": true,
+        "type": "string",
+        "description": "Single segment statistic to compute. Use one of mean, median, p90, decoupling, drift, np, or if.",
+        "enum": [
+          "decoupling",
+          "drift",
+          "if",
+          "mean",
+          "median",
+          "np",
+          "p90"
+        ]
+      }
+    ]
+  },
+  "compute_baseline": {
+    "name": "compute_baseline",
+    "description": "Use when the prompt asks whether a metric is high, low, suppressed, elevated, or unusual versus a baseline window; do not fetch get_* rows or streams and reduce them in chat.",
+    "arguments": [
+      {
+        "name": "baseline_end_date",
+        "required": true,
+        "type": "string",
+        "description": "Baseline inclusive athlete-local end date YYYY-MM-DD."
+      },
+      {
+        "name": "baseline_start_date",
+        "required": true,
+        "type": "string",
+        "description": "Baseline inclusive athlete-local start date YYYY-MM-DD."
+      },
+      {
+        "name": "current_end_date",
+        "required": true,
+        "type": "string",
+        "description": "Current inclusive athlete-local end date YYYY-MM-DD."
+      },
+      {
+        "name": "current_start_date",
+        "required": true,
+        "type": "string",
+        "description": "Current inclusive athlete-local start date YYYY-MM-DD."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include baseline/current audit samples; default returns aggregate statistics only.",
+        "default": false
+      },
+      {
+        "name": "metric",
+        "required": true,
+        "type": "string",
+        "description": "analysis_metric enum; choose one canonical value such as ctl, atl, tsb, weekly_tss, hrv, sleep_secs, if, or vi. Safe aliases are accepted by the server, but schemas enumerate canonical values only. Expressions such as ctl/atl are not supported.",
+        "enum": [
+          "abdomen",
+          "aerobic_decoupling_percent",
+          "atl",
+          "atl_load",
+          "average_cadence_rpm",
+          "average_heart_rate_bpm",
+          "average_power_watts",
+          "average_speed_kmh",
+          "average_speed_mph",
+          "avg_sleeping_hr",
+          "baevsky_si",
+          "blood_glucose",
+          "body_fat",
+          "calories_burned",
+          "carbohydrates",
+          "cardiac_decoupling_percent",
+          "compliance_pct",
+          "ctl",
+          "ctl_load",
+          "dfa_alpha1",
+          "diastolic",
+          "distance_km",
+          "distance_m",
+          "distance_mi",
+          "duration_seconds",
+          "elapsed_time_seconds",
+          "elevation_gain_m",
+          "elevation_loss_m",
+          "fat_total",
+          "fatigue",
+          "feel",
+          "hr_load",
+          "hrv",
+          "hrv_sdnn",
+          "hydration",
+          "hydration_volume",
+          "if",
+          "joules_above_ftp_kj",
+          "kcal_consumed",
+          "lactate",
+          "left_right_balance_percent",
+          "max_heart_rate_bpm",
+          "max_speed_kmh",
+          "max_speed_mph",
+          "mood",
+          "motivation",
+          "moving_time_seconds",
+          "pace_load",
+          "pace_seconds_per_km",
+          "pace_seconds_per_mile",
+          "polarization_index",
+          "power_load",
+          "protein",
+          "pw_hr",
+          "ramp",
+          "readiness",
+          "respiration",
+          "rhr",
+          "rpe",
+          "session_rpe",
+          "sleep_quality",
+          "sleep_score",
+          "sleep_secs",
+          "soreness",
+          "sp_o2",
+          "steps",
+          "strain_score",
+          "stress",
+          "stride_length_m",
+          "systolic",
+          "time_in_zones_total_seconds",
+          "time_seconds",
+          "training_load",
+          "trimp",
+          "tsb",
+          "vi",
+          "vo2max",
+          "w_prime_balance_end_kj",
+          "w_prime_balance_start_kj",
+          "weekly_hours",
+          "weekly_tss",
+          "weight"
+        ]
+      },
+      {
+        "name": "min_samples",
+        "required": false,
+        "type": "integer",
+        "description": "Minimum usable baseline samples required before z-score calculation.",
+        "default": 7
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Optional exact case-insensitive activity sport/type filter where the selected source supports sport filtering."
+      }
+    ]
+  },
+  "compute_compliance_rate": {
+    "name": "compute_compliance_rate",
+    "description": "Use when the prompt asks how well completed activities matched scheduled workouts, targets, sport, or event type; do not fetch get_* rows or streams and reduce them in chat.",
+    "arguments": [
+      {
+        "name": "category",
+        "required": false,
+        "type": "string",
+        "description": "Optional upstream event category filter.",
+        "default": "WORKOUT"
+      },
+      {
+        "name": "end_date",
+        "required": true,
+        "type": "string",
+        "description": "Athlete-local inclusive end date YYYY-MM-DD."
+      },
+      {
+        "name": "event_type",
+        "required": false,
+        "type": "string",
+        "description": "Optional exact case-insensitive event type filter."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include event-level pairing audit rows.",
+        "default": false
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Optional exact case-insensitive sport/type filter."
+      },
+      {
+        "name": "start_date",
+        "required": true,
+        "type": "string",
+        "description": "Athlete-local inclusive start date YYYY-MM-DD."
+      },
+      {
+        "name": "target_metric",
+        "required": false,
+        "type": "string",
+        "description": "Target/actual metric used for compliance.",
+        "enum": [
+          "time",
+          "distance",
+          "load"
+        ],
+        "default": "time"
+      },
+      {
+        "name": "tolerance_percent",
+        "required": false,
+        "type": "number",
+        "description": "Absolute percent delta allowed for compliance.",
+        "default": 20
+      }
+    ]
+  },
+  "compute_load_balance": {
+    "name": "compute_load_balance",
+    "description": "Use when the prompt asks whether training distribution is polarized, pyramidal, threshold-heavy, or balanced across low/moderate/high intensity; do not fetch get_* rows or streams and reduce them in chat.",
+    "arguments": [
+      {
+        "name": "end_date",
+        "required": true,
+        "type": "string",
+        "description": "Athlete-local inclusive end date YYYY-MM-DD."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include per-source audit rows. Default returns aggregate zones/buckets only.",
+        "default": false
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Optional exact case-insensitive activity sport/type filter."
+      },
+      {
+        "name": "start_date",
+        "required": true,
+        "type": "string",
+        "description": "Athlete-local inclusive start date YYYY-MM-DD."
+      },
+      {
+        "name": "zone_metric",
+        "required": false,
+        "type": "string",
+        "description": "Precomputed zone family to aggregate; raw streams are never fetched as fallback.",
+        "enum": [
+          "power",
+          "heart_rate",
+          "pace"
+        ],
+        "default": "power"
+      }
+    ]
+  },
+  "compute_zone_time": {
+    "name": "compute_zone_time",
+    "description": "Use when the prompt asks for time in power, heart-rate, or pace zones over a date window; do not fetch get_* rows or streams and reduce them in chat.",
+    "arguments": [
+      {
+        "name": "end_date",
+        "required": true,
+        "type": "string",
+        "description": "Athlete-local inclusive end date YYYY-MM-DD."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include per-source audit rows. Default returns aggregate zones/buckets only.",
+        "default": false
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Optional exact case-insensitive activity sport/type filter."
+      },
+      {
+        "name": "start_date",
+        "required": true,
+        "type": "string",
+        "description": "Athlete-local inclusive start date YYYY-MM-DD."
+      },
+      {
+        "name": "zone_metric",
+        "required": true,
+        "type": "string",
+        "description": "Precomputed zone family to aggregate; raw streams are never fetched as fallback.",
+        "enum": [
+          "power",
+          "heart_rate",
+          "pace"
+        ],
+        "default": "power"
+      }
+    ]
+  },
+  "create_custom_item": {
+    "name": "create_custom_item",
+    "description": "Create one custom item definition.",
+    "arguments": [
+      {
+        "name": "content",
+        "required": true,
+        "type": "object",
+        "description": "Required item_type-specific content object. Validated against existing readable custom items before upload; see icuvisor://custom-item-schemas for schema guidance.",
+        "additional_properties": "allowed"
+      },
+      {
+        "name": "description",
+        "required": false,
+        "type": "string",
+        "description": "Optional custom item description. Preserved verbatim when supplied."
+      },
+      {
+        "name": "hide_script",
+        "required": false,
+        "type": "boolean",
+        "description": "Optional upstream hide_script flag for script/formula based custom items."
+      },
+      {
+        "name": "image",
+        "required": false,
+        "type": "string",
+        "description": "Optional upstream image identifier or URL when supported by the custom-item type."
+      },
+      {
+        "name": "index",
+        "required": false,
+        "type": "integer",
+        "description": "Optional display/order index for item types that support ordering."
+      },
+      {
+        "name": "item_type",
+        "required": true,
+        "type": "string",
+        "description": "Required upstream custom-item type. The value must match an existing readable schema sample, for example FITNESS_CHART, INPUT_FIELD, ACTIVITY_FIELD, ACTIVITY_STREAM, ACTIVITY_PANEL, ACTIVITY_HISTOGRAM, ACTIVITY_MAP, ACTIVITY_HEATMAP, TRACE_CHART, FITNESS_TABLE, or ZONES."
+      },
+      {
+        "name": "name",
+        "required": true,
+        "type": "string",
+        "description": "Required custom item name. Surrounding whitespace is trimmed."
+      },
+      {
+        "name": "visibility",
+        "required": false,
+        "type": "string",
+        "description": "Optional upstream visibility value. Omit to use intervals.icu defaults."
+      }
+    ],
+    "examples": [
+      {
+        "content": {
+          "layout": {
+            "height": 240
+          },
+          "series": [
+            {
+              "color": "blue",
+              "field": "ctl"
+            }
+          ]
+        },
+        "item_type": "FITNESS_CHART",
+        "name": "Training load trend"
+      },
+      {
+        "content": {
+          "field": "travel_fatigue",
+          "format": "0.0",
+          "label": "Travel fatigue",
+          "script": "return input",
+          "type": "number",
+          "units": "score",
+          "visibility": "PRIVATE"
+        },
+        "description": "Short coach-facing note captured on travel weeks.",
+        "hide_script": false,
+        "index": 20,
+        "item_type": "INPUT_FIELD",
+        "name": "Travel fatigue note",
+        "visibility": "PRIVATE"
+      }
+    ]
+  },
+  "create_workout": {
+    "name": "create_workout",
+    "description": "Create a reusable workout-library template, not a calendar event.",
+    "arguments": [
+      {
+        "name": "description",
+        "required": false,
+        "type": "string",
+        "description": "Optional free-text prose for the initial upstream workout description/DSL. This is part of the single upstream description/DSL field, not separate append-only notes. Preserved verbatim. May be supplied with workout_doc; use the \u003c!-- icuvisor:steps --\u003e sentinel on its own line to choose where serialized steps are inserted."
+      },
+      {
+        "name": "folder_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu workout-library folder ID. Must identify an existing folder owned by the athlete; top-level workout creates are refused upstream."
+      },
+      {
+        "name": "name",
+        "required": true,
+        "type": "string",
+        "description": "Required workout-library template name/title. Surrounding whitespace is trimmed."
+      },
+      {
+        "name": "sport",
+        "required": true,
+        "type": "string",
+        "description": "Required upstream sport/activity type for the workout template, such as Ride, Run, Swim, VirtualRide, or the athlete account's configured activity type. Used with athlete sport settings to disambiguate structured workout_doc zone targets."
+      },
+      {
+        "name": "tags",
+        "required": false,
+        "type": "array",
+        "description": "Optional workout-library tags to preserve on the upstream template, in caller-provided order.",
+        "items": {
+          "required": false,
+          "type": "string"
+        }
+      },
+      {
+        "name": "workout_doc",
+        "required": false,
+        "type": "object",
+        "description": "Optional structured WorkoutDoc for the initial upstream workout description/DSL. Serialized and merged with description when both are supplied. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Zone targets are serialized using the supplied sport and the athlete's sport settings, adding metric suffixes such as Z2 Power, Z2 HR, or Z2 Pace when needed. Syntax reference: icuvisor://workout-syntax.",
+        "additional_properties": "allowed"
+      }
+    ],
+    "examples": [
+      {
+        "description": "60m easy aerobic endurance. Keep it conversational.",
+        "folder_id": "folder-ride-1",
+        "name": "Endurance aerobic ride",
+        "sport": "Ride"
+      },
+      {
+        "folder_id": "folder-build-1",
+        "name": "Threshold builder",
+        "sport": "Ride",
+        "tags": [
+          "threshold",
+          "build"
+        ],
+        "workout_doc": {
+          "steps": [
+            {
+              "description": "Warm up",
+              "duration": 900,
+              "power": {
+                "units": "PERCENT_FTP",
+                "value": 60
+              }
+            },
+            {
+              "description": "Threshold",
+              "duration": 1200,
+              "power": {
+                "max": 100,
+                "min": 95,
+                "units": "PERCENT_FTP"
+              }
+            },
+            {
+              "description": "Cool down",
+              "duration": 600,
+              "power": {
+                "units": "PERCENT_FTP",
+                "value": 50
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "delete_activity": {
+    "name": "delete_activity",
+    "description": "Delete one activity by activity_id.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Required opaque upstream activity ID to delete. This destructive operation has no confirm argument; the tool is registered only when ICUVISOR_DELETE_MODE=full."
+      }
+    ]
+  },
+  "delete_custom_item": {
+    "name": "delete_custom_item",
+    "description": "Delete one custom item definition by item_id.",
+    "arguments": [
+      {
+        "name": "item_id",
+        "required": true,
+        "type": "string",
+        "description": "Required opaque upstream custom item ID to delete. This destructive operation has no confirm argument; the tool is registered only when ICUVISOR_DELETE_MODE=full."
+      }
+    ]
+  },
+  "delete_event": {
+    "name": "delete_event",
+    "description": "Delete one calendar event by event_id.",
+    "arguments": [
+      {
+        "name": "event_id",
+        "required": true,
+        "type": "string",
+        "description": "Required opaque upstream event ID to delete. This destructive operation has no confirm argument; the tool is registered only when ICUVISOR_DELETE_MODE=full."
+      }
+    ]
+  },
+  "delete_events_by_date_range": {
+    "name": "delete_events_by_date_range",
+    "description": "Delete calendar events in a required athlete-local YYYY-MM-DD start_date/end_date range, optionally filtered by category.",
+    "arguments": [
+      {
+        "name": "category",
+        "required": false,
+        "type": "string",
+        "description": "Optional upstream event category filter. Omit to delete all event categories in the bounded date range."
+      },
+      {
+        "name": "end_date",
+        "required": true,
+        "type": "string",
+        "description": "Required athlete-local end date YYYY-MM-DD. Same-day ranges are allowed; range size is capped at 31 inclusive days."
+      },
+      {
+        "name": "start_date",
+        "required": true,
+        "type": "string",
+        "description": "Required athlete-local start date YYYY-MM-DD. Open-ended ranges are rejected."
+      }
+    ]
+  },
+  "delete_gear": {
+    "name": "delete_gear",
+    "description": "Delete one gear item by gear_id.",
+    "arguments": [
+      {
+        "name": "gear_id",
+        "required": true,
+        "type": "string",
+        "description": "Required opaque upstream gear ID to delete. This destructive operation has no confirm argument; the tool is registered only when ICUVISOR_DELETE_MODE=full."
+      }
+    ]
+  },
+  "delete_sport_settings": {
+    "name": "delete_sport_settings",
+    "description": "Delete one sport-settings definition by sport_settings_id.",
+    "arguments": [
+      {
+        "name": "sport_settings_id",
+        "required": true,
+        "type": "string",
+        "description": "Required opaque upstream sport-settings ID to delete. This destructive operation has no confirm argument; the tool is registered only when ICUVISOR_DELETE_MODE=full."
+      }
+    ]
+  },
+  "delete_workout": {
+    "name": "delete_workout",
+    "description": "Delete one reusable workout-library template by workout_id.",
+    "arguments": [
+      {
+        "name": "workout_id",
+        "required": true,
+        "type": "string",
+        "description": "Required upstream workout-library template ID to delete. This destructive operation has no confirm argument; the tool is registered only when ICUVISOR_DELETE_MODE=full."
+      }
+    ]
+  },
+  "get_activities": {
+    "name": "get_activities",
+    "description": "Scan an athlete-local date window and return a paginated activity index: terse unit-disambiguated summary rows with IDs, source/device hints, tags, custom_fields, and Strava-unavailable markers.",
+    "arguments": [
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream activity fields and preserve upstream nulls; default terse rows are unit-disambiguated and null-stripped.",
+        "default": false
+      },
+      {
+        "name": "include_unnamed",
+        "required": false,
+        "type": "boolean",
+        "description": "When false, drop rows with an empty activity name after bounded pagination.",
+        "default": false
+      },
+      {
+        "name": "newest",
+        "required": false,
+        "type": "string",
+        "description": "Optional local ISO-8601 end date/date-time; defaults upstream to now."
+      },
+      {
+        "name": "next_page_token",
+        "required": false,
+        "type": "string",
+        "description": "Opaque token from _meta.next_page_token for the next page. Do not edit."
+      },
+      {
+        "name": "oldest",
+        "required": false,
+        "type": "string",
+        "description": "Required local ISO-8601 start date/date-time unless next_page_token is supplied."
+      },
+      {
+        "name": "page_size",
+        "required": false,
+        "type": "integer",
+        "description": "Number of terse rows to return per page; values above 200 are capped.",
+        "default": 50
+      },
+      {
+        "name": "route_id",
+        "required": false,
+        "type": "integer",
+        "description": "Optional intervals.icu route ID filter."
+      }
+    ]
+  },
+  "get_activity_details": {
+    "name": "get_activity_details",
+    "description": "Get one activity's terse metadata and metrics by activity_id, including upstream activity tags when returned, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, and custom_fields for athlete-defined activity custom fields when upstream provides them.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "intervals.icu activity ID."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "Include raw upstream fields; default terse mode strips nulls and returns normalized fields.",
+        "default": false
+      }
+    ]
+  },
+  "get_activity_histogram": {
+    "name": "get_activity_histogram",
+    "description": "Use when the prompt asks for a single activity's power, heart-rate, or pace distribution; do not fetch get_activity_streams samples and bin them in chat.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu activity ID whose stream distribution should be summarized."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, preserve diagnostic metadata. Raw stream samples are never returned by this histogram tool.",
+        "default": false
+      },
+      {
+        "name": "metric",
+        "required": true,
+        "type": "string",
+        "description": "Histogram metric enum for a single activity; schemas enumerate canonical values only. Safe aliases such as power, hr, heart_rate, and pace are accepted by the server.",
+        "enum": [
+          "heart_rate_bpm",
+          "pace_seconds_per_km",
+          "power_watts"
+        ]
+      }
+    ]
+  },
+  "get_activity_intervals": {
+    "name": "get_activity_intervals",
+    "description": "Get analyzed intervals for one activity by activity_id, including scalar custom interval fields such as lactate under custom_fields when upstream includes them.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "intervals.icu activity ID."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "Include raw upstream fields; default terse mode strips nulls and returns normalized fields.",
+        "default": false
+      }
+    ]
+  },
+  "get_activity_messages": {
+    "name": "get_activity_messages",
+    "description": "List comments and notes on one activity by activity_id.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "intervals.icu activity ID whose messages/comments should be listed."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "Include raw upstream message fields and preserve nulls.",
+        "default": false
+      },
+      {
+        "name": "limit",
+        "required": false,
+        "type": "integer",
+        "description": "Maximum messages to return; defaults to 100 and is capped at 200.",
+        "default": 100
+      },
+      {
+        "name": "since_id",
+        "required": false,
+        "type": "integer",
+        "description": "Return messages after this upstream message ID; zero means no cursor."
+      }
+    ]
+  },
+  "get_activity_splits": {
+    "name": "get_activity_splits",
+    "description": "Get manual or virtual per-km/per-mile activity splits by activity_id.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu activity ID whose manual or virtual splits should be returned."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, preserve full response metadata during shaping; split rows remain terse and unit-disambiguated by default.",
+        "default": false
+      },
+      {
+        "name": "split_unit",
+        "required": false,
+        "type": "string",
+        "description": "Optional split distance unit. Defaults to the athlete's preferred_units when omitted, falling back to km.",
+        "enum": [
+          "km",
+          "mi"
+        ]
+      }
+    ]
+  },
+  "get_activity_streams": {
+    "name": "get_activity_streams",
+    "description": "Get canonical activity stream channels by activity_id.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu activity ID whose stream channels should be listed."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream stream payloads and samples for available stream channels; default returns metadata only unless keys is supplied.",
+        "default": false
+      },
+      {
+        "name": "keys",
+        "required": false,
+        "type": "array",
+        "description": "Optional stream keys to include as samples. Values are canonicalized to snake_case when known; unknown keys are reported in _meta. Supplying keys includes samples even when include_full is false.",
+        "items": {
+          "required": false,
+          "type": "string"
+        }
+      }
+    ]
+  },
+  "get_athlete_profile": {
+    "name": "get_athlete_profile",
+    "description": "Get the configured athlete profile, FTP/thresholds, zones, and sport settings from intervals.icu.",
+    "arguments": [
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include additional typed, non-secret profile and sport-setting identifiers. Defaults to false; raw upstream payloads and credentials are never returned.",
+        "default": false
+      }
+    ]
+  },
+  "get_best_efforts": {
+    "name": "get_best_efforts",
+    "description": "Get upstream best efforts grouped by sport and default/requested power, heart-rate, and pace buckets.",
+    "arguments": [
+      {
+        "name": "distance_meters",
+        "required": false,
+        "type": "array",
+        "description": "Pace distance buckets. Defaults depend on sport: run-style 400,1000,1609,5000,10000m; swim 50,100,200,400,1500m.",
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      },
+      {
+        "name": "duration_seconds",
+        "required": false,
+        "type": "array",
+        "description": "Power/HR duration buckets. Defaults to 5,15,30,60,300,1200,3600 seconds.",
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream curve arrays and activity maps.",
+        "default": false
+      },
+      {
+        "name": "newest",
+        "required": false,
+        "type": "string",
+        "description": "Optional local end date YYYY-MM-DD. Supply with oldest or omit both for all-time."
+      },
+      {
+        "name": "oldest",
+        "required": false,
+        "type": "string",
+        "description": "Optional local start date YYYY-MM-DD. Supply with newest or omit both for all-time."
+      },
+      {
+        "name": "sports",
+        "required": false,
+        "type": "array",
+        "description": "Intervals.icu sports/types to fan out. Defaults to Ride, Run, Swim.",
+        "items": {
+          "required": false,
+          "type": "string"
+        }
+      }
+    ]
+  },
+  "get_custom_item_by_id": {
+    "name": "get_custom_item_by_id",
+    "description": "Fetch one custom item by item_id and preserve its full content payload.",
+    "arguments": [
+      {
+        "name": "item_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu custom item ID."
+      }
+    ]
+  },
+  "get_custom_items": {
+    "name": "get_custom_items",
+    "description": "List custom item definitions such as charts, fields, streams, panels, histograms, maps, and zones.",
+    "arguments": [
+      {
+        "name": "item_type",
+        "required": false,
+        "type": "string",
+        "description": "Optional upstream custom-item type filter, for example FITNESS_CHART, INPUT_FIELD, ACTIVITY_FIELD, ACTIVITY_STREAM, ACTIVITY_PANEL, ACTIVITY_HISTOGRAM, ACTIVITY_MAP, ACTIVITY_HEATMAP, TRACE_CHART, FITNESS_TABLE, or ZONES."
+      }
+    ]
+  },
+  "get_event_by_id": {
+    "name": "get_event_by_id",
+    "description": "Fetch a single calendar event detail by event_id.",
+    "arguments": [
+      {
+        "name": "date",
+        "required": false,
+        "type": "string",
+        "description": "Optional athlete-local YYYY-MM-DD date hint. On detail 404, scans ±30 days around this date."
+      },
+      {
+        "name": "event_id",
+        "required": true,
+        "type": "string",
+        "description": "Required upstream event ID. Numeric upstream IDs should be passed as strings."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include the raw upstream event payload under event.full; default response is terse.",
+        "default": false
+      },
+      {
+        "name": "newest",
+        "required": false,
+        "type": "string",
+        "description": "Optional athlete-local scan end YYYY-MM-DD. Must be paired with oldest and span at most 61 days."
+      },
+      {
+        "name": "oldest",
+        "required": false,
+        "type": "string",
+        "description": "Optional athlete-local scan start YYYY-MM-DD. Must be paired with newest and span at most 61 days."
+      },
+      {
+        "name": "resolve",
+        "required": false,
+        "type": "boolean",
+        "description": "Optional upstream resolve flag for the fallback list scan; defaults to true to recover recurring or derived event instances."
+      }
+    ]
+  },
+  "get_events": {
+    "name": "get_events",
+    "description": "List calendar events across a bounded athlete-local YYYY-MM-DD date range.",
+    "arguments": [
+      {
+        "name": "calendar_id",
+        "required": false,
+        "type": "string",
+        "description": "Optional upstream calendar ID filter."
+      },
+      {
+        "name": "category",
+        "required": false,
+        "type": "string",
+        "description": "Optional upstream event category filter. Documented upstream categories include WORKOUT, RACE_A, RACE_B, RACE_C, NOTE, PLAN, HOLIDAY, SICK, INJURED, SET_EFTP, FITNESS_DAYS, SEASON_START, TARGET, SET_FITNESS; see icuvisor://event-categories. Custom athlete/account category values are passed through."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include each raw upstream event payload under full; default rows are terse and null-stripped.",
+        "default": false
+      },
+      {
+        "name": "limit",
+        "required": false,
+        "type": "integer",
+        "description": "Maximum event rows to request; defaults to 100 and values above 500 are capped.",
+        "default": 100
+      },
+      {
+        "name": "newest",
+        "required": true,
+        "type": "string",
+        "description": "Required athlete-local end date YYYY-MM-DD; date range is capped at 366 days."
+      },
+      {
+        "name": "oldest",
+        "required": true,
+        "type": "string",
+        "description": "Required athlete-local start date YYYY-MM-DD."
+      },
+      {
+        "name": "resolve",
+        "required": false,
+        "type": "boolean",
+        "description": "Optional upstream resolve flag for recurring/derived events when supported by intervals.icu."
+      }
+    ]
+  },
+  "get_extended_metrics": {
+    "name": "get_extended_metrics",
+    "description": "Get one activity's upstream-exposed extended metrics by activity_id.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Intervals.icu activity ID to fetch extended metrics for."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream activity, interval, and power-vs-HR payloads. Default terse mode only returns upstream-exposed metrics and drops unavailable fields.",
+        "default": false
+      }
+    ]
+  },
+  "get_fitness": {
+    "name": "get_fitness",
+    "description": "Get CTL, ATL, and TSB fitness trends for a local date range.",
+    "arguments": [
+      {
+        "name": "end_date",
+        "required": true,
+        "type": "string",
+        "description": "local end date as YYYY-MM-DD in the athlete timezone."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream summary rows.",
+        "default": false
+      },
+      {
+        "name": "start_date",
+        "required": true,
+        "type": "string",
+        "description": "local start date for fitness rows as YYYY-MM-DD in the athlete timezone."
+      }
+    ]
+  },
+  "get_fitness_projection": {
+    "name": "get_fitness_projection",
+    "description": "Use when the prompt asks to project CTL, ATL, or TSB forward; do not fetch get_fitness rows and model the curve in chat.",
+    "arguments": [
+      {
+        "name": "horizon_date",
+        "required": false,
+        "type": "string",
+        "description": "Optional athlete-local YYYY-MM-DD end date; provide either horizon_date or horizon_days, not both."
+      },
+      {
+        "name": "horizon_days",
+        "required": false,
+        "type": "integer",
+        "description": "Optional number of days after start_date to simulate.",
+        "default": 42
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include the projected daily CTL/ATL/TSB curve series.",
+        "default": false
+      },
+      {
+        "name": "model",
+        "required": false,
+        "type": "string",
+        "description": "Closed enum. Free-form physiology models are rejected; this tool only supports deterministic CTL/ATL/TSB impulse-response projection.",
+        "enum": [
+          "deterministic_ctl_atl_tsb"
+        ],
+        "default": "deterministic_ctl_atl_tsb"
+      },
+      {
+        "name": "planned_daily_loads",
+        "required": false,
+        "type": "array",
+        "description": "Optional explicit planned training load values by athlete-local date; these replace modeled ramp load for matching dates.",
+        "items": {
+          "required": false,
+          "type": "object"
+        }
+      },
+      {
+        "name": "recovery_week_cadence",
+        "required": false,
+        "type": "integer",
+        "description": "Every Nth week uses recovery_week_load_pct of modeled load; use 0 to disable recovery weeks.",
+        "default": 4
+      },
+      {
+        "name": "recovery_week_load_pct",
+        "required": false,
+        "type": "number",
+        "description": "Percent of modeled load used during recovery weeks.",
+        "default": 60
+      },
+      {
+        "name": "start_date",
+        "required": true,
+        "type": "string",
+        "description": "Athlete-local YYYY-MM-DD date whose get_fitness CTL/ATL/TSB values seed the projection."
+      },
+      {
+        "name": "weekly_ramp_pct",
+        "required": false,
+        "type": "number",
+        "description": "Week-over-week percent change applied to modeled daily load when planned_daily_loads does not specify a day.",
+        "default": 5
+      }
+    ]
+  },
+  "get_gear_list": {
+    "name": "get_gear_list",
+    "description": "List the athlete's intervals.icu gear with IDs and human-readable names for resolving activity gear_id fields.",
+    "arguments": [
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream gear fields under each row's full object; default terse rows include gear_id, name/name_missing, type, brand, model, and retired.",
+        "default": false
+      },
+      {
+        "name": "refresh",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, bypass the manual in-process per-athlete gear cache and fetch a fresh list from intervals.icu. Failed refreshes do not replace the last successful cache entry.",
+        "default": false
+      }
+    ]
+  },
+  "get_hr_curves": {
+    "name": "get_hr_curves",
+    "description": "Get upstream-computed heart-rate best-effort curves for a date range.",
+    "arguments": [
+      {
+        "name": "duration_seconds",
+        "required": false,
+        "type": "array",
+        "description": "Heart-rate curve duration buckets in seconds. Defaults to 5,15,30,60,300,1200,3600 seconds; point values are heart_rate_bpm.",
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream curve arrays and activity maps.",
+        "default": false
+      },
+      {
+        "name": "newest",
+        "required": true,
+        "type": "string",
+        "description": "Local end date YYYY-MM-DD."
+      },
+      {
+        "name": "oldest",
+        "required": true,
+        "type": "string",
+        "description": "Local start date YYYY-MM-DD."
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Optional intervals.icu sport/type filter for the upstream type parameter. Omit to let upstream aggregate its default heart-rate curve set."
+      }
+    ]
+  },
+  "get_pace_curves": {
+    "name": "get_pace_curves",
+    "description": "Get upstream-computed pace best-effort curves for a date range.",
+    "arguments": [
+      {
+        "name": "distance_meters",
+        "required": false,
+        "type": "array",
+        "description": "Pace curve distance buckets in meters. Defaults to 400,1000,1609,5000,10000m, or swim-style 50,100,200,400,1500m when sport contains Swim. Points include upstream elapsed_seconds plus either pace_seconds_per_km or pace_seconds_per_mile based on athlete units.",
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream curve arrays and activity maps.",
+        "default": false
+      },
+      {
+        "name": "newest",
+        "required": true,
+        "type": "string",
+        "description": "Local end date YYYY-MM-DD."
+      },
+      {
+        "name": "oldest",
+        "required": true,
+        "type": "string",
+        "description": "Local start date YYYY-MM-DD."
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Optional intervals.icu sport/type filter for the upstream type parameter. Omit to let upstream aggregate its default pace curve set."
+      }
+    ]
+  },
+  "get_planning_context": {
+    "name": "get_planning_context",
+    "description": "Fetch read-only weekly planning context without creating an ATP or calendar writes: athlete-local week events/workouts, active training-plan assignment summary, current fitness context, upcoming races, and caveats.",
+    "arguments": [
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw source read payloads only: event full fields, fitness row full fields, and raw active training-plan assignment/nested payloads. This does not enable ATP creation or calendar writes.",
+        "default": false
+      },
+      {
+        "name": "week_start",
+        "required": false,
+        "type": "string",
+        "description": "Optional athlete-local YYYY-MM-DD date anchoring the planning week. The supplied date is normalized backward to Monday; omit to use the upcoming athlete-local Monday, with today used when today is Monday."
+      }
+    ]
+  },
+  "get_power_curves": {
+    "name": "get_power_curves",
+    "description": "Get the upstream-computed mean-maximal power curve for a date range.",
+    "arguments": [
+      {
+        "name": "duration_seconds",
+        "required": false,
+        "type": "array",
+        "description": "Power curve buckets to return. Defaults to 5,15,30,60,300,1200,3600 seconds.",
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream curve arrays and activity maps.",
+        "default": false
+      },
+      {
+        "name": "newest",
+        "required": true,
+        "type": "string",
+        "description": "Local end date YYYY-MM-DD."
+      },
+      {
+        "name": "oldest",
+        "required": true,
+        "type": "string",
+        "description": "Local start date YYYY-MM-DD."
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Intervals.icu sport/type for the required upstream type parameter; defaults to Ride.",
+        "default": "Ride"
+      }
+    ]
+  },
+  "get_today": {
+    "name": "get_today",
+    "description": "Answer how's today looking with one terse daily digest: today's CTL/ATL/TSB fitness, wellness, completed activities, planned events, and NOTE/race annotations.",
+    "arguments": [
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream payloads under each digest section's rows. Defaults to false for a terse today digest.",
+        "default": false
+      }
+    ]
+  },
+  "get_training_plan": {
+    "name": "get_training_plan",
+    "description": "Fetch the athlete's active training-plan assignment, not calendar events or workout-library templates.",
+    "arguments": [
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include the raw upstream training-plan assignment and nested plan/workout payload. Default mode returns assignment fields and lightweight plan summary only.",
+        "default": false
+      }
+    ]
+  },
+  "get_training_summary": {
+    "name": "get_training_summary",
+    "description": "Get aggregated training volume, neutral training load, sRPE, and upstream zone-order totals for a local date range.",
+    "arguments": [
+      {
+        "name": "end_date",
+        "required": true,
+        "type": "string",
+        "description": "local end date as YYYY-MM-DD in the athlete timezone."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream summary rows.",
+        "default": false
+      },
+      {
+        "name": "start_date",
+        "required": true,
+        "type": "string",
+        "description": "local start date for summary rows as YYYY-MM-DD in the athlete timezone."
+      }
+    ]
+  },
+  "get_wellness_data": {
+    "name": "get_wellness_data",
+    "description": "Get daily wellness rows for a local date range with distinct sleepQuality, sleepScore, sleepSecs, nutrition keys calories_intake/carbs_g/protein_g/fat_g when present, custom fields, native provider sidecars, and provider-native provenance scale labels for sleep/readiness.",
+    "arguments": [
+      {
+        "name": "fields",
+        "required": false,
+        "type": "array",
+        "description": "Optional upstream wellness field names to request; custom fields are preserved when returned.",
+        "items": {
+          "required": false,
+          "type": "string"
+        }
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include the raw upstream wellness row under full and keep null fields.",
+        "default": false
+      },
+      {
+        "name": "newest",
+        "required": true,
+        "type": "string",
+        "description": "Local newest wellness date YYYY-MM-DD in the athlete timezone, inclusive."
+      },
+      {
+        "name": "oldest",
+        "required": true,
+        "type": "string",
+        "description": "Local oldest wellness date YYYY-MM-DD in the athlete timezone."
+      }
+    ]
+  },
+  "get_workout_library": {
+    "name": "get_workout_library",
+    "description": "List workout-library folders and plans, not calendar events or the active training-plan assignment.",
+    "arguments": [
+      {
+        "name": "include_top_level_workouts",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, also fetch all library workouts and include only those without a folder_id as top-level workout templates.",
+        "default": false
+      }
+    ]
+  },
+  "get_workouts_in_folder": {
+    "name": "get_workouts_in_folder",
+    "description": "List workout-library templates inside one folder or plan by folder_id.",
+    "arguments": [
+      {
+        "name": "folder_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu workout-library folder or plan ID. The public API lists all workouts, and icuvisor filters by this folder_id."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include each raw upstream workout_doc object verbatim. Default mode returns only workout_doc_summary.",
+        "default": false
+      }
+    ]
+  },
+  "icuvisor_check_server_version": {
+    "name": "icuvisor_check_server_version",
+    "description": "Check whether the MCP client is using stale icuvisor tool descriptions after an upgrade.",
+    "arguments": null
+  },
+  "icuvisor_list_advanced_capabilities": {
+    "name": "icuvisor_list_advanced_capabilities",
+    "description": "Use only when the user asks what other icuvisor tools are available or when a requested advanced/delete capability is not visible in the current tool catalog.",
+    "arguments": null
+  },
+  "link_activity_to_event": {
+    "name": "link_activity_to_event",
+    "description": "Manually pair one completed activity with one planned calendar event when intervals.icu auto-pairing misses (forum #97).",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu activity ID to pair. Surrounding whitespace is trimmed; IDs are otherwise preserved exactly."
+      },
+      {
+        "name": "event_id",
+        "required": true,
+        "type": "string",
+        "description": "Required numeric intervals.icu planned event ID to set as the activity paired_event_id. Surrounding whitespace is trimmed."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include the raw upstream updated activity payload under full; default returns a terse link confirmation.",
+        "default": false
+      }
+    ]
+  },
+  "list_athletes": {
+    "name": "list_athletes",
+    "description": "List the coach-mode roster configured for this icuvisor server.",
+    "arguments": null
+  },
+  "resolve_calendar_dates": {
+    "name": "resolve_calendar_dates",
+    "description": "Resolve athlete-local calendar anchors before planning, scheduling, or answering date-sensitive prompts such as today, tomorrow, next week, or N days from today.",
+    "arguments": [
+      {
+        "name": "base_date",
+        "required": false,
+        "type": "string",
+        "description": "Optional athlete-local YYYY-MM-DD base date. Defaults to today's date from the athlete timezone, not UTC or the chat client's timezone."
+      },
+      {
+        "name": "offsets",
+        "required": false,
+        "type": "array",
+        "description": "Integer day offsets from base_date. 0 is the base date, 1 is tomorrow, 7 is one week later, and negative values look backward. Each date is computed in the athlete timezone with calendar-day arithmetic.",
+        "default": [
+          0
+        ],
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      }
+    ]
+  },
+  "select_athlete": {
+    "name": "select_athlete",
+    "description": "Select the default target athlete for subsequent coach-mode tool calls in this MCP session.",
+    "arguments": [
+      {
+        "name": "athlete_id",
+        "required": true,
+        "type": "string",
+        "description": "Target athlete to select for this session. Format: i12345 or 12345."
+      }
+    ]
+  },
+  "set_activity_intervals": {
+    "name": "set_activity_intervals",
+    "description": "Set or correct the interval structure on one completed activity by writing a structured workout_doc as the activity's description; intervals.icu re-parses the DSL into rendered intervals overlaid on the recording.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu activity ID whose interval structure will be (re)written. Surrounding whitespace is trimmed; the i-prefix is preserved verbatim."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include the raw upstream updated-activity payload under full; default returns a terse confirmation.",
+        "default": false
+      },
+      {
+        "name": "prose",
+        "required": false,
+        "type": "string",
+        "description": "Optional free-text prose to interleave around the serialized steps; the upstream description retains the prose verbatim around the DSL block. Use the \u003c!-- icuvisor:steps --\u003e sentinel on its own line to choose where serialized steps are inserted. Omit to send the serialized DSL alone."
+      },
+      {
+        "name": "workout_doc",
+        "required": true,
+        "type": "object",
+        "description": "Required structured WorkoutDoc whose steps are serialized to the activity description DSL; intervals.icu re-parses the DSL into rendered intervals. Must contain at least one step. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Syntax reference: icuvisor://workout-syntax. Call validate_workout first if uncertain about the DSL.",
+        "additional_properties": "allowed"
+      }
+    ]
+  },
+  "update_activity": {
+    "name": "update_activity",
+    "description": "Rename and/or replace the free-text description of one completed activity by activity_id.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu activity ID. Surrounding whitespace is trimmed; the i-prefix is preserved verbatim."
+      },
+      {
+        "name": "description",
+        "required": false,
+        "type": "string",
+        "description": "Optional replacement free-text activity description; this is not append-only. Omit to leave unchanged; pass an explicit empty string to clear the description. Prose metadata only — to write structured intervals, use set_activity_intervals with a workout_doc."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include the raw upstream updated-activity payload under full; default returns a terse update confirmation.",
+        "default": false
+      },
+      {
+        "name": "name",
+        "required": false,
+        "type": "string",
+        "description": "Optional replacement activity title. Omit to leave unchanged. Empty strings are rejected to avoid accidentally blanking the title; intervals.icu's UI also rejects blank titles."
+      }
+    ]
+  },
+  "update_custom_item": {
+    "name": "update_custom_item",
+    "description": "Update one custom item definition by item_id with sparse fields only.",
+    "arguments": [
+      {
+        "name": "content",
+        "required": false,
+        "type": "object",
+        "description": "Optional sparse content patch. Validated against the existing item_type schema, then merged so omitted keys stay untouched; see icuvisor://custom-item-schemas.",
+        "additional_properties": "allowed"
+      },
+      {
+        "name": "description",
+        "required": false,
+        "type": "string",
+        "description": "Optional replacement custom item description. Omit to leave unchanged; empty strings are preserved when intentionally supplied."
+      },
+      {
+        "name": "hide_script",
+        "required": false,
+        "type": "boolean",
+        "description": "Optional replacement upstream hide_script flag. Omit to leave unchanged."
+      },
+      {
+        "name": "image",
+        "required": false,
+        "type": "string",
+        "description": "Optional replacement upstream image identifier or URL when supported by the custom-item type. Omit to leave unchanged."
+      },
+      {
+        "name": "index",
+        "required": false,
+        "type": "integer",
+        "description": "Optional replacement display/order index. Omit to leave unchanged."
+      },
+      {
+        "name": "item_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu custom item ID to update. Surrounding whitespace is trimmed."
+      },
+      {
+        "name": "name",
+        "required": false,
+        "type": "string",
+        "description": "Optional replacement custom item name. Omit to leave unchanged."
+      },
+      {
+        "name": "visibility",
+        "required": false,
+        "type": "string",
+        "description": "Optional replacement upstream visibility value. Omit to leave unchanged."
+      }
+    ],
+    "examples": [
+      {
+        "item_id": "custom-item-example-3",
+        "name": "Training load trend - coach view"
+      },
+      {
+        "content": {
+          "layout": {
+            "height": 300
+          }
+        },
+        "description": "Updated description for the coach dashboard.",
+        "item_id": "custom-item-example-4",
+        "visibility": "PRIVATE"
+      }
+    ]
+  },
+  "update_sport_settings": {
+    "name": "update_sport_settings",
+    "description": "Update one sport's FTP, threshold heart rate, threshold pace, or zone definitions.",
+    "arguments": [
+      {
+        "name": "effective_date",
+        "required": true,
+        "type": "string",
+        "description": "Required athlete-local effective date as YYYY-MM-DD; used as the oldest date for upstream sport-setting recompute."
+      },
+      {
+        "name": "ftp",
+        "required": false,
+        "type": "integer",
+        "description": "Functional Threshold Power in watts for the selected sport."
+      },
+      {
+        "name": "sport",
+        "required": true,
+        "type": "string",
+        "description": "Sport setting to update, matching intervals.icu sport type (for example Ride, Run, Swim).",
+        "enum": [
+          "Ride",
+          "Run",
+          "Swim",
+          "VirtualRide",
+          "Walk",
+          "Hike",
+          "Rowing",
+          "WeightTraining",
+          "AlpineSki",
+          "NordicSki",
+          "Other"
+        ]
+      },
+      {
+        "name": "threshold_hr",
+        "required": false,
+        "type": "integer",
+        "description": "Threshold heart rate in bpm for the selected sport."
+      },
+      {
+        "name": "threshold_pace",
+        "required": false,
+        "type": "object",
+        "description": "Threshold pace with an explicit pace-duration unit; seconds_per_km is 4:15/km as 255 and seconds_per_mile is 8:00/mi as 480.",
+        "children": [
+          {
+            "name": "unit",
+            "required": true,
+            "type": "string",
+            "description": "Pace-duration unit for threshold_pace value.",
+            "enum": [
+              "seconds_per_km",
+              "seconds_per_mile",
+              "seconds_per_100m",
+              "seconds_per_500m",
+              "minutes_per_km",
+              "minutes_per_mile"
+            ]
+          },
+          {
+            "name": "value",
+            "required": true,
+            "type": "number",
+            "description": "Threshold pace duration in the provided unit, not speed."
+          }
+        ]
+      },
+      {
+        "name": "zones",
+        "required": false,
+        "type": "array",
+        "description": "Optional destructive replacement zone definitions. Supplying zones overwrites prior power/hr/pace zone definitions for this sport and is rejected unless ICUVISOR_DELETE_MODE=full.",
+        "items": {
+          "required": false,
+          "type": "object"
+        }
+      }
+    ],
+    "examples": [
+      {
+        "effective_date": "2026-06-01",
+        "ftp": 285,
+        "sport": "Ride"
+      },
+      {
+        "effective_date": "2026-06-01",
+        "sport": "Run",
+        "threshold_hr": 172,
+        "threshold_pace": {
+          "unit": "seconds_per_km",
+          "value": 255
+        }
+      }
+    ]
+  },
+  "update_wellness": {
+    "name": "update_wellness",
+    "description": "Update one athlete-local wellness row with sparse manual fields: subjective scales, measurements, injury text, and locked; legacy feel remains in the input schema for compatibility but rejects with field_not_writable: feel (not accepted by intervals.icu wellness write), device-owned sleepScore rejects with field_not_writable: sleepScore (device-managed), and _native rejects with field_not_writable: _native (bridge-managed).",
+    "arguments": [
+      {
+        "name": "abdomen",
+        "required": false,
+        "type": "number",
+        "description": "Manual abdomen circumference in cm."
+      },
+      {
+        "name": "bloodGlucose",
+        "required": false,
+        "type": "number",
+        "description": "Manual blood glucose in the upstream intervals.icu wellness unit."
+      },
+      {
+        "name": "bodyFat",
+        "required": false,
+        "type": "number",
+        "description": "Manual body fat percentage, 0-100%."
+      },
+      {
+        "name": "date",
+        "required": true,
+        "type": "string",
+        "description": "Required athlete-local wellness date as YYYY-MM-DD."
+      },
+      {
+        "name": "diastolic",
+        "required": false,
+        "type": "integer",
+        "description": "Manual diastolic blood pressure in mmHg."
+      },
+      {
+        "name": "fatigue",
+        "required": false,
+        "type": "integer",
+        "description": "1-5 (athlete-reported fatigue); fatigue scale."
+      },
+      {
+        "name": "feel",
+        "required": false,
+        "type": "integer",
+        "description": "1-5 (athlete-reported feel); feel scale."
+      },
+      {
+        "name": "hrv",
+        "required": false,
+        "type": "number",
+        "description": "Manual HRV in milliseconds rMSSD."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include the raw upstream wellness row under wellness.full and keep null fields.",
+        "default": false
+      },
+      {
+        "name": "injury",
+        "required": false,
+        "type": "string",
+        "description": "Optional free-text injury or limitation note. Preserved verbatim."
+      },
+      {
+        "name": "lactate",
+        "required": false,
+        "type": "number",
+        "description": "Manual blood lactate in mmol/L."
+      },
+      {
+        "name": "locked",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, ask upstream to lock the wellness row against device-sync overwrites."
+      },
+      {
+        "name": "menstrualPhase",
+        "required": false,
+        "type": "string",
+        "description": "Menstrual phase as accepted by intervals.icu; free-text string until the upstream enum contract is verified."
+      },
+      {
+        "name": "mood",
+        "required": false,
+        "type": "integer",
+        "description": "1-5 (athlete-reported mood); mood scale."
+      },
+      {
+        "name": "motivation",
+        "required": false,
+        "type": "integer",
+        "description": "1-5 (athlete-reported motivation); motivation scale."
+      },
+      {
+        "name": "respiration",
+        "required": false,
+        "type": "number",
+        "description": "respiration: breaths per minute."
+      },
+      {
+        "name": "restingHR",
+        "required": false,
+        "type": "integer",
+        "description": "Manual resting heart rate in bpm."
+      },
+      {
+        "name": "sleepQuality",
+        "required": false,
+        "type": "integer",
+        "description": "1-4 (athlete-entered, 1=poor 4=great); sleepQuality scale."
+      },
+      {
+        "name": "soreness",
+        "required": false,
+        "type": "integer",
+        "description": "1-5 (athlete-reported soreness); soreness scale."
+      },
+      {
+        "name": "spO2",
+        "required": false,
+        "type": "number",
+        "description": "spO2: blood oxygen saturation percentage 0-100."
+      },
+      {
+        "name": "stress",
+        "required": false,
+        "type": "integer",
+        "description": "1-5 (athlete-reported stress); stress scale."
+      },
+      {
+        "name": "systolic",
+        "required": false,
+        "type": "integer",
+        "description": "Manual systolic blood pressure in mmHg."
+      },
+      {
+        "name": "vo2max",
+        "required": false,
+        "type": "number",
+        "description": "vo2max: ml/kg/min."
+      },
+      {
+        "name": "weight",
+        "required": false,
+        "type": "number",
+        "description": "Manual body weight in the athlete's preferred weight unit from get_athlete_profile (_meta.units / units.weight); converted to upstream kg at the API boundary."
+      }
+    ],
+    "examples": [
+      {
+        "date": "2026-06-15",
+        "fatigue": 2
+      },
+      {
+        "date": "2026-06-16",
+        "fatigue": 2,
+        "hrv": 62.5,
+        "locked": true,
+        "mood": 4,
+        "motivation": 4,
+        "restingHR": 48,
+        "sleepQuality": 3,
+        "soreness": 2,
+        "stress": 3
+      }
+    ]
+  },
+  "update_workout": {
+    "name": "update_workout",
+    "description": "Update one reusable workout-library template by workout_id with sparse fields only.",
+    "arguments": [
+      {
+        "name": "description",
+        "required": false,
+        "type": "string",
+        "description": "Optional replacement for the upstream workout description/DSL, not append-only notes. Omit to leave unchanged. Supplying description without workout_doc can replace existing structured steps; provide the desired workout_doc to preserve or merge structure. May be supplied with workout_doc; use the \u003c!-- icuvisor:steps --\u003e sentinel on its own line to choose where serialized steps are inserted. Empty strings without workout_doc are rejected to avoid accidentally clearing structured workout content."
+      },
+      {
+        "name": "folder_id",
+        "required": false,
+        "type": "string",
+        "description": "Optional replacement intervals.icu workout-library folder or plan ID. Omit to leave unchanged; an explicit empty string moves the workout to the top level when upstream supports it."
+      },
+      {
+        "name": "name",
+        "required": false,
+        "type": "string",
+        "description": "Optional replacement workout-library template name/title. Omit to leave unchanged."
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Optional replacement upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Omit to leave unchanged. Include with workout_doc when icuvisor should use athlete sport settings to disambiguate zone target suffixes."
+      },
+      {
+        "name": "tags",
+        "required": false,
+        "type": "array",
+        "description": "Optional replacement workout-library tags. Omit to leave unchanged; provide the full desired tag list when appending a tag.",
+        "items": {
+          "required": false,
+          "type": "string"
+        }
+      },
+      {
+        "name": "workout_doc",
+        "required": false,
+        "type": "object",
+        "description": "Optional replacement structured WorkoutDoc for the upstream workout description/DSL. Serialized and merged with description when both are supplied; empty steps clear structured content. Include the desired steps when changing prose so the replacement description/DSL preserves workout structure. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Include sport in the same request when zone targets should be serialized using athlete sport settings; otherwise workout_doc uses the no-sport serializer. Syntax reference: icuvisor://workout-syntax.",
+        "additional_properties": "allowed"
+      },
+      {
+        "name": "workout_id",
+        "required": true,
+        "type": "string",
+        "description": "Required upstream workout-library template ID to update. Surrounding whitespace is trimmed."
+      }
+    ],
+    "examples": [
+      {
+        "name": "Endurance aerobic ride - revised",
+        "workout_id": "workout-example-7"
+      },
+      {
+        "workout_doc": {
+          "steps": [
+            {
+              "description": "Warm up",
+              "duration": 600,
+              "power": {
+                "units": "PERCENT_FTP",
+                "value": 55
+              }
+            },
+            {
+              "description": "Tempo",
+              "duration": 1800,
+              "power": {
+                "max": 85,
+                "min": 80,
+                "units": "PERCENT_FTP"
+              }
+            }
+          ]
+        },
+        "workout_id": "workout-example-8"
+      }
+    ]
+  },
+  "validate_workout": {
+    "name": "validate_workout",
+    "description": "Validate an intervals.icu workout description, a structured workout_doc, or both, and return the canonical merged DSL plus estimated duration that icuvisor would submit on a write.",
+    "arguments": [
+      {
+        "name": "description",
+        "required": false,
+        "type": "string",
+        "description": "Optional free-text intervals.icu description. Prose, headers, comments, and any line the DSL parser does not recognize as a structured step pass through verbatim. Embed the sentinel '\u003c!-- icuvisor:steps --\u003e' on its own line to control where structured steps from workout_doc are inserted in the merged canonical DSL. Structured-step lines start with '- ' or are 'Nx' repeat headers; dashed repeat-like lines such as '-3 x' are also validated so malformed repeat syntax surfaces as PARSE_ERROR. Syntax reference: icuvisor://workout-syntax."
+      },
+      {
+        "name": "workout_doc",
+        "required": false,
+        "type": "object",
+        "description": "Optional structured WorkoutDoc with a steps[] array. Validated via the same Serialize path that write tools use. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Mutually compatible with description; when both contain structured steps, workout_doc wins and the response surfaces a STEP_SOURCES_OVERRIDDEN warning.",
+        "additional_properties": "allowed"
+      }
+    ],
+    "examples": [
+      {
+        "description": "Easy Zone 2 spin.\n- 60m 60-70% HR"
+      },
+      {
+        "description": "Threshold day. Keep cadence above 85.\n\u003c!-- icuvisor:steps --\u003e\nCool down well.",
+        "workout_doc": {
+          "steps": [
+            {
+              "description": "Warm up",
+              "duration": 600,
+              "power": {
+                "units": "PERCENT_FTP",
+                "value": 60
+              }
+            },
+            {
+              "reps": 3,
+              "steps": [
+                {
+                  "duration": 480,
+                  "power": {
+                    "max": 100,
+                    "min": 95,
+                    "units": "PERCENT_FTP"
+                  }
+                },
+                {
+                  "description": "Recovery",
+                  "duration": 240,
+                  "power": {
+                    "units": "PERCENT_FTP",
+                    "value": 50
+                  }
+                }
+              ]
+            },
+            {
+              "description": "Cool down",
+              "duration": 600,
+              "power": {
+                "units": "PERCENT_FTP",
+                "value": 50
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

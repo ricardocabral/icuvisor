@@ -14,10 +14,11 @@ import (
 
 const (
 	addOrUpdateEventName                    = "add_or_update_event"
-	addOrUpdateEventDescription             = "Create or update a non-destructive calendar event such as a planned workout, race, or note. Omitting event_id creates a new event; providing event_id updates that event without deleting or replacing unrelated events; use delete_event to remove. Creates preflight same-day calendar events and skip exact duplicates when upstream fields already match, but upstream has no compare-and-set idempotency key so near-concurrent creates can still race. Before workout creates or updates, present a human-readable preview for user approval that covers total duration, key steps, target intensities, load/distance/time changes, and what existing title/prose/tags/structured steps are preserved. `description` is a replacement for the upstream event description/DSL, not append-only notes; omit it on updates to leave the current description unchanged. For WORKOUT updates, supplying `description` without `workout_doc` can replace existing structured steps; include the desired `workout_doc` to preserve or merge structure. When both are supplied, icuvisor merges them into the upstream description DSL and the `<!-- icuvisor:steps -->` sentinel controls serialized-step placement. WORKOUT `type` supplies sport context for structured zone targets, allowing icuvisor to emit metric suffixes when needed, such as `Z2 Power`, `Z2 HR`, or `Z2 Pace`. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
+	addOrUpdateEventDescription             = "Create or update a non-destructive calendar event such as a planned workout, race, or note. Omitting event_id creates a new event; providing event_id updates that event without deleting or replacing unrelated events; use delete_event to remove. Optional external_id is a non-empty upstream idempotency key for retry-safe creates/updates; omit it to leave the upstream key unchanged, and use event_id for intentional edits to an existing event. Creates preflight same-day calendar events, skip matching external_id retries, and skip exact duplicates when upstream fields already match; near-concurrent creates can still race if upstream does not enforce uniqueness. Before workout creates or updates, present a human-readable preview for user approval that covers total duration, key steps, target intensities, load/distance/time changes, and what existing title/prose/tags/structured steps are preserved. `description` is a replacement for the upstream event description/DSL, not append-only notes; omit it on updates to leave the current description unchanged. For WORKOUT updates, supplying `description` without `workout_doc` can replace existing structured steps; include the desired `workout_doc` to preserve or merge structure. When both are supplied, icuvisor merges them into the upstream description DSL and the `<!-- icuvisor:steps -->` sentinel controls serialized-step placement. WORKOUT `type` supplies sport context for structured zone targets, allowing icuvisor to emit metric suffixes when needed, such as `Z2 Power`, `Z2 HR`, or `Z2 Pace`. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
 	descriptionOnlyWorkoutWarning           = "Description was written without workout_doc; if this item previously had structured steps, they may have been replaced. Include workout_doc when preserving or merging workout structure."
 	sameDayConflictWarning                  = "Same-day calendar events already exist; verify this create is not an unintended duplicate."
 	duplicateCreateSkippedWarning           = "Skipped create because an existing same-day event already matches the requested writable fields."
+	duplicateExternalIDSkippedWarning       = "Skipped create because an existing same-day event already has the requested external_id."
 	invalidAddOrUpdateEventArgumentsMessage = "invalid add_or_update_event arguments; provide date as athlete-local YYYY-MM-DD, category, type for WORKOUT events, name for NOTE creates, and optional event_id for updates"
 	writeEventMessage                       = "could not write event; check intervals.icu credentials, athlete ID, event ID, and writable event fields"
 )
@@ -30,6 +31,7 @@ type EventWriterClient interface {
 type addOrUpdateEventRequest struct {
 	Date               string                 `json:"date"`
 	EventID            string                 `json:"event_id,omitempty"`
+	ExternalID         string                 `json:"external_id,omitempty"`
 	Category           string                 `json:"category"`
 	Type               string                 `json:"type,omitempty"`
 	Name               string                 `json:"name,omitempty"`
@@ -143,6 +145,7 @@ func decodeAddOrUpdateEventRequest(raw json.RawMessage) (addOrUpdateEventRequest
 	args = decoded
 	args.Date = strings.TrimSpace(args.Date)
 	args.EventID = strings.TrimSpace(args.EventID)
+	args.ExternalID = strings.TrimSpace(args.ExternalID)
 	args.Category = strings.TrimSpace(args.Category)
 	args.Type = strings.TrimSpace(args.Type)
 	args.Name = strings.TrimSpace(args.Name)
@@ -177,6 +180,7 @@ func decodeAddOrUpdateEventRequest(raw json.RawMessage) (addOrUpdateEventRequest
 func eventWriteParams(args addOrUpdateEventRequest, options workoutdoc.SerializeOptions) (intervals.WriteEventParams, string, error) {
 	params := intervals.WriteEventParams{
 		EventID:            args.EventID,
+		ExternalID:         args.ExternalID,
 		Date:               args.Date,
 		Category:           args.Category,
 		Type:               args.Type,
@@ -220,6 +224,10 @@ func shapeAddOrUpdateEventResponse(event intervals.Event, args addOrUpdateEventR
 		meta.Operation = "skip_duplicate"
 		meta.DuplicateEventID = preflight.Duplicate.ID
 		meta.DuplicateWarning = duplicateCreateSkippedWarning
+		if len(preflight.Conflicts) > 0 && preflight.Conflicts[0].Reason == "matching_external_id" {
+			meta.DuplicateWarning = duplicateExternalIDSkippedWarning
+		}
+		meta.SameDayConflicts = preflight.Conflicts
 	} else if len(preflight.Conflicts) > 0 {
 		meta.DuplicateWarning = sameDayConflictWarning
 		meta.SameDayConflicts = preflight.Conflicts
@@ -252,15 +260,29 @@ func eventCreatePreflightFromEvents(params intervals.WriteEventParams, events []
 		if eventDateOnly(event) != params.Date {
 			continue
 		}
+		if eventMatchesExternalID(event, params.ExternalID) {
+			duplicate := event
+			result.Duplicate = &duplicate
+			result.Conflicts = []applyTrainingPlanConflict{{EventID: event.ID, Date: eventDateOnly(event), Reason: "matching_external_id"}}
+			return result
+		}
 		if eventMatchesWriteParams(event, params) {
 			duplicate := event
 			result.Duplicate = &duplicate
-			result.Conflicts = []applyTrainingPlanConflict{{EventID: event.ID, Reason: "duplicate_existing_event"}}
+			result.Conflicts = []applyTrainingPlanConflict{{EventID: event.ID, Date: eventDateOnly(event), Reason: "duplicate_existing_event"}}
 			return result
 		}
 		result.Conflicts = append(result.Conflicts, applyTrainingPlanConflict{EventID: event.ID, Reason: "existing_event_on_date"})
 	}
 	return result
+}
+
+func eventMatchesExternalID(event intervals.Event, externalID string) bool {
+	externalID = strings.TrimSpace(externalID)
+	if externalID == "" {
+		return false
+	}
+	return strings.TrimSpace(firstNonEmpty(stringValue(event.ExternalID), anyString(event.Raw["external_id"]))) == externalID
 }
 
 func eventMatchesWriteParams(event intervals.Event, params intervals.WriteEventParams) bool {
@@ -385,6 +407,7 @@ func addOrUpdateEventInputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"date", "category"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
 		"date":                 map[string]any{"type": "string", "description": "Required athlete-local event date as YYYY-MM-DD; interpreted in the configured athlete timezone."},
 		"event_id":             map[string]any{"type": "string", "description": "Optional upstream event ID to update. Omit to create a new event; this tool never deletes events."},
+		"external_id":          map[string]any{"type": "string", "description": "Optional non-empty upstream idempotency key. Surrounding whitespace is trimmed; omit or pass blank to leave external_id unchanged/unset. Clearing an existing upstream external_id is not supported."},
 		"category":             map[string]any{"type": "string", "description": intervals.EventCategoryReferenceDescription("Required upstream event category.")},
 		"type":                 map[string]any{"type": "string", "description": "Required for WORKOUT events: upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Surrounding whitespace is trimmed. Used with athlete sport settings to disambiguate structured workout_doc zone targets."},
 		"name":                 map[string]any{"type": "string", "description": "Event title/name shown on the athlete calendar. Required when creating NOTE events; optional for other supported writes and updates unless upstream requires it."},

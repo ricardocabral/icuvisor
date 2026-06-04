@@ -268,6 +268,93 @@
 	background: color-mix(in srgb, var(--tv-delete) 13%, transparent);
 	border-color: color-mix(in srgb, var(--tv-delete) 30%, transparent);
 }
+.tool-catalog .badge-required {
+	color: var(--tv-delete);
+	background: color-mix(in srgb, var(--tv-delete) 10%, transparent);
+	border-color: color-mix(in srgb, var(--tv-delete) 24%, transparent);
+}
+.tool-catalog .badge-optional {
+	color: var(--tv-meta);
+	background: color-mix(in srgb, var(--tv-meta) 8%, transparent);
+	border-color: color-mix(in srgb, var(--tv-meta) 20%, transparent);
+}
+
+/* Per-tool argument and example details */
+.tool-catalog .tool-summary {
+	margin: 0;
+}
+.tool-catalog .tool-schema-details,
+.tool-catalog .tool-example-details {
+	margin-top: 0.55rem;
+	border: 1px solid rgba(120, 120, 120, 0.18);
+	border-radius: 8px;
+	background: rgba(120, 120, 120, 0.035);
+}
+.tool-catalog .tool-schema-details > summary,
+.tool-catalog .tool-example-details > summary {
+	cursor: pointer;
+	padding: 0.35rem 0.55rem;
+	font-size: 0.78rem;
+	font-weight: 700;
+	color: var(--tv-meta);
+}
+.tool-catalog .tool-arguments {
+	display: grid;
+	gap: 0.55rem;
+	margin: 0;
+	padding: 0 0.65rem 0.65rem;
+}
+.tool-catalog .tool-argument {
+	display: grid;
+	gap: 0.2rem;
+	padding-top: 0.55rem;
+	border-top: 1px solid rgba(120, 120, 120, 0.16);
+}
+.tool-catalog .tool-argument dt {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.35rem;
+	font-weight: 700;
+}
+.tool-catalog .tool-argument dd {
+	margin: 0;
+	font-size: 0.86rem;
+	color: inherit;
+}
+.tool-catalog .tool-argument dd p {
+	margin: 0.15rem 0 0;
+}
+.tool-catalog .tool-type,
+.tool-catalog .tool-required-inline {
+	font-size: 0.72rem;
+	font-weight: 700;
+	color: var(--tv-meta);
+}
+.tool-catalog .tool-arg-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem 0.8rem;
+	color: rgba(75, 85, 99, 0.92);
+}
+.dark .tool-catalog .tool-arg-meta {
+	color: rgba(209, 213, 219, 0.86);
+}
+.tool-catalog .tool-arg-children {
+	margin: 0.35rem 0 0;
+	padding-left: 1.1rem;
+}
+.tool-catalog .tool-arg-children li {
+	margin: 0.12rem 0;
+}
+.tool-catalog .tool-example-details pre {
+	margin: 0 0.65rem 0.65rem;
+	padding: 0.55rem;
+	max-width: min(72ch, 100%);
+	overflow-x: auto;
+	font-size: 0.75rem;
+	white-space: pre;
+}
 
 /* Screen-reader-only text inside the catalog (e.g. badge context) */
 .tool-catalog .tool-sr-only {

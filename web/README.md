@@ -54,7 +54,7 @@ If the new Hextra tag requires a newer Hugo version, update `.github/workflows/p
 
 - `hugo.toml` — site config, Hextra module import, menu, theme params, and Pagefind settings.
 - `go.mod` / `go.sum` — Hugo Module manifests for the Hextra dependency.
-- `data/tools.json` — generated from the Go tool registry by `make docs-tools` / `cmd/gendocs`; do not hand-edit.
+- `data/tools.json` and `data/tool_schemas.json` — generated from the Go tool registry by `make docs-tools` / `cmd/gendocs`; do not hand-edit.
 - `layouts/index.html` — bespoke landing-page layout that overrides only the home page.
 - `layouts/partials/` — small Hextra overrides for Pagefind, favicons, and footer text.
 - `static/css/style.css` — bento-grid design tokens for the bespoke landing page.

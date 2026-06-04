@@ -45,6 +45,7 @@ type getEventsResponse struct {
 
 type getEventsRow struct {
 	EventID                  string                `json:"event_id,omitempty"`
+	ExternalID               string                `json:"external_id,omitempty"`
 	Category                 string                `json:"category,omitempty"`
 	Type                     string                `json:"type,omitempty"`
 	Name                     string                `json:"name,omitempty"`
@@ -198,7 +199,7 @@ func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, tim
 }
 
 func eventRow(event intervals.Event, includeFull bool, timezoneName string, previewContexts ...workoutTargetPreviewContext) (getEventsRow, error) {
-	row := getEventsRow{EventID: event.ID, Category: firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"])), Type: stringValue(event.Type), Name: stringValue(event.Name), StartDateLocal: stringValue(event.StartDateLocal), EndDateLocal: stringValue(event.EndDateLocal), Description: stringValue(event.Description), Indoor: event.Indoor, TrainingLoad: event.TrainingLoad, LoadTarget: event.LoadTarget, DistanceMeters: event.Distance, DistanceTargetMeters: event.DistanceTarget, MovingTimeSeconds: intValue(event.MovingTime), TimeTargetSeconds: intValue(event.TimeTarget), ElapsedTimeSeconds: intValue(event.ElapsedTime), ElapsedTimeTargetSeconds: intValue(event.ElapsedTimeTarget), TrainingPlanID: anyString(firstRaw(event.Raw, "training_plan_id", "plan_id")), CalendarID: anyString(event.CalendarID), PlanApplied: stringValue(event.PlanApplied), Updated: stringValue(event.Updated), Tags: eventTags(event.Raw)}
+	row := getEventsRow{EventID: event.ID, ExternalID: firstNonEmpty(stringValue(event.ExternalID), anyString(event.Raw["external_id"])), Category: firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"])), Type: stringValue(event.Type), Name: stringValue(event.Name), StartDateLocal: stringValue(event.StartDateLocal), EndDateLocal: stringValue(event.EndDateLocal), Description: stringValue(event.Description), Indoor: event.Indoor, TrainingLoad: event.TrainingLoad, LoadTarget: event.LoadTarget, DistanceMeters: event.Distance, DistanceTargetMeters: event.DistanceTarget, MovingTimeSeconds: intValue(event.MovingTime), TimeTargetSeconds: intValue(event.TimeTarget), ElapsedTimeSeconds: intValue(event.ElapsedTime), ElapsedTimeTargetSeconds: intValue(event.ElapsedTimeTarget), TrainingPlanID: anyString(firstRaw(event.Raw, "training_plan_id", "plan_id")), CalendarID: anyString(event.CalendarID), PlanApplied: stringValue(event.PlanApplied), Updated: stringValue(event.Updated), Tags: eventTags(event.Raw)}
 	if row.CalendarID == "" {
 		row.CalendarID = anyString(event.Raw["calendar_id"])
 	}

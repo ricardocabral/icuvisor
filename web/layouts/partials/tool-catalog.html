@@ -1,5 +1,7 @@
 {{ $tools := site.Data.tools }}
 {{ if not $tools }}{{ errorf "web/data/tools.json is missing or empty; run make docs-tools" }}{{ end }}
+{{ $schemas := site.Data.tool_schemas }}
+{{ if not $schemas }}{{ errorf "web/data/tool_schemas.json is missing or empty; run make docs-tools" }}{{ end }}
 {{ $groups := site.Data.tool_groups }}
 {{ if not $groups }}{{ errorf "web/data/tool_groups.yaml is missing or empty" }}{{ end }}
 <div class="tool-catalog">
@@ -20,7 +22,7 @@
             <thead>
               <tr>
                 <th scope="col">Tool</th>
-                <th scope="col">Summary</th>
+                <th scope="col">Summary and inputs</th>
                 <th scope="col">Tier</th>
                 <th scope="col">Safety</th>
               </tr>
@@ -31,11 +33,57 @@
                 {{ $verb := index $parts 0 }}
                 {{ $rest := "" }}
                 {{ if gt (len $parts) 1 }}{{ $rest = delimit (after 1 $parts) "_" }}{{ end }}
+                {{ $schema := index $schemas .name }}
                 <tr id="{{ .anchor }}">
                   <th scope="row">
                     <code class="tool-id tool-verb--{{ $verb }}"><span class="tool-verb">{{ $verb }}</span>{{ with $rest }}<span class="tool-rest">_{{ . }}</span>{{ end }}</code>
                   </th>
-                  <td>{{ .summary }}</td>
+                  <td>
+                    <p class="tool-summary">{{ .summary }}</p>
+                    {{ with $schema }}
+                      {{ with .arguments }}
+                        <details class="tool-schema-details">
+                          <summary>Arguments ({{ len . }})</summary>
+                          <dl class="tool-arguments">
+                            {{ range . }}
+                              <div class="tool-argument">
+                                <dt>
+                                  <code>{{ .name }}</code>
+                                  {{ if .required }}<span class="badge badge-required">required</span>{{ else }}<span class="badge badge-optional">optional</span>{{ end }}
+                                  {{ with .type }}<span class="tool-type">{{ . }}</span>{{ end }}
+                                </dt>
+                                <dd>
+                                  {{ with .description }}<p>{{ . }}</p>{{ end }}
+                                  <p class="tool-arg-meta">
+                                    {{ with .enum }}<span>enum: <code>{{ delimit . ", " }}</code></span>{{ end }}
+                                    {{ if isset . "default" }}<span>default: <code>{{ index . "default" | jsonify }}</code></span>{{ end }}
+                                    {{ with .format }}<span>format: <code>{{ . }}</code></span>{{ end }}
+                                    {{ with index . "additional_properties" }}<span>additional properties: <code>{{ . }}</code></span>{{ end }}
+                                    {{ with .items }}<span>items: <code>{{ .type }}</code></span>{{ end }}
+                                  </p>
+                                  {{ with .children }}
+                                    <ul class="tool-arg-children">
+                                      {{ range . }}
+                                        <li><code>{{ .name }}</code>{{ with .type }} <span class="tool-type">{{ . }}</span>{{ end }}{{ if .required }} <span class="tool-required-inline">required</span>{{ end }}{{ with .description }} — {{ . }}{{ end }}</li>
+                                      {{ end }}
+                                    </ul>
+                                  {{ end }}
+                                </dd>
+                              </div>
+                            {{ end }}
+                          </dl>
+                        </details>
+                      {{ end }}
+                      {{ with .examples }}
+                        <details class="tool-example-details">
+                          <summary>Input examples ({{ len . }})</summary>
+                          {{ range . }}
+                            <pre><code>{{ . | jsonify }}</code></pre>
+                          {{ end }}
+                        </details>
+                      {{ end }}
+                    {{ end }}
+                  </td>
                   <td>
                     {{ if eq .tier "full" }}
                       <a class="badge badge-tier badge-tier-full" href="{{ "/reference/safety-modes/#toolset-tier" | relURL }}">full<span class="tool-sr-only"> toolset</span></a>

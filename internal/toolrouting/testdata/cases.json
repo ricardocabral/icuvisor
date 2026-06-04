@@ -29,6 +29,15 @@
       "notes": "Write/update event routing should use the event upsert tool."
     },
     {
+      "id": "event-write-with-external-id",
+      "prompt": "Create a retry-safe planned Ride workout on 2026-06-01 named Endurance 60 using external_id icuvisor-manual-20260601-endurance.",
+      "expected_first_tool": "add_or_update_event",
+      "catalog_mode": "core_safe",
+      "toolset": "core",
+      "delete_mode": "safe",
+      "notes": "Explicit external_id/idempotency intent is still a calendar event upsert, not a delete or custom-item write."
+    },
+    {
       "id": "race-a-event-create",
       "prompt": "Create an A race on 2026-09-13 called City Championship with a 40 km road race goal note.",
       "expected_first_tool": "add_or_update_event",

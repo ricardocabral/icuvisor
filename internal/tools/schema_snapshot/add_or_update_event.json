@@ -261,6 +261,10 @@
       "description": "Optional upstream event ID to update. Omit to create a new event; this tool never deletes events.",
       "type": "string"
     },
+    "external_id": {
+      "description": "Optional non-empty upstream idempotency key. Surrounding whitespace is trimmed; omit or pass blank to leave external_id unchanged/unset. Clearing an existing upstream external_id is not supported.",
+      "type": "string"
+    },
     "include_full": {
       "default": false,
       "description": "When true, include the raw upstream event payload under event.full; default response matches get_event_by_id's terse event shape.",

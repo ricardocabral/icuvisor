@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added read-only `icuvisor_check_server_version` MCP diagnostic for comparing visible tool-description version/fingerprint fields with the running server's local catalog metadata after upgrades.
+- Added generated per-tool argument schema and input-example data to the public tool reference so docs stay aligned with the registered MCP catalog.
+- Added optional `add_or_update_event.external_id` support for retry-safer calendar writes, including terse event-read audit visibility and conservative blank/no-clear semantics.
+- Added deterministic `icuvisor-plan-v1-...` external IDs for `apply_training_plan` events so repeated applies are safer and matching existing plan events are protected during replacement while preserving same-day/upstream idempotency caveats.
 
 ### Changed
 

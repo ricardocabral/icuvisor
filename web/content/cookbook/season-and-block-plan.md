@@ -84,7 +84,7 @@ Stage 2 should produce something like:
 ## Variations
 
 - **No calendar writes:** stop after Stage 2 and apply the plan in intervals.icu yourself. Useful when the server runs read-only.
-- **Apply a library plan:** if a structured plan already exists, ask the assistant to use [`apply_training_plan`]({{< relref "/reference/tools#apply_training_plan" >}}) instead of authoring one.
+- **Apply a library plan:** if a structured plan already exists, ask the assistant to use [`apply_training_plan`]({{< relref "/reference/tools#apply_training_plan" >}}) instead of authoring one. Dry-run previews include deterministic `icuvisor-plan-v1-...` `external_id` values for the proposed events; when you apply the same plan/start/date tuple again, those IDs make retries safer and protect matching existing plan events during replacement. They are still best-effort upstream idempotency aids scoped to icuvisor's same-day checks, not a promise that every cross-day or upstream race condition is deduped.
 - **Gym or strength blocks:** ask for a `NOTE` such as "Gym — 45 min strength and mobility" or a simple supported calendar workout type if your account has one; detailed exercises, sets, reps, and loads are future scope until intervals.icu exposes a documented strength-training API.
 - **Re-plan mid-season:** "I missed two weeks to illness — re-assess and adjust the remaining blocks."
 - **Audit without re-planning:** use `plan_health_review` to check whether the current calendar still makes sense. Deload or recovery weeks should be treated as intentional load reductions unless adherence, wellness, or form evidence says otherwise; a race date supplied by the user is only a scenario anchor if no matching race event is found.
