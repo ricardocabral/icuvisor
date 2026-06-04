@@ -107,7 +107,7 @@ icuvisor uses `github.com/modelcontextprotocol/go-sdk`. Read its docs before cha
 - After the workflow publishes, inspect the release body and assets/checksums before announcing.
 - Tags are immutable. If a release is broken, ship a new patch — never retag.
 
-## What I want from Claude in this repo
+## What I want from a coding agent in this repo
 
 - **Read the PRD section before answering scope questions.** Don't invent product behaviour from your training data.
 - **Prefer editing existing files** to creating new ones; this repo is small enough that sprawl is expensive.
