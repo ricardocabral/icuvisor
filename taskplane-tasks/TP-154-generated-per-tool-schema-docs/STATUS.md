@@ -1,11 +1,11 @@
 # TP-154: Generated per-tool schema docs — Status
 
-**Current Step:** Step 5: Testing & Verification
-**Status:** 🟡 In Progress
-**Last Updated:** 2026-06-03
+**Current Step:** Step 6: Documentation & Delivery
+**Status:** ✅ Complete
+**Last Updated:** 2026-06-04
 **Review Level:** 2
-**Review Counter:** 11
-**Iteration:** 4
+**Review Counter:** 12
+**Iteration:** 5
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -64,7 +64,7 @@
 ---
 
 ### Step 5: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] FULL test suite passing
 - [x] Lint passes
@@ -74,12 +74,12 @@
 ---
 
 ### Step 6: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] "Must Update" docs modified
-- [ ] "Check If Affected" docs reviewed
-- [ ] Discoveries logged
-- [ ] Generated-file summary included
+- [x] "Must Update" docs modified
+- [x] "Check If Affected" docs reviewed
+- [x] Discoveries logged
+- [x] Generated-file summary included
 
 ---
 
@@ -94,6 +94,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Website schema docs generation projects from the live registered catalog, not from stable schema snapshot fixtures. | Recorded as a TP-153 dependency/caveat; no generator dependency on snapshots added. | `cmd/gendocs`, STATUS Step 4 notes |
+| Contributor schema snapshot instructions are separate from website docs data generation. | Left `CONTRIBUTING.md` unchanged; updated `README.md`/`web/README.md` for `make docs-tools`. | `CONTRIBUTING.md`, `README.md`, `web/README.md` |
 
 ---
 
@@ -115,6 +117,9 @@
 | 2026-06-03 23:24 | Worker iter 1 | done in 987s, tools: 57 |
 | 2026-06-03 23:52 | Worker iter 2 | done in 1655s, tools: 127 |
 | 2026-06-04 00:08 | Worker iter 3 | done in 964s, tools: 10 |
+| 2026-06-04 00:30 | Worker iter 4 | done in 1319s, tools: 13 |
+| 2026-06-04 00:30 | Step 6 started | Documentation & Delivery |
+| 2026-06-04 | Step 6 completed | Delivery notes, docs review, discoveries, and generated-file summary recorded |
 
 ---
 
@@ -125,6 +130,12 @@
 ---
 
 ## Notes
+
+### Step 6 delivery notes
+
+- Must Update docs verified: `web/content/reference/tools.md` now describes generated arguments/examples, `web/layouts/partials/tool-catalog.html` renders `web/data/tool_schemas.json` argument details and input examples, and `CHANGELOG.md` includes the `[Unreleased]` docs/reference improvement.
+- Check If Affected docs reviewed: `README.md` and `web/README.md` now mention `make docs-tools`/generated `tool_schemas.json`; `CONTRIBUTING.md` remains correct because its schema snapshot instructions are a separate live-registry compatibility workflow.
+- Generated-file summary: `web/data/tools.json` has 60 catalog rows and `web/data/tool_schemas.json` has 60 matching schema entries, 260 total projected arguments, and curated examples for 9 write-oriented tools; no missing or extra schema keys were found versus catalog tool names.
 
 ### Step 4 guidance notes
 
@@ -153,3 +164,4 @@
 | 2026-06-03 23:44 | Review R009 | plan Step 4: APPROVE |
 | 2026-06-03 23:48 | Review R010 | code Step 4: APPROVE |
 | 2026-06-03 23:49 | Review R011 | plan Step 5: APPROVE |
+| 2026-06-04 00:10 | Review R012 | code Step 5: APPROVE |
