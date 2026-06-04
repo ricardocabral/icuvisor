@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-05-20
 **Status:** Active
-**Next Task ID:** TP-150
+**Next Task ID:** TP-155
 
 ---
 
@@ -192,6 +192,20 @@ Scaffolded 2026-06-03 from public GitHub issues/PRs/metadata in competing interv
 | TP-147 | Race-event routing evals for `add_or_update_event`      | —          |
 | TP-148 | Public positioning for gear resolution and unit-safe output | —      |
 | TP-149 | OpenAPI endpoint-diff triage automation                 | —          |
+
+---
+
+## Competitive follow-up — 2026-06-03 WorkoutContext MCP review (TP-150 … TP-154)
+
+Scaffolded 2026-06-03 from public GitHub PRs/commits/docs in `agiantwhale/workoutcontext` reviewed over the prior 7 days. Clean-room rule applies: tasks may use public behavior signals and upstream API/docs, but must not read or copy competitor implementation code.
+
+| ID     | Title                                                   | Depends on |
+| ------ | ------------------------------------------------------- | ---------- |
+| TP-150 | Workout DSL metric suffix from sport priority           | —          |
+| TP-151 | Event external_id idempotency                           | —          |
+| TP-152 | Visible catalog/version diagnostic tool                 | —          |
+| TP-153 | Snapshot every registered MCP tool schema               | —          |
+| TP-154 | Generated per-tool schema docs                          | —          |
 
 ---
 
