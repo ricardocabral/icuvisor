@@ -108,14 +108,14 @@ func TestCatalogIncludesAnalyzerFamilyPlacement(t *testing.T) {
 	descriptors := descriptorNameSet(Catalog())
 	cases := map[string]string{
 		computeActivitySegmentStatsName: "Use when the prompt asks for mean, median, p90, normalized power, intensity factor, drift, or decoupling over an explicit activity segment, including first-vs-last distance comparisons, as the analyzer-family raw-stream exception",
-		analyzeTrendName:                "Use when the prompt asks whether an analysis metric is trending up, trending down, or changing versus baseline",
+		analyzeTrendName:                "Use when the prompt asks for slope or rolling trend direction over time for one analysis metric",
 		analyzeDistributionName:         "Use when the prompt asks for an analysis metric's distribution, histogram, quantiles, or outliers",
 		analyzeCorrelationName:          "Use when the prompt asks whether two analysis metrics are correlated or lagged together",
-		analyzeEffortsDeltaName:         "Use when the prompt asks whether best-effort power, heart-rate, or pace buckets changed versus baseline",
+		analyzeEffortsDeltaName:         "Use when the prompt asks about named best-effort curve buckets (for example 5 min power, 20 min HR, or 5k pace) and current-vs-baseline deltas",
 		getFitnessProjectionName:        "Use when the prompt asks to project CTL, ATL, or TSB forward",
-		computeZoneTimeName:             "Use when the prompt asks for time in power, heart-rate, or pace zones over a date window",
+		computeZoneTimeName:             "Use when the prompt asks for zone-time totals or intensity distribution (seconds/share in Z1-Zn) across activities in a date window",
 		computeLoadBalanceName:          "Use when the prompt asks whether training distribution is polarized, pyramidal, threshold-heavy, or balanced across low/moderate/high intensity",
-		computeBaselineName:             "Use when the prompt asks whether a metric is high, low, suppressed, elevated, or unusual versus a baseline window",
+		computeBaselineName:             "Use when the prompt asks whether current metric values are unusual relative to a historical baseline via z-score/status bands",
 		computeComplianceRateName:       "Use when the prompt asks how well completed activities matched scheduled workouts, targets, sport, or event type",
 	}
 	for name, summaryNeedle := range cases {

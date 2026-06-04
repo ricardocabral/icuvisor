@@ -12,7 +12,7 @@ import (
 
 const (
 	analyzeTrendName        = "analyze_trend"
-	analyzeTrendDescription = "Use when the prompt asks whether an analysis metric is trending up, trending down, or changing versus baseline; do not fetch get_* rows or streams and reduce them in chat. Computes rolling means, OLS slope, and current-vs-baseline deltas with skipped-missing-day metadata."
+	analyzeTrendDescription = "Use when the prompt asks for slope or rolling trend direction over time for one analysis metric; do not fetch get_* rows or streams and reduce them in chat. Computes rolling means, OLS slope, and current-vs-baseline deltas with skipped-missing-day metadata."
 	invalidAnalyzeTrendArgs = "invalid analyze_trend arguments; provide metric, window dates, optional baseline_window, rolling_window_days, sport, and include_full"
 	fetchAnalyzeTrendMsg    = "could not analyze trend; check credentials, date range, metric, and sport filter"
 )
