@@ -17,7 +17,7 @@ import (
 
 const (
 	computeBaselineName                    = "compute_baseline"
-	computeBaselineDescription             = "Use when the prompt asks whether a metric is high, low, suppressed, elevated, or unusual versus a baseline window; do not fetch get_* rows or streams and reduce them in chat. Computes z-scores from existing read outputs with wellness interpretation and explicit insufficient-data signals."
+	computeBaselineDescription             = "Use when the prompt asks whether current metric values are unusual relative to a historical baseline via z-score/status bands; do not fetch get_* rows or streams and reduce them in chat. Computes z-scores from existing read outputs with wellness interpretation and explicit insufficient-data signals."
 	invalidComputeBaselineArgumentsMessage = "invalid compute_baseline arguments; provide metric, baseline/current date windows, optional sport, and min_samples >= 2"
 	fetchComputeBaselineMessage            = "could not compute baseline; check intervals.icu credentials, athlete ID, and date range"
 )

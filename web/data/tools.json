@@ -116,7 +116,7 @@
     "group": "analyzers",
     "tier": "full",
     "safety": "read",
-    "summary": "Use when the prompt asks whether best-effort power, heart-rate, or pace buckets changed versus baseline; do not fetch get_* rows or streams and reduce them in chat.",
+    "summary": "Use when the prompt asks about named best-effort curve buckets (for example 5 min power, 20 min HR, or 5k pace) and current-vs-baseline deltas; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "analyze_efforts_delta"
   },
   {
@@ -124,7 +124,7 @@
     "group": "analyzers",
     "tier": "core",
     "safety": "read",
-    "summary": "Use when the prompt asks whether an analysis metric is trending up, trending down, or changing versus baseline; do not fetch get_* rows or streams and reduce them in chat.",
+    "summary": "Use when the prompt asks for slope or rolling trend direction over time for one analysis metric; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "analyze_trend"
   },
   {
@@ -140,7 +140,7 @@
     "group": "analyzers",
     "tier": "core",
     "safety": "read",
-    "summary": "Use when the prompt asks whether a metric is high, low, suppressed, elevated, or unusual versus a baseline window; do not fetch get_* rows or streams and reduce them in chat.",
+    "summary": "Use when the prompt asks whether current metric values are unusual relative to a historical baseline via z-score/status bands; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "compute_baseline"
   },
   {
@@ -164,7 +164,7 @@
     "group": "analyzers",
     "tier": "core",
     "safety": "read",
-    "summary": "Use when the prompt asks for time in power, heart-rate, or pace zones over a date window; do not fetch get_* rows or streams and reduce them in chat.",
+    "summary": "Use when the prompt asks for zone-time totals or intensity distribution (seconds/share in Z1-Zn) across activities in a date window; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "compute_zone_time"
   },
   {
