@@ -1,0 +1,68 @@
+{
+  "steps": [
+    {
+      "description": "Warmup",
+      "duration": 600,
+      "power": { "value": 60, "units": "PERCENT_FTP" },
+      "cadence": { "min": 85, "max": 95, "units": "RPM" }
+    },
+    {
+      "description": "Meter reps",
+      "distance": { "value": 400, "unit": "mtr" },
+      "power": { "min": 250, "max": 275, "units": "WATTS" }
+    },
+    {
+      "description": "Main Set",
+      "reps": 2,
+      "steps": [
+        {
+          "description": "Threshold HR",
+          "duration": 480,
+          "hr": { "min": 95, "max": 100, "units": "PERCENT_LTHR" }
+        },
+        {
+          "description": "Float HR",
+          "duration": 120,
+          "hr": { "min": 80, "max": 85, "units": "PERCENT_HR" }
+        },
+        {
+          "description": "Cruise Pace",
+          "distance": { "value": 1, "unit": "km" },
+          "pace": { "min": 92, "max": 96, "units": "PERCENT_THRESHOLD" }
+        }
+      ]
+    },
+    {
+      "description": "Build",
+      "duration": 360,
+      "ramp": true,
+      "power": { "start": 60, "end": 90, "units": "PERCENT_FTP" },
+      "cadence": { "min": 85, "max": 95, "units": "RPM" }
+    },
+    {
+      "description": "Pace Zone",
+      "duration": 600,
+      "pace": { "min": 2, "max": 3, "units": "PACE_ZONE" }
+    },
+    {
+      "description": "Power Zone",
+      "duration": 300,
+      "power": { "min": 2, "max": 3, "units": "ZONE" }
+    },
+    {
+      "description": "Mile Pace",
+      "distance": { "value": 1, "unit": "mi" },
+      "pace": { "text": "5:55/mi Pace" }
+    },
+    {
+      "description": "Open",
+      "duration": 300,
+      "freeride": true
+    },
+    {
+      "description": "Strides",
+      "duration": 30,
+      "rpe": { "value": 8, "units": "RPE" }
+    }
+  ]
+}
