@@ -344,6 +344,14 @@
     "anchor": "get_training_summary"
   },
   {
+    "name": "icuvisor_check_server_version",
+    "group": "meta",
+    "tier": "core",
+    "safety": "read",
+    "summary": "Check whether the MCP client is using stale icuvisor tool descriptions after an upgrade.",
+    "anchor": "icuvisor_check_server_version"
+  },
+  {
     "name": "icuvisor_list_advanced_capabilities",
     "group": "meta",
     "tier": "core",

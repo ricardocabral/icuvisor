@@ -29,10 +29,15 @@ const StepsSentinel = "<!-- icuvisor:steps -->"
 // Prose is never reformatted, trimmed, or otherwise rewritten — line endings
 // are preserved as-is apart from \r\n being normalized to \n.
 func MergeDescription(prose string, doc WorkoutDoc) (string, error) {
+	return MergeDescriptionWithOptions(prose, doc, SerializeOptions{})
+}
+
+// MergeDescriptionWithOptions combines free-text prose with context-aware DSL serialization.
+func MergeDescriptionWithOptions(prose string, doc WorkoutDoc, options SerializeOptions) (string, error) {
 	prose = strings.ReplaceAll(prose, "\r\n", "\n")
 	var dsl string
 	if len(doc.Steps) > 0 {
-		serialized, err := Serialize(doc)
+		serialized, err := SerializeWithOptions(doc, options)
 		if err != nil {
 			return "", err
 		}

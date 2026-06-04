@@ -71,6 +71,46 @@ func TestCreateWorkoutWithStructuredStepsSerializesDSLAndReturnsReadShape(t *tes
 	}
 }
 
+func TestWorkoutDocSerializeOptionsForSportUsesKnownWorkoutOrder(t *testing.T) {
+	t.Parallel()
+
+	profile := intervals.AthleteWithSportSettings{SportSettings: []intervals.SportSettings{
+		{Type: "Ride", Types: []string{"Ride"}, WorkoutOrder: "HR_POWER_PACE"},
+		{Type: "Run", Types: []string{"TrailRun", "Run"}, WorkoutOrder: "POWER_HR_PACE"},
+		{Type: "Walk", Types: []string{"Walk"}, WorkoutOrder: "UNKNOWN"},
+	}}
+	if got := workoutDocSerializeOptionsForSport(profile, " Run ").WorkoutOrder; got != "POWER_HR_PACE" {
+		t.Fatalf("run workout order = %q, want POWER_HR_PACE", got)
+	}
+	if got := workoutDocSerializeOptionsForSport(profile, "ride").WorkoutOrder; got != "HR_POWER_PACE" {
+		t.Fatalf("ride workout order = %q, want HR_POWER_PACE", got)
+	}
+	if got := workoutDocSerializeOptionsForSport(profile, "Walk").WorkoutOrder; got != "" {
+		t.Fatalf("unknown workout order = %q, want zero options", got)
+	}
+}
+
+func TestCreateWorkoutRunPowerOrderSerializesPowerZoneSuffix(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWorkoutCreatorClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Type: "Run", Types: []string{"Run"}, WorkoutOrder: "POWER_HR_PACE"}}}},
+		workout:           decodeToolWorkouts(t, `{"id":"w-run-power","name":"Run Power","type":"Run","folder_id":"f-run","workout_doc":{"steps":[{"duration":900}]}}`)[0],
+	}
+	tool := newCreateWorkoutTool(client, client, "test", "UTC", false)
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"name":"Run Power","folder_id":"f-run","sport":"Run","workout_doc":{"steps":[{"description":"Endurance","duration":900,"power":{"value":2,"units":"POWER_ZONE"}}]}}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 || client.calls[0].Description == nil {
+		t.Fatalf("write calls = %#v, want one serialized workout_doc", client.calls)
+	}
+	if got, want := *client.calls[0].Description, "- Endurance 15m Z2 Power"; got != want {
+		t.Fatalf("description DSL = %q, want %q", got, want)
+	}
+}
+
 func TestCreateWorkoutWarnsWhenUpstreamDoesNotRenderWorkoutDoc(t *testing.T) {
 	t.Parallel()
 

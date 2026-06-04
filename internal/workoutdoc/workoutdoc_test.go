@@ -147,6 +147,33 @@ func TestSerializeTargetUnitSemantics(t *testing.T) {
 	}
 }
 
+func TestSerializeWithOptionsKnownWorkoutOrdersEmitZoneMetricSuffixes(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name  string
+		order string
+		step  Step
+		want  string
+	}{
+		{name: "hr primary order keeps HR zone explicit", order: "HR_POWER_PACE", step: Step{Description: "HR", Duration: 600, HR: targetValue(2, "HR_ZONE")}, want: "- HR 10m Z2 HR"},
+		{name: "pace primary order keeps pace zone explicit", order: "PACE_HR_POWER", step: Step{Description: "Pace", Duration: 600, Pace: targetValue(2, "PACE_ZONE")}, want: "- Pace 10m Z2 Pace"},
+		{name: "power zone range gets power suffix", order: "POWER_HR_PACE", step: Step{Description: "Power", Duration: 900, Power: targetRange(2, 3, "POWER_ZONE")}, want: "- Power 15m Z2-Z3 Power"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := SerializeWithOptions(WorkoutDoc{Steps: []Step{tc.step}}, SerializeOptions{WorkoutOrder: tc.order})
+			if err != nil {
+				t.Fatalf("SerializeWithOptions() error = %v", err)
+			}
+			if got != tc.want {
+				t.Fatalf("SerializeWithOptions() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestSerializeRejectsUnsupportedAbsolutePaceUnits(t *testing.T) {
 	t.Parallel()
 

@@ -6,11 +6,22 @@ import (
 	"strings"
 )
 
+// SerializeOptions configures context-aware WorkoutDoc serialization without
+// changing the default no-context Serialize behavior.
+type SerializeOptions struct {
+	WorkoutOrder string
+}
+
 // Serialize emits a deterministic Intervals.icu workout-description DSL string.
 func Serialize(doc WorkoutDoc) (string, error) {
+	return SerializeWithOptions(doc, SerializeOptions{})
+}
+
+// SerializeWithOptions emits a deterministic Intervals.icu workout-description DSL string.
+func SerializeWithOptions(doc WorkoutDoc, options SerializeOptions) (string, error) {
 	lines := make([]string, 0, len(doc.Steps))
 	for _, step := range doc.Steps {
-		emitted, err := serializeStep(step, 0, false)
+		emitted, err := serializeStep(step, 0, false, options)
 		if err != nil {
 			return "", err
 		}
@@ -19,18 +30,18 @@ func Serialize(doc WorkoutDoc) (string, error) {
 	return strings.Join(lines, "\n"), nil
 }
 
-func serializeStep(step Step, depth int, inRepeat bool) ([]string, error) {
+func serializeStep(step Step, depth int, inRepeat bool, options SerializeOptions) ([]string, error) {
 	if step.Reps > 0 || len(step.Steps) > 0 {
-		return serializeRepeat(step, depth, inRepeat)
+		return serializeRepeat(step, depth, inRepeat, options)
 	}
-	line, err := serializeSimpleStep(step, depth)
+	line, err := serializeSimpleStep(step, depth, options)
 	if err != nil {
 		return nil, err
 	}
 	return []string{line}, nil
 }
 
-func serializeRepeat(step Step, depth int, inRepeat bool) ([]string, error) {
+func serializeRepeat(step Step, depth int, inRepeat bool, options SerializeOptions) ([]string, error) {
 	if err := descriptionStructuralTokenError(step, "repeat"); err != nil {
 		return nil, err
 	}
@@ -53,7 +64,7 @@ func serializeRepeat(step Step, depth int, inRepeat bool) ([]string, error) {
 	}
 	lines := []string{indent(depth) + header}
 	for _, child := range step.Steps {
-		emitted, err := serializeStep(child, depth+1, true)
+		emitted, err := serializeStep(child, depth+1, true, options)
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +73,7 @@ func serializeRepeat(step Step, depth int, inRepeat bool) ([]string, error) {
 	return lines, nil
 }
 
-func serializeSimpleStep(step Step, depth int) (string, error) {
+func serializeSimpleStep(step Step, depth int, options SerializeOptions) (string, error) {
 	if err := descriptionStructuralTokenError(step, "step"); err != nil {
 		return "", err
 	}
@@ -83,7 +94,7 @@ func serializeSimpleStep(step Step, depth int) (string, error) {
 		parts = append(parts, distance)
 	}
 
-	target, err := stepTarget(step)
+	target, err := stepTarget(step, options)
 	if err != nil {
 		return "", err
 	}
@@ -100,7 +111,7 @@ func serializeSimpleStep(step Step, depth int) (string, error) {
 	return indent(depth) + "- " + strings.Join(parts, " "), nil
 }
 
-func stepTarget(step Step) (string, error) {
+func stepTarget(step Step, options SerializeOptions) (string, error) {
 	targets := 0
 	for _, target := range []*Target{step.Power, step.HR, step.Pace, step.RPE} {
 		if target != nil {
@@ -123,13 +134,13 @@ func stepTarget(step Step) (string, error) {
 	var err error
 	switch {
 	case step.Power != nil:
-		formatted, err = formatTarget("power", *step.Power, step.Ramp)
+		formatted, err = formatTarget("power", *step.Power, step.Ramp, options)
 	case step.HR != nil:
-		formatted, err = formatTarget("hr", *step.HR, step.Ramp)
+		formatted, err = formatTarget("hr", *step.HR, step.Ramp, options)
 	case step.Pace != nil:
-		formatted, err = formatTarget("pace", *step.Pace, step.Ramp)
+		formatted, err = formatTarget("pace", *step.Pace, step.Ramp, options)
 	case step.RPE != nil:
-		formatted, err = formatTarget("rpe", *step.RPE, step.Ramp)
+		formatted, err = formatTarget("rpe", *step.RPE, step.Ramp, options)
 	case step.Ramp:
 		return "", unsupported(step, "ramp requires a power, heart-rate, pace, or RPE target")
 	default:
@@ -144,7 +155,7 @@ func stepTarget(step Step) (string, error) {
 	return formatted, nil
 }
 
-func formatTarget(family string, target Target, ramp bool) (string, error) {
+func formatTarget(family string, target Target, ramp bool, options SerializeOptions) (string, error) {
 	if target.Text != "" {
 		if ramp {
 			return "", fmt.Errorf("text targets cannot be used for ramps")
@@ -161,11 +172,37 @@ func formatTarget(family string, target Target, ramp bool) (string, error) {
 			continue
 		}
 		if syntax.Zone {
-			return syntax.Prefix + formatZoneRange(lo, hi, ranged, syntax.Suffix), nil
+			suffix := syntax.Suffix
+			if explicitZoneMetricSuffixes(options) {
+				suffix = explicitZoneMetricSuffix(family, suffix)
+			}
+			return syntax.Prefix + formatZoneRange(lo, hi, ranged, suffix), nil
 		}
 		return syntax.Prefix + formatRange(lo, hi, ranged, syntax.Suffix), nil
 	}
 	return "", fmt.Errorf("unsupported %s target units %q", family, target.Units)
+}
+
+func explicitZoneMetricSuffixes(options SerializeOptions) bool {
+	switch canonicalUnit(options.WorkoutOrder) {
+	case "POWER_HR_PACE", "HR_POWER_PACE", "PACE_HR_POWER":
+		return true
+	default:
+		return false
+	}
+}
+
+func explicitZoneMetricSuffix(family string, fallback string) string {
+	switch family {
+	case "power":
+		return " Power"
+	case "hr":
+		return " HR"
+	case "pace":
+		return " Pace"
+	default:
+		return fallback
+	}
 }
 
 func syntaxUnitMatches(units []string, unit string) bool {

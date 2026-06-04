@@ -15,7 +15,7 @@ import (
 
 const (
 	updateWorkoutName                    = "update_workout"
-	updateWorkoutDescription             = "Update one reusable workout-library template by workout_id with sparse fields only. Omitted fields stay untouched. Before updating, present a human-readable before/after preview for user approval that covers total duration, key steps, target intensities, load/distance/time changes, and exactly which title/prose/tags/folder/structured steps are preserved. A supplied `description` and/or `workout_doc` replaces the template's upstream description/DSL; `description` is not append-only notes. To preserve structured steps while changing prose, provide the desired `workout_doc` plus prose and use the `<!-- icuvisor:steps -->` sentinel to position serialized steps. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax for the cheat sheet and common mistakes)."
+	updateWorkoutDescription             = "Update one reusable workout-library template by workout_id with sparse fields only. Omitted fields stay untouched. Before updating, present a human-readable before/after preview for user approval that covers total duration, key steps, target intensities, load/distance/time changes, and exactly which title/prose/tags/folder/structured steps are preserved. A supplied `description` and/or `workout_doc` replaces the template's upstream description/DSL; `description` is not append-only notes. To preserve structured steps while changing prose, provide the desired `workout_doc` plus prose and use the `<!-- icuvisor:steps -->` sentinel to position serialized steps. Include `sport` with `workout_doc` when zone targets should follow the athlete's sport settings; icuvisor then emits metric suffixes when needed, such as `Z2 Power`, `Z2 HR`, or `Z2 Pace`. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax for the cheat sheet and common mistakes)."
 	invalidUpdateWorkoutArgumentsMessage = "invalid update_workout arguments; provide workout_id plus at least one sparse workout field"
 	updateWorkoutMessage                 = "could not update workout; check intervals.icu credentials, athlete ID, workout ID, folder ID, and writable workout fields"
 )
@@ -76,7 +76,7 @@ func updateWorkoutHandler(client WorkoutUpdaterClient, profileClient ProfileClie
 		if client == nil {
 			return Result{}, NewUserError(updateWorkoutMessage, errors.New("missing workout updater client"))
 		}
-		params, uploaded, err := updateWorkoutParams(args)
+		params, uploaded, err := updateWorkoutParams(args, updateWorkoutSerializeOptions(profile, args))
 		if err != nil {
 			return Result{}, NewUserError(invalidUpdateWorkoutArgumentsMessage, err)
 		}
@@ -146,7 +146,7 @@ func rawObjectFields(raw json.RawMessage) (map[string]bool, error) {
 	return out, nil
 }
 
-func updateWorkoutParams(args updateWorkoutRequest) (intervals.WriteWorkoutParams, string, error) {
+func updateWorkoutParams(args updateWorkoutRequest, options workoutdoc.SerializeOptions) (intervals.WriteWorkoutParams, string, error) {
 	params := intervals.WriteWorkoutParams{WorkoutID: args.WorkoutID, Name: args.Name, NameSet: args.nameProvided, FolderID: args.FolderID, FolderIDSet: args.folderIDProvided, Description: args.Description, DescriptionSet: args.descriptionProvided, Tags: append([]string(nil), args.Tags...), TagsSet: args.tagsProvided, Sport: args.Sport, SportSet: args.sportProvided}
 	if !args.workoutDocProvided {
 		return params, "", nil
@@ -158,7 +158,7 @@ func updateWorkoutParams(args updateWorkoutRequest) (intervals.WriteWorkoutParam
 	if args.Description != nil {
 		prose = *args.Description
 	}
-	dsl, err := workoutdoc.MergeDescription(prose, *args.WorkoutDoc)
+	dsl, err := workoutdoc.MergeDescriptionWithOptions(prose, *args.WorkoutDoc, options)
 	if err != nil {
 		return intervals.WriteWorkoutParams{}, "", fmt.Errorf("merging workout_doc with description: %w", err)
 	}
@@ -210,9 +210,9 @@ func updateWorkoutInputSchema() map[string]any {
 		"name":        map[string]any{"type": "string", "description": "Optional replacement workout-library template name/title. Omit to leave unchanged."},
 		"folder_id":   map[string]any{"type": "string", "description": "Optional replacement intervals.icu workout-library folder or plan ID. Omit to leave unchanged; an explicit empty string moves the workout to the top level when upstream supports it."},
 		"description": map[string]any{"type": "string", "description": "Optional replacement for the upstream workout description/DSL, not append-only notes. Omit to leave unchanged. Supplying description without workout_doc can replace existing structured steps; provide the desired workout_doc to preserve or merge structure. May be supplied with workout_doc; use the " + workoutdoc.StepsSentinel + " sentinel on its own line to choose where serialized steps are inserted. Empty strings without workout_doc are rejected to avoid accidentally clearing structured workout content."},
-		"workout_doc": map[string]any{"type": "object", "description": "Optional replacement structured WorkoutDoc for the upstream workout description/DSL. Serialized and merged with description when both are supplied; empty steps clear structured content. Include the desired steps when changing prose so the replacement description/DSL preserves workout structure. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Syntax reference: icuvisor://workout-syntax."},
+		"workout_doc": map[string]any{"type": "object", "description": "Optional replacement structured WorkoutDoc for the upstream workout description/DSL. Serialized and merged with description when both are supplied; empty steps clear structured content. Include the desired steps when changing prose so the replacement description/DSL preserves workout structure. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Include sport in the same request when zone targets should be serialized using athlete sport settings; otherwise workout_doc uses the no-sport serializer. Syntax reference: icuvisor://workout-syntax."},
 		"tags":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional replacement workout-library tags. Omit to leave unchanged; provide the full desired tag list when appending a tag."},
-		"sport":       map[string]any{"type": "string", "description": "Optional replacement upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Omit to leave unchanged."},
+		"sport":       map[string]any{"type": "string", "description": "Optional replacement upstream sport/activity type such as Ride, Run, Swim, or the athlete account's configured activity type. Omit to leave unchanged. Include with workout_doc when icuvisor should use athlete sport settings to disambiguate zone target suffixes."},
 	}}
 }
 

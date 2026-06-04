@@ -177,6 +177,18 @@ func TestSportSettingsDecodesPaceUnitsVerbatim(t *testing.T) {
 	}
 }
 
+func TestSportSettingsDecodesWorkoutOrder(t *testing.T) {
+	t.Parallel()
+
+	var got AthleteWithSportSettings
+	if err := json.Unmarshal([]byte(`{"sportSettings":[{"types":["Run"],"workout_order":"POWER_HR_PACE"}]}`), &got); err != nil {
+		t.Fatalf("unmarshal profile: %v", err)
+	}
+	if len(got.SportSettings) != 1 || got.SportSettings[0].WorkoutOrder != "POWER_HR_PACE" {
+		t.Fatalf("sport settings = %#v, want workout_order decoded", got.SportSettings)
+	}
+}
+
 func TestDoJSONRetriesRateLimitAndServerErrorsForGET(t *testing.T) {
 	t.Parallel()
 
