@@ -64,6 +64,10 @@
       "minimum": 0,
       "type": "number"
     },
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "bloodGlucose": {
       "description": "Manual blood glucose in the upstream intervals.icu wellness unit.",
       "minimum": 0,

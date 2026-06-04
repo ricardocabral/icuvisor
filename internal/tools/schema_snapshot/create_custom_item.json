@@ -1,0 +1,115 @@
+{
+  "additionalProperties": false,
+  "examples": [
+    {
+      "content": {
+        "layout": {
+          "height": 240
+        },
+        "series": [
+          {
+            "color": "blue",
+            "field": "ctl"
+          }
+        ]
+      },
+      "item_type": "FITNESS_CHART",
+      "name": "Training load trend"
+    },
+    {
+      "content": {
+        "field": "travel_fatigue",
+        "format": "0.0",
+        "label": "Travel fatigue",
+        "script": "return input",
+        "type": "number",
+        "units": "score",
+        "visibility": "PRIVATE"
+      },
+      "description": "Short coach-facing note captured on travel weeks.",
+      "hide_script": false,
+      "index": 20,
+      "item_type": "INPUT_FIELD",
+      "name": "Travel fatigue note",
+      "visibility": "PRIVATE"
+    }
+  ],
+  "input_examples": [
+    {
+      "content": {
+        "layout": {
+          "height": 240
+        },
+        "series": [
+          {
+            "color": "blue",
+            "field": "ctl"
+          }
+        ]
+      },
+      "item_type": "FITNESS_CHART",
+      "name": "Training load trend"
+    },
+    {
+      "content": {
+        "field": "travel_fatigue",
+        "format": "0.0",
+        "label": "Travel fatigue",
+        "script": "return input",
+        "type": "number",
+        "units": "score",
+        "visibility": "PRIVATE"
+      },
+      "description": "Short coach-facing note captured on travel weeks.",
+      "hide_script": false,
+      "index": 20,
+      "item_type": "INPUT_FIELD",
+      "name": "Travel fatigue note",
+      "visibility": "PRIVATE"
+    }
+  ],
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "content": {
+      "description": "Required item_type-specific content object. Validated against existing readable custom items before upload; see icuvisor://custom-item-schemas for schema guidance.",
+      "type": "object"
+    },
+    "description": {
+      "description": "Optional custom item description. Preserved verbatim when supplied.",
+      "type": "string"
+    },
+    "hide_script": {
+      "description": "Optional upstream hide_script flag for script/formula based custom items.",
+      "type": "boolean"
+    },
+    "image": {
+      "description": "Optional upstream image identifier or URL when supported by the custom-item type.",
+      "type": "string"
+    },
+    "index": {
+      "description": "Optional display/order index for item types that support ordering.",
+      "type": "integer"
+    },
+    "item_type": {
+      "description": "Required upstream custom-item type. The value must match an existing readable schema sample, for example FITNESS_CHART, INPUT_FIELD, ACTIVITY_FIELD, ACTIVITY_STREAM, ACTIVITY_PANEL, ACTIVITY_HISTOGRAM, ACTIVITY_MAP, ACTIVITY_HEATMAP, TRACE_CHART, FITNESS_TABLE, or ZONES.",
+      "type": "string"
+    },
+    "name": {
+      "description": "Required custom item name. Surrounding whitespace is trimmed.",
+      "type": "string"
+    },
+    "visibility": {
+      "description": "Optional upstream visibility value. Omit to use intervals.icu defaults.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "item_type",
+    "name",
+    "content"
+  ],
+  "type": "object"
+}

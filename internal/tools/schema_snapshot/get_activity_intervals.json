@@ -5,6 +5,10 @@
       "description": "intervals.icu activity ID.",
       "type": "string"
     },
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "include_full": {
       "default": false,
       "description": "Include raw upstream fields; default terse mode strips nulls and returns normalized fields.",

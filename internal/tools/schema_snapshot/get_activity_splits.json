@@ -5,6 +5,10 @@
       "description": "Required intervals.icu activity ID whose manual or virtual splits should be returned.",
       "type": "string"
     },
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "include_full": {
       "default": false,
       "description": "When true, preserve full response metadata during shaping; split rows remain terse and unit-disambiguated by default.",

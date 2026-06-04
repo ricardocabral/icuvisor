@@ -1,6 +1,10 @@
 {
   "additionalProperties": false,
   "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "distance_meters": {
       "description": "Pace distance buckets. Defaults depend on sport: run-style 400,1000,1609,5000,10000m; swim 50,100,200,400,1500m.",
       "items": {

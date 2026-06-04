@@ -1,0 +1,88 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "baseline_window": {
+      "additionalProperties": false,
+      "description": "Optional baseline inclusive athlete-local window; defaults to same length immediately before current_window.",
+      "properties": {
+        "end_date": {
+          "description": "Inclusive athlete-local end date YYYY-MM-DD.",
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Inclusive athlete-local start date YYYY-MM-DD.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_date",
+        "end_date"
+      ],
+      "type": "object"
+    },
+    "current_window": {
+      "additionalProperties": false,
+      "description": "Current inclusive athlete-local best-efforts window.",
+      "properties": {
+        "end_date": {
+          "description": "Inclusive athlete-local end date YYYY-MM-DD.",
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Inclusive athlete-local start date YYYY-MM-DD.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_date",
+        "end_date"
+      ],
+      "type": "object"
+    },
+    "distance_meters": {
+      "description": "Required for pace; invalid for power or heart_rate.",
+      "items": {
+        "maximum": 100000,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "duration_seconds": {
+      "description": "Required/defaulted for power or heart_rate; invalid for pace.",
+      "items": {
+        "maximum": 86400,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "effort_family": {
+      "enum": [
+        "power",
+        "heart_rate",
+        "pace"
+      ],
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include current/baseline bucket series; terse mode omits raw curve arrays.",
+      "type": "boolean"
+    },
+    "sport": {
+      "description": "Intervals.icu sport/type to compare, e.g. Ride or Run.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "sport",
+    "effort_family",
+    "current_window"
+  ],
+  "type": "object"
+}

@@ -231,6 +231,10 @@
     }
   ],
   "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
     "category": {
       "description": "Required upstream event category. Documented upstream categories include WORKOUT, RACE_A, RACE_B, RACE_C, NOTE, PLAN, HOLIDAY, SICK, INJURED, SET_EFTP, FITNESS_DAYS, SEASON_START, TARGET, SET_FITNESS; see icuvisor://event-categories. Custom athlete/account category values are passed through.",
       "type": "string"
