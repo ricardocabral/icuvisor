@@ -136,12 +136,16 @@ jobs:
           chmod 600 "$key_path"
           echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
 
+      - name: Generate release notes from changelog
+        shell: bash
+        run: python3 scripts/release_notes_from_changelog.py "$RELEASE_TAG" > "$RUNNER_TEMP/release-notes.md"
+
       - name: Run GoReleaser to draft release
         uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: ${{ env.GORELEASER_VERSION }}
-          args: release --clean
+          args: release --clean --release-notes=${{ runner.temp }}/release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SCOOP_BUCKET_PAT: ${{ secrets.SCOOP_BUCKET_PAT }}

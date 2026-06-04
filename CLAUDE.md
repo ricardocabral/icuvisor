@@ -100,7 +100,11 @@ icuvisor uses `github.com/modelcontextprotocol/go-sdk`. Read its docs before cha
 - `make test` / `make test-race` — unit tests.
 - `make lint` — golangci-lint.
 - `make snapshot` — local GoReleaser dry-run.
-- Tag `vX.Y.Z` on `main` to trigger the release workflow.
+- Before tagging, move `CHANGELOG.md` `[Unreleased]` content to `[X.Y.Z] - YYYY-MM-DD`, reset `[Unreleased]`, and update compare links.
+- Validate release notes with `python3 scripts/release_notes_from_changelog.py vX.Y.Z`; GitHub release notes must match that changelog section, not the commit list.
+- Run `make check` and `goreleaser check` with the workflow-pinned GoReleaser version, commit as `chore(release): prepare vX.Y.Z`, then push `main`.
+- Create an annotated tag on `main` (`git tag -a vX.Y.Z -m vX.Y.Z`) and push it to trigger the release workflow.
+- After the workflow publishes, inspect the release body and assets/checksums before announcing.
 - Tags are immutable. If a release is broken, ship a new patch — never retag.
 
 ## What I want from Claude in this repo
