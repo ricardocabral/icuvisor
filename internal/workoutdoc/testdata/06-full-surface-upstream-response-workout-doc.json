@@ -1,0 +1,64 @@
+{
+  "steps": [
+    {
+      "text": "Warmup",
+      "power": { "units": "%ftp", "value": 60 },
+      "cadence": { "end": 95, "start": 85, "units": "rpm" },
+      "duration": 600
+    },
+    {
+      "text": "Meter reps",
+      "power": { "end": 275, "start": 250, "units": "w" },
+      "distance": 400,
+      "duration": 48
+    },
+    {
+      "ramp": true,
+      "text": "Build",
+      "power": { "end": 90, "start": 60, "units": "%ftp" },
+      "cadence": { "end": 95, "start": 85, "units": "rpm" },
+      "duration": 360
+    },
+    {
+      "pace": { "end": 3, "start": 2, "units": "pace_zone" },
+      "text": "Pace Zone",
+      "duration": 600
+    },
+    {
+      "text": "Power Zone",
+      "power": { "end": 3, "start": 2, "units": "power_zone" },
+      "duration": 300
+    },
+    {
+      "pace": { "units": "secs/mi", "value": 355 },
+      "text": "Mile Pace",
+      "distance": 1609.34,
+      "duration": 355
+    },
+    {
+      "text": "Open",
+      "duration": 300,
+      "freeride": true
+    },
+    {
+      "text": "Strides",
+      "duration": 30
+    },
+    {
+      "hr": { "end": 100, "start": 95, "units": "%lthr" },
+      "text": "Threshold HR",
+      "duration": 480
+    },
+    {
+      "hr": { "end": 85, "start": 80, "units": "%hr" },
+      "text": "Float HR",
+      "duration": 120
+    },
+    {
+      "pace": { "end": 96, "start": 92, "units": "%pace" },
+      "text": "Cruise Pace",
+      "distance": 1000,
+      "duration": 120
+    }
+  ]
+}
