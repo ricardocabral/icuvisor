@@ -1,11 +1,11 @@
 # TP-154: Generated per-tool schema docs — Status
 
-**Current Step:** Step 4: Update contributor/user guidance
+**Current Step:** Step 5: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-03
 **Review Level:** 2
-**Review Counter:** 10
-**Iteration:** 2
+**Review Counter:** 11
+**Iteration:** 4
 **Size:** M
 
 > **Hydration:** Checkboxes represent meaningful outcomes, not individual code changes. Workers expand steps when runtime discoveries warrant it — aim for 2-5 outcome-level items per step, not exhaustive implementation scripts.
@@ -64,12 +64,12 @@
 ---
 
 ### Step 5: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] FULL test suite passing
-- [ ] Lint passes
-- [ ] All failures fixed
-- [ ] Build passes
+- [x] FULL test suite passing
+- [x] Lint passes
+- [x] All failures fixed
+- [x] Build passes
 
 ---
 
@@ -111,7 +111,10 @@
 | 2026-06-03 | Step 2 started | Implement generator and tests |
 | 2026-06-03 | Step 3 started | Render docs and refine UX |
 | 2026-06-03 | Step 4 started | Update contributor/user guidance |
+| 2026-06-03 | Step 5 started | Testing & Verification |
 | 2026-06-03 23:24 | Worker iter 1 | done in 987s, tools: 57 |
+| 2026-06-03 23:52 | Worker iter 2 | done in 1655s, tools: 127 |
+| 2026-06-04 00:08 | Worker iter 3 | done in 964s, tools: 10 |
 
 ---
 
@@ -149,3 +152,4 @@
 | 2026-06-03 23:43 | Review R008 | plan Step 4: REVISE |
 | 2026-06-03 23:44 | Review R009 | plan Step 4: APPROVE |
 | 2026-06-03 23:48 | Review R010 | code Step 4: APPROVE |
+| 2026-06-03 23:49 | Review R011 | plan Step 5: APPROVE |
