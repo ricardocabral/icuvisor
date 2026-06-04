@@ -196,6 +196,11 @@ func parsePrimaryTarget(step *Step, tokens []string) error {
 			step.Power = targetForStep(step, target)
 			return nil
 		}
+		if len(tokens) == 2 && strings.EqualFold(tokens[1], "Power") {
+			target.Units = "POWER_ZONE"
+			step.Power = targetForStep(step, target)
+			return nil
+		}
 		if len(tokens) == 2 && strings.EqualFold(tokens[1], "HR") {
 			target.Units = "HR_ZONE"
 			step.HR = targetForStep(step, target)

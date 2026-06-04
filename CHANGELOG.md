@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added read-only `icuvisor_check_server_version` MCP diagnostic for comparing visible tool-description version/fingerprint fields with the running server's local catalog metadata after upgrades.
+
 ### Changed
 
 - Expanded MCP tool schema snapshots to cover the full coach-enabled, full-capability registry so newly registered public tools cannot miss drift checks silently.
+
+### Fixed
+
+- Planned workout writes from `add_or_update_event`, `create_workout`, `update_workout`, and `apply_training_plan` now use athlete sport settings to emit explicit zone metric suffixes (`Z2 Power`, `Z2 HR`, `Z2 Pace`) when the upstream sport priority order would make bare zones ambiguous.
 
 ## [0.1.8] - 2026-06-03
 

@@ -14,7 +14,7 @@ import (
 
 const (
 	createWorkoutName                    = "create_workout"
-	createWorkoutDescription             = "Create a reusable workout-library template, not a calendar event. Before creating, present a human-readable preview for user approval that covers total duration, key steps, target intensities, planned load/distance/time, and what prose/tags/folder are preserved or newly set. Creation builds the initial upstream template description/DSL from `workout_doc` (structured steps), `description` (free-text prose), or both; `description` is part of that single upstream description/DSL field, not a separate append-only notes channel. When both are supplied, icuvisor merges them and the `<!-- icuvisor:steps -->` sentinel controls serialized-step placement. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
+	createWorkoutDescription             = "Create a reusable workout-library template, not a calendar event. Before creating, present a human-readable preview for user approval that covers total duration, key steps, target intensities, planned load/distance/time, and what prose/tags/folder are preserved or newly set. Creation builds the initial upstream template description/DSL from `workout_doc` (structured steps), `description` (free-text prose), or both; `description` is part of that single upstream description/DSL field, not a separate append-only notes channel. When both are supplied, icuvisor merges them and the `<!-- icuvisor:steps -->` sentinel controls serialized-step placement. Structured zone targets use the athlete's sport settings so ambiguous zones are emitted with metric suffixes when needed, such as `Z2 Power`, `Z2 HR`, or `Z2 Pace`. Prefer `workout_doc` when the structure is known, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
 	invalidCreateWorkoutArgumentsMessage = "invalid create_workout arguments; provide name, sport, folder_id, optional tags, and optional description and/or workout_doc"
 	createWorkoutMessage                 = "could not create workout; check intervals.icu credentials, athlete ID, folder ID, and writable workout fields"
 )
@@ -67,7 +67,7 @@ func createWorkoutHandler(client WorkoutCreatorClient, profileClient ProfileClie
 		if client == nil {
 			return Result{}, NewUserError(createWorkoutMessage, errors.New("missing workout creator client"))
 		}
-		params, uploaded, err := createWorkoutParams(args)
+		params, uploaded, err := createWorkoutParams(args, workoutDocSerializeOptionsForSport(profile, args.Sport))
 		if err != nil {
 			return Result{}, NewUserError(invalidCreateWorkoutArgumentsMessage, err)
 		}
@@ -108,7 +108,7 @@ func decodeCreateWorkoutRequest(raw json.RawMessage) (createWorkoutRequest, erro
 	return args, nil
 }
 
-func createWorkoutParams(args createWorkoutRequest) (intervals.WriteWorkoutParams, string, error) {
+func createWorkoutParams(args createWorkoutRequest, options workoutdoc.SerializeOptions) (intervals.WriteWorkoutParams, string, error) {
 	params := intervals.WriteWorkoutParams{Name: args.Name, FolderID: args.FolderID, Description: args.Description, Tags: append([]string(nil), args.Tags...), Sport: args.Sport}
 	if args.WorkoutDoc == nil {
 		return params, "", nil
@@ -117,7 +117,7 @@ func createWorkoutParams(args createWorkoutRequest) (intervals.WriteWorkoutParam
 	if args.Description != nil {
 		prose = *args.Description
 	}
-	dsl, err := workoutdoc.MergeDescription(prose, *args.WorkoutDoc)
+	dsl, err := workoutdoc.MergeDescriptionWithOptions(prose, *args.WorkoutDoc, options)
 	if err != nil {
 		return intervals.WriteWorkoutParams{}, "", fmt.Errorf("merging workout_doc with description: %w", err)
 	}
@@ -136,9 +136,9 @@ func createWorkoutInputSchema() map[string]any {
 		"name":        map[string]any{"type": "string", "description": "Required workout-library template name/title. Surrounding whitespace is trimmed."},
 		"folder_id":   map[string]any{"type": "string", "description": "Required intervals.icu workout-library folder ID. Must identify an existing folder owned by the athlete; top-level workout creates are refused upstream."},
 		"description": map[string]any{"type": "string", "description": "Optional free-text prose for the initial upstream workout description/DSL. This is part of the single upstream description/DSL field, not separate append-only notes. Preserved verbatim. May be supplied with workout_doc; use the " + workoutdoc.StepsSentinel + " sentinel on its own line to choose where serialized steps are inserted."},
-		"workout_doc": map[string]any{"type": "object", "description": "Optional structured WorkoutDoc for the initial upstream workout description/DSL. Serialized and merged with description when both are supplied. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Syntax reference: icuvisor://workout-syntax."},
+		"workout_doc": map[string]any{"type": "object", "description": "Optional structured WorkoutDoc for the initial upstream workout description/DSL. Serialized and merged with description when both are supplied. In each structured step, description is a label/comment only: do not include duration or distance tokens there; use duration seconds or distance instead. Zone targets are serialized using the supplied sport and the athlete's sport settings, adding metric suffixes such as Z2 Power, Z2 HR, or Z2 Pace when needed. Syntax reference: icuvisor://workout-syntax."},
 		"tags":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional workout-library tags to preserve on the upstream template, in caller-provided order."},
-		"sport":       map[string]any{"type": "string", "description": "Required upstream sport/activity type for the workout template, such as Ride, Run, Swim, VirtualRide, or the athlete account's configured activity type."},
+		"sport":       map[string]any{"type": "string", "description": "Required upstream sport/activity type for the workout template, such as Ride, Run, Swim, VirtualRide, or the athlete account's configured activity type. Used with athlete sport settings to disambiguate structured workout_doc zone targets."},
 	}}
 }
 
