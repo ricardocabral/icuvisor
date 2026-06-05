@@ -48,11 +48,13 @@ Add via the GitHub web UI (**Settings > Secrets and variables > Actions > New re
 | `TRUSTED_SIGNING_ACCOUNT` | Trusted Signing account name | Optional MSI signing |
 | `TRUSTED_SIGNING_PROFILE` | Certificate profile name | Optional MSI signing |
 
-For unsigned Winget distribution, set only:
+For unsigned Winget update automation, set only:
 
 ```bash
-gh secret set WINGET_PAT
+gh secret set WINGET_PAT --repo ricardocabral/icuvisor
 ```
+
+`WINGET_PAT` is not issued by Microsoft and does not require any Winget form. Create it yourself in GitHub (**Settings > Developer settings > Personal access tokens > Tokens (classic)**) with the `public_repo` scope. Use a dedicated token with an expiration date. Fine-grained PATs are not recommended here because `winget-releaser` / Komac document classic `public_repo` as the supported path.
 
 If you also want Scoop publishing:
 
@@ -81,7 +83,7 @@ The `.github/workflows/winget.yml` workflow uses `vedantmgoyal9/winget-releaser`
 
 ### 3.1 Bootstrap the first Winget version manually
 
-`winget-releaser` expects at least one version of the package to already exist in `microsoft/winget-pkgs`. Use `wingetcreate` for the first stable version, then let the workflow handle future versions.
+`winget-releaser` expects at least one version of the package to already exist in `microsoft/winget-pkgs`. Use `wingetcreate` for the first stable version, then let the workflow handle future versions. No separate issue or Microsoft form is required; the submitted pull request is the package request.
 
 From a Windows machine:
 
@@ -108,17 +110,50 @@ Use these manifest values when prompted:
 
 Before submitting, verify the generated installer entries point at the `.msi` assets and have the correct architectures (`x64` / `arm64`) and SHA-256 hashes.
 
-### 3.2 Automate future Winget versions
+If you are not on Windows, Komac is a cross-platform alternative that can bootstrap the same first PR:
+
+```bash
+brew install komac
+komac new RicardoCabral.icuvisor \
+  --version X.Y.Z \
+  --urls \
+    "https://github.com/ricardocabral/icuvisor/releases/download/vX.Y.Z/icuvisor_X.Y.Z_windows_amd64.msi" \
+    "https://github.com/ricardocabral/icuvisor/releases/download/vX.Y.Z/icuvisor_X.Y.Z_windows_arm64.msi" \
+  --package-locale en-US \
+  --publisher "Ricardo Niederberger Cabral" \
+  --package-name icuvisor \
+  --package-url https://icuvisor.app \
+  --moniker icuvisor \
+  --license MIT \
+  --license-url https://github.com/ricardocabral/icuvisor/blob/main/LICENSE \
+  --short-description "MCP server connecting intervals.icu training data to AI assistants." \
+  --release-notes-url "https://github.com/ricardocabral/icuvisor/releases/tag/vX.Y.Z" \
+  --submit
+```
+
+Komac also requires a classic GitHub token with `public_repo`; pass it with `--token`, set `GITHUB_TOKEN`, or run `komac token add`.
+
+### 3.2 Winget PR review and merge
+
+After submission, `wingetbot` runs validation and opens/updates status comments. The PR is reviewed and merged by the `microsoft/winget-pkgs` automation and package moderators/maintainers. First package submissions usually take longer than version updates.
+
+You generally only need to monitor the PR:
+
+- If validation fails, fix what the bot or moderator asks for.
+- If a moderator asks about the unsigned MSI, reply that unsigned MSI/EXE installers are accepted in `winget-pkgs`; the manifest pins immutable GitHub release asset URLs and SHA-256 hashes.
+- Once merged, users can install with `winget install RicardoCabral.icuvisor`.
+
+### 3.3 Automate future Winget versions
 
 After the first Winget PR is merged:
 
 - [ ] Create a classic PAT with `public_repo` scope for the account that will open Winget PRs.
 - [ ] Make sure that account can fork `microsoft/winget-pkgs` (pre-create the fork if needed).
 - [ ] Add `WINGET_PAT` to this repository's Actions secrets.
-- [ ] Publish a stable release such as `v0.5.1`; prereleases are intentionally skipped.
+- [ ] Publish a stable release such as `v1.0.1`; prereleases are intentionally skipped.
 - [ ] Confirm `.github/workflows/winget.yml` opens an update PR.
 
-The workflow strips the leading `v` from tags before passing `PackageVersion`, so `v0.5.1` becomes Winget version `0.5.1`.
+The workflow strips the leading `v` from tags before passing `PackageVersion`, so `v1.0.1` becomes Winget version `1.0.1`.
 
 ## 4. WiX MSI internals
 
@@ -134,15 +169,16 @@ The `wix build` invocation passes the binary, license, and icon paths in via WiX
 ## 5. Pre-flight before first unsigned Winget release
 
 - [ ] `goreleaser check` passes locally.
-- [ ] Tag a release candidate (`v0.5.1-rc.1`) and watch all jobs go green. Expect a warning in `release-windows` saying signing is disabled; the unsigned `.msi` is still uploaded to the draft. `winget.yml` will not fire for prereleases.
+- [ ] Tag a release candidate (`v1.0.1-rc.1`) and watch all jobs go green. Expect a warning in `release-windows` saying signing is disabled; the unsigned `.msi` is still uploaded to the draft. `winget.yml` will not fire for prereleases.
 - [ ] Smoke test both MSIs from a Windows VM:
   - install,
   - open a new shell,
   - run `icuvisor version`,
   - uninstall via Apps & Features,
   - confirm clean removal.
-- [ ] Promote to a stable tag (`v0.5.1`).
-- [ ] Submit the first Winget version with `wingetcreate` (section 3.1).
+- [ ] Promote to a stable tag (`v1.0.0`).
+- [ ] Submit the first Winget version with `wingetcreate` or Komac (section 3.1).
+- [ ] Wait for `wingetbot` validation and `microsoft/winget-pkgs` moderator review. No separate issue or form is required.
 - [ ] After the first Winget PR is merged, set `WINGET_PAT` and let `winget.yml` handle future stable releases.
 
 Windows SmartScreen may warn "Unknown publisher" on unsigned builds. That is expected and does not prevent Winget submission.
@@ -155,7 +191,8 @@ The current CI signing hook is Azure Trusted Signing. If Azure Trusted Signing i
 
 ## 7. Failure modes and recovery
 
-- **Winget first submission fails in `winget-releaser`**: the package probably is not present in `microsoft/winget-pkgs` yet. Bootstrap the first version with `wingetcreate`, wait for it to merge, then retry automation on the next release.
+- **Winget first submission fails in `winget-releaser`**: the package probably is not present in `microsoft/winget-pkgs` yet. Bootstrap the first version with `wingetcreate` or Komac, wait for it to merge, then retry automation on the next release.
+- **Komac cannot find `ricardocabral/winget-pkgs`**: fork `microsoft/winget-pkgs` under the token user's account, then retry the submission.
 - **Winget PR never opens**: `WINGET_PAT` is missing `public_repo`, the token user cannot fork `microsoft/winget-pkgs`, or the action is rate-limited. Re-run `winget.yml` via `workflow_dispatch` with the tag.
 - **Winget moderation flags unsigned installer**: note that unsigned MSI/EXE installers are allowed, then wait for static analysis/reputation if requested. If moderation asks for another fix, update the manifest or release asset as directed.
 - **`wix build` fails with version error**: the tag included pre-release metadata that survived the strip step. Inspect the `Compute MSI version` step output.
