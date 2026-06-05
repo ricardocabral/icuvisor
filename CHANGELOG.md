@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-06-04
+
 ### Fixed
 
 - Workout writes now set `_meta.workout_doc_warning` when intervals.icu returns a parsed `workout_doc` that partially differs from the uploaded structured workout, catching cases such as flattened repeat blocks or dropped RPE targets instead of warning only on total parse failure.
@@ -212,7 +214,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v0.1.9...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/ricardocabral/icuvisor/compare/v0.1.9...v1.0.0
 [0.1.9]: https://github.com/ricardocabral/icuvisor/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/ricardocabral/icuvisor/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/ricardocabral/icuvisor/compare/v0.1.6...v0.1.7
