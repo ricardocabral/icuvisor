@@ -218,8 +218,7 @@ func shapeAddOrUpdateEventResponse(event intervals.Event, args addOrUpdateEventR
 	if args.EventID != "" {
 		operation = "update"
 	}
-	uploadedSteps := args.WorkoutDoc != nil && len(args.WorkoutDoc.Steps) > 0
-	meta := addOrUpdateEventMeta{Operation: operation, Date: args.Date, Timezone: timezoneName, WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, event.WorkoutDoc), DescriptionOnlyWorkoutWarning: addOrUpdateEventDescriptionOnlyWorkoutWarning(args), IncludeFull: args.IncludeFull}
+	meta := addOrUpdateEventMeta{Operation: operation, Date: args.Date, Timezone: timezoneName, WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(args.WorkoutDoc, event.WorkoutDoc), DescriptionOnlyWorkoutWarning: addOrUpdateEventDescriptionOnlyWorkoutWarning(args), IncludeFull: args.IncludeFull}
 	if preflight.Duplicate != nil {
 		meta.Operation = "skip_duplicate"
 		meta.DuplicateEventID = preflight.Duplicate.ID

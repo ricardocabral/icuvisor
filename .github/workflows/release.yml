@@ -200,7 +200,7 @@ jobs:
           gh release upload "$RELEASE_TAG" dist/icuvisor_*_macos_universal.dmg --clobber
 
   release-windows:
-    name: Build signed Windows MSI
+    name: Build Windows MSI
     runs-on: windows-latest
     needs: release
     strategy:
@@ -280,7 +280,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Get-Item $out
 
-      - name: Check Trusted Signing secrets
+      - name: Check optional Trusted Signing secrets
         id: signing
         shell: pwsh
         env:

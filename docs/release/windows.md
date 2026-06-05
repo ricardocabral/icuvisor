@@ -1,10 +1,8 @@
-# Windows release: MSI signing and publish setup
+# Windows release: MSI, Scoop, and Winget publish setup
 
-Companion to the macOS release runbook (kept maintainer-only at `docs/internal/release.md`). This doc covers the **Windows** half of the release pipeline: building a signed `.msi`, publishing to the Scoop bucket, and submitting Winget manifests.
+Companion to the macOS release runbook (kept maintainer-only at `docs/internal/release.md`). This doc covers the **Windows** half of the release pipeline: building an `.msi`, publishing to the Scoop bucket, and submitting Winget manifests.
 
-The macOS DMG flow remains owned by the maintainer runbook. After macOS drafts the release, the new `release-windows` job in `.github/workflows/release.yml` builds the MSI; the `finalize` job then regenerates `SHA256SUMS.txt` and publishes the draft. Winget submission lives in a separate workflow that fires on `release: published`.
-
-**Signing is optional and auto-gated.** Without the `AZURE_TENANT_ID` secret, the MSI ships unsigned (Windows SmartScreen will warn end users; acceptable for pre-v1 betas). Without the `SCOOP_BUCKET_PAT` secret, the scoop bucket update is skipped. Without the `WINGET_PAT` secret, the winget submission is skipped. Set the secrets when you are ready for that signal — no code changes needed.
+The default Windows path does **not** require Authenticode signing. Winget community packages may use unsigned MSI/EXE installers; the trade-off is user trust and SmartScreen reputation, not package eligibility. The release workflow still has an optional Azure Trusted Signing step, but missing Azure secrets only logs a warning and ships an unsigned MSI.
 
 ## Pipeline overview
 
@@ -15,7 +13,7 @@ preflight (ubuntu)
 release (macos)              <- builds linux/windows zips, dmg, runs goreleaser scoops
    |
    v
-release-windows (windows)    <- builds .msi for amd64+arm64, signs if Azure secrets present, uploads to draft
+release-windows (windows)    <- builds .msi for amd64+arm64, optionally signs, uploads to draft
    |
    v
 finalize (ubuntu)            <- regenerates SHA256SUMS, publishes draft
@@ -28,105 +26,101 @@ winget.yml                   <- submits PR to microsoft/winget-pkgs (skipped wit
 
 Artifacts produced per release (added to the existing macOS/Linux set):
 
-- `icuvisor_<version>_windows_amd64.msi` — Authenticode-signed (Azure Trusted Signing) when configured; unsigned otherwise
-- `icuvisor_<version>_windows_arm64.msi` — Authenticode-signed when configured; unsigned otherwise
+- `icuvisor_<version>_windows_amd64.msi` — unsigned by default; Authenticode-signed only when signing secrets are configured
+- `icuvisor_<version>_windows_arm64.msi` — unsigned by default; Authenticode-signed only when signing secrets are configured
 - Scoop manifest committed to `ricardocabral/scoop-icuvisor` at `bucket/icuvisor.json` (skipped without `SCOOP_BUCKET_PAT`)
 - Winget PR opened against `microsoft/winget-pkgs` under `RicardoCabral.icuvisor` (skipped without `WINGET_PAT`)
 
-## 1. Azure Trusted Signing setup (optional)
+## 1. GitHub Actions secrets
 
-Skip this entire section to ship an unsigned MSI — useful for early betas. The `release-windows` job will publish an unsigned `.msi`, log a warning, and continue. Set the Azure secrets later to flip signing back on with no code change.
-
-Azure Trusted Signing is Microsoft's managed Authenticode signing service. Cert lives in an Azure-managed HSM; CI authenticates with an Entra ID app and calls the signing endpoint per release.
-
-### 1.1 Create the Trusted Signing account and certificate profile
-
-- [ ] Sign in to <https://portal.azure.com/> with the account that should own the publisher identity.
-- [ ] Create or pick a subscription. Note that Trusted Signing is only available in select regions (East US, West Central US, West Europe, North Europe at time of writing).
-- [ ] Search the portal for **Trusted Signing Accounts** and click **Create**.
-- [ ] Fill in:
-  - **Account name:** `icuvisor-signing` (anything unique within the resource group)
-  - **Region:** pick the closest supported region (e.g. East US)
-  - **Pricing tier:** Basic is sufficient for an OSS project (~$10/month at time of writing)
-- [ ] After the account is created, open it and go to **Identity validation**.
-- [ ] Submit the identity validation request. Choose **Individual** or **Organization** — this determines the **CN=** name on the Authenticode signature shown to Windows users. Organization validation requires DUNS or equivalent verification and can take several days.
-- [ ] Wait for validation to complete (status becomes **Completed**).
-- [ ] In the Trusted Signing account, open **Certificate profiles** and click **Create**.
-- [ ] Profile type: **Public Trust**. Name it `icuvisor-public`. The profile name becomes `TRUSTED_SIGNING_PROFILE`.
-
-### 1.2 Create the Entra ID app and grant signing permission
-
-- [ ] In Azure portal, go to **Microsoft Entra ID > App registrations > New registration**.
-- [ ] Name: `icuvisor-ci-signing`. Single tenant. No redirect URI.
-- [ ] After creation, record:
-  - **Application (client) ID** -> `AZURE_CLIENT_ID`
-  - **Directory (tenant) ID** -> `AZURE_TENANT_ID`
-- [ ] Open **Certificates & secrets > New client secret**. Set a 12-month expiration. Copy the **Value** (only shown once) -> `AZURE_CLIENT_SECRET`. Set a calendar reminder ~11 months out to rotate.
-- [ ] Open the Trusted Signing account again. Go to **Access control (IAM) > Add role assignment**.
-- [ ] Role: **Trusted Signing Certificate Profile Signer**. Assign to the `icuvisor-ci-signing` app registration.
-
-### 1.3 Record non-secret endpoint and account names
-
-- [ ] In the Trusted Signing account overview, copy the **Account URI** (looks like `https://eus.codesigning.azure.net`) -> `TRUSTED_SIGNING_ENDPOINT`.
-- [ ] Copy the **Account name** (e.g. `icuvisor-signing`) -> `TRUSTED_SIGNING_ACCOUNT`.
-- [ ] Copy the **Certificate profile name** (e.g. `icuvisor-public`) -> `TRUSTED_SIGNING_PROFILE`.
-
-## 2. GitHub Actions secrets
-
-All secrets here are **optional**. Missing secrets auto-disable the matching pipeline step (signing / scoop publish / winget submission) and log a warning instead of failing the release.
+Only `WINGET_PAT` is required for Winget. MSI signing secrets are optional and can stay unset.
 
 Add via the GitHub web UI (**Settings > Secrets and variables > Actions > New repository secret**) or `gh secret set`.
 
 | Secret | Source | Gates |
 | --- | --- | --- |
-| `AZURE_TENANT_ID` | Entra ID Directory (tenant) ID | MSI signing (presence of this one secret toggles the signing step) |
-| `AZURE_CLIENT_ID` | App registration Application (client) ID | MSI signing |
-| `AZURE_CLIENT_SECRET` | App registration client secret value | MSI signing |
-| `TRUSTED_SIGNING_ENDPOINT` | Trusted Signing account URI (e.g. `https://eus.codesigning.azure.net`) | MSI signing |
-| `TRUSTED_SIGNING_ACCOUNT` | Trusted Signing account name | MSI signing |
-| `TRUSTED_SIGNING_PROFILE` | Certificate profile name | MSI signing |
-| `SCOOP_BUCKET_PAT` | Fine-grained PAT with `contents: write` on `ricardocabral/scoop-icuvisor` | Scoop bucket commit |
-| `WINGET_PAT` | Classic PAT with `public_repo` scope (used by winget-releaser to fork microsoft/winget-pkgs and open a PR) | Winget submission |
+| `WINGET_PAT` | Classic PAT with `public_repo` scope | Winget update PRs |
+| `SCOOP_BUCKET_PAT` | Fine-grained PAT with `contents: write` on `ricardocabral/scoop-icuvisor` | Scoop bucket commits |
+| `AZURE_TENANT_ID` | Entra ID Directory (tenant) ID | Optional MSI signing |
+| `AZURE_CLIENT_ID` | App registration Application (client) ID | Optional MSI signing |
+| `AZURE_CLIENT_SECRET` | App registration client secret value | Optional MSI signing |
+| `TRUSTED_SIGNING_ENDPOINT` | Trusted Signing account URI (e.g. `https://eus.codesigning.azure.net`) | Optional MSI signing |
+| `TRUSTED_SIGNING_ACCOUNT` | Trusted Signing account name | Optional MSI signing |
+| `TRUSTED_SIGNING_PROFILE` | Certificate profile name | Optional MSI signing |
 
-`gh` form:
+For unsigned Winget distribution, set only:
 
 ```bash
-gh secret set AZURE_TENANT_ID
-gh secret set AZURE_CLIENT_ID
-gh secret set AZURE_CLIENT_SECRET
-gh secret set TRUSTED_SIGNING_ENDPOINT
-gh secret set TRUSTED_SIGNING_ACCOUNT
-gh secret set TRUSTED_SIGNING_PROFILE
-gh secret set SCOOP_BUCKET_PAT
 gh secret set WINGET_PAT
 ```
 
-## 3. Scoop bucket
+If you also want Scoop publishing:
+
+```bash
+gh secret set SCOOP_BUCKET_PAT
+```
+
+## 2. Scoop bucket
 
 The bucket repo `ricardocabral/scoop-icuvisor` is private at first and is **already created and seeded** with an empty `bucket/` directory. GoReleaser commits `bucket/icuvisor.json` on every tag push using `SCOOP_BUCKET_PAT`; without that secret, the scoops step is skipped silently.
 
-When ready for public adoption (v1.0):
+When ready for public adoption:
 
 - [ ] Flip the bucket repo to public: `gh repo edit ricardocabral/scoop-icuvisor --visibility public`.
 - [ ] Smoke test: `scoop bucket add icuvisor https://github.com/ricardocabral/scoop-icuvisor && scoop install icuvisor`.
 
-## 4. Winget submission
-
-The `winget.yml` workflow uses `vedantmgoyal9/winget-releaser` (community action) to:
-
-- detect the `.msi` artifacts attached to the published release,
-- generate v1.6 manifest YAMLs,
-- fork `microsoft/winget-pkgs`, push a branch, open a PR.
+## 3. Winget submission
 
 Package identifier: `RicardoCabral.icuvisor`.
 
-Before the first run:
+The `.github/workflows/winget.yml` workflow uses `vedantmgoyal9/winget-releaser` to:
 
-- [ ] Reserve the publisher namespace by reading [microsoft/winget-pkgs#new-package-guidelines](https://github.com/microsoft/winget-pkgs/blob/master/doc/Authoring.md). Identifier `RicardoCabral.icuvisor` is fine if no one else has claimed `RicardoCabral`.
-- [ ] Confirm the `WINGET_PAT` token user (typically the maintainer's GitHub account) is allowed to fork `microsoft/winget-pkgs`. No prior PR is required, but you can also pre-create a fork manually.
-- [ ] The first PR will be reviewed by the winget moderators. Subsequent releases auto-PR.
+- detect the `.msi` artifacts attached to the published release,
+- generate manifest YAMLs for the next version,
+- fork `microsoft/winget-pkgs`, push a branch, and open a PR.
 
-## 5. WiX MSI internals
+### 3.1 Bootstrap the first Winget version manually
+
+`winget-releaser` expects at least one version of the package to already exist in `microsoft/winget-pkgs`. Use `wingetcreate` for the first stable version, then let the workflow handle future versions.
+
+From a Windows machine:
+
+```powershell
+winget install Microsoft.WingetCreate
+wingetcreate new `
+  "https://github.com/ricardocabral/icuvisor/releases/download/vX.Y.Z/icuvisor_X.Y.Z_windows_amd64.msi" `
+  "https://github.com/ricardocabral/icuvisor/releases/download/vX.Y.Z/icuvisor_X.Y.Z_windows_arm64.msi"
+```
+
+Use these manifest values when prompted:
+
+| Field | Value |
+| --- | --- |
+| PackageIdentifier | `RicardoCabral.icuvisor` |
+| PackageName | `icuvisor` |
+| Publisher | `Ricardo Niederberger Cabral` |
+| PackageVersion | `X.Y.Z` (no leading `v`) |
+| Moniker | `icuvisor` |
+| License | `MIT` |
+| PackageUrl | `https://icuvisor.app` |
+| LicenseUrl | `https://github.com/ricardocabral/icuvisor/blob/main/LICENSE` |
+| ShortDescription | `MCP server connecting intervals.icu training data to AI assistants.` |
+
+Before submitting, verify the generated installer entries point at the `.msi` assets and have the correct architectures (`x64` / `arm64`) and SHA-256 hashes.
+
+### 3.2 Automate future Winget versions
+
+After the first Winget PR is merged:
+
+- [ ] Create a classic PAT with `public_repo` scope for the account that will open Winget PRs.
+- [ ] Make sure that account can fork `microsoft/winget-pkgs` (pre-create the fork if needed).
+- [ ] Add `WINGET_PAT` to this repository's Actions secrets.
+- [ ] Publish a stable release such as `v0.5.1`; prereleases are intentionally skipped.
+- [ ] Confirm `.github/workflows/winget.yml` opens an update PR.
+
+The workflow strips the leading `v` from tags before passing `PackageVersion`, so `v0.5.1` becomes Winget version `0.5.1`.
+
+## 4. WiX MSI internals
 
 The MSI source is `build/windows/icuvisor.wxs` (WiX v4). Highlights:
 
@@ -137,38 +131,39 @@ The MSI source is `build/windows/icuvisor.wxs` (WiX v4). Highlights:
 
 The `wix build` invocation passes the binary, license, and icon paths in via WiX preprocessor variables (`$(var.BinarySource)`, etc.) so the same `.wxs` works for amd64 and arm64.
 
-## 6. Pre-flight before first Windows release
-
-### 6.1 Minimum (unsigned MSI, no scoop/winget — fastest path to a first release)
+## 5. Pre-flight before first unsigned Winget release
 
 - [ ] `goreleaser check` passes locally.
-- [ ] Tag a release candidate (`v0.5.1-rc.1`) and watch all jobs go green. Expect a warning in `release-windows` saying signing is disabled; the unsigned `.msi` is still uploaded to the draft. `winget.yml` will not fire (prerelease).
-- [ ] Smoke test the MSI from a Windows VM:
-  - install, run `icuvisor version` from a new shell, uninstall via Apps & Features, confirm clean removal.
-  - Windows SmartScreen will warn "Unknown publisher" on first install — expected for unsigned builds.
+- [ ] Tag a release candidate (`v0.5.1-rc.1`) and watch all jobs go green. Expect a warning in `release-windows` saying signing is disabled; the unsigned `.msi` is still uploaded to the draft. `winget.yml` will not fire for prereleases.
+- [ ] Smoke test both MSIs from a Windows VM:
+  - install,
+  - open a new shell,
+  - run `icuvisor version`,
+  - uninstall via Apps & Features,
+  - confirm clean removal.
+- [ ] Promote to a stable tag (`v0.5.1`).
+- [ ] Submit the first Winget version with `wingetcreate` (section 3.1).
+- [ ] After the first Winget PR is merged, set `WINGET_PAT` and let `winget.yml` handle future stable releases.
 
-### 6.2 Full pipeline (signed MSI + scoop + winget)
+Windows SmartScreen may warn "Unknown publisher" on unsigned builds. That is expected and does not prevent Winget submission.
 
-- [ ] Trusted Signing identity validation completed; certificate profile created.
-- [ ] All 8 secrets in section 2 added to the repo.
-- [ ] `scoop-icuvisor` repo exists with a `main` branch and a `bucket/` directory.
-- [ ] Tag a release candidate (`v0.5.1-rc.1`) and watch all jobs go green. `winget.yml` will not fire because the release is a prerelease — that is intentional.
-- [ ] Inspect the signed MSI from a Windows VM:
-  - right-click the `.msi` > **Properties > Digital Signatures** — should show the Trusted Signing identity and a valid timestamp.
-  - `Get-AuthenticodeSignature .\icuvisor_*.msi` — `Status` must be `Valid`.
-  - install, run `icuvisor version` from a new shell, uninstall via Apps & Features, confirm clean removal.
-- [ ] Promote to a stable tag (`v0.5.1`). The `winget.yml` workflow will fire on the publish event and open a PR in `microsoft/winget-pkgs`.
+## 6. Optional Authenticode signing
+
+Signing is useful for SmartScreen reputation, enterprise environments, and verified publisher identity, but it is not a Winget prerequisite.
+
+The current CI signing hook is Azure Trusted Signing. If Azure Trusted Signing is not available to the maintainer, leave the Azure secrets unset. If a different signing provider is adopted later (for example, a traditional OV/EV code-signing certificate or an OSS-friendly signing service), replace the `Sign MSI with Azure Trusted Signing` step in `.github/workflows/release.yml`.
 
 ## 7. Failure modes and recovery
 
-- **Trusted Signing returns 403**: the Entra app is missing the **Trusted Signing Certificate Profile Signer** role on the account. Fix the role assignment and retry; no need to rotate the secret.
+- **Winget first submission fails in `winget-releaser`**: the package probably is not present in `microsoft/winget-pkgs` yet. Bootstrap the first version with `wingetcreate`, wait for it to merge, then retry automation on the next release.
+- **Winget PR never opens**: `WINGET_PAT` is missing `public_repo`, the token user cannot fork `microsoft/winget-pkgs`, or the action is rate-limited. Re-run `winget.yml` via `workflow_dispatch` with the tag.
+- **Winget moderation flags unsigned installer**: note that unsigned MSI/EXE installers are allowed, then wait for static analysis/reputation if requested. If moderation asks for another fix, update the manifest or release asset as directed.
 - **`wix build` fails with version error**: the tag included pre-release metadata that survived the strip step. Inspect the `Compute MSI version` step output.
 - **Scoop manifest never appears in bucket repo**: `SCOOP_BUCKET_PAT` is missing `contents: write` on `scoop-icuvisor`, or expired. Regenerate.
-- **Winget PR never opens**: `WINGET_PAT` is missing `public_repo`, or the PAT user is rate-limited on `microsoft/winget-pkgs`. Re-run `winget.yml` via workflow_dispatch with the tag.
 - **MSI installs but `icuvisor` is not on PATH**: existing shells were opened before install. Open a new shell. If still missing, `setx PATH "%PATH%;%LOCALAPPDATA%\Programs\icuvisor"` and re-test.
 
 ## 8. What is _not_ wired up here
 
 - **No NSIS installer.** Roadmap calls for `.msi` only; NSIS is left for future iteration if user demand appears.
-- **No GoReleaser-Pro MSI/winget/scoops-with-msi.** Everything here is OSS goreleaser plus a community action. If we adopt GoReleaser Pro later, the `release-windows` job becomes a thin wrapper around `goreleaser release --split`.
-- **No code signing of the raw `icuvisor.exe`** inside the MSI. Only the MSI itself is signed. If SmartScreen reputation requires per-binary signing later, sign the `.exe` in the same `release-windows` job before `wix build`.
+- **No GoReleaser-Pro MSI/winget/scoops-with-msi.** Everything here is OSS GoReleaser plus a community action. If we adopt GoReleaser Pro later, the `release-windows` job becomes a thin wrapper around `goreleaser release --split`.
+- **No code signing of the raw `icuvisor.exe`** inside the MSI. If SmartScreen reputation requires per-binary signing later, sign the `.exe` in the same `release-windows` job before `wix build`.
