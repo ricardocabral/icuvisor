@@ -453,7 +453,7 @@ func TestAddOrUpdateEventSerializesRepeatWorkoutDocGoldenFixture(t *testing.T) {
 	wantDSL := strings.TrimRight(readTextFixture(t, "02-repeat-recovery-dsl.txt"), "\n")
 	client := &fakeEventWriterClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
-		event:             decodeToolEvents(t, `{"id":"evt-3","category":"WORKOUT","name":"Golden","start_date_local":"2026-08-01","workout_doc":{"steps":[{"duration":600}]}}`)[0],
+		event:             decodeToolEvents(t, `{"id":"evt-3","category":"WORKOUT","name":"Golden","start_date_local":"2026-08-01","workout_doc":{"steps":[{"description":"Main Set","reps":3,"steps":[{"duration":300,"power":{"value":110,"units":"PERCENT_FTP"}},{"description":"Recovery","duration":180,"power":{"value":50,"units":"PERCENT_FTP"}}]}]}}`)[0],
 	}
 	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
 	rawDoc, err := json.Marshal(structured)

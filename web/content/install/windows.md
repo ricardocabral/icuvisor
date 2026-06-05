@@ -3,9 +3,9 @@ title: "Install on Windows"
 description: "Install icuvisor on Windows from the unsigned MSI."
 ---
 
-icuvisor for Windows ships as an MSI built by CI on every release. Until v1.0, the MSI is **unsigned** — Windows SmartScreen will warn about an unknown publisher on first launch. The installer is functional; once past the warning, install, upgrade, and uninstall behave normally.
+icuvisor for Windows ships as an MSI built by CI on every release. The MSI is currently **unsigned** — Windows SmartScreen may warn about an unknown publisher on first launch. The installer is functional; once past the warning, install, upgrade, and uninstall behave normally.
 
-A signed MSI (Azure Trusted Signing) will land at v1.0 with no other changes.
+Winget distribution does not require Authenticode signing; it verifies the installer URL and SHA-256 hash from the package manifest. Signing may be added later if a suitable code-signing path is available.
 
 ## Install from the MSI
 

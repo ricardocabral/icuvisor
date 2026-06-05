@@ -12,7 +12,8 @@
     -d LicenseSource=<path>    path to LICENSE
     -d IconSource=<path>       path to icuvisor.ico
 
-  The output MSI is signed with Authenticode after `wix build` completes.
+  The output MSI may be signed with Authenticode after `wix build` completes
+  when release signing secrets are configured.
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package

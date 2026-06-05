@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added a full-surface WorkoutDoc DSL golden candidate and live API response fixture for issue #25, covering labels, repeat headers, duration/distance steps, ramps, freeride, power/HR/pace/RPE/cadence targets, ranges, and zone suffixes.
+
+### Changed
+
+- Windows release documentation and Winget automation now support unsigned MSI distribution, with Winget package versions derived from `v`-prefixed release tags.
+
+### Fixed
+
+- Workout writes now set `_meta.workout_doc_warning` when intervals.icu returns a parsed `workout_doc` that partially differs from the uploaded structured workout, catching cases such as flattened repeat blocks or dropped RPE targets instead of warning only on total parse failure.
+
 ## [0.1.9] - 2026-06-04
 
 ### Added

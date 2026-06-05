@@ -26,13 +26,13 @@ jobs:
           WINGET_PAT: ${{ secrets.WINGET_PAT }}
         run: |
           if (-not $env:WINGET_PAT) {
-            Write-Warning "WINGET_PAT secret not set; skipping winget submission. Set the PAT and re-run this workflow via workflow_dispatch once the MSI is Authenticode-signed."
+            Write-Warning "WINGET_PAT secret not set; skipping Winget submission. Signing is not required for winget-pkgs, but a classic PAT with public_repo scope is required to open the manifest PR."
             "skip=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           } else {
             "skip=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           }
 
-      - name: Resolve tag
+      - name: Resolve tag and package version
         if: steps.guard.outputs.skip == 'false'
         id: tag
         shell: pwsh
@@ -42,14 +42,19 @@ jobs:
         run: |
           $tag = if ($env:DISPATCH_TAG) { $env:DISPATCH_TAG } else { $env:RELEASE_TAG }
           if (-not $tag) { throw "no tag provided" }
+          $version = $tag -replace '^v', ''
+          if ($version -notmatch '^\d+\.\d+\.\d+([-.+].*)?$') {
+            throw "Tag $tag does not yield a valid Winget PackageVersion"
+          }
           "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Submit to winget-pkgs
         if: steps.guard.outputs.skip == 'false'
         uses: vedantmgoyal9/winget-releaser@main
         with:
           identifier: RicardoCabral.icuvisor
-          version: ${{ steps.tag.outputs.tag }}
+          version: ${{ steps.tag.outputs.version }}
           installers-regex: '^icuvisor_.*_windows_(amd64|arm64)\.msi$'
           release-tag: ${{ steps.tag.outputs.tag }}
           token: ${{ secrets.WINGET_PAT }}

@@ -147,6 +147,31 @@ func TestSerializeTargetUnitSemantics(t *testing.T) {
 	}
 }
 
+func TestFullSurfaceCandidateGoldenLocksIssue25RiskAreas(t *testing.T) {
+	t.Parallel()
+
+	doc := readStructured(t, filepath.Join("testdata", "06-full-surface-upstream-candidate-structured.json"))
+	want := readGolden(t, filepath.Join("testdata", "06-full-surface-upstream-candidate-dsl.txt"))
+
+	got, err := Serialize(doc)
+	if err != nil {
+		t.Fatalf("Serialize(full surface candidate) error = %v", err)
+	}
+	if got != want {
+		t.Fatalf("Serialize(full surface candidate) mismatch\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+
+	parsed, err := Parse(want)
+	if err != nil {
+		t.Fatalf("Parse(full surface candidate) error = %v", err)
+	}
+	if !reflect.DeepEqual(parsed.Steps, doc.Steps) {
+		gotJSON, _ := json.MarshalIndent(parsed, "", "  ")
+		wantJSON, _ := json.MarshalIndent(doc, "", "  ")
+		t.Fatalf("Parse(full surface candidate) mismatch\n--- got ---\n%s\n--- want ---\n%s", gotJSON, wantJSON)
+	}
+}
+
 func TestSerializeWithOptionsKnownWorkoutOrdersEmitZoneMetricSuffixes(t *testing.T) {
 	t.Parallel()
 
@@ -283,7 +308,7 @@ func readGolden(t *testing.T, path string) string {
 	if err != nil {
 		t.Fatalf("read %s: %v", path, err)
 	}
-	return string(data)
+	return strings.TrimSuffix(string(data), "\n")
 }
 
 func floatPtr(value float64) *float64 {

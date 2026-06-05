@@ -28,7 +28,7 @@ func TestCreateWorkoutWithStructuredStepsSerializesDSLAndReturnsReadShape(t *tes
 
 	client := &fakeWorkoutCreatorClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
-		workout:           decodeToolWorkouts(t, `{"id":"w-1","name":"Sweet Spot","type":"Ride","folder_id":"f-20","tags":["sweet-spot"],"workout_doc":{"steps":[{"duration":600},{"duration":300}],"name":"Sweet Spot"}}`)[0],
+		workout:           decodeToolWorkouts(t, `{"id":"w-1","name":"Sweet Spot","type":"Ride","folder_id":"f-20","tags":["sweet-spot"],"workout_doc":{"steps":[{"text":"Warmup","duration":600,"power":{"value":65,"units":"%ftp"}},{"duration":300,"freeride":true}],"name":"Sweet Spot"}}`)[0],
 	}
 	tool := newCreateWorkoutTool(client, client, "test", "UTC", false)
 
@@ -130,6 +130,34 @@ func TestCreateWorkoutWarnsWhenUpstreamDoesNotRenderWorkoutDoc(t *testing.T) {
 	}
 	if warning, _ := meta["workout_doc_warning"].(string); warning == "" {
 		t.Fatalf("workout_doc_warning = %#v, want non-empty render warning when upstream returns no workout_doc", meta["workout_doc_warning"])
+	}
+}
+
+func TestWorkoutDocRenderWarningDetectsPartialFidelityLoss(t *testing.T) {
+	t.Parallel()
+
+	rpe := float64(8)
+	uploaded := &workoutdoc.WorkoutDoc{Steps: []workoutdoc.Step{{Description: "Strides", Duration: 30, RPE: &workoutdoc.Target{Value: &rpe, Units: "RPE"}}}}
+	upstream := map[string]any{"steps": []any{map[string]any{"text": "Strides", "duration": float64(30)}}}
+
+	warning := workoutDocRenderWarning(uploaded, upstream)
+	if !strings.Contains(warning, "partially parsed") {
+		t.Fatalf("workoutDocRenderWarning() = %q, want partial-fidelity warning", warning)
+	}
+}
+
+func TestWorkoutDocRenderWarningDetectsIssue25CapturedPartialLoss(t *testing.T) {
+	t.Parallel()
+
+	uploaded := readWorkoutDocFixture(t, "06-full-surface-upstream-candidate-structured.json")
+	var upstream map[string]any
+	if err := json.Unmarshal([]byte(readTextFixture(t, "06-full-surface-upstream-response-workout-doc.json")), &upstream); err != nil {
+		t.Fatalf("unmarshal upstream fixture: %v", err)
+	}
+
+	warning := workoutDocRenderWarning(&uploaded, upstream)
+	if warning != workoutDocPartialFidelityWarning {
+		t.Fatalf("workoutDocRenderWarning() = %q, want captured partial-fidelity warning", warning)
 	}
 }
 

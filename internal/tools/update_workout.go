@@ -168,8 +168,7 @@ func updateWorkoutParams(args updateWorkoutRequest, options workoutdoc.Serialize
 }
 
 func shapeUpdateWorkoutResponse(workout intervals.Workout, args updateWorkoutRequest, workoutDocUploaded string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) updateWorkoutResponse {
-	uploadedSteps := args.WorkoutDoc != nil && len(args.WorkoutDoc.Steps) > 0
-	return updateWorkoutResponse{Workout: workoutToRow(workout, false, workoutPreviewContextForWorkout(workout, profile, unitSystem)), Meta: updateWorkoutMeta{Operation: "update", SourceEndpoint: workoutLibraryWorkoutsEndpoint, WorkoutID: args.WorkoutID, FieldsUpdated: updateWorkoutFieldsUpdated(args), WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(uploadedSteps, workout.WorkoutDoc), DescriptionOnlyWorkoutWarning: updateWorkoutDescriptionOnlyWorkoutWarning(args), DefaultPayloadScope: "same terse workout row shape used by get_workout_library/get_workouts_in_folder; raw workout_doc remains summarized"}}
+	return updateWorkoutResponse{Workout: workoutToRow(workout, false, workoutPreviewContextForWorkout(workout, profile, unitSystem)), Meta: updateWorkoutMeta{Operation: "update", SourceEndpoint: workoutLibraryWorkoutsEndpoint, WorkoutID: args.WorkoutID, FieldsUpdated: updateWorkoutFieldsUpdated(args), WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(args.WorkoutDoc, workout.WorkoutDoc), DescriptionOnlyWorkoutWarning: updateWorkoutDescriptionOnlyWorkoutWarning(args), DefaultPayloadScope: "same terse workout row shape used by get_workout_library/get_workouts_in_folder; raw workout_doc remains summarized"}}
 }
 
 func updateWorkoutDescriptionOnlyWorkoutWarning(args updateWorkoutRequest) string {
