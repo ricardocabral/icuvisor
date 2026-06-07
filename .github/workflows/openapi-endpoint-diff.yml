@@ -39,7 +39,7 @@ jobs:
             -output openapi-endpoint-diff.md
           cat openapi-endpoint-diff.md >> "$GITHUB_STEP_SUMMARY"
       - name: Upload endpoint diff report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: openapi-endpoint-diff
           path: openapi-endpoint-diff.md
