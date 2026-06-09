@@ -300,6 +300,74 @@ pre,
 	flex-wrap: wrap;
 }
 
+.proof-card {
+	justify-content: space-between;
+}
+
+.prompt-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: var(--s-3);
+	margin-top: var(--s-2);
+}
+.prompt-grid blockquote {
+	margin: 0;
+	min-height: 100%;
+	padding: var(--s-4);
+	border: 1px solid var(--border);
+	border-left: 4px solid var(--secondary);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	color: var(--text);
+	font-weight: 600;
+	line-height: 1.35;
+}
+
+.capability-card {
+	justify-content: space-between;
+}
+
+.capability-list {
+	list-style: none;
+	padding: 0;
+	margin: var(--s-2) 0;
+	display: grid;
+	gap: var(--s-2);
+}
+.capability-list li {
+	padding: var(--s-2) 0;
+	border-bottom: 1px solid var(--border);
+	color: var(--text-muted);
+}
+.capability-list li:last-child {
+	border-bottom: 0;
+}
+
+.roadmap-card {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: var(--s-4);
+}
+.roadmap-card p {
+	max-width: 74ch;
+}
+
+@media (max-width: 900px) {
+	.prompt-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.roadmap-card {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 640px) {
+	.prompt-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
 /* Code block */
 pre.code {
 	margin: 0;
