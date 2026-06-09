@@ -39,38 +39,42 @@
     <main class="bento" role="main">
 
       <section class="card hero col-12" aria-labelledby="hero-title">
-        <h1 id="hero-title">Talk to your <span style="background:linear-gradient(120deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;color:transparent;">intervals.icu</span> data from your own computer.</h1>
-        <p class="lead">icuvisor is an open-source, local-first <a href="https://modelcontextprotocol.io" rel="noopener">MCP</a> server for <a href="{{ .Site.Params.intervals }}" rel="noopener">intervals.icu</a>, shipped as one binary. Your API key stays in the OS keychain, there is no icuvisor SaaS account to create, and Claude, ChatGPT, Cursor, or another MCP client connects through a simple local setup.</p>
+        <h1 id="hero-title">Talk to your <span style="background:linear-gradient(120deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;color:transparent;">intervals.icu</span> training data from Claude, ChatGPT, or any MCP client.</h1>
+        <p class="lead">icuvisor is a small open-source app that runs on your own computer. It lets your AI assistant read your intervals.icu training data without creating an icuvisor cloud account.</p>
         <div class="actions">
-          <a class="btn" href="#install">Get started</a>
-          <a class="btn btn-ghost" href="{{ .Site.Params.github }}" rel="noopener">View on GitHub →</a>
+          <a class="btn" href="#install">Install icuvisor</a>
+          <a class="btn btn-ghost" href="{{ "/connect/" | relURL }}">Connect a client</a>
+          <a class="btn btn-ghost" href="{{ .Site.Params.github }}" rel="noopener">GitHub</a>
         </div>
       </section>
 
-      <section class="card col-8" id="features" aria-labelledby="why-title">
-        <span class="tag">Why icuvisor</span>
-        <h2 id="why-title">Your training data, available locally to the assistant you choose.</h2>
-        <p>Ask follow-up questions about last week's threshold workout. Get a plain-English summary of your form trend. Plan an event from your calendar. icuvisor exposes intervals.icu through a clean MCP catalog while keeping the connector on your machine instead of adding an icuvisor-hosted middle service.</p>
-        <ul class="feature-list">
-          <li><strong>Single signed binary</strong> for macOS, Windows, and Linux — no Python, no Docker, no hosted connector account.</li>
-          <li><strong>Guided local setup</strong> stores your intervals.icu API key in macOS Keychain, Windows Credential Manager, or libsecret.</li>
-          <li><strong>Terse-by-default responses</strong> tuned for LLM context windows. Heavy payloads are opt-in.</li>
-          <li><strong>Generated MCP tool catalog</strong> covering activities, wellness, fitness, events, and custom items.</li>
-          <li><strong>Coach mode</strong> for working across a roster of athletes from one install.</li>
-          <li><strong>stdio &amp; Streamable HTTP</strong> transports for major MCP clients.</li>
-        </ul>
+      <section class="card proof-card col-4" id="features" aria-labelledby="install-like-app-title">
+        <span class="tag">Install</span>
+        <h2 id="install-like-app-title">Installs like an app.</h2>
+        <p>One signed binary for macOS, Windows, and Linux. No Python, Docker, or hosted connector account.</p>
       </section>
 
-      <section class="card col-4" aria-labelledby="privacy-title">
+      <section class="card proof-card col-4" aria-labelledby="privacy-title">
         <span class="tag">Privacy</span>
-        <h3 id="privacy-title">Local-first by design.</h3>
-        <p>Your intervals.icu API key lives in the OS keychain — never on disk in plain text, never in a tool argument, never on an icuvisor server. The HTTP transport binds to <span class="mono">127.0.0.1</span> by default, so local clients stay local unless you deliberately change that configuration.</p>
+        <h2 id="privacy-title">Private by default.</h2>
+        <p>Your intervals.icu API key stays on your computer. icuvisor does not store your training data or send it through an icuvisor server.</p>
       </section>
 
-      <section class="card col-4" aria-labelledby="oss-title">
-        <span class="tag">Open source &amp; free</span>
-        <h3 id="oss-title">No icuvisor account, credits, or subscription.</h3>
-        <p>The icuvisor binary is free and open source, with no hosted icuvisor account to create and no icuvisor SaaS usage quota. AI clients, model providers, package downloads, and intervals.icu remain separate services with their own terms, limits, and conversation-data settings.</p>
+      <section class="card proof-card col-4" aria-labelledby="context-title">
+        <span class="tag">AI-ready</span>
+        <h2 id="context-title">Built for AI context.</h2>
+        <p>Answers stay short and clear, with units like watts, pace, sleep score, and training load spelled out.</p>
+      </section>
+
+      <section class="card col-12 use-cases" aria-labelledby="use-cases-title">
+        <span class="tag">What to ask</span>
+        <h2 id="use-cases-title">Useful training questions, grounded in your own data.</h2>
+        <div class="prompt-grid">
+          <blockquote>How am I absorbing this training block?</blockquote>
+          <blockquote>Compare my last four threshold workouts.</blockquote>
+          <blockquote>Plan next week around Saturday's race.</blockquote>
+          <blockquote>Review this athlete's readiness before I write workouts.</blockquote>
+        </div>
       </section>
 
       {{ $releaseURL := "https://api.github.com/repos/ricardocabral/icuvisor/releases/latest" }}
@@ -97,10 +101,10 @@
         {{ end }}
       {{ end }}
 
-      <section class="card col-8" id="install" aria-labelledby="install-title">
+      <section class="card col-6" id="install" aria-labelledby="install-title">
         <span class="tag">Install</span>
         <h3 id="install-title">Download, run setup, connect your client.</h3>
-        <p>Pick the build for your platform — icuvisor {{ with $release }}{{ .tag_name }}{{ end }} — then run <span class="mono">icuvisor setup</span> to save your intervals.icu credential in the OS keychain and generate local MCP settings.</p>
+        <p>Pick the build for your platform{{ with $release }} — icuvisor {{ .tag_name }}{{ end }} — then run <span class="mono">icuvisor setup</span> and connect your AI client.</p>
         {{ with $downloads }}
         <ul class="download-list">
         {{ range . }}
@@ -128,63 +132,47 @@
         <p style="margin-top:var(--s-3)"><a href="{{ "/install/" | relURL }}" rel="noopener">Read the full quickstart →</a>{{ with $release }} · <a href="{{ .html_url }}" rel="noopener">Release notes</a>{{ end }}</p>
       </section>
 
-      <section class="card col-12" id="tools" aria-labelledby="tools-title">
-        <span class="tag">Tool catalog</span>
-        <h2 id="tools-title">Everything your AI assistant can do.</h2>
-        <p>The full set of MCP tools icuvisor exposes, grouped by area. See the <a href="{{ "/reference/tools/" | relURL }}">tool reference</a> for arguments and response shapes.</p>
-        {{ partial "tool-list.html" . }}
+      <section class="card col-6 capability-card" id="tools" aria-labelledby="tools-title">
+        <span class="tag">Capabilities</span>
+        <h2 id="tools-title">What can it access?</h2>
+        <p>icuvisor gives your assistant access to the parts of intervals.icu athletes ask about most.</p>
+        <ul class="capability-list">
+          <li>Activities and intervals</li>
+          <li>Fitness, power, HR, and pace curves</li>
+          <li>Wellness and daily readiness</li>
+          <li>Calendar events and workouts</li>
+          <li>Coach rosters and custom items</li>
+        </ul>
+        <p><a href="{{ "/reference/tools/" | relURL }}">Open the full tool reference →</a></p>
       </section>
 
       <section class="card col-12" id="docs" aria-labelledby="docs-title">
         <span class="tag">Documentation</span>
         <h2 id="docs-title">Find what you need.</h2>
         <div class="doc-grid">
-          <a class="doc-card" href="{{ "/tutorials/" | relURL }}">
-            <h3>Tutorials</h3>
-            <p>Step-by-step walkthroughs to get your first AI assistant talking to intervals.icu.</p>
-          </a>
-          <a class="doc-card" href="{{ "/guides/" | relURL }}">
-            <h3>How-to guides</h3>
-            <p>Task-focused recipes: get an API key, set up coach mode, expose HTTP, troubleshoot.</p>
-          </a>
-          <a class="doc-card" href="{{ "/cookbook/" | relURL }}">
-            <h3>Cookbook</h3>
-            <p>Copy-paste prompts and multi-step recipes for reliable training answers from your AI assistant.</p>
-          </a>
-          <a class="doc-card" href="{{ "/reference/" | relURL }}">
-            <h3>Reference</h3>
-            <p>The tool catalog, CLI flags, config file, resources &amp; prompts, and safety modes.</p>
-          </a>
-          <a class="doc-card" href="{{ "/explain/" | relURL }}">
-            <h3>Explanations</h3>
-            <p>What MCP is, why icuvisor is local-first, terse-by-default, and how coach mode works.</p>
+          <a class="doc-card" href="{{ "/install/" | relURL }}">
+            <h3>Install</h3>
+            <p>Platform-specific setup for macOS, Windows, and Linux.</p>
           </a>
           <a class="doc-card" href="{{ "/connect/" | relURL }}">
             <h3>Connect a client</h3>
-            <p>Per-client setup for Claude Desktop, Claude Code, ChatGPT, and others.</p>
+            <p>Claude Desktop, Claude Code, ChatGPT, Cursor, and other MCP clients.</p>
           </a>
-          <a class="doc-card" href="{{ "/install/" | relURL }}">
-            <h3>Install</h3>
-            <p>Platform-specific install instructions for macOS, Windows, and Linux.</p>
+          <a class="doc-card" href="{{ "/cookbook/" | relURL }}">
+            <h3>Cookbook</h3>
+            <p>Prompt recipes for readiness checks, weekly reviews, race week, and workouts.</p>
+          </a>
+          <a class="doc-card" href="{{ "/reference/tools/" | relURL }}">
+            <h3>Tool reference</h3>
+            <p>Arguments, response shapes, safety gates, and generated schema details.</p>
           </a>
         </div>
       </section>
 
-      <section class="card col-6" aria-labelledby="clients-title">
-        <span class="tag">Compatible clients</span>
-        <h3 id="clients-title">Works where you already work.</h3>
-        <ul class="feature-list">
-          <li>Claude Desktop &amp; Claude Code</li>
-          <li>ChatGPT (custom MCP)</li>
-          <li>Cursor, Continue, Zed</li>
-          <li>Pi, and any other MCP-compatible client</li>
-        </ul>
-      </section>
-
-      <section class="card col-6" aria-labelledby="status-title">
+      <section class="card col-12 roadmap-card" aria-labelledby="status-title">
         <span class="tag tag-muted">Roadmap</span>
         <h3 id="status-title">Where we are.</h3>
-        <p>icuvisor is pre-alpha. The walking-skeleton (v0.1) is in progress. v1.0 ships installers, the full tool catalog, and one-click client configs.</p>
+        <p>icuvisor 1.0 is available. Recent updates focus on reliable training conversations: clearer workout and calendar changes, better tool documentation, and stronger guardrails so your assistant handles dates, units, and missing data correctly.</p>
         <p><a href="https://github.com/ricardocabral/icuvisor/blob/main/ROADMAP.md" rel="noopener">Read the roadmap →</a></p>
       </section>
 
