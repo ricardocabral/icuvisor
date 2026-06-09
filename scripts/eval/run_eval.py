@@ -45,6 +45,15 @@ DEFAULT_RESULTS = REPO_ROOT / "scripts/eval/results/latest.json"
 
 REQUIRED_FIELDS = ("id", "recipe", "persona", "prompt", "expected_tools",
                    "forbidden_tools", "must_address")
+ALLOWED_ACTIVATION_RISKS = ("action_decision",)
+NO_TOOL_ANTI_PATTERN_MARKERS = (
+    "without calling",
+    "without using",
+    "answers from memory",
+    "no tool",
+    "does not call",
+    "fails to call",
+)
 ASSISTANT_SYSTEM = (
     "You are a helpful assistant with access to the icuvisor MCP tools, which "
     "return real intervals.icu training data. Answer the user's request using "
@@ -110,6 +119,17 @@ def validate(scenarios_path: Path, catalog_path: Path, judge_path: Path) -> int:
             errors.append(f"{tag}: tools both expected and forbidden: {sorted(overlap)}")
         if not expected:
             warnings.append(f"{tag}: no expected_tools — activation cannot be scored")
+        activation_risk = sc.get("activation_risk")
+        if activation_risk:
+            if activation_risk not in ALLOWED_ACTIVATION_RISKS:
+                errors.append(f"{tag}: unknown activation_risk '{activation_risk}'")
+            if activation_risk == "action_decision":
+                anti_patterns = " ".join(sc.get("anti_patterns", [])).lower()
+                if not any(marker in anti_patterns
+                           for marker in NO_TOOL_ANTI_PATTERN_MARKERS):
+                    errors.append(
+                        f"{tag}: action_decision scenarios must include an "
+                        "anti_pattern for answering without calling tools")
 
         recipe = sc.get("recipe", "")
         if recipe and not (RECIPE_DIR / f"{recipe}.md").exists():

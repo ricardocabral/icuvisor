@@ -228,7 +228,7 @@
       "anti_patterns": ["answers from get_activities session summaries only", "asks the user for an activity ID before trying date lookup", "skips get_activity_intervals and get_activity_splits", "fabricates split rows or per-rep metrics not returned by a tool"]
     },
     {
-      "id": "CB-ACT-03",
+      "id": "CB-ACT-05",
       "recipe": "activity-retrospective",
       "persona": "athlete",
       "prompt": "Compare the first 10 km with the last 10 km of my most recent marathon or long run. Use icuvisor: find the activity, get details to determine total distance, translate the first segment to 0..10000 meters and the last segment to total_distance_m-10000..total_distance_m, then call compute_activity_segment_stats for average pace/velocity, power if available, and heart rate for each segment. Do not fetch raw activity streams or reduce samples in chat. If the activity is shorter than 20 km or streams are missing, say exactly what prevents the comparison.",
@@ -456,6 +456,7 @@
       "id": "CB-WORKOUT-03",
       "recipe": "build-workouts",
       "persona": "athlete",
+      "activation_risk": "action_decision",
       "prompt": "Change the existing scheduled workout on my calendar tomorrow to 4x6min at threshold with 3min easy recoveries, keeping the same date and sport. Use icuvisor: resolve tomorrow in my athlete timezone, find tomorrow's existing workout event, then edit that existing event_id in place. Do not delete it, do not create a replacement event, and do not create or update a workout-library template.",
       "expected_tools": [
         "resolve_calendar_dates",
@@ -481,6 +482,7 @@
         "does not delete the original event, create a replacement event, or mutate a workout-library template"
       ],
       "anti_patterns": [
+        "answers with instructions or a proposed workout without calling resolve_calendar_dates, get_events, and add_or_update_event",
         "deletes and recreates the calendar event",
         "creates or updates a workout-library template instead of editing the scheduled calendar event",
         "writes before identifying the existing event_id",
@@ -591,6 +593,7 @@
       "id": "CB-COACH-02",
       "recipe": "coach-roster-triage",
       "persona": "coach",
+      "activation_risk": "action_decision",
       "prompt": "Triage one athlete on my roster in detail this week: their recent activities, upcoming planned work, fitness trend, and wellness flags. End with one concise coaching note I could send. Use icuvisor.",
       "expected_tools": [
         "select_athlete",
@@ -617,6 +620,7 @@
         "one concise coaching note"
       ],
       "anti_patterns": [
+        "answers a coaching note from memory without calling select_athlete and athlete read tools",
         "asks for an API key",
         "writes to the athlete's account"
       ]
@@ -625,6 +629,7 @@
       "id": "CB-LIB-01",
       "recipe": "prompt-library",
       "persona": "athlete",
+      "activation_risk": "action_decision",
       "prompt": "What are my CTL, ATL, and TSB right now, and how have they moved over the last 6 weeks? Use my intervals.icu data and explain what the current form number means for the next few days.",
       "expected_tools": [
         "get_fitness"
@@ -701,6 +706,7 @@
       "id": "CB-LIB-04",
       "recipe": "prompt-library",
       "persona": "athlete",
+      "activation_risk": "action_decision",
       "prompt": "Over the last 28 days, is my training load trending up, down, or flat? Say whether the change is meaningful or within normal noise. Use my intervals.icu data.",
       "expected_tools": [
         "analyze_trend"
@@ -718,6 +724,7 @@
         "whether the change is statistically meaningful or noise"
       ],
       "anti_patterns": [
+        "answers from memory without calling analyze_trend or another icuvisor read tool",
         "asserts a trend with no analyzer or fitness data",
         "rolls its own reduction over raw streams instead of using analyze_trend"
       ]
