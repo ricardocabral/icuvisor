@@ -1,10 +1,10 @@
 # TP-158: Sport-settings profile readiness warnings — Status
 
-**Current Step:** Step 2: Propagate to tool/resource schemas and tests
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 
@@ -44,12 +44,12 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] FULL test suite passing
-- [ ] Integration tests (if applicable)
-- [ ] All failures fixed
-- [ ] Build passes
+- [x] FULL test suite passing
+- [x] Integration tests (if applicable)
+- [x] All failures fixed
+- [x] Build passes
 
 ---
 
@@ -74,6 +74,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | `go run ./scripts/snapshot_tool_schemas.go` produced no `get_athlete_profile.json` diff because committed snapshots cover input schemas; readiness warnings/output description do not change arguments. | No schema snapshot change needed. | `internal/tools/schema_snapshot/get_athlete_profile.json` |
+| No dedicated integration-test target or `*integration*` test file applies to profile readiness warnings; `make test` covers the generated-doc and package-level contract. | Integration checkbox treated as not applicable after repo search. | `Makefile`, repository test files |
 
 ---
 
@@ -102,3 +103,4 @@ Public signals: IcuSync forum #263 and LeCoach forum #406 highlight threshold/zo
 | 2026-06-10 11:56 | Review R004 | plan Step 2: APPROVE |
 | 2026-06-10 12:05 | Review R005 | code Step 2: UNKNOWN |
 | 2026-06-10 12:09 | Review R006 | code Step 2: APPROVE |
+| 2026-06-10 12:11 | Review R007 | plan Step 3: APPROVE |

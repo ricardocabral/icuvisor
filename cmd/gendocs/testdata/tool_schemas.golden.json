@@ -2485,7 +2485,7 @@
   },
   "update_sport_settings": {
     "name": "update_sport_settings",
-    "description": "Update one sport's FTP, threshold heart rate, threshold pace, or zone definitions.",
+    "description": "Update one sport's FTP, threshold heart rate, threshold pace, or zone definitions referenced by get_athlete_profile _meta.warnings.",
     "arguments": [
       {
         "name": "effective_date",
