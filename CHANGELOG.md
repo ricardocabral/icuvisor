@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Added regression coverage ensuring activity `gear_id` values without embedded names resolve via the full gear list, while unknown IDs remain explicit without invented `gear_name` values.
 - Hardened `get_today` so athlete-local current-day metadata cannot be combined with previous-day fitness, wellness, activity, or event rows when upstream returns stale rows around morning partial/absent wellness.
 
 ## [1.0.0] - 2026-06-04
