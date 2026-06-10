@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -26,6 +26,7 @@
 - [x] Raw in-process HTTP wire assertions parse JSON or SSE `data:` envelopes instead of SDK-decoded results
 - [x] Handshake lifecycle covers initialize, `notifications/initialized` with session ID, then ping using Codex-like headers
 - [x] Success assertions reject bare payloads and top-level errors before inspecting `result`
+- [ ] R003 revision: success envelope assertions fail whenever a top-level `error` member is present, even `null`
 - [x] Codex-like HTTP headers covered without external process
 - [x] Targeted MCP tests pass
 
@@ -66,6 +67,7 @@
 |---|------|------|---------|------|
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
+| R003 | Code | 1 | REVISE | `.reviews/R003-code-step1.md` |
 
 ---
 
@@ -100,5 +102,7 @@
 
 Public signal: Montis forum #512 and #516-518 described Codex handshake failure until JSON-RPC 2.0 wrapping was strict.
 R001 plan review requires raw in-process HTTP assertions against the wire response, parsing current SSE `data:` JSON-RPC envelopes if necessary, and a full initialize/initialized/ping session lifecycle with Codex-like headers.
+R003 code review requires rejecting any top-level `error` member on successful JSON-RPC responses, including `error: null`.
 | 2026-06-10 12:21 | Review R001 | plan Step 1: REVISE |
 | 2026-06-10 12:23 | Review R002 | plan Step 1: APPROVE |
+| 2026-06-10 12:29 | Review R003 | code Step 1: REVISE |
