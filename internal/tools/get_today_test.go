@@ -170,6 +170,32 @@ func TestGetTodayDoesNotBackfillYesterdayWellness(t *testing.T) {
 	}
 }
 
+func TestGetTodayPreservesTodayWellnessStaleMetadata(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeTodayClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		wellnessRows: []intervals.Wellness{
+			decodeWellnessRow(t, `{"id":"2026-05-23","sleepScore":90,"source":"garmin","bridge_fetched_at":"2026-05-20T00:00:00Z"}`),
+			decodeWellnessRow(t, `{"id":"2026-05-24","sleepScore":75,"source":"garmin","bridge_fetched_at":"2026-05-22T00:00:00Z"}`),
+		},
+	}
+	tool := newGetTodayToolWithClock(client, client, nil, nil, nil, nil, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	wellness := resultMap(t, result)["wellness"].([]any)
+	if len(wellness) != 1 {
+		t.Fatalf("wellness = %#v, want only today row", wellness)
+	}
+	meta := wellness[0].(map[string]any)["_meta"].(map[string]any)
+	if meta["stale"] != true || !strings.Contains(meta["stale_reason"].(string), "garmin bridge data is older than 24h") {
+		t.Fatalf("wellness _meta = %#v, want stale provenance preserved", meta)
+	}
+}
+
 func TestGetTodayDigestUsesAthleteLocalDateAndSourceShapes(t *testing.T) {
 	t.Parallel()
 
