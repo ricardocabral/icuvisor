@@ -1,10 +1,10 @@
 # TP-162: Codex Streamable HTTP JSON-RPC smoke coverage — Status
 
-**Current Step:** Step 1: Add Streamable HTTP JSON-RPC handshake smoke tests
+**Current Step:** Step 2: Fix transport/protocol behavior only if tests fail
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -19,7 +19,7 @@
 ---
 
 ### Step 1: Add Streamable HTTP JSON-RPC handshake smoke tests
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Initialize response envelope test added
 - [x] Ping response envelope test added
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Fix transport/protocol behavior only if tests fail
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Transport/server fixes applied if needed
 - [ ] Stdio and loopback defaults preserved
@@ -68,6 +68,7 @@
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | Code | 1 | REVISE | `.reviews/R003-code-step1.md` |
+| R004 | Code | 1 | APPROVE | `.reviews/R004-code-step1.md` |
 
 ---
 
@@ -89,6 +90,8 @@
 | 2026-06-10 12:17 | Step 1 started | Streamable HTTP JSON-RPC smoke tests |
 | 2026-06-10 12:18 | Step 1 plan reviewed | R001 REVISE, R002 APPROVE after raw-wire checklist hydration |
 | 2026-06-10 12:19 | Targeted MCP tests | `go test ./internal/mcp -run 'Streamable|JSONRPC|Codex|Protocol|Ping|Initialize'` passed |
+| 2026-06-10 12:20 | Step 1 code reviewed | R003 REVISE addressed; R004 APPROVE |
+| 2026-06-10 12:20 | Step 2 started | Transport/protocol behavior verification |
 
 ---
 
@@ -106,3 +109,4 @@ R003 code review requires rejecting any top-level `error` member on successful J
 | 2026-06-10 12:21 | Review R001 | plan Step 1: REVISE |
 | 2026-06-10 12:23 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-10 12:29 | Review R003 | code Step 1: REVISE |
+| 2026-06-10 12:32 | Review R004 | code Step 1: APPROVE |
