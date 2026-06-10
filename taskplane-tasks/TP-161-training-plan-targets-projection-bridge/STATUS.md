@@ -1,10 +1,10 @@
 # TP-161: Bridge training-plan targets into fitness projection — Status
 
-**Current Step:** Step 2: Implement bridge in projection input and schema
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 1
 **Size:** M
 
@@ -39,7 +39,7 @@
 ---
 
 ### Step 2: Implement bridge in projection input and schema
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 > ⚠️ Hydrate: Expand after inspecting current `get_training_plan` output fields and upstream plan target shapes.
 
@@ -55,7 +55,7 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing
 - [ ] Integration tests (if applicable)
@@ -83,6 +83,10 @@
 | R003 | Plan | 1 | APPROVE | `.reviews/R003-plan-step1.md` |
 | R004 | Code | 1 | REVISE | `.reviews/R004-code-step1.md` |
 | R005 | Code | 1 | APPROVE | `.reviews/R005-code-step1.md` |
+| R006 | Plan | 2 | APPROVE | `.reviews/R006-plan-step2.md` |
+| R007 | Code | 2 | REVISE | `.reviews/R007-code-step2.md` |
+| R008 | Code | 2 | REVISE | `.reviews/R008-code-step2.md` |
+| R009 | Code | 2 | APPROVE | `.reviews/R009-code-step2.md` |
 
 ---
 
@@ -132,3 +136,4 @@ Step 1 contract: `get_fitness_projection` will accept explicit `weekly_plan_targ
 | 2026-06-10 12:16 | Review R006 | plan Step 2: APPROVE |
 | 2026-06-10 12:24 | Review R007 | code Step 2: REVISE |
 | 2026-06-10 12:28 | Review R008 | code Step 2: REVISE |
+| 2026-06-10 12:32 | Review R009 | code Step 2: APPROVE |
