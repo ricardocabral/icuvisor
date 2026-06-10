@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -43,12 +43,12 @@
 
 > ⚠️ Hydrate: Expand after inspecting current `get_training_plan` output fields and upstream plan target shapes.
 
-- [ ] Optional typed request field plus decoder validation for weekly targets added
-- [ ] Analyzer input/result types carry weekly targets and fill/override counts
-- [ ] Deterministic conversion implemented
-- [ ] Metadata/source assumptions updated
-- [ ] Schema snapshot refreshed
-- [ ] Targeted projection/training-plan tests pass
+- [x] Optional typed request field plus decoder validation for weekly targets added
+- [x] Analyzer input/result types carry weekly targets and fill/override counts
+- [x] Deterministic conversion implemented
+- [x] Metadata/source assumptions updated
+- [x] Schema snapshot refreshed
+- [x] Targeted projection/training-plan tests pass
 
 ---
 
@@ -101,6 +101,7 @@
 | 2026-06-10 11:55 | Step 0 started | Preflight |
 | 2026-06-10 | Step 1 tests added | `go test ./internal/analysis ./internal/tools -run 'FitnessProjection|TrainingPlan'` fails as expected on missing `WeeklyPlanTargets`/`weekly_plan_targets` bridge support |
 | 2026-06-10 | Step 1 R004 revisions | Corrected recovery-week timing and weekly-target filled-day expected count; targeted tests still fail only on missing bridge support |
+| 2026-06-10 | Step 2 implementation | Added `weekly_plan_targets` request/schema bridge, deterministic analyzer fill with explicit-load precedence, metadata counts/source_tools, refreshed schema snapshot, and targeted tests pass |
 
 ---
 
@@ -122,3 +123,4 @@ Step 1 contract: `get_fitness_projection` will accept explicit `weekly_plan_targ
 | 2026-06-10 12:04 | Review R003 | plan Step 1: APPROVE |
 | 2026-06-10 12:09 | Review R004 | code Step 1: REVISE |
 | 2026-06-10 12:13 | Review R005 | code Step 1: APPROVE |
+| 2026-06-10 12:16 | Review R006 | plan Step 2: APPROVE |

@@ -7,9 +7,14 @@
       "model": "deterministic_ctl_atl_tsb",
       "modeled_load_without_plan": "starts from current CTL as daily load proxy and changes by weekly_ramp_pct each week",
       "planned_daily_load_count": 0,
-      "planned_load_override_behavior": "planned_daily_loads replace modeled load on matching dates only",
+      "planned_load_override_behavior": "planned_daily_loads replace weekly_plan_targets or modeled load on matching dates only; weekly target remainder is not redistributed",
       "recovery_week_cadence": 0,
       "recovery_week_load_pct": 60,
+      "weekly_plan_target_count": 0,
+      "weekly_plan_target_distribution": "weekly_plan_targets are distributed evenly as training_load/7 across projected dates in the target week; partial weeks are not reweighted",
+      "weekly_plan_target_filled_day_count": 0,
+      "weekly_plan_target_override_count": 0,
+      "weekly_plan_target_week_anchor": "athlete-local ISO Monday week_start_date",
       "weekly_ramp_pct": 7
     },
     "boundaries": [

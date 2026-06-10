@@ -15,8 +15,8 @@ import (
 
 const (
 	getFitnessProjectionName        = "get_fitness_projection"
-	getFitnessProjectionDescription = "Use when the prompt asks to project CTL, ATL, or TSB forward; do not fetch get_fitness rows and model the curve in chat. Projects from the current fitness row using deterministic load assumptions: weekly ramp %, optional recovery-week cadence, horizon, and optional explicit planned daily loads. Returns the curve only with include_full:true."
-	invalidFitnessProjectionMessage = "invalid fitness projection arguments; provide start_date with optional horizon_date or horizon_days, bounded ramp/recovery settings, and no free-form physiology model"
+	getFitnessProjectionDescription = "Use when the prompt asks to project CTL, ATL, or TSB forward; do not fetch get_fitness rows and model the curve in chat. Projects from the current fitness row using deterministic load assumptions: weekly ramp %, optional recovery-week cadence, horizon, optional weekly plan targets copied from get_training_plan context, and optional explicit planned daily loads. Returns the curve only with include_full:true."
+	invalidFitnessProjectionMessage = "invalid fitness projection arguments; provide start_date with optional horizon_date or horizon_days, bounded ramp/recovery settings, valid weekly plan targets, and no free-form physiology model"
 	fetchFitnessProjectionMessage   = "could not fetch current fitness data; check intervals.icu credentials, athlete ID, and start date"
 
 	fitnessProjectionModel = "deterministic_ctl_atl_tsb"
@@ -34,18 +34,20 @@ const (
 	defaultProjectionRecoveryLoadPct     = 60
 	maxProjectionRecoveryLoadPct         = 100
 	maxProjectionPlannedDailyLoad        = 1000
+	maxProjectionWeeklyTargetLoad        = 7 * maxProjectionPlannedDailyLoad
 )
 
 type fitnessProjectionRequest struct {
-	StartDate               string                         `json:"start_date"`
-	HorizonDate             string                         `json:"horizon_date,omitempty"`
-	HorizonDays             int                            `json:"horizon_days,omitempty"`
-	WeeklyRampPct           *float64                       `json:"weekly_ramp_pct,omitempty"`
-	RecoveryWeekCadence     *int                           `json:"recovery_week_cadence,omitempty"`
-	RecoveryWeekLoadPct     *float64                       `json:"recovery_week_load_pct,omitempty"`
-	PlannedDailyLoads       []fitnessProjectionPlannedLoad `json:"planned_daily_loads,omitempty"`
-	Model                   string                         `json:"model,omitempty"`
-	IncludeFull             bool                           `json:"include_full,omitempty"`
+	StartDate               string                              `json:"start_date"`
+	HorizonDate             string                              `json:"horizon_date,omitempty"`
+	HorizonDays             int                                 `json:"horizon_days,omitempty"`
+	WeeklyRampPct           *float64                            `json:"weekly_ramp_pct,omitempty"`
+	RecoveryWeekCadence     *int                                `json:"recovery_week_cadence,omitempty"`
+	RecoveryWeekLoadPct     *float64                            `json:"recovery_week_load_pct,omitempty"`
+	PlannedDailyLoads       []fitnessProjectionPlannedLoad      `json:"planned_daily_loads,omitempty"`
+	WeeklyPlanTargets       []fitnessProjectionWeeklyPlanTarget `json:"weekly_plan_targets,omitempty"`
+	Model                   string                              `json:"model,omitempty"`
+	IncludeFull             bool                                `json:"include_full,omitempty"`
 	resolvedHorizonDays     int
 	resolvedWeeklyRampPct   float64
 	resolvedRecoveryCadence int
@@ -55,6 +57,11 @@ type fitnessProjectionRequest struct {
 type fitnessProjectionPlannedLoad struct {
 	Date         string  `json:"date"`
 	TrainingLoad float64 `json:"training_load"`
+}
+
+type fitnessProjectionWeeklyPlanTarget struct {
+	WeekStartDate string  `json:"week_start_date"`
+	TrainingLoad  float64 `json:"training_load"`
 }
 
 type fitnessProjectionSummary struct {
@@ -121,6 +128,7 @@ func getFitnessProjectionHandler(client FitnessClient, profileClient ProfileClie
 			RecoveryWeekCadence: args.resolvedRecoveryCadence,
 			RecoveryWeekLoadPct: args.resolvedRecoveryLoadPct,
 			PlannedDailyLoads:   analysisProjectionPlannedLoads(args.PlannedDailyLoads),
+			WeeklyPlanTargets:   analysisProjectionWeeklyTargets(args.WeeklyPlanTargets),
 		})
 		if err != nil {
 			return Result{}, NewUserError(invalidFitnessProjectionMessage, err)
@@ -130,10 +138,10 @@ func getFitnessProjectionHandler(client FitnessClient, profileClient ProfileClie
 			Series: shapeFitnessProjectionPoints(projection.Points),
 			Meta: analysis.AnalyzerMetaInput{
 				Method:      fitnessProjectionModel,
-				SourceTools: []string{getFitnessName},
+				SourceTools: fitnessProjectionSourceTools(args),
 				N:           1,
 				MinSamples:  1,
-				Assumptions: fitnessProjectionAssumptions(args),
+				Assumptions: fitnessProjectionAssumptions(args, projection),
 				Boundaries:  fitnessProjectionBoundaries(),
 			},
 		}
@@ -173,6 +181,14 @@ func analysisProjectionPlannedLoads(loads []fitnessProjectionPlannedLoad) []anal
 	out := make([]analysis.FitnessProjectionPlannedLoad, 0, len(loads))
 	for _, load := range loads {
 		out = append(out, analysis.FitnessProjectionPlannedLoad{Date: strings.TrimSpace(load.Date), TrainingLoad: load.TrainingLoad})
+	}
+	return out
+}
+
+func analysisProjectionWeeklyTargets(targets []fitnessProjectionWeeklyPlanTarget) []analysis.FitnessProjectionWeeklyTarget {
+	out := make([]analysis.FitnessProjectionWeeklyTarget, 0, len(targets))
+	for _, target := range targets {
+		out = append(out, analysis.FitnessProjectionWeeklyTarget{WeekStartDate: strings.TrimSpace(target.WeekStartDate), TrainingLoad: target.TrainingLoad})
 	}
 	return out
 }
@@ -276,6 +292,9 @@ func decodeFitnessProjectionRequest(raw json.RawMessage) (fitnessProjectionReque
 	if err := validateProjectionPlannedLoads(args.StartDate, args.resolvedHorizonDays, args.PlannedDailyLoads); err != nil {
 		return args, err
 	}
+	if err := validateProjectionWeeklyPlanTargets(args.StartDate, args.resolvedHorizonDays, args.WeeklyPlanTargets); err != nil {
+		return args, err
+	}
 	return args, nil
 }
 
@@ -316,6 +335,36 @@ func validateProjectionPlannedLoads(startDate string, horizonDays int, loads []f
 	return nil
 }
 
+func validateProjectionWeeklyPlanTargets(startDate string, horizonDays int, targets []fitnessProjectionWeeklyPlanTarget) error {
+	start, _ := time.Parse(time.DateOnly, startDate)
+	firstProjected := start.AddDate(0, 0, 1)
+	lastProjected := start.AddDate(0, 0, horizonDays)
+	seen := map[string]struct{}{}
+	for i, target := range targets {
+		weekStartDate := strings.TrimSpace(target.WeekStartDate)
+		targets[i].WeekStartDate = weekStartDate
+		if !validDate(weekStartDate) {
+			return errors.New("weekly_plan_targets.week_start_date must be a Monday YYYY-MM-DD")
+		}
+		weekStart, _ := time.Parse(time.DateOnly, weekStartDate)
+		if weekStart.Weekday() != time.Monday {
+			return errors.New("weekly_plan_targets.week_start_date must be a Monday YYYY-MM-DD")
+		}
+		if _, ok := seen[weekStartDate]; ok {
+			return fmt.Errorf("weekly_plan_targets contains duplicate week_start_date %s", weekStartDate)
+		}
+		seen[weekStartDate] = struct{}{}
+		weekEnd := weekStart.AddDate(0, 0, 6)
+		if weekEnd.Before(firstProjected) || weekStart.After(lastProjected) {
+			return fmt.Errorf("weekly_plan_targets week_start_date %s must overlap the projection horizon", weekStartDate)
+		}
+		if target.TrainingLoad < 0 || target.TrainingLoad > maxProjectionWeeklyTargetLoad || math.IsNaN(target.TrainingLoad) || math.IsInf(target.TrainingLoad, 0) {
+			return fmt.Errorf("weekly_plan_targets training_load for %s must be between 0 and %d", weekStartDate, maxProjectionWeeklyTargetLoad)
+		}
+	}
+	return nil
+}
+
 func fitnessProjectionInputSchema() map[string]any {
 	return map[string]any{
 		"type":                 "object",
@@ -328,25 +377,39 @@ func fitnessProjectionInputSchema() map[string]any {
 			"weekly_ramp_pct":        map[string]any{"type": "number", "minimum": minProjectionWeeklyRampPct, "maximum": maxProjectionWeeklyRampPct, "default": defaultProjectionWeeklyRampPct, "description": "Week-over-week percent change applied to modeled daily load when planned_daily_loads does not specify a day."},
 			"recovery_week_cadence":  map[string]any{"type": "integer", "minimum": 0, "maximum": maxProjectionRecoveryWeekCadence, "default": defaultProjectionRecoveryWeekCadence, "description": "Every Nth week uses recovery_week_load_pct of modeled load; use 0 to disable recovery weeks."},
 			"recovery_week_load_pct": map[string]any{"type": "number", "minimum": 0, "maximum": maxProjectionRecoveryLoadPct, "default": defaultProjectionRecoveryLoadPct, "description": "Percent of modeled load used during recovery weeks."},
-			"planned_daily_loads":    map[string]any{"type": "array", "description": "Optional explicit planned training load values by athlete-local date; these replace modeled ramp load for matching dates.", "items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"date", "training_load"}, "properties": map[string]any{"date": map[string]any{"type": "string", "description": "Athlete-local YYYY-MM-DD date after start_date and within the horizon."}, "training_load": map[string]any{"type": "number", "minimum": 0, "maximum": maxProjectionPlannedDailyLoad, "description": "Planned daily training load/TSS-equivalent stress for this date."}}}},
+			"planned_daily_loads":    map[string]any{"type": "array", "description": "Optional explicit planned training load values by athlete-local date; these replace modeled ramp load or weekly_plan_targets load for matching dates.", "items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"date", "training_load"}, "properties": map[string]any{"date": map[string]any{"type": "string", "description": "Athlete-local YYYY-MM-DD date after start_date and within the horizon."}, "training_load": map[string]any{"type": "number", "minimum": 0, "maximum": maxProjectionPlannedDailyLoad, "description": "Planned daily training load/TSS-equivalent stress for this date."}}}},
+			"weekly_plan_targets":    map[string]any{"type": "array", "description": "Optional weekly training-load/TSS targets copied from get_training_plan or planning context. Each ISO Monday week_start_date is distributed evenly as training_load/7 across projected future dates in that week; partial weeks are not reweighted and planned_daily_loads override exact dates.", "items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"week_start_date", "training_load"}, "properties": map[string]any{"week_start_date": map[string]any{"type": "string", "description": "Athlete-local ISO Monday YYYY-MM-DD week anchor. The target week must overlap projected days after start_date."}, "training_load": map[string]any{"type": "number", "minimum": 0, "maximum": maxProjectionWeeklyTargetLoad, "description": "Weekly target training load/TSS-equivalent stress; the projection uses training_load/7 for each covered day unless planned_daily_loads overrides it."}}}},
 			"model":                  map[string]any{"type": "string", "enum": []string{fitnessProjectionModel}, "default": fitnessProjectionModel, "description": "Closed enum. Free-form physiology models are rejected; this tool only supports deterministic CTL/ATL/TSB impulse-response projection."},
 			"include_full":           map[string]any{"type": "boolean", "default": false, "description": "When true, include the projected daily CTL/ATL/TSB curve series."},
 		},
 	}
 }
 
-func fitnessProjectionAssumptions(args fitnessProjectionRequest) map[string]any {
+func fitnessProjectionSourceTools(args fitnessProjectionRequest) []string {
+	sources := []string{getFitnessName}
+	if len(args.WeeklyPlanTargets) > 0 {
+		sources = append(sources, getTrainingPlanName)
+	}
+	return sources
+}
+
+func fitnessProjectionAssumptions(args fitnessProjectionRequest, projection analysis.FitnessProjectionResult) map[string]any {
 	return map[string]any{
-		"model":                          fitnessProjectionModel,
-		"horizon_days":                   args.resolvedHorizonDays,
-		"weekly_ramp_pct":                round(args.resolvedWeeklyRampPct, 3),
-		"recovery_week_cadence":          args.resolvedRecoveryCadence,
-		"recovery_week_load_pct":         round(args.resolvedRecoveryLoadPct, 3),
-		"planned_daily_load_count":       len(args.PlannedDailyLoads),
-		"ctl_time_constant_days":         42,
-		"atl_time_constant_days":         7,
-		"modeled_load_without_plan":      "starts from current CTL as daily load proxy and changes by weekly_ramp_pct each week",
-		"planned_load_override_behavior": "planned_daily_loads replace modeled load on matching dates only",
+		"model":                               fitnessProjectionModel,
+		"horizon_days":                        args.resolvedHorizonDays,
+		"weekly_ramp_pct":                     round(args.resolvedWeeklyRampPct, 3),
+		"recovery_week_cadence":               args.resolvedRecoveryCadence,
+		"recovery_week_load_pct":              round(args.resolvedRecoveryLoadPct, 3),
+		"planned_daily_load_count":            len(args.PlannedDailyLoads),
+		"weekly_plan_target_count":            len(args.WeeklyPlanTargets),
+		"weekly_plan_target_filled_day_count": projection.WeeklyPlanTargetFilledDayCount,
+		"weekly_plan_target_override_count":   projection.WeeklyPlanTargetOverrideCount,
+		"weekly_plan_target_week_anchor":      "athlete-local ISO Monday week_start_date",
+		"weekly_plan_target_distribution":     "weekly_plan_targets are distributed evenly as training_load/7 across projected dates in the target week; partial weeks are not reweighted",
+		"ctl_time_constant_days":              42,
+		"atl_time_constant_days":              7,
+		"modeled_load_without_plan":           "starts from current CTL as daily load proxy and changes by weekly_ramp_pct each week",
+		"planned_load_override_behavior":      "planned_daily_loads replace weekly_plan_targets or modeled load on matching dates only; weekly target remainder is not redistributed",
 	}
 }
 

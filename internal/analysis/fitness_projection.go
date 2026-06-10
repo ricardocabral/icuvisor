@@ -26,6 +26,13 @@ type FitnessProjectionInput struct {
 	RecoveryWeekCadence int
 	RecoveryWeekLoadPct float64
 	PlannedDailyLoads   []FitnessProjectionPlannedLoad
+	WeeklyPlanTargets   []FitnessProjectionWeeklyTarget
+}
+
+// FitnessProjectionWeeklyTarget distributes one weekly training-plan target across its anchored week.
+type FitnessProjectionWeeklyTarget struct {
+	WeekStartDate string
+	TrainingLoad  float64
 }
 
 // FitnessProjectionPlannedLoad overrides modeled load for one projected date.
@@ -47,22 +54,24 @@ type FitnessProjectionPoint struct {
 
 // FitnessProjectionResult contains the full projected curve and aggregate summary values.
 type FitnessProjectionResult struct {
-	StartDate        string
-	EndDate          string
-	StartCTL         float64
-	StartATL         float64
-	StartTSB         float64
-	EndCTL           float64
-	EndATL           float64
-	EndTSB           float64
-	CTLChange        float64
-	ATLChange        float64
-	TSBChange        float64
-	AverageDailyLoad float64
-	TotalLoad        float64
-	MinTSB           float64
-	MaxCTL           float64
-	Points           []FitnessProjectionPoint
+	StartDate                      string
+	EndDate                        string
+	StartCTL                       float64
+	StartATL                       float64
+	StartTSB                       float64
+	EndCTL                         float64
+	EndATL                         float64
+	EndTSB                         float64
+	CTLChange                      float64
+	ATLChange                      float64
+	TSBChange                      float64
+	AverageDailyLoad               float64
+	TotalLoad                      float64
+	MinTSB                         float64
+	MaxCTL                         float64
+	WeeklyPlanTargetFilledDayCount int
+	WeeklyPlanTargetOverrideCount  int
+	Points                         []FitnessProjectionPoint
 }
 
 // ProjectFitness projects CTL/ATL/TSB using first-order impulse-response updates.
@@ -78,6 +87,10 @@ func ProjectFitness(input FitnessProjectionInput) (FitnessProjectionResult, erro
 	for _, load := range input.PlannedDailyLoads {
 		plannedLoads[load.Date] = load.TrainingLoad
 	}
+	weeklyTargetLoads, err := weeklyPlanTargetLoads(input.WeeklyPlanTargets)
+	if err != nil {
+		return FitnessProjectionResult{}, err
+	}
 	ctl := input.StartCTL
 	atl := input.StartATL
 	points := make([]FitnessProjectionPoint, 0, input.HorizonDays+1)
@@ -87,9 +100,19 @@ func ProjectFitness(input FitnessProjectionInput) (FitnessProjectionResult, erro
 	for day := 1; day <= input.HorizonDays; day++ {
 		date := start.AddDate(0, 0, day).Format(time.DateOnly)
 		load, source := modeledProjectionLoad(baseLoad, input.WeeklyRampPct, input.RecoveryWeekCadence, input.RecoveryWeekLoadPct, day)
+		_, weeklyTarget := weeklyTargetLoads[date]
+		if weeklyTarget {
+			load = weeklyTargetLoads[date]
+			source = "weekly_plan_targets"
+		}
 		if planned, ok := plannedLoads[date]; ok {
+			if weeklyTarget {
+				result.WeeklyPlanTargetOverrideCount++
+			}
 			load = planned
 			source = "planned_daily_loads"
+		} else if weeklyTarget {
+			result.WeeklyPlanTargetFilledDayCount++
 		}
 		ctl = ctl + (load-ctl)/FitnessProjectionCTLTimeConstantDays
 		atl = atl + (load-atl)/FitnessProjectionATLTimeConstantDays
@@ -115,6 +138,21 @@ func ProjectFitness(input FitnessProjectionInput) (FitnessProjectionResult, erro
 	result.AverageDailyLoad = result.TotalLoad / float64(input.HorizonDays)
 	result.Points = points
 	return result, nil
+}
+
+func weeklyPlanTargetLoads(targets []FitnessProjectionWeeklyTarget) (map[string]float64, error) {
+	loads := map[string]float64{}
+	for _, target := range targets {
+		weekStart, err := time.Parse(time.DateOnly, target.WeekStartDate)
+		if err != nil {
+			return nil, fmt.Errorf("parsing weekly plan target week start: %w", err)
+		}
+		dailyLoad := target.TrainingLoad / 7
+		for day := 0; day < 7; day++ {
+			loads[weekStart.AddDate(0, 0, day).Format(time.DateOnly)] = dailyLoad
+		}
+	}
+	return loads, nil
 }
 
 func modeledProjectionLoad(baseLoad float64, weeklyRampPct float64, recoveryWeekCadence int, recoveryWeekLoadPct float64, day int) (float64, string) {
