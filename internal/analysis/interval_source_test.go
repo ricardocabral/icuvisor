@@ -30,10 +30,10 @@ func TestInferIntervalSource(t *testing.T) {
 			want: IntervalSourceResult{Source: IntervalSourceStructuredWorkout},
 		},
 		{
-			name: "all raw intervals without group markers are manual added",
+			name: "all evidence-bearing raw intervals without group markers are manual added",
 			in: IntervalSourceInput{Intervals: []IntervalSourceInterval{
-				{Name: "Lap", Raw: map[string]any{"id": "interval-1", "start_index": 100}},
-				{Name: "Lap", Raw: map[string]any{"id": "interval-2", "end_index": 200}},
+				{Name: "Lap", Raw: map[string]any{"id": "interval-1", "start_index": 0, "end_index": 100}},
+				{Name: "Lap", Raw: map[string]any{"id": "interval-2", "start_index": 100, "end_index": 200}},
 			}},
 			want: IntervalSourceResult{Source: IntervalSourceManualAdded},
 		},
@@ -41,7 +41,7 @@ func TestInferIntervalSource(t *testing.T) {
 			name: "raw intervals with and without group markers are mixed",
 			in: IntervalSourceInput{Intervals: []IntervalSourceInterval{
 				{Name: "Lap", Raw: map[string]any{"id": "interval-1", "group_id": "group-a"}},
-				{Name: "Lap", Raw: map[string]any{"id": "interval-2"}},
+				{Name: "Lap", Raw: map[string]any{"id": "interval-2", "start_index": 100, "end_index": 200}},
 			}},
 			want: IntervalSourceResult{Source: IntervalSourceMixed},
 		},

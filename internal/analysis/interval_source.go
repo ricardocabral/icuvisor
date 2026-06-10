@@ -177,7 +177,9 @@ func inferGroupedManualSource(intervals []IntervalSourceInterval) (IntervalSourc
 			grouped++
 			continue
 		}
-		ungrouped++
+		if rawHasManualIntervalEvidence(interval.Raw) {
+			ungrouped++
+		}
 	}
 	if grouped == 0 && ungrouped == 0 {
 		return "", false
@@ -201,6 +203,23 @@ func rawHasGroupIDMarker(raw map[string]any) bool {
 		}
 	}
 	return false
+}
+
+func rawHasManualIntervalEvidence(raw map[string]any) bool {
+	hasStart := false
+	hasEnd := false
+	for key, value := range raw {
+		if !rawMarkerPresent(value) {
+			continue
+		}
+		switch normalizeMarkerText(key) {
+		case "startindex":
+			hasStart = true
+		case "endindex":
+			hasEnd = true
+		}
+	}
+	return hasStart && hasEnd
 }
 
 func rawMarkerPresent(value any) bool {
