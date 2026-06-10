@@ -27,9 +27,9 @@
 - [x] Initial targeted event tests added/run
 - [x] R001 concrete contract captured for API surface, response shape, idempotency, catalog, and tests
 - [x] R002 contract tightened for idempotency fingerprint, status enum, partial failures, aliases, and schema/example tests
-- [ ] R004 tests cover range query bounds and deterministic external IDs
-- [ ] R004 tests cover external-ID-with-different-fields conflicts and duplicate-plus-conflict same-day scans
-- [ ] R004 tests cover default terse and include_full row shaping
+- [x] R004 tests cover range query bounds and deterministic external IDs
+- [x] R004 tests cover external-ID-with-different-fields conflicts and duplicate-plus-conflict same-day scans
+- [x] R004 tests cover default terse and include_full row shaping
 
 ---
 

@@ -34,7 +34,18 @@ func (f *fakeUnavailableDateRangeClient) AddOrUpdateEvent(ctx context.Context, p
 
 func (f *fakeUnavailableDateRangeClient) ListEvents(ctx context.Context, params intervals.ListEventsParams) ([]intervals.Event, error) {
 	f.listCalls = append(f.listCalls, params)
-	return append([]intervals.Event(nil), f.events...), nil
+	filtered := make([]intervals.Event, 0, len(f.events))
+	for _, event := range f.events {
+		date := eventDateOnly(event)
+		if params.Oldest != "" && date < params.Oldest {
+			continue
+		}
+		if params.Newest != "" && date > params.Newest {
+			continue
+		}
+		filtered = append(filtered, event)
+	}
+	return filtered, nil
 }
 
 func TestAddUnavailableDateRangeRegistrationMetadata(t *testing.T) {
@@ -84,12 +95,16 @@ func TestAddUnavailableDateRangeCreatesInclusivePerDayEvents(t *testing.T) {
 		if call.Description == nil || *call.Description != description {
 			t.Fatalf("call[%d].Description = %#v, want %q", i, call.Description, description)
 		}
-		if !strings.HasPrefix(call.ExternalID, "icuvisor-unavailable-v1-") {
-			t.Fatalf("call[%d].ExternalID = %q, want generated unavailable id", i, call.ExternalID)
+		wantExternalID := addUnavailableDateRangeExternalID("HOLIDAY", wantDate, "Holiday", description)
+		if call.ExternalID != wantExternalID {
+			t.Fatalf("call[%d].ExternalID = %q, want %q", i, call.ExternalID, wantExternalID)
 		}
 	}
 	if client.calls[0].ExternalID == client.calls[1].ExternalID || client.calls[1].ExternalID == client.calls[2].ExternalID {
 		t.Fatalf("external IDs = %#v, want per-day idempotency keys", client.calls)
+	}
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-07-01" || client.listCalls[0].Newest != "2026-07-03" {
+		t.Fatalf("ListEvents calls = %#v, want inclusive range preflight", client.listCalls)
 	}
 
 	out := resultMap(t, result)
@@ -99,6 +114,9 @@ func TestAddUnavailableDateRangeCreatesInclusivePerDayEvents(t *testing.T) {
 	events := out["events"].([]any)
 	if len(events) != 3 {
 		t.Fatalf("events = %#v, want 3 rows", events)
+	}
+	if _, exists := events[0].(map[string]any)["full"]; exists {
+		t.Fatalf("event row = %#v, want terse default without full payload", events[0])
 	}
 	meta := out["_meta"].(map[string]any)
 	if meta["operation"] != "create_range" || meta["category"] != "HOLIDAY" || meta["timezone"] != "America/Sao_Paulo" || meta["requested_days"] != float64(3) || meta["created_count"] != float64(3) || meta["skipped_count"] != float64(0) {
@@ -127,6 +145,9 @@ func TestAddUnavailableDateRangeSkipsRepeatedRangeByGeneratedExternalID(t *testi
 	if len(client.calls) != 0 {
 		t.Fatalf("write calls = %#v, want repeated range skipped", client.calls)
 	}
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-08-10" || client.listCalls[0].Newest != "2026-08-11" {
+		t.Fatalf("ListEvents calls = %#v, want inclusive range preflight", client.listCalls)
+	}
 	out := resultMap(t, result)
 	if out["status"] != "skipped" {
 		t.Fatalf("status = %#v, want skipped", out["status"])
@@ -145,7 +166,7 @@ func TestAddUnavailableDateRangeCreatesMissingDaysAndReportsConflicts(t *testing
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
 		events: decodeToolEvents(t,
 			`{"id":"evt-injured","external_id":"`+existingID+`","category":"INJURED","type":"Unavailable","name":"Injured","start_date_local":"2026-09-01"}`,
-			`{"id":"evt-workout","category":"WORKOUT","type":"Run","name":"Workout to review","start_date_local":"2026-09-02"}`,
+			`{"id":"evt-workout","category":"WORKOUT","type":"Run","name":"Workout to review","start_date_local":"2026-09-01"}`,
 		),
 		created: decodeToolEvents(t, `{"id":"evt-created","category":"INJURED","type":"Unavailable","name":"Injured","start_date_local":"2026-09-02"}`),
 	}
@@ -158,6 +179,9 @@ func TestAddUnavailableDateRangeCreatesMissingDaysAndReportsConflicts(t *testing
 	if len(client.calls) != 1 || client.calls[0].Date != "2026-09-02" || client.calls[0].Category != "INJURED" {
 		t.Fatalf("write calls = %#v, want only missing injured day", client.calls)
 	}
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-09-01" || client.listCalls[0].Newest != "2026-09-02" {
+		t.Fatalf("ListEvents calls = %#v, want inclusive range preflight", client.listCalls)
+	}
 	out := resultMap(t, result)
 	if out["status"] != "partial" {
 		t.Fatalf("status = %#v, want partial", out["status"])
@@ -165,6 +189,55 @@ func TestAddUnavailableDateRangeCreatesMissingDaysAndReportsConflicts(t *testing
 	meta := out["_meta"].(map[string]any)
 	if meta["created_count"] != float64(1) || meta["skipped_count"] != float64(1) || meta["conflict_count"] != float64(1) {
 		t.Fatalf("meta = %#v, want mixed counts", meta)
+	}
+}
+
+func TestAddUnavailableDateRangeMatchingExternalIDWithDifferentFieldsIsConflict(t *testing.T) {
+	t.Parallel()
+
+	externalID := addUnavailableDateRangeExternalID("SICK", "2026-08-12", "Sick", "New details")
+	client := &fakeUnavailableDateRangeClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		events:            decodeToolEvents(t, `{"id":"evt-drifted","external_id":"`+externalID+`","category":"SICK","type":"Unavailable","name":"Sick","start_date_local":"2026-08-12","description":"Old details"}`),
+		created:           decodeToolEvents(t, `{"id":"evt-created","category":"SICK","type":"Unavailable","name":"Sick","start_date_local":"2026-08-12","description":"New details"}`),
+	}
+	tool := newAddUnavailableDateRangeTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"2026-08-12","end_date":"2026-08-12","category":"SICK","description":"New details"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 || client.calls[0].ExternalID != externalID {
+		t.Fatalf("write calls = %#v, want drifted external_id treated as conflict and new write attempted", client.calls)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["conflict_count"] != float64(1) || meta["created_count"] != float64(1) {
+		t.Fatalf("meta = %#v, want one conflict plus created marker", meta)
+	}
+}
+
+func TestAddUnavailableDateRangeIncludeFullAddsRawEventPayload(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeUnavailableDateRangeClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		created:           decodeToolEvents(t, `{"id":"evt-full","category":"HOLIDAY","type":"Unavailable","name":"Holiday","start_date_local":"2026-07-04","raw_extra":"kept"}`),
+	}
+	tool := newAddUnavailableDateRangeTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"2026-07-04","end_date":"2026-07-04","category":"HOLIDAY","include_full":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	events := out["events"].([]any)
+	full, ok := events[0].(map[string]any)["full"].(map[string]any)
+	if !ok || full["raw_extra"] != "kept" {
+		t.Fatalf("event row = %#v, want raw payload when include_full true", events[0])
+	}
+	meta := out["_meta"].(map[string]any)
+	if meta["include_full"] != true {
+		t.Fatalf("meta = %#v, want include_full true", meta)
 	}
 }
 
