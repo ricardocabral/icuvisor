@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -38,6 +38,8 @@
 - [x] Schema snapshot refreshed if needed
 - [x] update_sport_settings guidance/tests reviewed
 - [x] Targeted tool/resource tests pass
+- [ ] Align readiness warning actions with `update_sport_settings` argument fields
+- [ ] Add handler-level get_athlete_profile warning serialization tests including alias-complete settings
 
 ---
 
@@ -98,3 +100,4 @@ Public signals: IcuSync forum #263 and LeCoach forum #406 highlight threshold/zo
 | 2026-06-10 11:48 | Review R002 | code Step 1: UNKNOWN |
 | 2026-06-10 11:53 | Review R003 | code Step 1: APPROVE |
 | 2026-06-10 11:56 | Review R004 | plan Step 2: APPROVE |
+| 2026-06-10 12:05 | Review R005 | code Step 2: UNKNOWN |
