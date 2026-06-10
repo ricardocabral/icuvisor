@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 
@@ -36,6 +36,10 @@
 - [x] R006 tests ensure preflight lists all categories for same-day conflicts
 - [x] R006 tests cover exact duplicate skip without generated external_id
 - [x] R006 tests cover custom trimmed name write/idempotency contract
+- [ ] R007 tests cover mid-range write failure with no rollback and retry-safe public error
+- [ ] R007 tests assert range preflight uses max event limit
+- [ ] R007 tests cover malformed/impossible date validation
+- [ ] R007 trailing whitespace fixed in review artifacts
 
 ---
 
@@ -82,6 +86,7 @@
 | R004 | Code | Step 1 | REVISE | `.reviews/R004-code-step1.md` |
 | R005 | Code | Step 1 | REVISE | `.reviews/R005-code-step1.md` |
 | R006 | Code | Step 1 | REVISE | `.reviews/R006-code-step1.md` |
+| R007 | Code | Step 1 | REVISE | `.reviews/R007-code-step1.md` |
 
 ---
 
@@ -105,6 +110,7 @@
 | 2026-06-10 12:10 | Review R004 | code Step 1: REVISE |
 | 2026-06-10 12:15 | Review R005 | code Step 1: REVISE |
 | 2026-06-10 12:20 | Review R006 | code Step 1: REVISE |
+| 2026-06-10 12:26 | Review R007 | code Step 1: REVISE |
 
 ---
 
