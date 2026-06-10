@@ -1,10 +1,10 @@
 # TP-162: Codex Streamable HTTP JSON-RPC smoke coverage — Status
 
-**Current Step:** Step 2: Fix transport/protocol behavior only if tests fail
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -33,7 +33,7 @@
 ---
 
 ### Step 2: Fix transport/protocol behavior only if tests fail
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Transport/server fixes applied if needed
 - [x] Stdio and loopback defaults preserved
@@ -43,7 +43,7 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing
 - [ ] Integration tests (if applicable)
@@ -70,6 +70,7 @@
 | R003 | Code | 1 | REVISE | `.reviews/R003-code-step1.md` |
 | R004 | Code | 1 | APPROVE | `.reviews/R004-code-step1.md` |
 | R005 | Plan | 2 | APPROVE | `.reviews/R005-plan-step2.md` |
+| R006 | Code | 2 | APPROVE | `.reviews/R006-code-step2.md` |
 
 ---
 
@@ -96,6 +97,8 @@
 | 2026-06-10 12:20 | Step 2 started | Transport/protocol behavior verification |
 | 2026-06-10 12:21 | Step 2 plan reviewed | R005 APPROVE |
 | 2026-06-10 12:21 | Step 2 transport fixes assessed | No transport/server changes needed after raw-wire tests and `go test ./internal/mcp` passed |
+| 2026-06-10 12:22 | Step 2 code reviewed | R006 APPROVE |
+| 2026-06-10 12:22 | Step 3 started | Testing and verification |
 
 ---
 
@@ -115,3 +118,4 @@ R003 code review requires rejecting any top-level `error` member on successful J
 | 2026-06-10 12:29 | Review R003 | code Step 1: REVISE |
 | 2026-06-10 12:32 | Review R004 | code Step 1: APPROVE |
 | 2026-06-10 12:34 | Review R005 | plan Step 2: APPROVE |
+| 2026-06-10 12:36 | Review R006 | code Step 2: APPROVE |
