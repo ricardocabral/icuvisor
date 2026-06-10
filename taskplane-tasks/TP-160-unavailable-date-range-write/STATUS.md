@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -26,6 +26,7 @@
 - [x] Idempotency/range semantics defined
 - [ ] Initial targeted event tests added/run
 - [x] R001 concrete contract captured for API surface, response shape, idempotency, catalog, and tests
+- [ ] R002 contract tightened for idempotency fingerprint, status enum, partial failures, aliases, and schema/example tests
 
 ---
 
@@ -38,6 +39,7 @@
 - [ ] Tool/schema/catalog integration complete
 - [ ] Safety protections preserved
 - [ ] Targeted tools/MCP/toolcheck tests pass
+- [ ] New write tool satisfies schema stability, catalog tier, `examples`, and `input_examples` invariants
 
 ---
 
@@ -66,6 +68,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R001 | Plan | Step 1 | REVISE | `.reviews/R001-plan-step1.md` |
+| R002 | Plan | Step 1 | REVISE | `.reviews/R002-plan-step1.md` |
 
 ---
 
@@ -84,6 +87,7 @@
 | 2026-06-10 11:54 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-10 11:54 | Step 0 started | Preflight |
 | 2026-06-10 11:58 | Review R001 | plan Step 1: REVISE |
+| 2026-06-10 12:01 | Review R002 | plan Step 1: REVISE |
 
 ---
 
@@ -108,3 +112,4 @@ R001 plan feedback requires a concrete contract before implementation.
 **Request/response and idempotency contract:** request fields are required `start_date`, `end_date`, `category`; optional `name`, `description`, and `include_full`. Dates are athlete-local inclusive `YYYY-MM-DD`; same-day ranges are allowed; reversed ranges and ranges over 31 inclusive days are rejected. Implementation creates one upstream event per day because `intervals.WriteEventParams` writes a single `Date`. Each write uses normalized `Category`, `Type: "Unavailable"`, default `Name` equal to `Holiday`, `Sick`, or `Injured` when omitted, optional `Description`, and a generated stable `external_id` with prefix `icuvisor-unavailable-v1-` plus a short hash of normalized category/date/name. Repeated identical calls skip existing matching `external_id` rows; pre-existing same-day rows that exactly match writable fields also skip; mixed ranges create missing days and report skipped days. Nonmatching same-day events, including workouts, are not overwritten or deleted; they are reported as conflicts/warnings while the unavailable marker is still added unless it is a duplicate. Response shape: `{events:[terse event rows], status:"created", _meta:{operation:"create_range", date_range:{oldest,newest}, timezone, category, requested_days, created_count, skipped_count, conflict_count, range_cap_days:31, include_full, skipped:[{date,event_id,reason}], same_day_conflicts:[...]}}`; `include_full:true` only adds raw upstream payloads under event rows as existing event tools do.
 
 **Initial test contract:** Step 1 failing tests should cover valid multi-day creation and write params, alias normalization, repeated-call idempotency, mixed existing/missing days, invalid/reversed/excessive ranges, unsupported categories, include_full shaping, and safety invariants that the tool is `RequirementWrite`/core and does not require delete mode or delete events. Step 2 targeted tests must include `go test ./internal/tools ./internal/mcp ./internal/toolchecks` after schema/catalog updates.
+| 2026-06-10 12:03 | Review R002 | plan Step 1: REVISE |
