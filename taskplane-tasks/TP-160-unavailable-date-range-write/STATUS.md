@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 1
 **Size:** M
 
@@ -57,6 +57,8 @@
 - [x] New write tool satisfies schema stability, catalog tier, `examples`, and `input_examples` invariants
 - [x] Per-day idempotency, duplicate, conflict, and partial failure semantics implemented against existing event helpers
 - [x] Schema snapshots, catalog hash, toolcatalog ACL, and core/full toolset surfaces updated
+- [ ] R011 adversarial safety static catalog and gendocs golden fixtures updated
+- [ ] R011 schema examples valid against published category enum
 
 ---
 
@@ -94,6 +96,7 @@
 | R008 | Code | Step 1 | REVISE | `.reviews/R008-code-step1.md` |
 | R009 | Code | Step 1 | APPROVE | n/a |
 | R010 | Plan | Step 2 | APPROVE | `.reviews/R010-plan-step2.md` |
+| R011 | Code | Step 2 | REVISE | `.reviews/R011-code-step2.md` |
 
 ---
 
@@ -121,6 +124,7 @@
 | 2026-06-10 12:31 | Review R008 | code Step 1: REVISE |
 | 2026-06-10 12:35 | Review R009 | code Step 1: APPROVE |
 | 2026-06-10 12:38 | Review R010 | plan Step 2: APPROVE |
+| 2026-06-10 12:47 | Review R011 | code Step 2: REVISE |
 
 ---
 
