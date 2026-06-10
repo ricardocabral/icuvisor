@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -27,6 +27,9 @@
 - [x] Initial targeted event tests added/run
 - [x] R001 concrete contract captured for API surface, response shape, idempotency, catalog, and tests
 - [x] R002 contract tightened for idempotency fingerprint, status enum, partial failures, aliases, and schema/example tests
+- [ ] R004 tests cover range query bounds and deterministic external IDs
+- [ ] R004 tests cover external-ID-with-different-fields conflicts and duplicate-plus-conflict same-day scans
+- [ ] R004 tests cover default terse and include_full row shaping
 
 ---
 
@@ -69,7 +72,8 @@
 |---|------|------|---------|------|
 | R001 | Plan | Step 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | Step 1 | REVISE | `.reviews/R002-plan-step1.md` |
-| R003 | Plan | Step 1 | APPROVE | n/a |
+| R003 | Plan | Step 1 | APPROVE | `.reviews/R003-plan-step1.md` |
+| R004 | Code | Step 1 | REVISE | `.reviews/R004-code-step1.md` |
 
 ---
 
@@ -90,6 +94,7 @@
 | 2026-06-10 11:58 | Review R001 | plan Step 1: REVISE |
 | 2026-06-10 12:01 | Review R002 | plan Step 1: REVISE |
 | 2026-06-10 12:06 | Review R003 | plan Step 1: APPROVE |
+| 2026-06-10 12:10 | Review R004 | code Step 1: REVISE |
 
 ---
 
