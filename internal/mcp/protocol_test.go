@@ -71,6 +71,183 @@ const (
 
 var protocolTransportKinds = []protocolTransportKind{protocolTransportInMemory, protocolTransportStreamableHTTP}
 
+func TestStreamableHTTPJSONRPCInitializeAndPingWireEnvelopes(t *testing.T) {
+	t.Parallel()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("net.Listen() error = %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	server, err := NewServer(ctx, Options{Version: "test", Registry: testEchoRegistry{}})
+	if err != nil {
+		cancel()
+		listener.Close()
+		t.Fatalf("NewServer() error = %v", err)
+	}
+	runDone := make(chan error, 1)
+	go func() {
+		runDone <- server.ServeStreamableHTTP(ctx, listener)
+	}()
+	defer func() {
+		cancel()
+		waitForServerRun(t, runDone)
+	}()
+
+	client := &http.Client{Timeout: 2 * time.Second}
+	endpoint := "http://" + listener.Addr().String() + StreamableHTTPPath
+	protocolVersion := "2025-06-18"
+
+	initialize := codexStreamableHTTPPost(t, ctx, client, endpoint, `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"codex-jsonrpc-smoke","version":"test"}}}`, "", "")
+	if initialize.status != http.StatusOK {
+		t.Fatalf("initialize status = %d body = %q, want 200", initialize.status, initialize.body)
+	}
+	sessionID := initialize.headers.Get("Mcp-Session-Id")
+	if sessionID == "" {
+		t.Fatalf("initialize response missing Mcp-Session-Id header; headers = %#v", initialize.headers)
+	}
+	initializeResult := assertStreamableHTTPJSONRPCEnvelope(t, "initialize", initialize, 1)
+	if _, ok := initializeResult["serverInfo"]; !ok {
+		t.Fatalf("initialize result = %#v, want serverInfo", initializeResult)
+	}
+
+	initialized := codexStreamableHTTPPost(t, ctx, client, endpoint, `{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}`, sessionID, protocolVersion)
+	if initialized.status != http.StatusAccepted {
+		t.Fatalf("notifications/initialized status = %d body = %q, want 202", initialized.status, initialized.body)
+	}
+
+	ping := codexStreamableHTTPPost(t, ctx, client, endpoint, `{"jsonrpc":"2.0","id":2,"method":"ping","params":{}}`, sessionID, protocolVersion)
+	if ping.status != http.StatusOK {
+		t.Fatalf("ping status = %d body = %q, want 200", ping.status, ping.body)
+	}
+	assertStreamableHTTPJSONRPCEnvelope(t, "ping", ping, 2)
+}
+
+type streamableHTTPWireResponse struct {
+	status  int
+	headers http.Header
+	body    []byte
+}
+
+func codexStreamableHTTPPost(t *testing.T, ctx context.Context, client *http.Client, endpoint, payload, sessionID, protocolVersion string) streamableHTTPWireResponse {
+	t.Helper()
+
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(payload))
+	if err != nil {
+		t.Fatalf("NewRequestWithContext() error = %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json, text/event-stream")
+	if sessionID != "" {
+		request.Header.Set("Mcp-Session-Id", sessionID)
+	}
+	if protocolVersion != "" {
+		request.Header.Set("Mcp-Protocol-Version", protocolVersion)
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("POST %s error = %v", endpoint, err)
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		t.Fatalf("reading streamable HTTP response body: %v", err)
+	}
+	return streamableHTTPWireResponse{status: response.StatusCode, headers: response.Header.Clone(), body: body}
+}
+
+func assertStreamableHTTPJSONRPCEnvelope(t *testing.T, label string, response streamableHTTPWireResponse, wantID int) map[string]json.RawMessage {
+	t.Helper()
+
+	envelope := decodeStreamableHTTPJSONRPCEnvelope(t, label, response)
+	var version string
+	if raw, ok := envelope["jsonrpc"]; !ok {
+		t.Fatalf("%s response %q missing top-level jsonrpc field", label, response.body)
+	} else if err := json.Unmarshal(raw, &version); err != nil || version != "2.0" {
+		t.Fatalf("%s response jsonrpc = %s, err = %v, want \"2.0\"", label, raw, err)
+	}
+	var gotID int
+	if raw, ok := envelope["id"]; !ok {
+		t.Fatalf("%s response %q missing top-level id field", label, response.body)
+	} else if err := json.Unmarshal(raw, &gotID); err != nil || gotID != wantID {
+		t.Fatalf("%s response id = %s, err = %v, want %d", label, raw, err, wantID)
+	}
+	if raw, ok := envelope["error"]; ok && strings.TrimSpace(string(raw)) != "null" {
+		t.Fatalf("%s response has top-level error %s", label, raw)
+	}
+	rawResult, ok := envelope["result"]
+	if !ok {
+		t.Fatalf("%s response %q missing top-level result field", label, response.body)
+	}
+	if trimmed := strings.TrimSpace(string(rawResult)); !strings.HasPrefix(trimmed, "{") {
+		t.Fatalf("%s response result = %s, want JSON object", label, rawResult)
+	}
+	var result map[string]json.RawMessage
+	if err := json.Unmarshal(rawResult, &result); err != nil {
+		t.Fatalf("%s response result decode error = %v; result = %s", label, err, rawResult)
+	}
+	return result
+}
+
+func decodeStreamableHTTPJSONRPCEnvelope(t *testing.T, label string, response streamableHTTPWireResponse) map[string]json.RawMessage {
+	t.Helper()
+
+	mediaType := strings.ToLower(strings.TrimSpace(strings.Split(response.headers.Get("Content-Type"), ";")[0]))
+	payload := response.body
+	if mediaType == "text/event-stream" {
+		payload = firstJSONSSEDataPayload(t, label, response.body)
+	} else if mediaType != "application/json" {
+		t.Fatalf("%s response content type = %q body = %q, want application/json or text/event-stream", label, response.headers.Get("Content-Type"), response.body)
+	}
+	var envelope map[string]json.RawMessage
+	if err := json.Unmarshal(payload, &envelope); err != nil {
+		t.Fatalf("%s response is not a JSON-RPC object: %v; payload = %q; raw body = %q", label, err, payload, response.body)
+	}
+	if len(envelope) == 0 {
+		t.Fatalf("%s response decoded as empty object; raw body = %q", label, response.body)
+	}
+	return envelope
+}
+
+func firstJSONSSEDataPayload(t *testing.T, label string, body []byte) []byte {
+	t.Helper()
+
+	var candidates []string
+	var current strings.Builder
+	scanner := bufio.NewScanner(strings.NewReader(string(body)))
+	for scanner.Scan() {
+		line := strings.TrimSuffix(scanner.Text(), "\r")
+		if line == "" {
+			if current.Len() > 0 {
+				candidates = append(candidates, current.String())
+				current.Reset()
+			}
+			continue
+		}
+		if data, ok := strings.CutPrefix(line, "data:"); ok {
+			if current.Len() > 0 {
+				current.WriteByte('\n')
+			}
+			current.WriteString(strings.TrimSpace(data))
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		t.Fatalf("%s response SSE scan error = %v; raw body = %q", label, err, body)
+	}
+	if current.Len() > 0 {
+		candidates = append(candidates, current.String())
+	}
+	for _, candidate := range candidates {
+		trimmed := strings.TrimSpace(candidate)
+		if strings.HasPrefix(trimmed, "{") && json.Valid([]byte(trimmed)) {
+			return []byte(trimmed)
+		}
+	}
+	t.Fatalf("%s response SSE body has no JSON object data event: %q", label, body)
+	return nil
+}
+
 func TestProtocolSharedTransportSuite(t *testing.T) {
 	t.Parallel()
 
