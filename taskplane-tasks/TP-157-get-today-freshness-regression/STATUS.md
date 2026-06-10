@@ -1,25 +1,25 @@
 # TP-157: get_today current-day freshness regression — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
-**Last Updated:** 2026-06-09
+**Current Step:** Step 1: Add explicit freshness regression tests
+**Status:** 🟡 In Progress
+**Last Updated:** 2026-06-10
 **Review Level:** 1
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** M
 
 ---
 
 ### Step 0: Preflight
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Required files and paths exist
-- [ ] Dependencies satisfied
+- [x] Required files and paths exist
+- [x] Dependencies satisfied
 
 ---
 
 ### Step 1: Add explicit freshness regression tests
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Fixed timezone/as_of test added
 - [ ] Previous-day activity/event/fitness rows excluded
@@ -76,6 +76,8 @@
 | Timestamp | Action | Outcome |
 |-----------|--------|---------|
 | 2026-06-09 | Task staged | PROMPT.md and STATUS.md created |
+| 2026-06-10 11:40 | Task started | Runtime V2 lane-runner execution |
+| 2026-06-10 11:40 | Step 0 started | Preflight |
 
 ---
 
