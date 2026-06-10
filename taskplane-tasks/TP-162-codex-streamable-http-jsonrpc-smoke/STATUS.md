@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -35,10 +35,10 @@
 ### Step 2: Fix transport/protocol behavior only if tests fail
 **Status:** 🟨 In Progress
 
-- [ ] Transport/server fixes applied if needed
-- [ ] Stdio and loopback defaults preserved
-- [ ] Protocol errors remain short/actionable
-- [ ] Targeted MCP tests pass
+- [x] Transport/server fixes applied if needed
+- [x] Stdio and loopback defaults preserved
+- [x] Protocol errors remain short/actionable
+- [x] Targeted MCP tests pass
 
 ---
 
@@ -69,6 +69,7 @@
 | R002 | Plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 | R003 | Code | 1 | REVISE | `.reviews/R003-code-step1.md` |
 | R004 | Code | 1 | APPROVE | `.reviews/R004-code-step1.md` |
+| R005 | Plan | 2 | APPROVE | `.reviews/R005-plan-step2.md` |
 
 ---
 
@@ -76,6 +77,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Step 1 raw-wire smoke passed against the current Streamable HTTP transport, so Step 2 required no transport/server code change. | Verified with `go test ./internal/mcp`; preserve current `JSONResponse: false` SSE-compatible behavior. | `internal/mcp/transport.go`, `internal/mcp/protocol_test.go` |
 
 ---
 
@@ -92,6 +94,8 @@
 | 2026-06-10 12:19 | Targeted MCP tests | `go test ./internal/mcp -run 'Streamable|JSONRPC|Codex|Protocol|Ping|Initialize'` passed |
 | 2026-06-10 12:20 | Step 1 code reviewed | R003 REVISE addressed; R004 APPROVE |
 | 2026-06-10 12:20 | Step 2 started | Transport/protocol behavior verification |
+| 2026-06-10 12:21 | Step 2 plan reviewed | R005 APPROVE |
+| 2026-06-10 12:21 | Step 2 transport fixes assessed | No transport/server changes needed after raw-wire tests and `go test ./internal/mcp` passed |
 
 ---
 
@@ -110,3 +114,4 @@ R003 code review requires rejecting any top-level `error` member on successful J
 | 2026-06-10 12:23 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-10 12:29 | Review R003 | code Step 1: REVISE |
 | 2026-06-10 12:32 | Review R004 | code Step 1: APPROVE |
+| 2026-06-10 12:34 | Review R005 | plan Step 2: APPROVE |
