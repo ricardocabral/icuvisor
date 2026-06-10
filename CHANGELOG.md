@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `get_activity_intervals` now distinguishes manually added and mixed interval-source evidence in `_meta.interval_source`, alongside existing structured-workout, device-lap, and unknown classifications.
+
 ## [1.0.0] - 2026-06-04
 
 ### Fixed

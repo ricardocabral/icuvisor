@@ -1,7 +1,7 @@
 # TP-155: Activity interval manual and mixed classification — Status
 
-**Current Step:** Step 3: Testing & Verification
-**Status:** 🟡 In Progress
+**Current Step:** Step 4: Documentation & Delivery
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-10
 **Review Level:** 1
 **Review Counter:** 4
@@ -41,7 +41,7 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] FULL test suite passing
 - [x] Integration tests (if applicable)
@@ -51,11 +51,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] `CHANGELOG.md` updated
-- [ ] `README.md` reviewed/updated if affected
-- [ ] Discoveries logged
+- [x] `CHANGELOG.md` updated
+- [x] `README.md` reviewed/updated if affected
+- [x] Discoveries logged
 
 ---
 
@@ -70,6 +70,9 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Manual interval inference needs evidence-bearing raw rows; terse fixtures with only summary fields remain `unknown` rather than `manual_added`. | Implemented via start/end index evidence guard and regression tests. | `internal/analysis/interval_source.go`, `internal/analysis/interval_source_test.go` |
+| `get_activity_intervals` schema snapshot did not change because only top-level description/output semantics changed, not input arguments. | Verified with `go run ./scripts/snapshot_tool_schemas.go` and diffed the tool snapshot. | `internal/tools/schema_snapshot/get_activity_intervals.json` |
+| `README.md` does not name the interval-source enum. | Reviewed; no README change needed. | `README.md` |
 
 ---
 
