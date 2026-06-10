@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 
@@ -12,17 +13,22 @@ import (
 
 type fakeUnavailableDateRangeClient struct {
 	fakeProfileClient
-	events     []intervals.Event
-	created    []intervals.Event
-	calls      []intervals.WriteEventParams
-	listCalls  []intervals.ListEventsParams
-	writeError error
+	events      []intervals.Event
+	created     []intervals.Event
+	calls       []intervals.WriteEventParams
+	listCalls   []intervals.ListEventsParams
+	writeError  error
+	writeErrors []error
 }
 
 func (f *fakeUnavailableDateRangeClient) AddOrUpdateEvent(ctx context.Context, params intervals.WriteEventParams) (intervals.Event, error) {
+	callIndex := len(f.calls)
 	f.calls = append(f.calls, params)
 	if f.writeError != nil {
 		return intervals.Event{}, f.writeError
+	}
+	if callIndex < len(f.writeErrors) && f.writeErrors[callIndex] != nil {
+		return intervals.Event{}, f.writeErrors[callIndex]
 	}
 	if len(f.created) == 0 {
 		return intervals.Event{ID: "evt-created", Category: ptrString(params.Category), Type: ptrString(params.Type), Name: ptrString(params.Name), StartDateLocal: ptrString(params.Date), Description: params.Description, ExternalID: ptrString(params.ExternalID), Raw: map[string]any{"id": "evt-created", "category": params.Category, "type": params.Type, "name": params.Name, "start_date_local": params.Date, "external_id": params.ExternalID}}, nil
@@ -130,7 +136,7 @@ func TestAddUnavailableDateRangeCreatesInclusivePerDayEvents(t *testing.T) {
 	if client.calls[0].ExternalID == client.calls[1].ExternalID || client.calls[1].ExternalID == client.calls[2].ExternalID {
 		t.Fatalf("external IDs = %#v, want per-day idempotency keys", client.calls)
 	}
-	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-07-01" || client.listCalls[0].Newest != "2026-07-03" || client.listCalls[0].Category != "" {
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-07-01" || client.listCalls[0].Newest != "2026-07-03" || client.listCalls[0].Category != "" || client.listCalls[0].Limit != maxEventsLimit {
 		t.Fatalf("ListEvents calls = %#v, want inclusive range preflight", client.listCalls)
 	}
 
@@ -176,7 +182,7 @@ func TestAddUnavailableDateRangeSkipsRepeatedRangeByGeneratedExternalID(t *testi
 	if len(client.calls) != 0 {
 		t.Fatalf("write calls = %#v, want repeated range skipped", client.calls)
 	}
-	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-08-10" || client.listCalls[0].Newest != "2026-08-11" || client.listCalls[0].Category != "" {
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-08-10" || client.listCalls[0].Newest != "2026-08-11" || client.listCalls[0].Category != "" || client.listCalls[0].Limit != maxEventsLimit {
 		t.Fatalf("ListEvents calls = %#v, want inclusive range preflight", client.listCalls)
 	}
 	out := resultMap(t, result)
@@ -222,7 +228,7 @@ func TestAddUnavailableDateRangeCreatesMissingDaysAndReportsConflicts(t *testing
 	if len(client.calls) != 1 || client.calls[0].Date != "2026-09-02" || client.calls[0].Category != "INJURED" {
 		t.Fatalf("write calls = %#v, want only missing injured day", client.calls)
 	}
-	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-09-01" || client.listCalls[0].Newest != "2026-09-02" || client.listCalls[0].Category != "" {
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-09-01" || client.listCalls[0].Newest != "2026-09-02" || client.listCalls[0].Category != "" || client.listCalls[0].Limit != maxEventsLimit {
 		t.Fatalf("ListEvents calls = %#v, want inclusive range preflight", client.listCalls)
 	}
 	out := resultMap(t, result)
@@ -342,6 +348,28 @@ func TestAddUnavailableDateRangeIncludeFullAddsRawEventPayload(t *testing.T) {
 	}
 }
 
+func TestAddUnavailableDateRangeStopsOnMidRangeWriteErrorWithoutRollback(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeUnavailableDateRangeClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		created:           decodeToolEvents(t, `{"id":"evt-created","category":"HOLIDAY","type":"Unavailable","name":"Holiday","start_date_local":"2026-07-07"}`),
+		writeErrors:       []error{nil, errors.New("temporary upstream failure")},
+	}
+	tool := newAddUnavailableDateRangeTool(client, client, "test", "UTC", false)
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"2026-07-07","end_date":"2026-07-08","category":"HOLIDAY"}`)})
+	if err == nil {
+		t.Fatal("Handler() error = nil, want public write error after partial write failure")
+	}
+	if message, ok := PublicErrorMessage(err); !ok || !strings.Contains(message, "could not write unavailable date range") {
+		t.Fatalf("PublicErrorMessage(%v) = %q/%v, want unavailable range write error", err, message, ok)
+	}
+	if len(client.calls) != 2 || client.calls[0].Date != "2026-07-07" || client.calls[1].Date != "2026-07-08" {
+		t.Fatalf("write calls = %#v, want day 1 success then day 2 failure with no rollback", client.calls)
+	}
+}
+
 func TestAddUnavailableDateRangeRejectsInvalidInputs(t *testing.T) {
 	t.Parallel()
 
@@ -354,6 +382,8 @@ func TestAddUnavailableDateRangeRejectsInvalidInputs(t *testing.T) {
 	}{
 		{name: "unsupported category", args: `{"start_date":"2026-07-01","end_date":"2026-07-01","category":"NOTE"}`},
 		{name: "broad travel alias rejected", args: `{"start_date":"2026-07-01","end_date":"2026-07-01","category":"travel"}`},
+		{name: "malformed start date", args: `{"start_date":"2026/07/01","end_date":"2026-07-01","category":"HOLIDAY"}`},
+		{name: "impossible end date", args: `{"start_date":"2026-07-01","end_date":"2026-02-30","category":"HOLIDAY"}`},
 		{name: "reversed range", args: `{"start_date":"2026-07-03","end_date":"2026-07-01","category":"HOLIDAY"}`},
 		{name: "excessive range", args: `{"start_date":"2026-07-01","end_date":"2026-08-01","category":"HOLIDAY"}`},
 	}

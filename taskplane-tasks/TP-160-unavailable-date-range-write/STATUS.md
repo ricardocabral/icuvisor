@@ -36,10 +36,10 @@
 - [x] R006 tests ensure preflight lists all categories for same-day conflicts
 - [x] R006 tests cover exact duplicate skip without generated external_id
 - [x] R006 tests cover custom trimmed name write/idempotency contract
-- [ ] R007 tests cover mid-range write failure with no rollback and retry-safe public error
-- [ ] R007 tests assert range preflight uses max event limit
-- [ ] R007 tests cover malformed/impossible date validation
-- [ ] R007 trailing whitespace fixed in review artifacts
+- [x] R007 tests cover mid-range write failure with no rollback and retry-safe public error
+- [x] R007 tests assert range preflight uses max event limit
+- [x] R007 tests cover malformed/impossible date validation
+- [x] R007 trailing whitespace fixed in review artifacts
 
 ---
 
