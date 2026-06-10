@@ -1,11 +1,11 @@
 # TP-159: Gear name resolution regression — Status
 
-**Current Step:** Step 2: Fix resolver behavior only if the regression fails
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 1
-**Iteration:** 1
+**Review Counter:** 2
+**Iteration:** 2
 **Size:** S
 
 ---
@@ -29,17 +29,17 @@
 ---
 
 ### Step 2: Fix resolver behavior only if the regression fails
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Resolver fixes applied if needed
-- [ ] Cache/error behavior preserved
-- [ ] README wording checked
-- [ ] Targeted gear/activity tests pass
+- [x] Resolver fixes applied if needed
+- [x] Cache/error behavior preserved
+- [x] README wording checked
+- [x] Targeted gear/activity tests pass
 
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing
 - [ ] Integration tests (if applicable)
@@ -68,6 +68,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Numeric `gear_id` regression tests passed against existing resolver; no resolver code change required. | Step 2 resolver fix skipped by task condition. | internal/tools/activity_gear_resolution.go |
+| README gear wording already names `gear_id`, `gear_name`, and explicit `gear_resolution` for unresolved IDs, matching the current tool output schemas/tests. | No README edit required for Step 2. | README.md:27; internal/tools/get_activities.go; internal/tools/get_activity_details.go |
 
 ---
 
@@ -78,6 +80,7 @@
 | 2026-06-09 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-06-10 13:05 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-10 13:05 | Step 0 started | Preflight |
+| 2026-06-10 13:31 | Worker iter 1 | done in 1583s, tools: 67 |
 
 ---
 
@@ -91,3 +94,4 @@
 
 Public signal: IcuSync forum #269-270 noted activities may expose only numeric `gear_id`; resolving names requires fetching full gear list.
 | 2026-06-10 13:09 | Review R001 | plan Step 1: APPROVE |
+| 2026-06-10 13:15 | Review R002 | plan Step 2: APPROVE |
