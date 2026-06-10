@@ -188,7 +188,7 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 - `get_athlete_profile` — FTP, zones, sport settings, thresholds.
 - `update_sport_settings` — write FTP, threshold HR, threshold pace, and per-sport zone definitions back to the athlete profile (forum #35 — assistants offered FTP updates that didn't land because there was no write path). Per-sport scoped (`sport: "Ride" | "Run" | …`). Gated by `ICUVISOR_DELETE_MODE` like other destructive writes when used to overwrite zone definitions, since a bad zone overwrite silently miscolours every historical activity.
 - `list_athletes`, `select_athlete` — coach mode.
-- `get_fitness` — CTL/ATL/TSB trends, taper projections.
+- `get_fitness` — CTL/ATL/TSB trends, taper projections. `get_fitness_projection` can accept caller-supplied weekly training-plan load targets and deterministic daily overrides so projections do not depend on ad-hoc chat math.
 - `get_today` — one-call athlete-local daily digest for "how's today looking?": today's CTL/ATL/TSB, wellness, completed activities, planned events, and NOTE/race annotations, terse by default with `include_full` raw section detail.
 - `resolve_calendar_dates` — read-only athlete-local calendar resolver for today, tomorrow, N-day offsets, and supplied base dates; returns deterministic `date` + `weekday` anchors so assistants do not infer future weekday/date pairings from UTC or model arithmetic.
 - `get_best_efforts` — PRs across sports.
@@ -292,7 +292,7 @@ Tool catalog:
 - `compute_baseline` — rolling baseline (mean, std), current-window value, z-score, and "suppressed" / "elevated" flag for wellness metrics (the HRV-deviation primitive used by HRV4Training-style readiness checks).
 - `compute_activity_segment_stats` — within-activity stream math: mean / median / p90 / decoupling / drift / NP / IF over a specified time or distance range inside one activity, pulled from `get_activity_streams`. The only analyzer that touches raw streams by default.
 - `compute_compliance_rate` — scheduled vs completed events across a window, mean delta to target, per sport / event type. Reuses `link_activity_to_event` pairings.
-- `get_fitness_projection` — forward CTL/ATL/TSB simulation given a hypothetical ramp %, recovery-week cadence, and date horizon. Lives in this family (moved up from v1.x — forum thread 123739 post #49). Returns projected curve plus modeled assumptions in `_meta` so the LLM can explain the result.
+- `get_fitness_projection` — forward CTL/ATL/TSB simulation given a hypothetical ramp %, recovery-week cadence, date horizon, optional explicit `planned_daily_loads`, and optional `weekly_plan_targets` copied from planning/training-plan context. Weekly targets are athlete-local ISO Monday anchors distributed deterministically as `training_load/7` across projected future dates; explicit daily loads override exact dates without redistribution. Lives in this family (moved up from v1.x — forum thread 123739 post #49). Returns projected curve plus modeled/bridge assumptions in `_meta` so the LLM can explain the result.
 
 **Activation hint pattern.** Tool descriptions lead with the user-prompt shape that should trigger the tool and an explicit "do not roll your own" line, e.g.:
 

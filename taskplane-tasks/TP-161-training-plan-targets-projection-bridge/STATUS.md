@@ -1,7 +1,7 @@
 # TP-161: Bridge training-plan targets into fitness projection — Status
 
 **Current Step:** Step 4: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-10
 **Review Level:** 2
 **Review Counter:** 11
@@ -65,12 +65,12 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `README.md` updated
-- [ ] `CHANGELOG.md` updated
-- [ ] PRD reviewed/updated if affected
-- [ ] Discoveries logged
+- [x] `README.md` updated
+- [x] `CHANGELOG.md` updated
+- [x] PRD reviewed/updated if affected
+- [x] Discoveries logged
 
 ---
 
@@ -116,6 +116,7 @@
 | 2026-06-10 | Step 3 integration scope | No external-service integration tests apply; bridge is deterministic request/analyzer/schema logic covered by unit/golden tests |
 | 2026-06-10 | Step 3 failure status | Prior targeted and generated-doc failures fixed; full suite is green |
 | 2026-06-10 | Step 3 build | `make build` passed |
+| 2026-06-10 | Step 4 documentation | README, CHANGELOG, and PRD updated; discovery table records no-implicit-fetch training-plan shape decision |
 
 ---
 

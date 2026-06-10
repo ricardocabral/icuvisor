@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `get_fitness_projection` now accepts `weekly_plan_targets` copied from planning/training-plan context and deterministically distributes each weekly load target across projected days, while explicit `planned_daily_loads` keep precedence and metadata reports the bridge assumptions.
 - `get_activity_intervals` now distinguishes manually added and mixed interval-source evidence in `_meta.interval_source`, alongside existing structured-workout, device-lap, and unknown classifications.
 
 ## [1.0.0] - 2026-06-04
