@@ -1,10 +1,10 @@
 # TP-159: Gear name resolution regression — Status
 
-**Current Step:** Step 1: Add direct numeric-gear-id regression coverage
+**Current Step:** Step 2: Fix resolver behavior only if the regression fails
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -19,17 +19,17 @@
 ---
 
 ### Step 1: Add direct numeric-gear-id regression coverage
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Activity fixture exposes gear ID without embedded name
-- [ ] Gear list fixture resolves the name
-- [ ] Unknown gear fallback covered
-- [ ] Targeted gear/activity tests pass
+- [x] Activity fixture exposes gear ID without embedded name
+- [x] Gear list fixture resolves the name
+- [x] Unknown gear fallback covered
+- [x] Targeted gear/activity tests pass
 
 ---
 
 ### Step 2: Fix resolver behavior only if the regression fails
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Resolver fixes applied if needed
 - [ ] Cache/error behavior preserved
@@ -90,3 +90,4 @@
 ## Notes
 
 Public signal: IcuSync forum #269-270 noted activities may expose only numeric `gear_id`; resolving names requires fetching full gear list.
+| 2026-06-10 13:09 | Review R001 | plan Step 1: APPROVE |

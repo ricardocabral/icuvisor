@@ -359,17 +359,17 @@ func TestGetActivityDetailsMarksSyncChainStubsUnavailable(t *testing.T) {
 func TestGetActivityDetailsResolvesGear(t *testing.T) {
 	t.Parallel()
 
-	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`)
-	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity, gear: decodeToolGear(t, `{"id":"g-1","name":"Race Bike"}`)}
+	activity := loadSingleActivityFixtureFile(t, activityDetailWithGearFixture)
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity, gear: loadGearFixtureFile(t, gearListFixture)}
 	tool := newGetActivityDetailsToolWithGear(client, client, client, newGearListCache(), nil, nil, "test", "UTC", false)
 
-	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a-bike"}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
 	activityMap := resultMap(t, result)["activity"].(map[string]any)
-	if activityMap["gear_id"] != "g-1" || activityMap["gear_name"] != "Race Bike" || activityMap["gear_resolution"] != gearResolutionResolved {
-		t.Fatalf("activity = %#v, want resolved gear", activityMap)
+	if activityMap["gear_id"] != "123" || activityMap["gear_name"] != "Race Bike" || activityMap["gear_resolution"] != gearResolutionResolved {
+		t.Fatalf("activity = %#v, want resolved numeric gear", activityMap)
 	}
 }
 
