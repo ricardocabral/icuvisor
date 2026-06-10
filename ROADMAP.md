@@ -1,55 +1,119 @@
 # Roadmap
 
-Living document. Phases are scoped and gated, not calendared. icuvisor will not commit to calendar dates pre-launch — each phase is shippable independently. Track current progress in [GitHub Issues](https://github.com/ricardocabral/icuvisor/issues) and [Projects](https://github.com/ricardocabral/icuvisor/projects). Product scope, tool catalog, and Key Results live in the [PRD](docs/prd/PRD-icuvisor.md); this file is the authoritative phasing plan.
+Living document. Phases are scoped and gated, not calendared. Each phase is shippable independently. Completed work belongs in [CHANGELOG.md](CHANGELOG.md); this file tracks only forward-looking scope. Track current progress in [GitHub Issues](https://github.com/ricardocabral/icuvisor/issues) and [Projects](https://github.com/ricardocabral/icuvisor/projects). Product scope, tool catalog, and Key Results live in the [PRD](docs/prd/PRD-icuvisor.md); this file is the authoritative phasing plan.
 
-## v0.2.0
+## v1.x - Local-first stable line
 
-**Goal:** validate KR1 (install success) and the coach use case on real users.
+**Goal:** make the local binary feel boring to install, update, diagnose, and connect to mainstream MCP clients while preserving the local-first trust model.
 
-- [x] `get_today` daily-digest tool: a single terse-by-default read that returns today's fitness (CTL/ATL/TSB), wellness, completed activities, planned events, and any race or NOTE-category annotation in one call, so the LLM answers "how's today looking?" without chaining `get_fitness` + `get_wellness_data` + `get_activities` + `get_events`. Counts against KR5 (token efficiency): one round trip instead of four. Honours the terse / `include_full` split — the digest stays terse, `include_full` widens per-section detail. Complements the existing "recovery check" MCP prompt rather than replacing it (a prompt is not a tool). Each digest section reuses the response shaping already proven on its source tool so scale labels, unit normalization, and null-stripping do not fork.
-- [x] `_meta.as_of` anchor on time-relative reads: every read whose result depends on "now" — `get_today` plus the current-day paths of `get_wellness_data`, `get_activities`, and `get_events` — carries `_meta.as_of`, the current datetime in the athlete's configured timezone, so the LLM does not mis-reason about partial-day data: morning wellness reflects last night's sleep, accumulated training load is so-far-today, and planned event times may already have passed. Additive `_meta` only; no schema break on stable v0.2 tools.
-- [x] Write tools for completed activities: `update_activity` (sparse rename and/or free-text description edit; non-destructive, registered with `RequirementWrite`) and `set_activity_intervals` (writes a structured `workout_doc` as the activity description so intervals.icu re-parses the DSL into rendered intervals; destructive, registered only when `ICUVISOR_DELETE_MODE=full`). `set_activity_intervals` stamps `_meta.interval_source_intent: "structured_workout"` so downstream readers can distinguish a manually written interval set from device auto-laps, scoped against the v0.6 `interval_source` classifier in `internal/analysis/interval_source.go`.
-- [x] macOS signed installer; manual Claude Desktop / Claude Code config documentation.
-- [x] Onboarding flow (basic — full polish in v1.0): paste API key, autodetect athlete ID + timezone, "Test connection" via `get_athlete_profile`.
-- [ ] Coach mode behind a feature flag, with per-athlete granular tool permissions.
-- [ ] Post-update notification that tells the user to start a new conversation in their AI client when tool schemas changed.
+### v1.2 - Package and signing closure
 
-## v1.0 — First stable release
+- Windows release trust: Authenticode-sign the MSI or document a durable no-signing decision with explicit SmartScreen expectations.
+- Windows package reach: publish and validate the Winget manifest alongside the existing MSI/Scoop path.
+- Linux packages: ship `.deb` and `.rpm` packages with libsecret/Secret Service setup guidance and package-manager upgrade behavior.
+- macOS package-manager polish: resolve the remaining Gatekeeper story for the Homebrew tarball binary, either by signing/notarizing it or documenting the exact trust tradeoff.
+- Installer verification matrix: smoke the credential path, first `icuvisor setup`, upgrade, uninstall, and PATH behavior on macOS, Windows, and Linux release artifacts.
 
-**Goal:** hit KR2 (adoption), KR3 (coverage), KR4 (reliability), and KR6 (client compatibility).
+### v1.3 - Update and schema-cache UX
 
-- [ ] Signed installers across platforms:
-  - macOS: `.dmg` + Homebrew tap.
-  - Windows: `.msi` + Scoop bucket + Winget manifest.
-  - Linux: `.deb` + `.rpm` + shell installer.
-- [ ] Auto-update via signed releases (opt-out). Post-update notification instructs the user to start a new conversation in their AI client when tool schemas changed, since MCP clients cache the catalog per conversation.
-- [ ] Onboarding UI with one-click client config for: Claude Desktop, Claude Code, Claude Cowork, ChatGPT Developer Mode (instructions), Pi.dev, Cursor, Continue, Zed.
-- [x] Documented manual config for any MCP client.
-- [ ] Keychain-backed credential path exercised by signed installers and one-click onboarding on all platforms.
-- [ ] Opt-in anonymous telemetry (install success, tool call counts; no payloads).
+- Signed update channel: add an opt-out update check that verifies signed release metadata before offering an upgrade.
+- In-app upgrade path: let the user apply an update without rerunning install docs, reusing the shell/MSI/package-manager path where appropriate.
+- Catalog-change notice: turn the existing stale-conversation guidance into an automatic user-visible notice when the running catalog fingerprint changes.
+- Client recovery hints: make post-upgrade guidance client-specific where possible, especially for clients that cache MCP schemas per conversation.
 
-## v1.x — Iterate
+### v1.4 - Guided onboarding and client setup
 
-- [ ] Local-LLM client recipes (ollmcp, Cline, LM Studio).
-- [ ] Diagnostics export button in tray menu.
-- [ ] Telemetry-driven response-shape tuning.
-- [ ] Strength training and training plan endpoints (depends on PRD assumptions §7.4.3 / §7.4.4 and the evidence criteria in `docs/upstream-gaps/strength-training.md`; current support remains best-effort gym notes/simple supported calendar events).
+- Onboarding UI: wrap the existing secure setup flow in a non-terminal experience for the happy path.
+- One-click client config for Claude Desktop, Claude Code, Claude Cowork, Cursor, Continue, Zed, and any client with a stable local config format.
+- Instruction-only setup pages for clients that cannot be configured safely by icuvisor, including ChatGPT Developer Mode and Pi.dev.
+- Diagnostics export button in the tray/menu UI, backed by the existing redacted diagnostics command.
+- KR6 compatibility sweep across the target client list, including setup, first tool call, stale-schema recovery, and teardown.
 
-## v2.x
+### v1.5 - Local LLM and power-user coverage
 
-- **Optional hosted relay** (icuvisor cloud, opt-in, BYO key): for mobile-only athletes who can't run a desktop binary. Same code path; the binary runs in our infra and authenticates via a token. Mobile access is a dominant reason athletes pay competing hosted servers, so this may pull forward into v1.x pending PRD §7.4 #8 validation.
-- **Strava / TrainingPeaks** companion MCP servers in the same family.
-- **Workout templates** library, AI-generated and athlete-curated.
-- **Conversation memory** export hooks (Claude Projects integration).
-- Sports physio science-backed guardrails on generated plans. Validation tool LLMs can call for checking if a generated plan follows best practices and recommendations from science.
-- **Multi-sport / triathlon structured workout files**: surface upstream's triathlon workout-file resources with category (Bike/Run/Swim), metric, and sub-category filters as a dedicated read tool (e.g. `get_triathlon_workout_files`). Today's `workout_doc` DSL is single-discipline, so brick sessions and triathlon plan templates round-trip lossily. Depends on the v0.3 workout-library CRUD and likely some round-trip work in `internal/workoutdoc/` to represent a sequence of discipline-tagged blocks. Worth scoping against the v0.6 analyzer family so multi-sport compliance/zone-time computations don't fork the schema later.
-- **Documented self-hosted remote recipe** as an interim before the hosted relay: a `docs/deploy/` recipe for running icuvisor on Fly / Render / a small VM behind a reverse proxy with auth, intended for athletes who want phone access from their AI client today. Explicitly NOT a supported product — same binary, same code path, user-operated. Decision is whether to publish the recipe (cheap, accelerates feedback) or hold the line that mobile access waits for the opt-in relay. Revisit once SSE-transport decision lands.
-- **`fill_calendar_from_library`** ("Plan Filler", forum thread 123739 post #24): given a date range, target weekly load (TSS or hours), available hours per weekday, and a workout-library folder filter, assign existing library workouts to days to hit the target. Returns the proposed schedule for review; commit is a separate explicit call. Depends on workout-library CRUD (v0.3) and `apply_training_plan`.
+- Local-LLM recipes for ollmcp, Cline, and LM Studio, with explicit caveats for resource support, context limits, and toolset size.
+- Streamable HTTP hardening for local clients that prefer HTTP over stdio, retaining `127.0.0.1` as the default bind.
+- Power-user configuration examples for `ICUVISOR_TOOLSET`, `ICUVISOR_DELETE_MODE`, coach mode, and headless environments.
+- Client capability notes for MCP Resources, Prompts, input examples, and `_meta` visibility so docs match what each client actually passes to the model.
+
+### v1.6 - Observability and response-shape tuning
+
+- Opt-in anonymous telemetry for install success, update success, tool-call counts, error classes, latency buckets, and catalog/toolset distribution. No payloads.
+- Telemetry consent UI and CLI flags, with clear disable and data-inspection paths.
+- Response-shape tuning loop: use opt-in aggregate data to adjust page sizes, core/full tool placement, and terse defaults without expanding token cost accidentally.
+- Reliability dashboard or maintainer report for KR1, KR2, KR4, KR5, and KR6 tracking.
+
+### v1.7 - Coach and upstream API validation
+
+- Authenticated coach-roster probe using a real coach-scoped key through the normal local credential flow; never paste the key into prompts or fixtures.
+- Switch `list_athletes` from configured-roster source to upstream source only after auth, response shape, pagination, and scoping are confirmed.
+- Preserve configured-roster ACLs as the local authorization boundary even if upstream roster discovery lands.
+- Add regression fixtures for coach roster edge cases discovered during the authenticated probe.
+
+### v1.8 - Remaining first-party intervals.icu coverage
+
+- Training-plan endpoint validation and any missing read/write tools justified by the PRD catalog.
+- Strength-training endpoint validation against `docs/upstream-gaps/strength-training.md`; keep current support at best-effort gym notes/simple calendar events until the upstream schema can round-trip.
+- Planning-parameter probe for ramp rate, recovery-week cadence, taper target, and intensity-distribution preference. Ship only fields exposed by the upstream API.
+- Extended-metrics field audit for fields that are still unproven upstream; drop unsupported fields explicitly rather than synthesizing them silently.
+
+## v2.x - Remote, planning, and ecosystem expansion
+
+**Goal:** expand beyond the single-machine local workflow only where the trust boundary, user value, and maintenance cost are explicit.
+
+### v2.0 - Remote-access decision point
+
+- Validate mobile/remote demand through waitlist or telemetry, with a specific threshold for pulling relay work forward.
+- Decide whether to publish a self-hosted remote recipe before the hosted relay. If published, mark it as user-operated and unsupported, with the same binary and code path.
+- Define the relay threat model: credential storage, auth tokens, revocation, logging, rate limits, abuse handling, and data-retention defaults.
+- Confirm the transport story for provider-reachable MCP clients; do not add legacy SSE unless the PRD changes.
+
+### v2.1 - Optional hosted relay MVP
+
+- Build an opt-in relay for athletes who cannot run a desktop binary but still want BYO intervals.icu credentials.
+- Keep the local binary as the execution unit where feasible, so relay behavior stays aligned with the desktop code path.
+- Add account, token, and device-management flows only to the extent needed for secure relay access.
+- Document privacy boundaries separately from the local-first default so users can make an informed choice.
+
+### v2.2 - Relay hardening
+
+- Operational controls: audit logs, secret rotation, incident response, backups, and regional data-handling decisions.
+- Cost controls and usage limits that do not turn the local product into a primary SaaS.
+- Mobile-client compatibility validation across the AI clients that motivated relay demand.
+- Migration path between local and relay modes without exporting API keys through a chat.
+
+### v2.3 - Planning automation
+
+- `fill_calendar_from_library` ("Plan Filler"): propose workouts from an existing library folder over a date range using target weekly load/hours and weekday availability. Commit remains a separate explicit call.
+- Training-plan editing workflows that preserve existing races, notes, unavailable blocks, and user-authored descriptions.
+- Workout-template curation: AI-generated and athlete-curated template sets built on top of the existing workout-library tools.
+- Plan-preview evaluation that reports load distribution, compliance assumptions, conflicts, and lossy workout fields before writes.
+
+### v2.4 - Multi-sport workout model
+
+- Surface upstream triathlon workout-file resources with category, metric, and sub-category filters.
+- Represent discipline-tagged block sequences without forcing them through the single-discipline `workout_doc` shape.
+- Round-trip brick sessions and triathlon templates with documented lossy fields, golden fixtures, and analyzer-compatible schema.
+- Align multi-sport compliance and zone-time calculations with the analyzer family instead of creating a separate reporting model.
+
+### v2.5 - Plan safety and coaching guardrails
+
+- Science-backed validation tool for generated plans, with transparent rules and citations rather than hidden coaching opinion.
+- Guardrails for ramp rate, recovery weeks, taper shape, intensity distribution, and race-week workload when the required inputs are available.
+- Explicit "insufficient evidence" responses when a plan cannot be validated from available athlete data.
+- Versioned rule definitions so plan-validation behavior does not drift silently.
+
+### v2.6 - Companion ecosystem
+
+- Strava companion MCP server for direct Strava workflows that are intentionally outside the icuvisor binary.
+- TrainingPeaks companion MCP server if demand and API access justify it.
+- Conversation-memory export hooks, such as Claude Projects integration, that keep user-owned summaries portable without storing athlete data in icuvisor infrastructure by default.
+- Cross-server guidance for users who run icuvisor alongside nutrition, strength, or device-specific MCP servers.
 
 ## Out of scope
 
 - Replacing intervals.icu's own UI.
 - Becoming a multi-tenant SaaS for primary use.
 - Hosting athlete data on our infrastructure outside the future opt-in relay.
-- Non-intervals.icu data sources as first-party features (athletes can install other MCP servers alongside icuvisor).
-- Mobile-only installs at launch — desktop only for v1; mobile is served via the user's desktop or the future hosted relay.
+- Non-intervals.icu data sources inside the icuvisor binary; athletes can install companion MCP servers alongside icuvisor.
+- Native mobile installs; mobile access is served through the user's desktop or the future opt-in relay.
