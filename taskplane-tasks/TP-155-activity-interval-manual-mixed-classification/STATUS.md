@@ -1,10 +1,10 @@
 # TP-155: Activity interval manual and mixed classification — Status
 
-**Current Step:** Step 2: Propagate source evidence to tool/analyzer responses
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -31,7 +31,7 @@
 ---
 
 ### Step 2: Propagate source evidence to tool/analyzer responses
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Analyzer metadata supports the new values
 - [x] get-activity-interval output/tests expose the new classifications
@@ -41,12 +41,12 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] FULL test suite passing
-- [ ] Integration tests (if applicable)
-- [ ] All failures fixed
-- [ ] Build passes
+- [x] FULL test suite passing
+- [x] Integration tests (if applicable)
+- [x] All failures fixed
+- [x] Build passes
 
 ---
 
@@ -95,3 +95,4 @@ Public signal: IcuSync forum #265-266 reports auto-detected intervals have `grou
 | 2026-06-10 11:43 | Review R001 | plan Step 1: REVISE |
 | 2026-06-10 11:44 | Review R002 | plan Step 1: APPROVE |
 | 2026-06-10 11:48 | Review R003 | plan Step 2: APPROVE |
+| 2026-06-10 11:53 | Review R004 | plan Step 3: APPROVE |
