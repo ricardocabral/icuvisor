@@ -1,7 +1,7 @@
 # TP-157: get_today current-day freshness regression — Status
 
 **Current Step:** Step 4: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-10
 **Review Level:** 1
 **Review Counter:** 3
@@ -49,11 +49,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `CHANGELOG.md` updated
-- [ ] README/PRD reviewed if affected
-- [ ] Discoveries logged
+- [x] `CHANGELOG.md` updated
+- [x] README/PRD reviewed if affected
+- [x] Discoveries logged
 
 ---
 
@@ -68,6 +68,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| `get_today` already requested athlete-local today ranges, but shaped any stale rows returned by fakes/upstream without defensive post-fetch filtering. | Added date filters and regression coverage for fitness, wellness, activities, events, and stale wellness metadata preservation. | `internal/tools/get_today.go`, `internal/tools/get_today_test.go` |
+| README does not document `get_today`; PRD already describes the tool as a current-day digest, so no contract wording change was needed. | Left README/PRD unchanged and noted behavior fix in `CHANGELOG.md`. | `README.md`, `docs/prd/PRD-icuvisor.md`, `CHANGELOG.md` |
 
 ---
 

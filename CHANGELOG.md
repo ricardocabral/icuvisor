@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Hardened `get_today` so athlete-local current-day metadata cannot be combined with previous-day fitness, wellness, activity, or event rows when upstream returns stale rows around morning partial/absent wellness.
+
 ## [1.0.0] - 2026-06-04
 
 ### Fixed
