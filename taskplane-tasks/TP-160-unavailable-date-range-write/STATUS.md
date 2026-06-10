@@ -1,6 +1,6 @@
 # TP-160: Unavailable date-range write convenience — Status
 
-**Current Step:** Step 2: Implement the write convenience and catalog integration
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
@@ -63,7 +63,7 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing
 - [ ] Integration tests (if applicable)
