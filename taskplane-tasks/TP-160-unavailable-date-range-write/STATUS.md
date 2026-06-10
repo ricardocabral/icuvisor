@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 12
+**Review Counter:** 13
 **Iteration:** 1
 **Size:** M
 
@@ -69,6 +69,7 @@
 - [ ] Integration tests (if applicable)
 - [ ] All failures fixed
 - [ ] Build passes
+- [x] R013 verification plan includes `make check`, separate `make build`, failure rerun loop, and command outcome logging
 
 ---
 
@@ -98,6 +99,7 @@
 | R010 | Plan | Step 2 | APPROVE | `.reviews/R010-plan-step2.md` |
 | R011 | Code | Step 2 | REVISE | `.reviews/R011-code-step2.md` |
 | R012 | Code | Step 2 | APPROVE | n/a |
+| R013 | Plan | Step 3 | REVISE | `.reviews/R013-plan-step3.md` |
 
 ---
 
@@ -127,6 +129,7 @@
 | 2026-06-10 12:38 | Review R010 | plan Step 2: APPROVE |
 | 2026-06-10 12:47 | Review R011 | code Step 2: REVISE |
 | 2026-06-10 12:51 | Review R012 | code Step 2: APPROVE |
+| 2026-06-10 12:54 | Review R013 | plan Step 3: REVISE |
 
 ---
 
@@ -141,6 +144,8 @@
 Public signal: IntervalCoach forum #856 added Sick/Injured/Holiday range support.
 
 R001 plan feedback requires a concrete contract before implementation.
+
+Step 3 verification plan: run `make check` (fmt-check, vet, lint, race tests), run `make test` to satisfy the explicit full-suite checkbox, then run `make build` separately. No integration-test target or task-specific integration fixture exists, so the integration checkbox is N/A with this rationale. On any failure, fix it, rerun the narrow failing package/command, then rerun the full verification command set before marking Step 3 complete. Record command outcomes in STATUS.md.
 
 ### Step 1 Design Contract
 
