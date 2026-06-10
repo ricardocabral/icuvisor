@@ -1,10 +1,10 @@
 # TP-159: Gear name resolution regression — Status
 
-**Current Step:** Step 3: Testing & Verification
+**Current Step:** Step 4: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 2
 **Size:** S
 
@@ -39,17 +39,17 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] FULL test suite passing
-- [ ] Integration tests (if applicable)
-- [ ] All failures fixed
-- [ ] Build passes
+- [x] FULL test suite passing
+- [x] Integration tests (if applicable)
+- [x] All failures fixed
+- [x] Build passes
 
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `CHANGELOG.md` updated
 - [ ] `README.md` reviewed/updated if affected
@@ -70,6 +70,8 @@
 |-----------|-------------|----------|
 | Numeric `gear_id` regression tests passed against existing resolver; no resolver code change required. | Step 2 resolver fix skipped by task condition. | internal/tools/activity_gear_resolution.go |
 | README gear wording already names `gear_id`, `gear_name`, and explicit `gear_resolution` for unresolved IDs, matching the current tool output schemas/tests. | No README edit required for Step 2. | README.md:27; internal/tools/get_activities.go; internal/tools/get_activity_details.go |
+| No dedicated integration test target or integration test files were found for this gear-resolution regression. | Step 3 integration check marked not applicable after repository search. | Makefile; .github; find '*integration*' |
+| `make test` completed without failures. | No Step 3 fixes were necessary. | make test |
 
 ---
 
@@ -95,3 +97,4 @@
 Public signal: IcuSync forum #269-270 noted activities may expose only numeric `gear_id`; resolving names requires fetching full gear list.
 | 2026-06-10 13:09 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-10 13:15 | Review R002 | plan Step 2: APPROVE |
+| 2026-06-10 13:34 | Review R003 | plan Step 3: APPROVE |
