@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -31,7 +31,7 @@
 ---
 
 ### Step 2: Propagate to tool/resource schemas and tests
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] get_athlete_profile warnings covered by tests
 - [x] athlete-profile resource covered if shared shaping applies
@@ -101,3 +101,4 @@ Public signals: IcuSync forum #263 and LeCoach forum #406 highlight threshold/zo
 | 2026-06-10 11:53 | Review R003 | code Step 1: APPROVE |
 | 2026-06-10 11:56 | Review R004 | plan Step 2: APPROVE |
 | 2026-06-10 12:05 | Review R005 | code Step 2: UNKNOWN |
+| 2026-06-10 12:09 | Review R006 | code Step 2: APPROVE |
