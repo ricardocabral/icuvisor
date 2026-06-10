@@ -1956,7 +1956,7 @@
         "name": "planned_daily_loads",
         "required": false,
         "type": "array",
-        "description": "Optional explicit planned training load values by athlete-local date; these replace modeled ramp load for matching dates.",
+        "description": "Optional explicit planned training load values by athlete-local date; these replace modeled ramp load or weekly_plan_targets load for matching dates.",
         "items": {
           "required": false,
           "type": "object"
@@ -1981,6 +1981,16 @@
         "required": true,
         "type": "string",
         "description": "Athlete-local YYYY-MM-DD date whose get_fitness CTL/ATL/TSB values seed the projection."
+      },
+      {
+        "name": "weekly_plan_targets",
+        "required": false,
+        "type": "array",
+        "description": "Optional weekly training-load/TSS targets copied from get_training_plan or planning context. Each ISO Monday week_start_date is distributed evenly as training_load/7 across projected future dates in that week; partial weeks are not reweighted and planned_daily_loads override exact dates.",
+        "items": {
+          "required": false,
+          "type": "object"
+        }
       },
       {
         "name": "weekly_ramp_pct",

@@ -49,7 +49,7 @@
 - [x] Metadata/source assumptions updated
 - [x] Schema snapshot refreshed
 - [x] Targeted projection/training-plan tests pass
-- [ ] R007 generated tool-schema docs refreshed
+- [x] R007 generated tool-schema docs refreshed
 
 ---
 
@@ -103,6 +103,7 @@
 | 2026-06-10 | Step 1 tests added | `go test ./internal/analysis ./internal/tools -run 'FitnessProjection|TrainingPlan'` fails as expected on missing `WeeklyPlanTargets`/`weekly_plan_targets` bridge support |
 | 2026-06-10 | Step 1 R004 revisions | Corrected recovery-week timing and weekly-target filled-day expected count; targeted tests still fail only on missing bridge support |
 | 2026-06-10 | Step 2 implementation | Added `weekly_plan_targets` request/schema bridge, deterministic analyzer fill with explicit-load precedence, metadata counts/source_tools, refreshed schema snapshot, and targeted tests pass |
+| 2026-06-10 | Step 2 R007 revision | Regenerated website and gendocs tool-schema data/goldens; focused gendocs/projection/schema tests pass |
 
 ---
 
