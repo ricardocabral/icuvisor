@@ -1,10 +1,10 @@
 # TP-155: Activity interval manual and mixed classification — Status
 
-**Current Step:** Step 1: Add classifier states and fixture coverage
+**Current Step:** Step 2: Propagate source evidence to tool/analyzer responses
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -19,7 +19,7 @@
 ---
 
 ### Step 1: Add classifier states and fixture coverage
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Add `manual_added` and `mixed` states in the classifier
 - [x] Guard against overclassifying missing raw evidence as `manual_added`
@@ -31,12 +31,12 @@
 ---
 
 ### Step 2: Propagate source evidence to tool/analyzer responses
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Analyzer metadata supports the new values
-- [ ] get-activity-interval output/tests expose the new classifications
-- [ ] Schema snapshot refreshed if needed
-- [ ] Targeted tool and analysis tests pass
+- [x] Analyzer metadata supports the new values
+- [x] get-activity-interval output/tests expose the new classifications
+- [x] Schema snapshot refreshed if needed
+- [x] Targeted tool and analysis tests pass
 
 ---
 
@@ -94,3 +94,4 @@
 Public signal: IcuSync forum #265-266 reports auto-detected intervals have `group_id`; manually added intervals do not.
 | 2026-06-10 11:43 | Review R001 | plan Step 1: REVISE |
 | 2026-06-10 11:44 | Review R002 | plan Step 1: APPROVE |
+| 2026-06-10 11:48 | Review R003 | plan Step 2: APPROVE |

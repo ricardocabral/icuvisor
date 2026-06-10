@@ -72,13 +72,13 @@ func TestActivityReadToolDescriptionsRouteLapAnalysisToIntervals(t *testing.T) {
 		}
 	}
 	intervalsDescription := strings.ToLower(intervalsTool.Description)
-	for _, want := range []string{"interval_source", "structured_workout", "device_laps", "auto_lap_suspected"} {
+	for _, want := range []string{"interval_source", "structured_workout", "device_laps", "manual_added", "mixed", "auto_lap_suspected"} {
 		if !strings.Contains(intervalsDescription, want) {
 			t.Fatalf("intervals description = %q, want source hint %q", intervalsTool.Description, want)
 		}
 	}
 	outputDescription := strings.ToLower(activityReadOutputSchema()["description"].(string))
-	for _, want := range []string{"get_activity_intervals", "interval_source", "auto_lap_suspected"} {
+	for _, want := range []string{"get_activity_intervals", "interval_source", "manual_added", "mixed", "auto_lap_suspected"} {
 		if !strings.Contains(outputDescription, want) {
 			t.Fatalf("output schema description = %q, want source hint %q", outputDescription, want)
 		}
@@ -456,6 +456,8 @@ func TestGetActivityIntervalsSourceMetadata(t *testing.T) {
 		{name: "structured group", fixture: "structured.json", wantSource: "structured_workout"},
 		{name: "one kilometer device laps", fixture: "auto_laps_1km.json", wantSource: "device_laps", wantSuspected: true},
 		{name: "one mile device laps", fixture: "auto_laps_1mi.json", wantSource: "device_laps", wantSuspected: true},
+		{name: "manual added source", fixture: "manual_added.json", wantSource: "manual_added"},
+		{name: "mixed source", fixture: "mixed.json", wantSource: "mixed"},
 		{name: "unknown source", fixture: "unknown.json", wantSource: "unknown"},
 	}
 	for _, tc := range tests {

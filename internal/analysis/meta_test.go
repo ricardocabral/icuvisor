@@ -44,18 +44,32 @@ func TestNewAnalyzerMetaHonorsExplicitInsufficientSample(t *testing.T) {
 }
 
 func TestApplyIntervalSourceEvidence(t *testing.T) {
-	input := AnalyzerMetaInput{SourceTools: []string{"get_activity_intervals", "get_wellness_data"}}
-	withEvidence := ApplyIntervalSourceEvidence(input, IntervalSourceResult{Source: IntervalSourceDeviceLaps, AutoLapSuspected: true})
-	meta := NewAnalyzerMeta(withEvidence)
+	tests := []struct {
+		name          string
+		evidence      IntervalSourceResult
+		wantSource    IntervalSource
+		wantSuspected bool
+	}{
+		{name: "device laps keep auto lap suspicion", evidence: IntervalSourceResult{Source: IntervalSourceDeviceLaps, AutoLapSuspected: true}, wantSource: IntervalSourceDeviceLaps, wantSuspected: true},
+		{name: "manual added source propagates", evidence: IntervalSourceResult{Source: IntervalSourceManualAdded}, wantSource: IntervalSourceManualAdded},
+		{name: "mixed source propagates", evidence: IntervalSourceResult{Source: IntervalSourceMixed}, wantSource: IntervalSourceMixed},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			input := AnalyzerMetaInput{SourceTools: []string{"get_activity_intervals", "get_wellness_data"}}
+			withEvidence := ApplyIntervalSourceEvidence(input, tc.evidence)
+			meta := NewAnalyzerMeta(withEvidence)
 
-	if !reflect.DeepEqual(meta.SourceTools, []string{"get_activity_intervals", "get_wellness_data"}) {
-		t.Fatalf("SourceTools = %#v, want deduplicated interval source tools", meta.SourceTools)
-	}
-	if meta.IntervalSource != IntervalSourceDeviceLaps {
-		t.Fatalf("IntervalSource = %q, want %q", meta.IntervalSource, IntervalSourceDeviceLaps)
-	}
-	if meta.AutoLapSuspected == nil || *meta.AutoLapSuspected != true {
-		t.Fatalf("AutoLapSuspected = %#v, want true pointer", meta.AutoLapSuspected)
+			if !reflect.DeepEqual(meta.SourceTools, []string{"get_activity_intervals", "get_wellness_data"}) {
+				t.Fatalf("SourceTools = %#v, want deduplicated interval source tools", meta.SourceTools)
+			}
+			if meta.IntervalSource != tc.wantSource {
+				t.Fatalf("IntervalSource = %q, want %q", meta.IntervalSource, tc.wantSource)
+			}
+			if meta.AutoLapSuspected == nil || *meta.AutoLapSuspected != tc.wantSuspected {
+				t.Fatalf("AutoLapSuspected = %#v, want %v pointer", meta.AutoLapSuspected, tc.wantSuspected)
+			}
+		})
 	}
 }
 
