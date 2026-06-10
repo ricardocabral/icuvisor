@@ -396,7 +396,7 @@
     "group": "settings",
     "tier": "full",
     "safety": "write",
-    "summary": "Update one sport's FTP, threshold heart rate, threshold pace, or zone definitions.",
+    "summary": "Update one sport's FTP, threshold heart rate, threshold pace, or zone definitions referenced by get_athlete_profile _meta.warnings.",
     "anchor": "update_sport_settings"
   },
   {
