@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -24,15 +24,15 @@
 - [x] Weekly target input shape and no-implicit-fetch contract defined
 - [x] Week anchoring, partial-week horizon, and start-date exclusion defined
 - [x] Override formula and fallback-to-modeled behavior defined
-- [ ] Overlap-based horizon validation and mid-week current-week target case defined
-- [ ] Weekly target source labels and source_tools metadata behavior defined
-- [ ] Weekly target date/load validation bounds defined
-- [ ] Failing bridge tests added
-- [ ] Weekly target distribution assumptions defined
-- [ ] Explicit daily-load precedence covered
-- [ ] Validation/ignore behavior for duplicate/invalid/out-of-horizon weekly targets covered
-- [ ] Tool-level metadata/schema-facing behavior covered
-- [ ] Initial targeted projection/training-plan tests run
+- [x] Overlap-based horizon validation and mid-week current-week target case defined
+- [x] Weekly target source labels and source_tools metadata behavior defined
+- [x] Weekly target date/load validation bounds defined
+- [x] Failing bridge tests added
+- [x] Weekly target distribution assumptions defined
+- [x] Explicit daily-load precedence covered
+- [x] Validation/ignore behavior for duplicate/invalid/out-of-horizon weekly targets covered
+- [x] Tool-level metadata/schema-facing behavior covered
+- [x] Initial targeted projection/training-plan tests run
 
 ---
 
@@ -90,6 +90,7 @@
 | 2026-06-09 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-06-10 11:55 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-10 11:55 | Step 0 started | Preflight |
+| 2026-06-10 | Step 1 tests added | `go test ./internal/analysis ./internal/tools -run 'FitnessProjection|TrainingPlan'` fails as expected on missing `WeeklyPlanTargets`/`weekly_plan_targets` bridge support |
 
 ---
 
@@ -107,3 +108,4 @@ Plan review R002 requested overlap-based horizon validation for mid-week current
 Step 1 contract: `get_fitness_projection` will accept explicit `weekly_plan_targets` entries shaped as `{week_start_date: YYYY-MM-DD, training_load: number}` supplied by the caller from `get_training_plan`/planning context; the projection tool will not fetch training plans implicitly. `week_start_date` is the athlete-local ISO/Monday week anchor. Projection day 0 (`start_date`) remains the current-fitness seed and never receives projected load. For projected dates day 1..horizon, weekly targets create candidate loads of `training_load/7` for dates in that anchored week, including partial weeks without reweighting. Explicit `planned_daily_loads` replace candidates for exact dates and do not consume or redistribute weekly target load. Dates without explicit daily loads or matching weekly targets keep existing modeled ramp/recovery sources. Weekly target overlap validation is based on intersection with projected days 1..horizon, so a current-week Monday target is valid when `start_date` is mid-week and future dates remain in that week; targets with no overlap are rejected. Daily source label for filled dates will be `weekly_plan_targets`; `_meta.source_tools` always includes `get_fitness` and adds `get_training_plan` only when weekly targets are supplied. Assumptions will include target count, filled-day count, override count, ISO Monday anchor, partial-week/no-redistribution caveat, and even `training_load/7` distribution. `week_start_date` must be a valid Monday date after trimming, duplicate normalized week anchors are rejected, and `training_load` must be finite in `[0, 7*maxProjectionPlannedDailyLoad]`.
 | 2026-06-10 11:58 | Review R001 | plan Step 1: REVISE |
 | 2026-06-10 12:01 | Review R002 | plan Step 1: REVISE |
+| 2026-06-10 12:04 | Review R003 | plan Step 1: APPROVE |
