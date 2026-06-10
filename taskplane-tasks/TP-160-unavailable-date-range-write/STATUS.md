@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -25,6 +25,7 @@
 - [ ] Allowed unavailability categories defined
 - [ ] Idempotency/range semantics defined
 - [ ] Initial targeted event tests added/run
+- [ ] R001 concrete contract captured for API surface, response shape, idempotency, catalog, and tests
 
 ---
 
@@ -64,6 +65,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | Plan | Step 1 | REVISE | `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -93,3 +95,6 @@
 ## Notes
 
 Public signal: IntervalCoach forum #856 added Sick/Injured/Holiday range support.
+
+R001 plan feedback requires a concrete contract before implementation.
+| 2026-06-10 11:58 | Review R001 | plan Step 1: REVISE |
