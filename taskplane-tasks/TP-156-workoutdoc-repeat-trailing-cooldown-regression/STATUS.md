@@ -1,10 +1,10 @@
 # TP-156: WorkoutDoc repeat plus trailing cooldown regression — Status
 
-**Current Step:** Step 2: Fix parser/serializer only if the new fixture fails
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** S
 
@@ -29,17 +29,17 @@
 ---
 
 ### Step 2: Fix parser/serializer only if the new fixture fails
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Parser boundary handling fixed if needed
-- [ ] Serializer boundary handling fixed if needed
-- [ ] Focused assertions added if needed
-- [ ] Targeted WorkoutDoc tests pass
+- [x] Parser boundary handling fixed if needed
+- [x] Serializer boundary handling fixed if needed
+- [x] Focused assertions added if needed
+- [x] Targeted WorkoutDoc tests pass
 
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing
 - [ ] Integration tests (if applicable)
@@ -91,3 +91,4 @@
 
 Public signal: Montis forum #536 reported cooldown interpreted inside every repeat after description flattening.
 | 2026-06-10 12:42 | Review R001 | plan Step 1: APPROVE |
+| 2026-06-10 12:46 | Review R002 | plan Step 2: APPROVE |
