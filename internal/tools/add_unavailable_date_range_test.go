@@ -36,6 +36,9 @@ func (f *fakeUnavailableDateRangeClient) ListEvents(ctx context.Context, params 
 	f.listCalls = append(f.listCalls, params)
 	filtered := make([]intervals.Event, 0, len(f.events))
 	for _, event := range f.events {
+		if params.Category != "" && !strings.EqualFold(firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"])), params.Category) {
+			continue
+		}
 		date := eventDateOnly(event)
 		if params.Oldest != "" && date < params.Oldest {
 			continue
@@ -127,7 +130,7 @@ func TestAddUnavailableDateRangeCreatesInclusivePerDayEvents(t *testing.T) {
 	if client.calls[0].ExternalID == client.calls[1].ExternalID || client.calls[1].ExternalID == client.calls[2].ExternalID {
 		t.Fatalf("external IDs = %#v, want per-day idempotency keys", client.calls)
 	}
-	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-07-01" || client.listCalls[0].Newest != "2026-07-03" {
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-07-01" || client.listCalls[0].Newest != "2026-07-03" || client.listCalls[0].Category != "" {
 		t.Fatalf("ListEvents calls = %#v, want inclusive range preflight", client.listCalls)
 	}
 
@@ -173,7 +176,7 @@ func TestAddUnavailableDateRangeSkipsRepeatedRangeByGeneratedExternalID(t *testi
 	if len(client.calls) != 0 {
 		t.Fatalf("write calls = %#v, want repeated range skipped", client.calls)
 	}
-	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-08-10" || client.listCalls[0].Newest != "2026-08-11" {
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-08-10" || client.listCalls[0].Newest != "2026-08-11" || client.listCalls[0].Category != "" {
 		t.Fatalf("ListEvents calls = %#v, want inclusive range preflight", client.listCalls)
 	}
 	out := resultMap(t, result)
@@ -219,7 +222,7 @@ func TestAddUnavailableDateRangeCreatesMissingDaysAndReportsConflicts(t *testing
 	if len(client.calls) != 1 || client.calls[0].Date != "2026-09-02" || client.calls[0].Category != "INJURED" {
 		t.Fatalf("write calls = %#v, want only missing injured day", client.calls)
 	}
-	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-09-01" || client.listCalls[0].Newest != "2026-09-02" {
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-09-01" || client.listCalls[0].Newest != "2026-09-02" || client.listCalls[0].Category != "" {
 		t.Fatalf("ListEvents calls = %#v, want inclusive range preflight", client.listCalls)
 	}
 	out := resultMap(t, result)
@@ -237,6 +240,52 @@ func TestAddUnavailableDateRangeCreatesMissingDaysAndReportsConflicts(t *testing
 	}
 	if meta["created_count"] != float64(1) || meta["skipped_count"] != float64(1) || meta["conflict_count"] != float64(1) || meta["range_cap_days"] != float64(31) {
 		t.Fatalf("meta = %#v, want mixed counts", meta)
+	}
+}
+
+func TestAddUnavailableDateRangeSkipsExactDuplicateWithoutExternalID(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeUnavailableDateRangeClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		events:            decodeToolEvents(t, `{"id":"evt-manual","category":"HOLIDAY","type":"Unavailable","name":"Holiday","start_date_local":"2026-07-05","description":"Rest day"}`),
+	}
+	tool := newAddUnavailableDateRangeTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"2026-07-05","end_date":"2026-07-05","category":"HOLIDAY","description":"Rest day"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 0 {
+		t.Fatalf("write calls = %#v, want exact duplicate without external_id skipped", client.calls)
+	}
+	out := resultMap(t, result)
+	if out["status"] != "skipped" {
+		t.Fatalf("status = %#v, want skipped", out["status"])
+	}
+	meta := out["_meta"].(map[string]any)
+	skipped := meta["skipped"].([]any)
+	if len(skipped) != 1 || skipped[0].(map[string]any)["event_id"] != "evt-manual" || skipped[0].(map[string]any)["reason"] != "duplicate_existing_event" {
+		t.Fatalf("skipped = %#v, want exact duplicate details", skipped)
+	}
+}
+
+func TestAddUnavailableDateRangeUsesCustomTrimmedNameInWritesAndExternalID(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeUnavailableDateRangeClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		created:           decodeToolEvents(t, `{"id":"evt-custom","category":"HOLIDAY","type":"Unavailable","name":"Family time off","start_date_local":"2026-07-06","description":"Family"}`),
+	}
+	tool := newAddUnavailableDateRangeTool(client, client, "test", "UTC", false)
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"2026-07-06","end_date":"2026-07-06","category":"PTO","name":"  Family time off  ","description":"Family"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	wantExternalID := addUnavailableDateRangeExternalID("HOLIDAY", "2026-07-06", "Family time off", "Family")
+	if len(client.calls) != 1 || client.calls[0].Name != "Family time off" || client.calls[0].Category != "HOLIDAY" || client.calls[0].ExternalID != wantExternalID {
+		t.Fatalf("write calls = %#v, want custom trimmed name and matching external ID", client.calls)
 	}
 }
 
