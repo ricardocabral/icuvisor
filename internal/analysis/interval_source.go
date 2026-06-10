@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// IntervalSource identifies whether activity intervals look structured or device-generated.
+// IntervalSource identifies whether activity intervals look structured, manual, or device-generated.
 type IntervalSource string
 
 const (
@@ -15,6 +15,10 @@ const (
 	IntervalSourceStructuredWorkout IntervalSource = "structured_workout"
 	// IntervalSourceDeviceLaps identifies intervals that look like generic device auto-laps.
 	IntervalSourceDeviceLaps IntervalSource = "device_laps"
+	// IntervalSourceManualAdded identifies intervals that expose raw upstream rows without auto-detected group markers.
+	IntervalSourceManualAdded IntervalSource = "manual_added"
+	// IntervalSourceMixed identifies rows containing both grouped auto-detected and ungrouped manual interval evidence.
+	IntervalSourceMixed IntervalSource = "mixed"
 	// IntervalSourceUnknown identifies intervals without enough source evidence.
 	IntervalSourceUnknown IntervalSource = "unknown"
 )
@@ -78,13 +82,16 @@ type intervalSourceSample struct {
 
 var genericLapNamePattern = regexp.MustCompile(`^(lap|split|km|kilometer|mile)\s*#?\d*$`)
 
-// InferIntervalSource classifies interval rows using explicit markers before uniform-lap heuristics.
+// InferIntervalSource classifies interval rows using explicit markers, grouped-row evidence, then uniform-lap heuristics.
 func InferIntervalSource(input IntervalSourceInput) IntervalSourceResult {
 	if hasStructuredSignal(input) {
 		return IntervalSourceResult{Source: IntervalSourceStructuredWorkout}
 	}
 	if hasExplicitDeviceLapSignal(input) {
 		return IntervalSourceResult{Source: IntervalSourceDeviceLaps, AutoLapSuspected: true}
+	}
+	if source, ok := inferGroupedManualSource(input.Intervals); ok {
+		return IntervalSourceResult{Source: source}
 	}
 	if nearUniformAutoLaps(input) {
 		return IntervalSourceResult{Source: IntervalSourceDeviceLaps, AutoLapSuspected: true}
@@ -157,6 +164,99 @@ func rawHasDeviceLapMarker(raw map[string]any) bool {
 		}
 	}
 	return false
+}
+
+func inferGroupedManualSource(intervals []IntervalSourceInterval) (IntervalSource, bool) {
+	grouped := 0
+	ungrouped := 0
+	for _, interval := range intervals {
+		if len(interval.Raw) == 0 {
+			continue
+		}
+		if rawHasGroupIDMarker(interval.Raw) {
+			grouped++
+			continue
+		}
+		if rawHasManualIntervalEvidence(interval.Raw) {
+			ungrouped++
+		}
+	}
+	if grouped == 0 && ungrouped == 0 {
+		return "", false
+	}
+	if grouped > 0 && ungrouped > 0 {
+		return IntervalSourceMixed, true
+	}
+	if ungrouped > 0 {
+		return IntervalSourceManualAdded, true
+	}
+	return "", false
+}
+
+func rawHasGroupIDMarker(raw map[string]any) bool {
+	for key, value := range raw {
+		if normalizeMarkerText(key) != "groupid" {
+			continue
+		}
+		if rawMarkerPresent(value) {
+			return true
+		}
+	}
+	return false
+}
+
+func rawHasManualIntervalEvidence(raw map[string]any) bool {
+	hasStart := false
+	hasEnd := false
+	for key, value := range raw {
+		if !rawMarkerPresent(value) {
+			continue
+		}
+		switch normalizeMarkerText(key) {
+		case "startindex":
+			hasStart = true
+		case "endindex":
+			hasEnd = true
+		}
+	}
+	return hasStart && hasEnd
+}
+
+func rawMarkerPresent(value any) bool {
+	switch typed := value.(type) {
+	case nil:
+		return false
+	case string:
+		return strings.TrimSpace(typed) != ""
+	case bool:
+		return typed
+	case int:
+		return typed != 0
+	case int8:
+		return typed != 0
+	case int16:
+		return typed != 0
+	case int32:
+		return typed != 0
+	case int64:
+		return typed != 0
+	case uint:
+		return typed != 0
+	case uint8:
+		return typed != 0
+	case uint16:
+		return typed != 0
+	case uint32:
+		return typed != 0
+	case uint64:
+		return typed != 0
+	case float32:
+		return typed != 0
+	case float64:
+		return typed != 0
+	default:
+		return true
+	}
 }
 
 func isDeviceLapMarkerKey(normalizedKey string) bool {

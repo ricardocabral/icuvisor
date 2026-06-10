@@ -50,6 +50,31 @@ func TestGoldenRoundTripStructuredSerializeParse(t *testing.T) {
 	}
 }
 
+func TestRepeatTrailingCooldownStaysOutsideRepeat(t *testing.T) {
+	t.Parallel()
+
+	doc := readStructured(t, filepath.Join("testdata", "07-repeat-trailing-cooldown-structured.json"))
+	if len(doc.Steps) != 3 {
+		t.Fatalf("fixture has %d top-level steps, want warmup, repeat, cooldown", len(doc.Steps))
+	}
+	if got := doc.Steps[1]; got.Description != "Main Set" || got.Reps != 3 || len(got.Steps) != 2 {
+		t.Fatalf("middle step = %#v, want 3x Main Set with two children", got)
+	}
+	if got := doc.Steps[2]; got.Description != "Cooldown" || got.Duration != 480 {
+		t.Fatalf("trailing step = %#v, want top-level cooldown", got)
+	}
+
+	parsed, err := Parse(readGolden(t, filepath.Join("testdata", "07-repeat-trailing-cooldown-dsl.txt")))
+	if err != nil {
+		t.Fatalf("Parse(repeat trailing cooldown fixture) error = %v", err)
+	}
+	if !reflect.DeepEqual(parsed.Steps, doc.Steps) {
+		gotJSON, _ := json.MarshalIndent(parsed, "", "  ")
+		wantJSON, _ := json.MarshalIndent(doc, "", "  ")
+		t.Fatalf("Parse(repeat trailing cooldown fixture) mismatch\n--- got ---\n%s\n--- want ---\n%s", gotJSON, wantJSON)
+	}
+}
+
 func TestSerializeRepeatHeadersAreCanonical(t *testing.T) {
 	t.Parallel()
 

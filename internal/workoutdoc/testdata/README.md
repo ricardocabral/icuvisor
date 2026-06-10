@@ -15,6 +15,10 @@ zone/load metrics. The capture proves partial fidelity loss: Intervals.icu
 returned structured steps, but flattened the repeat children to the end and
 dropped the RPE target from `Strides`.
 
+`07-repeat-trailing-cooldown-*` covers the regression where a named repeat main
+set is followed by a top-level cooldown. The de-indented cooldown line is a
+sibling after the repeat block, not a child that repeats with the main set.
+
 The remaining UI smoke for issue #25 is to create the equivalent workout in the
 Intervals.icu web editor, fetch its `description` and `workout_doc` with
 `include_full:true`, and replace or add a fixture if the UI emits a different

@@ -47,6 +47,26 @@ Prefer a package manager? `brew install ricardocabral/icuvisor/icuvisor`, `scoop
 
 Learn more on how to connect your AI assistant, read the tool catalog, and troubleshoot stale conversations or cached tool catalogs at <https://icuvisor.app>.
 
+### Fitness projection with training-plan targets
+
+`get_fitness_projection` can bridge weekly training-plan targets into future CTL/ATL/TSB scenarios without asking the assistant to invent daily loads. Provide `weekly_plan_targets` from planning context or `get_training_plan` output as ISO Monday week anchors; icuvisor distributes each weekly `training_load` evenly as `training_load/7` across projected future dates in that week. Explicit `planned_daily_loads` win for matching dates and are not redistributed.
+
+```json
+{
+  "start_date": "2026-06-03",
+  "horizon_days": 14,
+  "weekly_plan_targets": [
+    { "week_start_date": "2026-06-01", "training_load": 700 },
+    { "week_start_date": "2026-06-08", "training_load": 840 }
+  ],
+  "planned_daily_loads": [
+    { "date": "2026-06-10", "training_load": 60 }
+  ]
+}
+```
+
+The projection `_meta.assumptions` reports target counts, filled days, override counts, the ISO-Monday anchor convention, and `source_tools` adds `get_training_plan` when weekly targets are supplied.
+
 ## For developers
 
 ### Build from source

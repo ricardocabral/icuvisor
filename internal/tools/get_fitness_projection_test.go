@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -127,4 +128,114 @@ func TestGetFitnessProjectionInsufficientCurrentFitnessData(t *testing.T) {
 	if !ok || !strings.Contains(message, "insufficient current fitness data") {
 		t.Fatalf("public error = %q (ok=%v), want insufficient current fitness data", message, ok)
 	}
+}
+
+func TestGetFitnessProjectionWeeklyPlanTargetsMetadataAndSources(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeFitnessMetricsClient(t)
+	tool := newGetFitnessProjectionTool(client, client, "test", "UTC", false)
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"2026-05-01","horizon_days":10,"weekly_ramp_pct":0,"recovery_week_cadence":0,"weekly_plan_targets":[{"week_start_date":"2026-04-27","training_load":700},{"week_start_date":"2026-05-04","training_load":840}],"planned_daily_loads":[{"date":"2026-05-05","training_load":42}],"include_full":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+
+	root := analyzerMap(t, result.StructuredContent)
+	meta := analyzerMap(t, root["_meta"])
+	if !anyStringSliceContains(t, meta["source_tools"], getTrainingPlanName) || !anyStringSliceContains(t, meta["source_tools"], getFitnessName) {
+		t.Fatalf("source_tools = %#v, want get_fitness and get_training_plan", meta["source_tools"])
+	}
+	assumptions := analyzerMap(t, meta["assumptions"])
+	if assumptions["weekly_plan_target_count"] != float64(2) || assumptions["weekly_plan_target_filled_day_count"] != float64(8) || assumptions["weekly_plan_target_override_count"] != float64(1) {
+		t.Fatalf("weekly target assumptions = %#v", assumptions)
+	}
+	if assumptions["weekly_plan_target_week_anchor"] != "athlete-local ISO Monday week_start_date" || !strings.Contains(assumptions["weekly_plan_target_distribution"].(string), "training_load/7") {
+		t.Fatalf("weekly target distribution assumptions = %#v", assumptions)
+	}
+
+	series := root["series"].([]any)
+	assertProjectionSeriesPoint(t, series, "2026-05-02", "weekly_plan_targets", 100)
+	assertProjectionSeriesPoint(t, series, "2026-05-05", "planned_daily_loads", 42)
+	assertProjectionSeriesPoint(t, series, "2026-05-06", "weekly_plan_targets", 120)
+}
+
+func TestDecodeFitnessProjectionRequestValidatesWeeklyPlanTargets(t *testing.T) {
+	t.Parallel()
+
+	valid, err := decodeFitnessProjectionRequest(json.RawMessage(`{"start_date":"2026-06-03","horizon_days":3,"weekly_plan_targets":[{"week_start_date":"2026-06-01","training_load":700}]}`))
+	if err != nil {
+		t.Fatalf("decode valid overlapping current-week target error = %v", err)
+	}
+	targets := reflect.ValueOf(valid).FieldByName("WeeklyPlanTargets")
+	if !targets.IsValid() || targets.Len() != 1 {
+		t.Fatalf("WeeklyPlanTargets = %#v, want one normalized target", valid)
+	}
+
+	cases := []struct {
+		name    string
+		args    string
+		wantErr string
+	}{
+		{name: "duplicate normalized week", args: `{"start_date":"2026-06-03","horizon_days":7,"weekly_plan_targets":[{"week_start_date":"2026-06-01","training_load":700},{"week_start_date":" 2026-06-01 ","training_load":500}]}`, wantErr: "weekly_plan_targets contains duplicate week_start_date 2026-06-01"},
+		{name: "non monday anchor", args: `{"start_date":"2026-06-03","horizon_days":7,"weekly_plan_targets":[{"week_start_date":"2026-06-02","training_load":700}]}`, wantErr: "weekly_plan_targets.week_start_date must be a Monday YYYY-MM-DD"},
+		{name: "missing load", args: `{"start_date":"2026-06-03","horizon_days":7,"weekly_plan_targets":[{"week_start_date":"2026-06-01"}]}`, wantErr: "weekly_plan_targets training_load for 2026-06-01 is required"},
+		{name: "negative load", args: `{"start_date":"2026-06-03","horizon_days":7,"weekly_plan_targets":[{"week_start_date":"2026-06-01","training_load":-1}]}`, wantErr: "weekly_plan_targets training_load for 2026-06-01 must be between 0 and 7000"},
+		{name: "too large load", args: `{"start_date":"2026-06-03","horizon_days":7,"weekly_plan_targets":[{"week_start_date":"2026-06-01","training_load":7001}]}`, wantErr: "weekly_plan_targets training_load for 2026-06-01 must be between 0 and 7000"},
+		{name: "no overlap before horizon", args: `{"start_date":"2026-06-03","horizon_days":7,"weekly_plan_targets":[{"week_start_date":"2026-05-25","training_load":700}]}`, wantErr: "weekly_plan_targets week_start_date 2026-05-25 must overlap the projection horizon"},
+		{name: "no overlap after horizon", args: `{"start_date":"2026-06-03","horizon_days":7,"weekly_plan_targets":[{"week_start_date":"2026-06-15","training_load":700}]}`, wantErr: "weekly_plan_targets week_start_date 2026-06-15 must overlap the projection horizon"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			_, err := decodeFitnessProjectionRequest(json.RawMessage(tc.args))
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Fatalf("decode error = %v, want substring %q", err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestFitnessProjectionSchemaIncludesWeeklyPlanTargets(t *testing.T) {
+	t.Parallel()
+
+	properties := fitnessProjectionInputSchema()["properties"].(map[string]any)
+	raw, ok := properties["weekly_plan_targets"].(map[string]any)
+	if !ok {
+		t.Fatalf("schema properties = %#v, want weekly_plan_targets", properties)
+	}
+	description := raw["description"].(string)
+	if !strings.Contains(description, getTrainingPlanName) || !strings.Contains(description, "training_load/7") {
+		t.Fatalf("weekly_plan_targets description = %q, want get_training_plan and training_load/7 guidance", description)
+	}
+}
+
+func assertProjectionSeriesPoint(t *testing.T, series []any, date string, source string, load float64) {
+	t.Helper()
+
+	for _, rawPoint := range series {
+		point := rawPoint.(map[string]any)
+		if point["date"] != date {
+			continue
+		}
+		if point["training_load_source"] != source || point["training_load"] != load {
+			t.Fatalf("series point %s = source %q load %v, want source %q load %v", date, point["training_load_source"], point["training_load"], source, load)
+		}
+		return
+	}
+	t.Fatalf("series point %s not found in %#v", date, series)
+}
+
+func anyStringSliceContains(t *testing.T, raw any, want string) bool {
+	t.Helper()
+
+	items, ok := raw.([]any)
+	if !ok {
+		t.Fatalf("%#v is %T, want []any", raw, raw)
+	}
+	for _, item := range items {
+		if item == want {
+			return true
+		}
+	}
+	return false
 }

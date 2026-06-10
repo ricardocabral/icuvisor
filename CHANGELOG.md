@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added Codex-compatible Streamable HTTP smoke coverage that verifies `initialize` and `ping` responses are strict JSON-RPC 2.0 envelopes over raw in-process HTTP.
 - Added athlete-profile `_meta.warnings` for missing sport thresholds and zones so assistants can preflight threshold- or zone-based planning before producing advice.
+- Added WorkoutDoc regression coverage proving a trailing cooldown remains a top-level sibling after a named repeat main set.
+
+### Changed
+
+- `get_fitness_projection` now accepts `weekly_plan_targets` copied from planning/training-plan context and deterministically distributes each weekly load target across projected days, while explicit `planned_daily_loads` keep precedence and metadata reports the bridge assumptions.
+- `get_activity_intervals` now distinguishes manually added and mixed interval-source evidence in `_meta.interval_source`, alongside existing structured-workout, device-lap, and unknown classifications.
 
 ## [1.0.0] - 2026-06-04
 

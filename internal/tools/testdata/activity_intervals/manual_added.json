@@ -1,0 +1,30 @@
+{
+  "id": "manual-added-intervals",
+  "analyzed": true,
+  "icu_intervals": [
+    {
+      "id": "manual-1",
+      "name": "Lap",
+      "distance": 800,
+      "duration": 240,
+      "start_index": 0,
+      "end_index": 100
+    },
+    {
+      "id": "manual-2",
+      "name": "Lap",
+      "distance": 1250,
+      "duration": 370,
+      "start_index": 100,
+      "end_index": 200
+    },
+    {
+      "id": "manual-3",
+      "name": "Lap",
+      "distance": 2100,
+      "duration": 600,
+      "start_index": 200,
+      "end_index": 300
+    }
+  ]
+}

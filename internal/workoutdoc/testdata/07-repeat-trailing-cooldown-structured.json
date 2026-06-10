@@ -1,0 +1,30 @@
+{
+  "steps": [
+    {
+      "description": "Warmup",
+      "duration": 600,
+      "power": { "value": 60, "units": "PERCENT_FTP" }
+    },
+    {
+      "description": "Main Set",
+      "reps": 3,
+      "steps": [
+        {
+          "description": "Threshold",
+          "duration": 360,
+          "power": { "min": 95, "max": 100, "units": "PERCENT_FTP" }
+        },
+        {
+          "description": "Recovery",
+          "duration": 120,
+          "power": { "value": 55, "units": "PERCENT_FTP" }
+        }
+      ]
+    },
+    {
+      "description": "Cooldown",
+      "duration": 480,
+      "power": { "value": 50, "units": "PERCENT_FTP" }
+    }
+  ]
+}

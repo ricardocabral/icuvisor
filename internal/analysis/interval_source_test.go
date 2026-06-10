@@ -30,9 +30,38 @@ func TestInferIntervalSource(t *testing.T) {
 			want: IntervalSourceResult{Source: IntervalSourceStructuredWorkout},
 		},
 		{
+			name: "all evidence-bearing raw intervals without group markers are manual added",
+			in: IntervalSourceInput{Intervals: []IntervalSourceInterval{
+				{Name: "Lap", Raw: map[string]any{"id": "interval-1", "start_index": 0, "end_index": 100}},
+				{Name: "Lap", Raw: map[string]any{"id": "interval-2", "start_index": 100, "end_index": 200}},
+			}},
+			want: IntervalSourceResult{Source: IntervalSourceManualAdded},
+		},
+		{
+			name: "raw intervals with and without group markers are mixed",
+			in: IntervalSourceInput{Intervals: []IntervalSourceInterval{
+				{Name: "Lap", Raw: map[string]any{"id": "interval-1", "group_id": "group-a"}},
+				{Name: "Lap", Raw: map[string]any{"id": "interval-2", "start_index": 100, "end_index": 200}},
+			}},
+			want: IntervalSourceResult{Source: IntervalSourceMixed},
+		},
+		{
+			name: "all raw intervals with group markers preserve uniform device fallback",
+			in:   IntervalSourceInput{Intervals: groupedRawDistanceIntervals(6, km)},
+			want: IntervalSourceResult{Source: IntervalSourceDeviceLaps, AutoLapSuspected: true},
+		},
+		{
 			name: "one kilometer generic auto laps",
 			in:   IntervalSourceInput{Intervals: genericDistanceIntervals(6, km)},
 			want: IntervalSourceResult{Source: IntervalSourceDeviceLaps, AutoLapSuspected: true},
+		},
+		{
+			name: "missing raw evidence does not classify as manual added",
+			in: IntervalSourceInput{Intervals: []IntervalSourceInterval{
+				{Name: "Lap", Raw: nil},
+				{Name: "Lap", Raw: map[string]any{}},
+			}},
+			want: IntervalSourceResult{Source: IntervalSourceUnknown},
 		},
 		{
 			name: "one mile generic auto laps",
@@ -85,6 +114,14 @@ func TestInferIntervalSource(t *testing.T) {
 			want: IntervalSourceResult{Source: IntervalSourceStructuredWorkout},
 		},
 		{
+			name: "explicit workout step marker takes precedence over group-id heuristic",
+			in: IntervalSourceInput{Intervals: []IntervalSourceInterval{
+				{Name: "Lap", Raw: map[string]any{"id": "interval-1", "workout_step_id": "step-1"}},
+				{Name: "Lap", Raw: map[string]any{"id": "interval-2", "group_id": "group-a"}},
+			}},
+			want: IntervalSourceResult{Source: IntervalSourceStructuredWorkout},
+		},
+		{
 			name: "explicit auto lap marker is device laps",
 			in: IntervalSourceInput{Intervals: []IntervalSourceInterval{
 				{Name: "Lap", Raw: map[string]any{"lap_source": "device auto lap"}},
@@ -102,6 +139,14 @@ func TestInferIntervalSource(t *testing.T) {
 			name: "explicit auto lap type marker is device laps",
 			in: IntervalSourceInput{Intervals: []IntervalSourceInterval{
 				{Name: "Lap", Raw: map[string]any{"lap_type": "auto"}},
+			}},
+			want: IntervalSourceResult{Source: IntervalSourceDeviceLaps, AutoLapSuspected: true},
+		},
+		{
+			name: "explicit auto lap marker takes precedence over group-id heuristic",
+			in: IntervalSourceInput{Intervals: []IntervalSourceInterval{
+				{Name: "Lap", Raw: map[string]any{"id": "interval-1", "lap_source": "device auto lap"}},
+				{Name: "Lap", Raw: map[string]any{"id": "interval-2"}},
 			}},
 			want: IntervalSourceResult{Source: IntervalSourceDeviceLaps, AutoLapSuspected: true},
 		},
@@ -137,6 +182,14 @@ func genericDurationIntervals(count int, duration float64) []IntervalSourceInter
 		endIndex := startIndex + 100
 		d := duration
 		out = append(out, IntervalSourceInterval{Name: "Lap", Duration: &d, StartIndex: &startIndex, EndIndex: &endIndex})
+	}
+	return out
+}
+
+func groupedRawDistanceIntervals(count int, distance float64) []IntervalSourceInterval {
+	out := genericDistanceIntervals(count, distance)
+	for i := range out {
+		out[i].Raw = map[string]any{"id": i + 1, "group_id": "auto-group"}
 	}
 	return out
 }

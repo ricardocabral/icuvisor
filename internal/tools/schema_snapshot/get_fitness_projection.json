@@ -30,7 +30,7 @@
       "type": "string"
     },
     "planned_daily_loads": {
-      "description": "Optional explicit planned training load values by athlete-local date; these replace modeled ramp load for matching dates.",
+      "description": "Optional explicit planned training load values by athlete-local date; these replace modeled ramp load or weekly_plan_targets load for matching dates.",
       "items": {
         "additionalProperties": false,
         "properties": {
@@ -70,6 +70,30 @@
     "start_date": {
       "description": "Athlete-local YYYY-MM-DD date whose get_fitness CTL/ATL/TSB values seed the projection.",
       "type": "string"
+    },
+    "weekly_plan_targets": {
+      "description": "Optional weekly training-load/TSS targets copied from get_training_plan or planning context. Each ISO Monday week_start_date is distributed evenly as training_load/7 across projected future dates in that week; partial weeks are not reweighted and planned_daily_loads override exact dates.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "training_load": {
+            "description": "Weekly target training load/TSS-equivalent stress; the projection uses training_load/7 for each covered day unless planned_daily_loads overrides it.",
+            "maximum": 7000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "week_start_date": {
+            "description": "Athlete-local ISO Monday YYYY-MM-DD week anchor. The target week must overlap projected days after start_date.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "week_start_date",
+          "training_load"
+        ],
+        "type": "object"
+      },
+      "type": "array"
     },
     "weekly_ramp_pct": {
       "default": 5,
