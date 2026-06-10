@@ -151,6 +151,10 @@ If you need to distinguish a Codex issue from an icuvisor MCP issue, you can que
 
 For maintainers, a small script can send `initialize`, `notifications/initialized`, and `tools/list` to `bin/icuvisor` with non-secret dummy env values. The expected v0.1 result is exactly one tool: `get_athlete_profile`.
 
+## Streamable HTTP handshake compatibility
+
+icuvisor also keeps in-process smoke coverage for Codex-like Streamable HTTP clients. The test sends raw HTTP `initialize`, `notifications/initialized`, and `ping` requests with `Content-Type: application/json`, `Accept: application/json, text/event-stream`, `Mcp-Session-Id`, and `Mcp-Protocol-Version` headers, then asserts initialize and ping responses are strict JSON-RPC 2.0 envelopes rather than bare payloads.
+
 ## Cleanup checklist
 
 After validation:

@@ -61,6 +61,31 @@ func TestAthleteProfileResourceReturnsSharedShapedProfile(t *testing.T) {
 	}
 }
 
+func TestAthleteProfileResourceIncludesSharedReadinessWarnings(t *testing.T) {
+	t.Parallel()
+
+	profile := intervals.AthleteWithSportSettings{
+		ID:            "i12345",
+		Name:          "Warning Athlete",
+		SportSettings: []intervals.SportSettings{{Types: []string{"Run"}}},
+	}
+	client := &fakeAthleteProfileClient{profiles: []intervals.AthleteWithSportSettings{profile}}
+	resource := AthleteProfileResource(client, ResourceOptions{Version: "test", TimezoneFallback: "UTC"})
+
+	result, err := resource.Handler(context.Background(), Request{URI: AthleteProfileURI})
+	if err != nil {
+		t.Fatalf("resource handler error = %v", err)
+	}
+	var response athleteprofile.Response
+	if err := json.Unmarshal([]byte(result.Text), &response); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	wantCodes := []string{"missing_hr_threshold", "missing_hr_zones", "missing_pace_threshold", "missing_pace_zones"}
+	if got := resourceProfileWarningCodes(response.Meta.Warnings); !stringSlicesEqual(got, wantCodes) {
+		t.Fatalf("warning codes = %#v, want %#v", got, wantCodes)
+	}
+}
+
 func TestAthleteProfileResourceCachesUntilTTLExpires(t *testing.T) {
 	now := time.Date(2026, 5, 14, 12, 0, 0, 0, time.UTC)
 	client := &fakeAthleteProfileClient{profiles: []intervals.AthleteWithSportSettings{
@@ -265,6 +290,26 @@ func (c *failingBlockingAthleteProfileClient) GetAthleteProfile(ctx context.Cont
 	case <-c.release:
 		return intervals.AthleteWithSportSettings{}, c.err
 	}
+}
+
+func resourceProfileWarningCodes(warnings []athleteprofile.ReadinessWarning) []string {
+	codes := make([]string, 0, len(warnings))
+	for _, warning := range warnings {
+		codes = append(codes, warning.Code)
+	}
+	return codes
+}
+
+func stringSlicesEqual(got []string, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for i := range got {
+		if got[i] != want[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func resourceTestProfile(id string, name string) intervals.AthleteWithSportSettings {
