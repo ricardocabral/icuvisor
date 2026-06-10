@@ -25,13 +25,17 @@
       "model": "",
       "tools": "read,write,edit,bash,grep,find,ls",
       "thinking": "",
-      "excludeExtensions": []
+      "excludeExtensions": [
+        "npm:pi-web-access"
+      ]
     },
     "reviewer": {
       "model": "",
       "tools": "read,bash,grep,find,ls",
       "thinking": "on",
-      "excludeExtensions": []
+      "excludeExtensions": [
+        "npm:pi-web-access"
+      ]
     },
     "context": {
       "workerContextWindow": 0,
@@ -96,7 +100,9 @@
       "verify": [],
       "order": "fewest-files-first",
       "timeoutMinutes": 90,
-      "excludeExtensions": []
+      "excludeExtensions": [
+        "npm:pi-web-access"
+      ]
     },
     "failure": {
       "onTaskFailure": "skip-dependents",

@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-05-20
 **Status:** Active
-**Next Task ID:** TP-155
+**Next Task ID:** TP-163
 
 ---
 
@@ -206,6 +206,23 @@ Scaffolded 2026-06-03 from public GitHub PRs/commits/docs in `agiantwhale/workou
 | TP-152 | Visible catalog/version diagnostic tool                 | —          |
 | TP-153 | Snapshot every registered MCP tool schema               | —          |
 | TP-154 | Generated per-tool schema docs                          | —          |
+
+---
+
+## Forum follow-up — 2026-06-09 AI coach gap review (TP-155 … TP-162)
+
+Scaffolded 2026-06-09 from public intervals.icu forum behavior signals across IcuSync, Montis, IntervalCoach, and LeCoach. Clean-room rule applies: tasks may use public product behavior signals and upstream API/docs, but must not read or copy GPL/copyleft competitor source.
+
+| ID     | Title                                                   | Depends on |
+| ------ | ------------------------------------------------------- | ---------- |
+| TP-155 | Activity interval manual and mixed classification       | —          |
+| TP-156 | WorkoutDoc repeat plus trailing cooldown regression     | —          |
+| TP-157 | `get_today` current-day freshness regression            | —          |
+| TP-158 | Sport-settings profile readiness warnings               | —          |
+| TP-159 | Gear name resolution regression                         | —          |
+| TP-160 | Unavailable date-range write convenience                | —          |
+| TP-161 | Bridge training-plan targets into fitness projection    | —          |
+| TP-162 | Codex Streamable HTTP JSON-RPC smoke coverage           | —          |
 
 ---
 
