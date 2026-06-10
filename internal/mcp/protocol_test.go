@@ -173,8 +173,8 @@ func assertStreamableHTTPJSONRPCEnvelope(t *testing.T, label string, response st
 	} else if err := json.Unmarshal(raw, &gotID); err != nil || gotID != wantID {
 		t.Fatalf("%s response id = %s, err = %v, want %d", label, raw, err, wantID)
 	}
-	if raw, ok := envelope["error"]; ok && strings.TrimSpace(string(raw)) != "null" {
-		t.Fatalf("%s response has top-level error %s", label, raw)
+	if raw, ok := envelope["error"]; ok {
+		t.Fatalf("%s response has top-level error member %s", label, raw)
 	}
 	rawResult, ok := envelope["result"]
 	if !ok {

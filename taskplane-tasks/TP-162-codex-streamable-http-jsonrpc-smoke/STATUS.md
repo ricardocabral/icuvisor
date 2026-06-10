@@ -26,7 +26,7 @@
 - [x] Raw in-process HTTP wire assertions parse JSON or SSE `data:` envelopes instead of SDK-decoded results
 - [x] Handshake lifecycle covers initialize, `notifications/initialized` with session ID, then ping using Codex-like headers
 - [x] Success assertions reject bare payloads and top-level errors before inspecting `result`
-- [ ] R003 revision: success envelope assertions fail whenever a top-level `error` member is present, even `null`
+- [x] R003 revision: success envelope assertions fail whenever a top-level `error` member is present, even `null`
 - [x] Codex-like HTTP headers covered without external process
 - [x] Targeted MCP tests pass
 
