@@ -26,6 +26,7 @@ icuvisor is designed to keep training-data access simple, local, and easy for an
 - **Structured, terse responses:** read tools return compact JSON-shaped results by default, with fuller payloads behind explicit `include_full` options for cases such as raw streams.
 - **Gear names when they are knowable:** activity summaries and details include `gear_id` plus `gear_name` for bikes, shoes, and other gear when intervals.icu exposes a resolvable gear item; unresolved IDs keep an explicit `gear_resolution` status instead of inventing a name.
 - **Units and scales are explicit:** distances, paces, work, hydration, and related fields use unit-labelled names or `_meta` legends so the model does not have to infer whether a value is kilometres, miles, kilojoules, or a 1-5 rating. Activity fuel fields distinguish active `calories_burned`, athlete-logged `carbs_ingested_g`, upstream `carbs_used_g`, and wellness `kcal_consumed` intake.
+- **Profile readiness warnings:** athlete-profile reads flag missing sport thresholds or zones in `_meta.warnings` so the assistant can ask you to update settings before producing threshold- or zone-based analysis and plans.
 - **Delete safety is outside the model's reach:** destructive tools are registered only when the process-level `ICUVISOR_DELETE_MODE` allows them; there is no per-call `confirm` argument for the assistant to invent.
 
 The fastest path on Linux, macOS (without Homebrew), WSL, and CI is the shell installer:
