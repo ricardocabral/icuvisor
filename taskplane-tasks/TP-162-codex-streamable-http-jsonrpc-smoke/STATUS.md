@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -21,13 +21,13 @@
 ### Step 1: Add Streamable HTTP JSON-RPC handshake smoke tests
 **Status:** 🟨 In Progress
 
-- [ ] Initialize response envelope test added
-- [ ] Ping response envelope test added
-- [ ] Raw in-process HTTP wire assertions parse JSON or SSE `data:` envelopes instead of SDK-decoded results
-- [ ] Handshake lifecycle covers initialize, `notifications/initialized` with session ID, then ping using Codex-like headers
-- [ ] Success assertions reject bare payloads and top-level errors before inspecting `result`
-- [ ] Codex-like HTTP headers covered without external process
-- [ ] Targeted MCP tests pass
+- [x] Initialize response envelope test added
+- [x] Ping response envelope test added
+- [x] Raw in-process HTTP wire assertions parse JSON or SSE `data:` envelopes instead of SDK-decoded results
+- [x] Handshake lifecycle covers initialize, `notifications/initialized` with session ID, then ping using Codex-like headers
+- [x] Success assertions reject bare payloads and top-level errors before inspecting `result`
+- [x] Codex-like HTTP headers covered without external process
+- [x] Targeted MCP tests pass
 
 ---
 
@@ -65,6 +65,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
+| R002 | Plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
 
 ---
 
@@ -84,6 +85,8 @@
 | 2026-06-10 12:17 | Step 0 started | Preflight |
 | 2026-06-10 12:17 | Step 0 completed | Required paths and Go module dependencies verified |
 | 2026-06-10 12:17 | Step 1 started | Streamable HTTP JSON-RPC smoke tests |
+| 2026-06-10 12:18 | Step 1 plan reviewed | R001 REVISE, R002 APPROVE after raw-wire checklist hydration |
+| 2026-06-10 12:19 | Targeted MCP tests | `go test ./internal/mcp -run 'Streamable|JSONRPC|Codex|Protocol|Ping|Initialize'` passed |
 
 ---
 
@@ -98,3 +101,4 @@
 Public signal: Montis forum #512 and #516-518 described Codex handshake failure until JSON-RPC 2.0 wrapping was strict.
 R001 plan review requires raw in-process HTTP assertions against the wire response, parsing current SSE `data:` JSON-RPC envelopes if necessary, and a full initialize/initialized/ping session lifecycle with Codex-like headers.
 | 2026-06-10 12:21 | Review R001 | plan Step 1: REVISE |
+| 2026-06-10 12:23 | Review R002 | plan Step 1: APPROVE |
