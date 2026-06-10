@@ -1,10 +1,10 @@
 # TP-157: get_today current-day freshness regression — Status
 
-**Current Step:** Step 2: Fix filtering or shaping if tests expose stale composition
+**Current Step:** Step 3: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -29,17 +29,17 @@
 ---
 
 ### Step 2: Fix filtering or shaping if tests expose stale composition
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Date filtering fixed if needed
-- [ ] Existing wellness stale metadata preserved
-- [ ] Fetch/filter boundaries are defensive against stale rows
-- [ ] Targeted get_today tests pass
+- [x] Date filtering fixed if needed
+- [x] Existing wellness stale metadata preserved
+- [x] Fetch/filter boundaries are defensive against stale rows
+- [x] Targeted get_today tests pass
 
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing
 - [ ] Integration tests (if applicable)
@@ -91,3 +91,4 @@
 
 Public signal: IntervalCoach forum #852-855 described a mixed old/new daily briefing bug.
 | 2026-06-10 11:43 | Review R001 | plan Step 1: APPROVE |
+| 2026-06-10 11:49 | Review R002 | plan Step 2: APPROVE |
