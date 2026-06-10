@@ -17,7 +17,7 @@ import (
 
 const (
 	updateSportSettingsName                    = "update_sport_settings"
-	updateSportSettingsDescription             = "Update one sport's FTP, threshold heart rate, threshold pace, or zone definitions. Threshold-only writes are allowed in safe/full modes; supplying zones overwrites prior zone definitions and requires ICUVISOR_DELETE_MODE=full."
+	updateSportSettingsDescription             = "Update one sport's FTP, threshold heart rate, threshold pace, or zone definitions referenced by get_athlete_profile _meta.warnings. Threshold-only writes are allowed in safe/full modes; supplying zones overwrites prior zone definitions and requires ICUVISOR_DELETE_MODE=full."
 	invalidUpdateSportSettingsArgumentsMessage = "invalid update_sport_settings arguments; provide sport, effective_date, and at least one documented threshold or gated zones field"
 	writeSportSettingsMessage                  = "could not update sport settings; check intervals.icu credentials, athlete ID, sport, effective date, and writable fields"
 	zoneOverwriteGateMessage                   = "zones overwrite prior sport-setting zone definitions; set ICUVISOR_DELETE_MODE=full to allow this destructive argument"

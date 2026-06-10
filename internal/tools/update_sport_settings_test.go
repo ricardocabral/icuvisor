@@ -27,6 +27,9 @@ func TestUpdateSportSettingsSchemaDocumentsInputsAndZoneGate(t *testing.T) {
 	t.Parallel()
 
 	tool := newUpdateSportSettingsTool(&fakeSportSettingsWriterClient{}, &fakeProfileClient{}, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
+	if !strings.Contains(tool.Description, "get_athlete_profile _meta.warnings") || strings.Contains(strings.ToLower(tool.Description), "credential") {
+		t.Fatalf("description = %q, want profile-warning guidance without credential wording", tool.Description)
+	}
 	schema := tool.InputSchema.(map[string]any)
 	required := schema["required"].([]string)
 	if !containsString(required, "sport") || !containsString(required, "effective_date") {
