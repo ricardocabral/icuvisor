@@ -1,6 +1,6 @@
 # TP-158: Sport-settings profile readiness warnings — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Design and add readiness warning shape
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
@@ -11,7 +11,7 @@
 ---
 
 ### Step 0: Preflight
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -19,7 +19,7 @@
 ---
 
 ### Step 1: Design and add readiness warning shape
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `_meta.warnings` warning codes added
 - [ ] Warnings are terse, sport-scoped, and non-sensitive
