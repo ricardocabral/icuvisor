@@ -1,10 +1,10 @@
 # TP-157: get_today current-day freshness regression — Status
 
-**Current Step:** Step 1: Add explicit freshness regression tests
+**Current Step:** Step 2: Fix filtering or shaping if tests expose stale composition
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -19,17 +19,17 @@
 ---
 
 ### Step 1: Add explicit freshness regression tests
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Fixed timezone/as_of test added
-- [ ] Previous-day activity/event/fitness rows excluded
-- [ ] Partial or absent wellness does not backfill yesterday
-- [ ] Targeted get_today tests pass
+- [x] Fixed timezone/as_of test added
+- [x] Previous-day activity/event/fitness rows excluded
+- [x] Partial or absent wellness does not backfill yesterday
+- [x] Targeted get_today tests pass
 
 ---
 
 ### Step 2: Fix filtering or shaping if tests expose stale composition
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Date filtering fixed if needed
 - [ ] Existing wellness stale metadata preserved
@@ -90,3 +90,4 @@
 ## Notes
 
 Public signal: IntervalCoach forum #852-855 described a mixed old/new daily briefing bug.
+| 2026-06-10 11:43 | Review R001 | plan Step 1: APPROVE |

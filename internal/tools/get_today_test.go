@@ -62,6 +62,114 @@ func TestGetTodayRegistrationMetadata(t *testing.T) {
 	}
 }
 
+func TestGetTodayFreshDigestUsesFixedAthleteLocalToday(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeTodayClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		fitnessRows:       decodeSummaries(t, `[{"date":"2026-05-23","fitness":70,"fatigue":79,"form":-9},{"date":"2026-05-24","fitness":72,"fatigue":81,"form":-9}]`),
+		wellnessRows:      []intervals.Wellness{decodeWellnessRow(t, `{"id":"2026-05-24","feel":4}`)},
+		activities: decodeActivityPage(t,
+			`{"id":"yesterday-activity","name":"Stale Run","type":"Run","start_date_local":"2026-05-23T08:15:00","distance":5000}`,
+			`{"id":"today-activity","name":"Morning Ride","type":"Ride","start_date_local":"2026-05-24T08:15:00","distance":30000}`,
+		),
+		events: decodeToolEvents(t,
+			`{"id":"yesterday-event","category":"WORKOUT","name":"Stale Workout","start_date_local":"2026-05-23"}`,
+			`{"id":"today-event","category":"WORKOUT","name":"Endurance","start_date_local":"2026-05-24"}`,
+		),
+	}
+	tool := newGetTodayToolWithClock(client, client, nil, nil, nil, nil, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+
+	assertTodayCalls(t, client, "2026-05-24")
+	meta := out["_meta"].(map[string]any)
+	if meta["date"] != "2026-05-24" || meta["as_of"] != "2026-05-24T23:30:00-03:00" || meta["as_of_date"] != "2026-05-24" || meta["timezone"] != "America/Sao_Paulo" {
+		t.Fatalf("meta = %#v, want fixed athlete-local today", meta)
+	}
+	fitness := out["fitness"].([]any)
+	if len(fitness) != 1 || fitness[0].(map[string]any)["date"] != "2026-05-24" {
+		t.Fatalf("fitness = %#v, want only today row", fitness)
+	}
+	if got := out["wellness"].([]any)[0].(map[string]any)["date"]; got != "2026-05-24" {
+		t.Fatalf("wellness date = %#v, want today", got)
+	}
+	activities := out["completed_activities"].([]any)
+	if len(activities) != 1 || activities[0].(map[string]any)["activity_id"] != "today-activity" || !strings.HasPrefix(activities[0].(map[string]any)["start_date_local"].(string), "2026-05-24") {
+		t.Fatalf("completed_activities = %#v, want only today row", activities)
+	}
+	planned := out["planned_events"].([]any)
+	if len(planned) != 1 || planned[0].(map[string]any)["event_id"] != "today-event" || planned[0].(map[string]any)["start_date_local"] != "2026-05-24" {
+		t.Fatalf("planned_events = %#v, want only today row", planned)
+	}
+}
+
+func TestGetTodayDoesNotBackfillYesterdayWellness(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		rows         []intervals.Wellness
+		wantCount    int
+		wantFeel     any
+		wantNoWeight bool
+	}{
+		{
+			name:         "absent today excludes yesterday",
+			rows:         []intervals.Wellness{decodeWellnessRow(t, `{"id":"2026-05-23","feel":5,"sleepQuality":4,"weight":70}`)},
+			wantCount:    0,
+			wantNoWeight: true,
+		},
+		{
+			name: "partial today excludes richer yesterday",
+			rows: []intervals.Wellness{
+				decodeWellnessRow(t, `{"id":"2026-05-23","feel":5,"sleepQuality":4,"weight":70}`),
+				decodeWellnessRow(t, `{"id":"2026-05-24","feel":2}`),
+			},
+			wantCount:    1,
+			wantFeel:     float64(2),
+			wantNoWeight: true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &fakeTodayClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+				wellnessRows:      tc.rows,
+			}
+			tool := newGetTodayToolWithClock(client, client, nil, nil, nil, nil, "test", "UTC", false, fixedTodayClock())
+
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			out := resultMap(t, result)
+			wellness := out["wellness"].([]any)
+			if len(wellness) != tc.wantCount {
+				t.Fatalf("wellness = %#v, want %d today rows", wellness, tc.wantCount)
+			}
+			if tc.wantCount == 0 {
+				return
+			}
+			row := wellness[0].(map[string]any)
+			if row["date"] != "2026-05-24" || row["feel"] != tc.wantFeel {
+				t.Fatalf("wellness row = %#v, want partial today row only", row)
+			}
+			if tc.wantNoWeight {
+				if _, ok := row["weight"]; ok {
+					t.Fatalf("wellness row backfilled yesterday weight: %#v", row)
+				}
+			}
+		})
+	}
+}
+
 func TestGetTodayDigestUsesAthleteLocalDateAndSourceShapes(t *testing.T) {
 	t.Parallel()
 
