@@ -73,6 +73,36 @@ func TestAddUnavailableDateRangeRegistrationMetadata(t *testing.T) {
 	if _, ok := schema["input_examples"]; !ok {
 		t.Fatalf("schema missing input_examples: %#v", schema)
 	}
+	required := schema["required"].([]string)
+	if strings.Join(required, ",") != "start_date,end_date,category" {
+		t.Fatalf("required = %#v, want start_date/end_date/category", required)
+	}
+	properties := schema["properties"].(map[string]any)
+	category := properties["category"].(map[string]any)
+	enum := category["enum"].([]string)
+	accepted := map[string]bool{}
+	for _, value := range enum {
+		accepted[value] = true
+	}
+	for _, want := range []string{"HOLIDAY", "SICK", "INJURED", "VACATION", "PTO", "TIME_OFF"} {
+		if !accepted[want] {
+			t.Fatalf("category enum = %#v, missing %s", enum, want)
+		}
+	}
+	for _, forbidden := range []string{"WORKOUT", "NOTE", "TRAVEL", "AWAY"} {
+		if accepted[forbidden] {
+			t.Fatalf("category enum = %#v, should not include %s", enum, forbidden)
+		}
+	}
+	if properties["include_full"].(map[string]any)["default"] != false {
+		t.Fatalf("include_full schema = %#v, want default false", properties["include_full"])
+	}
+	for _, field := range []string{"start_date", "end_date", "category"} {
+		description, _ := properties[field].(map[string]any)["description"].(string)
+		if description == "" {
+			t.Fatalf("%s schema missing description: %#v", field, properties[field])
+		}
+	}
 }
 
 func TestAddUnavailableDateRangeExternalIDContract(t *testing.T) {
@@ -389,12 +419,16 @@ func TestAddUnavailableDateRangeRejectsInvalidInputs(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			client.listCalls = nil
 			_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.args)})
 			if err == nil {
 				t.Fatal("Handler() error = nil, want invalid input error")
 			}
 			if message, ok := PublicErrorMessage(err); !ok || !strings.Contains(message, "invalid add_unavailable_date_range arguments") {
 				t.Fatalf("PublicErrorMessage(%v) = %q/%v, want invalid add_unavailable_date_range arguments", err, message, ok)
+			}
+			if len(client.listCalls) != 0 {
+				t.Fatalf("ListEvents calls = %#v, want validation failure before preflight I/O", client.listCalls)
 			}
 		})
 	}

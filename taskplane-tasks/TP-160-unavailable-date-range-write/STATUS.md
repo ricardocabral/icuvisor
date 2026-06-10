@@ -40,8 +40,8 @@
 - [x] R007 tests assert range preflight uses max event limit
 - [x] R007 tests cover malformed/impossible date validation
 - [x] R007 trailing whitespace fixed in review artifacts
-- [ ] R008 tests pin required schema fields, category enum, include_full default, and descriptions
-- [ ] R008 invalid input tests assert no preflight list calls
+- [x] R008 tests pin required schema fields, category enum, include_full default, and descriptions
+- [x] R008 invalid input tests assert no preflight list calls
 
 ---
 
