@@ -232,6 +232,14 @@
     "anchor": "add_or_update_event"
   },
   {
+    "name": "add_unavailable_date_range",
+    "group": "events",
+    "tier": "core",
+    "safety": "write",
+    "summary": "Create unavailable calendar markers across an inclusive athlete-local date range for Sick, Injured, or Holiday/time-off blocks.",
+    "anchor": "add_unavailable_date_range"
+  },
+  {
     "name": "delete_event",
     "group": "events",
     "tier": "full",
@@ -396,7 +404,7 @@
     "group": "settings",
     "tier": "full",
     "safety": "write",
-    "summary": "Update one sport's FTP, threshold heart rate, threshold pace, or zone definitions.",
+    "summary": "Update one sport's FTP, threshold heart rate, threshold pace, or zone definitions referenced by get_athlete_profile _meta.warnings.",
     "anchor": "update_sport_settings"
   },
   {
