@@ -60,8 +60,8 @@ type fitnessProjectionPlannedLoad struct {
 }
 
 type fitnessProjectionWeeklyPlanTarget struct {
-	WeekStartDate string  `json:"week_start_date"`
-	TrainingLoad  float64 `json:"training_load"`
+	WeekStartDate string   `json:"week_start_date"`
+	TrainingLoad  *float64 `json:"training_load"`
 }
 
 type fitnessProjectionSummary struct {
@@ -188,7 +188,7 @@ func analysisProjectionPlannedLoads(loads []fitnessProjectionPlannedLoad) []anal
 func analysisProjectionWeeklyTargets(targets []fitnessProjectionWeeklyPlanTarget) []analysis.FitnessProjectionWeeklyTarget {
 	out := make([]analysis.FitnessProjectionWeeklyTarget, 0, len(targets))
 	for _, target := range targets {
-		out = append(out, analysis.FitnessProjectionWeeklyTarget{WeekStartDate: strings.TrimSpace(target.WeekStartDate), TrainingLoad: target.TrainingLoad})
+		out = append(out, analysis.FitnessProjectionWeeklyTarget{WeekStartDate: strings.TrimSpace(target.WeekStartDate), TrainingLoad: *target.TrainingLoad})
 	}
 	return out
 }
@@ -358,7 +358,11 @@ func validateProjectionWeeklyPlanTargets(startDate string, horizonDays int, targ
 		if weekEnd.Before(firstProjected) || weekStart.After(lastProjected) {
 			return fmt.Errorf("weekly_plan_targets week_start_date %s must overlap the projection horizon", weekStartDate)
 		}
-		if target.TrainingLoad < 0 || target.TrainingLoad > maxProjectionWeeklyTargetLoad || math.IsNaN(target.TrainingLoad) || math.IsInf(target.TrainingLoad, 0) {
+		if target.TrainingLoad == nil {
+			return fmt.Errorf("weekly_plan_targets training_load for %s is required", weekStartDate)
+		}
+		trainingLoad := *target.TrainingLoad
+		if trainingLoad < 0 || trainingLoad > maxProjectionWeeklyTargetLoad || math.IsNaN(trainingLoad) || math.IsInf(trainingLoad, 0) {
 			return fmt.Errorf("weekly_plan_targets training_load for %s must be between 0 and %d", weekStartDate, maxProjectionWeeklyTargetLoad)
 		}
 	}

@@ -50,7 +50,7 @@
 - [x] Schema snapshot refreshed
 - [x] Targeted projection/training-plan tests pass
 - [x] R007 generated tool-schema docs refreshed
-- [ ] R008 missing weekly target training_load rejected
+- [x] R008 missing weekly target training_load rejected
 
 ---
 
@@ -105,6 +105,7 @@
 | 2026-06-10 | Step 1 R004 revisions | Corrected recovery-week timing and weekly-target filled-day expected count; targeted tests still fail only on missing bridge support |
 | 2026-06-10 | Step 2 implementation | Added `weekly_plan_targets` request/schema bridge, deterministic analyzer fill with explicit-load precedence, metadata counts/source_tools, refreshed schema snapshot, and targeted tests pass |
 | 2026-06-10 | Step 2 R007 revision | Regenerated website and gendocs tool-schema data/goldens; focused gendocs/projection/schema tests pass |
+| 2026-06-10 | Step 2 R008 revision | Added required weekly target `training_load` decoding validation and regression test; focused projection/gendocs/schema tests pass |
 
 ---
 
