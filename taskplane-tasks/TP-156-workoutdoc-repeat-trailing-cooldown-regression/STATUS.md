@@ -1,7 +1,7 @@
 # TP-156: WorkoutDoc repeat plus trailing cooldown regression — Status
 
 **Current Step:** Step 4: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-10
 **Review Level:** 1
 **Review Counter:** 3
@@ -49,11 +49,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `CHANGELOG.md` updated
-- [ ] Fixture README accurate
-- [ ] Discoveries logged
+- [x] `CHANGELOG.md` updated
+- [x] Fixture README accurate
+- [x] Discoveries logged
 
 ---
 
@@ -68,6 +68,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| New repeat-trailing-cooldown fixture passed with existing parser/serializer; focused assertions were added to make sibling cooldown nesting explicit. | No parser or serializer code change required. | `internal/workoutdoc/workoutdoc_test.go`, `internal/workoutdoc/testdata/07-repeat-trailing-cooldown-*` |
+| No separate integration test target exists for this fixture-only WorkoutDoc regression. | Verified with full `make test`; integration checkbox is not applicable beyond unit/golden coverage. | Step 3 |
 
 ---
 

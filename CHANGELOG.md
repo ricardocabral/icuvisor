@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added WorkoutDoc regression coverage proving a trailing cooldown remains a top-level sibling after a named repeat main set.
+
 ### Changed
 
 - `get_fitness_projection` now accepts `weekly_plan_targets` copied from planning/training-plan context and deterministically distributes each weekly load target across projected days, while explicit `planned_daily_loads` keep precedence and metadata reports the bridge assumptions.
