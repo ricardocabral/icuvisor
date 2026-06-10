@@ -117,6 +117,8 @@
 | 2026-06-10 | Step 3 failure status | Prior targeted and generated-doc failures fixed; full suite is green |
 | 2026-06-10 | Step 3 build | `make build` passed |
 | 2026-06-10 | Step 4 documentation | README, CHANGELOG, and PRD updated; discovery table records no-implicit-fetch training-plan shape decision |
+| 2026-06-10 12:39 | Worker iter 1 | done in 2604s, tools: 144 |
+| 2026-06-10 12:39 | Task complete | .DONE created |
 
 ---
 
