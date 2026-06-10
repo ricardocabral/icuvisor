@@ -66,6 +66,30 @@ func TestAddUnavailableDateRangeRegistrationMetadata(t *testing.T) {
 	}
 }
 
+func TestAddUnavailableDateRangeExternalIDContract(t *testing.T) {
+	t.Parallel()
+
+	base := addUnavailableDateRangeExternalID("SICK", "2026-08-10", "Sick", "Flu")
+	const want = "icuvisor-unavailable-v1-ec9b71719f032f350079e8e8"
+	if base != want {
+		t.Fatalf("external ID = %q, want stable golden %q", base, want)
+	}
+	if len(strings.TrimPrefix(base, "icuvisor-unavailable-v1-")) != 24 {
+		t.Fatalf("external ID = %q, want 24 hex digest chars after prefix", base)
+	}
+	variants := map[string]string{
+		"date":        addUnavailableDateRangeExternalID("SICK", "2026-08-11", "Sick", "Flu"),
+		"category":    addUnavailableDateRangeExternalID("INJURED", "2026-08-10", "Sick", "Flu"),
+		"name":        addUnavailableDateRangeExternalID("SICK", "2026-08-10", "Ill", "Flu"),
+		"description": addUnavailableDateRangeExternalID("SICK", "2026-08-10", "Sick", "Cold"),
+	}
+	for field, got := range variants {
+		if got == base {
+			t.Fatalf("external ID did not change when %s changed: %q", field, got)
+		}
+	}
+}
+
 func TestAddUnavailableDateRangeCreatesInclusivePerDayEvents(t *testing.T) {
 	t.Parallel()
 
@@ -119,7 +143,11 @@ func TestAddUnavailableDateRangeCreatesInclusivePerDayEvents(t *testing.T) {
 		t.Fatalf("event row = %#v, want terse default without full payload", events[0])
 	}
 	meta := out["_meta"].(map[string]any)
-	if meta["operation"] != "create_range" || meta["category"] != "HOLIDAY" || meta["timezone"] != "America/Sao_Paulo" || meta["requested_days"] != float64(3) || meta["created_count"] != float64(3) || meta["skipped_count"] != float64(0) {
+	dateRange := meta["date_range"].(map[string]any)
+	if dateRange["oldest"] != "2026-07-01" || dateRange["newest"] != "2026-07-03" {
+		t.Fatalf("date_range = %#v, want inclusive request bounds", dateRange)
+	}
+	if meta["operation"] != "create_range" || meta["category"] != "HOLIDAY" || meta["timezone"] != "America/Sao_Paulo" || meta["requested_days"] != float64(3) || meta["created_count"] != float64(3) || meta["skipped_count"] != float64(0) || meta["range_cap_days"] != float64(31) || meta["include_full"] != false {
 		t.Fatalf("meta = %#v, want created range counts", meta)
 	}
 }
@@ -132,13 +160,13 @@ func TestAddUnavailableDateRangeSkipsRepeatedRangeByGeneratedExternalID(t *testi
 	client := &fakeUnavailableDateRangeClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
 		events: decodeToolEvents(t,
-			`{"id":"evt-sick-1","external_id":"`+firstID+`","category":"SICK","type":"Unavailable","name":"Sick","start_date_local":"2026-08-10","description":"Flu"}`,
-			`{"id":"evt-sick-2","external_id":"`+secondID+`","category":"SICK","type":"Unavailable","name":"Sick","start_date_local":"2026-08-11","description":"Flu"}`,
+			`{"id":"evt-sick-1","external_id":"`+firstID+`","category":"SICK","type":"Unavailable","name":"Sick","start_date_local":"2026-08-10","description":"Flu","raw_marker":"first"}`,
+			`{"id":"evt-sick-2","external_id":"`+secondID+`","category":"SICK","type":"Unavailable","name":"Sick","start_date_local":"2026-08-11","description":"Flu","raw_marker":"second"}`,
 		),
 	}
 	tool := newAddUnavailableDateRangeTool(client, client, "test", "UTC", false)
 
-	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"2026-08-10","end_date":"2026-08-11","category":"sickness","description":"Flu"}`)})
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"2026-08-10","end_date":"2026-08-11","category":"sickness","description":"Flu","include_full":true}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
@@ -152,8 +180,20 @@ func TestAddUnavailableDateRangeSkipsRepeatedRangeByGeneratedExternalID(t *testi
 	if out["status"] != "skipped" {
 		t.Fatalf("status = %#v, want skipped", out["status"])
 	}
+	events := out["events"].([]any)
+	if full := events[0].(map[string]any)["full"].(map[string]any); full["raw_marker"] != "first" {
+		t.Fatalf("skipped event row = %#v, want full raw payload", events[0])
+	}
 	meta := out["_meta"].(map[string]any)
-	if meta["created_count"] != float64(0) || meta["skipped_count"] != float64(2) {
+	dateRange := meta["date_range"].(map[string]any)
+	if dateRange["oldest"] != "2026-08-10" || dateRange["newest"] != "2026-08-11" {
+		t.Fatalf("date_range = %#v, want inclusive request bounds", dateRange)
+	}
+	skipped := meta["skipped"].([]any)
+	if len(skipped) != 2 || skipped[0].(map[string]any)["event_id"] != "evt-sick-1" || skipped[0].(map[string]any)["date"] != "2026-08-10" || skipped[0].(map[string]any)["reason"] != "matching_external_id" {
+		t.Fatalf("skipped = %#v, want per-day duplicate details", skipped)
+	}
+	if meta["created_count"] != float64(0) || meta["skipped_count"] != float64(2) || meta["include_full"] != true || meta["range_cap_days"] != float64(31) {
 		t.Fatalf("meta = %#v, want all skipped", meta)
 	}
 }
@@ -187,7 +227,15 @@ func TestAddUnavailableDateRangeCreatesMissingDaysAndReportsConflicts(t *testing
 		t.Fatalf("status = %#v, want partial", out["status"])
 	}
 	meta := out["_meta"].(map[string]any)
-	if meta["created_count"] != float64(1) || meta["skipped_count"] != float64(1) || meta["conflict_count"] != float64(1) {
+	skipped := meta["skipped"].([]any)
+	if len(skipped) != 1 || skipped[0].(map[string]any)["event_id"] != "evt-injured" || skipped[0].(map[string]any)["reason"] != "matching_external_id" {
+		t.Fatalf("skipped = %#v, want duplicate unavailable detail", skipped)
+	}
+	conflicts := meta["same_day_conflicts"].([]any)
+	if len(conflicts) != 1 || conflicts[0].(map[string]any)["event_id"] != "evt-workout" || conflicts[0].(map[string]any)["date"] != "2026-09-01" || conflicts[0].(map[string]any)["reason"] != "existing_event_on_date" {
+		t.Fatalf("same_day_conflicts = %#v, want same-day workout conflict detail", conflicts)
+	}
+	if meta["created_count"] != float64(1) || meta["skipped_count"] != float64(1) || meta["conflict_count"] != float64(1) || meta["range_cap_days"] != float64(31) {
 		t.Fatalf("meta = %#v, want mixed counts", meta)
 	}
 }
@@ -211,6 +259,10 @@ func TestAddUnavailableDateRangeMatchingExternalIDWithDifferentFieldsIsConflict(
 		t.Fatalf("write calls = %#v, want drifted external_id treated as conflict and new write attempted", client.calls)
 	}
 	meta := resultMap(t, result)["_meta"].(map[string]any)
+	conflicts := meta["same_day_conflicts"].([]any)
+	if len(conflicts) != 1 || conflicts[0].(map[string]any)["event_id"] != "evt-drifted" || conflicts[0].(map[string]any)["reason"] != "existing_event_on_date" {
+		t.Fatalf("same_day_conflicts = %#v, want drifted external_id reported as non-duplicate conflict", conflicts)
+	}
 	if meta["conflict_count"] != float64(1) || meta["created_count"] != float64(1) {
 		t.Fatalf("meta = %#v, want one conflict plus created marker", meta)
 	}
