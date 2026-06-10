@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -21,10 +21,10 @@
 ### Step 1: Design and add readiness warning shape
 **Status:** 🟨 In Progress
 
-- [ ] `_meta.warnings` warning codes added
-- [ ] Warnings are terse, sport-scoped, and non-sensitive
-- [ ] Warnings provide actionable planning preflight context
-- [ ] Targeted profile/sport tests pass
+- [x] `_meta.warnings` warning codes added
+- [x] Warnings are terse, sport-scoped, and non-sensitive
+- [x] Warnings provide actionable planning preflight context
+- [x] Targeted profile/sport tests pass
 
 ---
 
@@ -91,3 +91,4 @@
 ## Notes
 
 Public signals: IcuSync forum #263 and LeCoach forum #406 highlight threshold/zone readiness problems.
+| 2026-06-10 11:43 | Review R001 | plan Step 1: APPROVE |
