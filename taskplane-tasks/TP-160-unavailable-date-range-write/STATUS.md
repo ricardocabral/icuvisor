@@ -1,6 +1,6 @@
 # TP-160: Unavailable date-range write convenience — Status
 
-**Current Step:** Step 1: Design the range-write contract
+**Current Step:** Step 2: Implement the write convenience and catalog integration
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
@@ -46,7 +46,7 @@
 ---
 
 ### Step 2: Implement the write convenience and catalog integration
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 > ⚠️ Hydrate: Expand after inspecting current event write helpers, category normalization, and registry conventions.
 
@@ -55,6 +55,8 @@
 - [ ] Safety protections preserved
 - [ ] Targeted tools/MCP/toolcheck tests pass
 - [ ] New write tool satisfies schema stability, catalog tier, `examples`, and `input_examples` invariants
+- [ ] Per-day idempotency, duplicate, conflict, and partial failure semantics implemented against existing event helpers
+- [ ] Schema snapshots, catalog hash, toolcatalog ACL, and core/full toolset surfaces updated
 
 ---
 
