@@ -1,10 +1,10 @@
 # TP-156: WorkoutDoc repeat plus trailing cooldown regression — Status
 
-**Current Step:** Step 3: Testing & Verification
+**Current Step:** Step 4: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** S
 
@@ -39,17 +39,17 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] FULL test suite passing
-- [ ] Integration tests (if applicable)
-- [ ] All failures fixed
-- [ ] Build passes
+- [x] FULL test suite passing
+- [x] Integration tests (if applicable)
+- [x] All failures fixed
+- [x] Build passes
 
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `CHANGELOG.md` updated
 - [ ] Fixture README accurate
@@ -92,3 +92,4 @@
 Public signal: Montis forum #536 reported cooldown interpreted inside every repeat after description flattening.
 | 2026-06-10 12:42 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-10 12:46 | Review R002 | plan Step 2: APPROVE |
+| 2026-06-10 12:48 | Review R003 | plan Step 3: APPROVE |
