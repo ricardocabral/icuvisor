@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -21,12 +21,12 @@
 ### Step 1: Add classifier states and fixture coverage
 **Status:** 🟨 In Progress
 
-- [ ] Add `manual_added` and `mixed` states in the classifier
-- [ ] Guard against overclassifying missing raw evidence as `manual_added`
-- [ ] Document/test explicit precedence before group-id heuristic before fallback
-- [ ] Add regression tests for grouped, ungrouped, mixed, structured, and device-lap cases
-- [ ] Preserve existing precedence behavior
-- [ ] Targeted analysis tests pass
+- [x] Add `manual_added` and `mixed` states in the classifier
+- [x] Guard against overclassifying missing raw evidence as `manual_added`
+- [x] Document/test explicit precedence before group-id heuristic before fallback
+- [x] Add regression tests for grouped, ungrouped, mixed, structured, and device-lap cases
+- [x] Preserve existing precedence behavior
+- [x] Targeted analysis tests pass
 
 ---
 
@@ -93,3 +93,4 @@
 
 Public signal: IcuSync forum #265-266 reports auto-detected intervals have `group_id`; manually added intervals do not.
 | 2026-06-10 11:43 | Review R001 | plan Step 1: REVISE |
+| 2026-06-10 11:44 | Review R002 | plan Step 1: APPROVE |
