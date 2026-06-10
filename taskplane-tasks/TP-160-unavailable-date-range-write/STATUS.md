@@ -33,9 +33,9 @@
 - [x] R005 tests pin external ID fingerprint independently
 - [x] R005 tests assert response date_range/range_cap/skipped/conflict details
 - [x] R005 tests cover include_full on skipped duplicate rows
-- [ ] R006 tests ensure preflight lists all categories for same-day conflicts
-- [ ] R006 tests cover exact duplicate skip without generated external_id
-- [ ] R006 tests cover custom trimmed name write/idempotency contract
+- [x] R006 tests ensure preflight lists all categories for same-day conflicts
+- [x] R006 tests cover exact duplicate skip without generated external_id
+- [x] R006 tests cover custom trimmed name write/idempotency contract
 
 ---
 
