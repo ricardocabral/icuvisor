@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -19,7 +19,7 @@
 ---
 
 ### Step 1: Design and add readiness warning shape
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] `_meta.warnings` warning codes added
 - [x] Warnings are terse, sport-scoped, and non-sensitive
@@ -95,3 +95,4 @@
 Public signals: IcuSync forum #263 and LeCoach forum #406 highlight threshold/zone readiness problems.
 | 2026-06-10 11:43 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-10 11:48 | Review R002 | code Step 1: UNKNOWN |
+| 2026-06-10 11:53 | Review R003 | code Step 1: APPROVE |
