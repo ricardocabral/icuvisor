@@ -1,6 +1,6 @@
 # TP-160: Unavailable date-range write convenience — Status
 
-**Current Step:** Step 3: Testing & Verification
+**Current Step:** Step 4: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
@@ -74,12 +74,12 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] `README.md` updated
-- [ ] PRD updated if catalog changed
-- [ ] `CHANGELOG.md` updated
-- [ ] Discoveries logged
+- [x] `README.md` updated
+- [x] PRD updated if catalog changed
+- [x] `CHANGELOG.md` updated
+- [x] Discoveries logged
 
 ---
 
@@ -109,6 +109,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| No out-of-scope discoveries during TP-160. | N/A | N/A |
 
 ---
 

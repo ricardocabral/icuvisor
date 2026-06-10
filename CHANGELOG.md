@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `add_unavailable_date_range` for retry-safe Sick, Injured, and Holiday/time-off calendar blocks across inclusive date ranges, with duplicate skipping and same-day conflict metadata.
+
 ### Fixed
 
 - Hardened `get_today` so athlete-local current-day metadata cannot be combined with previous-day fitness, wellness, activity, or event rows when upstream returns stale rows around morning partial/absent wellness.
