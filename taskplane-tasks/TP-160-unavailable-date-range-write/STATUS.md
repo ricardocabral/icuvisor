@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -30,6 +30,9 @@
 - [x] R004 tests cover range query bounds and deterministic external IDs
 - [x] R004 tests cover external-ID-with-different-fields conflicts and duplicate-plus-conflict same-day scans
 - [x] R004 tests cover default terse and include_full row shaping
+- [ ] R005 tests pin external ID fingerprint independently
+- [ ] R005 tests assert response date_range/range_cap/skipped/conflict details
+- [ ] R005 tests cover include_full on skipped duplicate rows
 
 ---
 
@@ -74,6 +77,7 @@
 | R002 | Plan | Step 1 | REVISE | `.reviews/R002-plan-step1.md` |
 | R003 | Plan | Step 1 | APPROVE | `.reviews/R003-plan-step1.md` |
 | R004 | Code | Step 1 | REVISE | `.reviews/R004-code-step1.md` |
+| R005 | Code | Step 1 | REVISE | `.reviews/R005-code-step1.md` |
 
 ---
 
@@ -95,6 +99,7 @@
 | 2026-06-10 12:01 | Review R002 | plan Step 1: REVISE |
 | 2026-06-10 12:06 | Review R003 | plan Step 1: APPROVE |
 | 2026-06-10 12:10 | Review R004 | code Step 1: REVISE |
+| 2026-06-10 12:15 | Review R005 | code Step 1: REVISE |
 
 ---
 
