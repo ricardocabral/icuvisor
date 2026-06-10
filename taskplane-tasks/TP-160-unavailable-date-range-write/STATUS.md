@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 1
 **Size:** M
 
@@ -50,13 +50,13 @@
 
 > ⚠️ Hydrate: Expand after inspecting current event write helpers, category normalization, and registry conventions.
 
-- [ ] Range write implemented with validation
-- [ ] Tool/schema/catalog integration complete
-- [ ] Safety protections preserved
-- [ ] Targeted tools/MCP/toolcheck tests pass
-- [ ] New write tool satisfies schema stability, catalog tier, `examples`, and `input_examples` invariants
-- [ ] Per-day idempotency, duplicate, conflict, and partial failure semantics implemented against existing event helpers
-- [ ] Schema snapshots, catalog hash, toolcatalog ACL, and core/full toolset surfaces updated
+- [x] Range write implemented with validation
+- [x] Tool/schema/catalog integration complete
+- [x] Safety protections preserved
+- [x] Targeted tools/MCP/toolcheck tests pass
+- [x] New write tool satisfies schema stability, catalog tier, `examples`, and `input_examples` invariants
+- [x] Per-day idempotency, duplicate, conflict, and partial failure semantics implemented against existing event helpers
+- [x] Schema snapshots, catalog hash, toolcatalog ACL, and core/full toolset surfaces updated
 
 ---
 
@@ -93,6 +93,7 @@
 | R007 | Code | Step 1 | REVISE | `.reviews/R007-code-step1.md` |
 | R008 | Code | Step 1 | REVISE | `.reviews/R008-code-step1.md` |
 | R009 | Code | Step 1 | APPROVE | n/a |
+| R010 | Plan | Step 2 | APPROVE | `.reviews/R010-plan-step2.md` |
 
 ---
 
@@ -119,6 +120,7 @@
 | 2026-06-10 12:26 | Review R007 | code Step 1: REVISE |
 | 2026-06-10 12:31 | Review R008 | code Step 1: REVISE |
 | 2026-06-10 12:35 | Review R009 | code Step 1: APPROVE |
+| 2026-06-10 12:38 | Review R010 | plan Step 2: APPROVE |
 
 ---
 
