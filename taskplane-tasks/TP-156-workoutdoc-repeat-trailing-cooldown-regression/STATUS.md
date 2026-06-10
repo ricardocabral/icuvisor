@@ -1,10 +1,10 @@
 # TP-156: WorkoutDoc repeat plus trailing cooldown regression — Status
 
-**Current Step:** Step 1: Add golden fixture for repeat main set plus final cooldown
+**Current Step:** Step 2: Fix parser/serializer only if the new fixture fails
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** S
 
@@ -19,17 +19,17 @@
 ---
 
 ### Step 1: Add golden fixture for repeat main set plus final cooldown
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] DSL fixture added
-- [ ] Structured JSON fixture added
-- [ ] Fixture README updated
-- [ ] Targeted WorkoutDoc tests pass
+- [x] DSL fixture added
+- [x] Structured JSON fixture added
+- [x] Fixture README updated
+- [x] Targeted WorkoutDoc tests pass
 
 ---
 
 ### Step 2: Fix parser/serializer only if the new fixture fails
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Parser boundary handling fixed if needed
 - [ ] Serializer boundary handling fixed if needed
@@ -90,3 +90,4 @@
 ## Notes
 
 Public signal: Montis forum #536 reported cooldown interpreted inside every repeat after description flattening.
+| 2026-06-10 12:42 | Review R001 | plan Step 1: APPROVE |

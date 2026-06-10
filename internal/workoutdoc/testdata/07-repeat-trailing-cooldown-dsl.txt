@@ -1,0 +1,5 @@
+- Warmup 10m 60%
+Main Set 3x
+  - Threshold 6m 95-100%
+  - Recovery 2m 55%
+- Cooldown 8m 50%
