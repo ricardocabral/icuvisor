@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -21,9 +21,14 @@
 ### Step 1: Design deterministic weekly-target distribution
 **Status:** 🟨 In Progress
 
+- [ ] Weekly target input shape and no-implicit-fetch contract defined
+- [ ] Week anchoring, partial-week horizon, and start-date exclusion defined
+- [ ] Override formula and fallback-to-modeled behavior defined
 - [ ] Failing bridge tests added
 - [ ] Weekly target distribution assumptions defined
 - [ ] Explicit daily-load precedence covered
+- [ ] Validation/ignore behavior for duplicate/invalid/out-of-horizon weekly targets covered
+- [ ] Tool-level metadata/schema-facing behavior covered
 - [ ] Initial targeted projection/training-plan tests run
 
 ---
@@ -94,3 +99,5 @@
 ## Notes
 
 Public signal: IntervalCoach forum #858-859 noted goal-progress projection falling off after 7 days despite weekly TSS targets.
+Plan review R001 requested concrete target shape, week anchoring/partial week semantics, exact override formula, fallback behavior, validation cases, and metadata/source_tools expectations before tests.
+| 2026-06-10 11:58 | Review R001 | plan Step 1: REVISE |
