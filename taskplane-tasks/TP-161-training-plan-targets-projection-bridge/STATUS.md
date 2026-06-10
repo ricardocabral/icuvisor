@@ -1,10 +1,10 @@
 # TP-161: Bridge training-plan targets into fitness projection — Status
 
-**Current Step:** Step 1: Design deterministic weekly-target distribution
+**Current Step:** Step 2: Implement bridge in projection input and schema
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -19,7 +19,7 @@
 ---
 
 ### Step 1: Design deterministic weekly-target distribution
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Weekly target input shape and no-implicit-fetch contract defined
 - [x] Week anchoring, partial-week horizon, and start-date exclusion defined
@@ -39,7 +39,7 @@
 ---
 
 ### Step 2: Implement bridge in projection input and schema
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 > ⚠️ Hydrate: Expand after inspecting current `get_training_plan` output fields and upstream plan target shapes.
 
@@ -75,6 +75,11 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
+| R002 | Plan | 1 | REVISE | `.reviews/R002-plan-step1.md` |
+| R003 | Plan | 1 | APPROVE | `.reviews/R003-plan-step1.md` |
+| R004 | Code | 1 | REVISE | `.reviews/R004-code-step1.md` |
+| R005 | Code | 1 | APPROVE | `.reviews/R005-code-step1.md` |
 
 ---
 
@@ -114,3 +119,4 @@ Step 1 contract: `get_fitness_projection` will accept explicit `weekly_plan_targ
 | 2026-06-10 12:01 | Review R002 | plan Step 1: REVISE |
 | 2026-06-10 12:04 | Review R003 | plan Step 1: APPROVE |
 | 2026-06-10 12:09 | Review R004 | code Step 1: REVISE |
+| 2026-06-10 12:13 | Review R005 | code Step 1: APPROVE |
