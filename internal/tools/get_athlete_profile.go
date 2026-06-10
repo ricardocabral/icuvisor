@@ -17,7 +17,7 @@ import (
 
 const (
 	getAthleteProfileName                    = "get_athlete_profile"
-	getAthleteProfileDescription             = "Get the configured athlete profile, FTP/thresholds, zones, and sport settings from intervals.icu. Use this for athlete identity, units, timezone, FTP, heart-rate thresholds, pace thresholds, and zone configuration; do not use it for activities, wellness, fitness trends, events, or workouts."
+	getAthleteProfileDescription             = "Get the configured athlete profile, FTP/thresholds, zones, and sport settings from intervals.icu. Use this for athlete identity, units, timezone, FTP, heart-rate thresholds, pace thresholds, zone configuration, and _meta.warnings that flag missing sport settings before analysis or planning; do not use it for activities, wellness, fitness trends, events, or workouts."
 	invalidGetAthleteProfileArgumentsMessage = "invalid get_athlete_profile arguments; only include_full is supported"
 	fetchAthleteProfileMessage               = "could not fetch athlete profile; check intervals.icu credentials and athlete ID"
 )
@@ -128,7 +128,7 @@ func getAthleteProfileOutputSchema() map[string]any {
 	return map[string]any{
 		"type":                 "object",
 		"additionalProperties": true,
-		"description":          "Terse athlete profile with normalized athlete_id, units, timezone, sport thresholds/zones, and _meta.server_version.",
+		"description":          "Terse athlete profile with normalized athlete_id, units, timezone, sport thresholds/zones, _meta.server_version, and _meta.warnings for missing sport thresholds or zones that should be fixed with update_sport_settings before planning.",
 	}
 }
 

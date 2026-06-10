@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ricardocabral/icuvisor/internal/athleteprofile"
 	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 )
@@ -185,6 +186,70 @@ func TestGetAthleteProfileHandlerSuccess(t *testing.T) {
 	}
 	if sport.PaceUnitsSource != "MINS_KM" || sport.PaceDistanceUnit != "km" {
 		t.Fatalf("pace metadata = %q/%q", sport.PaceUnitsSource, sport.PaceDistanceUnit)
+	}
+	if len(response.Meta.Warnings) != 0 {
+		t.Fatalf("warnings = %+v, want none for complete sport settings", response.Meta.Warnings)
+	}
+}
+
+func TestGetAthleteProfileReadinessWarnings(t *testing.T) {
+	t.Parallel()
+
+	response := newGetAthleteProfileResponse(intervals.AthleteWithSportSettings{
+		ID: "i12345",
+		SportSettings: []intervals.SportSettings{
+			{Types: []string{"Ride"}},
+			{Types: []string{"Run"}},
+			{Types: []string{"Swim"}},
+		},
+	}, "test", "UTC", false)
+
+	wantCodes := []string{
+		"missing_power_threshold",
+		"missing_power_zones",
+		"missing_hr_threshold",
+		"missing_hr_zones",
+		"missing_hr_threshold",
+		"missing_hr_zones",
+		"missing_pace_threshold",
+		"missing_pace_zones",
+		"missing_hr_threshold",
+		"missing_hr_zones",
+		"missing_pace_threshold",
+		"missing_pace_zones",
+	}
+	if got := profileWarningCodes(response.Meta.Warnings); !stringSlicesEqual(got, wantCodes) {
+		t.Fatalf("warning codes = %#v, want %#v", got, wantCodes)
+	}
+	for _, warning := range response.Meta.Warnings {
+		if len(warning.SportTypes) != 1 || warning.SportTypes[0] == "" {
+			t.Fatalf("warning sport types = %#v", warning)
+		}
+		if warning.Field == "" || warning.Message == "" || warning.Action == "" {
+			t.Fatalf("warning missing actionable context: %#v", warning)
+		}
+		lower := strings.ToLower(warning.Message + " " + warning.Action)
+		for _, forbidden := range []string{"i12345", "api", "credential", "token", "password"} {
+			if strings.Contains(lower, forbidden) {
+				t.Fatalf("warning leaks forbidden text %q: %#v", forbidden, warning)
+			}
+		}
+	}
+}
+
+func TestGetAthleteProfileReadinessWarningsOmittedWhenComplete(t *testing.T) {
+	t.Parallel()
+
+	response := newGetAthleteProfileResponse(intervals.AthleteWithSportSettings{
+		ID: "i12345",
+		SportSettings: []intervals.SportSettings{
+			{Types: []string{"Ride"}, FTP: 250, LTHR: 170, PowerZones: []int{100, 150}, HRZones: []int{120, 140}},
+			{Types: []string{"Run"}, LTHR: 170, HRZones: []int{120, 140}, ThresholdPace: 300, PaceUnits: "MINS_KM", PaceZones: []float64{360, 330}},
+			{Types: []string{"Swim"}, LTHR: 150, HRZones: []int{120, 140}, ThresholdPace: 90, PaceUnits: "SECS_100M", PaceZones: []float64{100, 90}},
+		},
+	}, "test", "UTC", false)
+	if len(response.Meta.Warnings) != 0 {
+		t.Fatalf("warnings = %+v, want none", response.Meta.Warnings)
 	}
 }
 
@@ -510,6 +575,26 @@ func decodeProfileResult(t *testing.T, result Result) GetAthleteProfileResponse 
 		t.Fatalf("structured/text mismatch: %+v vs %+v", structured, textResponse)
 	}
 	return structured
+}
+
+func profileWarningCodes(warnings []athleteprofile.ReadinessWarning) []string {
+	codes := make([]string, 0, len(warnings))
+	for _, warning := range warnings {
+		codes = append(codes, warning.Code)
+	}
+	return codes
+}
+
+func stringSlicesEqual(got []string, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for i := range got {
+		if got[i] != want[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func resultText(t *testing.T, result Result) string {

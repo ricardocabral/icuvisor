@@ -63,13 +63,23 @@ type Sport struct {
 	Meta                        map[string]any `json:"_meta,omitempty"`
 }
 
+// ReadinessWarning flags missing sport settings that can affect analysis or planning.
+type ReadinessWarning struct {
+	Code       string   `json:"code"`
+	SportTypes []string `json:"sport_types"`
+	Field      string   `json:"field"`
+	Message    string   `json:"message"`
+	Action     string   `json:"action"`
+}
+
 // Meta contains response-shaping metadata.
 type Meta struct {
-	ServerVersion      string `json:"server_version"`
-	AthleteIDFormat    string `json:"athlete_id_format"`
-	TimezoneConvention string `json:"timezone_convention"`
-	PaceConvention     string `json:"pace_convention"`
-	IncludeFull        bool   `json:"include_full"`
+	ServerVersion      string             `json:"server_version"`
+	AthleteIDFormat    string             `json:"athlete_id_format"`
+	TimezoneConvention string             `json:"timezone_convention"`
+	PaceConvention     string             `json:"pace_convention"`
+	IncludeFull        bool               `json:"include_full"`
+	Warnings           []ReadinessWarning `json:"warnings,omitempty"`
 }
 
 // Shape returns the shaped athlete profile used by get_athlete_profile and icuvisor://athlete-profile.
@@ -116,6 +126,7 @@ func NewResponse(profile intervals.AthleteWithSportSettings, version string, tim
 	unitSystem := profileUnitSystem(profile)
 	for _, setting := range profile.SportSettings {
 		response.SportSettings = append(response.SportSettings, profileSport(setting, includeFull, unitSystem))
+		response.Meta.Warnings = append(response.Meta.Warnings, sportReadinessWarnings(setting)...)
 	}
 	return response
 }
@@ -190,6 +201,93 @@ func profileTimezone(profileTimezone string, fallback string) string {
 		return timezone
 	}
 	return strings.TrimSpace(fallback)
+}
+
+func sportReadinessWarnings(setting intervals.SportSettings) []ReadinessWarning {
+	sportTypes := readinessSportTypes(setting)
+	var warnings []ReadinessWarning
+	if isRideSport(sportTypes) {
+		if setting.FTP <= 0 {
+			warnings = append(warnings, readinessWarning("missing_power_threshold", sportTypes, "ftp_watts", "power threshold is missing for this sport", "Use update_sport_settings to set FTP before power-based planning."))
+		}
+		if len(setting.PowerZones) == 0 {
+			warnings = append(warnings, readinessWarning("missing_power_zones", sportTypes, "power_zones_watts", "power zones are missing for this sport", "Use update_sport_settings to set power zones before zone-based planning."))
+		}
+	}
+	if usesHeartRateReadiness(sportTypes) {
+		if setting.LTHR <= 0 && setting.FTHR <= 0 {
+			warnings = append(warnings, readinessWarning("missing_hr_threshold", sportTypes, "lthr_bpm", "heart-rate threshold is missing for this sport", "Use update_sport_settings to set LTHR/FTHR before heart-rate-based planning."))
+		}
+		if len(setting.HRZones) == 0 {
+			warnings = append(warnings, readinessWarning("missing_hr_zones", sportTypes, "hr_zones_bpm", "heart-rate zones are missing for this sport", "Use update_sport_settings to set heart-rate zones before zone-based planning."))
+		}
+	}
+	if usesPaceReadiness(sportTypes) {
+		if setting.ThresholdPace <= 0 && setting.PaceThreshold <= 0 {
+			warnings = append(warnings, readinessWarning("missing_pace_threshold", sportTypes, "threshold_pace", "pace threshold is missing for this sport", "Use update_sport_settings to set threshold pace before pace-based planning."))
+		}
+		if len(setting.PaceZones) == 0 {
+			warnings = append(warnings, readinessWarning("missing_pace_zones", sportTypes, "pace_zones", "pace zones are missing for this sport", "Use update_sport_settings to set pace zones before zone-based planning."))
+		}
+	}
+	return warnings
+}
+
+func readinessWarning(code string, sportTypes []string, field string, message string, action string) ReadinessWarning {
+	return ReadinessWarning{Code: code, SportTypes: sportTypes, Field: field, Message: message, Action: action}
+}
+
+func readinessSportTypes(setting intervals.SportSettings) []string {
+	seen := map[string]bool{}
+	var sportTypes []string
+	for _, value := range append([]string{setting.Type}, setting.Types...) {
+		trimmed := strings.TrimSpace(value)
+		if trimmed == "" || seen[strings.ToLower(trimmed)] {
+			continue
+		}
+		seen[strings.ToLower(trimmed)] = true
+		sportTypes = append(sportTypes, trimmed)
+	}
+	if len(sportTypes) == 0 {
+		return []string{"unknown"}
+	}
+	return sportTypes
+}
+
+func isRideSport(sportTypes []string) bool {
+	for _, sportType := range sportTypes {
+		switch normalizeSportType(sportType) {
+		case "ride", "virtualride", "bike", "bikeride", "cycle", "cycling", "indoorcycling", "mountainbike", "mtb", "gravelride", "ebikeride":
+			return true
+		}
+	}
+	return false
+}
+
+func usesHeartRateReadiness(sportTypes []string) bool {
+	for _, sportType := range sportTypes {
+		switch normalizeSportType(sportType) {
+		case "unknown", "note", "other":
+			continue
+		default:
+			return true
+		}
+	}
+	return false
+}
+
+func usesPaceReadiness(sportTypes []string) bool {
+	for _, sportType := range sportTypes {
+		switch normalizeSportType(sportType) {
+		case "run", "virtualrun", "trailrun", "treadmill", "walk", "hike", "swim", "openwaterswim", "poolswim", "row", "rowing", "kayak", "canoe":
+			return true
+		}
+	}
+	return false
+}
+
+func normalizeSportType(sportType string) string {
+	return strings.ToLower(strings.NewReplacer("_", "", "-", "", " ", "").Replace(strings.TrimSpace(sportType)))
 }
 
 func firstNonEmpty(values ...string) string {
