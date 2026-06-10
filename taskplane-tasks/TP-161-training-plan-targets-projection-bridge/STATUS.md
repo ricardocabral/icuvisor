@@ -33,8 +33,8 @@
 - [x] Validation/ignore behavior for duplicate/invalid/out-of-horizon weekly targets covered
 - [x] Tool-level metadata/schema-facing behavior covered
 - [x] Initial targeted projection/training-plan tests run
-- [ ] R004 recovery-week timing assertion corrected
-- [ ] R004 weekly target filled-day metadata count corrected
+- [x] R004 recovery-week timing assertion corrected
+- [x] R004 weekly target filled-day metadata count corrected
 
 ---
 
@@ -93,6 +93,7 @@
 | 2026-06-10 11:55 | Task started | Runtime V2 lane-runner execution |
 | 2026-06-10 11:55 | Step 0 started | Preflight |
 | 2026-06-10 | Step 1 tests added | `go test ./internal/analysis ./internal/tools -run 'FitnessProjection|TrainingPlan'` fails as expected on missing `WeeklyPlanTargets`/`weekly_plan_targets` bridge support |
+| 2026-06-10 | Step 1 R004 revisions | Corrected recovery-week timing and weekly-target filled-day expected count; targeted tests still fail only on missing bridge support |
 
 ---
 

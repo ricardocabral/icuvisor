@@ -146,7 +146,7 @@ func TestGetFitnessProjectionWeeklyPlanTargetsMetadataAndSources(t *testing.T) {
 		t.Fatalf("source_tools = %#v, want get_fitness and get_training_plan", meta["source_tools"])
 	}
 	assumptions := analyzerMap(t, meta["assumptions"])
-	if assumptions["weekly_plan_target_count"] != float64(2) || assumptions["weekly_plan_target_filled_day_count"] != float64(6) || assumptions["weekly_plan_target_override_count"] != float64(1) {
+	if assumptions["weekly_plan_target_count"] != float64(2) || assumptions["weekly_plan_target_filled_day_count"] != float64(8) || assumptions["weekly_plan_target_override_count"] != float64(1) {
 		t.Fatalf("weekly target assumptions = %#v", assumptions)
 	}
 	if assumptions["weekly_plan_target_week_anchor"] != "athlete-local ISO Monday week_start_date" || !strings.Contains(assumptions["weekly_plan_target_distribution"].(string), "training_load/7") {

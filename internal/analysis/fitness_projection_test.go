@@ -78,7 +78,8 @@ func TestFitnessProjectionUncoveredDatesRetainRecoveryWeekSource(t *testing.T) {
 	}
 
 	assertProjectionPoint(t, projection, "2026-06-02", "weekly_plan_targets", 100)
-	assertProjectionPoint(t, projection, "2026-06-08", "modeled_recovery_week", 50)
+	assertProjectionPoint(t, projection, "2026-06-08", "modeled_ramp", 100)
+	assertProjectionPoint(t, projection, "2026-06-09", "modeled_recovery_week", 50)
 }
 
 type weeklyTargetFixture struct {
