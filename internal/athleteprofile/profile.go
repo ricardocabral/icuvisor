@@ -208,26 +208,26 @@ func sportReadinessWarnings(setting intervals.SportSettings) []ReadinessWarning 
 	var warnings []ReadinessWarning
 	if isRideSport(sportTypes) {
 		if setting.FTP <= 0 {
-			warnings = append(warnings, readinessWarning("missing_power_threshold", sportTypes, "ftp_watts", "power threshold is missing for this sport", "Use update_sport_settings to set FTP before power-based planning."))
+			warnings = append(warnings, readinessWarning("missing_power_threshold", sportTypes, "ftp_watts", "power threshold is missing for this sport", "Use update_sport_settings with ftp for this sport before power-based planning."))
 		}
 		if len(setting.PowerZones) == 0 {
-			warnings = append(warnings, readinessWarning("missing_power_zones", sportTypes, "power_zones_watts", "power zones are missing for this sport", "Use update_sport_settings to set power zones before zone-based planning."))
+			warnings = append(warnings, readinessWarning("missing_power_zones", sportTypes, "power_zones_watts", "power zones are missing for this sport", "Use update_sport_settings with zones kind=power for this sport before zone-based planning."))
 		}
 	}
 	if usesHeartRateReadiness(sportTypes) {
 		if setting.LTHR <= 0 && setting.FTHR <= 0 {
-			warnings = append(warnings, readinessWarning("missing_hr_threshold", sportTypes, "lthr_bpm", "heart-rate threshold is missing for this sport", "Use update_sport_settings to set LTHR/FTHR before heart-rate-based planning."))
+			warnings = append(warnings, readinessWarning("missing_hr_threshold", sportTypes, "lthr_bpm", "heart-rate threshold is missing for this sport", "Use update_sport_settings with threshold_hr for this sport before heart-rate-based planning."))
 		}
 		if len(setting.HRZones) == 0 {
-			warnings = append(warnings, readinessWarning("missing_hr_zones", sportTypes, "hr_zones_bpm", "heart-rate zones are missing for this sport", "Use update_sport_settings to set heart-rate zones before zone-based planning."))
+			warnings = append(warnings, readinessWarning("missing_hr_zones", sportTypes, "hr_zones_bpm", "heart-rate zones are missing for this sport", "Use update_sport_settings with zones kind=hr for this sport before zone-based planning."))
 		}
 	}
 	if usesPaceReadiness(sportTypes) {
 		if setting.ThresholdPace <= 0 && setting.PaceThreshold <= 0 {
-			warnings = append(warnings, readinessWarning("missing_pace_threshold", sportTypes, "threshold_pace", "pace threshold is missing for this sport", "Use update_sport_settings to set threshold pace before pace-based planning."))
+			warnings = append(warnings, readinessWarning("missing_pace_threshold", sportTypes, "threshold_pace", "pace threshold is missing for this sport", "Use update_sport_settings with threshold_pace for this sport before pace-based planning."))
 		}
 		if len(setting.PaceZones) == 0 {
-			warnings = append(warnings, readinessWarning("missing_pace_zones", sportTypes, "pace_zones", "pace zones are missing for this sport", "Use update_sport_settings to set pace zones before zone-based planning."))
+			warnings = append(warnings, readinessWarning("missing_pace_zones", sportTypes, "pace_zones", "pace zones are missing for this sport", "Use update_sport_settings with zones kind=pace for this sport before zone-based planning."))
 		}
 	}
 	return warnings

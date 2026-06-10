@@ -38,8 +38,8 @@
 - [x] Schema snapshot refreshed if needed
 - [x] update_sport_settings guidance/tests reviewed
 - [x] Targeted tool/resource tests pass
-- [ ] Align readiness warning actions with `update_sport_settings` argument fields
-- [ ] Add handler-level get_athlete_profile warning serialization tests including alias-complete settings
+- [x] Align readiness warning actions with `update_sport_settings` argument fields
+- [x] Add handler-level get_athlete_profile warning serialization tests including alias-complete settings
 
 ---
 

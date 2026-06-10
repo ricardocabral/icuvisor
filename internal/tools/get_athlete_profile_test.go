@@ -221,6 +221,14 @@ func TestGetAthleteProfileReadinessWarnings(t *testing.T) {
 	if got := profileWarningCodes(response.Meta.Warnings); !stringSlicesEqual(got, wantCodes) {
 		t.Fatalf("warning codes = %#v, want %#v", got, wantCodes)
 	}
+	wantActionFields := map[string][]string{
+		"missing_power_threshold": {"update_sport_settings", "ftp"},
+		"missing_power_zones":     {"update_sport_settings", "zones", "kind=power"},
+		"missing_hr_threshold":    {"update_sport_settings", "threshold_hr"},
+		"missing_hr_zones":        {"update_sport_settings", "zones", "kind=hr"},
+		"missing_pace_threshold":  {"update_sport_settings", "threshold_pace"},
+		"missing_pace_zones":      {"update_sport_settings", "zones", "kind=pace"},
+	}
 	for _, warning := range response.Meta.Warnings {
 		if len(warning.SportTypes) != 1 || warning.SportTypes[0] == "" {
 			t.Fatalf("warning sport types = %#v", warning)
@@ -228,12 +236,82 @@ func TestGetAthleteProfileReadinessWarnings(t *testing.T) {
 		if warning.Field == "" || warning.Message == "" || warning.Action == "" {
 			t.Fatalf("warning missing actionable context: %#v", warning)
 		}
+		for _, want := range wantActionFields[warning.Code] {
+			if !strings.Contains(warning.Action, want) {
+				t.Fatalf("warning action = %q, want %q for code %s", warning.Action, want, warning.Code)
+			}
+		}
 		lower := strings.ToLower(warning.Message + " " + warning.Action)
-		for _, forbidden := range []string{"i12345", "api", "credential", "token", "password"} {
+		for _, forbidden := range []string{"i12345", "api", "credential", "token", "password", "lthr", "fthr"} {
 			if strings.Contains(lower, forbidden) {
 				t.Fatalf("warning leaks forbidden text %q: %#v", forbidden, warning)
 			}
 		}
+	}
+}
+
+func TestGetAthleteProfileHandlerSerializesReadinessWarnings(t *testing.T) {
+	t.Parallel()
+
+	tool, _ := newTestProfileTool(t, "test", "UTC", intervals.AthleteWithSportSettings{
+		ID: "i12345",
+		SportSettings: []intervals.SportSettings{
+			{Types: []string{"Ride"}},
+			{Types: []string{"Run"}},
+			{Types: []string{"Swim"}},
+		},
+	})
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	response := decodeProfileResult(t, result)
+	wantCodes := []string{
+		"missing_power_threshold",
+		"missing_power_zones",
+		"missing_hr_threshold",
+		"missing_hr_zones",
+		"missing_hr_threshold",
+		"missing_hr_zones",
+		"missing_pace_threshold",
+		"missing_pace_zones",
+		"missing_hr_threshold",
+		"missing_hr_zones",
+		"missing_pace_threshold",
+		"missing_pace_zones",
+	}
+	if got := profileWarningCodes(response.Meta.Warnings); !stringSlicesEqual(got, wantCodes) {
+		t.Fatalf("warning codes = %#v, want %#v", got, wantCodes)
+	}
+	text := resultText(t, result)
+	for _, want := range []string{"\"warnings\"", "\"missing_power_threshold\"", "threshold_hr", "kind=pace"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("serialized response missing %s: %s", want, text)
+		}
+	}
+}
+
+func TestGetAthleteProfileHandlerOmitsReadinessWarningsWhenAliasesComplete(t *testing.T) {
+	t.Parallel()
+
+	tool, _ := newTestProfileTool(t, "test", "UTC", intervals.AthleteWithSportSettings{
+		ID: "i12345",
+		SportSettings: []intervals.SportSettings{
+			{Types: []string{"Ride"}, FTP: 250, FTHR: 170, PowerZones: []int{100, 150}, HRZones: []int{120, 140}},
+			{Types: []string{"Run"}, FTHR: 170, HRZones: []int{120, 140}, PaceThreshold: 300, PaceUnits: "MINS_KM", PaceZones: []float64{360, 330}},
+			{Types: []string{"Swim"}, FTHR: 150, HRZones: []int{120, 140}, PaceThreshold: 90, PaceUnits: "SECS_100M", PaceZones: []float64{100, 90}},
+		},
+	})
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	response := decodeProfileResult(t, result)
+	if len(response.Meta.Warnings) != 0 {
+		t.Fatalf("warnings = %+v, want none", response.Meta.Warnings)
+	}
+	if strings.Contains(resultText(t, result), "\"warnings\"") {
+		t.Fatalf("serialized complete profile includes warnings: %s", resultText(t, result))
 	}
 }
 
