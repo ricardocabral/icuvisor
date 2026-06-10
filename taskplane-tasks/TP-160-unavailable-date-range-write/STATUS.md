@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -33,6 +33,9 @@
 - [x] R005 tests pin external ID fingerprint independently
 - [x] R005 tests assert response date_range/range_cap/skipped/conflict details
 - [x] R005 tests cover include_full on skipped duplicate rows
+- [ ] R006 tests ensure preflight lists all categories for same-day conflicts
+- [ ] R006 tests cover exact duplicate skip without generated external_id
+- [ ] R006 tests cover custom trimmed name write/idempotency contract
 
 ---
 
@@ -78,6 +81,7 @@
 | R003 | Plan | Step 1 | APPROVE | `.reviews/R003-plan-step1.md` |
 | R004 | Code | Step 1 | REVISE | `.reviews/R004-code-step1.md` |
 | R005 | Code | Step 1 | REVISE | `.reviews/R005-code-step1.md` |
+| R006 | Code | Step 1 | REVISE | `.reviews/R006-code-step1.md` |
 
 ---
 
@@ -100,6 +104,7 @@
 | 2026-06-10 12:06 | Review R003 | plan Step 1: APPROVE |
 | 2026-06-10 12:10 | Review R004 | code Step 1: REVISE |
 | 2026-06-10 12:15 | Review R005 | code Step 1: REVISE |
+| 2026-06-10 12:20 | Review R006 | code Step 1: REVISE |
 
 ---
 
