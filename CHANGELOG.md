@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added Codex-compatible Streamable HTTP smoke coverage that verifies `initialize` and `ping` responses are strict JSON-RPC 2.0 envelopes over raw in-process HTTP.
 - Added athlete-profile `_meta.warnings` for missing sport thresholds and zones so assistants can preflight threshold- or zone-based planning before producing advice.
 
 ## [1.0.0] - 2026-06-04

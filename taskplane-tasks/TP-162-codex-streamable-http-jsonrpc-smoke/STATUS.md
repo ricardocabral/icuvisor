@@ -1,7 +1,7 @@
 # TP-162: Codex Streamable HTTP JSON-RPC smoke coverage — Status
 
 **Current Step:** Step 4: Documentation & Delivery
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-06-10
 **Review Level:** 2
 **Review Counter:** 8
@@ -53,11 +53,11 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] `docs/clients/codex-local.md` reviewed/updated if affected
-- [ ] `CHANGELOG.md` updated
-- [ ] Discoveries logged
+- [x] `docs/clients/codex-local.md` reviewed/updated if affected
+- [x] `CHANGELOG.md` updated
+- [x] Discoveries logged
 
 ---
 
@@ -107,6 +107,8 @@
 | 2026-06-10 12:24 | Build | `make build` passed |
 | 2026-06-10 12:24 | Step 3 code reviewed | R008 APPROVE |
 | 2026-06-10 12:24 | Step 4 started | Documentation and delivery |
+| 2026-06-10 12:25 | Documentation updated | Codex Streamable HTTP smoke coverage noted in client docs and changelog |
+| 2026-06-10 12:25 | Task completed | All steps complete |
 
 ---
 
