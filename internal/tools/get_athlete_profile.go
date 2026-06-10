@@ -106,8 +106,8 @@ func shapeGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, 
 	return athleteprofile.Shape(profile, version, timezoneFallback, includeFull, debugMetadata, shapeCfg.options(false, nil, "", false, "", ""))
 }
 
-func newGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, version string, timezoneFallback string, includeFull bool) GetAthleteProfileResponse {
-	return athleteprofile.NewResponse(profile, version, timezoneFallback, includeFull)
+func newGetAthleteProfileResponse(profile intervals.AthleteWithSportSettings, version string, timezoneFallback string) GetAthleteProfileResponse {
+	return athleteprofile.NewResponse(profile, version, timezoneFallback, false)
 }
 
 func getAthleteProfileInputSchema() map[string]any {

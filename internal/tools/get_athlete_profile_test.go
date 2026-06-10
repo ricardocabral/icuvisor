@@ -202,7 +202,7 @@ func TestGetAthleteProfileReadinessWarnings(t *testing.T) {
 			{Types: []string{"Run"}},
 			{Types: []string{"Swim"}},
 		},
-	}, "test", "UTC", false)
+	}, "test", "UTC")
 
 	wantCodes := []string{
 		"missing_power_threshold",
@@ -321,7 +321,7 @@ func TestGetAthleteProfileReadinessWarningsPreferTypesOverLegacyType(t *testing.
 	response := newGetAthleteProfileResponse(intervals.AthleteWithSportSettings{
 		ID:            "i12345",
 		SportSettings: []intervals.SportSettings{{Type: "Ride", Types: []string{"Run"}}},
-	}, "test", "UTC", false)
+	}, "test", "UTC")
 	if got := profileWarningCodes(response.Meta.Warnings); !stringSlicesEqual(got, []string{"missing_hr_threshold", "missing_hr_zones", "missing_pace_threshold", "missing_pace_zones"}) {
 		t.Fatalf("warning codes = %#v", got)
 	}
@@ -334,7 +334,7 @@ func TestGetAthleteProfileReadinessWarningsPreferTypesOverLegacyType(t *testing.
 	fallback := newGetAthleteProfileResponse(intervals.AthleteWithSportSettings{
 		ID:            "i12345",
 		SportSettings: []intervals.SportSettings{{Type: "Ride"}},
-	}, "test", "UTC", false)
+	}, "test", "UTC")
 	if got := profileWarningCodes(fallback.Meta.Warnings); !stringSlicesEqual(got[:2], []string{"missing_power_threshold", "missing_power_zones"}) {
 		t.Fatalf("fallback warning codes = %#v", got)
 	}
@@ -353,7 +353,7 @@ func TestGetAthleteProfileReadinessWarningsSkipNonApplicableSports(t *testing.T)
 			{Types: []string{"Yoga"}},
 			{Types: []string{"Other"}},
 		},
-	}, "test", "UTC", false)
+	}, "test", "UTC")
 	if len(response.Meta.Warnings) != 0 {
 		t.Fatalf("warnings = %+v, want none for non-applicable sports", response.Meta.Warnings)
 	}
@@ -369,7 +369,7 @@ func TestGetAthleteProfileReadinessWarningsOmittedWhenComplete(t *testing.T) {
 			{Types: []string{"Run"}, LTHR: 170, HRZones: []int{120, 140}, ThresholdPace: 300, PaceUnits: "MINS_KM", PaceZones: []float64{360, 330}},
 			{Types: []string{"Swim"}, LTHR: 150, HRZones: []int{120, 140}, ThresholdPace: 90, PaceUnits: "SECS_100M", PaceZones: []float64{100, 90}},
 		},
-	}, "test", "UTC", false)
+	}, "test", "UTC")
 	if len(response.Meta.Warnings) != 0 {
 		t.Fatalf("warnings = %+v, want none", response.Meta.Warnings)
 	}
@@ -460,7 +460,7 @@ func TestGetAthleteProfileResponseShapingVariants(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			response := newGetAthleteProfileResponse(tc.profile, tc.version, normalizeTimezoneFallback(tc.fallback), false)
+			response := newGetAthleteProfileResponse(tc.profile, tc.version, normalizeTimezoneFallback(tc.fallback))
 			if response.Timezone != tc.wantTimezone {
 				t.Fatalf("timezone = %q, want %q", response.Timezone, tc.wantTimezone)
 			}
@@ -497,7 +497,7 @@ func TestGetAthleteProfilePaceConversionPolicies(t *testing.T) {
 			{Types: []string{"Other"}, ThresholdPace: 7, PaceUnits: "FEET", PaceZones: []float64{6, 7}},
 		},
 	}
-	response := newGetAthleteProfileResponse(profile, "test", "UTC", false)
+	response := newGetAthleteProfileResponse(profile, "test", "UTC")
 	if len(response.SportSettings) != 3 {
 		t.Fatalf("sport settings = %d, want 3", len(response.SportSettings))
 	}
