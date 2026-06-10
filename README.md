@@ -27,6 +27,7 @@ icuvisor is designed to keep training-data access simple, local, and easy for an
 - **Gear names when they are knowable:** activity summaries and details include `gear_id` plus `gear_name` for bikes, shoes, and other gear when intervals.icu exposes a resolvable gear item; unresolved IDs keep an explicit `gear_resolution` status instead of inventing a name.
 - **Units and scales are explicit:** distances, paces, work, hydration, and related fields use unit-labelled names or `_meta` legends so the model does not have to infer whether a value is kilometres, miles, kilojoules, or a 1-5 rating. Activity fuel fields distinguish active `calories_burned`, athlete-logged `carbs_ingested_g`, upstream `carbs_used_g`, and wellness `kcal_consumed` intake.
 - **Profile readiness warnings:** athlete-profile reads flag missing sport thresholds or zones in `_meta.warnings` so the assistant can ask you to update settings before producing threshold- or zone-based analysis and plans.
+- **Calendar writes are safety-shaped:** assistants can add workouts, notes, races, and unavailable date ranges such as Sick, Injured, or Holiday blocks; range writes are per-day, retry-safe, and report same-day conflicts without deleting or overwriting existing workouts.
 - **Delete safety is outside the model's reach:** destructive tools are registered only when the process-level `ICUVISOR_DELETE_MODE` allows them; there is no per-call `confirm` argument for the assistant to invent.
 
 The fastest path on Linux, macOS (without Homebrew), WSL, and CI is the shell installer:
@@ -66,6 +67,8 @@ Learn more on how to connect your AI assistant, read the tool catalog, and troub
 ```
 
 The projection `_meta.assumptions` reports target counts, filled days, override counts, the ISO-Monday anchor convention, and `source_tools` adds `get_training_plan` when weekly targets are supplied.
+
+Example calendar write prompt: "Mark me sick from 2026-08-10 through 2026-08-12" maps to `add_unavailable_date_range` with `category: "SICK"`, `start_date`, and `end_date`; use `include_full: true` only when raw upstream event payloads are needed.
 
 ## For developers
 

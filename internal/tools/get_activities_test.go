@@ -353,10 +353,9 @@ func TestGetActivitiesActivityNutritionFields(t *testing.T) {
 func TestGetActivitiesResolvesGearNames(t *testing.T) {
 	t.Parallel()
 
-	client := newFakeActivitiesClient(t, []string{
-		`{"id":"a1","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`,
-	}, "metric")
-	client.gear = decodeToolGear(t, `{"id":"g-1","name":"Race Bike"}`)
+	client := newFakeActivitiesClient(t, nil, "metric")
+	client.activities = loadActivityFixtureFile(t, activityListWithGearFixture)
+	client.gear = loadGearFixtureFile(t, gearListFixture)
 	cache := newGearListCache()
 	tool := newGetActivitiesToolWithGear(client, client, client, cache, nil, nil, "test", "UTC", false)
 
@@ -364,9 +363,20 @@ func TestGetActivitiesResolvesGearNames(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
-	row := resultMap(t, result)["activities"].([]any)[0].(map[string]any)
-	if row["gear_id"] != "g-1" || row["gear_name"] != "Race Bike" || row["gear_resolution"] != gearResolutionResolved {
-		t.Fatalf("row = %#v, want resolved gear", row)
+	rows := resultMap(t, result)["activities"].([]any)
+	var row map[string]any
+	for _, rawRow := range rows {
+		candidate := rawRow.(map[string]any)
+		if candidate["activity_id"] == "a-bike" {
+			row = candidate
+			break
+		}
+	}
+	if row == nil {
+		t.Fatalf("rows = %#v, want a-bike activity row", rows)
+	}
+	if row["gear_id"] != "123" || row["gear_name"] != "Race Bike" || row["gear_resolution"] != gearResolutionResolved {
+		t.Fatalf("row = %#v, want resolved numeric gear", row)
 	}
 	if client.gearCalls != 1 {
 		t.Fatalf("gear calls = %d, want one lookup", client.gearCalls)
@@ -410,12 +420,23 @@ func TestGetActivitiesMarksUnknownUnnamedAndLookupUnavailableGear(t *testing.T) 
 	}
 	rows := resultMap(t, result)["activities"].([]any)
 	statuses := map[string]string{}
+	var unknownRow map[string]any
 	for _, rawRow := range rows {
 		row := rawRow.(map[string]any)
-		statuses[row["activity_id"].(string)] = row["gear_resolution"].(string)
+		activityID := row["activity_id"].(string)
+		statuses[activityID] = row["gear_resolution"].(string)
+		if activityID == "unknown" {
+			unknownRow = row
+		}
 	}
 	if statuses["unknown"] != gearResolutionUnresolved || statuses["unnamed"] != gearResolutionNameMissing {
 		t.Fatalf("statuses = %#v, want unknown and name_missing", statuses)
+	}
+	if unknownRow["gear_id"] != "missing" {
+		t.Fatalf("unknown row = %#v, want unresolved gear ID preserved", unknownRow)
+	}
+	if _, ok := unknownRow["gear_name"]; ok {
+		t.Fatalf("unknown row = %#v, want no misleading gear_name for unresolved gear", unknownRow)
 	}
 
 	client = newFakeActivitiesClient(t, []string{`{"id":"a1","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","gear_id":"g-1"}`}, "metric")

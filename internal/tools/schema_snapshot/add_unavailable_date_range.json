@@ -1,0 +1,94 @@
+{
+  "additionalProperties": false,
+  "examples": [
+    {
+      "category": "HOLIDAY",
+      "description": "Family holiday; no training.",
+      "end_date": "2026-07-03",
+      "start_date": "2026-07-01"
+    },
+    {
+      "category": "SICK",
+      "description": "Flu symptoms; rest only.",
+      "end_date": "2026-08-11",
+      "start_date": "2026-08-10"
+    },
+    {
+      "category": "INJURY",
+      "end_date": "2026-09-05",
+      "name": "Calf injury block",
+      "start_date": "2026-09-01"
+    }
+  ],
+  "input_examples": [
+    {
+      "category": "HOLIDAY",
+      "description": "Family holiday; no training.",
+      "end_date": "2026-07-03",
+      "start_date": "2026-07-01"
+    },
+    {
+      "category": "SICK",
+      "description": "Flu symptoms; rest only.",
+      "end_date": "2026-08-11",
+      "start_date": "2026-08-10"
+    },
+    {
+      "category": "INJURY",
+      "end_date": "2026-09-05",
+      "name": "Calf injury block",
+      "start_date": "2026-09-01"
+    }
+  ],
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "category": {
+      "description": "Closed unavailable category or alias. Accepted canonical values are HOLIDAY, SICK, and INJURED; time-off aliases normalize to HOLIDAY.",
+      "enum": [
+        "HOLIDAY",
+        "SICK",
+        "INJURED",
+        "HOLIDAYS",
+        "VACATION",
+        "PTO",
+        "TIME_OFF",
+        "TIME OFF",
+        "ILL",
+        "ILLNESS",
+        "SICKNESS",
+        "INJURY"
+      ],
+      "type": "string"
+    },
+    "description": {
+      "description": "Optional replacement event description written to each per-day unavailable marker.",
+      "type": "string"
+    },
+    "end_date": {
+      "description": "Required athlete-local inclusive end date as YYYY-MM-DD; same-day ranges are allowed and ranges are capped at 31 days.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw upstream event payloads under each returned event.full; default response uses terse event rows.",
+      "type": "boolean"
+    },
+    "name": {
+      "description": "Optional event title/name. Defaults to Holiday, Sick, or Injured after category normalization; surrounding whitespace is trimmed.",
+      "type": "string"
+    },
+    "start_date": {
+      "description": "Required athlete-local inclusive start date as YYYY-MM-DD.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "start_date",
+    "end_date",
+    "category"
+  ],
+  "type": "object"
+}
