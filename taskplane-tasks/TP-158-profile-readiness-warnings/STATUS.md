@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -25,6 +25,8 @@
 - [x] Warnings are terse, sport-scoped, and non-sensitive
 - [x] Warnings provide actionable planning preflight context
 - [x] Targeted profile/sport tests pass
+- [ ] Prefer sport setting `types` over legacy `type` when deriving warning scope
+- [ ] Restrict heart-rate readiness warnings to applicable endurance sport types
 
 ---
 
@@ -92,3 +94,4 @@
 
 Public signals: IcuSync forum #263 and LeCoach forum #406 highlight threshold/zone readiness problems.
 | 2026-06-10 11:43 | Review R001 | plan Step 1: APPROVE |
+| 2026-06-10 11:48 | Review R002 | code Step 1: UNKNOWN |
