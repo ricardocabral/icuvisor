@@ -1,10 +1,10 @@
 # TP-158: Sport-settings profile readiness warnings — Status
 
-**Current Step:** Step 1: Design and add readiness warning shape
+**Current Step:** Step 2: Propagate to tool/resource schemas and tests
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -31,13 +31,13 @@
 ---
 
 ### Step 2: Propagate to tool/resource schemas and tests
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] get_athlete_profile warnings covered by tests
-- [ ] athlete-profile resource covered if shared shaping applies
-- [ ] Schema snapshot refreshed if needed
-- [ ] update_sport_settings guidance/tests reviewed
-- [ ] Targeted tool/resource tests pass
+- [x] get_athlete_profile warnings covered by tests
+- [x] athlete-profile resource covered if shared shaping applies
+- [x] Schema snapshot refreshed if needed
+- [x] update_sport_settings guidance/tests reviewed
+- [x] Targeted tool/resource tests pass
 
 ---
 
@@ -71,6 +71,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| `go run ./scripts/snapshot_tool_schemas.go` produced no `get_athlete_profile.json` diff because committed snapshots cover input schemas; readiness warnings/output description do not change arguments. | No schema snapshot change needed. | `internal/tools/schema_snapshot/get_athlete_profile.json` |
 
 ---
 
@@ -96,3 +97,4 @@ Public signals: IcuSync forum #263 and LeCoach forum #406 highlight threshold/zo
 | 2026-06-10 11:43 | Review R001 | plan Step 1: APPROVE |
 | 2026-06-10 11:48 | Review R002 | code Step 1: UNKNOWN |
 | 2026-06-10 11:53 | Review R003 | code Step 1: APPROVE |
+| 2026-06-10 11:56 | Review R004 | plan Step 2: APPROVE |
