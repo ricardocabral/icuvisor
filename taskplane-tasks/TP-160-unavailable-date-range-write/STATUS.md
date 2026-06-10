@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -40,6 +40,8 @@
 - [x] R007 tests assert range preflight uses max event limit
 - [x] R007 tests cover malformed/impossible date validation
 - [x] R007 trailing whitespace fixed in review artifacts
+- [ ] R008 tests pin required schema fields, category enum, include_full default, and descriptions
+- [ ] R008 invalid input tests assert no preflight list calls
 
 ---
 
@@ -87,6 +89,7 @@
 | R005 | Code | Step 1 | REVISE | `.reviews/R005-code-step1.md` |
 | R006 | Code | Step 1 | REVISE | `.reviews/R006-code-step1.md` |
 | R007 | Code | Step 1 | REVISE | `.reviews/R007-code-step1.md` |
+| R008 | Code | Step 1 | REVISE | `.reviews/R008-code-step1.md` |
 
 ---
 
@@ -111,6 +114,7 @@
 | 2026-06-10 12:15 | Review R005 | code Step 1: REVISE |
 | 2026-06-10 12:20 | Review R006 | code Step 1: REVISE |
 | 2026-06-10 12:26 | Review R007 | code Step 1: REVISE |
+| 2026-06-10 12:31 | Review R008 | code Step 1: REVISE |
 
 ---
 
