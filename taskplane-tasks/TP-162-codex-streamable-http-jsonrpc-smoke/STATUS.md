@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -23,6 +23,9 @@
 
 - [ ] Initialize response envelope test added
 - [ ] Ping response envelope test added
+- [ ] Raw in-process HTTP wire assertions parse JSON or SSE `data:` envelopes instead of SDK-decoded results
+- [ ] Handshake lifecycle covers initialize, `notifications/initialized` with session ID, then ping using Codex-like headers
+- [ ] Success assertions reject bare payloads and top-level errors before inspecting `result`
 - [ ] Codex-like HTTP headers covered without external process
 - [ ] Targeted MCP tests pass
 
@@ -61,6 +64,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 
 ---
 
@@ -92,3 +96,5 @@
 ## Notes
 
 Public signal: Montis forum #512 and #516-518 described Codex handshake failure until JSON-RPC 2.0 wrapping was strict.
+R001 plan review requires raw in-process HTTP assertions against the wire response, parsing current SSE `data:` JSON-RPC envelopes if necessary, and a full initialize/initialized/ping session lifecycle with Codex-like headers.
+| 2026-06-10 12:21 | Review R001 | plan Step 1: REVISE |
