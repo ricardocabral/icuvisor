@@ -320,7 +320,7 @@ func addUnavailableDateRangeInputExamples() []map[string]any {
 	return []map[string]any{
 		{"start_date": "2026-07-01", "end_date": "2026-07-03", "category": "HOLIDAY", "description": "Family holiday; no training."},
 		{"start_date": "2026-08-10", "end_date": "2026-08-11", "category": "SICK", "description": "Flu symptoms; rest only."},
-		{"start_date": "2026-09-01", "end_date": "2026-09-05", "category": "injury", "name": "Calf injury block"},
+		{"start_date": "2026-09-01", "end_date": "2026-09-05", "category": "INJURY", "name": "Calf injury block"},
 	}
 }
 

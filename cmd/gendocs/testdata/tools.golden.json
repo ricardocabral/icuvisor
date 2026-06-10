@@ -232,6 +232,14 @@
     "anchor": "add_or_update_event"
   },
   {
+    "name": "add_unavailable_date_range",
+    "group": "events",
+    "tier": "core",
+    "safety": "write",
+    "summary": "Create unavailable calendar markers across an inclusive athlete-local date range for Sick, Injured, or Holiday/time-off blocks.",
+    "anchor": "add_unavailable_date_range"
+  },
+  {
     "name": "delete_event",
     "group": "events",
     "tier": "full",

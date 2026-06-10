@@ -57,8 +57,8 @@
 - [x] New write tool satisfies schema stability, catalog tier, `examples`, and `input_examples` invariants
 - [x] Per-day idempotency, duplicate, conflict, and partial failure semantics implemented against existing event helpers
 - [x] Schema snapshots, catalog hash, toolcatalog ACL, and core/full toolset surfaces updated
-- [ ] R011 adversarial safety static catalog and gendocs golden fixtures updated
-- [ ] R011 schema examples valid against published category enum
+- [x] R011 adversarial safety static catalog and gendocs golden fixtures updated
+- [x] R011 schema examples valid against published category enum
 
 ---
 
