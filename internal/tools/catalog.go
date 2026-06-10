@@ -71,7 +71,7 @@ func catalogTools() []Tool {
 
 func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Tool {
 	capability := capabilityOrSafe(opts.capability)
-	tools := make([]Tool, 0, 42)
+	tools := make([]Tool, 0, 43)
 	tools = append(tools,
 		newGetAthleteProfileTool(client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetFitnessTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -95,6 +95,7 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 		newGetEventsTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetEventByIDTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAddOrUpdateEventTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newAddUnavailableDateRangeTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newApplyTrainingPlanTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, capability, opts.shaping),
 		newDeleteEventTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newDeleteEventsByDateRangeTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -158,7 +159,7 @@ func toolCatalogGroup(name string) string {
 		return "activities"
 	case computeActivitySegmentStatsName, analyzeTrendName, analyzeDistributionName, analyzeCorrelationName, analyzeEffortsDeltaName, computeZoneTimeName, computeLoadBalanceName, computeBaselineName, computeComplianceRateName:
 		return "analyzers"
-	case resolveCalendarDatesName, getEventsName, getEventByIDName, addOrUpdateEventName, deleteEventName, deleteEventsByDateRangeName, linkActivityToEventName:
+	case resolveCalendarDatesName, getEventsName, getEventByIDName, addOrUpdateEventName, addUnavailableDateRangeName, deleteEventName, deleteEventsByDateRangeName, linkActivityToEventName:
 		return "events"
 	case getPlanningContextName, getTrainingPlanName, applyTrainingPlanName, getWorkoutLibraryName, getWorkoutsInFolderName, createWorkoutName, updateWorkoutName, deleteWorkoutName, validateWorkoutName:
 		return "workout-library"

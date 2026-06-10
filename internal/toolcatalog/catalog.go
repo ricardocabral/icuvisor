@@ -9,6 +9,7 @@ import (
 const (
 	AddActivityMessage               = "add_activity_message"
 	AddOrUpdateEvent                 = "add_or_update_event"
+	AddUnavailableDateRange          = "add_unavailable_date_range"
 	AnalyzeCorrelation               = "analyze_correlation"
 	AnalyzeDistribution              = "analyze_distribution"
 	AnalyzeEffortsDelta              = "analyze_efforts_delta"
@@ -73,6 +74,7 @@ const (
 var athleteScopedToolNames = []string{
 	AddActivityMessage,
 	AddOrUpdateEvent,
+	AddUnavailableDateRange,
 	AnalyzeCorrelation,
 	AnalyzeDistribution,
 	AnalyzeEffortsDelta,
