@@ -237,6 +237,50 @@ func TestGetAthleteProfileReadinessWarnings(t *testing.T) {
 	}
 }
 
+func TestGetAthleteProfileReadinessWarningsPreferTypesOverLegacyType(t *testing.T) {
+	t.Parallel()
+
+	response := newGetAthleteProfileResponse(intervals.AthleteWithSportSettings{
+		ID:            "i12345",
+		SportSettings: []intervals.SportSettings{{Type: "Ride", Types: []string{"Run"}}},
+	}, "test", "UTC", false)
+	if got := profileWarningCodes(response.Meta.Warnings); !stringSlicesEqual(got, []string{"missing_hr_threshold", "missing_hr_zones", "missing_pace_threshold", "missing_pace_zones"}) {
+		t.Fatalf("warning codes = %#v", got)
+	}
+	for _, warning := range response.Meta.Warnings {
+		if !stringSlicesEqual(warning.SportTypes, []string{"Run"}) {
+			t.Fatalf("sport types = %#v, want Run only", warning.SportTypes)
+		}
+	}
+
+	fallback := newGetAthleteProfileResponse(intervals.AthleteWithSportSettings{
+		ID:            "i12345",
+		SportSettings: []intervals.SportSettings{{Type: "Ride"}},
+	}, "test", "UTC", false)
+	if got := profileWarningCodes(fallback.Meta.Warnings); !stringSlicesEqual(got[:2], []string{"missing_power_threshold", "missing_power_zones"}) {
+		t.Fatalf("fallback warning codes = %#v", got)
+	}
+	if !stringSlicesEqual(fallback.Meta.Warnings[0].SportTypes, []string{"Ride"}) {
+		t.Fatalf("fallback sport types = %#v, want Ride", fallback.Meta.Warnings[0].SportTypes)
+	}
+}
+
+func TestGetAthleteProfileReadinessWarningsSkipNonApplicableSports(t *testing.T) {
+	t.Parallel()
+
+	response := newGetAthleteProfileResponse(intervals.AthleteWithSportSettings{
+		ID: "i12345",
+		SportSettings: []intervals.SportSettings{
+			{Types: []string{"Strength"}},
+			{Types: []string{"Yoga"}},
+			{Types: []string{"Other"}},
+		},
+	}, "test", "UTC", false)
+	if len(response.Meta.Warnings) != 0 {
+		t.Fatalf("warnings = %+v, want none for non-applicable sports", response.Meta.Warnings)
+	}
+}
+
 func TestGetAthleteProfileReadinessWarningsOmittedWhenComplete(t *testing.T) {
 	t.Parallel()
 

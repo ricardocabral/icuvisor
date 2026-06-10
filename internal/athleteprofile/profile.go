@@ -238,9 +238,13 @@ func readinessWarning(code string, sportTypes []string, field string, message st
 }
 
 func readinessSportTypes(setting intervals.SportSettings) []string {
+	values := setting.Types
+	if len(values) == 0 {
+		values = []string{setting.Type}
+	}
 	seen := map[string]bool{}
 	var sportTypes []string
-	for _, value := range append([]string{setting.Type}, setting.Types...) {
+	for _, value := range values {
 		trimmed := strings.TrimSpace(value)
 		if trimmed == "" || seen[strings.ToLower(trimmed)] {
 			continue
@@ -267,9 +271,10 @@ func isRideSport(sportTypes []string) bool {
 func usesHeartRateReadiness(sportTypes []string) bool {
 	for _, sportType := range sportTypes {
 		switch normalizeSportType(sportType) {
-		case "unknown", "note", "other":
-			continue
-		default:
+		case "ride", "virtualride", "bike", "bikeride", "cycle", "cycling", "indoorcycling", "mountainbike", "mtb", "gravelride", "ebikeride",
+			"run", "virtualrun", "trailrun", "treadmill", "walk", "hike",
+			"swim", "openwaterswim", "poolswim",
+			"row", "rowing", "kayak", "canoe":
 			return true
 		}
 	}

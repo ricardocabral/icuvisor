@@ -25,8 +25,8 @@
 - [x] Warnings are terse, sport-scoped, and non-sensitive
 - [x] Warnings provide actionable planning preflight context
 - [x] Targeted profile/sport tests pass
-- [ ] Prefer sport setting `types` over legacy `type` when deriving warning scope
-- [ ] Restrict heart-rate readiness warnings to applicable endurance sport types
+- [x] Prefer sport setting `types` over legacy `type` when deriving warning scope
+- [x] Restrict heart-rate readiness warnings to applicable endurance sport types
 
 ---
 
