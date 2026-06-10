@@ -1,10 +1,10 @@
 # TP-162: Codex Streamable HTTP JSON-RPC smoke coverage — Status
 
-**Current Step:** Step 3: Testing & Verification
+**Current Step:** Step 4: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -43,7 +43,7 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] FULL test suite passing
 - [x] Integration tests (if applicable)
@@ -53,7 +53,7 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `docs/clients/codex-local.md` reviewed/updated if affected
 - [ ] `CHANGELOG.md` updated
@@ -72,6 +72,7 @@
 | R005 | Plan | 2 | APPROVE | `.reviews/R005-plan-step2.md` |
 | R006 | Code | 2 | APPROVE | `.reviews/R006-code-step2.md` |
 | R007 | Plan | 3 | APPROVE | `.reviews/R007-plan-step3.md` |
+| R008 | Code | 3 | APPROVE | `.reviews/R008-code-step3.md` |
 
 ---
 
@@ -104,6 +105,8 @@
 | 2026-06-10 12:23 | Full test suite | `make test` passed |
 | 2026-06-10 12:23 | Integration tests | No separate integration target exists; in-process HTTP coverage included in `make test` |
 | 2026-06-10 12:24 | Build | `make build` passed |
+| 2026-06-10 12:24 | Step 3 code reviewed | R008 APPROVE |
+| 2026-06-10 12:24 | Step 4 started | Documentation and delivery |
 
 ---
 
@@ -125,3 +128,4 @@ R003 code review requires rejecting any top-level `error` member on successful J
 | 2026-06-10 12:34 | Review R005 | plan Step 2: APPROVE |
 | 2026-06-10 12:36 | Review R006 | code Step 2: APPROVE |
 | 2026-06-10 12:38 | Review R007 | plan Step 3: APPROVE |
+| 2026-06-10 12:41 | Review R008 | code Step 3: APPROVE |
