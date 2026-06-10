@@ -1,10 +1,10 @@
 # TP-161: Bridge training-plan targets into fitness projection — Status
 
-**Current Step:** Step 3: Testing & Verification
+**Current Step:** Step 4: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 2
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 1
 **Size:** M
 
@@ -55,7 +55,7 @@
 ---
 
 ### Step 3: Testing & Verification
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] FULL test suite passing
 - [x] Integration tests (if applicable)
@@ -65,7 +65,7 @@
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] `README.md` updated
 - [ ] `CHANGELOG.md` updated
@@ -87,6 +87,8 @@
 | R007 | Code | 2 | REVISE | `.reviews/R007-code-step2.md` |
 | R008 | Code | 2 | REVISE | `.reviews/R008-code-step2.md` |
 | R009 | Code | 2 | APPROVE | `.reviews/R009-code-step2.md` |
+| R010 | Plan | 3 | APPROVE | `.reviews/R010-plan-step3.md` |
+| R011 | Code | 3 | APPROVE | `.reviews/R011-code-step3.md` |
 
 ---
 
@@ -142,3 +144,4 @@ Step 1 contract: `get_fitness_projection` will accept explicit `weekly_plan_targ
 | 2026-06-10 12:28 | Review R008 | code Step 2: REVISE |
 | 2026-06-10 12:32 | Review R009 | code Step 2: APPROVE |
 | 2026-06-10 12:33 | Review R010 | plan Step 3: APPROVE |
+| 2026-06-10 12:36 | Review R011 | code Step 3: APPROVE |
