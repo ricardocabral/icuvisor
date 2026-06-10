@@ -1,17 +1,17 @@
 # TP-155: Activity interval manual and mixed classification — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Add classifier states and fixture coverage
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
 ---
 
 ### Step 0: Preflight
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -19,9 +19,11 @@
 ---
 
 ### Step 1: Add classifier states and fixture coverage
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Add `manual_added` and `mixed` states in the classifier
+- [ ] Guard against overclassifying missing raw evidence as `manual_added`
+- [ ] Document/test explicit precedence before group-id heuristic before fallback
 - [ ] Add regression tests for grouped, ungrouped, mixed, structured, and device-lap cases
 - [ ] Preserve existing precedence behavior
 - [ ] Targeted analysis tests pass
@@ -90,3 +92,4 @@
 ## Notes
 
 Public signal: IcuSync forum #265-266 reports auto-detected intervals have `group_id`; manually added intervals do not.
+| 2026-06-10 11:43 | Review R001 | plan Step 1: REVISE |
