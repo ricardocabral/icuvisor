@@ -1,59 +1,59 @@
 # TP-157: get_today current-day freshness regression — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
-**Last Updated:** 2026-06-09
+**Current Step:** Step 4: Documentation & Delivery
+**Status:** ✅ Complete
+**Last Updated:** 2026-06-10
 **Review Level:** 1
-**Review Counter:** 0
-**Iteration:** 0
+**Review Counter:** 3
+**Iteration:** 1
 **Size:** M
 
 ---
 
 ### Step 0: Preflight
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Required files and paths exist
-- [ ] Dependencies satisfied
+- [x] Required files and paths exist
+- [x] Dependencies satisfied
 
 ---
 
 ### Step 1: Add explicit freshness regression tests
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Fixed timezone/as_of test added
-- [ ] Previous-day activity/event/fitness rows excluded
-- [ ] Partial or absent wellness does not backfill yesterday
-- [ ] Targeted get_today tests pass
+- [x] Fixed timezone/as_of test added
+- [x] Previous-day activity/event/fitness rows excluded
+- [x] Partial or absent wellness does not backfill yesterday
+- [x] Targeted get_today tests pass
 
 ---
 
 ### Step 2: Fix filtering or shaping if tests expose stale composition
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Date filtering fixed if needed
-- [ ] Existing wellness stale metadata preserved
-- [ ] Fetch/filter boundaries are defensive against stale rows
-- [ ] Targeted get_today tests pass
+- [x] Date filtering fixed if needed
+- [x] Existing wellness stale metadata preserved
+- [x] Fetch/filter boundaries are defensive against stale rows
+- [x] Targeted get_today tests pass
 
 ---
 
 ### Step 3: Testing & Verification
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] FULL test suite passing
-- [ ] Integration tests (if applicable)
-- [ ] All failures fixed
-- [ ] Build passes
+- [x] FULL test suite passing
+- [x] Integration tests (if applicable)
+- [x] All failures fixed
+- [x] Build passes
 
 ---
 
 ### Step 4: Documentation & Delivery
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] `CHANGELOG.md` updated
-- [ ] README/PRD reviewed if affected
-- [ ] Discoveries logged
+- [x] `CHANGELOG.md` updated
+- [x] README/PRD reviewed if affected
+- [x] Discoveries logged
 
 ---
 
@@ -68,6 +68,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| `get_today` already requested athlete-local today ranges, but shaped any stale rows returned by fakes/upstream without defensive post-fetch filtering. | Added date filters and regression coverage for fitness, wellness, activities, events, and stale wellness metadata preservation. | `internal/tools/get_today.go`, `internal/tools/get_today_test.go` |
+| README does not document `get_today`; PRD already describes the tool as a current-day digest, so no contract wording change was needed. | Left README/PRD unchanged and noted behavior fix in `CHANGELOG.md`. | `README.md`, `docs/prd/PRD-icuvisor.md`, `CHANGELOG.md` |
 
 ---
 
@@ -76,6 +78,10 @@
 | Timestamp | Action | Outcome |
 |-----------|--------|---------|
 | 2026-06-09 | Task staged | PROMPT.md and STATUS.md created |
+| 2026-06-10 11:40 | Task started | Runtime V2 lane-runner execution |
+| 2026-06-10 11:40 | Step 0 started | Preflight |
+| 2026-06-10 11:54 | Worker iter 1 | done in 877s, tools: 98 |
+| 2026-06-10 11:54 | Task complete | .DONE created |
 
 ---
 
@@ -88,3 +94,6 @@
 ## Notes
 
 Public signal: IntervalCoach forum #852-855 described a mixed old/new daily briefing bug.
+| 2026-06-10 11:43 | Review R001 | plan Step 1: APPROVE |
+| 2026-06-10 11:49 | Review R002 | plan Step 2: APPROVE |
+| 2026-06-10 11:52 | Review R003 | plan Step 3: APPROVE |

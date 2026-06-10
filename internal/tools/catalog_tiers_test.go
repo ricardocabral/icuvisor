@@ -42,6 +42,7 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 		getEventsName:                   safety.ToolsetCore,
 		getEventByIDName:                safety.ToolsetCore,
 		addOrUpdateEventName:            safety.ToolsetCore,
+		addUnavailableDateRangeName:     safety.ToolsetCore,
 		updateWellnessName:              safety.ToolsetCore,
 		addActivityMessageName:          safety.ToolsetCore,
 		linkActivityToEventName:         safety.ToolsetCore,

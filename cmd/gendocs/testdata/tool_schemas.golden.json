@@ -140,6 +140,77 @@
       }
     ]
   },
+  "add_unavailable_date_range": {
+    "name": "add_unavailable_date_range",
+    "description": "Create unavailable calendar markers across an inclusive athlete-local date range for Sick, Injured, or Holiday/time-off blocks.",
+    "arguments": [
+      {
+        "name": "category",
+        "required": true,
+        "type": "string",
+        "description": "Closed unavailable category or alias. Accepted canonical values are HOLIDAY, SICK, and INJURED; time-off aliases normalize to HOLIDAY.",
+        "enum": [
+          "HOLIDAY",
+          "SICK",
+          "INJURED",
+          "HOLIDAYS",
+          "VACATION",
+          "PTO",
+          "TIME_OFF",
+          "TIME OFF",
+          "ILL",
+          "ILLNESS",
+          "SICKNESS",
+          "INJURY"
+        ]
+      },
+      {
+        "name": "description",
+        "required": false,
+        "type": "string",
+        "description": "Optional replacement event description written to each per-day unavailable marker."
+      },
+      {
+        "name": "end_date",
+        "required": true,
+        "type": "string",
+        "description": "Required athlete-local inclusive end date as YYYY-MM-DD; same-day ranges are allowed and ranges are capped at 31 days."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream event payloads under each returned event.full; default response uses terse event rows.",
+        "default": false
+      },
+      {
+        "name": "name",
+        "required": false,
+        "type": "string",
+        "description": "Optional event title/name. Defaults to Holiday, Sick, or Injured after category normalization; surrounding whitespace is trimmed."
+      },
+      {
+        "name": "start_date",
+        "required": true,
+        "type": "string",
+        "description": "Required athlete-local inclusive start date as YYYY-MM-DD."
+      }
+    ],
+    "examples": [
+      {
+        "category": "HOLIDAY",
+        "description": "Family holiday; no training.",
+        "end_date": "2026-07-03",
+        "start_date": "2026-07-01"
+      },
+      {
+        "category": "SICK",
+        "description": "Flu symptoms; rest only.",
+        "end_date": "2026-08-11",
+        "start_date": "2026-08-10"
+      }
+    ]
+  },
   "analyze_correlation": {
     "name": "analyze_correlation",
     "description": "Use when the prompt asks whether two analysis metrics are correlated or lagged together; do not fetch get_* rows or streams and reduce them in chat.",

@@ -98,10 +98,12 @@ func getTodayHandler(client todayClient, profileClient ProfileClient, gearClient
 		if err != nil {
 			return todayFetchError(err)
 		}
+		fitnessRows = filterTodayFitnessRows(fitnessRows, today)
 		wellness, err := client.ListWellness(ctx, intervals.WellnessParams{Oldest: today, Newest: today})
 		if err != nil {
 			return todayFetchError(err)
 		}
+		wellness = filterTodayWellnessRows(wellness, today)
 		customFieldCodes := todayCustomFieldCodes(ctx, customFieldClient, customFieldCache)
 		activities, _, err := fetchActivitiesPage(ctx, client, GetActivitiesRequest{Oldest: today, PageSize: defaultActivitiesPageSize, IncludeFull: args.IncludeFull}, nil, targetAthleteID(ctx), customFieldCodes)
 		if err != nil {
@@ -110,6 +112,7 @@ func getTodayHandler(client todayClient, profileClient ProfileClient, gearClient
 			}
 			return todayFetchError(err)
 		}
+		activities = filterTodayActivities(activities, today)
 		if gearCache == nil {
 			gearCache = newGearListCache()
 		}
@@ -121,6 +124,7 @@ func getTodayHandler(client todayClient, profileClient ProfileClient, gearClient
 		if err != nil {
 			return todayFetchError(err)
 		}
+		events = filterTodayEvents(events, today)
 
 		payload, err := shapeGetTodayResponse(todayDigestInputs{today: today, asOf: asOf, timezone: asOf.Timezone, includeFull: args.IncludeFull, unitSystem: unitSystem, profile: profile, fitnessRows: fitnessRows, wellnessRows: wellness, activities: activities, gearResolutions: gearResolutions, customFieldCodes: customFieldCodes, events: events})
 		if err != nil {
@@ -190,6 +194,57 @@ func shapeGetTodayResponse(in todayDigestInputs) (getTodayResponse, error) {
 			ActivityWindow: "from athlete-local midnight through upstream now",
 		},
 	}, nil
+}
+
+func filterTodayFitnessRows(rows []intervals.SummaryWithCats, today string) []intervals.SummaryWithCats {
+	filtered := rows[:0]
+	for _, row := range rows {
+		if row.Date == today {
+			filtered = append(filtered, row)
+		}
+	}
+	return filtered
+}
+
+func filterTodayWellnessRows(rows []intervals.Wellness, today string) []intervals.Wellness {
+	filtered := rows[:0]
+	for _, row := range rows {
+		if row.ID != nil && *row.ID == today {
+			filtered = append(filtered, row)
+		}
+	}
+	return filtered
+}
+
+func filterTodayActivities(activities []intervals.Activity, today string) []intervals.Activity {
+	filtered := activities[:0]
+	for _, activity := range activities {
+		if localDateMatches(activity.StartDateLocal, today) {
+			filtered = append(filtered, activity)
+		}
+	}
+	return filtered
+}
+
+func filterTodayEvents(events []intervals.Event, today string) []intervals.Event {
+	filtered := events[:0]
+	for _, event := range events {
+		if localDateMatches(event.StartDateLocal, today) {
+			filtered = append(filtered, event)
+		}
+	}
+	return filtered
+}
+
+func localDateMatches(value *string, today string) bool {
+	if value == nil {
+		return false
+	}
+	date := strings.TrimSpace(*value)
+	if len(date) >= len(today) {
+		date = date[:len(today)]
+	}
+	return date == today
 }
 
 func splitTodayEvents(events []intervals.Event, includeFull bool, timezoneName string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) ([]getEventsRow, []getEventsRow, error) {

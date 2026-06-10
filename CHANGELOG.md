@@ -12,11 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Codex-compatible Streamable HTTP smoke coverage that verifies `initialize` and `ping` responses are strict JSON-RPC 2.0 envelopes over raw in-process HTTP.
 - Added athlete-profile `_meta.warnings` for missing sport thresholds and zones so assistants can preflight threshold- or zone-based planning before producing advice.
 - Added WorkoutDoc regression coverage proving a trailing cooldown remains a top-level sibling after a named repeat main set.
+- Added `add_unavailable_date_range` for retry-safe Sick, Injured, and Holiday/time-off calendar blocks across inclusive date ranges, with duplicate skipping and same-day conflict metadata.
 
 ### Changed
 
 - `get_fitness_projection` now accepts `weekly_plan_targets` copied from planning/training-plan context and deterministically distributes each weekly load target across projected days, while explicit `planned_daily_loads` keep precedence and metadata reports the bridge assumptions.
 - `get_activity_intervals` now distinguishes manually added and mixed interval-source evidence in `_meta.interval_source`, alongside existing structured-workout, device-lap, and unknown classifications.
+
+### Fixed
+
+- Added regression coverage ensuring activity `gear_id` values without embedded names resolve via the full gear list, while unknown IDs remain explicit without invented `gear_name` values.
+- Hardened `get_today` so athlete-local current-day metadata cannot be combined with previous-day fitness, wellness, activity, or event rows when upstream returns stale rows around morning partial/absent wellness.
 
 ## [1.0.0] - 2026-06-04
 
