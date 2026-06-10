@@ -43,7 +43,8 @@
 
 > ⚠️ Hydrate: Expand after inspecting current `get_training_plan` output fields and upstream plan target shapes.
 
-- [ ] Optional typed request field/helper added
+- [ ] Optional typed request field plus decoder validation for weekly targets added
+- [ ] Analyzer input/result types carry weekly targets and fill/override counts
 - [ ] Deterministic conversion implemented
 - [ ] Metadata/source assumptions updated
 - [ ] Schema snapshot refreshed
@@ -87,6 +88,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| `get_training_plan` currently returns assignment fields plus lightweight plan summary by default and preserves raw nested plan payload only with `include_full:true`; this bridge should therefore accept caller-supplied weekly targets rather than extracting them implicitly. | Reflected in `weekly_plan_targets` request contract and schema wording. | `internal/tools/get_training_plan.go` |
 
 ---
 
