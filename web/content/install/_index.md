@@ -27,6 +27,8 @@ iwr -useb https://icuvisor.app/install.ps1 | iex
 
 The installer detects your platform, downloads the matching release asset, verifies the SHA256 checksum (and the cosign signature when `cosign` is on your `PATH`), and installs the binary. Re-run the same command to upgrade in place. See [installer integrity](https://github.com/ricardocabral/icuvisor/blob/main/SECURITY.md#installer-integrity) for signature verification details.
 
+After installing, run `icuvisor setup` to store credentials safely and write non-secret defaults. If you maintain JSON config by hand or point a client at a config path, see the [config file reference]({{< relref "../reference/config-file" >}}); if your MCP client uses environment variables, see the [CLI environment variable reference]({{< relref "../reference/cli#environment-variables" >}}).
+
 ## Platform guides
 
 Prefer a package manager or a signed installer package? Pick your platform:
