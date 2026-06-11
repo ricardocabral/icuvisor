@@ -96,7 +96,7 @@ Use this command path in the MCP client configuration:
 /Applications/icuvisor.app/Contents/MacOS/icuvisor
 ```
 
-Keep the API key out of client JSON. Put only non-secret values in the client configuration, such as `INTERVALS_ICU_ATHLETE_ID`, `ICUVISOR_TIMEZONE`, `ICUVISOR_TRANSPORT`, or a `--config` path. The full list is in the [CLI reference]({{< relref "../reference/cli" >}}).
+Keep the API key out of client JSON. Put only non-secret values in the client configuration, such as `INTERVALS_ICU_ATHLETE_ID`, `ICUVISOR_TIMEZONE`, `ICUVISOR_TRANSPORT`, or a `--config` path. For JSON config fields and default config paths, see the [config file reference]({{< relref "../reference/config-file" >}}); for environment variables, see the [CLI environment variable reference]({{< relref "../reference/cli#environment-variables" >}}).
 
 ## Uninstall
 
