@@ -18,6 +18,63 @@ const StreamableHTTPPath = "/mcp"
 const streamableHTTPSessionTimeout = 30 * time.Minute
 const streamableHTTPShutdownTimeout = 5 * time.Second
 
+type streamableRequestServerKey struct{}
+
+// StreamableHTTPHandlerOptions configures a reusable SDK Streamable HTTP handler.
+type StreamableHTTPHandlerOptions struct {
+	Logger              *slog.Logger
+	Stateless           bool
+	JSONResponse        bool
+	FactoryErrorMessage string
+}
+
+// StreamableHTTPServerFactory builds or resolves an MCP server for one HTTP request.
+type StreamableHTTPServerFactory func(*http.Request) (*Server, error)
+
+// NewStreamableHTTPHandler adapts icuvisor Server construction to the SDK Streamable HTTP handler.
+func NewStreamableHTTPHandler(factory StreamableHTTPServerFactory, opts StreamableHTTPHandlerOptions) http.Handler {
+	logger := opts.Logger
+	if logger == nil {
+		logger = slog.Default()
+	}
+	sdkHandler := sdkmcp.NewStreamableHTTPHandler(func(req *http.Request) *sdkmcp.Server {
+		if server, ok := req.Context().Value(streamableRequestServerKey{}).(*Server); ok && server != nil {
+			return server.server
+		}
+		server, err := factory(req)
+		if err != nil || server == nil {
+			return nil
+		}
+		return server.server
+	}, &sdkmcp.StreamableHTTPOptions{
+		Stateless:                  opts.Stateless,
+		JSONResponse:               opts.JSONResponse,
+		Logger:                     logger,
+		SessionTimeout:             streamableHTTPSessionTimeout,
+		DisableLocalhostProtection: false,
+		CrossOriginProtection:      nil,
+	})
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost || r.Method == http.MethodGet {
+			server, err := factory(r)
+			if err != nil {
+				message := err.Error()
+				if opts.FactoryErrorMessage != "" {
+					message = opts.FactoryErrorMessage
+				}
+				http.Error(w, message, http.StatusUnauthorized)
+				return
+			}
+			if server == nil {
+				http.Error(w, "no server available", http.StatusBadRequest)
+				return
+			}
+			r = r.WithContext(context.WithValue(r.Context(), streamableRequestServerKey{}, server))
+		}
+		sdkHandler.ServeHTTP(w, r)
+	})
+}
+
 // Run serves one MCP session until the client disconnects or ctx is cancelled.
 func (s *Server) Run(ctx context.Context) error {
 	if s == nil || s.server == nil || s.transport == nil {
@@ -101,16 +158,9 @@ func (s *Server) ServeStreamableHTTP(ctx context.Context, listener net.Listener)
 		version = "dev"
 	}
 
-	streamableHandler := sdkmcp.NewStreamableHTTPHandler(func(*http.Request) *sdkmcp.Server {
-		return s.server
-	}, &sdkmcp.StreamableHTTPOptions{
-		Stateless:                  false,
-		JSONResponse:               false,
-		Logger:                     logger,
-		SessionTimeout:             streamableHTTPSessionTimeout,
-		DisableLocalhostProtection: false,
-		CrossOriginProtection:      nil,
-	})
+	streamableHandler := NewStreamableHTTPHandler(func(*http.Request) (*Server, error) {
+		return s, nil
+	}, StreamableHTTPHandlerOptions{Logger: logger})
 	mux := http.NewServeMux()
 	mux.Handle(StreamableHTTPPath, streamableHandler)
 	httpServer := &http.Server{

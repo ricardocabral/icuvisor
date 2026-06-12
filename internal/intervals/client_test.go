@@ -45,6 +45,49 @@ func TestDoJSONSetsAuthUserAgentPathAndDecodes(t *testing.T) {
 	}
 }
 
+func TestNewOAuthBearerClientSetsBearerAuthUserAgentAndDefaults(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got, want := r.URL.Path, "/athlete/i67890"; got != want {
+			t.Fatalf("path = %q, want target athlete", got)
+		}
+		if _, _, ok := r.BasicAuth(); ok {
+			t.Fatal("BasicAuth() present, want bearer auth only")
+		}
+		if got, want := r.Header.Get("Authorization"), "Bearer hosted-token"; got != want {
+			t.Fatalf("Authorization = %q, want %q", got, want)
+		}
+		if got, want := r.UserAgent(), "icuvisor/v-hosted"; got != want {
+			t.Fatalf("User-Agent = %q, want %q", got, want)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"i67890","name":"Bearer Athlete"}`))
+	}))
+	defer server.Close()
+
+	client, err := NewOAuthBearerClient(OAuthBearerOptions{AccessToken: " hosted-token ", APIBaseURL: server.URL, Version: "v-hosted", HTTPClient: server.Client()})
+	if err != nil {
+		t.Fatalf("NewOAuthBearerClient() error = %v", err)
+	}
+	var got AthleteWithSportSettings
+	if err := client.doJSON(WithTargetAthleteID(context.Background(), "i67890"), &got, "athlete", client.athleteID); err != nil {
+		t.Fatalf("doJSON() error = %v", err)
+	}
+	if got.ID != "i67890" || got.Name != "Bearer Athlete" {
+		t.Fatalf("decoded athlete = %+v", got)
+	}
+}
+
+func TestNewOAuthBearerClientRequiresAccessToken(t *testing.T) {
+	t.Parallel()
+
+	_, err := NewOAuthBearerClient(OAuthBearerOptions{AccessToken: "  "})
+	if err == nil || strings.Contains(err.Error(), "hosted-token") {
+		t.Fatalf("NewOAuthBearerClient() error = %v, want redacted missing-token error", err)
+	}
+}
+
 func TestDoJSONUsesContextTargetAthleteWithoutMutatingClient(t *testing.T) {
 	t.Parallel()
 

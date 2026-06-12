@@ -32,10 +32,82 @@ const (
 // Options configures a Client.
 type Options struct {
 	Config     config.Config
+	Auth       AuthMode
 	Version    string
 	HTTPClient *http.Client
 	Retry      RetryConfig
 }
+
+// OAuthBearerOptions configures an OAuth Bearer client.
+type OAuthBearerOptions struct {
+	AccessToken string
+	APIBaseURL  string
+	Version     string
+	HTTPClient  *http.Client
+	HTTPTimeout time.Duration
+	Retry       RetryConfig
+}
+
+// AuthMode applies an intervals.icu authorization strategy to outbound requests.
+type AuthMode interface {
+	apply(*http.Request)
+	validate() error
+	kind() string
+}
+
+// AuthModeAPIKey configures intervals.icu API-key Basic Auth.
+type AuthModeAPIKey struct {
+	apiKey string
+}
+
+// NewAuthModeAPIKey returns an API-key Basic Auth mode with token material kept unexported.
+func NewAuthModeAPIKey(apiKey string) AuthModeAPIKey {
+	return AuthModeAPIKey{apiKey: strings.TrimSpace(apiKey)}
+}
+
+func (m AuthModeAPIKey) apply(req *http.Request) {
+	req.SetBasicAuth(basicAuthUsername, m.apiKey)
+}
+
+func (m AuthModeAPIKey) validate() error {
+	if m.apiKey == "" {
+		return errors.New("missing intervals.icu API key")
+	}
+	return nil
+}
+
+func (m AuthModeAPIKey) kind() string { return "api_key_basic" }
+
+func (m AuthModeAPIKey) String() string { return "intervals.AuthModeAPIKey(redacted)" }
+
+func (m AuthModeAPIKey) GoString() string { return m.String() }
+
+// AuthModeBearer configures intervals.icu OAuth Bearer authorization.
+type AuthModeBearer struct {
+	accessToken string
+}
+
+// NewAuthModeBearer returns an OAuth Bearer Auth mode with token material kept unexported.
+func NewAuthModeBearer(accessToken string) AuthModeBearer {
+	return AuthModeBearer{accessToken: strings.TrimSpace(accessToken)}
+}
+
+func (m AuthModeBearer) apply(req *http.Request) {
+	req.Header.Set("Authorization", "Bearer "+m.accessToken)
+}
+
+func (m AuthModeBearer) validate() error {
+	if m.accessToken == "" {
+		return errors.New("missing intervals.icu OAuth access token")
+	}
+	return nil
+}
+
+func (m AuthModeBearer) kind() string { return "oauth_bearer" }
+
+func (m AuthModeBearer) String() string { return "intervals.AuthModeBearer(redacted)" }
+
+func (m AuthModeBearer) GoString() string { return m.String() }
 
 // RetryConfig controls retry behavior for idempotent requests.
 type RetryConfig struct {
@@ -69,19 +141,41 @@ func (cfg RetryConfig) WithDefaults() RetryConfig {
 // Client is a typed intervals.icu API client.
 type Client struct {
 	baseURL    *url.URL
-	apiKey     string
+	auth       AuthMode
 	athleteID  string
 	userAgent  string
 	httpClient *http.Client
 	retry      RetryConfig
 }
 
+// NewOAuthBearerClient builds an OAuth Bearer client routed through token-owner athlete ID 0.
+func NewOAuthBearerClient(opts OAuthBearerOptions) (*Client, error) {
+	httpTimeout := opts.HTTPTimeout
+	if httpTimeout == 0 {
+		httpTimeout = config.DefaultHTTPTimeout
+	}
+	return NewClient(Options{
+		Config: config.Config{
+			AthleteID:   "0",
+			APIBaseURL:  opts.APIBaseURL,
+			HTTPTimeout: httpTimeout,
+		},
+		Auth:       NewAuthModeBearer(opts.AccessToken),
+		Version:    opts.Version,
+		HTTPClient: opts.HTTPClient,
+		Retry:      opts.Retry,
+	})
+}
+
 // NewClient builds a Client from validated runtime configuration.
 func NewClient(opts Options) (*Client, error) {
 	cfg := opts.Config
-	apiKey := strings.TrimSpace(cfg.APIKey)
-	if apiKey == "" {
-		return nil, errors.New("missing intervals.icu API key")
+	auth := opts.Auth
+	if auth == nil {
+		auth = NewAuthModeAPIKey(cfg.APIKey)
+	}
+	if err := auth.validate(); err != nil {
+		return nil, err
 	}
 
 	athleteID, err := config.NormalizeAthleteID(cfg.AthleteID)
@@ -110,7 +204,7 @@ func NewClient(opts Options) (*Client, error) {
 
 	return &Client{
 		baseURL:    parsedBaseURL,
-		apiKey:     apiKey,
+		auth:       auth,
 		athleteID:  athleteID,
 		userAgent:  fmt.Sprintf("icuvisor/%s", version),
 		httpClient: httpClient,
@@ -134,7 +228,7 @@ func (c *Client) newRequest(ctx context.Context, method string, pathParts ...str
 	if err != nil {
 		return nil, fmt.Errorf("building intervals.icu request: %w", err)
 	}
-	req.SetBasicAuth(basicAuthUsername, c.apiKey)
+	c.auth.apply(req)
 	req.Header.Set("User-Agent", c.userAgent)
 	return req, nil
 }

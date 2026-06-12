@@ -28,6 +28,7 @@ type RegistryOptions struct {
 	CoachModeEnabled bool
 	CoachConfig      coach.Config
 	CatalogFilter    func(Tool) bool
+	CatalogHash      string
 }
 
 // NewRegistry creates the default tool registry.
@@ -53,6 +54,7 @@ func NewRegistryWithOptions(client *intervals.Client, opts RegistryOptions) Regi
 		coachModeEnabled: opts.CoachModeEnabled,
 		coachConfig:      opts.CoachConfig,
 		catalogFilter:    opts.CatalogFilter,
+		catalogHash:      opts.CatalogHash,
 		gearCache:        newGearListCache(),
 		customFieldCache: newCustomFieldCache(),
 	}
@@ -69,24 +71,26 @@ type defaultRegistry struct {
 	coachModeEnabled bool
 	coachConfig      coach.Config
 	catalogFilter    func(Tool) bool
+	catalogHash      string
 	gearCache        *gearListCache
 	customFieldCache *customFieldCache
 }
 
 type responseShaping struct {
-	deleteMode safety.Mode
-	toolset    safety.Toolset
+	deleteMode  safety.Mode
+	toolset     safety.Toolset
+	catalogHash string
 }
 
 func responseShapingOrDefault(shaping []responseShaping) responseShaping {
 	if len(shaping) > 0 {
-		return responseShaping{deleteMode: safety.ParseMode(shaping[0].deleteMode.String()), toolset: safety.ParseToolset(shaping[0].toolset.String())}
+		return responseShaping{deleteMode: safety.ParseMode(shaping[0].deleteMode.String()), toolset: safety.ParseToolset(shaping[0].toolset.String()), catalogHash: shaping[0].catalogHash}
 	}
 	return responseShaping{deleteMode: safety.ModeSafe, toolset: safety.ToolsetCore}
 }
 
 func (s responseShaping) options(includeFull bool, rowCollections []string, version string, debugMetadata bool, queryType string, unitSystem response.UnitSystem) response.Options {
-	return response.Options{IncludeFull: includeFull, RowCollections: rowCollections, ServerVersion: version, DebugMetadata: debugMetadata, QueryType: queryType, UnitSystem: unitSystem, DeleteMode: s.deleteMode, Toolset: s.toolset}
+	return response.Options{IncludeFull: includeFull, RowCollections: rowCollections, ServerVersion: version, DebugMetadata: debugMetadata, QueryType: queryType, UnitSystem: unitSystem, DeleteMode: s.deleteMode, Toolset: s.toolset, CatalogHash: s.catalogHash}
 }
 
 func capabilityOrSafe(capability safety.Capability) safety.Capability {
@@ -108,8 +112,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	}
 	collector := &catalogCollectingRegistrar{downstream: registrar}
 	registrar = collector
-	shaping := responseShaping{deleteMode: r.deleteMode, toolset: r.toolset}
+	shaping := responseShaping{deleteMode: r.deleteMode, toolset: r.toolset, catalogHash: r.catalogHash}
 	add := func(tool Tool) error {
+		if r.catalogFilter != nil && !r.catalogFilter(tool) {
+			return nil
+		}
 		if !toolcatalog.IsKnownTool(tool.Name) {
 			return fmt.Errorf("registering %s: not present in shared tool catalog", tool.Name)
 		}

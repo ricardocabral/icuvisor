@@ -20,17 +20,18 @@ import (
 
 // Options contains dependencies for constructing the MCP server.
 type Options struct {
-	Config                 config.Config
-	Version                string
-	Logger                 *slog.Logger
-	Registry               tools.Registry
-	ResourceRegistry       resources.Registry
-	PromptRegistry         prompts.Registry
-	Capability             safety.Capability
-	Toolset                safety.Toolset
-	Transport              sdkmcp.Transport
-	SelectionStore         *coach.SelectionStore
-	RecentToolCallRecorder diagnostics.RecentToolCallRecorder
+	Config                     config.Config
+	Version                    string
+	Logger                     *slog.Logger
+	Registry                   tools.Registry
+	ResourceRegistry           resources.Registry
+	PromptRegistry             prompts.Registry
+	Capability                 safety.Capability
+	Toolset                    safety.Toolset
+	Transport                  sdkmcp.Transport
+	SelectionStore             *coach.SelectionStore
+	RecentToolCallRecorder     diagnostics.RecentToolCallRecorder
+	SkipRuntimeCatalogMetadata bool
 }
 
 // Server wraps the SDK server and selected transport.
@@ -102,7 +103,9 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 		}
 		logger.Info("prompt registration complete", "registered_count", registrar.registeredCount)
 	}
-	response.SetRuntimeCatalogMetadata(version, catalogHash)
+	if !opts.SkipRuntimeCatalogMetadata {
+		response.SetRuntimeCatalogMetadata(version, catalogHash)
+	}
 
 	return &Server{server: sdkServer, transport: transport, logger: logger, version: version, catalogHash: catalogHash}, nil
 }

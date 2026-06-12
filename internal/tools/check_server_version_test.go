@@ -74,6 +74,29 @@ func TestCheckServerVersionOutputShapeAndNoLeakage(t *testing.T) {
 	}
 }
 
+func TestCheckServerVersionUsesRegistryCatalogHashWithoutGlobalMetadata(t *testing.T) {
+	response.SetRuntimeCatalogMetadata("global-version", "global-hash")
+	t.Cleanup(func() { response.SetRuntimeCatalogMetadata("dev", "dev-catalog-hash") })
+
+	registrar := &collectingRegistrar{}
+	if err := NewRegistryWithOptions(newNoNetworkIntervalsClient(t), RegistryOptions{Version: "request-version", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeSafe), Toolset: safety.ToolsetCore, CatalogHash: "request-catalog-hash"}).Register(context.Background(), registrar); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+	tool := findTool(t, registrar.tools, checkServerVersionName)
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+
+	payload := checkServerVersionResult(t, result)
+	if payload.ServerVersion != "request-version" || payload.CatalogHash != "request-catalog-hash" {
+		t.Fatalf("runtime fields = version %q hash %q, want request metadata", payload.ServerVersion, payload.CatalogHash)
+	}
+	if runtime := response.RuntimeCatalogMetadata(); runtime.Version != "global-version" || runtime.CatalogHash != "global-hash" {
+		t.Fatalf("global runtime metadata = %+v, want unchanged", runtime)
+	}
+}
+
 func TestCheckServerVersionRejectsArguments(t *testing.T) {
 	t.Parallel()
 

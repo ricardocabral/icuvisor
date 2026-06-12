@@ -19,6 +19,7 @@ type Options struct {
 	UnitSystem     UnitSystem
 	DeleteMode     safety.Mode
 	Toolset        safety.Toolset
+	CatalogHash    string
 }
 
 // Shape converts value through JSON tags and applies response-boundary shaping.

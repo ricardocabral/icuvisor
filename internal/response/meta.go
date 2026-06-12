@@ -146,7 +146,7 @@ func addCommonMeta(row map[string]any, opts Options) {
 	}
 	serverVersion := normalizeVersion(opts.ServerVersion)
 	meta["server_version"] = serverVersion
-	for key, value := range schemaCatalogMeta(serverVersion) {
+	for key, value := range schemaCatalogMetaForOptions(serverVersion, opts.CatalogHash) {
 		meta[key] = value
 	}
 	meta["delete_mode"] = opts.DeleteMode.String()
@@ -155,6 +155,13 @@ func addCommonMeta(row map[string]any, opts Options) {
 		meta["units"] = opts.UnitSystem.Metadata()
 	}
 	row["_meta"] = meta
+}
+
+func schemaCatalogMetaForOptions(serverVersion string, catalogHash string) map[string]any {
+	if strings.TrimSpace(catalogHash) != "" {
+		return map[string]any{"catalog_hash": normalizeCatalogHash(catalogHash)}
+	}
+	return schemaCatalogMeta(serverVersion)
 }
 
 func schemaCatalogMeta(serverVersion string) map[string]any {

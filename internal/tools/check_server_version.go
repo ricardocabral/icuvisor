@@ -98,6 +98,9 @@ func checkServerVersionHandler(descriptionVersion string, descriptionFingerprint
 			return Result{}, err
 		}
 		runtime := response.RuntimeCatalogMetadata()
+		if strings.TrimSpace(shapeCfg.catalogHash) != "" {
+			runtime = response.RuntimeCatalogMetadataSnapshot{Version: descriptionVersion, CatalogHash: shapeCfg.catalogHash}
+		}
 		payload := checkServerVersionResponse{
 			ServerVersion:                 runtime.Version,
 			CatalogHash:                   runtime.CatalogHash,
