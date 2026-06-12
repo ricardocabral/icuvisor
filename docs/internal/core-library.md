@@ -30,6 +30,7 @@ The facade intentionally exposes a narrow host-safe surface:
   - `NewPromptRegistry()`.
   - `NewServer(context.Context, ServerOptions)`.
   - `Server.CatalogHash()`, `Run`, `ServeStreamableHTTP`, and `RunStreamableHTTP`.
+  - `RecentToolCallRecorder` for host or CLI diagnostics that record tool names without exposing arguments or payloads.
 - Catalog helpers:
   - `CollectToolCatalog(context.Context, CatalogOptions)`.
   - `ComputeToolCatalogHash(context.Context, CatalogOptions)`.
@@ -42,6 +43,12 @@ The facade intentionally exposes a narrow host-safe surface:
   - `StreamableHTTPPath` for the default `/mcp` endpoint.
 
 The public types are not aliases of `internal/...` types. Callers should treat them as the compatibility contract and avoid depending on internal package names or representations.
+
+## Public CLI adoption
+
+The local `icuvisor` CLI's default non-coach MCP startup path now constructs the Intervals API-key client, core tool registry, resource registry, prompt registry, and MCP server through `pkg/icuvisor`. This keeps the public facade exercised by production CLI behavior instead of only by host-side tests.
+
+Coach mode remains on the existing internal wiring path for now because it still depends on internal selection-store and coach ACL machinery that is not part of the public host-safe contract. The public facade is covered by parity tests against the internal registries for catalog hashes/tool names, resources, prompts, delete-mode/toolset combinations, and API-key Basic Auth behavior.
 
 ## Hosted-safe semantics
 
