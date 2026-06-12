@@ -81,6 +81,21 @@ func TestCoreRegistryFacadeFiltersAndAddsDiagnostics(t *testing.T) {
 	}
 }
 
+func TestExtraToolsParticipateInCheckServerVersionFingerprint(t *testing.T) {
+	t.Parallel()
+
+	baseDescription := "Report hosted connection setup status without athlete data."
+	changedDescription := "Report hosted connection setup status and reconnect guidance without athlete data."
+	baseFingerprint := checkServerVersionFingerprintForExtra(t, baseDescription)
+	changedFingerprint := checkServerVersionFingerprintForExtra(t, changedDescription)
+	if baseFingerprint == "" || changedFingerprint == "" {
+		t.Fatalf("fingerprints = %q/%q, want non-empty", baseFingerprint, changedFingerprint)
+	}
+	if baseFingerprint == changedFingerprint {
+		t.Fatalf("extra tool description change did not change check-server-version fingerprint: %s", baseFingerprint)
+	}
+}
+
 func TestServerFacadeCatalogHashAndSkipRuntimeMetadata(t *testing.T) {
 	t.Parallel()
 
@@ -124,6 +139,47 @@ func TestStreamableHTTPHandlerFacadeMapsFactoryError(t *testing.T) {
 	}
 	if strings.Contains(body, "sensitive-token") {
 		t.Fatalf("body leaked internal error: %q", body)
+	}
+}
+
+func checkServerVersionFingerprintForExtra(t *testing.T, description string) string {
+	t.Helper()
+	registry := NewCoreRegistry(newFacadeTestClient(t), RegistryOptions{Version: "v-public", Toolset: ToolsetFull, ExtraTools: []Tool{facadeExtraTool(description, ToolsetCore)}})
+	catalog, err := CollectToolCatalog(context.Background(), CatalogOptions{Config: facadeTestConfig(), Registry: registry, Mode: DeleteModeSafe, Toolset: ToolsetFull})
+	if err != nil {
+		t.Fatalf("CollectToolCatalog() error = %v", err)
+	}
+	for _, tool := range catalog {
+		if tool.Name != "icuvisor_check_server_version" {
+			continue
+		}
+		marker := "description_catalog_fingerprint="
+		start := strings.Index(tool.Description, marker)
+		if start < 0 {
+			t.Fatalf("check-server-version description missing fingerprint: %q", tool.Description)
+		}
+		start += len(marker)
+		end := strings.Index(tool.Description[start:], ";")
+		if end < 0 {
+			return tool.Description[start:]
+		}
+		return tool.Description[start : start+end]
+	}
+	t.Fatal("catalog missing icuvisor_check_server_version")
+	return ""
+}
+
+func facadeExtraTool(description string, toolset Toolset) Tool {
+	return Tool{
+		Name:         "hosted_setup_status",
+		Description:  description,
+		InputSchema:  map[string]any{"type": "object", "additionalProperties": false},
+		OutputSchema: map[string]any{"type": "object", "additionalProperties": true},
+		Requirement:  RequirementRead,
+		Toolset:      toolset,
+		Handler: func(context.Context, ToolRequest) (ToolResult, error) {
+			return TextResult(map[string]any{"status": "ok"}), nil
+		},
 	}
 }
 

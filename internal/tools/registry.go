@@ -29,6 +29,7 @@ type RegistryOptions struct {
 	CoachConfig      coach.Config
 	CatalogFilter    func(Tool) bool
 	CatalogHash      string
+	ExtraTools       []Tool
 }
 
 // NewRegistry creates the default tool registry.
@@ -55,6 +56,7 @@ func NewRegistryWithOptions(client *intervals.Client, opts RegistryOptions) Regi
 		coachConfig:      opts.CoachConfig,
 		catalogFilter:    opts.CatalogFilter,
 		catalogHash:      opts.CatalogHash,
+		extraTools:       append([]Tool(nil), opts.ExtraTools...),
 		gearCache:        newGearListCache(),
 		customFieldCache: newCustomFieldCache(),
 	}
@@ -72,6 +74,7 @@ type defaultRegistry struct {
 	coachConfig      coach.Config
 	catalogFilter    func(Tool) bool
 	catalogHash      string
+	extraTools       []Tool
 	gearCache        *gearListCache
 	customFieldCache *customFieldCache
 }
@@ -113,11 +116,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	collector := &catalogCollectingRegistrar{downstream: registrar}
 	registrar = collector
 	shaping := responseShaping{deleteMode: r.deleteMode, toolset: r.toolset, catalogHash: r.catalogHash}
-	add := func(tool Tool) error {
+	add := func(tool Tool, requireKnown bool) error {
 		if r.catalogFilter != nil && !r.catalogFilter(tool) {
 			return nil
 		}
-		if !toolcatalog.IsKnownTool(tool.Name) {
+		if requireKnown && !toolcatalog.IsKnownTool(tool.Name) {
 			return fmt.Errorf("registering %s: not present in shared tool catalog", tool.Name)
 		}
 		if err := registrar.AddTool(tool); err != nil {
@@ -136,12 +139,17 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 		coachModeEnabled: r.coachModeEnabled,
 		coachConfig:      r.coachConfig,
 	}) {
-		if err := add(tool); err != nil {
+		if err := add(tool, true); err != nil {
+			return err
+		}
+	}
+	for _, tool := range r.extraTools {
+		if err := add(tool, false); err != nil {
 			return err
 		}
 	}
 	advancedTool := newListAdvancedCapabilitiesTool(filteredCatalog(collector.tools, r.catalogFilter), r.toolset, shaping)
-	if err := add(advancedTool); err != nil {
+	if err := add(advancedTool, true); err != nil {
 		return err
 	}
 	diagnosticCatalog := effectiveDiagnosticCatalog(filteredCatalog(collector.tools, r.catalogFilter), r.capability, r.toolset)
@@ -149,7 +157,7 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	if err != nil {
 		return fmt.Errorf("building %s: %w", checkServerVersionName, err)
 	}
-	if err := add(diagnosticTool); err != nil {
+	if err := add(diagnosticTool, true); err != nil {
 		return err
 	}
 	return nil

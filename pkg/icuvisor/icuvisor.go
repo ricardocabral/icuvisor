@@ -143,8 +143,8 @@ func NewCoreRegistry(client *Client, opts RegistryOptions) Registry {
 		innerClient = client.inner
 	}
 	filter := internalToolFilter(opts.ToolFilter)
-	base := tools.NewRegistryWithOptions(innerClient, tools.RegistryOptions{Version: opts.Version, TimezoneFallback: opts.TimezoneFallback, DebugMetadata: opts.DebugMetadata, Capability: safety.NewCapability(opts.DeleteMode.toInternal()), Toolset: opts.Toolset.toInternal(), CatalogFilter: filter, CatalogHash: opts.CatalogHash})
-	return Registry{inner: registryWithExtras{base: base, filter: filter, extras: internalTools(opts.ExtraTools)}}
+	base := tools.NewRegistryWithOptions(innerClient, tools.RegistryOptions{Version: opts.Version, TimezoneFallback: opts.TimezoneFallback, DebugMetadata: opts.DebugMetadata, Capability: safety.NewCapability(opts.DeleteMode.toInternal()), Toolset: opts.Toolset.toInternal(), CatalogFilter: filter, CatalogHash: opts.CatalogHash, ExtraTools: internalTools(opts.ExtraTools)})
+	return Registry{inner: base}
 }
 
 // NewResourceRegistry creates the default MCP resource registry.
@@ -343,29 +343,6 @@ func NewStreamableHTTPHandler(factory StreamableHTTPServerFactory, opts Streamab
 		}
 		return server.inner, nil
 	}, internalmcp.StreamableHTTPHandlerOptions{Logger: opts.Logger, Stateless: opts.Stateless, JSONResponse: opts.JSONResponse, FactoryErrorMessage: opts.FactoryErrorMessage})
-}
-
-type registryWithExtras struct {
-	base   tools.Registry
-	filter func(tools.Tool) bool
-	extras []tools.Tool
-}
-
-func (r registryWithExtras) Register(ctx context.Context, registrar tools.Registrar) error {
-	if r.base != nil {
-		if err := r.base.Register(ctx, registrar); err != nil {
-			return err
-		}
-	}
-	for _, tool := range r.extras {
-		if r.filter != nil && !r.filter(tool) {
-			continue
-		}
-		if err := registrar.AddTool(tool); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func internalTools(publicTools []Tool) []tools.Tool {

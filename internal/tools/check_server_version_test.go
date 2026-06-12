@@ -74,6 +74,34 @@ func TestCheckServerVersionOutputShapeAndNoLeakage(t *testing.T) {
 	}
 }
 
+func TestRegistryExtraToolsParticipateInAdvancedCapabilities(t *testing.T) {
+	registrar := &collectingRegistrar{}
+	extraTool := Tool{Name: "hosted_full_status", Description: "Report hosted full-only setup status.", InputSchema: noArgsSchema(), OutputSchema: genericOutputSchema("hosted status"), Requirement: RequirementRead, Toolset: safety.ToolsetFull, Handler: func(context.Context, Request) (Result, error) { return TextResult(map[string]any{"status": "ok"}), nil }}
+	if err := NewRegistryWithOptions(newNoNetworkIntervalsClient(t), RegistryOptions{Version: "v0.6.1", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeSafe), Toolset: safety.ToolsetCore, ExtraTools: []Tool{extraTool}}).Register(context.Background(), registrar); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+	tool := findTool(t, registrar.tools, listAdvancedCapabilitiesName)
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+
+	var payload struct {
+		AdvancedCapabilities []struct {
+			Name string `json:"name"`
+		} `json:"advanced_capabilities"`
+	}
+	if err := json.Unmarshal([]byte(resultText(t, result)), &payload); err != nil {
+		t.Fatalf("unmarshal result: %v", err)
+	}
+	for _, capability := range payload.AdvancedCapabilities {
+		if capability.Name == "hosted_full_status" {
+			return
+		}
+	}
+	t.Fatalf("advanced capabilities missing hosted_full_status: %#v", payload.AdvancedCapabilities)
+}
+
 func TestCheckServerVersionUsesRegistryCatalogHashWithoutGlobalMetadata(t *testing.T) {
 	response.SetRuntimeCatalogMetadata("global-version", "global-hash")
 	t.Cleanup(func() { response.SetRuntimeCatalogMetadata("dev", "dev-catalog-hash") })
