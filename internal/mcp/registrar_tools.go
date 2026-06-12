@@ -294,6 +294,9 @@ func (r *safeRegistrar) validateTool(tool tools.Tool) error {
 	if err := validateToolset(tool); err != nil {
 		return err
 	}
+	if err := validateRequirement(tool); err != nil {
+		return err
+	}
 	if err := validateObjectSchema("input", tool.Name, tool.InputSchema, true); err != nil {
 		return err
 	}

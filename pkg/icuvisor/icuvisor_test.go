@@ -81,6 +81,46 @@ func TestCoreRegistryFacadeFiltersAndAddsDiagnostics(t *testing.T) {
 	}
 }
 
+func TestExtraToolSafetyMetadataFailsClosed(t *testing.T) {
+	t.Parallel()
+
+	invalidRequirement := facadeExtraTool("Invalid requirement.", ToolsetCore)
+	invalidRequirement.Requirement = Requirement("deletee")
+	registry := NewCoreRegistry(newFacadeTestClient(t), RegistryOptions{Version: "v-public", Toolset: ToolsetFull, ExtraTools: []Tool{invalidRequirement}})
+	if _, err := CollectToolCatalog(context.Background(), CatalogOptions{Config: facadeTestConfig(), Registry: registry, Mode: DeleteModeFull, Toolset: ToolsetFull}); err == nil {
+		t.Fatal("CollectToolCatalog() error = nil, want invalid requirement error")
+	}
+
+	invalidToolset := facadeExtraTool("Invalid toolset.", Toolset("coree"))
+	registry = NewCoreRegistry(newFacadeTestClient(t), RegistryOptions{Version: "v-public", Toolset: ToolsetFull, ExtraTools: []Tool{invalidToolset}})
+	if _, err := CollectToolCatalog(context.Background(), CatalogOptions{Config: facadeTestConfig(), Registry: registry, Mode: DeleteModeFull, Toolset: ToolsetFull}); err == nil {
+		t.Fatal("CollectToolCatalog() error = nil, want invalid toolset error")
+	}
+}
+
+func TestExtraToolOmittedToolsetDefaultsToFull(t *testing.T) {
+	t.Parallel()
+
+	extra := facadeExtraTool("Omitted toolset should be full.", "")
+	registry := NewCoreRegistry(newFacadeTestClient(t), RegistryOptions{Version: "v-public", Toolset: ToolsetCore, ExtraTools: []Tool{extra}})
+	coreCatalog, err := CollectToolCatalog(context.Background(), CatalogOptions{Config: facadeTestConfig(), Registry: registry, Mode: DeleteModeSafe, Toolset: ToolsetCore})
+	if err != nil {
+		t.Fatalf("CollectToolCatalog(core) error = %v", err)
+	}
+	if hasTool(coreCatalog, "hosted_setup_status") {
+		t.Fatal("core catalog includes extra tool with omitted toolset; want full-only default")
+	}
+
+	registry = NewCoreRegistry(newFacadeTestClient(t), RegistryOptions{Version: "v-public", Toolset: ToolsetFull, ExtraTools: []Tool{extra}})
+	fullCatalog, err := CollectToolCatalog(context.Background(), CatalogOptions{Config: facadeTestConfig(), Registry: registry, Mode: DeleteModeSafe, Toolset: ToolsetFull})
+	if err != nil {
+		t.Fatalf("CollectToolCatalog(full) error = %v", err)
+	}
+	if !hasTool(fullCatalog, "hosted_setup_status") {
+		t.Fatal("full catalog missing extra tool with omitted toolset")
+	}
+}
+
 func TestExtraToolsParticipateInCheckServerVersionFingerprint(t *testing.T) {
 	t.Parallel()
 

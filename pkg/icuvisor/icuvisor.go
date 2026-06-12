@@ -368,7 +368,7 @@ func internalTools(publicTools []Tool) []tools.Tool {
 }
 
 func internalTool(tool Tool) tools.Tool {
-	return tools.Tool{Name: tool.Name, Description: tool.Description, InputSchema: tool.InputSchema, OutputSchema: tool.OutputSchema, Requirement: tool.Requirement.toInternal(), Toolset: tool.Toolset.toInternal(), Handler: internalHandler(tool.Handler)}
+	return tools.Tool{Name: tool.Name, Description: tool.Description, InputSchema: tool.InputSchema, OutputSchema: tool.OutputSchema, Requirement: tools.Requirement(tool.Requirement), Toolset: safety.Toolset(tool.Toolset), Handler: internalHandler(tool.Handler)}
 }
 
 func internalHandler(handler Handler) tools.Handler {
@@ -447,15 +447,4 @@ func (m DeleteMode) toInternal() safety.Mode {
 
 func (t Toolset) toInternal() safety.Toolset {
 	return safety.ParseToolset(string(t))
-}
-
-func (r Requirement) toInternal() tools.Requirement {
-	switch r {
-	case RequirementWrite:
-		return tools.RequirementWrite
-	case RequirementDelete:
-		return tools.RequirementDelete
-	default:
-		return tools.RequirementRead
-	}
 }

@@ -76,6 +76,15 @@ func validateToolset(tool tools.Tool) error {
 	}
 }
 
+func validateRequirement(tool tools.Tool) error {
+	switch tool.Requirement {
+	case "", tools.RequirementRead, tools.RequirementWrite, tools.RequirementDelete:
+		return nil
+	default:
+		return fmt.Errorf("tool %q has invalid requirement %q", tool.Name, tool.Requirement)
+	}
+}
+
 func validateObjectSchema(kind, name string, schema any, required bool) error {
 	if schema == nil {
 		if required {
