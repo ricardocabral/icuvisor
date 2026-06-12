@@ -6,11 +6,15 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/ricardocabral/icuvisor/internal/config"
+	"github.com/ricardocabral/icuvisor/internal/intervals"
 	internalmcp "github.com/ricardocabral/icuvisor/internal/mcp"
+	internalprompts "github.com/ricardocabral/icuvisor/internal/prompts"
 	internalresources "github.com/ricardocabral/icuvisor/internal/resources"
 	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
@@ -48,6 +52,130 @@ func TestBearerClientFacadeUsesBearerAuth(t *testing.T) {
 	}
 	if profile.Name != "Hosted Bearer" {
 		t.Fatalf("profile name = %q, want Hosted Bearer", profile.Name)
+	}
+}
+
+func TestAPIKeyClientFacadeMatchesInternalBasicAuth(t *testing.T) {
+	t.Parallel()
+
+	requests := make(chan *http.Request, 2)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests <- r
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"i12345","name":"Fixture Athlete"}`))
+	}))
+	defer server.Close()
+
+	cfg := facadeTestConfig()
+	cfg.APIBaseURL = server.URL
+	publicClient, err := NewAPIKeyClient(APIKeyClientOptions{Config: cfg, Version: "v-public", HTTPClient: server.Client()})
+	if err != nil {
+		t.Fatalf("NewAPIKeyClient() error = %v", err)
+	}
+	if _, err := publicClient.inner.GetAthleteProfile(context.Background()); err != nil {
+		t.Fatalf("public GetAthleteProfile() error = %v", err)
+	}
+
+	internalClient, err := intervals.NewClient(intervals.Options{Config: config.Config{APIKey: cfg.APIKey, AthleteID: cfg.AthleteID, Timezone: cfg.Timezone, APIBaseURL: server.URL, HTTPTimeout: cfg.HTTPTimeout}, Version: "v-public", HTTPClient: server.Client()})
+	if err != nil {
+		t.Fatalf("internal NewClient() error = %v", err)
+	}
+	if _, err := internalClient.GetAthleteProfile(context.Background()); err != nil {
+		t.Fatalf("internal GetAthleteProfile() error = %v", err)
+	}
+
+	for _, label := range []string{"public", "internal"} {
+		req := <-requests
+		username, password, ok := req.BasicAuth()
+		if !ok || username == "" || password != "x" {
+			t.Fatalf("%s BasicAuth() = %q/%q/%v, want API-key basic auth", label, username, password, ok)
+		}
+		if auth := req.Header.Get("Authorization"); strings.HasPrefix(auth, "Bearer ") {
+			t.Fatalf("%s Authorization = %q, want no bearer auth", label, auth)
+		}
+		if got, want := req.UserAgent(), "icuvisor/v-public"; got != want {
+			t.Fatalf("%s User-Agent = %q, want %q", label, got, want)
+		}
+	}
+}
+
+func TestPublicCoreCatalogMatchesInternalForPolicyMatrix(t *testing.T) {
+	t.Parallel()
+
+	client := newFacadeTestClient(t)
+	cfg := facadeTestConfig()
+	modes := []DeleteMode{DeleteModeSafe, DeleteModeFull, DeleteModeNone}
+	toolsets := []Toolset{ToolsetCore, ToolsetFull}
+	for _, mode := range modes {
+		for _, toolset := range toolsets {
+			mode, toolset := mode, toolset
+			t.Run(string(mode)+"/"+string(toolset), func(t *testing.T) {
+				t.Parallel()
+
+				publicRegistry := NewCoreRegistry(client, RegistryOptions{Version: "v-public", TimezoneFallback: cfg.Timezone, DebugMetadata: true, DeleteMode: mode, Toolset: toolset})
+				publicCatalog, err := CollectToolCatalog(context.Background(), CatalogOptions{Config: cfg, Registry: publicRegistry, Mode: mode, Toolset: toolset})
+				if err != nil {
+					t.Fatalf("public CollectToolCatalog() error = %v", err)
+				}
+				publicHash, err := ComputeToolCatalogHash(context.Background(), CatalogOptions{Config: cfg, Registry: publicRegistry, Mode: mode, Toolset: toolset})
+				if err != nil {
+					t.Fatalf("public ComputeToolCatalogHash() error = %v", err)
+				}
+
+				internalCfg, err := cfg.toInternalValidated()
+				if err != nil {
+					t.Fatalf("toInternalValidated() error = %v", err)
+				}
+				internalMode := mode.toInternal()
+				internalToolset := toolset.toInternal()
+				internalRegistry := internaltools.NewRegistryWithOptions(client.inner, internaltools.RegistryOptions{Version: "v-public", TimezoneFallback: cfg.Timezone, DebugMetadata: true, Capability: safety.NewCapability(internalMode), Toolset: internalToolset})
+				internalCatalog, err := internalmcp.CollectToolCatalog(context.Background(), internalmcp.CatalogHashOptions{Config: internalCfg, Registry: internalRegistry, Capability: safety.NewCapability(internalMode), Toolset: internalToolset})
+				if err != nil {
+					t.Fatalf("internal CollectToolCatalog() error = %v", err)
+				}
+				internalHash, err := internalmcp.ComputeToolCatalogHash(context.Background(), internalmcp.CatalogHashOptions{Config: internalCfg, Registry: internalRegistry, Capability: safety.NewCapability(internalMode), Toolset: internalToolset})
+				if err != nil {
+					t.Fatalf("internal ComputeToolCatalogHash() error = %v", err)
+				}
+
+				if got, want := publicToolNames(publicCatalog), internalToolNames(internalCatalog); strings.Join(got, ",") != strings.Join(want, ",") {
+					t.Fatalf("public tool names = %v, want internal %v", got, want)
+				}
+				if publicHash != internalHash {
+					t.Fatalf("public catalog hash = %q, want internal %q", publicHash, internalHash)
+				}
+			})
+		}
+	}
+}
+
+func TestPublicResourcesAndPromptsMatchInternalDefaults(t *testing.T) {
+	t.Parallel()
+
+	client := newFacadeTestClient(t)
+	cfg := facadeTestConfig()
+	publicResources := &collectingResourceRegistrar{}
+	if err := NewResourceRegistry(client, ResourceRegistryOptions{Version: "v-public", TimezoneFallback: cfg.Timezone, DeleteMode: DeleteModeSafe, Toolset: ToolsetCore}).inner.Register(context.Background(), publicResources); err != nil {
+		t.Fatalf("public resource Register() error = %v", err)
+	}
+	internalResources := &collectingResourceRegistrar{}
+	if err := internalresources.NewRegistryWithOptions(client.inner, internalresources.ResourceOptions{Version: "v-public", TimezoneFallback: cfg.Timezone, DeleteMode: safety.ModeSafe, Toolset: safety.ToolsetCore}).Register(context.Background(), internalResources); err != nil {
+		t.Fatalf("internal resource Register() error = %v", err)
+	}
+	if got, want := resourceURIs(publicResources.resources), resourceURIs(internalResources.resources); strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Fatalf("public resource URIs = %v, want internal %v", got, want)
+	}
+
+	publicPrompts := &collectingPromptRegistrar{}
+	if err := NewPromptRegistry().inner.Register(context.Background(), publicPrompts); err != nil {
+		t.Fatalf("public prompt Register() error = %v", err)
+	}
+	internalPrompts := &collectingPromptRegistrar{}
+	if err := internalprompts.NewRegistry().Register(context.Background(), internalPrompts); err != nil {
+		t.Fatalf("internal prompt Register() error = %v", err)
+	}
+	if got, want := promptNames(publicPrompts.prompts), promptNames(internalPrompts.prompts); strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Fatalf("public prompt names = %v, want internal %v", got, want)
 	}
 }
 
@@ -497,4 +625,49 @@ func hasTool(catalog []ToolInfo, name string) bool {
 		}
 	}
 	return false
+}
+
+func publicToolNames(catalog []ToolInfo) []string {
+	names := make([]string, 0, len(catalog))
+	for _, tool := range catalog {
+		names = append(names, tool.Name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+func internalToolNames(catalog []internaltools.Tool) []string {
+	names := make([]string, 0, len(catalog))
+	for _, tool := range catalog {
+		names = append(names, tool.Name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+func resourceURIs(resources []internalresources.Resource) []string {
+	uris := make([]string, 0, len(resources))
+	for _, resource := range resources {
+		uris = append(uris, resource.URI)
+	}
+	sort.Strings(uris)
+	return uris
+}
+
+type collectingPromptRegistrar struct {
+	prompts []internalprompts.Prompt
+}
+
+func (r *collectingPromptRegistrar) AddPrompt(prompt internalprompts.Prompt) error {
+	r.prompts = append(r.prompts, prompt)
+	return nil
+}
+
+func promptNames(prompts []internalprompts.Prompt) []string {
+	names := make([]string, 0, len(prompts))
+	for _, prompt := range prompts {
+		names = append(names, prompt.Name)
+	}
+	sort.Strings(names)
+	return names
 }

@@ -207,7 +207,13 @@ type ServerOptions struct {
 	DeleteMode                 DeleteMode
 	Toolset                    Toolset
 	Transport                  sdkmcp.Transport
+	RecentToolCallRecorder     RecentToolCallRecorder
 	SkipRuntimeCatalogMetadata bool
+}
+
+// RecentToolCallRecorder records tool-call names for diagnostics without exposing arguments or payloads.
+type RecentToolCallRecorder interface {
+	RecordToolCall(context.Context, string, time.Time) error
 }
 
 // NewServer constructs an MCP server from public core facade inputs.
@@ -230,7 +236,7 @@ func NewServer(ctx context.Context, opts ServerOptions) (*Server, error) {
 		registry = registryForConfigWithCatalogHash(opts.Registry, opts.Config, catalogHash)
 		resourceRegistry = resourceRegistryForConfigWithCatalogHash(opts.ResourceRegistry, opts.Config, catalogHash)
 	}
-	server, err := internalmcp.NewServer(ctx, internalmcp.Options{Config: cfg, Version: opts.Version, Logger: opts.Logger, Registry: registry, ResourceRegistry: resourceRegistry, PromptRegistry: opts.PromptRegistry.inner, Capability: safety.NewCapability(deleteMode.toInternal()), Toolset: toolset.toInternal(), Transport: opts.Transport, SkipRuntimeCatalogMetadata: opts.SkipRuntimeCatalogMetadata})
+	server, err := internalmcp.NewServer(ctx, internalmcp.Options{Config: cfg, Version: opts.Version, Logger: opts.Logger, Registry: registry, ResourceRegistry: resourceRegistry, PromptRegistry: opts.PromptRegistry.inner, Capability: safety.NewCapability(deleteMode.toInternal()), Toolset: toolset.toInternal(), Transport: opts.Transport, RecentToolCallRecorder: opts.RecentToolCallRecorder, SkipRuntimeCatalogMetadata: opts.SkipRuntimeCatalogMetadata})
 	if err != nil {
 		return nil, err
 	}
