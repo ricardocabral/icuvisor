@@ -3,7 +3,7 @@ title: "Connect ChatGPT"
 description: "Minimal ChatGPT MCP connection notes for icuvisor."
 ---
 
-ChatGPT MCP support is evolving across client and developer-mode surfaces. Use this page as the focused connection shape: point ChatGPT's MCP configuration at the local icuvisor binary and keep secrets out of the model conversation.
+ChatGPT MCP support is evolving across client and developer-mode surfaces. Use this page only for ChatGPT surfaces that explicitly run a local MCP server by stdio or connect to a loopback Streamable HTTP URL. Remote custom connector UIs are different and are covered below.
 
 ## Before you start
 
@@ -14,6 +14,8 @@ ChatGPT MCP support is evolving across client and developer-mode surfaces. Use t
 ## Stdio configuration shape
 
 Use the same stdio server definition as the Claude clients when ChatGPT asks for a local MCP server command:
+
+macOS:
 
 ```json
 {
@@ -30,14 +32,40 @@ Use the same stdio server definition as the Claude clients when ChatGPT asks for
 }
 ```
 
+Windows:
+
+```json
+{
+  "mcpServers": {
+    "icuvisor": {
+      "command": "C:\\Users\\<you>\\AppData\\Local\\Programs\\icuvisor\\icuvisor.exe",
+      "env": {
+        "INTERVALS_ICU_ATHLETE_ID": "i12345",
+        "ICUVISOR_TIMEZONE": "Europe/Brussels",
+        "ICUVISOR_TRANSPORT": "stdio"
+      }
+    }
+  }
+}
+```
+
 If your ChatGPT MCP surface expects a single server object rather than a full `mcpServers` map, use the `icuvisor` object from the example as that server definition.
 
 ## HTTP alternative
 
 If your ChatGPT MCP surface expects an HTTP URL, start icuvisor with Streamable HTTP on loopback:
 
+macOS:
+
 ```bash
 ICUVISOR_TRANSPORT=http /Applications/icuvisor.app/Contents/MacOS/icuvisor
+```
+
+Windows PowerShell:
+
+```powershell
+$env:ICUVISOR_TRANSPORT = "http"
+& "$env:LOCALAPPDATA\Programs\icuvisor\icuvisor.exe"
 ```
 
 Then point the client at:

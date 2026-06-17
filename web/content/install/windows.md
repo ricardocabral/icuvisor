@@ -1,23 +1,38 @@
 ---
 title: "Install on Windows"
-description: "Install icuvisor on Windows from the unsigned MSI."
+description: "Install icuvisor on Windows with PowerShell or the unsigned MSI."
 ---
 
-icuvisor for Windows ships as an MSI built by CI on every release. The MSI is currently **unsigned** — Windows SmartScreen may warn about an unknown publisher on first launch. The installer is functional; once past the warning, install, upgrade, and uninstall behave normally.
+The recommended Windows install path is the PowerShell installer. It downloads the latest release asset, verifies the SHA256 checksum, installs `icuvisor.exe` for the current user, and avoids the unsigned MSI SmartScreen prompt.
 
-Winget distribution does not require Authenticode signing; it verifies the installer URL and SHA-256 hash from the package manifest. Signing may be added later if a suitable code-signing path is available.
+```powershell
+iwr -useb https://icuvisor.app/install.ps1 | iex
+```
 
-## Install from the MSI
+Open a **new** PowerShell or Command Prompt window after installation and confirm:
+
+```powershell
+icuvisor version
+```
+
+Re-run the same command to upgrade in place.
+
+icuvisor also ships as an MSI built by CI on every release. The MSI is currently **unsigned** — Windows SmartScreen may warn about an unknown publisher on first launch. The installer is functional; once past the warning, install, upgrade, and uninstall behave normally.
+
+Windows package-manager distribution is still being validated. When Winget support is added, it can verify the installer URL and SHA-256 hash from the package manifest even before Authenticode signing is available. Signing may be added later if a suitable code-signing path is available.
+
+## Install from the MSI manually
 
 1. Download `icuvisor_<version>_windows_<arch>.msi` and `SHA256SUMS.txt` from the latest GitHub release. Pick `amd64` on Intel/AMD machines and `arm64` on ARM (Surface Pro X, Snapdragon laptops).
 2. Optional: verify the checksum in PowerShell from the folder where both files were downloaded:
 
    ```powershell
-   (Get-FileHash .\icuvisor_*_windows_*.msi -Algorithm SHA256).Hash.ToLower()
-   Select-String -Path .\SHA256SUMS.txt -Pattern 'windows'
+   $msi = "icuvisor_<version>_windows_<arch>.msi"
+   (Get-FileHash ".\$msi" -Algorithm SHA256).Hash.ToLower()
+   Select-String -Path .\SHA256SUMS.txt -Pattern ([regex]::Escape($msi))
    ```
 
-   The two hashes must match.
+   Replace `<version>` and `<arch>` with the file you downloaded. The two hashes must match.
 
 3. Double-click the MSI. When SmartScreen shows **"Windows protected your PC"**, click **More info → Run anyway**. This is expected for unsigned pre-v1 builds.
 4. The installer is per-user — no UAC prompt. Files land in `%LOCALAPPDATA%\Programs\icuvisor`, which expands to `C:\Users\<you>\AppData\Local\Programs\icuvisor`, and that directory is added to your user `PATH`. `AppData` is hidden in File Explorer by default, so a normal C: drive search will not find it — paste the path into the address bar, or enable **View → Show → Hidden items**.
@@ -73,7 +88,7 @@ Keep the API key out of client JSON. Put only non-secret values in the client co
 3. Optional: remove the Credential Manager API key:
 
    ```powershell
-   cmdkey /delete:icuvisor
+   cmdkey /delete:icuvisor:intervals-icu-api-key
    ```
 
 4. Remove any MCP client config blocks that launch icuvisor.

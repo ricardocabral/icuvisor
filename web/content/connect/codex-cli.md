@@ -49,6 +49,12 @@ For the macOS app install, the command path is usually:
 /Applications/icuvisor.app/Contents/MacOS/icuvisor
 ```
 
+For the Windows installer, the command path is usually:
+
+```text
+C:\Users\<you>\AppData\Local\Programs\icuvisor\icuvisor.exe
+```
+
 Codex writes the server entry to `~/.codex/config.toml` by default. OpenAI also documents project-scoped `.codex/config.toml` for trusted projects.
 
 ## Manual config.toml option

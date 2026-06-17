@@ -1,14 +1,16 @@
 ---
 title: Getting started with ChatGPT
-description: Install icuvisor on macOS, connect it to ChatGPT over local MCP stdio, and ask your first training-data question.
+description: Install icuvisor on macOS, connect it to a local ChatGPT MCP surface over stdio, and ask your first training-data question.
 ---
 
 By the end you'll have asked ChatGPT about real activity from your intervals.icu account and gotten a sourced answer from icuvisor.
 
+This tutorial is for a local ChatGPT MCP surface that explicitly accepts a stdio command on your Mac. It is not for ChatGPT-style hosted custom connector UIs: hosted connector UIs cannot reach `127.0.0.1` on your computer and require a provider-reachable HTTPS MCP endpoint. See [Connect ChatGPT]({{< relref "../connect/chatgpt" >}}#remote-connector-uis-are-not-supported-yet) before trying this flow.
+
 ## What you'll need
 
 - macOS 13 or newer.
-- A ChatGPT account with custom MCP connectors enabled.
+- A ChatGPT surface that supports local MCP stdio servers.
 - An intervals.icu account.
 - About 10 minutes.
 
@@ -61,9 +63,9 @@ Enter your athlete ID and timezone when prompted. Your athlete ID is the number 
 
 ## Step 4 — Connect ChatGPT
 
-Open ChatGPT.
+Open the local ChatGPT MCP surface.
 
-Go to **Settings** → **Connectors** → **Add custom MCP**.
+Open the MCP server configuration screen. The exact labels can change while ChatGPT MCP support evolves; do not use a hosted connector screen that asks only for a remote HTTPS URL.
 
 Name the connector `icuvisor` and paste this configuration:
 

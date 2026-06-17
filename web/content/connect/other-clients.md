@@ -15,6 +15,8 @@ Keep the intervals.icu API key out of client JSON. Store it with `icuvisor setup
 
 Use this shape for clients that accept a Claude-style `mcpServers` map, including Cursor and many local-agent clients:
 
+macOS:
+
 ```json
 {
   "mcpServers": {
@@ -23,6 +25,23 @@ Use this shape for clients that accept a Claude-style `mcpServers` map, includin
       "env": {
         "INTERVALS_ICU_ATHLETE_ID": "i12345",
         "ICUVISOR_TIMEZONE": "America/Sao_Paulo",
+        "ICUVISOR_TRANSPORT": "stdio"
+      }
+    }
+  }
+}
+```
+
+Windows:
+
+```json
+{
+  "mcpServers": {
+    "icuvisor": {
+      "command": "C:\\Users\\<you>\\AppData\\Local\\Programs\\icuvisor\\icuvisor.exe",
+      "env": {
+        "INTERVALS_ICU_ATHLETE_ID": "i12345",
+        "ICUVISOR_TIMEZONE": "Europe/Brussels",
         "ICUVISOR_TRANSPORT": "stdio"
       }
     }
@@ -45,8 +64,17 @@ For clients that ask for only one server entry, copy the inner `icuvisor` object
 
 Start icuvisor in HTTP mode:
 
+macOS:
+
 ```bash
 ICUVISOR_TRANSPORT=http /Applications/icuvisor.app/Contents/MacOS/icuvisor
+```
+
+Windows PowerShell:
+
+```powershell
+$env:ICUVISOR_TRANSPORT = "http"
+& "$env:LOCALAPPDATA\Programs\icuvisor\icuvisor.exe"
 ```
 
 Use this MCP endpoint:

@@ -9,8 +9,17 @@ description: "Enable icuvisor's Streamable HTTP MCP transport and understand the
 
 Run icuvisor with `ICUVISOR_TRANSPORT=http`:
 
+macOS:
+
 ```bash
 ICUVISOR_TRANSPORT=http /Applications/icuvisor.app/Contents/MacOS/icuvisor
+```
+
+Windows PowerShell:
+
+```powershell
+$env:ICUVISOR_TRANSPORT = "http"
+& "$env:LOCALAPPDATA\Programs\icuvisor\icuvisor.exe"
 ```
 
 By default, icuvisor listens on loopback only:
@@ -21,8 +30,16 @@ http://127.0.0.1:8765/mcp
 
 Equivalent flags:
 
+macOS:
+
 ```bash
 /Applications/icuvisor.app/Contents/MacOS/icuvisor --transport http --http-bind 127.0.0.1:8765
+```
+
+Windows PowerShell:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\icuvisor\icuvisor.exe" --transport http --http-bind 127.0.0.1:8765
 ```
 
 Config files can also set:

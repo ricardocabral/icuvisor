@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Clarified Windows and ChatGPT connection documentation after Windows VM install testing, including PowerShell-first Windows install guidance, exact Windows credential cleanup, platform-specific MCP command examples, and hosted ChatGPT connector limitations.
 - Clarified the Claude Desktop manual setup docs for Windows users, including the `%APPDATA%\Claude\claude_desktop_config.json` path and the `%LOCALAPPDATA%\Programs\icuvisor\icuvisor.exe` command path.
 - Made the Windows PowerShell installer ASCII-only so saving `install.ps1` and running it as a file works under Windows PowerShell 5.1.
 

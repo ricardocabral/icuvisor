@@ -164,4 +164,11 @@ cmdkey /list | findstr /i icuvisor
 
 ## Updating
 
-For the extension path, download and open the newer `.mcpb` release asset, then restart Claude Desktop and start a new chat. For the manual app path, download the newer signed DMG, replace `/Applications/icuvisor.app`, fully quit Claude Desktop, and start a new chat. In both paths, keep the API key out of manual JSON config. Also start a new chat after changing Project instructions. If Claude still shows old tools or stale answers, use the [stale conversation troubleshooting guide]({{< relref "../guides/troubleshooting#stale-conversations-and-cached-tool-catalogs" >}}).
+For the extension path, download and open the newer `.mcpb` release asset, then restart Claude Desktop and start a new chat.
+
+For the manual app path:
+
+- macOS: download the newer signed DMG, replace `/Applications/icuvisor.app`, fully quit Claude Desktop, and start a new chat.
+- Windows: rerun `iwr -useb https://icuvisor.app/install.ps1 | iex` in PowerShell, or install the newer MSI, fully quit Claude Desktop, and start a new chat.
+
+In both paths, keep the API key out of manual JSON config. Also start a new chat after changing Project instructions. If Claude still shows old tools or stale answers, use the [stale conversation troubleshooting guide]({{< relref "../guides/troubleshooting#stale-conversations-and-cached-tool-catalogs" >}}).

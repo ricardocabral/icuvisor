@@ -31,10 +31,10 @@ After installing, run `icuvisor setup` to store credentials safely and write non
 
 ## Platform guides
 
-Prefer a package manager or a signed installer package? Pick your platform:
+Prefer a package manager or platform-specific installer package? Pick your platform:
 
 {{< cards >}}
   {{< card link="macos" title="macOS" subtitle="Install the signed macOS app and verify Gatekeeper status." >}}
-  {{< card link="windows" title="Windows" subtitle="Install from the MSI package." >}}
+  {{< card link="windows" title="Windows" subtitle="Install with PowerShell or the MSI package." >}}
   {{< card link="linux" title="Linux" subtitle="Current Linux packaging status." >}}
 {{< /cards >}}
