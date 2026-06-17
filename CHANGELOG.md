@@ -9,9 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `pkg/icuvisor`, a public Go facade for reusing icuvisor's core MCP server, tool/resource/prompt registries, Intervals client wiring, catalog metadata, and Streamable HTTP handler from other Go modules without importing internal packages.
+
 ### Changed
 
+- The default non-coach CLI/MCP startup path now uses the public `pkg/icuvisor` facade, with parity coverage against the internal wiring; hosted deployments can depend on the public core library while keeping hosted OAuth, storage, and deployment code private.
+
 ### Fixed
+
+- Clarified the Claude Desktop manual setup docs for Windows users, including the `%APPDATA%\Claude\claude_desktop_config.json` path and the `%LOCALAPPDATA%\Programs\icuvisor\icuvisor.exe` command path.
+- Made the Windows PowerShell installer ASCII-only so saving `install.ps1` and running it as a file works under Windows PowerShell 5.1.
 
 ## [1.1.0] - 2026-06-10
 

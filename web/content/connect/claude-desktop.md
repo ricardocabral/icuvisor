@@ -46,18 +46,25 @@ If the extension installs but tools do not appear, open Claude Desktop settings,
 
 ## Option 2: Manual JSON and keychain fallback
 
-Use this path if you installed `icuvisor.app` from the macOS DMG, use a development binary, or cannot install `.mcpb` files in your Claude Desktop environment.
+Use this path if you installed `icuvisor.app` from the macOS DMG, installed `icuvisor.exe` on Windows, use a development binary, or cannot install `.mcpb` files in your Claude Desktop environment.
 
 You need:
 
-- `icuvisor.app` installed in `/Applications`, or another absolute path to an `icuvisor` binary.
+- macOS: `icuvisor.app` installed in `/Applications`, or another absolute path to an `icuvisor` binary.
+- Windows: `icuvisor.exe` installed at `%LOCALAPPDATA%\Programs\icuvisor\icuvisor.exe`, or another absolute path to `icuvisor.exe`.
 - Your intervals.icu athlete ID, written as `i12345` or `12345`.
-- Your API key stored in the macOS Keychain under service `icuvisor` and account `intervals-icu-api-key`.
+- Your API key stored by `icuvisor setup` in the OS credential store. On macOS this is Keychain; on Windows this is Windows Credential Manager.
 
 Store the API key first:
 
 ```bash
 /Applications/icuvisor.app/Contents/MacOS/icuvisor setup
+```
+
+On Windows, run this in a new PowerShell window after installing:
+
+```powershell
+icuvisor setup
 ```
 
 Claude Desktop reads MCP server definitions from:
@@ -66,7 +73,17 @@ Claude Desktop reads MCP server definitions from:
 ~/Library/Application Support/Claude/claude_desktop_config.json
 ```
 
-Create the file if it does not exist. Add or merge this `mcpServers.icuvisor` block, replacing only the non-secret placeholders:
+On Windows, the file is:
+
+```text
+%APPDATA%\Claude\claude_desktop_config.json
+```
+
+That usually expands to `C:\Users\<you>\AppData\Roaming\Claude\claude_desktop_config.json`.
+
+Create the file if it does not exist. Add or merge the right `mcpServers.icuvisor` block for your OS, replacing only the non-secret placeholders.
+
+macOS:
 
 ```json
 {
@@ -83,12 +100,29 @@ Create the file if it does not exist. Add or merge this `mcpServers.icuvisor` bl
 }
 ```
 
+Windows:
+
+```json
+{
+  "mcpServers": {
+    "icuvisor": {
+      "command": "C:\\Users\\<you>\\AppData\\Local\\Programs\\icuvisor\\icuvisor.exe",
+      "env": {
+        "INTERVALS_ICU_ATHLETE_ID": "i12345",
+        "ICUVISOR_TIMEZONE": "Europe/Brussels",
+        "ICUVISOR_TRANSPORT": "stdio"
+      }
+    }
+  }
+}
+```
+
 Notes:
 
-- Do not put your intervals.icu API key in `claude_desktop_config.json`; the manual path reads it from Keychain.
+- Do not put your intervals.icu API key in `claude_desktop_config.json`; the manual path reads it from the OS credential store.
 - `ICUVISOR_TRANSPORT=stdio` is optional because stdio is the default, but keeping it explicit makes the config easier to audit.
 - Use a real IANA timezone such as `UTC`, `America/Sao_Paulo`, or `Europe/London`.
-- If you installed the app somewhere else, update `command` to the absolute path to `icuvisor.app/Contents/MacOS/icuvisor` or your binary.
+- If you installed the app somewhere else, update `command` to the absolute path to `icuvisor.app/Contents/MacOS/icuvisor` or `icuvisor.exe`.
 
 After editing the file, fully quit and reopen Claude Desktop.
 
@@ -107,10 +141,23 @@ If the answer says the tool is missing or cannot start, run:
 plutil -lint "$HOME/Library/Application Support/Claude/claude_desktop_config.json"
 ```
 
+On Windows:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\icuvisor\icuvisor.exe" version
+Get-Content "$env:APPDATA\Claude\claude_desktop_config.json" | ConvertFrom-Json | Out-Null
+```
+
 If the answer reports missing credentials, confirm the Keychain item exists and the athlete ID is set in the JSON:
 
 ```bash
 security find-generic-password -s icuvisor -a intervals-icu-api-key >/dev/null
+```
+
+On Windows, confirm Credential Manager has an icuvisor entry:
+
+```powershell
+cmdkey /list | findstr /i icuvisor
 ```
 
 </details>
