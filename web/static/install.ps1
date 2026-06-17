@@ -109,7 +109,7 @@ $existingCmd  = Get-Command icuvisor -ErrorAction SilentlyContinue
 $existingPath = if ($existingCmd) { $existingCmd.Source } else { $null }
 if ($existingPath) {
   if ($existingPath -match '\\scoop\\(apps|shims)\\') {
-    throw "icuvisor is managed by Scoop at $existingPath — run 'scoop update icuvisor' instead, or pass -InstallDir to override."
+    throw "icuvisor is managed by Scoop at $existingPath - run 'scoop update icuvisor' instead, or pass -InstallDir to override."
   }
   if (-not $InstallDir) {
     $InstallDir = Split-Path -Parent $existingPath
@@ -195,7 +195,7 @@ try {
     )
     & cosign @cosignArgs *> $null
     if ($LASTEXITCODE -ne 0) {
-      throw 'cosign signature verification FAILED — refusing to install'
+      throw 'cosign signature verification FAILED - refusing to install'
     }
     Write-Step 'cosign signature: OK'
   } elseif ($RequireCosign) {
@@ -205,9 +205,9 @@ try {
     throw '-RequireCosign was set but cosign is not installed (https://docs.sigstore.dev/cosign/installation/)'
   } else {
     if (-not $haveSig) {
-      Write-Warn 'no cosign signature found for this release — falling back to SHA-256 only'
+      Write-Warn 'no cosign signature found for this release - falling back to SHA-256 only'
     } else {
-      Write-Warn 'cosign not installed — falling back to SHA-256 only (pass -RequireCosign to require it; see https://docs.sigstore.dev/cosign/installation/)'
+      Write-Warn 'cosign not installed - falling back to SHA-256 only (pass -RequireCosign to require it; see https://docs.sigstore.dev/cosign/installation/)'
     }
   }
 
@@ -232,7 +232,7 @@ try {
 
   # Atomic-ish replace for a possibly-running .exe: rename the old file to .old
   # (allowed on Windows even while it's executing), then move the new file into
-  # place, then best-effort delete the .old. If deletion fails, leave it — the
+  # place, then best-effort delete the .old. If deletion fails, leave it - the
   # next install will retry the cleanup.
   $destPath = Join-Path $InstallDir 'icuvisor.exe'
   $oldPath  = "$destPath.old"
@@ -279,7 +279,7 @@ try {
   Write-Host ''
   Write-Host 'Next steps:'
   Write-Host "  1. Run 'icuvisor setup' once to store your intervals.icu API key in Windows Credential Manager."
-  Write-Host '  2. Point your MCP client (Claude Desktop, Cursor, …) at:'
+  Write-Host '  2. Point your MCP client (Claude Desktop, Cursor, ...) at:'
   Write-Host "       $destPath"
   Write-Host '  3. Docs: https://icuvisor.app'
   Write-Host ''
