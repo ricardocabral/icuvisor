@@ -14,22 +14,33 @@ import (
 
 type fakePlanningContextClient struct {
 	fakeProfileClient
-	weekEvents      []intervals.Event
-	raceEvents      []intervals.Event
-	trainingPlan    intervals.TrainingPlan
-	fitnessRows     []intervals.SummaryWithCats
-	listCalls       []intervals.ListEventsParams
-	trainingCalls   int
-	fitnessCalls    []intervals.AthleteSummaryParams
-	listErr         error
-	trainingPlanErr error
-	fitnessErr      error
+	weekEvents          []intervals.Event
+	raceEvents          []intervals.Event
+	seasonEvents        []intervals.Event
+	seasonEventsByStart map[string][]intervals.Event
+	trainingPlan        intervals.TrainingPlan
+	fitnessRows         []intervals.SummaryWithCats
+	listCalls           []intervals.ListEventsParams
+	trainingCalls       int
+	fitnessCalls        []intervals.AthleteSummaryParams
+	listErr             error
+	trainingPlanErr     error
+	fitnessErr          error
 }
 
 func (f *fakePlanningContextClient) ListEvents(_ context.Context, params intervals.ListEventsParams) ([]intervals.Event, error) {
 	f.listCalls = append(f.listCalls, params)
 	if f.listErr != nil {
 		return nil, f.listErr
+	}
+	if params.Category == planningContextSeasonCategory {
+		if f.seasonEventsByStart != nil {
+			return append([]intervals.Event(nil), f.seasonEventsByStart[params.Oldest]...), nil
+		}
+		if len(f.listCalls) == 3 {
+			return append([]intervals.Event(nil), f.seasonEvents...), nil
+		}
+		return nil, nil
 	}
 	if len(f.listCalls) == 1 {
 		return append([]intervals.Event(nil), f.weekEvents...), nil
@@ -81,6 +92,7 @@ func TestGetPlanningContextTerseDefaultShapeAndCalls(t *testing.T) {
 			`{"id":"o1","category":"OTHER","name":"Bike fit","start_date_local":"2026-05-27"}`,
 		),
 		raceEvents:   decodeToolEvents(t, `{"id":"future-race","category":"RACE_A","name":"A race","start_date_local":"2026-06-21"}`, `{"id":"not-race","category":"WORKOUT","name":"Workout","start_date_local":"2026-06-01"}`),
+		seasonEvents: decodeToolEvents(t, `{"id":"season-2026","category":"SEASON_START","name":"2026 Build","description":"Base starts","start_date_local":"2026-01-01"}`),
 		trainingPlan: decodeTrainingPlan(t, `{"id":"tp1","plan_id":"p1","name":"Base","training_plan_start_date":"2026-05-01","training_plan":{"id":"p1","name":"Base Plan","description":"Build"}}`),
 		fitnessRows:  decodeSummaries(t, `[{"date":"2026-05-18","fitness":70,"fatigue":75,"form":-5},{"date":"2026-05-24","fitness":71.2345,"fatigue":80.2,"form":-8.9,"raw_extra":"hidden"}]`),
 	}
@@ -119,6 +131,18 @@ func TestGetPlanningContextTerseDefaultShapeAndCalls(t *testing.T) {
 	if len(upcoming) != 1 || upcoming[0].(map[string]any)["event_id"] != "future-race" {
 		t.Fatalf("upcoming_races = %#v, want only race-scan race", upcoming)
 	}
+	seasonContext := out["season_context"].(map[string]any)
+	seasons := seasonContext["seasons"].([]any)
+	if len(seasons) != 1 || seasons[0].(map[string]any)["event_id"] != "season-2026" || seasons[0].(map[string]any)["start_date"] != "2026-01-01" {
+		t.Fatalf("season_context.seasons = %#v, want terse season row", seasons)
+	}
+	if _, ok := seasons[0].(map[string]any)["full"]; ok {
+		t.Fatalf("season row included full in terse response: %#v", seasons[0])
+	}
+	seasonMeta := seasonContext["_meta"].(map[string]any)
+	if seasonMeta["category"] != planningContextSeasonCategory || seasonMeta["count"] != float64(1) || seasonMeta["chunk_count"] != float64(4) || seasonMeta["seasons_may_be_truncated"] != false {
+		t.Fatalf("season meta = %#v, want category/count/chunks", seasonMeta)
+	}
 	meta := out["_meta"].(map[string]any)
 	assertPlanningMetaBasics(t, meta)
 	counts := meta["section_counts"].(map[string]any)
@@ -137,6 +161,7 @@ func TestGetPlanningContextIncludeFullWidensOnlySourceRows(t *testing.T) {
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
 		weekEvents:        decodeToolEvents(t, `{"id":"w1","category":"WORKOUT","name":"Workout","start_date_local":"2026-05-25","raw_extra":"kept"}`),
 		raceEvents:        decodeToolEvents(t, `{"id":"r1","category":"RACE","name":"Race","start_date_local":"2026-06-21","raw_extra":"kept"}`),
+		seasonEvents:      decodeToolEvents(t, `{"id":"s1","category":"SEASON_START","name":"Season","start_date_local":"2026-01-01","raw_extra":"kept"}`),
 		trainingPlan:      decodeTrainingPlan(t, `{"id":"tp1","plan_id":"p1","name":"Base","raw_extra":"kept","training_plan":{"id":"p1","name":"Base Plan"}}`),
 		fitnessRows:       decodeSummaries(t, `[{"date":"2026-05-24","fitness":71,"fatigue":80,"form":-9,"raw_extra":"kept"}]`),
 	}
@@ -158,6 +183,10 @@ func TestGetPlanningContextIncludeFullWidensOnlySourceRows(t *testing.T) {
 	plan := out["training_plan"].(map[string]any)["training_plan"].(map[string]any)
 	if plan["full"].(map[string]any)["raw_extra"] != "kept" {
 		t.Fatalf("training plan full = %#v, want raw_extra", plan["full"])
+	}
+	season := out["season_context"].(map[string]any)["seasons"].([]any)[0].(map[string]any)
+	if season["full"].(map[string]any)["raw_extra"] != "kept" {
+		t.Fatalf("season full = %#v, want raw_extra", season["full"])
 	}
 	if out["_meta"].(map[string]any)["include_full"] != true {
 		t.Fatalf("_meta.include_full = %#v, want true", out["_meta"])
@@ -279,8 +308,8 @@ type planningCallWant struct {
 
 func assertPlanningCalls(t *testing.T, client *fakePlanningContextClient, want planningCallWant) {
 	t.Helper()
-	if len(client.listCalls) != 2 {
-		t.Fatalf("ListEvents calls = %#v, want week and race scans", client.listCalls)
+	if len(client.listCalls) != 6 {
+		t.Fatalf("ListEvents calls = %#v, want week, race, and 4 season scans", client.listCalls)
 	}
 	weekCall := client.listCalls[0]
 	if weekCall.Oldest != want.weekStart || weekCall.Newest != want.weekEnd || weekCall.Limit != planningContextEventLimit {
@@ -289,6 +318,13 @@ func assertPlanningCalls(t *testing.T, client *fakePlanningContextClient, want p
 	raceCall := client.listCalls[1]
 	if raceCall.Oldest != want.raceStart || raceCall.Newest != want.raceEnd || raceCall.Limit != planningContextEventLimit {
 		t.Fatalf("race ListEvents = %#v, want %s..%s limit %d", raceCall, want.raceStart, want.raceEnd, planningContextEventLimit)
+	}
+	wantSeasonCalls := []dateRangeMeta{{Oldest: "2023-05-24", Newest: "2024-05-23"}, {Oldest: "2024-05-24", Newest: "2025-05-24"}, {Oldest: "2025-05-25", Newest: "2026-05-25"}, {Oldest: "2026-05-26", Newest: "2027-05-24"}}
+	for i, wantChunk := range wantSeasonCalls {
+		seasonCall := client.listCalls[i+2]
+		if seasonCall.Oldest != wantChunk.Oldest || seasonCall.Newest != wantChunk.Newest || seasonCall.Category != planningContextSeasonCategory || seasonCall.Limit != planningContextEventLimit {
+			t.Fatalf("season ListEvents[%d] = %#v, want %#v category %s limit %d", i, seasonCall, wantChunk, planningContextSeasonCategory, planningContextEventLimit)
+		}
 	}
 	if client.trainingCalls != 1 {
 		t.Fatalf("training calls = %d, want 1", client.trainingCalls)

@@ -19,11 +19,14 @@ const (
 	getPlanningContextDescription = "Fetch read-only weekly planning context without creating an ATP or calendar writes: athlete-local week events/workouts, active training-plan assignment summary, current fitness context, upcoming races, and caveats. This does not fill a calendar or call write/delete tools; include_full widens source read payloads only."
 	fetchPlanningContextMessage   = "could not fetch planning context; check intervals.icu credentials, athlete ID, timezone, and date window"
 
-	planningContextEventLimit     = 500
-	planningContextRaceScanDays   = 84
-	planningContextFitnessDays    = 7
-	planningContextScopeContext   = "context_only"
-	planningContextReadOnlyCaveat = "read_only_no_atp"
+	planningContextEventLimit      = 500
+	planningContextRaceScanDays    = 84
+	planningContextFitnessDays     = 7
+	planningContextSeasonLookback  = 3
+	planningContextSeasonLookahead = 1
+	planningContextSeasonCategory  = "SEASON_START"
+	planningContextScopeContext    = "context_only"
+	planningContextReadOnlyCaveat  = "read_only_no_atp"
 )
 
 type planningContextClient interface {
@@ -43,6 +46,7 @@ type getPlanningContextResponse struct {
 	TrainingPlan  getTrainingPlanResponse   `json:"training_plan"`
 	Fitness       planningFitnessContext    `json:"fitness_context"`
 	UpcomingRaces []getEventsRow            `json:"upcoming_races"`
+	SeasonContext planningSeasonContext     `json:"season_context"`
 	Caveats       []planningContextCaveat   `json:"caveats"`
 	Meta          planningContextMeta       `json:"_meta"`
 }
@@ -64,6 +68,30 @@ type planningContextWeekEvents struct {
 type planningFitnessContext struct {
 	Current *fitnessRow  `json:"current,omitempty"`
 	Rows    []fitnessRow `json:"rows"`
+}
+
+type planningSeasonContext struct {
+	Seasons []planningSeasonRow `json:"seasons"`
+	Meta    planningSeasonMeta  `json:"_meta"`
+}
+
+type planningSeasonRow struct {
+	EventID     string         `json:"event_id,omitempty"`
+	StartDate   string         `json:"start_date,omitempty"`
+	Name        string         `json:"name,omitempty"`
+	Description string         `json:"description,omitempty"`
+	Full        map[string]any `json:"full,omitempty"`
+}
+
+type planningSeasonMeta struct {
+	Category              string          `json:"category"`
+	Window                dateRangeMeta   `json:"window"`
+	Chunks                []dateRangeMeta `json:"chunks"`
+	ChunkCount            int             `json:"chunk_count"`
+	MaxChunkDays          int             `json:"max_chunk_days"`
+	EventLimitPerChunk    int             `json:"event_limit_per_chunk"`
+	Count                 int             `json:"count"`
+	SeasonsMayBeTruncated bool            `json:"seasons_may_be_truncated"`
 }
 
 type planningContextCaveat struct {
@@ -101,21 +129,26 @@ type planningContextTruncation struct {
 }
 
 type planningContextInputs struct {
-	weekStart    time.Time
-	weekEnd      time.Time
-	weekAnchor   string
-	fitnessStart time.Time
-	fitnessEnd   time.Time
-	raceStart    time.Time
-	raceEnd      time.Time
-	asOf         response.AsOfMetadata
-	timezone     string
-	includeFull  bool
-	unitSystem   response.UnitSystem
-	weekEvents   []intervals.Event
-	raceEvents   []intervals.Event
-	trainingPlan intervals.TrainingPlan
-	fitnessRows  []intervals.SummaryWithCats
+	weekStart       time.Time
+	weekEnd         time.Time
+	weekAnchor      string
+	fitnessStart    time.Time
+	fitnessEnd      time.Time
+	raceStart       time.Time
+	raceEnd         time.Time
+	seasonStart     time.Time
+	seasonEnd       time.Time
+	seasonChunks    []dateRangeMeta
+	seasonTruncated bool
+	asOf            response.AsOfMetadata
+	timezone        string
+	includeFull     bool
+	unitSystem      response.UnitSystem
+	weekEvents      []intervals.Event
+	raceEvents      []intervals.Event
+	seasonEvents    []intervals.Event
+	trainingPlan    intervals.TrainingPlan
+	fitnessRows     []intervals.SummaryWithCats
 }
 
 func newGetPlanningContextTool(client planningContextClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -161,12 +194,18 @@ func getPlanningContextHandler(client planningContextClient, profileClient Profi
 		fitnessEnd := asOfDate
 		raceStart := asOfDate
 		raceEnd := asOfDate.AddDate(0, 0, planningContextRaceScanDays)
+		seasonStart := asOfDate.AddDate(-planningContextSeasonLookback, 0, 0)
+		seasonEnd := asOfDate.AddDate(planningContextSeasonLookahead, 0, 0)
 
 		weekEvents, err := client.ListEvents(ctx, intervals.ListEventsParams{Oldest: formatDate(weekStart), Newest: formatDate(weekEnd), Limit: planningContextEventLimit})
 		if err != nil {
 			return planningContextFetchError(err)
 		}
 		raceEvents, err := client.ListEvents(ctx, intervals.ListEventsParams{Oldest: formatDate(raceStart), Newest: formatDate(raceEnd), Limit: planningContextEventLimit})
+		if err != nil {
+			return planningContextFetchError(err)
+		}
+		seasonEvents, seasonChunks, seasonTruncated, err := listPlanningSeasonEvents(ctx, client, seasonStart, seasonEnd)
 		if err != nil {
 			return planningContextFetchError(err)
 		}
@@ -179,7 +218,7 @@ func getPlanningContextHandler(client planningContextClient, profileClient Profi
 			return planningContextFetchError(err)
 		}
 
-		payload, err := shapeGetPlanningContextResponse(planningContextInputs{weekStart: weekStart, weekEnd: weekEnd, weekAnchor: weekAnchor, fitnessStart: fitnessStart, fitnessEnd: fitnessEnd, raceStart: raceStart, raceEnd: raceEnd, asOf: asOf, timezone: timezoneName, includeFull: args.IncludeFull, unitSystem: unitSystem, weekEvents: weekEvents, raceEvents: raceEvents, trainingPlan: plan, fitnessRows: fitnessRows})
+		payload, err := shapeGetPlanningContextResponse(planningContextInputs{weekStart: weekStart, weekEnd: weekEnd, weekAnchor: weekAnchor, fitnessStart: fitnessStart, fitnessEnd: fitnessEnd, raceStart: raceStart, raceEnd: raceEnd, seasonStart: seasonStart, seasonEnd: seasonEnd, seasonChunks: seasonChunks, seasonTruncated: seasonTruncated, asOf: asOf, timezone: timezoneName, includeFull: args.IncludeFull, unitSystem: unitSystem, weekEvents: weekEvents, raceEvents: raceEvents, seasonEvents: seasonEvents, trainingPlan: plan, fitnessRows: fitnessRows})
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_planning_context response: %w", err)
 		}
@@ -227,6 +266,7 @@ func shapeGetPlanningContextResponse(in planningContextInputs) (getPlanningConte
 	}
 	fitnessRows := shapeFitnessRows(in.fitnessRows, in.includeFull)
 	currentFitness := latestFitnessRow(fitnessRows, in.asOf.AsOfDate)
+	seasonContext := shapePlanningSeasonContext(in.seasonEvents, in.includeFull, in.seasonStart, in.seasonEnd, in.seasonChunks, in.seasonTruncated)
 	trainingPlan := shapeGetTrainingPlanResponse(in.trainingPlan, in.includeFull, in.timezone)
 	weekTruncated := len(in.weekEvents) >= planningContextEventLimit
 	raceTruncated := len(in.raceEvents) >= planningContextEventLimit
@@ -242,6 +282,7 @@ func shapeGetPlanningContextResponse(in planningContextInputs) (getPlanningConte
 		TrainingPlan:  trainingPlan,
 		Fitness:       planningFitnessContext{Current: currentFitness, Rows: fitnessRows},
 		UpcomingRaces: upcomingRaces,
+		SeasonContext: seasonContext,
 		Caveats:       caveats,
 		Meta: planningContextMeta{
 			SourceTools:     []string{getAthleteProfileName, getEventsName, getTrainingPlanName, getFitnessName},
@@ -258,7 +299,7 @@ func shapeGetPlanningContextResponse(in planningContextInputs) (getPlanningConte
 			RaceWindow:      dateRangeMeta{Oldest: formatDate(in.raceStart), Newest: formatDate(in.raceEnd)},
 			EventLimits:     planningContextEventLimits{WeekEvents: planningContextEventLimit, RaceScan: planningContextEventLimit},
 			Truncation:      planningContextTruncation{WeekEventsMayBeTruncated: weekTruncated, RaceScanMayBeTruncated: raceTruncated},
-			SectionCounts:   map[string]int{"planned_workouts": len(weekEvents.PlannedWorkouts), "races": len(weekEvents.Races), "notes": len(weekEvents.Notes), "other_events": len(weekEvents.OtherEvents), "fitness_rows": len(fitnessRows), "upcoming_races": len(upcomingRaces)},
+			SectionCounts:   map[string]int{"planned_workouts": len(weekEvents.PlannedWorkouts), "races": len(weekEvents.Races), "notes": len(weekEvents.Notes), "other_events": len(weekEvents.OtherEvents), "fitness_rows": len(fitnessRows), "upcoming_races": len(upcomingRaces), "seasons": len(seasonContext.Seasons)},
 			CaveatCodes:     caveatCodes,
 		},
 	}, nil
@@ -302,6 +343,65 @@ func planningRaceRows(events []intervals.Event, includeFull bool, timezoneName s
 	}
 	sortEventRows(out)
 	return out, nil
+}
+
+func listPlanningSeasonEvents(ctx context.Context, client EventsClient, start time.Time, end time.Time) ([]intervals.Event, []dateRangeMeta, bool, error) {
+	chunks := planningSeasonChunks(start, end)
+	events := []intervals.Event{}
+	truncated := false
+	for _, chunk := range chunks {
+		chunkEvents, err := client.ListEvents(ctx, intervals.ListEventsParams{Oldest: chunk.Oldest, Newest: chunk.Newest, Category: planningContextSeasonCategory, Limit: planningContextEventLimit})
+		if err != nil {
+			return nil, chunks, false, err
+		}
+		if len(chunkEvents) >= planningContextEventLimit {
+			truncated = true
+		}
+		events = append(events, chunkEvents...)
+	}
+	return events, chunks, truncated, nil
+}
+
+func planningSeasonChunks(start time.Time, end time.Time) []dateRangeMeta {
+	if end.Before(start) {
+		return nil
+	}
+	chunks := []dateRangeMeta{}
+	for chunkStart := start; !chunkStart.After(end); {
+		chunkEnd := chunkStart.AddDate(0, 0, maxEventsRangeDays-1)
+		if chunkEnd.After(end) {
+			chunkEnd = end
+		}
+		chunks = append(chunks, dateRangeMeta{Oldest: formatDate(chunkStart), Newest: formatDate(chunkEnd)})
+		chunkStart = chunkEnd.AddDate(0, 0, 1)
+	}
+	return chunks
+}
+
+func shapePlanningSeasonContext(events []intervals.Event, includeFull bool, start time.Time, end time.Time, chunks []dateRangeMeta, truncated bool) planningSeasonContext {
+	rows := []planningSeasonRow{}
+	for _, event := range events {
+		if !isSeasonStartEvent(event) {
+			continue
+		}
+		row := planningSeasonRow{EventID: event.ID, StartDate: stringValue(event.StartDateLocal), Name: stringValue(event.Name), Description: stringValue(event.Description)}
+		if includeFull {
+			row.Full = cloneJSONMap(event.Raw)
+		}
+		rows = append(rows, row)
+	}
+	sort.SliceStable(rows, func(i, j int) bool {
+		if rows[i].StartDate != rows[j].StartDate {
+			return rows[i].StartDate < rows[j].StartDate
+		}
+		return rows[i].EventID < rows[j].EventID
+	})
+	return planningSeasonContext{Seasons: rows, Meta: planningSeasonMeta{Category: planningContextSeasonCategory, Window: dateRangeMeta{Oldest: formatDate(start), Newest: formatDate(end)}, Chunks: chunks, ChunkCount: len(chunks), MaxChunkDays: maxEventsRangeDays, EventLimitPerChunk: planningContextEventLimit, Count: len(rows), SeasonsMayBeTruncated: truncated}}
+}
+
+func isSeasonStartEvent(event intervals.Event) bool {
+	category := firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"]))
+	return strings.EqualFold(strings.TrimSpace(category), planningContextSeasonCategory)
 }
 
 func planningEventClass(category string) string {
@@ -381,5 +481,5 @@ func getPlanningContextInputSchema() map[string]any {
 }
 
 func getPlanningContextOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Read-only planning context with week_events, training_plan, current fitness_context, upcoming_races, caveats, and _meta planning_scope=context_only/read_only=true/writes_performed=false. It summarizes existing source reads and never creates ATP notes or calendar items."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Read-only planning context with week_events, training_plan, current fitness_context, upcoming_races, season_context, caveats, and _meta planning_scope=context_only/read_only=true/writes_performed=false. It summarizes existing source reads, includes SEASON_START season-boundary context, and never creates ATP notes or calendar items."}
 }
