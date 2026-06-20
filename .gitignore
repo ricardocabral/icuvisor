@@ -71,7 +71,8 @@ __pycache__/
 .pi/telemetry/
 .pi/verification/
 .pi/diagnostics/
-.pi/agents/task-*.md
+# Keep .pi/agents/task-*.md tracked: Taskplane workspace execution worktrees need
+# worker/reviewer/merger prompts at startup.
 .worktrees/
 .taskplane-tasks/
 
