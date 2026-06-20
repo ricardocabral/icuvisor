@@ -45,8 +45,8 @@ Living document. Phases are scoped and gated, not calendared. Each phase is ship
 
 ### v1.7 - Coach and upstream API validation
 
-- Authenticated coach-roster probe using a real coach-scoped key through the normal local credential flow; never paste the key into prompts or fixtures.
-- Switch `list_athletes` from configured-roster source to upstream source only after auth, response shape, pagination, and scoping are confirmed.
+- Authenticated validation of the sanitized `GET /api/v1/athletes` roster client using a real coach-scoped key through the normal local credential flow; never paste the key into prompts or fixtures.
+- Switch `list_athletes` from configured-roster source to upstream source only after auth, response shape, pagination, scoping, and redaction are confirmed.
 - Preserve configured-roster ACLs as the local authorization boundary even if upstream roster discovery lands.
 - Add regression fixtures for coach roster edge cases discovered during the authenticated probe.
 

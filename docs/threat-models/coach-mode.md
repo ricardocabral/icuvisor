@@ -109,18 +109,27 @@ Unauthenticated probes are not sufficient to confirm coach-account behavior, but
 | `/api/v1/athlete/0/athlete-summary`      |             401 | Documented followed-athlete summary endpoint exists and requires authentication.        |
 | `/api/v1/athlete/0/athlete-summary.json` |             401 | Documented endpoint also accepts an `.json` extension form.                             |
 | `/api/v1/athlete/i0/athlete-summary`     |             403 | `0` has special authenticated-user behavior; canonical `i0` is not equivalent.          |
-| `/api/v1/athlete/0/followers`            |             401 | Path exists but is not documented as the roster summary endpoint in the OpenAPI result. |
-| `/api/v1/athletes`                       |             401 | Path exists but is not documented as the roster summary endpoint in the OpenAPI result. |
-| `/api/v1/coaches/athletes`               |             401 | Path exists but is not documented as the roster summary endpoint in the OpenAPI result. |
+| `/api/v1/athlete/0/followers`            |             401 | Path exists but is not the candidate endpoint for icuvisor's typed roster probe.        |
+| `/api/v1/athletes`                       |             401 | Path exists and is now tracked as the candidate authenticated coach-roster endpoint; unauthenticated checks still cannot prove coach-key shape, pagination, or scoping. |
+| `/api/v1/coaches/athletes`               |             401 | Path exists but is not the candidate endpoint for icuvisor's typed roster probe.        |
 | `/api/v1/athlete/0/athletes`             |             404 | Not an exposed endpoint.                                                                |
 | `/api/v1/athlete/0/coached-athletes`     |             404 | Not an exposed endpoint.                                                                |
 | `/api/v1/athlete/0/clients`              |             404 | Not an exposed endpoint.                                                                |
 
+### Sanitized `/api/v1/athletes` probe contract
+
+icuvisor has typed client coverage for `GET /api/v1/athletes`, but the public shape is deliberately narrower than the upstream row. The sanitized row may expose only:
+
+- `athlete_id`: normalized and validated as an intervals.icu athlete ID.
+- `name`: optional display label chosen from non-sensitive upstream name fields when present.
+
+The client ignores all other upstream fields. Public probe shapes must never include API keys, access or refresh tokens, invite tokens or URLs, email/contact fields, private wellness/provider keys, OAuth/provider authorization state, or raw nested upstream objects. Fixture tests include representative sensitive fields and assert they are absent from marshaled public output.
+
 ### Temporary implementation fallback pending authenticated validation
 
-Because this environment has no real coach key, the upstream roster endpoint remains unvalidated for v0.5 behavior. The authenticated coach-key probe is incomplete, not passed. Until a real coach account confirms auth, response shape, pagination behavior, and whether the endpoint returns only athletes intentionally exposed to the coach, implement `list_athletes` against the configured `coach.athletes[]` roster with `_meta.source: "config"` as a temporary fallback.
+Because this environment has no real coach key, authenticated coach behavior for `/api/v1/athletes` remains unvalidated. The authenticated coach-key probe is incomplete, not passed. Until a real coach account confirms auth, response shape, pagination behavior, and whether the endpoint returns only athletes intentionally exposed to the coach, keep `list_athletes` against the configured `coach.athletes[]` roster with `_meta.source: "config"` as a temporary fallback.
 
-The intervals client may remain extensible for a later authenticated `GET /api/v1/athlete/0/athlete-summary` probe, but coach mode must not claim `_meta.source: "upstream"` or depend on that upstream endpoint until the blocked probe is completed.
+The intervals client may remain extensible for authenticated roster probing, but coach mode must not claim `_meta.source: "upstream"` or depend on upstream roster rows until the blocked probe is completed. Even after upstream discovery is enabled, configured `coach.athletes[]` and per-athlete ACLs remain the local authorization boundary.
 
 Future maintainer probe requirements:
 
@@ -130,10 +139,10 @@ Future maintainer probe requirements:
 
    ```sh
    curl -sS -u "API_KEY:${INTERVALS_ICU_API_KEY}" \
-     'https://intervals.icu/api/v1/athlete/0/athlete-summary' | jq '.[0] | keys'
+     'https://intervals.icu/api/v1/athletes' | jq '.[0] | keys'
 
    curl -i -sS -u "API_KEY:${INTERVALS_ICU_API_KEY}" \
-     'https://intervals.icu/api/v1/athlete/0/athlete-summary.json'
+     'https://intervals.icu/api/v1/athletes'
    ```
 
 4. Record the exact path, auth style, response shape, roster filtering semantics, and any pagination or rate-limit headers before enabling `_meta.source: "upstream"`.
