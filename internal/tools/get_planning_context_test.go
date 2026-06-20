@@ -248,11 +248,82 @@ func TestGetPlanningContextEmptyDataCaveats(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
-	codes := planningStringSlice(resultMap(t, result)["_meta"].(map[string]any)["caveat_codes"])
+	out := resultMap(t, result)
+	seasonContext := out["season_context"].(map[string]any)
+	if seasons := seasonContext["seasons"].([]any); len(seasons) != 0 {
+		t.Fatalf("season_context.seasons = %#v, want empty", seasons)
+	}
+	if count := seasonContext["_meta"].(map[string]any)["count"]; count != float64(0) {
+		t.Fatalf("season_context._meta.count = %#v, want 0", count)
+	}
+	codes := planningStringSlice(out["_meta"].(map[string]any)["caveat_codes"])
 	for _, want := range []string{"read_only_no_atp", "no_week_events", "no_week_workouts", "no_active_training_plan", "no_fitness_rows", "no_upcoming_races"} {
 		if !slices.Contains(codes, want) {
 			t.Fatalf("caveat_codes = %#v, missing %s", codes, want)
 		}
+	}
+}
+
+func TestGetPlanningContextSeasonContextMultipleBoundaryAndCategoryFilter(t *testing.T) {
+	t.Parallel()
+
+	client := &fakePlanningContextClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		seasonEventsByStart: map[string][]intervals.Event{
+			"2023-05-24": decodeToolEvents(t,
+				`{"id":"season-oldest","category":"SEASON_START","name":"Oldest boundary","description":"Included at window start","start_date_local":"2023-05-24"}`,
+				`{"id":"not-season","category":"NOTE","name":"Noise","start_date_local":"2024-01-01"}`,
+			),
+			"2025-05-25": decodeToolEvents(t, `{"id":"season-middle","category":"SEASON_START","name":"Middle","start_date_local":"2026-01-01"}`),
+			"2026-05-26": decodeToolEvents(t, `{"id":"season-newest","category":"SEASON_START","name":"Newest boundary","start_date_local":"2027-05-24"}`),
+		},
+	}
+	tool := newGetPlanningContextToolWithClock(client, client, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	seasonContext := resultMap(t, result)["season_context"].(map[string]any)
+	seasons := seasonContext["seasons"].([]any)
+	if len(seasons) != 3 {
+		t.Fatalf("season_context.seasons = %#v, want 3 SEASON_START rows only", seasons)
+	}
+	wantIDs := []string{"season-oldest", "season-middle", "season-newest"}
+	for i, wantID := range wantIDs {
+		row := seasons[i].(map[string]any)
+		if row["event_id"] != wantID {
+			t.Fatalf("season row %d = %#v, want event_id %s", i, row, wantID)
+		}
+	}
+	meta := seasonContext["_meta"].(map[string]any)
+	window := meta["window"].(map[string]any)
+	if window["oldest"] != "2023-05-24" || window["newest"] != "2027-05-24" {
+		t.Fatalf("season window = %#v, want fixed lookback/lookahead bounds", window)
+	}
+	if meta["category"] != planningContextSeasonCategory || meta["chunk_count"] != float64(4) || meta["max_chunk_days"] != float64(maxEventsRangeDays) || meta["event_limit_per_chunk"] != float64(planningContextEventLimit) || meta["count"] != float64(3) {
+		t.Fatalf("season meta = %#v, want category/chunk/count contract", meta)
+	}
+}
+
+func TestGetPlanningContextSeasonTruncationMetadata(t *testing.T) {
+	t.Parallel()
+
+	client := &fakePlanningContextClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		seasonEventsByStart: map[string][]intervals.Event{
+			"2023-05-24": repeatedPlanningEvents(t, planningContextEventLimit, "season", planningContextSeasonCategory),
+		},
+	}
+	tool := newGetPlanningContextToolWithClock(client, client, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["season_context"].(map[string]any)["_meta"].(map[string]any)
+	if meta["seasons_may_be_truncated"] != true || meta["count"] != float64(planningContextEventLimit) {
+		t.Fatalf("season truncation meta = %#v, want truncated true and capped count", meta)
 	}
 }
 
