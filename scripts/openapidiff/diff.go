@@ -12,13 +12,18 @@ import (
 	"time"
 )
 
-type specPaths struct {
-	Paths map[string]json.RawMessage `json:"paths"`
+type specKeys struct {
+	Paths      map[string]json.RawMessage `json:"paths"`
+	Components struct {
+		Schemas map[string]json.RawMessage `json:"schemas"`
+	} `json:"components"`
 }
 
 type endpointDiff struct {
-	Added   []string
-	Removed []string
+	Added          []string
+	Removed        []string
+	SchemasAdded   []string
+	SchemasRemoved []string
 }
 
 func readSpec(path string) ([]byte, error) {
@@ -47,92 +52,108 @@ func fetchSpec(url string) ([]byte, error) {
 }
 
 func diffSpecs(baseline, latest []byte) (endpointDiff, error) {
-	baselinePaths, err := extractPaths(baseline)
+	baselineKeys, err := extractKeys(baseline)
 	if err != nil {
 		return endpointDiff{}, fmt.Errorf("baseline: %w", err)
 	}
-	latestPaths, err := extractPaths(latest)
+	latestKeys, err := extractKeys(latest)
 	if err != nil {
 		return endpointDiff{}, fmt.Errorf("latest: %w", err)
 	}
 
-	var diff endpointDiff
-	for path := range latestPaths {
-		if _, ok := baselinePaths[path]; !ok {
-			diff.Added = append(diff.Added, path)
-		}
-	}
-	for path := range baselinePaths {
-		if _, ok := latestPaths[path]; !ok {
-			diff.Removed = append(diff.Removed, path)
-		}
-	}
-	sort.Strings(diff.Added)
-	sort.Strings(diff.Removed)
-	return diff, nil
+	return endpointDiff{
+		Added:          addedKeys(baselineKeys.Paths, latestKeys.Paths),
+		Removed:        addedKeys(latestKeys.Paths, baselineKeys.Paths),
+		SchemasAdded:   addedKeys(baselineKeys.Components.Schemas, latestKeys.Components.Schemas),
+		SchemasRemoved: addedKeys(latestKeys.Components.Schemas, baselineKeys.Components.Schemas),
+	}, nil
 }
 
-func extractPaths(data []byte) (map[string]struct{}, error) {
-	var spec specPaths
+func addedKeys[T any](baseline, latest map[string]T) []string {
+	var added []string
+	for key := range latest {
+		if _, ok := baseline[key]; !ok {
+			added = append(added, key)
+		}
+	}
+	sort.Strings(added)
+	return added
+}
+
+func extractKeys(data []byte) (specKeys, error) {
+	var spec specKeys
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&spec); err != nil {
-		var loose map[string]json.RawMessage
-		if looseErr := json.Unmarshal(data, &loose); looseErr != nil {
-			return nil, fmt.Errorf("decoding JSON: %w", err)
-		}
-		pathsRaw, ok := loose["paths"]
-		if !ok {
-			return nil, fmt.Errorf("missing paths object")
-		}
-		if err := json.Unmarshal(pathsRaw, &spec.Paths); err != nil {
-			return nil, fmt.Errorf("decoding paths object: %w", err)
-		}
+		return specKeys{}, fmt.Errorf("decoding JSON: %w", err)
 	}
 	if len(spec.Paths) == 0 {
-		return nil, fmt.Errorf("missing or empty paths object")
+		return specKeys{}, fmt.Errorf("missing or empty paths object")
 	}
-	paths := make(map[string]struct{}, len(spec.Paths))
-	for path := range spec.Paths {
-		if strings.TrimSpace(path) == "" {
+	paths, err := compactKeys(spec.Paths, "paths", true)
+	if err != nil {
+		return specKeys{}, err
+	}
+	schemas, err := compactKeys(spec.Components.Schemas, "components.schemas", false)
+	if err != nil {
+		return specKeys{}, err
+	}
+	spec.Paths = paths
+	spec.Components.Schemas = schemas
+	return spec, nil
+}
+
+func compactKeys[T any](items map[string]T, label string, required bool) (map[string]T, error) {
+	if len(items) == 0 {
+		if required {
+			return nil, fmt.Errorf("missing or empty %s object", label)
+		}
+		return map[string]T{}, nil
+	}
+	compacted := make(map[string]T, len(items))
+	for key, value := range items {
+		if strings.TrimSpace(key) == "" {
 			continue
 		}
-		paths[path] = struct{}{}
+		compacted[key] = value
 	}
-	if len(paths) == 0 {
-		return nil, fmt.Errorf("paths object contains no non-empty paths")
+	if len(compacted) == 0 && required {
+		return nil, fmt.Errorf("%s object contains no non-empty keys", label)
 	}
-	return paths, nil
+	return compacted, nil
 }
 
 func renderMarkdown(diff endpointDiff, baselineSource, latestSource string) string {
 	var b strings.Builder
 	b.WriteString("# intervals.icu OpenAPI endpoint diff\n\n")
-	b.WriteString("This report compares only OpenAPI `paths` keys. It is a human triage aid; it does not approve product scope or auto-generate icuvisor tools.\n\n")
+	b.WriteString("This report compares OpenAPI `paths` keys and `components.schemas` names. It is a human triage aid; it does not approve product scope or auto-generate icuvisor tools. Schema-name drift is only a signal to inspect upstream docs and models.\n\n")
 	fmt.Fprintf(&b, "- Baseline: `%s`\n", baselineSource)
 	fmt.Fprintf(&b, "- Latest: `%s`\n", latestSource)
 	fmt.Fprintf(&b, "- Added paths: %d\n", len(diff.Added))
-	fmt.Fprintf(&b, "- Removed paths: %d\n\n", len(diff.Removed))
+	fmt.Fprintf(&b, "- Removed paths: %d\n", len(diff.Removed))
+	fmt.Fprintf(&b, "- Added schemas: %d\n", len(diff.SchemasAdded))
+	fmt.Fprintf(&b, "- Removed schemas: %d\n\n", len(diff.SchemasRemoved))
 
-	writePathSection(&b, "Added paths", diff.Added, "No added endpoint paths detected.")
-	writePathSection(&b, "Removed paths", diff.Removed, "No removed endpoint paths detected.")
+	writeListSection(&b, "Added paths", diff.Added, "No added endpoint paths detected.")
+	writeListSection(&b, "Removed paths", diff.Removed, "No removed endpoint paths detected.")
+	writeListSection(&b, "Added schemas", diff.SchemasAdded, "No added schema names detected.")
+	writeListSection(&b, "Removed schemas", diff.SchemasRemoved, "No removed schema names detected.")
 
 	b.WriteString("## Triage checklist\n\n")
-	b.WriteString("1. Read the upstream OpenAPI docs for each changed path and confirm whether the endpoint is relevant to icuvisor's PRD/roadmap.\n")
-	b.WriteString("2. For relevant additions, create a Taskplane/backlog task with endpoint, method, response-shaping, safety, and fixture requirements.\n")
-	b.WriteString("3. For removals or incompatible changes, check whether existing icuvisor tools depend on the path and open a regression task if needed.\n")
+	b.WriteString("1. Read the upstream OpenAPI docs for each changed path or schema name and confirm whether it is relevant to icuvisor's PRD/roadmap. Treat schema-only drift as a human triage signal, not implementation approval.\n")
+	b.WriteString("2. For relevant additions, create a Taskplane/backlog task with endpoint, method, response-shaping, safety, schema/model, and fixture requirements.\n")
+	b.WriteString("3. For removals or incompatible changes, check whether existing icuvisor tools depend on the path or schema and open a regression task if needed.\n")
 	b.WriteString("4. After triage, intentionally update the pinned baseline spec in `scripts/openapidiff/baseline/` so future reports only show new drift.\n")
 	return b.String()
 }
 
-func writePathSection(b *strings.Builder, title string, paths []string, empty string) {
+func writeListSection(b *strings.Builder, title string, items []string, empty string) {
 	b.WriteString("## " + title + "\n\n")
-	if len(paths) == 0 {
+	if len(items) == 0 {
 		b.WriteString(empty + "\n\n")
 		return
 	}
-	for _, path := range paths {
-		b.WriteString("- `" + path + "`\n")
+	for _, item := range items {
+		b.WriteString("- `" + item + "`\n")
 	}
 	b.WriteString("\n")
 }
