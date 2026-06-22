@@ -68,12 +68,12 @@ type getActivityIntervalsUnavailableResponse struct {
 }
 
 type activityReadMeta struct {
-	ServerVersion    string                  `json:"server_version"`
-	IncludeFull      bool                    `json:"include_full"`
-	Timezone         string                  `json:"timezone,omitempty"`
-	Limit            int                     `json:"limit,omitempty"`
-	SinceID          int64                   `json:"since_id,omitempty"`
-	FieldSemantics   map[string]string       `json:"field_semantics,omitempty"`
+	ServerVersion        string                  `json:"server_version"`
+	IncludeFull          bool                    `json:"include_full"`
+	Timezone             string                  `json:"timezone,omitempty"`
+	Limit                int                     `json:"limit,omitempty"`
+	SinceID              int64                   `json:"since_id,omitempty"`
+	FieldSemantics       map[string]string       `json:"field_semantics,omitempty"`
 	IntervalSource       analysis.IntervalSource `json:"interval_source,omitempty"`
 	AutoLapSuspected     *bool                   `json:"auto_lap_suspected,omitempty"`
 	IntervalSourceCaveat string                  `json:"interval_source_caveat,omitempty"`
