@@ -14,7 +14,7 @@ HUGO_PORT  ?= 1313
 
 .PHONY: all build install run test test-race cover bench lint fmt fmt-check vet tidy \
         download verify generate goimports check clean snapshot release \
-        validate-registry docs-tools eval-validate eval-tool-routing web-serve web-preview web-build web-clean help
+        validate-registry validate-distribution docs-tools eval-validate eval-tool-routing web-serve web-preview web-build web-clean help
 
 all: build ## Build the binary
 
@@ -84,6 +84,9 @@ release: ## Run a goreleaser release (requires tag + creds)
 
 validate-registry: ## Validate MCP Registry server.json metadata
 	python3 scripts/validate_server_json.py server.json
+
+validate-distribution: validate-registry ## Validate registry metadata and README install/deeplink CTAs
+	python3 scripts/validate_readme_distribution.py
 
 clean: web-clean ## Remove build artifacts (binary + site)
 	rm -rf bin dist coverage.txt coverage.html

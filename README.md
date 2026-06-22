@@ -52,6 +52,32 @@ winget install --id RicardoCabral.icuvisor --exact
 
 Open a new PowerShell or Command Prompt window after installation, then run `icuvisor version`. Windows users can also use the PowerShell installer above or download the `.msi` from the [releases page](https://github.com/ricardocabral/icuvisor/releases).
 
+### Connect from Cursor
+
+Run `icuvisor setup` first so the local server can read your intervals.icu API key from the OS keychain or your explicit headless config. Do not paste API keys into Cursor or into an MCP tool call.
+
+Use the Cursor install link for a local stdio server with no secrets embedded: [Install icuvisor in Cursor](https://cursor.com/install-mcp?name=icuvisor&config=%7B%22command%22%3A%22icuvisor%22%2C%22args%22%3A%5B%5D%2C%22env%22%3A%7B%22ICUVISOR_CONFIG%22%3A%22%22%7D%7D).
+
+If you prefer manual configuration, add this to `~/.cursor/mcp.json` and leave `ICUVISOR_CONFIG` empty unless you intentionally use a non-default config path:
+
+```json
+{
+  "mcpServers": {
+    "icuvisor": {
+      "command": "icuvisor",
+      "args": [],
+      "env": {
+        "ICUVISOR_CONFIG": ""
+      }
+    }
+  }
+}
+```
+
+### MCP discovery
+
+`server.json` in this repository describes icuvisor for MCP Registry-style discovery and points to the signed MCPB release artifact. No Glama badge is shown until Glama exposes a stable public icuvisor page; speculative discovery links are intentionally omitted.
+
 Learn more on how to connect your AI assistant, read the tool catalog, and troubleshoot stale conversations or cached tool catalogs at <https://icuvisor.app>.
 
 ### Fitness projection with ATP/periodization targets
