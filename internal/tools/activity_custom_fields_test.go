@@ -177,6 +177,21 @@ func TestGetActivitiesDefaultOmitsCustomFieldLookup(t *testing.T) {
 	}
 }
 
+func TestGetActivitiesUnknownCustomFieldHintTruncatesLongNames(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, nil, "metric")
+	client.customItems = decodeCustomItems(t, `{"id":"c1","type":"ACTIVITY_FIELD","content":{"field":"vo2max_est"}}`)
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, client, newCustomFieldCache(), "test", "UTC", false)
+	longField := strings.Repeat("x", maxCustomFieldHintLength+40)
+
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(fmt.Sprintf(`{"oldest":"2026-01-01","custom_fields":[%q]}`, longField))})
+	message, ok := PublicErrorMessage(err)
+	if !ok || strings.Contains(message, longField) || !strings.Contains(message, "...") || len(message) > 160 {
+		t.Fatalf("public error = %q/%v; want truncated short hint", message, ok)
+	}
+}
+
 func TestGetActivitiesRejectsTooManyCustomFields(t *testing.T) {
 	t.Parallel()
 

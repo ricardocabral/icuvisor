@@ -17,6 +17,7 @@ import (
 const (
 	activityCustomFieldItemType     = "ACTIVITY_FIELD"
 	maxSelectedActivityCustomFields = 20
+	maxCustomFieldHintLength        = 64
 )
 
 // ActivityCustomFieldClient lists custom-item definitions so activity reads can
@@ -136,7 +137,7 @@ func (e unknownActivityCustomFieldsError) Error() string {
 		available = "none"
 	}
 	if len(e.unknown) == 1 {
-		return fmt.Sprintf("unknown activity custom field %q; available: %s", e.unknown[0], available)
+		return fmt.Sprintf("unknown activity custom field %q; available: %s", fieldHint(e.unknown[0]), available)
 	}
 	return fmt.Sprintf("unknown activity custom fields: %s; available: %s", unknown, available)
 }
@@ -163,7 +164,19 @@ func limitedFieldList(values []string, limit int) string {
 		trimmed = values[:limit]
 		suffix = fmt.Sprintf(", +%d more", len(values)-limit)
 	}
-	return strings.Join(trimmed, ", ") + suffix
+	hints := make([]string, 0, len(trimmed))
+	for _, value := range trimmed {
+		hints = append(hints, fieldHint(value))
+	}
+	return strings.Join(hints, ", ") + suffix
+}
+
+func fieldHint(value string) string {
+	value = strings.Join(strings.Fields(value), " ")
+	if len(value) <= maxCustomFieldHintLength {
+		return value
+	}
+	return value[:maxCustomFieldHintLength] + "..."
 }
 
 func compactCustomFieldCodes(values []string) []string {
