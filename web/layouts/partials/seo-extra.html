@@ -1,0 +1,51 @@
+{{- $description := .Description | default .Site.Params.description -}}
+{{- $title := cond .IsHome .Site.Title (printf "%s | icuvisor" .Title) -}}
+{{- $image := "og-image.png" | absURL -}}
+{{- $publisher := dict
+  "@type" "Organization"
+  "name" "icuvisor"
+  "url" .Site.BaseURL
+  "logo" ("favicon-192.png" | absURL)
+  "sameAs" (slice .Site.Params.github)
+-}}
+{{- if .IsHome }}
+  <link rel="canonical" href="{{ .Permalink }}" />
+  <meta property="og:image" content="{{ $image }}" />
+  <meta name="twitter:image" content="{{ $image }}" />
+{{- else }}
+  <meta property="og:image:secure_url" content="{{ $image }}" />
+{{- end }}
+  <meta property="og:site_name" content="icuvisor" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="icuvisor logo with the text Local-first MCP for intervals.icu training data" />
+  <meta name="twitter:image:alt" content="icuvisor logo with the text Local-first MCP for intervals.icu training data" />
+  <script type="application/ld+json">
+{{ dict
+  "@context" "https://schema.org"
+  "@type" "WebPage"
+  "name" $title
+  "description" $description
+  "url" .Permalink
+  "isPartOf" (dict "@type" "WebSite" "name" "icuvisor" "url" .Site.BaseURL)
+  "publisher" $publisher
+| jsonify (dict "indent" "  ") | safeJS }}
+  </script>
+{{- if .IsHome }}
+  <script type="application/ld+json">
+{{ dict
+  "@context" "https://schema.org"
+  "@type" "SoftwareApplication"
+  "name" "icuvisor"
+  "applicationCategory" "HealthApplication"
+  "operatingSystem" "macOS, Windows, Linux"
+  "description" .Site.Params.description
+  "url" .Site.BaseURL
+  "downloadUrl" "https://github.com/ricardocabral/icuvisor/releases/latest"
+  "softwareHelp" ("install/" | absURL)
+  "license" "https://github.com/ricardocabral/icuvisor/blob/main/LICENSE"
+  "publisher" $publisher
+  "offers" (dict "@type" "Offer" "price" "0" "priceCurrency" "USD")
+| jsonify (dict "indent" "  ") | safeJS }}
+  </script>
+{{- end }}

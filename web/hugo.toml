@@ -8,6 +8,7 @@ disableKinds = ["taxonomy", "term", "RSS"]
 description = "Local-first, open-source MCP server that connects intervals.icu training data to Claude, ChatGPT, and other AI assistants. Signed binaries, OS keychain credentials, no SaaS account needed."
 github = "https://github.com/ricardocabral/icuvisor"
 intervals = "https://intervals.icu"
+images = ["og-image.png"]
 featuredTools = [
   "get_activities",
   "get_activity_details",
