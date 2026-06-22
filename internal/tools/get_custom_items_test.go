@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -49,6 +52,89 @@ func TestCustomItemsRegistrationMetadata(t *testing.T) {
 	detailTool := newGetCustomItemByIDTool(client, client, "test", "UTC", false)
 	if !strings.Contains(detailTool.Description, "icuvisor://custom-item-schemas") {
 		t.Fatalf("detail description = %q, want v0.4 resource note", detailTool.Description)
+	}
+}
+
+func TestCustomItemByIDLiveProbeScriptSkipsWithoutCredentialsAndDocumentsRedaction(t *testing.T) {
+	t.Parallel()
+
+	scriptPath := customItemProbeScriptPath()
+	script, err := os.ReadFile(scriptPath)
+	if err != nil {
+		t.Fatalf("read probe script: %v", err)
+	}
+	text := string(script)
+	for _, required := range []string{
+		"INTERVALS_ICU_API_KEY",
+		"INTERVALS_ICU_ATHLETE_ID",
+		"ICUVISOR_CUSTOM_ITEM_LIVE_PROBE_APPROVED=1",
+		"Output is redacted by default",
+		"real item identifiers, names, and content redacted",
+	} {
+		if !strings.Contains(text, required) {
+			t.Fatalf("probe script missing %q", required)
+		}
+	}
+	for _, forbidden := range []string{
+		"set -x",
+		"echo \"$INTERVALS_ICU_API_KEY",
+		"echo \"${INTERVALS_ICU_API_KEY",
+		"print(api_key",
+		"print(athlete_id",
+	} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("probe script contains secret-leaking pattern %q", forbidden)
+		}
+	}
+
+	cmd := exec.Command("bash", scriptPath)
+	cmd.Env = customItemProbeCleanEnv()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("probe without credentials error = %v, output = %s", err, output)
+	}
+	if got := string(output); !strings.Contains(got, "SKIP") || !strings.Contains(got, "redacted") {
+		t.Fatalf("probe without credentials output = %q, want redacted SKIP", got)
+	}
+}
+
+func TestCustomItemByIDLiveProbeScriptRequiresApprovalAndFailsBeforeNetworkOnBadInput(t *testing.T) {
+	t.Parallel()
+
+	scriptPath := customItemProbeScriptPath()
+	secret := "test-api-key-that-must-not-appear"
+	athleteID := "i999999"
+
+	cmd := exec.Command("bash", scriptPath)
+	cmd.Env = customItemProbeEnv(t, secret, athleteID, nil)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("probe without approval error = %v, output = %s", err, output)
+	}
+	if got := string(output); !strings.Contains(got, "SKIP") || !strings.Contains(got, "explicit operator approval") {
+		t.Fatalf("probe without approval output = %q, want approval SKIP", got)
+	}
+	if strings.Contains(string(output), secret) || strings.Contains(string(output), athleteID) {
+		t.Fatalf("probe without approval leaked secret or athlete ID: %q", output)
+	}
+
+	if _, err := exec.LookPath("python3"); err != nil {
+		t.Skip("python3 not available for probe failure-path test")
+	}
+	cmd = exec.Command("bash", scriptPath)
+	cmd.Env = customItemProbeEnv(t, secret, athleteID, map[string]string{
+		"ICUVISOR_CUSTOM_ITEM_LIVE_PROBE_APPROVED": "1",
+		"ICUVISOR_PROBE_TIMEOUT_SECONDS":           "not-a-number",
+	})
+	output, err = cmd.CombinedOutput()
+	if err == nil {
+		t.Fatalf("probe with bad timeout succeeded, output = %s", output)
+	}
+	if got := string(output); !strings.Contains(got, "FAIL") || !strings.Contains(got, "ICUVISOR_PROBE_TIMEOUT_SECONDS") {
+		t.Fatalf("probe with bad timeout output = %q, want loud validation failure", got)
+	}
+	if strings.Contains(string(output), secret) || strings.Contains(string(output), athleteID) {
+		t.Fatalf("probe failure leaked secret or athlete ID: %q", output)
 	}
 }
 
@@ -217,6 +303,46 @@ func TestGetCustomItemByIDReturnsSanitizedPublicErrors(t *testing.T) {
 			}
 		})
 	}
+}
+
+func customItemProbeScriptPath() string {
+	return filepath.Join("..", "..", "scripts", "probe_custom_item_by_id.sh")
+}
+
+func customItemProbeEnv(t *testing.T, apiKey string, athleteID string, extra map[string]string) []string {
+	t.Helper()
+	env := append(customItemProbeCleanEnv(),
+		"INTERVALS_ICU_API_KEY="+apiKey,
+		"INTERVALS_ICU_ATHLETE_ID="+athleteID,
+	)
+	for key, value := range extra {
+		env = append(env, key+"="+value)
+	}
+	return env
+}
+
+func customItemProbeCleanEnv() []string {
+	skipped := []string{
+		"INTERVALS_ICU_API_KEY=",
+		"INTERVALS_ICU_ATHLETE_ID=",
+		"INTERVALS_ICU_API_BASE_URL=",
+		"ICUVISOR_CUSTOM_ITEM_LIVE_PROBE_APPROVED=",
+		"ICUVISOR_PROBE_TIMEOUT_SECONDS=",
+	}
+	env := make([]string, 0, len(os.Environ()))
+	for _, entry := range os.Environ() {
+		keep := true
+		for _, prefix := range skipped {
+			if strings.HasPrefix(entry, prefix) {
+				keep = false
+				break
+			}
+		}
+		if keep {
+			env = append(env, entry)
+		}
+	}
+	return env
 }
 
 func decodeToolCustomItems(t *testing.T, raws ...string) []intervals.CustomItem {
