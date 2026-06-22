@@ -10,11 +10,13 @@ import (
 
 type fakeFitnessMetricsClient struct {
 	fakeProfileClient
-	summaries []intervals.SummaryWithCats
-	curves    map[string]intervals.DataCurveSet
+	summaries    []intervals.SummaryWithCats
+	summaryCalls []intervals.AthleteSummaryParams
+	curves       map[string]intervals.DataCurveSet
 }
 
-func (f *fakeFitnessMetricsClient) ListAthleteSummary(context.Context, intervals.AthleteSummaryParams) ([]intervals.SummaryWithCats, error) {
+func (f *fakeFitnessMetricsClient) ListAthleteSummary(_ context.Context, params intervals.AthleteSummaryParams) ([]intervals.SummaryWithCats, error) {
+	f.summaryCalls = append(f.summaryCalls, params)
 	return append([]intervals.SummaryWithCats(nil), f.summaries...), nil
 }
 
