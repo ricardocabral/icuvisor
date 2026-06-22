@@ -44,6 +44,82 @@ func TestCustomItemsClientListsAndGetsItems(t *testing.T) {
 	}
 }
 
+func TestCustomItemsClientGetCustomItemUsesByIDEndpointAndPreservesRawFields(t *testing.T) {
+	t.Parallel()
+
+	var paths []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.Method+" "+r.URL.EscapedPath())
+		if r.Method != http.MethodGet || r.URL.Path != "/athlete/i12345/custom-item/7" {
+			t.Fatalf("request = %s %s, want detail endpoint only", r.Method, r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":7,"type":"FITNESS_CHART","name":"CTL Chart","content":{"series":[{"field":"ctl","future":"kept"}]},"future_top_level":{"nested":true}}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	item, err := client.GetCustomItem(context.Background(), " 7 ")
+	if err != nil {
+		t.Fatalf("GetCustomItem() error = %v", err)
+	}
+	if len(paths) != 1 || paths[0] != "GET /athlete/i12345/custom-item/7" {
+		t.Fatalf("paths = %#v, want one by-ID GET and no list fallback", paths)
+	}
+	content := item.Content.(map[string]any)
+	series := content["series"].([]any)[0].(map[string]any)
+	if item.ID != "7" || series["future"] != "kept" || item.Raw["future_top_level"].(map[string]any)["nested"] != true {
+		t.Fatalf("item = %+v raw=%#v, want ID plus preserved content/raw fields", item, item.Raw)
+	}
+}
+
+func TestCustomItemsClientGetCustomItemRejectsBlankID(t *testing.T) {
+	t.Parallel()
+
+	client := newTestClient(t, "https://example.invalid", http.DefaultClient, RetryConfig{})
+	_, err := client.GetCustomItem(context.Background(), " \t ")
+	if err == nil || !strings.Contains(err.Error(), "item ID is required") {
+		t.Fatalf("GetCustomItem() error = %v, want required item ID error", err)
+	}
+}
+
+func TestCustomItemsClientGetCustomItemStatusErrors(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		code int
+		want error
+	}{
+		{name: "not found", code: http.StatusNotFound, want: ErrNotFound},
+		{name: "unauthorized", code: http.StatusUnauthorized, want: ErrUnauthorized},
+		{name: "rate limited", code: http.StatusTooManyRequests, want: ErrRateLimited},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/athlete/i12345/custom-item/7" {
+					t.Fatalf("path = %q, want by-ID endpoint", r.URL.Path)
+				}
+				w.WriteHeader(tc.code)
+				_, _ = w.Write([]byte(`raw upstream detail must not matter`))
+			}))
+			defer server.Close()
+
+			client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+			_, err := client.GetCustomItem(context.Background(), "7")
+			if !errors.Is(err, tc.want) {
+				t.Fatalf("GetCustomItem() error = %v, want %v", err, tc.want)
+			}
+			if strings.Contains(err.Error(), "raw upstream detail") {
+				t.Fatalf("error %q leaked raw upstream body", err)
+			}
+		})
+	}
+}
+
 func TestCustomItemsClientCreatesAndUpdatesItem(t *testing.T) {
 	t.Parallel()
 

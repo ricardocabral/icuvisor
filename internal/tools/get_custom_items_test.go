@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 
@@ -19,6 +20,7 @@ type fakeCustomItemsClient struct {
 	detailCalls []string
 	created     []intervals.WriteCustomItemParams
 	updated     []intervals.WriteCustomItemParams
+	detailErr   error
 	createErr   error
 	updateErr   error
 }
@@ -30,6 +32,9 @@ func (f *fakeCustomItemsClient) ListCustomItems(context.Context) ([]intervals.Cu
 
 func (f *fakeCustomItemsClient) GetCustomItem(_ context.Context, itemID string) (intervals.CustomItem, error) {
 	f.detailCalls = append(f.detailCalls, itemID)
+	if f.detailErr != nil {
+		return intervals.CustomItem{}, f.detailErr
+	}
 	return f.detail, nil
 }
 
@@ -110,7 +115,7 @@ func TestGetCustomItemByIDReturnsFullContentPayload(t *testing.T) {
 
 	client := &fakeCustomItemsClient{
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
-		detail:            decodeToolCustomItem(t, `{"id":7,"type":"FITNESS_CHART","name":"CTL Chart","content":{"series":[{"field":"ctl","color":"blue"}],"layout":{"height":240}},"from_athlete":{"id":"i999"}}`),
+		detail:            decodeToolCustomItem(t, `{"id":7,"type":"FITNESS_CHART","name":"CTL Chart","content":{"series":[{"field":"ctl","color":"blue","future_metric":"ramp"}],"layout":{"height":240}},"from_athlete":{"id":"i999"},"future_top_level":{"nested":true}}`),
 	}
 	tool := newGetCustomItemByIDTool(client, client, "test", "UTC", false)
 
@@ -118,8 +123,8 @@ func TestGetCustomItemByIDReturnsFullContentPayload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
-	if len(client.detailCalls) != 1 || client.detailCalls[0] != "7" {
-		t.Fatalf("detail calls = %#v, want item ID 7", client.detailCalls)
+	if len(client.detailCalls) != 1 || client.detailCalls[0] != "7" || client.listCalls != 0 {
+		t.Fatalf("calls = detail %#v/list %d, want by-ID lookup only", client.detailCalls, client.listCalls)
 	}
 	out := resultMap(t, result)
 	item := out["custom_item"].(map[string]any)
@@ -128,12 +133,89 @@ func TestGetCustomItemByIDReturnsFullContentPayload(t *testing.T) {
 	}
 	content := item["content"].(map[string]any)
 	series := content["series"].([]any)[0].(map[string]any)
-	if series["field"] != "ctl" || content["layout"].(map[string]any)["height"] != float64(240) {
+	if series["field"] != "ctl" || series["future_metric"] != "ramp" || content["layout"].(map[string]any)["height"] != float64(240) {
 		t.Fatalf("content = %#v, want verbatim nested payload", content)
 	}
+	if item["future_top_level"].(map[string]any)["nested"] != true || item["from_athlete"].(map[string]any)["id"] != "i999" {
+		t.Fatalf("custom_item = %#v, want unknown fields preserved", item)
+	}
 	meta := out["_meta"].(map[string]any)
-	if meta["content_preserved"] != true || meta["schema_documentation"] != "icuvisor://custom-item-schemas" {
-		t.Fatalf("meta = %#v, want content preservation and resource note", meta)
+	if meta["content_preserved"] != true || meta["schema_documentation"] != "icuvisor://custom-item-schemas" || meta["source_endpoint"] != customItemByIDEndpoint {
+		t.Fatalf("meta = %#v, want content preservation, endpoint, and resource note", meta)
+	}
+}
+
+func TestGetCustomItemByIDTrimsItemIDAndRejectsInvalidArguments(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeCustomItemsClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		detail:            decodeToolCustomItem(t, `{"id":7,"type":"FITNESS_CHART","name":"CTL Chart"}`),
+	}
+	tool := newGetCustomItemByIDTool(client, client, "test", "UTC", false)
+
+	if _, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"item_id":" 7 "}`)}); err != nil {
+		t.Fatalf("Handler() trim error = %v", err)
+	}
+	if len(client.detailCalls) != 1 || client.detailCalls[0] != "7" {
+		t.Fatalf("detail calls = %#v, want trimmed item ID", client.detailCalls)
+	}
+
+	tests := []struct {
+		name string
+		args string
+	}{
+		{name: "missing object", args: ``},
+		{name: "blank item id", args: `{"item_id":"   "}`},
+		{name: "unknown argument", args: `{"item_id":"7","query":"fallback"}`},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.args)})
+			if err == nil {
+				t.Fatalf("Handler() error = nil, want user-facing argument error")
+			}
+			if message, ok := PublicErrorMessage(err); !ok || message != invalidGetCustomItemByIDArgumentsMessage {
+				t.Fatalf("PublicErrorMessage(%v) = %q/%v, want %q", err, message, ok, invalidGetCustomItemByIDArgumentsMessage)
+			}
+		})
+	}
+}
+
+func TestGetCustomItemByIDReturnsSanitizedPublicErrors(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{name: "not found", err: intervals.ErrNotFound},
+		{name: "unauthorized", err: intervals.ErrUnauthorized},
+		{name: "rate limited", err: intervals.ErrRateLimited},
+		{name: "raw upstream detail", err: errors.New("upstream 401 Authorization: Bearer secret-token")},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &fakeCustomItemsClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+				detailErr:         tc.err,
+			}
+			tool := newGetCustomItemByIDTool(client, client, "test", "UTC", false)
+
+			_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"item_id":"7"}`)})
+			if err == nil {
+				t.Fatalf("Handler() error = nil, want sanitized public error")
+			}
+			message, ok := PublicErrorMessage(err)
+			if !ok || message != fetchCustomItemByIDMessage {
+				t.Fatalf("PublicErrorMessage(%v) = %q/%v, want %q", err, message, ok, fetchCustomItemByIDMessage)
+			}
+			if strings.Contains(message, "secret-token") || strings.Contains(message, "Authorization") {
+				t.Fatalf("public message leaked raw upstream detail: %q", message)
+			}
+		})
 	}
 }
 
