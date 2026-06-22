@@ -182,6 +182,7 @@ func shapePerSportLoadTrends(rows []intervals.SummaryWithCats, startDate string,
 	loadsByDate := map[string]map[string]float64{}
 	categoriesByDateBucket := map[string]map[string]map[string]bool{}
 	allCategoriesByBucket := map[string]map[string]bool{}
+	var hasNonZeroCategoryLoad bool
 	presentDates := map[string]bool{}
 	warmupDates := map[string]bool{}
 	caveatSet := map[string]bool{}
@@ -208,6 +209,9 @@ func shapePerSportLoadTrends(rows []intervals.SummaryWithCats, startDate string,
 				label = "unknown"
 			}
 			rowCategoryLoad += category.TrainingLoad
+			if category.TrainingLoad > 0 {
+				hasNonZeroCategoryLoad = true
+			}
 			ensureDateBucket(loadsByDate, row.Date)[bucket] += float64(category.TrainingLoad)
 			ensureDateBucketCategories(categoriesByDateBucket, row.Date, bucket)[label] = true
 			ensureBucketCategories(allCategoriesByBucket, bucket)[label] = true
@@ -225,7 +229,7 @@ func shapePerSportLoadTrends(rows []intervals.SummaryWithCats, startDate string,
 	if len(warmupDates) < perSportLoadTrendWarmupDays {
 		caveatSet["fewer than 84 warm-up summary days were available; early computed per-sport CTL/ATL/TSB estimates may be understated"] = true
 	}
-	if len(allCategoriesByBucket) == 0 {
+	if !hasNonZeroCategoryLoad {
 		caveatSet["no non-zero per-sport category load was available in the fetched summary rows"] = true
 	}
 
@@ -305,7 +309,7 @@ func sportLoadBucket(category string) string {
 	switch normalized {
 	case "run", "trailrun", "virtualrun", "treadmill", "treadmillrun":
 		return "running"
-	case "ride", "virtualride", "bike", "bikeride", "cycling", "cycle", "gravelride", "mountainbike", "mountainbikeride", "ebikeride":
+	case "ride", "virtualride", "bike", "bikeride", "cycling", "cycle", "indoorcycling", "indoorride", "gravelride", "mountainbike", "mountainbikeride", "mtb", "ebikeride":
 		return "cycling"
 	case "swim", "openwaterswim", "poolswim":
 		return "swimming"
@@ -322,7 +326,7 @@ func normalizeSportLoadCategory(category string) string {
 func sportLoadBucketMapping() map[string][]string {
 	return map[string][]string{
 		"running":  {"run", "trailrun", "virtualrun", "treadmill", "treadmillrun"},
-		"cycling":  {"ride", "virtualride", "bike", "bikeride", "cycling", "cycle", "gravelride", "mountainbike", "mountainbikeride", "ebikeride"},
+		"cycling":  {"ride", "virtualride", "bike", "bikeride", "cycling", "cycle", "indoorcycling", "indoorride", "gravelride", "mountainbike", "mountainbikeride", "mtb", "ebikeride"},
 		"swimming": {"swim", "openwaterswim", "poolswim"},
 		"other":    {"fallback for empty, unknown, or unsupported category labels"},
 	}

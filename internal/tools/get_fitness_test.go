@@ -38,7 +38,7 @@ func TestGetFitnessPerSportLoadTrends(t *testing.T) {
 
 	client := newFakeFitnessMetricsClient(t)
 	client.summaries = decodeSummaries(t, `[
-		{"date":"2026-05-02","fitness":72,"fatigue":80,"form":-8,"training_load":125,"byCategory":[{"category":"Ride","training_load":90},{"category":"Open Water Swim","training_load":35}]},
+		{"date":"2026-05-02","fitness":72,"fatigue":80,"form":-8,"training_load":135,"byCategory":[{"category":"Indoor Cycling","training_load":90},{"category":"MTB","training_load":10},{"category":"Open Water Swim","training_load":35}]},
 		{"date":"2026-05-01","fitness":70,"fatigue":78,"form":-8,"training_load":55,"byCategory":[{"category":"Trail Run","training_load":40},{"category":"Strength","training_load":15}]}
 	]`)
 	tool := newGetFitnessTool(client, client, "test", "UTC", false)
@@ -53,21 +53,21 @@ func TestGetFitnessPerSportLoadTrends(t *testing.T) {
 	}
 	buckets := perSportBuckets(t, got)
 	assertTrendLoad(t, buckets, "running", "2026-05-01", 40)
-	assertTrendLoad(t, buckets, "cycling", "2026-05-02", 90)
+	assertTrendLoad(t, buckets, "cycling", "2026-05-02", 100)
 	assertTrendLoad(t, buckets, "swimming", "2026-05-02", 35)
 	assertTrendLoad(t, buckets, "other", "2026-05-01", 15)
 	assertTrendValue(t, buckets, "running", "2026-05-01", "ctl", 0.952)
 	assertTrendValue(t, buckets, "running", "2026-05-01", "atl", 5.714)
 	assertTrendValue(t, buckets, "running", "2026-05-01", "tsb", -4.762)
-	if sumTrendLoadForDate(buckets, "2026-05-02") != 125 {
-		t.Fatalf("per-sport load sum on 2026-05-02 = %v, want 125", sumTrendLoadForDate(buckets, "2026-05-02"))
+	if sumTrendLoadForDate(buckets, "2026-05-02") != 135 {
+		t.Fatalf("per-sport load sum on 2026-05-02 = %v, want 135", sumTrendLoadForDate(buckets, "2026-05-02"))
 	}
 	meta := got["_meta"].(map[string]any)["per_sport_load_trends"].(map[string]any)
 	if meta["method"] != perSportLoadTrendMethod || meta["warmup_summary_days_available"].(float64) != 0 {
 		t.Fatalf("per-sport meta = %#v", meta)
 	}
 	categories := meta["source_categories_by_bucket"].(map[string]any)
-	if !anySliceContains(categories["running"].([]any), "Trail Run") || !anySliceContains(categories["swimming"].([]any), "Open Water Swim") {
+	if !anySliceContains(categories["running"].([]any), "Trail Run") || !anySliceContains(categories["cycling"].([]any), "Indoor Cycling") || !anySliceContains(categories["cycling"].([]any), "MTB") || !anySliceContains(categories["swimming"].([]any), "Open Water Swim") {
 		t.Fatalf("source categories = %#v", categories)
 	}
 }
@@ -98,7 +98,7 @@ func TestGetFitnessPerSportLoadTrendCaveatsAndDateGaps(t *testing.T) {
 		t.Fatalf("missing_requested_dates = %#v", missing)
 	}
 	caveats := joinedStrings(meta["caveats"].([]any))
-	for _, want := range []string{"no byCategory sport breakdown", "omit training_load", "totals differ", "absent from upstream summary rows", "fewer than 84 warm-up"} {
+	for _, want := range []string{"no byCategory sport breakdown", "omit training_load", "totals differ", "absent from upstream summary rows", "fewer than 84 warm-up", "no non-zero per-sport category load"} {
 		if !strings.Contains(caveats, want) {
 			t.Fatalf("caveats %q missing %q", caveats, want)
 		}
