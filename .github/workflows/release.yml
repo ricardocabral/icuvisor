@@ -7,6 +7,11 @@ on:
         description: "Release tag to build (for example v0.1.5)"
         required: true
         type: string
+      skip_package_managers:
+        description: "Recovery rerun only: skip Homebrew and Scoop uploads for this same tag"
+        required: false
+        type: boolean
+        default: false
   push:
     tags:
       - "v*.*.*"
@@ -54,6 +59,9 @@ jobs:
         with:
           version: latest
           args: --timeout=5m
+
+      - name: Validate distribution metadata
+        run: make validate-distribution
 
       - name: GoReleaser config check
         uses: goreleaser/goreleaser-action@v7
@@ -140,6 +148,35 @@ jobs:
         shell: bash
         run: python3 scripts/release_notes_from_changelog.py "$RELEASE_TAG" > "$RUNNER_TEMP/release-notes.md"
 
+      - name: Configure optional package-manager publishing
+        shell: bash
+        env:
+          SKIP_PACKAGE_MANAGERS: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_package_managers == true }}
+          HOMEBREW_TAP_PAT_SECRET: ${{ secrets.HOMEBREW_TAP_PAT }}
+          SCOOP_BUCKET_PAT_SECRET: ${{ secrets.SCOOP_BUCKET_PAT }}
+        run: |
+          set -euo pipefail
+          if [ "$SKIP_PACKAGE_MANAGERS" = "true" ]; then
+            echo "::notice::Skipping Homebrew and Scoop uploads for manual same-tag recovery rerun."
+            exit 0
+          fi
+          if [ -n "$HOMEBREW_TAP_PAT_SECRET" ]; then
+            echo "::add-mask::$HOMEBREW_TAP_PAT_SECRET"
+            {
+              echo "HOMEBREW_TAP_PAT<<__ICUVISOR_HOMEBREW_PAT__"
+              printf '%s\n' "$HOMEBREW_TAP_PAT_SECRET"
+              echo "__ICUVISOR_HOMEBREW_PAT__"
+            } >> "$GITHUB_ENV"
+          fi
+          if [ -n "$SCOOP_BUCKET_PAT_SECRET" ]; then
+            echo "::add-mask::$SCOOP_BUCKET_PAT_SECRET"
+            {
+              echo "SCOOP_BUCKET_PAT<<__ICUVISOR_SCOOP_PAT__"
+              printf '%s\n' "$SCOOP_BUCKET_PAT_SECRET"
+              echo "__ICUVISOR_SCOOP_PAT__"
+            } >> "$GITHUB_ENV"
+          fi
+
       - name: Run GoReleaser to draft release
         uses: goreleaser/goreleaser-action@v7
         with:
@@ -148,8 +185,6 @@ jobs:
           args: release --clean --release-notes=${{ runner.temp }}/release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SCOOP_BUCKET_PAT: ${{ secrets.SCOOP_BUCKET_PAT }}
-          HOMEBREW_TAP_PAT: ${{ secrets.HOMEBREW_TAP_PAT }}
 
       - name: Package signed macOS MCPB
         shell: bash
@@ -392,3 +427,48 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release edit "$RELEASE_TAG" --draft=false
+
+  publish-winget:
+    name: Submit manifests to winget-pkgs
+    runs-on: windows-latest
+    needs: publish
+    if: ${{ !contains(github.event.inputs.tag || github.ref_name, '-') }}
+    steps:
+      - name: Guard on WINGET_PAT secret
+        id: guard
+        shell: pwsh
+        env:
+          WINGET_PAT: ${{ secrets.WINGET_PAT }}
+        run: |
+          if (-not $env:WINGET_PAT) {
+            Write-Warning "WINGET_PAT secret not set; skipping Winget submission. Signing is not required for winget-pkgs, but a classic PAT with public_repo scope is required to open the manifest PR."
+            "skip=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          } else {
+            "skip=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          }
+
+      - name: Resolve package version
+        if: steps.guard.outputs.skip == 'false'
+        id: tag
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+        run: |
+          $tag = $env:RELEASE_TAG
+          if (-not $tag) { throw "no tag provided" }
+          $version = $tag -replace '^v', ''
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Tag $tag does not yield a stable Winget PackageVersion"
+          }
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Submit to winget-pkgs
+        if: steps.guard.outputs.skip == 'false'
+        uses: vedantmgoyal9/winget-releaser@main
+        with:
+          identifier: RicardoCabral.icuvisor
+          version: ${{ steps.tag.outputs.version }}
+          installers-regex: '^icuvisor_.*_windows_(amd64|arm64)\.msi$'
+          release-tag: ${{ steps.tag.outputs.tag }}
+          token: ${{ secrets.WINGET_PAT }}

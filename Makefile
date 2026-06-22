@@ -5,15 +5,16 @@ LDFLAGS := -s -w -X main.version=$(VERSION)
 
 GO         ?= go
 GOLANGCI   ?= golangci-lint
-GORELEASER ?= goreleaser
-GOIMPORTS  ?= goimports
-HUGO       ?= hugo
+GORELEASER       ?= goreleaser
+GOIMPORTS        ?= goimports
+HUGO             ?= hugo
+MCPB_CLI_PACKAGE ?= @anthropic-ai/mcpb@2.1.2
 HUGO_PORT  ?= 1313
 
 .DEFAULT_GOAL := help
 
 .PHONY: all build install run test test-race cover bench lint fmt fmt-check vet tidy \
-        download verify generate goimports check clean snapshot release \
+        download verify generate goimports check clean snapshot release release-preflight \
         validate-registry validate-distribution docs-tools eval-validate eval-tool-routing web-serve web-preview web-build web-clean help
 
 all: build ## Build the binary
@@ -81,6 +82,17 @@ snapshot: ## Build a local goreleaser snapshot
 
 release: ## Run a goreleaser release (requires tag + creds)
 	$(GORELEASER) release --clean
+
+release-preflight: validate-distribution ## Run non-publishing release validation checks
+	@output="$$( $(GORELEASER) check 2>&1 )"; status=$$?; printf '%s\n' "$$output"; \
+		if [ $$status -ne 0 ]; then \
+			if printf '%s\n' "$$output" | grep -q "configuration is valid, but uses deprecated properties"; then \
+				echo "warning: local GoReleaser reports a deprecation for the existing Homebrew formula config; workflow-pinned GoReleaser remains authoritative"; \
+			else \
+				exit $$status; \
+			fi; \
+		fi
+	npx --yes "$(MCPB_CLI_PACKAGE)" validate packaging/mcpb/manifest.json
 
 validate-registry: ## Validate MCP Registry server.json metadata
 	python3 scripts/validate_server_json.py server.json

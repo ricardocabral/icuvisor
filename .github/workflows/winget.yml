@@ -1,8 +1,6 @@
-name: Publish to Winget
+name: Publish to Winget (manual recovery)
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -16,8 +14,7 @@ jobs:
   publish:
     name: Submit manifests to winget-pkgs
     runs-on: windows-latest
-    # Stable releases only; skip prereleases and drafts.
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.release.draft == false && github.event.release.prerelease == false) }}
+    # Manual recovery only. The primary release workflow submits Winget after publishing the GitHub Release.
     steps:
       - name: Guard on WINGET_PAT secret
         id: guard
