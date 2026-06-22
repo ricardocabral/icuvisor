@@ -22,6 +22,18 @@ func (c *segmentStatsStreamsClient) GetActivityStreams(_ context.Context, params
 	return c.rows, nil
 }
 
+func TestComputeActivitySegmentStatsDescriptionRoutesCollapsedLaps(t *testing.T) {
+	t.Parallel()
+
+	tool := newComputeActivitySegmentStatsTool(&segmentStatsStreamsClient{}, "test", false)
+	description := strings.ToLower(tool.Description)
+	for _, want := range []string{"single", "collapsed", "lap", "stream-based", "interval execution"} {
+		if !strings.Contains(description, want) {
+			t.Fatalf("description = %q, want routing hint %q", tool.Description, want)
+		}
+	}
+}
+
 func TestComputeActivitySegmentStatsHandlerScalarDistanceOmitsTimeFetch(t *testing.T) {
 	client := &segmentStatsStreamsClient{rows: []intervals.ActivityStream{
 		{Type: "distance", Data: []float64{0, 100, 200, 300}},

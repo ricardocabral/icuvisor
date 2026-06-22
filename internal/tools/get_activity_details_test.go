@@ -66,13 +66,13 @@ func TestActivityReadToolDescriptionsRouteLapAnalysisToIntervals(t *testing.T) {
 	intervalsTool := newGetActivityIntervalsTool(client, client, "test", false)
 
 	detailsDescription := strings.ToLower(detailsTool.Description)
-	for _, want := range []string{"get_activity_intervals", "laps", "reps", "interval_source"} {
+	for _, want := range []string{"get_activity_intervals", "laps", "reps", "interval_source", "interval_source_caveat"} {
 		if !strings.Contains(detailsDescription, want) {
 			t.Fatalf("details description = %q, want routing hint %q", detailsTool.Description, want)
 		}
 	}
 	intervalsDescription := strings.ToLower(intervalsTool.Description)
-	for _, want := range []string{"interval_source", "structured_workout", "device_laps", "manual_added", "mixed", "auto_lap_suspected"} {
+	for _, want := range []string{"interval_source", "structured_workout", "device_laps", "manual_added", "mixed", "auto_lap_suspected", "interval_source_caveat", "compute_activity_segment_stats", "collapsed"} {
 		if !strings.Contains(intervalsDescription, want) {
 			t.Fatalf("intervals description = %q, want source hint %q", intervalsTool.Description, want)
 		}
@@ -89,7 +89,7 @@ func TestActivityReadToolDescriptionsRouteLapAnalysisToIntervals(t *testing.T) {
 		t.Fatalf("intervals invalid args public message = %q/%v; err=%v", message, ok, err)
 	}
 	outputDescription := strings.ToLower(activityReadOutputSchema()["description"].(string))
-	for _, want := range []string{"get_activity_intervals", "interval_source", "manual_added", "mixed", "auto_lap_suspected"} {
+	for _, want := range []string{"get_activity_intervals", "interval_source", "manual_added", "mixed", "auto_lap_suspected", "interval_source_caveat", "compute_activity_segment_stats", "collapsed"} {
 		if !strings.Contains(outputDescription, want) {
 			t.Fatalf("output schema description = %q, want source hint %q", outputDescription, want)
 		}
@@ -489,6 +489,30 @@ func TestGetActivityIntervalsSourceMetadata(t *testing.T) {
 			}
 			assertKeyAbsent(t, payload, "full")
 		})
+	}
+}
+
+func TestGetActivityIntervalsHighVarianceSingleLapCollapsedCaveat(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityReadClient{intervals: decodeIntervalsFixture(t, `{"id":"sprint-single-lap","analyzed":true,"icu_intervals":[{"id":"lap-1","name":"Lap","duration":3600,"distance":30000,"average_power":210,"max_watts":1180,"w5s_variability":970}]}`)}
+	tool := newGetActivityIntervalsTool(client, client, "test", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"sprint-single-lap"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	payload := resultMap(t, result)
+	meta := payload["_meta"].(map[string]any)
+	if meta["interval_source"] != "unknown" || meta["auto_lap_suspected"] != false {
+		t.Fatalf("_meta source = %#v, want unknown without auto-lap confidence", meta)
+	}
+	caveat, ok := meta["interval_source_caveat"].(string)
+	if !ok || !strings.Contains(caveat, "collapsed") || strings.Contains(strings.ToLower(caveat), "no interval") {
+		t.Fatalf("interval_source_caveat = %#v, want collapsed-lap caveat without no-interval claim", meta["interval_source_caveat"])
+	}
+	if meta["recommended_next_tool"] != computeActivitySegmentStatsName {
+		t.Fatalf("recommended_next_tool = %#v, want %q", meta["recommended_next_tool"], computeActivitySegmentStatsName)
 	}
 }
 

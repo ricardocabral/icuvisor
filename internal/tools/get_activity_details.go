@@ -17,8 +17,8 @@ import (
 const (
 	getActivityDetailsName                 = "get_activity_details"
 	getActivityIntervalsName               = "get_activity_intervals"
-	getActivityDetailsDescription          = "Get one activity's terse metadata and metrics by activity_id, including upstream activity tags when returned, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, and explicitly requested athlete-defined custom_fields when upstream provides them. This detail payload does not prove lap/rep execution source; before analyzing laps, reps, or interval execution, call get_activity_intervals and check _meta.interval_source/_meta.auto_lap_suspected. If the user described an activity by date/name instead of ID, resolve it with get_activities over the athlete-local date window first. Use include_full only when raw upstream fields are needed; Strava-blocked activities return an unavailable marker instead of sparse N/A rows."
-	getActivityIntervalsDescription        = "Get analyzed intervals for one activity by activity_id, including scalar custom interval fields such as lactate under custom_fields when upstream includes them. For reps/laps in a described or date-based activity, resolve the activity with get_activities first and pass the returned activity_id. Check _meta.interval_source (structured_workout, device_laps, manual_added, mixed, or unknown) and _meta.auto_lap_suspected before making lap/rep execution claims; device_laps means the rows look like device/Garmin laps or auto-laps, manual_added means raw interval rows lack upstream group_id markers, and mixed means grouped and ungrouped row evidence appears together. Interval units are normalized to the canonical intervals.icu unit enum and raw interval payloads require include_full."
+	getActivityDetailsDescription          = "Get one activity's terse metadata and metrics by activity_id, including upstream activity tags when returned, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, and explicitly requested athlete-defined custom_fields when upstream provides them. This detail payload does not prove lap/rep execution source; before analyzing laps, reps, or interval execution, call get_activity_intervals and check _meta.interval_source/_meta.auto_lap_suspected/_meta.interval_source_caveat. If the user described an activity by date/name instead of ID, resolve it with get_activities over the athlete-local date window first. Use include_full only when raw upstream fields are needed; Strava-blocked activities return an unavailable marker instead of sparse N/A rows."
+	getActivityIntervalsDescription        = "Get analyzed intervals for one activity by activity_id, including scalar custom interval fields such as lactate under custom_fields when upstream includes them. For reps/laps in a described or date-based activity, resolve the activity with get_activities first and pass the returned activity_id. Check _meta.interval_source (structured_workout, device_laps, manual_added, mixed, or unknown), _meta.auto_lap_suspected, and _meta.interval_source_caveat before making lap/rep execution claims; if the activity appears as one averaged/collapsed lap, do not claim there were no intervals and use compute_activity_segment_stats over explicit stream segments. device_laps means the rows look like device/Garmin laps or auto-laps, manual_added means raw interval rows lack upstream group_id markers, and mixed means grouped and ungrouped row evidence appears together. Interval units are normalized to the canonical intervals.icu unit enum and raw interval payloads require include_full."
 	invalidActivityDetailsArgumentsMessage = "invalid activity detail arguments; provide activity_id, optional custom_fields, and optional include_full"
 	invalidActivityReadArgumentsMessage    = "invalid activity read arguments; provide activity_id and optional include_full"
 	fetchActivityDetailsMessage            = "could not fetch activity details; check activity_id and intervals.icu credentials"
@@ -74,8 +74,10 @@ type activityReadMeta struct {
 	Limit            int                     `json:"limit,omitempty"`
 	SinceID          int64                   `json:"since_id,omitempty"`
 	FieldSemantics   map[string]string       `json:"field_semantics,omitempty"`
-	IntervalSource   analysis.IntervalSource `json:"interval_source,omitempty"`
-	AutoLapSuspected *bool                   `json:"auto_lap_suspected,omitempty"`
+	IntervalSource       analysis.IntervalSource `json:"interval_source,omitempty"`
+	AutoLapSuspected     *bool                   `json:"auto_lap_suspected,omitempty"`
+	IntervalSourceCaveat string                  `json:"interval_source_caveat,omitempty"`
+	RecommendedNextTool  string                  `json:"recommended_next_tool,omitempty"`
 }
 
 type activityIntervalRow struct {
@@ -229,7 +231,12 @@ func shapeActivityIntervalsDTO(activityID string, dto intervals.IntervalsDTO, in
 		}
 	}
 	classification := classifyActivityIntervalsDTO(dto)
-	out := getActivityIntervalsResponse{ActivityID: firstNonEmpty(dto.ID, activityID), Analyzed: dto.Analyzed, Intervals: make([]activityIntervalRow, 0, len(dto.ICUIntervals)), Groups: make([]activityIntervalGroup, 0, len(dto.ICUGroups)), Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, IntervalSource: classification.Source, AutoLapSuspected: boolPtr(classification.AutoLapSuspected)}}
+	meta := activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, IntervalSource: classification.Source, AutoLapSuspected: boolPtr(classification.AutoLapSuspected)}
+	if collapsedSingleLapCaveat(dto, classification) {
+		meta.IntervalSourceCaveat = "single_interval_rows_may_be_an_imported_or_collapsed_lap; averaged_row_alone_is_insufficient_for_interval_execution_judgments"
+		meta.RecommendedNextTool = computeActivitySegmentStatsName
+	}
+	out := getActivityIntervalsResponse{ActivityID: firstNonEmpty(dto.ID, activityID), Analyzed: dto.Analyzed, Intervals: make([]activityIntervalRow, 0, len(dto.ICUIntervals)), Groups: make([]activityIntervalGroup, 0, len(dto.ICUGroups)), Meta: meta}
 	if includeFull {
 		out.Full = dto.Raw
 	}
@@ -240,6 +247,10 @@ func shapeActivityIntervalsDTO(activityID string, dto intervals.IntervalsDTO, in
 		out.Groups = append(out.Groups, shapeActivityIntervalGroup(group, includeFull))
 	}
 	return out
+}
+
+func collapsedSingleLapCaveat(dto intervals.IntervalsDTO, classification analysis.IntervalSourceResult) bool {
+	return len(dto.ICUIntervals) == 1 && len(dto.ICUGroups) == 0 && classification.Source == analysis.IntervalSourceUnknown
 }
 
 func classifyActivityIntervalsDTO(dto intervals.IntervalsDTO) analysis.IntervalSourceResult {
@@ -388,5 +399,5 @@ func activityReadInputSchema() map[string]any {
 }
 
 func activityReadOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Activity detail or interval response. Activity detail rows include upstream tags when intervals.icu returns a string-array tags field, calories_burned (active/exercise calories, distinct from wellness kcal_consumed intake), carbs_ingested_g (athlete-logged carb intake in grams), carbs_used_g (upstream carbs-burned estimate in grams), gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds explicitly requested athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. On activity detail responses the activity's timezone field and _meta.timezone give the IANA zone start_date_local is in; start_date_utc is UTC. Derive the calendar date from that timezone so the activity is not reported on the wrong day. For lap/rep or interval-execution analysis, use get_activity_intervals and inspect _meta.interval_source plus _meta.auto_lap_suspected; get_activity_details alone does not identify whether intervals are structured_workout, device_laps/auto-laps, manual_added, mixed, or unknown rows."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Activity detail or interval response. Activity detail rows include upstream tags when intervals.icu returns a string-array tags field, calories_burned (active/exercise calories, distinct from wellness kcal_consumed intake), carbs_ingested_g (athlete-logged carb intake in grams), carbs_used_g (upstream carbs-burned estimate in grams), gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds explicitly requested athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. On activity detail responses the activity's timezone field and _meta.timezone give the IANA zone start_date_local is in; start_date_utc is UTC. Derive the calendar date from that timezone so the activity is not reported on the wrong day. For lap/rep or interval-execution analysis, use get_activity_intervals and inspect _meta.interval_source, _meta.auto_lap_suspected, and _meta.interval_source_caveat; get_activity_details alone does not identify whether intervals are structured_workout, device_laps/auto-laps, manual_added, mixed, unknown rows, or a single averaged/collapsed lap that should be followed up with compute_activity_segment_stats."}
 }
