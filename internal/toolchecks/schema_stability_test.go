@@ -14,8 +14,8 @@ func TestGenerateSchemaSnapshotsCoversFullCoachRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GenerateSchemaSnapshots() error = %v", err)
 	}
-	if len(generated) != 62 {
-		t.Fatalf("GenerateSchemaSnapshots() count = %d, want 62 full-mode coach-enabled registered tools", len(generated))
+	if len(generated) != 63 {
+		t.Fatalf("GenerateSchemaSnapshots() count = %d, want 63 full-mode coach-enabled registered tools", len(generated))
 	}
 	for _, name := range []string{
 		"add_or_update_event",
@@ -26,6 +26,7 @@ func TestGenerateSchemaSnapshotsCoversFullCoachRegistry(t *testing.T) {
 		"create_custom_item",
 		"delete_event",
 		"delete_gear",
+		"get_annual_training_plan",
 		"get_gear_list",
 		"get_planning_context",
 		"link_activity_to_event",

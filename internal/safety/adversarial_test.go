@@ -50,6 +50,7 @@ var v03ToolCatalog = []catalogToolSpec{
 	{name: "get_activity_messages", requirement: tools.RequirementRead},
 	{name: "get_activity_splits", requirement: tools.RequirementRead},
 	{name: "get_activity_streams", requirement: tools.RequirementRead},
+	{name: "get_annual_training_plan", requirement: tools.RequirementRead},
 	{name: "get_athlete_profile", requirement: tools.RequirementRead},
 	{name: "get_best_efforts", requirement: tools.RequirementRead},
 	{name: "get_custom_item_by_id", requirement: tools.RequirementRead},

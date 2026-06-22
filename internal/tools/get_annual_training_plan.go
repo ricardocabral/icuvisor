@@ -193,16 +193,15 @@ func getAnnualTrainingPlanHandler(client EventsClient, profileClient ProfileClie
 		if err != nil {
 			return Result{}, NewUserError(fetchAnnualTrainingPlanMessage, err)
 		}
-		fetchLimit := args.Limit + 1
-		events, err := client.ListEvents(ctx, intervals.ListEventsParams{Oldest: args.Oldest, Newest: args.Newest, CalendarID: args.CalendarID, Limit: fetchLimit})
+		events, err := client.ListEvents(ctx, intervals.ListEventsParams{Oldest: args.Oldest, Newest: args.Newest, CalendarID: args.CalendarID, Limit: args.Limit})
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
 			}
 			return Result{}, NewUserError(fetchAnnualTrainingPlanMessage, err)
 		}
-		truncated := len(events) > args.Limit
-		if truncated {
+		truncated := len(events) >= args.Limit
+		if len(events) > args.Limit {
 			events = events[:args.Limit]
 		}
 		asOf, err := response.AsOfMetadataInTimezone(now(), timezoneName)
