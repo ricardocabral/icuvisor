@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added the `shareable_training_report` MCP prompt and cookbook guidance for privacy-safe Markdown training reports that athletes review/redact and share manually without icuvisor publishing or hosting private data.
 - Added opt-in per-sport load trends to `get_fitness`, computing warmed running/cycling/swimming/other CTL/ATL/TSB-style estimates from visible summary category load with multisport planning caveats.
 - Added explicit activity custom-field selection for activity reads and `analyze_correlation`, including `custom:<field_code>` correlation metrics for VO2Max-like field histories with provenance and insufficient-data metadata.
 - Added weather provenance to `get_today` and `get_activities`: completed activities expose Intervals.icu historical weather when present, while daily forecast gaps are explicit so assistants do not invent conditions.
