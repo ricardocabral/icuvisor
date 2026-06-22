@@ -60,6 +60,7 @@ func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback
 	applyActivityDistanceAndPace(&row, activity, unitSystem)
 	applyActivitySpeed(&row, activity.AverageSpeed, true, unitSystem)
 	applyActivitySpeed(&row, activity.MaxSpeed, false, unitSystem)
+	row.Weather = activityWeatherSummary(activity)
 	row.CustomFields = activityCustomFields(activity.Raw, customFieldCodes)
 	if includeFull {
 		row.Full = activity.Raw
@@ -85,6 +86,24 @@ func activityCustomFields(raw map[string]any, customFieldCodes []string) map[str
 		return nil
 	}
 	return fields
+}
+
+func activityWeatherSummary(activity intervals.Activity) *activityWeather {
+	if activity.HasWeather == nil || !*activity.HasWeather {
+		return nil
+	}
+	return &activityWeather{
+		Status:             "available",
+		Provenance:         "intervals.icu activity historical weather fields",
+		AverageTempC:       roundFloatPtr(activity.AverageWeatherTemp, 1),
+		MinTempC:           roundFloatPtr(activity.MinWeatherTemp, 1),
+		MaxTempC:           roundFloatPtr(activity.MaxWeatherTemp, 1),
+		AverageWindSpeedMS: roundFloatPtr(activity.AverageWindSpeed, 2),
+		AverageWindGustMS:  roundFloatPtr(activity.AverageWindGust, 2),
+		PrevailingWindDeg:  activity.PrevailingWindDeg,
+		HeadwindPercent:    roundFloatPtr(activity.HeadwindPercent, 1),
+		TailwindPercent:    roundFloatPtr(activity.TailwindPercent, 1),
+	}
 }
 
 func applyActivityDistanceAndPace(row *getActivitiesRow, activity intervals.Activity, unitSystem response.UnitSystem) {
@@ -192,6 +211,14 @@ func anyString(value any) string {
 		return ""
 	}
 	return strings.TrimSpace(fmt.Sprint(value))
+}
+
+func roundFloatPtr(value *float64, places int) *float64 {
+	if value == nil {
+		return nil
+	}
+	rounded := round(*value, places)
+	return &rounded
 }
 
 func round(value float64, places int) float64 {

@@ -166,6 +166,35 @@ func TestGetActivitiesCaloriesBurnedSemanticsAndNullStripping(t *testing.T) {
 	}
 }
 
+func TestGetActivitiesSurfacesHistoricalWeatherWithProvenance(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"weather","name":"Windy Ride","type":"Ride","start_date_local":"2026-01-03T07:00:00","has_weather":true,"average_weather_temp":21.56,"min_weather_temp":19.2,"max_weather_temp":25.9,"average_wind_speed":4.321,"average_wind_gust":8.765,"prevailing_wind_deg":275,"headwind_percent":61.25,"tailwind_percent":38.75}`,
+		`{"id":"dry","name":"No Weather Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","has_weather":false}`,
+	}, "metric")
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	rows := resultMap(t, result)["activities"].([]any)
+	byID := map[string]map[string]any{}
+	for _, rawRow := range rows {
+		row := rawRow.(map[string]any)
+		byID[row["activity_id"].(string)] = row
+	}
+	weather := byID["weather"]["weather"].(map[string]any)
+	if weather["status"] != "available" || !strings.Contains(weather["provenance"].(string), "intervals.icu activity historical weather") {
+		t.Fatalf("weather = %#v, want historical weather provenance", weather)
+	}
+	if weather["average_temp_c"] != 21.6 || weather["average_wind_speed_m_s"] != 4.32 || weather["prevailing_wind_deg"] != float64(275) || weather["headwind_percent"] != 61.3 {
+		t.Fatalf("weather = %#v, want rounded upstream weather fields", weather)
+	}
+	assertKeyAbsent(t, byID["dry"], "weather")
+}
+
 func TestGetActivitiesTagEdgeCases(t *testing.T) {
 	t.Parallel()
 
@@ -549,7 +578,7 @@ func TestGetActivitiesPaginationFiltersAndTokenRoundTrip(t *testing.T) {
 func TestGetActivitiesBoundaryResponseShapeGoldenFixtures(t *testing.T) {
 	t.Parallel()
 
-	const exactFullWindowToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJjYXJic19pbmdlc3RlZCIsImNhcmJzX3VzZWQiLCJkZXZpY2VfbmFtZSIsImdlYXJfaWQiLCJ0YWdzIl0sImJlZm9yZV9zdGFydF9kYXRlX2xvY2FsIjoiMjAyNi0wMS0wM1QwNzowMDowMCIsImJlZm9yZV9pZCI6ImYzIiwic2tpcF9pZHNfYXRfYm91bmRhcnkiOlsiZjMiXX0`
+	const exactFullWindowToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwiaGFzX3dlYXRoZXIiLCJhdmVyYWdlX3dlYXRoZXJfdGVtcCIsIm1pbl93ZWF0aGVyX3RlbXAiLCJtYXhfd2VhdGhlcl90ZW1wIiwiYXZlcmFnZV93aW5kX3NwZWVkIiwiYXZlcmFnZV93aW5kX2d1c3QiLCJwcmV2YWlsaW5nX3dpbmRfZGVnIiwiaGVhZHdpbmRfcGVyY2VudCIsInRhaWx3aW5kX3BlcmNlbnQiLCJ0b3RhbF9lbGV2YXRpb25fZ2FpbiIsInRvdGFsX2VsZXZhdGlvbl9sb3NzIiwiaWN1X3RyYWluaW5nX2xvYWQiLCJhdmVyYWdlX2hlYXJ0cmF0ZSIsIm1heF9oZWFydHJhdGUiLCJhdmVyYWdlX2NhZGVuY2UiLCJjYWxvcmllcyIsImNhcmJzX2luZ2VzdGVkIiwiY2FyYnNfdXNlZCIsImRldmljZV9uYW1lIiwiZ2Vhcl9pZCIsInRhZ3MiXSwiYmVmb3JlX3N0YXJ0X2RhdGVfbG9jYWwiOiIyMDI2LTAxLTAzVDA3OjAwOjAwIiwiYmVmb3JlX2lkIjoiZjMiLCJza2lwX2lkc19hdF9ib3VuZGFyeSI6WyJmMyJdfQ`
 	const identicalTimestampStallToken = `eyJ2IjoxLCJvbGRlc3QiOiIyMDI2LTAxLTAxIiwiaW5jbHVkZV91bm5hbWVkIjpmYWxzZSwiaW5jbHVkZV9mdWxsIjpmYWxzZSwicGFnZV9zaXplIjoxLCJmaWVsZHMiOlsiaWQiLCJuYW1lIiwidHlwZSIsInN1Yl90eXBlIiwic3RhcnRfZGF0ZV9sb2NhbCIsInN0YXJ0X2RhdGUiLCJ0aW1lem9uZSIsInNvdXJjZSIsIl9ub3RlIiwiaWN1X2F0aGxldGVfaWQiLCJleHRlcm5hbF9pZCIsInN0cmVhbV90eXBlcyIsImRpc3RhbmNlIiwiaWN1X2Rpc3RhbmNlIiwibW92aW5nX3RpbWUiLCJlbGFwc2VkX3RpbWUiLCJhdmVyYWdlX3NwZWVkIiwibWF4X3NwZWVkIiwidG90YWxfZWxldmF0aW9uX2dhaW4iLCJ0b3RhbF9lbGV2YXRpb25fbG9zcyIsImljdV90cmFpbmluZ19sb2FkIiwiYXZlcmFnZV9oZWFydHJhdGUiLCJtYXhfaGVhcnRyYXRlIiwiYXZlcmFnZV9jYWRlbmNlIiwiY2Fsb3JpZXMiLCJjYXJic19pbmdlc3RlZCIsImNhcmJzX3VzZWQiLCJkZXZpY2VfbmFtZSIsInRhZ3MiXSwiYmVmb3JlX3N0YXJ0X2RhdGVfbG9jYWwiOiIyMDI2LTAxLTAzVDA3OjAwOjAwIiwiYmVmb3JlX2lkIjoiczMiLCJza2lwX2lkc19hdF9ib3VuZGFyeSI6WyJzMyJdfQ`
 
 	tests := []struct {

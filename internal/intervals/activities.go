@@ -68,6 +68,15 @@ type Activity struct {
 	TotalElevationLoss *float64 `json:"total_elevation_loss"`
 	AverageSpeed       *float64 `json:"average_speed"`
 	MaxSpeed           *float64 `json:"max_speed"`
+	HasWeather         *bool    `json:"has_weather"`
+	AverageWeatherTemp *float64 `json:"average_weather_temp"`
+	MinWeatherTemp     *float64 `json:"min_weather_temp"`
+	MaxWeatherTemp     *float64 `json:"max_weather_temp"`
+	AverageWindSpeed   *float64 `json:"average_wind_speed"`
+	AverageWindGust    *float64 `json:"average_wind_gust"`
+	PrevailingWindDeg  *int     `json:"prevailing_wind_deg"`
+	HeadwindPercent    *float64 `json:"headwind_percent"`
+	TailwindPercent    *float64 `json:"tailwind_percent"`
 	TrainingLoad       *int     `json:"icu_training_load"`
 	AverageHeartRate   *int     `json:"average_heartrate"`
 	MaxHeartRate       *int     `json:"max_heartrate"`

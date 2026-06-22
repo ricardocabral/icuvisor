@@ -31,7 +31,7 @@ func TestListActivitiesSendsQueryAndPreservesRawNulls(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`[
-			{"id":"a1","name":null,"type":"Run","start_date_local":"2026-01-30T07:00:00","distance":5000,"icu_training_load":42,"stream_types":["time","distance"]},
+			{"id":"a1","name":null,"type":"Run","start_date_local":"2026-01-30T07:00:00","distance":5000,"icu_training_load":42,"stream_types":["time","distance"],"has_weather":true,"average_weather_temp":22.5,"average_wind_speed":4.1,"prevailing_wind_deg":180},
 			{"id":"a2","source":"strava","_note":"Strava activity hidden"}
 		]`))
 	}))
@@ -60,6 +60,9 @@ func TestListActivitiesSendsQueryAndPreservesRawNulls(t *testing.T) {
 	}
 	if got, want := activities[0].StreamTypes, []string{"time", "distance"}; len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
 		t.Fatalf("StreamTypes = %#v, want %#v", got, want)
+	}
+	if activities[0].HasWeather == nil || !*activities[0].HasWeather || activities[0].AverageWeatherTemp == nil || *activities[0].AverageWeatherTemp != 22.5 || activities[0].AverageWindSpeed == nil || *activities[0].AverageWindSpeed != 4.1 || activities[0].PrevailingWindDeg == nil || *activities[0].PrevailingWindDeg != 180 {
+		t.Fatalf("weather fields = %+v, want decoded activity weather", activities[0])
 	}
 	if activities[1].Source == nil || *activities[1].Source != "strava" {
 		t.Fatalf("Source = %#v, want strava", activities[1].Source)

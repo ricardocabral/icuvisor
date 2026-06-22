@@ -108,6 +108,59 @@ func TestGetTodayFreshDigestUsesFixedAthleteLocalToday(t *testing.T) {
 	}
 }
 
+func TestGetTodayWeatherContextUsesUpstreamActivityWeatherOnly(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeTodayClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		activities: decodeActivityPage(t,
+			`{"id":"today-weather","name":"Lunch Ride","type":"Ride","start_date_local":"2026-05-24T12:00:00","has_weather":true,"average_weather_temp":24.44,"average_wind_speed":3.789}`,
+		),
+	}
+	tool := newGetTodayToolWithClock(client, client, nil, nil, nil, nil, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	weather := out["weather"].(map[string]any)
+	if weather["status"] != "completed_activity_weather_available" || weather["completed_activity_weather_count"] != float64(1) || !strings.Contains(weather["provenance"].(string), "get_activities") {
+		t.Fatalf("weather context = %#v, want completed activity weather provenance", weather)
+	}
+	activityWeather := out["completed_activities"].([]any)[0].(map[string]any)["weather"].(map[string]any)
+	if activityWeather["average_temp_c"] != 24.4 || activityWeather["average_wind_speed_m_s"] != 3.79 {
+		t.Fatalf("activity weather = %#v, want rounded upstream weather fields", activityWeather)
+	}
+}
+
+func TestGetTodayWeatherContextDoesNotInventForecast(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeTodayClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		events:            decodeToolEvents(t, `{"id":"today-event","category":"WORKOUT","name":"Endurance","start_date_local":"2026-05-24","indoor":false}`),
+	}
+	tool := newGetTodayToolWithClock(client, client, nil, nil, nil, nil, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	weather := out["weather"].(map[string]any)
+	if weather["status"] != "forecast_unavailable" || !strings.Contains(weather["summary"].(string), "do not infer or invent") || !strings.Contains(weather["provenance"].(string), "upstream gap") {
+		t.Fatalf("weather context = %#v, want explicit unavailable no-hallucination wording", weather)
+	}
+	if strings.Contains(strings.ToLower(weather["summary"].(string)), "sunny") || strings.Contains(strings.ToLower(weather["summary"].(string)), "rain") {
+		t.Fatalf("weather context invented conditions: %#v", weather)
+	}
+	planned := out["planned_events"].([]any)[0].(map[string]any)
+	if planned["indoor"] != false {
+		t.Fatalf("planned event = %#v, want existing indoor/outdoor flag preserved", planned)
+	}
+}
+
 func TestGetTodayDoesNotBackfillYesterdayWellness(t *testing.T) {
 	t.Parallel()
 

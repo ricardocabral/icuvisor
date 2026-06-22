@@ -39,7 +39,15 @@ type getTodayResponse struct {
 	CompletedActivities []getActivitiesRow `json:"completed_activities"`
 	PlannedEvents       []getEventsRow     `json:"planned_events"`
 	Annotations         []getEventsRow     `json:"annotations"`
+	Weather             getTodayWeather    `json:"weather"`
 	Meta                getTodayMeta       `json:"_meta"`
+}
+
+type getTodayWeather struct {
+	Status                        string `json:"status"`
+	Summary                       string `json:"summary"`
+	Provenance                    string `json:"provenance"`
+	CompletedActivityWeatherCount int    `json:"completed_activity_weather_count,omitempty"`
 }
 
 type getTodayMeta struct {
@@ -182,6 +190,7 @@ func shapeGetTodayResponse(in todayDigestInputs) (getTodayResponse, error) {
 		CompletedActivities: completed,
 		PlannedEvents:       planned,
 		Annotations:         annotations,
+		Weather:             todayWeatherContext(completed),
 		Meta: getTodayMeta{
 			Date:           in.today,
 			AsOf:           in.asOf.AsOf,
@@ -194,6 +203,28 @@ func shapeGetTodayResponse(in todayDigestInputs) (getTodayResponse, error) {
 			ActivityWindow: "from athlete-local midnight through upstream now",
 		},
 	}, nil
+}
+
+func todayWeatherContext(completed []getActivitiesRow) getTodayWeather {
+	count := 0
+	for _, activity := range completed {
+		if activity.Weather != nil {
+			count++
+		}
+	}
+	if count > 0 {
+		return getTodayWeather{
+			Status:                        "completed_activity_weather_available",
+			Summary:                       "Weather fields are available only for completed activities that Intervals.icu returned with historical activity weather; no forecast conditions are inferred for planned events.",
+			Provenance:                    "intervals.icu activity historical weather fields via get_activities rows",
+			CompletedActivityWeatherCount: count,
+		}
+	}
+	return getTodayWeather{
+		Status:     "forecast_unavailable",
+		Summary:    "No weather conditions are available from the current Intervals.icu daily digest sources; do not infer or invent today's forecast.",
+		Provenance: "upstream gap: supported get_today sources include fitness, wellness, activities, and events; current Intervals.icu forecast conditions are not exposed through the implemented read model",
+	}
 }
 
 func filterTodayFitnessRows(rows []intervals.SummaryWithCats, today string) []intervals.SummaryWithCats {
@@ -307,5 +338,5 @@ func getTodayInputSchema() map[string]any {
 }
 
 func getTodayOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "One-call athlete-local today digest with fitness, wellness, completed_activities, planned_events, annotations, athlete-local as-of metadata, source_tools, section counts, units, and scale labels. Terse by default; include_full adds raw upstream payloads per section."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "One-call athlete-local today digest with fitness, wellness, completed_activities, planned_events, annotations, explicit weather availability/provenance, athlete-local as-of metadata, source_tools, section counts, units, and scale labels. Terse by default; include_full adds raw upstream payloads per section."}
 }

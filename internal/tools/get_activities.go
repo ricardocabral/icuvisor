@@ -27,6 +27,7 @@ var terseActivityFields = []string{
 	"id", "name", "type", "sub_type", "start_date_local", "start_date", "timezone",
 	"source", "_note", "icu_athlete_id", "external_id", "stream_types",
 	"distance", "icu_distance", "moving_time", "elapsed_time", "average_speed", "max_speed",
+	"has_weather", "average_weather_temp", "min_weather_temp", "max_weather_temp", "average_wind_speed", "average_wind_gust", "prevailing_wind_deg", "headwind_percent", "tailwind_percent",
 	"total_elevation_gain", "total_elevation_loss", "icu_training_load", "average_heartrate",
 	"max_heartrate", "average_cadence", "calories", "carbs_ingested", "carbs_used",
 	"device_name", "gear_id", "tags",
@@ -102,6 +103,7 @@ type getActivitiesRow struct {
 	CaloriesBurned      *int               `json:"calories_burned,omitempty"`
 	CarbsIngestedG      *int               `json:"carbs_ingested_g,omitempty"`
 	CarbsUsedG          *int               `json:"carbs_used_g,omitempty"`
+	Weather             *activityWeather   `json:"weather,omitempty"`
 	DeviceName          string             `json:"device_name,omitempty"`
 	GearID              string             `json:"gear_id,omitempty"`
 	GearName            string             `json:"gear_name,omitempty"`
@@ -112,6 +114,19 @@ type getActivitiesRow struct {
 	Tags                *[]string          `json:"tags,omitempty"`
 	CustomFields        map[string]any     `json:"custom_fields,omitempty"`
 	Full                map[string]any     `json:"full,omitempty"`
+}
+
+type activityWeather struct {
+	Status             string   `json:"status"`
+	Provenance         string   `json:"provenance"`
+	AverageTempC       *float64 `json:"average_temp_c,omitempty"`
+	MinTempC           *float64 `json:"min_temp_c,omitempty"`
+	MaxTempC           *float64 `json:"max_temp_c,omitempty"`
+	AverageWindSpeedMS *float64 `json:"average_wind_speed_m_s,omitempty"`
+	AverageWindGustMS  *float64 `json:"average_wind_gust_m_s,omitempty"`
+	PrevailingWindDeg  *int     `json:"prevailing_wind_deg,omitempty"`
+	HeadwindPercent    *float64 `json:"headwind_percent,omitempty"`
+	TailwindPercent    *float64 `json:"tailwind_percent,omitempty"`
 }
 
 type unavailableReason struct {
