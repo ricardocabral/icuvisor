@@ -54,9 +54,9 @@ Open a new PowerShell or Command Prompt window after installation, then run `icu
 
 Learn more on how to connect your AI assistant, read the tool catalog, and troubleshoot stale conversations or cached tool catalogs at <https://icuvisor.app>.
 
-### Fitness projection with training-plan targets
+### Fitness projection with ATP/periodization targets
 
-`get_fitness_projection` can bridge weekly training-plan targets into future CTL/ATL/TSB scenarios without asking the assistant to invent daily loads. Provide `weekly_plan_targets` from planning context or `get_training_plan` output as ISO Monday week anchors; icuvisor distributes each weekly `training_load` evenly as `training_load/7` across projected future dates in that week. Explicit `planned_daily_loads` win for matching dates and are not redistributed.
+`get_annual_training_plan` summarizes existing PLAN, TARGET, and NOTE calendar events into season phases, weekly load/TSS targets, recovery/context notes, and `_meta.projection_bridge.weekly_plan_targets`. Copy those bridge rows into `get_fitness_projection.weekly_plan_targets` to model future CTL/ATL/TSB scenarios without asking the assistant to invent daily loads. `get_fitness_projection` distributes each ISO-Monday weekly `training_load` evenly as `training_load/7` across projected future dates in that week. Explicit `planned_daily_loads` win for matching dates and are not redistributed.
 
 ```json
 {
@@ -72,7 +72,7 @@ Learn more on how to connect your AI assistant, read the tool catalog, and troub
 }
 ```
 
-The projection `_meta.assumptions` reports target counts, filled days, override counts, the ISO-Monday anchor convention, and `source_tools` adds `get_training_plan` when weekly targets are supplied.
+The ATP `_meta.projection_bridge` reports which weekly TARGET rows are safe to copy and which partial or missing-load weeks were excluded. The projection `_meta.assumptions` reports target counts, filled days, override counts, the ISO-Monday anchor convention, and `source_tools` adds planning sources when weekly targets are supplied.
 
 Example calendar write prompt: "Mark me sick from 2026-08-10 through 2026-08-12" maps to `add_unavailable_date_range` with `category: "SICK"`, `start_date`, and `end_date`; use `include_full: true` only when raw upstream event payloads are needed.
 

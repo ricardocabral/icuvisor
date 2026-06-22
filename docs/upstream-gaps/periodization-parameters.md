@@ -11,6 +11,8 @@ TP-014 probed intervals.icu's public OpenAPI docs for athlete-profile and traini
 
 icuvisor should not compute these values client-side. If intervals.icu exposes explicit fields later, `get_planning_parameters` can ship with only the fields confirmed available, following the PRD availability rule that missing upstream fields are omitted rather than zero-filled.
 
+TP-196 adds `get_annual_training_plan` as a separate read-only summary of per-event calendar signals that are already exposed today: PLAN, TARGET, and NOTE events plus their load/time/distance targets. That tool does not close this upstream gap and must not present inferred ramp-rate, recovery-cadence, taper-drop, or intensity-distribution preferences as configured athlete-level parameters. Its responses include caveats and a projection bridge only for explicit weekly TARGET load rows.
+
 ## Evidence summary
 
 Public documentation sources checked:
@@ -27,7 +29,7 @@ Checked endpoint/schema areas:
 | `GET /api/v1/athlete/{id}/training-plan` | `athlete_id`, `training_plan_id`, `training_plan_start_date`, `timezone`, `training_plan_last_applied`, `training_plan`, `training_plan_alias` | Training-plan assignment only; no planning-parameter fields. |
 | `PUT /api/v1/athlete-plans`, `PUT /api/v1/athlete/{id}/training-plan` | `id`, `training_plan_id`, `training_plan_start_date`, `training_plan_alias` | No writable planning-parameter hints; write probing was out of scope. |
 | `GET /api/v1/athlete/{id}/folders` | `rollout_weeks`, `duration_weeks`, `hours_per_week_min`, `hours_per_week_max`, `workout_targets`, `starting_ctl`, `starting_atl` | Plan metadata only; no ramp, recovery cadence, taper, or distribution preference. |
-| `GET /api/v1/athlete/{id}/events{format}` | `icu_training_load`, `load_target`, `time_target`, `distance_target`, `target`, `icu_intensity`, plan linkage fields | Per-event values only, not athlete-level periodization settings. |
+| `GET /api/v1/athlete/{id}/events{format}` | `icu_training_load`, `load_target`, `time_target`, `distance_target`, `target`, `icu_intensity`, plan linkage fields, PLAN/TARGET/NOTE categories | Per-event values only, not athlete-level periodization settings. These are sufficient for `get_annual_training_plan` summaries but not for configured ramp/recovery/taper/distribution parameters. |
 | `GET /api/v1/athlete/{id}/fitness-model-events` | Fitness-model event categories such as `FITNESS_DAYS`, `SET_FITNESS`, `SET_EFTP` | No planning-parameter fields. |
 | `GET /api/v1/athlete/{id}/workouts`, `GET /api/v1/athlete/{id}/workouts/{workoutId}` | `icu_training_load`, `target`, `targets`, `plan_applied`, `for_week`, `icu_intensity` | Per-workout values only, not an athlete-level intensity-distribution preference. |
 
