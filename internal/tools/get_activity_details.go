@@ -15,12 +15,13 @@ import (
 )
 
 const (
-	getActivityDetailsName              = "get_activity_details"
-	getActivityIntervalsName            = "get_activity_intervals"
-	getActivityDetailsDescription       = "Get one activity's terse metadata and metrics by activity_id, including upstream activity tags when returned, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, and explicitly requested athlete-defined custom_fields when upstream provides them. This detail payload does not prove lap/rep execution source; before analyzing laps, reps, or interval execution, call get_activity_intervals and check _meta.interval_source/_meta.auto_lap_suspected. If the user described an activity by date/name instead of ID, resolve it with get_activities over the athlete-local date window first. Use include_full only when raw upstream fields are needed; Strava-blocked activities return an unavailable marker instead of sparse N/A rows."
-	getActivityIntervalsDescription     = "Get analyzed intervals for one activity by activity_id, including scalar custom interval fields such as lactate under custom_fields when upstream includes them. For reps/laps in a described or date-based activity, resolve the activity with get_activities first and pass the returned activity_id. Check _meta.interval_source (structured_workout, device_laps, manual_added, mixed, or unknown) and _meta.auto_lap_suspected before making lap/rep execution claims; device_laps means the rows look like device/Garmin laps or auto-laps, manual_added means raw interval rows lack upstream group_id markers, and mixed means grouped and ungrouped row evidence appears together. Interval units are normalized to the canonical intervals.icu unit enum and raw interval payloads require include_full."
-	invalidActivityReadArgumentsMessage = "invalid activity read arguments; provide activity_id, optional custom_fields, and optional include_full"
-	fetchActivityDetailsMessage         = "could not fetch activity details; check activity_id and intervals.icu credentials"
+	getActivityDetailsName                 = "get_activity_details"
+	getActivityIntervalsName               = "get_activity_intervals"
+	getActivityDetailsDescription          = "Get one activity's terse metadata and metrics by activity_id, including upstream activity tags when returned, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, and explicitly requested athlete-defined custom_fields when upstream provides them. This detail payload does not prove lap/rep execution source; before analyzing laps, reps, or interval execution, call get_activity_intervals and check _meta.interval_source/_meta.auto_lap_suspected. If the user described an activity by date/name instead of ID, resolve it with get_activities over the athlete-local date window first. Use include_full only when raw upstream fields are needed; Strava-blocked activities return an unavailable marker instead of sparse N/A rows."
+	getActivityIntervalsDescription        = "Get analyzed intervals for one activity by activity_id, including scalar custom interval fields such as lactate under custom_fields when upstream includes them. For reps/laps in a described or date-based activity, resolve the activity with get_activities first and pass the returned activity_id. Check _meta.interval_source (structured_workout, device_laps, manual_added, mixed, or unknown) and _meta.auto_lap_suspected before making lap/rep execution claims; device_laps means the rows look like device/Garmin laps or auto-laps, manual_added means raw interval rows lack upstream group_id markers, and mixed means grouped and ungrouped row evidence appears together. Interval units are normalized to the canonical intervals.icu unit enum and raw interval payloads require include_full."
+	invalidActivityDetailsArgumentsMessage = "invalid activity detail arguments; provide activity_id, optional custom_fields, and optional include_full"
+	invalidActivityReadArgumentsMessage    = "invalid activity read arguments; provide activity_id and optional include_full"
+	fetchActivityDetailsMessage            = "could not fetch activity details; check activity_id and intervals.icu credentials"
 )
 
 // ActivityDetailsClient retrieves a single intervals.icu activity.
@@ -121,7 +122,7 @@ func getActivityDetailsHandler(client ActivityDetailsClient, profileClient Profi
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeActivityDetailsReadRequest(req.Arguments)
 		if err != nil {
-			return Result{}, NewUserError(invalidActivityReadArgumentsMessage, err)
+			return Result{}, NewUserError(invalidActivityDetailsArgumentsMessage, err)
 		}
 		profile, err := profileClient.GetAthleteProfile(ctx)
 		if err != nil {
@@ -150,7 +151,7 @@ func getActivityDetailsHandler(client ActivityDetailsClient, profileClient Profi
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
 			}
-			return Result{}, NewUserError(activityCustomFieldSelectionMessage(err, invalidActivityReadArgumentsMessage), err)
+			return Result{}, NewUserError(activityCustomFieldSelectionMessage(err, invalidActivityDetailsArgumentsMessage), err)
 		}
 		activityTimezone := profileTimezone(profile.Timezone, timezoneFallback)
 		row := activityRow(activity, args.IncludeFull, activityTimezone, unitSystem, gearResolutions[activity.ID], customFieldCodes)

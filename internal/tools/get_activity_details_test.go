@@ -83,6 +83,11 @@ func TestActivityReadToolDescriptionsRouteLapAnalysisToIntervals(t *testing.T) {
 	if _, ok := intervalsTool.InputSchema.(map[string]any)["properties"].(map[string]any)["custom_fields"]; ok {
 		t.Fatalf("intervals input schema exposes ignored custom_fields: %#v", intervalsTool.InputSchema)
 	}
+	_, err := intervalsTool.Handler(context.Background(), Request{Name: intervalsTool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","custom_fields":["vo2max_est"]}`)})
+	message, ok := PublicErrorMessage(err)
+	if !ok || strings.Contains(message, "custom_fields") {
+		t.Fatalf("intervals invalid args public message = %q/%v; err=%v", message, ok, err)
+	}
 	outputDescription := strings.ToLower(activityReadOutputSchema()["description"].(string))
 	for _, want := range []string{"get_activity_intervals", "interval_source", "manual_added", "mixed", "auto_lap_suspected"} {
 		if !strings.Contains(outputDescription, want) {
