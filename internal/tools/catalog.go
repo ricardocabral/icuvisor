@@ -71,12 +71,13 @@ func catalogTools() []Tool {
 
 func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Tool {
 	capability := capabilityOrSafe(opts.capability)
-	tools := make([]Tool, 0, 43)
+	tools := make([]Tool, 0, 44)
 	tools = append(tools,
 		newGetAthleteProfileTool(client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetFitnessTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetTodayTool(client, client, client, opts.gearCache, client, opts.customFieldCache, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetPlanningContextTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newGetAnnualTrainingPlanTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newResolveCalendarDatesTool(client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAnalyzeTrendTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAnalyzeDistributionTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -161,7 +162,7 @@ func toolCatalogGroup(name string) string {
 		return "analyzers"
 	case resolveCalendarDatesName, getEventsName, getEventByIDName, addOrUpdateEventName, addUnavailableDateRangeName, deleteEventName, deleteEventsByDateRangeName, linkActivityToEventName:
 		return "events"
-	case getPlanningContextName, getTrainingPlanName, applyTrainingPlanName, getWorkoutLibraryName, getWorkoutsInFolderName, createWorkoutName, updateWorkoutName, deleteWorkoutName, validateWorkoutName:
+	case getPlanningContextName, getAnnualTrainingPlanName, getTrainingPlanName, applyTrainingPlanName, getWorkoutLibraryName, getWorkoutsInFolderName, createWorkoutName, updateWorkoutName, deleteWorkoutName, validateWorkoutName:
 		return "workout-library"
 	case getCustomItemsName, getCustomItemByIDName, createCustomItemName, updateCustomItemName, deleteCustomItemName:
 		return "custom-items"

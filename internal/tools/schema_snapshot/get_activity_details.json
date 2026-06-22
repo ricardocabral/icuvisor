@@ -9,6 +9,14 @@
       "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
       "type": "string"
     },
+    "custom_fields": {
+      "description": "Optional athlete-defined activity custom field codes to expose under custom_fields; defaults to none to keep terse responses small.",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 20,
+      "type": "array"
+    },
     "include_full": {
       "default": false,
       "description": "Include raw upstream fields; default terse mode strips nulls and returns normalized fields.",

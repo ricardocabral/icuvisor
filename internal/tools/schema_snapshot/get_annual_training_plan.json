@@ -1,0 +1,38 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "calendar_id": {
+      "description": "Optional upstream calendar ID filter when the athlete uses separate planning calendars.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw upstream PLAN/TARGET/NOTE event payloads only on the corresponding phase, target_event, and note rows. Default output is a compact summary.",
+      "type": "boolean"
+    },
+    "limit": {
+      "default": 500,
+      "description": "Maximum raw calendar events to scan before filtering PLAN/TARGET/NOTE periodization rows; defaults to 500 and values above 500 are capped.",
+      "maximum": 500,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "newest": {
+      "description": "Required athlete-local end date YYYY-MM-DD for the ATP/periodization event scan; must be on or after oldest.",
+      "type": "string"
+    },
+    "oldest": {
+      "description": "Required athlete-local start date YYYY-MM-DD for the ATP/periodization event scan; range is capped at 366 days.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "oldest",
+    "newest"
+  ],
+  "type": "object"
+}
