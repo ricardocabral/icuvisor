@@ -17,14 +17,14 @@ func (r *captureRegistrar) AddPrompt(prompt Prompt) error {
 	return nil
 }
 
-func TestNewRegistryRegistersSevenPrompts(t *testing.T) {
+func TestNewRegistryRegistersEightPrompts(t *testing.T) {
 	t.Parallel()
 
 	registrar := &captureRegistrar{}
 	if err := NewRegistry().Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	wantNames := []string{TrainingAnalysisName, RecoveryCheckName, WeeklyPlanningName, WeeklyReviewName, PlanHealthReviewName, RaceWeekTaperName, CoachRosterTriageName}
+	wantNames := []string{TrainingAnalysisName, RecoveryCheckName, WeeklyPlanningName, WeeklyReviewName, ShareableTrainingReportName, PlanHealthReviewName, RaceWeekTaperName, CoachRosterTriageName}
 	if len(registrar.prompts) != len(wantNames) {
 		t.Fatalf("registered %d prompts, want %d", len(registrar.prompts), len(wantNames))
 	}
@@ -57,6 +57,7 @@ func TestRenderedPromptsGolden(t *testing.T) {
 		{name: "recovery_check", prompt: RecoveryCheckPrompt(), arguments: map[string]string{"date": "2026-05-14", "lookback_days": "10"}, goldenFile: "recovery_check.md"},
 		{name: "weekly_planning", prompt: WeeklyPlanningPrompt(), arguments: map[string]string{"week_start": "2026-05-18"}, goldenFile: "weekly_planning.md"},
 		{name: "weekly_review", prompt: WeeklyReviewPrompt(), arguments: nil, goldenFile: "weekly_review.md"},
+		{name: "shareable_training_report", prompt: ShareableTrainingReportPrompt(), arguments: map[string]string{"report_type": "race_prep", "start_date": "2026-05-01", "end_date": "2026-06-07", "race_date": "2026-06-07", "audience": "family"}, goldenFile: "shareable_training_report.md"},
 		{name: "plan_health_review", prompt: PlanHealthReviewPrompt(), arguments: map[string]string{"planned_start": "2026-05-18", "planned_end": "2026-06-01", "completed_lookback_days": "21", "race_date": "2026-06-07", "race_name": "A Race"}, goldenFile: "plan_health_review.md"},
 		{name: "race_week_taper", prompt: RaceWeekTaperPrompt(), arguments: map[string]string{"race_date": "2026-06-07", "race_name": "A Race"}, goldenFile: "race_week_taper.md"},
 		{name: "coach_roster_triage", prompt: CoachRosterTriagePrompt(), arguments: map[string]string{"athlete_id": "i12345", "start_date": "2026-05-01", "end_date": "2026-05-14"}, goldenFile: "coach_roster_triage.md"},
@@ -149,6 +150,33 @@ func TestWeeklyReviewIncludesFallbackAndSafetyGuidance(t *testing.T) {
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("weekly review prompt missing %q:\n%s", want, text)
+		}
+	}
+}
+
+func TestShareableTrainingReportIncludesPrivacyAndReviewGuidance(t *testing.T) {
+	t.Parallel()
+
+	text := renderPromptText(t, ShareableTrainingReportPrompt(), map[string]string{
+		"report_type": "training_journey",
+		"start_date":  "2026-01-01",
+		"end_date":    "2026-06-01",
+		"audience":    "newsletter",
+	})
+	for _, want := range []string{
+		"Scope: report_type=training_journey, start_date=2026-01-01, end_date=2026-06-01, audience=newsletter.",
+		"Markdown first",
+		"simple static HTML in chat",
+		"does not generate, publish, upload, or host HTML",
+		"review and redact private health, location, notes, identifiers, and race logistics",
+		"Do not request or accept intervals.icu API keys in chat.",
+		"do not use include_full, raw streams, or heavy payloads unless the user explicitly asks or evidence is missing",
+		"Do not publish, host, upload, auto-share, or connect to social platforms",
+		"athlete manually shares only after review",
+		"Do not invent missing metrics",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("shareable training report prompt missing %q:\n%s", want, text)
 		}
 	}
 }
@@ -254,7 +282,7 @@ func TestRaceWeekTaperRequiresRaceDate(t *testing.T) {
 func TestPromptResourceCitationsStayTerse(t *testing.T) {
 	t.Parallel()
 
-	for _, prompt := range []Prompt{TrainingAnalysisPrompt(), RecoveryCheckPrompt(), WeeklyPlanningPrompt(), WeeklyReviewPrompt(), PlanHealthReviewPrompt(), RaceWeekTaperPrompt(), CoachRosterTriagePrompt()} {
+	for _, prompt := range []Prompt{TrainingAnalysisPrompt(), RecoveryCheckPrompt(), WeeklyPlanningPrompt(), WeeklyReviewPrompt(), ShareableTrainingReportPrompt(), PlanHealthReviewPrompt(), RaceWeekTaperPrompt(), CoachRosterTriagePrompt()} {
 		text := renderPromptText(t, prompt, requiredArgsForPrompt(prompt.Name))
 		if !strings.Contains(text, "icuvisor://") {
 			t.Fatalf("prompt %s missing resource URI:\n%s", prompt.Name, text)

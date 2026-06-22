@@ -13,6 +13,7 @@ func NewRegistry() Registry {
 		RecoveryCheckPrompt(),
 		WeeklyPlanningPrompt(),
 		WeeklyReviewPrompt(),
+		ShareableTrainingReportPrompt(),
 		PlanHealthReviewPrompt(),
 		RaceWeekTaperPrompt(),
 		CoachRosterTriagePrompt(),
