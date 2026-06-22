@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -173,6 +174,30 @@ func TestGetActivitiesDefaultOmitsCustomFieldLookup(t *testing.T) {
 	}
 	if client.customItemsCalls != 0 {
 		t.Fatalf("ListCustomItems calls = %d, want 0 without explicit custom_fields", client.customItemsCalls)
+	}
+}
+
+func TestGetActivitiesRejectsTooManyCustomFields(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, nil, "metric")
+	tool := newGetActivitiesToolWithGear(client, client, nil, nil, client, newCustomFieldCache(), "test", "UTC", false)
+	fields := make([]string, 0, maxSelectedActivityCustomFields+1)
+	for i := 0; i <= maxSelectedActivityCustomFields; i++ {
+		fields = append(fields, fmt.Sprintf("field_%02d", i))
+	}
+	rawFields, err := json.Marshal(fields)
+	if err != nil {
+		t.Fatalf("marshal fields: %v", err)
+	}
+
+	_, err = tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-01","custom_fields":` + string(rawFields) + `}`)})
+	message, ok := PublicErrorMessage(err)
+	if !ok || !strings.Contains(message, "at most 20") {
+		t.Fatalf("Handler() error = %v, public=%q ok=%v; want max custom_fields hint", err, message, ok)
+	}
+	if client.customItemsCalls != 0 {
+		t.Fatalf("ListCustomItems calls = %d, want validation before lookup", client.customItemsCalls)
 	}
 }
 

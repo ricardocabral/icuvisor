@@ -236,7 +236,7 @@ func getActivitiesInputSchema() map[string]any {
 		"include_unnamed": map[string]any{"type": "boolean", "default": false, "description": "When false, drop rows with an empty activity name after bounded pagination."},
 		"page_size":       map[string]any{"type": "integer", "default": defaultActivitiesPageSize, "minimum": 1, "maximum": maxActivitiesPageSize, "description": "Number of terse rows to return per page; values above 200 are capped."},
 		"next_page_token": map[string]any{"type": "string", "description": "Opaque token from _meta.next_page_token for the next page. Do not edit."},
-		"custom_fields":   map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "maxItems": 20, "description": "Optional athlete-defined activity custom field codes to fetch and expose under custom_fields; defaults to none to keep terse responses small."},
+		"custom_fields":   map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "maxItems": maxSelectedActivityCustomFields, "description": "Optional athlete-defined activity custom field codes to fetch and expose under custom_fields; defaults to none to keep terse responses small."},
 		"include_full":    map[string]any{"type": "boolean", "default": false, "description": "When true, include raw upstream activity fields and preserve upstream nulls; default terse rows are unit-disambiguated and null-stripped."},
 	}}
 }

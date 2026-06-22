@@ -216,6 +216,16 @@
     "description": "Use when the prompt asks whether two analysis metrics are correlated or lagged together; do not fetch get_* rows or streams and reduce them in chat.",
     "arguments": [
       {
+        "name": "custom_fields",
+        "required": false,
+        "type": "array",
+        "description": "Optional athlete-defined activity custom field codes to fetch for activity-backed correlation metrics; defaults to none.",
+        "items": {
+          "required": false,
+          "type": "string"
+        }
+      },
+      {
         "name": "include_full",
         "required": false,
         "type": "boolean",
@@ -1553,8 +1563,18 @@
   },
   "get_activities": {
     "name": "get_activities",
-    "description": "Scan an athlete-local date window and return a paginated activity index: terse unit-disambiguated summary rows with IDs, source/device hints, tags, custom_fields, and Strava-unavailable markers.",
+    "description": "Scan an athlete-local date window and return a paginated activity index: terse unit-disambiguated summary rows with IDs, source/device hints, tags, explicitly requested custom_fields, and Strava-unavailable markers.",
     "arguments": [
+      {
+        "name": "custom_fields",
+        "required": false,
+        "type": "array",
+        "description": "Optional athlete-defined activity custom field codes to fetch and expose under custom_fields; defaults to none to keep terse responses small.",
+        "items": {
+          "required": false,
+          "type": "string"
+        }
+      },
       {
         "name": "include_full",
         "required": false,
@@ -1604,13 +1624,23 @@
   },
   "get_activity_details": {
     "name": "get_activity_details",
-    "description": "Get one activity's terse metadata and metrics by activity_id, including upstream activity tags when returned, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, and custom_fields for athlete-defined activity custom fields when upstream provides them.",
+    "description": "Get one activity's terse metadata and metrics by activity_id, including upstream activity tags when returned, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, and explicitly requested athlete-defined custom_fields when upstream provides them.",
     "arguments": [
       {
         "name": "activity_id",
         "required": true,
         "type": "string",
         "description": "intervals.icu activity ID."
+      },
+      {
+        "name": "custom_fields",
+        "required": false,
+        "type": "array",
+        "description": "Optional athlete-defined activity custom field codes to expose under custom_fields; defaults to none to keep terse responses small.",
+        "items": {
+          "required": false,
+          "type": "string"
+        }
       },
       {
         "name": "include_full",
@@ -1660,6 +1690,16 @@
         "required": true,
         "type": "string",
         "description": "intervals.icu activity ID."
+      },
+      {
+        "name": "custom_fields",
+        "required": false,
+        "type": "array",
+        "description": "Optional athlete-defined activity custom field codes to expose under custom_fields; defaults to none to keep terse responses small.",
+        "items": {
+          "required": false,
+          "type": "string"
+        }
       },
       {
         "name": "include_full",

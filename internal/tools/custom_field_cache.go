@@ -14,7 +14,10 @@ import (
 
 // activityCustomFieldItemType is the intervals.icu custom-item type for
 // athlete-defined activity custom fields.
-const activityCustomFieldItemType = "ACTIVITY_FIELD"
+const (
+	activityCustomFieldItemType     = "ACTIVITY_FIELD"
+	maxSelectedActivityCustomFields = 20
+)
 
 // ActivityCustomFieldClient lists custom-item definitions so activity reads can
 // discover athlete-defined activity custom field codes.
@@ -78,6 +81,9 @@ func selectedActivityCustomFieldCodes(ctx context.Context, client ActivityCustom
 	if len(requested) == 0 {
 		return nil, nil
 	}
+	if len(requested) > maxSelectedActivityCustomFields {
+		return nil, tooManyActivityCustomFieldsError{count: len(requested)}
+	}
 	seenRequested := make(map[string]bool, len(requested))
 	selected := make([]string, 0, len(requested))
 	for _, code := range requested {
@@ -110,6 +116,14 @@ func selectedActivityCustomFieldCodes(ctx context.Context, client ActivityCustom
 	return selected, nil
 }
 
+type tooManyActivityCustomFieldsError struct {
+	count int
+}
+
+func (e tooManyActivityCustomFieldsError) Error() string {
+	return fmt.Sprintf("custom_fields accepts at most %d entries; got %d", maxSelectedActivityCustomFields, e.count)
+}
+
 type unknownActivityCustomFieldsError struct {
 	unknown   []string
 	available []string
@@ -128,6 +142,10 @@ func (e unknownActivityCustomFieldsError) Error() string {
 }
 
 func activityCustomFieldSelectionMessage(err error, fallback string) string {
+	var tooMany tooManyActivityCustomFieldsError
+	if errors.As(err, &tooMany) {
+		return tooMany.Error()
+	}
 	var unknown unknownActivityCustomFieldsError
 	if errors.As(err, &unknown) {
 		return unknown.Error()

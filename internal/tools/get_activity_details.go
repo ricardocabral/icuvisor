@@ -358,7 +358,7 @@ func shapeActivityIntervalGroup(group intervals.IntervalGroup, includeFull bool)
 }
 
 func activityReadInputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"activity_id"}, "properties": map[string]any{"activity_id": map[string]any{"type": "string", "description": "intervals.icu activity ID."}, "custom_fields": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "maxItems": 20, "description": "Optional athlete-defined activity custom field codes to expose under custom_fields; defaults to none to keep terse responses small."}, "include_full": map[string]any{"type": "boolean", "default": false, "description": "Include raw upstream fields; default terse mode strips nulls and returns normalized fields."}}}
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"activity_id"}, "properties": map[string]any{"activity_id": map[string]any{"type": "string", "description": "intervals.icu activity ID."}, "custom_fields": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "maxItems": maxSelectedActivityCustomFields, "description": "Optional athlete-defined activity custom field codes to expose under custom_fields; defaults to none to keep terse responses small."}, "include_full": map[string]any{"type": "boolean", "default": false, "description": "Include raw upstream fields; default terse mode strips nulls and returns normalized fields."}}}
 }
 
 func activityReadOutputSchema() map[string]any {
