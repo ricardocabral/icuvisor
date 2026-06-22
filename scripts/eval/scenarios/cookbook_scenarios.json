@@ -493,6 +493,40 @@
       ]
     },
     {
+      "id": "CB-PLAN-04",
+      "recipe": "season-and-block-plan",
+      "persona": "athlete",
+      "prompt": "I am a triathlete starting a new build block. Use icuvisor to assess the last 8 weeks before suggesting priorities: read my combined fitness trend with per-sport load trends enabled, and read my training-load summary. Separate run, bike, and swim fatigue/progression, but keep global form/TSB distinct from computed per-sport TSB-style estimates. Tell me which sport needs caution, which can progress, and what caveats apply. Do not write anything to my calendar.",
+      "expected_tools": [
+        "get_fitness",
+        "get_training_summary"
+      ],
+      "bonus_tools": [
+        "get_athlete_profile",
+        "analyze_trend"
+      ],
+      "forbidden_tools": [
+        "add_or_update_event",
+        "delete_event",
+        "delete_events_by_date_range",
+        "apply_training_plan"
+      ],
+      "must_address": [
+        "get_fitness called with include_per_sport_load_trends enabled",
+        "run, bike, and swim load trends discussed separately",
+        "combined CTL/ATL/TSB used for global form or freshness",
+        "computed per-sport trend caveats stated",
+        "discipline-specific caution or progression recommendation",
+        "does not write to the calendar"
+      ],
+      "anti_patterns": [
+        "treats computed per-sport TSB-style values as the athlete's global form",
+        "claims per-sport CTL/ATL/TSB are upstream-native values",
+        "collapses triathlon load into only a combined-load recommendation",
+        "writes events to the calendar"
+      ]
+    },
+    {
       "id": "CB-WORKOUT-01",
       "recipe": "build-workouts",
       "persona": "athlete",

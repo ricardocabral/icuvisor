@@ -1844,6 +1844,13 @@
         "default": false
       },
       {
+        "name": "include_per_sport_load_trends",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include computed per-sport CTL/ATL/TSB-style load trend estimates for running, cycling, swimming, and other from athlete-summary byCategory training_load. Existing combined fitness rows remain unchanged.",
+        "default": false
+      },
+      {
         "name": "start_date",
         "required": true,
         "type": "string",

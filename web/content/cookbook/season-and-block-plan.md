@@ -24,8 +24,11 @@ Send the stages as **separate messages**. Wait for each before sending the next.
 Stage 1 of planning my season. Use icuvisor with my intervals.icu data.
 Read my athlete profile, my fitness trend (CTL / ATL / TSB) for the last
 8 weeks, my training-load summary for that period, and my upcoming events.
-Summarize my current fitness, my recent weekly load range, and how much
-training history you can actually see. Do not propose a plan yet.
+If I train multiple endurance sports, call get_fitness with
+include_per_sport_load_trends:true and summarize run, bike, swim, and other
+load trends separately, including any caveats. Summarize my current combined
+fitness/form, my recent weekly load range, and how much training history you can
+actually see. Do not propose a plan yet.
 ```
 
 ### Stage 2 — design
@@ -86,6 +89,7 @@ Stage 2 should produce something like:
 - **No calendar writes:** stop after Stage 2 and apply the plan in intervals.icu yourself. Useful when the server runs read-only.
 - **Apply a library plan:** if a structured plan already exists, ask the assistant to use [`apply_training_plan`]({{< relref "/reference/tools#apply_training_plan" >}}) instead of authoring one. Dry-run previews include deterministic `icuvisor-plan-v1-...` `external_id` values for the proposed events; when you apply the same plan/start/date tuple again, those IDs make retries safer and protect matching existing plan events during replacement. They are still best-effort upstream idempotency aids scoped to icuvisor's same-day checks, not a promise that every cross-day or upstream race condition is deduped.
 - **Gym or strength blocks:** ask for a `NOTE` such as "Gym — 45 min strength and mobility" or a simple supported calendar workout type if your account has one; detailed exercises, sets, reps, and loads are future scope until intervals.icu exposes a documented strength-training API.
+- **Triathlon or multisport season:** in Stage 1, ask for `get_fitness` with `include_per_sport_load_trends:true` so the assistant can separate run, bike, swim, and other load trends. Treat those per-sport CTL/ATL/TSB-style values as computed context from visible category load, not upstream-native form. Use the combined CTL/ATL/TSB from `get_fitness` for global freshness and race-day form, then use per-sport trends to decide which discipline needs more base, maintenance, or recovery.
 - **Re-plan mid-season:** "I missed two weeks to illness — re-assess and adjust the remaining blocks."
 - **Audit without re-planning:** use `plan_health_review` to check whether the current calendar still makes sense. Deload or recovery weeks should be treated as intentional load reductions unless adherence, wellness, or form evidence says otherwise; a race date supplied by the user is only a scenario anchor if no matching race event is found.
 

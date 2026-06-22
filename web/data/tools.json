@@ -20,7 +20,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "Scan an athlete-local date window and return a paginated activity index: terse unit-disambiguated summary rows with IDs, source/device hints, tags, custom_fields, and Strava-unavailable markers.",
+    "summary": "Scan an athlete-local date window and return a paginated activity index: terse unit-disambiguated summary rows with IDs, source/device hints, tags, explicitly requested custom_fields, and Strava-unavailable markers.",
     "anchor": "get_activities"
   },
   {
@@ -28,7 +28,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "Get one activity's terse metadata and metrics by activity_id, including upstream activity tags when returned, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, and custom_fields for athlete-defined activity custom fields when upstream provides them.",
+    "summary": "Get one activity's terse metadata and metrics by activity_id, including upstream activity tags when returned, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, and explicitly requested athlete-defined custom_fields when upstream provides them.",
     "anchor": "get_activity_details"
   },
   {
@@ -100,7 +100,7 @@
     "group": "analyzers",
     "tier": "full",
     "safety": "read",
-    "summary": "Use when the prompt asks whether two analysis metrics are correlated or lagged together; do not fetch get_* rows or streams and reduce them in chat.",
+    "summary": "Use when the prompt asks whether two analysis metrics are correlated or lagged together, including explicitly requested activity custom fields via metric custom:\u003cfield_code\u003e plus custom_fields; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "analyze_correlation"
   },
   {

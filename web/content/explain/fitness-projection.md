@@ -15,6 +15,12 @@ It is deterministic on purpose. The same inputs always produce the same curve, s
 
 The projection seeds CTL, ATL, and TSB from the athlete-local `start_date` returned by [`get_fitness`]({{< relref "/reference/tools#get_fitness" >}}). The starting point is your real, current fitness — not an estimate — so a projection is only ever as current as your logged data.
 
+## Per-sport load trends are a context aid
+
+For runners, cyclists, swimmers, and triathletes, a single combined load can hide divergent sport fatigue. [`get_fitness`]({{< relref "/reference/tools#get_fitness" >}}) therefore has an opt-in `include_per_sport_load_trends: true` view that computes running, cycling, swimming, and other load trends from visible `byCategory[].training_load` in the athlete summary.
+
+Those per-sport CTL/ATL/TSB-style values are warmed estimates, not upstream-native per-sport fitness fields. They are useful for questions like "is my run load rising while bike load is flat?" or "am I carrying swim fatigue into a run block?" They should not replace the combined upstream CTL/ATL/TSB when judging global form, fatigue, or race-day freshness. If category data is missing or the warm-up history is short, the response includes caveats in `_meta.per_sport_load_trends.caveats`; quote those caveats instead of treating the per-sport numbers as precise physiology.
+
 ## The assumptions are part of the answer
 
 Because the result depends entirely on its assumptions, the tool reports them back to you. `_meta.assumptions` records the scenario it ran: horizon length, weekly ramp percentage, recovery-week cadence and load, the number of explicit planned loads supplied, and the CTL/ATL time constants. `_meta.boundaries` records the limits: the horizon is capped at 180 days, no hidden upstream periodization fields are read, and explicit `planned_daily_loads` replace the modelled ramp only on the dates they cover. Plan-health reviews should quote those assumptions instead of collapsing them into an opaque score.
