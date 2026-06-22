@@ -1692,16 +1692,6 @@
         "description": "intervals.icu activity ID."
       },
       {
-        "name": "custom_fields",
-        "required": false,
-        "type": "array",
-        "description": "Optional athlete-defined activity custom field codes to expose under custom_fields; defaults to none to keep terse responses small.",
-        "items": {
-          "required": false,
-          "type": "string"
-        }
-      },
-      {
         "name": "include_full",
         "required": false,
         "type": "boolean",

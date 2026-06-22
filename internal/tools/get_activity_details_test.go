@@ -77,6 +77,12 @@ func TestActivityReadToolDescriptionsRouteLapAnalysisToIntervals(t *testing.T) {
 			t.Fatalf("intervals description = %q, want source hint %q", intervalsTool.Description, want)
 		}
 	}
+	if _, ok := detailsTool.InputSchema.(map[string]any)["properties"].(map[string]any)["custom_fields"]; !ok {
+		t.Fatalf("details input schema missing custom_fields: %#v", detailsTool.InputSchema)
+	}
+	if _, ok := intervalsTool.InputSchema.(map[string]any)["properties"].(map[string]any)["custom_fields"]; ok {
+		t.Fatalf("intervals input schema exposes ignored custom_fields: %#v", intervalsTool.InputSchema)
+	}
 	outputDescription := strings.ToLower(activityReadOutputSchema()["description"].(string))
 	for _, want := range []string{"get_activity_intervals", "interval_source", "manual_added", "mixed", "auto_lap_suspected"} {
 		if !strings.Contains(outputDescription, want) {

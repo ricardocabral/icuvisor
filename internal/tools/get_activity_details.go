@@ -34,6 +34,11 @@ type ActivityIntervalsClient interface {
 }
 
 type activityReadRequest struct {
+	ActivityID  string `json:"activity_id"`
+	IncludeFull bool   `json:"include_full,omitempty"`
+}
+
+type activityDetailsReadRequest struct {
 	ActivityID   string   `json:"activity_id"`
 	CustomFields []string `json:"custom_fields,omitempty"`
 	IncludeFull  bool     `json:"include_full,omitempty"`
@@ -104,7 +109,7 @@ type activityIntervalGroup struct {
 
 func newGetActivityDetailsToolWithGear(client ActivityDetailsClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, customFieldClient ActivityCustomFieldClient, customFieldCache *customFieldCache, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
-	return coreTool(Tool{Name: getActivityDetailsName, Description: getActivityDetailsDescription, InputSchema: activityReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityDetailsHandler(client, profileClient, gearClient, gearCache, customFieldClient, customFieldCache, version, timezoneFallback, debugMetadata, shapeCfg)})
+	return coreTool(Tool{Name: getActivityDetailsName, Description: getActivityDetailsDescription, InputSchema: activityDetailsReadInputSchema(), OutputSchema: activityReadOutputSchema(), Handler: getActivityDetailsHandler(client, profileClient, gearClient, gearCache, customFieldClient, customFieldCache, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
 func newGetActivityIntervalsTool(client ActivityIntervalsClient, detailsClient ActivityDetailsClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -114,7 +119,7 @@ func newGetActivityIntervalsTool(client ActivityIntervalsClient, detailsClient A
 
 func getActivityDetailsHandler(client ActivityDetailsClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, customFieldClient ActivityCustomFieldClient, customFieldCache *customFieldCache, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
-		args, err := decodeActivityReadRequest(req.Arguments)
+		args, err := decodeActivityDetailsReadRequest(req.Arguments)
 		if err != nil {
 			return Result{}, NewUserError(invalidActivityReadArgumentsMessage, err)
 		}
@@ -181,6 +186,22 @@ func getActivityIntervalsHandler(client ActivityIntervalsClient, detailsClient A
 		payload := shapeActivityIntervalsDTO(args.ActivityID, dto, args.IncludeFull, version)
 		return encodeActivityIntervalsResponse(payload, args.IncludeFull, version, debugMetadata, shapeCfg)
 	}
+}
+
+func decodeActivityDetailsReadRequest(raw json.RawMessage) (activityDetailsReadRequest, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || trimmed[0] != '{' {
+		return activityDetailsReadRequest{}, errors.New("arguments must be a JSON object")
+	}
+	args, err := DecodeStrict[activityDetailsReadRequest](trimmed)
+	if err != nil {
+		return activityDetailsReadRequest{}, err
+	}
+	args.ActivityID = strings.TrimSpace(args.ActivityID)
+	if args.ActivityID == "" {
+		return activityDetailsReadRequest{}, errors.New("activity_id is required")
+	}
+	return args, nil
 }
 
 func decodeActivityReadRequest(raw json.RawMessage) (activityReadRequest, error) {
@@ -357,8 +378,12 @@ func shapeActivityIntervalGroup(group intervals.IntervalGroup, includeFull bool)
 	return row
 }
 
-func activityReadInputSchema() map[string]any {
+func activityDetailsReadInputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"activity_id"}, "properties": map[string]any{"activity_id": map[string]any{"type": "string", "description": "intervals.icu activity ID."}, "custom_fields": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "maxItems": maxSelectedActivityCustomFields, "description": "Optional athlete-defined activity custom field codes to expose under custom_fields; defaults to none to keep terse responses small."}, "include_full": map[string]any{"type": "boolean", "default": false, "description": "Include raw upstream fields; default terse mode strips nulls and returns normalized fields."}}}
+}
+
+func activityReadInputSchema() map[string]any {
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"activity_id"}, "properties": map[string]any{"activity_id": map[string]any{"type": "string", "description": "intervals.icu activity ID."}, "include_full": map[string]any{"type": "boolean", "default": false, "description": "Include raw upstream fields; default terse mode strips nulls and returns normalized fields."}}}
 }
 
 func activityReadOutputSchema() map[string]any {
