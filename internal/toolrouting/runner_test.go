@@ -86,7 +86,7 @@ func TestAnthropicProviderFirstTool(t *testing.T) {
 			t.Fatalf("temperature = %v, want deterministic zero", payload.Temperature)
 		}
 		w.Header().Set("content-type", "application/json")
-		_, _ = w.Write([]byte(`{"content":[{"type":"tool_use","name":"get_activities"}]}`))
+		_, _ = w.Write([]byte(`{"content":[{"type":"text","text":"I will inspect the catalog."},{"type":"tool_use","name":"get_activities"},{"type":"tool_use","name":"get_events"}]}`))
 	}))
 	defer server.Close()
 
@@ -97,6 +97,51 @@ func TestAnthropicProviderFirstTool(t *testing.T) {
 	}
 	if !sawAPIKey || selection.ToolName != toolcatalog.GetActivities || selection.RawMessage == "" {
 		t.Fatalf("selection=%#v sawAPIKey=%t, want get_activities and API key header", selection, sawAPIKey)
+	}
+}
+
+func TestDiffResultsClassifiesChanges(t *testing.T) {
+	baseline := EvalSummary{Total: 5, Results: []Result{
+		{CaseID: "newly-pass", Pass: false},
+		{CaseID: "regressed", Pass: true},
+		{CaseID: "still-bad", Pass: false},
+		{CaseID: "still-good", Pass: true},
+		{CaseID: "removed", Pass: true},
+	}}
+	current := EvalSummary{Total: 6, Results: []Result{
+		{CaseID: "new-case", Pass: true},
+		{CaseID: "newly-pass", Pass: true},
+		{CaseID: "regressed", Pass: false},
+		{CaseID: "skipped", Detail: "skipped: provider not configured"},
+		{CaseID: "still-bad", Pass: false},
+		{CaseID: "still-good", Pass: true},
+	}}
+
+	diff := DiffResults(baseline, current)
+	wantCounts := map[string]int{
+		DiffNew:          1,
+		DiffRemoved:      1,
+		DiffRegression:   1,
+		DiffSkipped:      1,
+		DiffStillFailing: 1,
+		DiffStillPassing: 1,
+		DiffWin:          1,
+	}
+	for class, want := range wantCounts {
+		if got := diff.Counts[class]; got != want {
+			t.Fatalf("diff.Counts[%s] = %d, want %d (all counts %#v)", class, got, want, diff.Counts)
+		}
+	}
+}
+
+func TestStripRawMessages(t *testing.T) {
+	summary := EvalSummary{Results: []Result{{CaseID: "case", RawMessage: `{"secret":"raw"}`}}}
+	got := StripRawMessages(summary)
+	if got.Results[0].RawMessage != "" {
+		t.Fatalf("StripRawMessages() raw = %q, want empty", got.Results[0].RawMessage)
+	}
+	if summary.Results[0].RawMessage == "" {
+		t.Fatal("StripRawMessages mutated input summary")
 	}
 }
 

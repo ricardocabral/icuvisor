@@ -62,6 +62,109 @@ type EvalSummary struct {
 	Results []Result `json:"results"`
 }
 
+// DiffEntry compares one case across a baseline and current routing eval result.
+type DiffEntry struct {
+	CaseID         string  `json:"case_id"`
+	Classification string  `json:"classification"`
+	Baseline       *Result `json:"baseline,omitempty"`
+	Current        *Result `json:"current,omitempty"`
+}
+
+// DiffSummary groups routing eval result changes by classification.
+type DiffSummary struct {
+	Counts  map[string]int `json:"counts"`
+	Entries []DiffEntry    `json:"entries"`
+}
+
+const (
+	DiffWin          = "win"
+	DiffRegression   = "regression"
+	DiffStillFailing = "still_failing"
+	DiffStillPassing = "still_passing"
+	DiffNew          = "new"
+	DiffRemoved      = "removed"
+	DiffSkipped      = "skipped"
+)
+
+// DiffResults classifies changes between a saved baseline and a current routing eval result.
+func DiffResults(baseline EvalSummary, current EvalSummary) DiffSummary {
+	baselineByID := resultsByID(baseline.Results)
+	currentByID := resultsByID(current.Results)
+	ids := make([]string, 0, len(baselineByID)+len(currentByID))
+	seen := make(map[string]struct{}, len(baselineByID)+len(currentByID))
+	for id := range baselineByID {
+		ids = append(ids, id)
+		seen[id] = struct{}{}
+	}
+	for id := range currentByID {
+		if _, ok := seen[id]; !ok {
+			ids = append(ids, id)
+		}
+	}
+	sort.Strings(ids)
+
+	diff := DiffSummary{Counts: map[string]int{}}
+	for _, id := range ids {
+		baselineResult, hasBaseline := baselineByID[id]
+		currentResult, hasCurrent := currentByID[id]
+		classification := classifyDiff(baselineResult, hasBaseline, currentResult, hasCurrent)
+		diff.Counts[classification]++
+		entry := DiffEntry{CaseID: id, Classification: classification}
+		if hasBaseline {
+			entry.Baseline = &baselineResult
+		}
+		if hasCurrent {
+			entry.Current = &currentResult
+		}
+		diff.Entries = append(diff.Entries, entry)
+	}
+	return diff
+}
+
+// StripRawMessages removes provider raw response bodies before JSON output intended for committed baselines.
+func StripRawMessages(summary EvalSummary) EvalSummary {
+	if len(summary.Results) > 0 {
+		results := make([]Result, len(summary.Results))
+		copy(results, summary.Results)
+		summary.Results = results
+	}
+	for i := range summary.Results {
+		summary.Results[i].RawMessage = ""
+	}
+	return summary
+}
+
+func resultsByID(results []Result) map[string]Result {
+	out := make(map[string]Result, len(results))
+	for _, result := range results {
+		out[result.CaseID] = result
+	}
+	return out
+}
+
+func classifyDiff(baseline Result, hasBaseline bool, current Result, hasCurrent bool) string {
+	switch {
+	case hasCurrent && resultSkipped(current):
+		return DiffSkipped
+	case !hasBaseline:
+		return DiffNew
+	case !hasCurrent:
+		return DiffRemoved
+	case !baseline.Pass && current.Pass:
+		return DiffWin
+	case baseline.Pass && !current.Pass:
+		return DiffRegression
+	case baseline.Pass && current.Pass:
+		return DiffStillPassing
+	default:
+		return DiffStillFailing
+	}
+}
+
+func resultSkipped(result Result) bool {
+	return strings.HasPrefix(result.Detail, "skipped:")
+}
+
 // EnvProvider returns a provider only when explicit opt-in environment is configured.
 func EnvProvider(getenv func(string) string, client *http.Client) (Provider, string, bool, error) {
 	providerName := strings.ToLower(strings.TrimSpace(getenv(EnvRoutingEvalProvider)))
