@@ -19,3 +19,11 @@ regexes = [
   '''API key, raw/normalized''',
   '''Secret Service provider, missing/default''',
 ]
+
+[[allowlists]]
+description = "Go test helper constructs a synthetic Intervals.icu API-key env var from a variable."
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^(internal/)?tools/get_custom_items_test\.go$''']
+regexTarget = "match"
+regexes = ['''^apiKey,\n[[:space:]]*"INTERVALS_ICU_ATHLETE_ID="$''']
