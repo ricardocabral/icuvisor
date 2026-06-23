@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-23
+
 ### Added
 
 - Added first-tool routing eval cases and save/diff reporting for ambiguous planning prompts, including ATP/periodization versus raw events, training-plan assignment, and fitness projection contrasts.
@@ -261,7 +263,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/ricardocabral/icuvisor/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/ricardocabral/icuvisor/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ricardocabral/icuvisor/compare/v0.1.9...v1.0.0
 [0.1.9]: https://github.com/ricardocabral/icuvisor/compare/v0.1.8...v0.1.9
