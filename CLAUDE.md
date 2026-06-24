@@ -12,6 +12,7 @@ icuvisor is an open-source MCP server that connects [intervals.icu](https://inte
 - **When / phasing:** [`ROADMAP.md`](ROADMAP.md)
 - **Contributor rules:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - **Security policy:** [`SECURITY.md`](SECURITY.md)
+- **Release process:** [`docs/release/publishing.md`](docs/release/publishing.md)
 
 If these conflict, the PRD wins for product behaviour, the roadmap wins for phasing, and CONTRIBUTING wins for process.
 
@@ -96,6 +97,7 @@ icuvisor uses `github.com/modelcontextprotocol/go-sdk`. Read its docs before cha
 
 ## Build, test, release
 
+- Read [`docs/release/publishing.md`](docs/release/publishing.md) before preparing, tagging, publishing, or announcing a new icuvisor release.
 - `make build` — local build into `./bin/icuvisor`.
 - `make test` / `make test-race` — unit tests.
 - `make lint` — golangci-lint.
