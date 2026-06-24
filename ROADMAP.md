@@ -57,53 +57,32 @@ Living document. Phases are scoped and gated, not calendared. Each phase is ship
 - Planning-parameter probe for ramp rate, recovery-week cadence, taper target, and intensity-distribution preference. Ship only fields exposed by the upstream API.
 - Extended-metrics field audit for fields that are still unproven upstream; drop unsupported fields explicitly rather than synthesizing them silently.
 
-## v2.x - Remote, planning, and ecosystem expansion
+## v2.x - Planning and ecosystem expansion
 
-**Goal:** expand beyond the single-machine local workflow only where the trust boundary, user value, and maintenance cost are explicit.
+**Goal:** expand training-planning automation and companion-server coverage while keeping new hosting or cross-service data retention outside the core binary.
 
-### v2.0 - Remote-access decision point
-
-- Validate mobile/remote demand through waitlist or telemetry, with a specific threshold for pulling relay work forward.
-- Decide whether to publish a self-hosted remote recipe before the hosted relay. If published, mark it as user-operated and unsupported, with the same binary and code path.
-- Define the relay threat model: credential storage, auth tokens, revocation, logging, rate limits, abuse handling, and data-retention defaults.
-- Confirm the transport story for provider-reachable MCP clients; do not add legacy SSE unless the PRD changes.
-
-### v2.1 - Optional hosted relay MVP
-
-- Build an opt-in relay for athletes who cannot run a desktop binary but still want BYO intervals.icu credentials.
-- Keep the local binary as the execution unit where feasible, so relay behavior stays aligned with the desktop code path.
-- Add account, token, and device-management flows only to the extent needed for secure relay access.
-- Document privacy boundaries separately from the local-first default so users can make an informed choice.
-
-### v2.2 - Relay hardening
-
-- Operational controls: audit logs, secret rotation, incident response, backups, and regional data-handling decisions.
-- Cost controls and usage limits that do not turn the local product into a primary SaaS.
-- Mobile-client compatibility validation across the AI clients that motivated relay demand.
-- Migration path between local and relay modes without exporting API keys through a chat.
-
-### v2.3 - Planning automation
+### v2.0 - Planning automation
 
 - `fill_calendar_from_library` ("Plan Filler"): propose workouts from an existing library folder over a date range using target weekly load/hours and weekday availability. Commit remains a separate explicit call.
 - Training-plan editing workflows that preserve existing races, notes, unavailable blocks, and user-authored descriptions.
 - Workout-template curation: AI-generated and athlete-curated template sets built on top of the existing workout-library tools.
 - Plan-preview evaluation that reports load distribution, compliance assumptions, conflicts, and lossy workout fields before writes.
 
-### v2.4 - Multi-sport workout model
+### v2.1 - Multi-sport workout model
 
 - Surface upstream triathlon workout-file resources with category, metric, and sub-category filters.
 - Represent discipline-tagged block sequences without forcing them through the single-discipline `workout_doc` shape.
 - Round-trip brick sessions and triathlon templates with documented lossy fields, golden fixtures, and analyzer-compatible schema.
 - Align multi-sport compliance and zone-time calculations with the analyzer family instead of creating a separate reporting model.
 
-### v2.5 - Plan safety and coaching guardrails
+### v2.2 - Plan safety and coaching guardrails
 
 - Science-backed validation tool for generated plans, with transparent rules and citations rather than hidden coaching opinion.
 - Guardrails for ramp rate, recovery weeks, taper shape, intensity distribution, and race-week workload when the required inputs are available.
 - Explicit "insufficient evidence" responses when a plan cannot be validated from available athlete data.
 - Versioned rule definitions so plan-validation behavior does not drift silently.
 
-### v2.6 - Companion ecosystem
+### v2.3 - Companion ecosystem
 
 - Strava companion MCP server for direct Strava workflows that are intentionally outside the icuvisor binary.
 - TrainingPeaks companion MCP server if demand and API access justify it.
@@ -114,6 +93,6 @@ Living document. Phases are scoped and gated, not calendared. Each phase is ship
 
 - Replacing intervals.icu's own UI.
 - Becoming a multi-tenant SaaS for primary use.
-- Hosting athlete data on our infrastructure outside the future opt-in relay.
+- Hosting athlete data on our infrastructure outside the optional hosted connector.
 - Non-intervals.icu data sources inside the icuvisor binary; athletes can install companion MCP servers alongside icuvisor.
-- Native mobile installs; mobile access is served through the user's desktop or the future opt-in relay.
+- Native mobile installs; mobile access is served through the user's desktop or the hosted connector where supported.
