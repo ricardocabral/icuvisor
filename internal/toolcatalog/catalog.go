@@ -50,6 +50,7 @@ const (
 	GetGearList                      = "get_gear_list"
 	GetHRCurves                      = "get_hr_curves"
 	GetPaceCurves                    = "get_pace_curves"
+	GetPerformancePotential          = "get_performance_potential"
 	GetPowerCurves                   = "get_power_curves"
 	GetPlanningContext               = "get_planning_context"
 	GetTrainingPlan                  = "get_training_plan"
@@ -117,6 +118,7 @@ var athleteScopedToolNames = []string{
 	GetGearList,
 	GetHRCurves,
 	GetPaceCurves,
+	GetPerformancePotential,
 	GetPowerCurves,
 	GetPlanningContext,
 	GetToday,
