@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "end_date": {
+      "description": "Local end date YYYY-MM-DD for upstream curve anchors.",
+      "type": "string"
+    },
+    "hr_duration_seconds": {
+      "description": "Heart-rate anchor buckets. Defaults to 5,15,30,60,300,1200,3600 seconds.",
+      "items": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include raw upstream curve payloads under each sport.full; terse default returns only selected anchors, statuses, caveats, and metadata.",
+      "type": "boolean"
+    },
+    "pace_distance_meters": {
+      "description": "Pace-distance anchor buckets for pace sports. Defaults depend on sport: run-style 400,1000,1609,5000,10000m; swim 50,100,200,400,1500m.",
+      "items": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "power_duration_seconds": {
+      "description": "Power-duration anchor buckets for power-based sports. Defaults to 5,15,30,60,300,1200,3600 seconds.",
+      "items": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "sports": {
+      "description": "Intervals.icu sport/type labels to summarize. Defaults to Ride, Run, Swim. Each sport remains in its own unit/source namespace.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "start_date": {
+      "description": "Local start date YYYY-MM-DD for upstream curve anchors.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "start_date",
+    "end_date"
+  ],
+  "type": "object"
+}
