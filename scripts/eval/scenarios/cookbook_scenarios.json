@@ -148,7 +148,7 @@
       "id": "CB-READY-03",
       "recipe": "readiness-check",
       "persona": "athlete",
-      "prompt": "Give me a morning briefing for today's planned workout. Use icuvisor, including get_today, to check readiness context and whether weather is available. If the outdoor option looks questionable from sourced weather or if weather is unavailable, suggest an indoor alternative in the answer, but do not write calendar changes or create a duplicate workout unless I explicitly approve replacing the existing event.",
+      "prompt": "Give me a morning briefing for today's planned workout. Use icuvisor, including get_today, to check readiness context, workout_status for planned/completed rows, and whether weather is available. If the outdoor option looks questionable from sourced weather or if weather is unavailable, suggest an indoor alternative in the answer, but do not infer completion from calendar/activity co-occurrence and do not write calendar changes or create a duplicate workout unless I explicitly approve replacing the existing event.",
       "expected_tools": [
         "get_today",
         "get_wellness_data",
@@ -166,6 +166,7 @@
       ],
       "must_address": [
         "today's planned workout context",
+        "workout_status-driven planned/completed wording",
         "weather availability or explicit unavailable status",
         "indoor versus outdoor recommendation",
         "no silent calendar write",
@@ -173,6 +174,7 @@
       ],
       "anti_patterns": [
         "invents weather when get_today says forecast_unavailable",
+        "treats a planned workout as completed without completed_linked/completed_unlinked status evidence",
         "creates both indoor and outdoor calendar workouts by default",
         "calls a write tool without explicit approval"
       ]

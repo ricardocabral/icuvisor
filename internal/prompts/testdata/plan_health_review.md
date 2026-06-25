@@ -6,7 +6,7 @@ Do:
 - Read profile first for timezone, units, sport settings, and today's athlete-local date; convert all windows before comparing days.
 - Separate completed-lookback, planned-window, and race-scenario dates; do not mix current-day or post-window wellness into completed adherence evidence.
 - Read events and training plan for planned workouts and races; if no race event is found, say so and treat any supplied race_date as a scenario anchor only.
-- Use compute_compliance_rate for scheduled-vs-completed adherence, then get_fitness, get_training_summary, compute_load_balance, and get_fitness_projection for load/form trajectory and future assumptions.
+- Use compute_compliance_rate for scheduled-vs-completed adherence; interpret workout_status, missed/planned/future/completed status counts, and caveats before calling anything skipped, missed, or completed, then get_fitness, get_training_summary, compute_load_balance, and get_fitness_projection for load/form trajectory and future assumptions.
 - Quote analyzer `_meta.method`, `_meta.assumptions`, `_meta.formula_ref`, missing-days, and sample-size caveats where present; call icuvisor_list_advanced_capabilities and name missing helpers when full-tool analyzers are unavailable.
 - Read recent wellness for sleep/readiness/HRV caveats; treat current-day `_meta.as_of` as partial-day context only and do not infer readiness when data is stale, absent, or missing key fields.
 - Treat planned deload or recovery weeks as intentional load reductions unless compliance, wellness, or form evidence shows a problem.

@@ -4,7 +4,7 @@ Resources: icuvisor://athlete-profile, icuvisor://event-categories, icuvisor://w
 Tools: get_athlete_profile, get_events, get_training_plan, get_fitness, get_training_summary, get_activities, compute_compliance_rate, icuvisor_list_advanced_capabilities.
 Do:
 - Find the race event by date/name and confirm priority/category, sport, distance, expected duration, and goal when missing.
-- Review active plan, planned events, fitness, training summary, recent activities, and compliance without pulling raw streams.
+- Review active plan, planned events, fitness, training summary, recent activities, and compute_compliance_rate workout_status/status counts/caveats without pulling raw streams or inferring completion from calendar/activity co-occurrence.
 - If advanced helpers are unavailable, call icuvisor_list_advanced_capabilities and proceed from events, fitness, summary, and activities.
 - Frame taper guidance as risk management: freshness, sharpness, logistics, and no last-minute fitness chasing.
 Guardrails:

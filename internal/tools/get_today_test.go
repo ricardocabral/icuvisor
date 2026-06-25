@@ -108,6 +108,56 @@ func TestGetTodayFreshDigestUsesFixedAthleteLocalToday(t *testing.T) {
 	}
 }
 
+func TestGetTodayWorkoutStatusDoesNotInferCompletionFromSameDayActivity(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeTodayClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		activities: decodeActivityPage(t,
+			`{"id":"unlinked-activity","name":"Easy jog","type":"Run","start_date_local":"2026-05-24T07:00:00","moving_time":1800}`,
+			`{"id":"linked-activity","name":"Paired ride","type":"Ride","start_date_local":"2026-05-24T09:00:00","paired_event_id":"linked-event","moving_time":3600}`,
+		),
+		events: decodeToolEvents(t,
+			`{"id":"planned-event","category":"WORKOUT","type":"Run","name":"Planned run","start_date_local":"2026-05-24","time_target":1800}`,
+			`{"id":"linked-event","category":"WORKOUT","type":"Ride","name":"Linked ride","start_date_local":"2026-05-24","activity_id":"linked-activity"}`,
+			`{"id":"note","category":"NOTE","name":"Travel","start_date_local":"2026-05-24"}`,
+		),
+	}
+	tool := newGetTodayToolWithClock(client, client, nil, nil, nil, nil, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	plannedRows := rowsByEventID(out["planned_events"].([]any))
+	if plannedRows["planned-event"]["workout_status"] != workoutStatusPlanned {
+		t.Fatalf("planned event = %#v, want planned despite same-day unlinked activity", plannedRows["planned-event"])
+	}
+	if plannedRows["linked-event"]["workout_status"] != workoutStatusCompletedLinked || plannedRows["linked-event"]["paired_activity_id"] != "linked-activity" {
+		t.Fatalf("linked event = %#v, want completed_linked", plannedRows["linked-event"])
+	}
+	activities := out["completed_activities"].([]any)
+	byActivityID := map[string]map[string]any{}
+	for _, item := range activities {
+		row := item.(map[string]any)
+		byActivityID[row["activity_id"].(string)] = row
+	}
+	if byActivityID["unlinked-activity"]["workout_status"] != workoutStatusCompletedUnlinked {
+		t.Fatalf("unlinked activity = %#v, want completed_unlinked", byActivityID["unlinked-activity"])
+	}
+	if !stringSliceContains(stringSliceFromAny(byActivityID["unlinked-activity"]["workout_status_caveats"]), workoutCaveatUnlinkedActivity) {
+		t.Fatalf("unlinked activity caveats = %#v, want completion caveat", byActivityID["unlinked-activity"])
+	}
+	if byActivityID["linked-activity"]["workout_status"] != workoutStatusCompletedLinked || byActivityID["linked-activity"]["paired_event_id"] != "linked-event" {
+		t.Fatalf("linked activity = %#v, want completed_linked", byActivityID["linked-activity"])
+	}
+	annotation := out["annotations"].([]any)[0].(map[string]any)
+	if _, ok := annotation["workout_status"]; ok {
+		t.Fatalf("annotation carried workout_status: %#v", annotation)
+	}
+}
+
 func TestGetTodayWeatherContextUsesUpstreamActivityWeatherOnly(t *testing.T) {
 	t.Parallel()
 
