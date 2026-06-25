@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added after-kJ durability curves to `get_power_curves`, including explicit kilojoule work-threshold metadata and omission of unavailable or uncomputed durability rows.
 - Added first-tool routing eval cases for arbitrary historical activity-window prompts that should start with `get_activities`.
 
+### Changed
+
+- Clarified planning and race-week taper prompts/docs to resolve relative dates, weekdays, and countdowns with `resolve_calendar_dates` before planning, and to use `get_fitness_projection` for race-day form assumptions.
+
 ## [1.2.0] - 2026-06-23
 
 ### Added

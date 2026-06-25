@@ -89,7 +89,7 @@ From my ramp test on [DATE], read out my FTP, threshold heart rate, and any VO2m
 ## Planning and calendar
 
 ```text
-Show my planned events for the next 14 days. Flag any week with no easy day and any back-to-back hard sessions.
+Show my planned events for the next 14 days. Resolve the date window in my athlete timezone first with `resolve_calendar_dates`, then flag any week with no easy day and any back-to-back hard sessions.
 ```
 
 ```text
@@ -97,7 +97,7 @@ Compare what I completed this week against what was planned. Use icuvisor's `wor
 ```
 
 ```text
-Run a transparent plan-health review for the next 14 days. Read my planned events/training plan, compare recent planned-vs-completed adherence using explicit `workout_status` values and compliance status counts, check load/form trajectory and get_fitness_projection assumptions, and caveat missing wellness/readiness data. Treat deload or recovery weeks as intentional unless the evidence says otherwise. If no race event is found, say so and treat any race date I supplied as a scenario anchor. Do not invent a black-box score or write to my calendar; show any proposed change for review first.
+Run a transparent plan-health review for the next 14 days. Resolve the planned window in my athlete timezone with `resolve_calendar_dates`, read my planned events/training plan, compare recent planned-vs-completed adherence using explicit `workout_status` values and compliance status counts, check load/form trajectory and get_fitness_projection assumptions, and caveat missing wellness/readiness data. Treat deload or recovery weeks as intentional unless the evidence says otherwise. If no race event is found, say so and treat any race date I supplied as a scenario anchor. Do not invent a black-box score or write to my calendar; show any proposed change for review first.
 ```
 
 ```text
