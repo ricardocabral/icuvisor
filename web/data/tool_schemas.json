@@ -2107,6 +2107,71 @@
       }
     ]
   },
+  "get_performance_potential": {
+    "name": "get_performance_potential",
+    "description": "Summarize per-sport performance potential from explicit athlete profile thresholds plus upstream power, pace, and heart-rate curve anchors.",
+    "arguments": [
+      {
+        "name": "end_date",
+        "required": true,
+        "type": "string",
+        "description": "Local end date YYYY-MM-DD for upstream curve anchors."
+      },
+      {
+        "name": "hr_duration_seconds",
+        "required": false,
+        "type": "array",
+        "description": "Heart-rate anchor buckets. Defaults to 5,15,30,60,300,1200,3600 seconds.",
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include raw upstream curve payloads under each sport.full; terse default returns only selected anchors, statuses, caveats, and metadata.",
+        "default": false
+      },
+      {
+        "name": "pace_distance_meters",
+        "required": false,
+        "type": "array",
+        "description": "Pace-distance anchor buckets for pace sports. Defaults depend on sport: run-style 400,1000,1609,5000,10000m; swim 50,100,200,400,1500m.",
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      },
+      {
+        "name": "power_duration_seconds",
+        "required": false,
+        "type": "array",
+        "description": "Power-duration anchor buckets for power-based sports. Defaults to 5,15,30,60,300,1200,3600 seconds.",
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      },
+      {
+        "name": "sports",
+        "required": false,
+        "type": "array",
+        "description": "Intervals.icu sport/type labels to summarize. Defaults to Ride, Run, Swim. Each sport remains in its own unit/source namespace.",
+        "items": {
+          "required": false,
+          "type": "string"
+        }
+      },
+      {
+        "name": "start_date",
+        "required": true,
+        "type": "string",
+        "description": "Local start date YYYY-MM-DD for upstream curve anchors."
+      }
+    ]
+  },
   "get_planning_context": {
     "name": "get_planning_context",
     "description": "Fetch read-only weekly planning context without creating an ATP or calendar writes: athlete-local week events/workouts, active training-plan assignment summary, current fitness context, upcoming races, and caveats.",

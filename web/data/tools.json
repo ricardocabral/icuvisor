@@ -336,6 +336,14 @@
     "anchor": "get_pace_curves"
   },
   {
+    "name": "get_performance_potential",
+    "group": "fitness",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Summarize per-sport performance potential from explicit athlete profile thresholds plus upstream power, pace, and heart-rate curve anchors.",
+    "anchor": "get_performance_potential"
+  },
+  {
     "name": "get_power_curves",
     "group": "fitness",
     "tier": "full",

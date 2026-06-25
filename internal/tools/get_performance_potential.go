@@ -166,7 +166,10 @@ func getPerformancePotentialHandler(client PerformancePotentialClient, profileCl
 		payload := performancePotentialResponse{Sports: make([]performancePotentialSport, 0, len(args.Sports)), Meta: performancePotentialMeta{ServerVersion: normalizeVersion(version), StartDate: args.StartDate, EndDate: args.EndDate, Sports: append([]string(nil), args.Sports...), PowerDurationSeconds: append([]int(nil), args.PowerDurationSeconds...), HRDurationSeconds: append([]int(nil), args.HRDurationSeconds...), PaceDistanceMeters: append([]int(nil), args.PaceDistanceMeters...), CurveSpec: curveSpec, SourceTools: analysis.NormalizeSourceTools([]string{getAthleteProfileName, getPowerCurvesName, getPaceCurvesName, getHRCurvesName}), SourceEndpoints: []string{"/api/v1/athlete/{id}", "/api/v1/athlete/{id}/power-curves.json", "/api/v1/athlete/{id}/pace-curves.json", "/api/v1/athlete/{id}/hr-curves.json"}, FormulaRefs: []string{analysis.PerformancePotentialFormulaRef}, SourceUnits: performancePotentialSourceUnits(unitSystem), Caveats: []string{"This is a deterministic summary of explicit profile thresholds and upstream curve anchors, not a proprietary score or medical/lactate diagnosis.", "Aerobic threshold, critical power, and model-derived threshold estimates are unavailable unless an explicit supported upstream source exists."}, IncludeFull: args.IncludeFull}}
 		for _, sport := range args.Sports {
 			profileSport := matchPerformancePotentialProfileSport(profileResponse.SportSettings, sport)
-			row := buildPerformancePotentialSport(ctx, client, sport, profileSport, unitSystem, curveSpec, args)
+			row, err := buildPerformancePotentialSport(ctx, client, sport, profileSport, unitSystem, curveSpec, args)
+			if err != nil {
+				return Result{}, err
+			}
 			payload.Sports = append(payload.Sports, row)
 		}
 		return encodeShaped(payload, args.IncludeFull, []string{"sports"}, version, debugMetadata, getPerformancePotentialName, unitSystem, shapeCfg)
@@ -198,18 +201,30 @@ func decodePerformancePotentialRequest(raw json.RawMessage) (performancePotentia
 	return args, nil
 }
 
-func buildPerformancePotentialSport(ctx context.Context, client PerformancePotentialClient, sport string, profileSport *athleteprofile.Sport, unitSystem response.UnitSystem, curveSpec string, args performancePotentialRequest) performancePotentialSport {
+func buildPerformancePotentialSport(ctx context.Context, client PerformancePotentialClient, sport string, profileSport *athleteprofile.Sport, unitSystem response.UnitSystem, curveSpec string, args performancePotentialRequest) (performancePotentialSport, error) {
 	family := analysis.PerformancePotentialSportFamily(sport)
 	row := performancePotentialSport{Sport: sport, SportFamily: family, Sources: map[string]analysis.PerformancePotentialSourceStatus{"athlete_profile": {Status: "available", Unit: string(unitSystem)}}}
 	row.Thresholds, row.ThresholdContext, row.Unavailable, row.Caveats = performancePotentialThresholdsForSport(sport, profileSport)
-	row.CurveAnchors.Power = performancePotentialPowerAnchors(ctx, client, sport, curveSpec, args.PowerDurationSeconds, args.IncludeFull, &row)
+	power, err := performancePotentialPowerAnchors(ctx, client, sport, curveSpec, args.PowerDurationSeconds, args.IncludeFull, &row)
+	if err != nil {
+		return performancePotentialSport{}, err
+	}
+	row.CurveAnchors.Power = power
 	paceBuckets := args.PaceDistanceMeters
 	if len(paceBuckets) == 0 {
 		paceBuckets = defaultDistanceBucketsForSport(sport)
 	}
-	row.CurveAnchors.Pace = performancePotentialPaceAnchors(ctx, client, sport, curveSpec, paceBuckets, unitSystem, args.IncludeFull, &row)
-	row.CurveAnchors.HeartRate = performancePotentialHRAnchors(ctx, client, sport, curveSpec, args.HRDurationSeconds, args.IncludeFull, &row)
-	return row
+	pace, err := performancePotentialPaceAnchors(ctx, client, sport, curveSpec, paceBuckets, unitSystem, args.IncludeFull, &row)
+	if err != nil {
+		return performancePotentialSport{}, err
+	}
+	row.CurveAnchors.Pace = pace
+	heartRate, err := performancePotentialHRAnchors(ctx, client, sport, curveSpec, args.HRDurationSeconds, args.IncludeFull, &row)
+	if err != nil {
+		return performancePotentialSport{}, err
+	}
+	row.CurveAnchors.HeartRate = heartRate
+	return row, nil
 }
 
 func performancePotentialThresholdsForSport(sport string, profileSport *athleteprofile.Sport) (performancePotentialThresholds, performancePotentialThresholdContext, []analysis.PerformancePotentialUnavailable, []string) {
@@ -278,16 +293,22 @@ func assignPerformancePotentialPaceThresholds(thresholds *performancePotentialTh
 	add("threshold_pace_value", profileSport.ThresholdPaceValue, "source_unit")
 }
 
-func performancePotentialPowerAnchors(ctx context.Context, client PerformancePotentialClient, sport string, curveSpec string, buckets []int, includeFull bool, row *performancePotentialSport) performancePotentialPowerCurve {
+func performancePotentialPowerAnchors(ctx context.Context, client PerformancePotentialClient, sport string, curveSpec string, buckets []int, includeFull bool, row *performancePotentialSport) (performancePotentialPowerCurve, error) {
 	if !analysis.PerformancePotentialSupportsPower(sport) {
 		row.Sources["power_curves"] = analysis.PerformancePotentialSourceStatus{Status: "unsupported", Reason: "sport family does not use power-duration anchors by default"}
-		return performancePotentialPowerCurve{Status: "unsupported", Reason: "sport family does not use power-duration anchors by default"}
+		return performancePotentialPowerCurve{Status: "unsupported", Reason: "sport family does not use power-duration anchors by default"}, nil
 	}
 	set, err := client.ListAthletePowerCurves(ctx, intervals.CurveParams{Sport: sport, CurveSpec: powerCurveRequestSpec(curveSpec), DurationSeconds: buckets})
 	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return performancePotentialPowerCurve{}, ctxErr
+		}
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return performancePotentialPowerCurve{}, err
+		}
 		row.Sources["power_curves"] = analysis.PerformancePotentialSourceStatus{Status: "unavailable", Reason: "source_fetch_failed", Unit: "W"}
 		row.Unavailable = append(row.Unavailable, unavailablePerformanceField("curve_anchors.power", "unavailable", "power curve source could not be fetched", getPowerCurvesName))
-		return performancePotentialPowerCurve{Status: "unavailable", Reason: "source_fetch_failed", Unit: "W"}
+		return performancePotentialPowerCurve{Status: "unavailable", Reason: "source_fetch_failed", Unit: "W"}, nil
 	}
 	points, missing := bucketPowerCurve(standardPowerCurve(set), buckets)
 	points, nonPositiveMissing := dropNonPositivePowerCurvePoints(points)
@@ -304,20 +325,26 @@ func performancePotentialPowerAnchors(ctx context.Context, client PerformancePot
 	if includeFull {
 		ensurePerformancePotentialFull(row)["power_curves"] = set.Raw
 	}
-	return performancePotentialPowerCurve{Status: status, Reason: reason, Unit: "W", Points: points, MissingBuckets: missing}
+	return performancePotentialPowerCurve{Status: status, Reason: reason, Unit: "W", Points: points, MissingBuckets: missing}, nil
 }
 
-func performancePotentialPaceAnchors(ctx context.Context, client PerformancePotentialClient, sport string, curveSpec string, buckets []int, unitSystem response.UnitSystem, includeFull bool, row *performancePotentialSport) performancePotentialPaceCurve {
+func performancePotentialPaceAnchors(ctx context.Context, client PerformancePotentialClient, sport string, curveSpec string, buckets []int, unitSystem response.UnitSystem, includeFull bool, row *performancePotentialSport) (performancePotentialPaceCurve, error) {
 	preferredUnit := performancePotentialPaceUnit(sport, unitSystem)
 	if !analysis.PerformancePotentialSupportsPace(sport) {
 		row.Sources["pace_curves"] = analysis.PerformancePotentialSourceStatus{Status: "unsupported", Reason: "sport family does not use pace-distance anchors by default", Unit: preferredUnit}
-		return performancePotentialPaceCurve{Status: "unsupported", Reason: "sport family does not use pace-distance anchors by default", PreferredUnit: preferredUnit, ElapsedUnit: "seconds"}
+		return performancePotentialPaceCurve{Status: "unsupported", Reason: "sport family does not use pace-distance anchors by default", PreferredUnit: preferredUnit, ElapsedUnit: "seconds"}, nil
 	}
 	set, err := client.ListAthletePaceCurves(ctx, intervals.CurveParams{Sport: sport, CurveSpec: curveSpec, DistanceMeters: buckets})
 	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return performancePotentialPaceCurve{}, ctxErr
+		}
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return performancePotentialPaceCurve{}, err
+		}
 		row.Sources["pace_curves"] = analysis.PerformancePotentialSourceStatus{Status: "unavailable", Reason: "source_fetch_failed", Unit: preferredUnit}
 		row.Unavailable = append(row.Unavailable, unavailablePerformanceField("curve_anchors.pace", "unavailable", "pace curve source could not be fetched", getPaceCurvesName))
-		return performancePotentialPaceCurve{Status: "unavailable", Reason: "source_fetch_failed", PreferredUnit: preferredUnit, ElapsedUnit: "seconds"}
+		return performancePotentialPaceCurve{Status: "unavailable", Reason: "source_fetch_failed", PreferredUnit: preferredUnit, ElapsedUnit: "seconds"}, nil
 	}
 	points, missing := bucketPerformancePotentialPaceCurve(firstCurve(set), buckets, unitSystem, sport)
 	status := "available"
@@ -331,19 +358,25 @@ func performancePotentialPaceAnchors(ctx context.Context, client PerformancePote
 	if includeFull {
 		ensurePerformancePotentialFull(row)["pace_curves"] = set.Raw
 	}
-	return performancePotentialPaceCurve{Status: status, Reason: reason, PreferredUnit: preferredUnit, ElapsedUnit: "seconds", Points: points, MissingDistanceMeters: missing}
+	return performancePotentialPaceCurve{Status: status, Reason: reason, PreferredUnit: preferredUnit, ElapsedUnit: "seconds", Points: points, MissingDistanceMeters: missing}, nil
 }
 
-func performancePotentialHRAnchors(ctx context.Context, client PerformancePotentialClient, sport string, curveSpec string, buckets []int, includeFull bool, row *performancePotentialSport) performancePotentialHRCurve {
+func performancePotentialHRAnchors(ctx context.Context, client PerformancePotentialClient, sport string, curveSpec string, buckets []int, includeFull bool, row *performancePotentialSport) (performancePotentialHRCurve, error) {
 	if !analysis.PerformancePotentialSupportsHeartRate(sport) {
 		row.Sources["hr_curves"] = analysis.PerformancePotentialSourceStatus{Status: "unsupported", Reason: "sport family does not use heart-rate anchors by default"}
-		return performancePotentialHRCurve{Status: "unsupported", Reason: "sport family does not use heart-rate anchors by default"}
+		return performancePotentialHRCurve{Status: "unsupported", Reason: "sport family does not use heart-rate anchors by default"}, nil
 	}
 	set, err := client.ListAthleteHRCurves(ctx, intervals.CurveParams{Sport: sport, CurveSpec: curveSpec, DurationSeconds: buckets})
 	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return performancePotentialHRCurve{}, ctxErr
+		}
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return performancePotentialHRCurve{}, err
+		}
 		row.Sources["hr_curves"] = analysis.PerformancePotentialSourceStatus{Status: "unavailable", Reason: "source_fetch_failed", Unit: "bpm"}
 		row.Unavailable = append(row.Unavailable, unavailablePerformanceField("curve_anchors.heart_rate", "unavailable", "heart-rate curve source could not be fetched", getHRCurvesName))
-		return performancePotentialHRCurve{Status: "unavailable", Reason: "source_fetch_failed", Unit: "bpm"}
+		return performancePotentialHRCurve{Status: "unavailable", Reason: "source_fetch_failed", Unit: "bpm"}, nil
 	}
 	points, missing := bucketHRCurve(firstCurve(set), buckets)
 	points, nonPositiveMissing := dropNonPositiveHRPoints(points)
@@ -360,7 +393,7 @@ func performancePotentialHRAnchors(ctx context.Context, client PerformancePotent
 	if includeFull {
 		ensurePerformancePotentialFull(row)["hr_curves"] = set.Raw
 	}
-	return performancePotentialHRCurve{Status: status, Reason: reason, Unit: "bpm", Points: points, MissingBuckets: missing}
+	return performancePotentialHRCurve{Status: status, Reason: reason, Unit: "bpm", Points: points, MissingBuckets: missing}, nil
 }
 
 func bucketPerformancePotentialPaceCurve(curve intervals.DataCurve, buckets []int, unitSystem response.UnitSystem, sport string) ([]performancePotentialPacePoint, []int) {
