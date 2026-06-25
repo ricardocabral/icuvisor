@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added explicit workout status fields and caveats to calendar, daily digest, and compliance outputs so assistants distinguish planned, completed, future, and missed/skipped workouts without inferring from activity co-occurrence.
 - Added after-kJ durability curves to `get_power_curves`, including explicit kilojoule work-threshold metadata and omission of unavailable or uncomputed durability rows.
 - Added first-tool routing eval cases for arbitrary historical activity-window prompts that should start with `get_activities`.
 
