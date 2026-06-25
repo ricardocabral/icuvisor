@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added first-tool routing eval cases for arbitrary historical activity-window prompts that should start with `get_activities`.
+
 ## [1.2.0] - 2026-06-23
 
 ### Added
