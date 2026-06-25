@@ -110,6 +110,33 @@ func TestGetAnnualTrainingPlanExtractsPhasesTargetsNotesAndBridge(t *testing.T) 
 	}
 }
 
+func TestGetAnnualTrainingPlanCurrentPhaseUsesAthleteLocalTodayWhenUTCDateDiffers(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeAnnualTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		events: decodeToolEvents(t,
+			`{"id":"p1","category":"PLAN","type":"Base","name":"Base phase","start_date_local":"2026-05-01","end_date_local":"2026-05-24"}`,
+			`{"id":"p2","category":"PLAN","type":"Build","name":"Build phase","start_date_local":"2026-05-25","end_date_local":"2026-06-30"}`,
+		),
+	}
+	tool := newGetAnnualTrainingPlanToolWithClock(client, client, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-05-01","newest":"2026-06-30"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	summary := out["summary"].(map[string]any)
+	if summary["current_phase_id"] != "phase_p1" {
+		t.Fatalf("summary = %#v, want current phase from athlete-local 2026-05-24 not UTC 2026-05-25", summary)
+	}
+	meta := out["_meta"].(map[string]any)
+	if meta["timezone"] != "America/Sao_Paulo" {
+		t.Fatalf("meta = %#v, want athlete timezone", meta)
+	}
+}
+
 func TestGetAnnualTrainingPlanEmptyResponseUsesUnavailableAndEmptyArrays(t *testing.T) {
 	t.Parallel()
 

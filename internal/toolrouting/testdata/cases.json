@@ -11,6 +11,33 @@
       "notes": "Confusable read case: details for one known activity should route to get_activity_details before streams or lists."
     },
     {
+      "id": "activity-window-explicit-date-range",
+      "prompt": "List all my activities from 2025-06-01 through 2025-11-30 so I can review that historical block.",
+      "expected_first_tool": "get_activities",
+      "catalog_mode": "core_safe",
+      "toolset": "core",
+      "delete_mode": "safe",
+      "notes": "Historical activity-window listing should use get_activities with its start/end filters; no separate date-window activity tool is required, and get_activity_details is only for one known activity id while get_training_summary/analyzers aggregate or compute rather than list activities."
+    },
+    {
+      "id": "activity-window-sport-filter-runs",
+      "prompt": "Show me all my run activities from June 1 2025 to November 30 2025, including dates and distances.",
+      "expected_first_tool": "get_activities",
+      "catalog_mode": "core_safe",
+      "toolset": "core",
+      "delete_mode": "safe",
+      "notes": "Sport/type-filtered historical windows are activity-index reads handled by get_activities; do not invent a date-window-specific tool, choose get_activity_details without an id, summarize with get_training_summary, or start with analyzer tools."
+    },
+    {
+      "id": "activity-window-oldest-in-period",
+      "prompt": "Find the oldest cycling activity I logged between 2024-01-01 and 2024-03-31 before pulling any detailed activity data.",
+      "expected_first_tool": "get_activities",
+      "catalog_mode": "core_safe",
+      "toolset": "core",
+      "delete_mode": "safe",
+      "notes": "Oldest-in-period wording still starts with the activity index via get_activities date and sport/type filters; get_activity_details can follow after an id is selected, while get_training_summary and analyzer tools are not first-call list/discovery tools."
+    },
+    {
       "id": "activity-stream-analyzer-helper",
       "prompt": "For activity 123456, compute the average power and heart-rate for the segment from 00:10:00 to 00:25:00.",
       "expected_first_tool": "compute_activity_segment_stats",
@@ -162,6 +189,33 @@
       "toolset": "full",
       "delete_mode": "safe",
       "notes": "Contrast: explicit future fitness projection should choose get_fitness_projection rather than summarizing ATP phases first."
+    },
+    {
+      "id": "date-anchor-tomorrow-planning-first-tool",
+      "prompt": "Plan tomorrow's workout around my current calendar and fitness. Resolve tomorrow in my athlete timezone before using any date, then use that resolved date for the plan.",
+      "expected_first_tool": "resolve_calendar_dates",
+      "catalog_mode": "full_safe",
+      "toolset": "full",
+      "delete_mode": "safe",
+      "notes": "Relative future planning must start by resolving athlete-local tomorrow via resolve_calendar_dates; do not compute tomorrow from model, UTC, or client-local time."
+    },
+    {
+      "id": "date-anchor-future-weekday-first-tool",
+      "prompt": "What should I do next Friday? First resolve the next Friday date in my athlete-local timezone, then inspect any planned events for that date.",
+      "expected_first_tool": "resolve_calendar_dates",
+      "catalog_mode": "core_safe",
+      "toolset": "core",
+      "delete_mode": "safe",
+      "notes": "Future weekday prompts are ambiguous without the athlete-local calendar anchor and should call resolve_calendar_dates before get_events or planning tools."
+    },
+    {
+      "id": "date-anchor-countdown-first-tool",
+      "prompt": "I race in 12 days; resolve the athlete-local race date first, verify the weekday, then summarize the taper window.",
+      "expected_first_tool": "resolve_calendar_dates",
+      "catalog_mode": "full_safe",
+      "toolset": "full",
+      "delete_mode": "safe",
+      "notes": "Countdown planning should use resolve_calendar_dates output as the anchor instead of model arithmetic or UTC/client-time date math."
     }
   ]
 }

@@ -146,6 +146,7 @@ type DataCurve struct {
 	MovingTime     int       `json:"moving_time"`
 	TrainingLoad   int       `json:"training_load"`
 	Weight         float64   `json:"weight"`
+	AfterKJ        *int      `json:"after_kj"`
 	Secs           []float64 `json:"secs"`
 	Distance       []float64 `json:"distance"`
 	Values         []float64 `json:"values"`

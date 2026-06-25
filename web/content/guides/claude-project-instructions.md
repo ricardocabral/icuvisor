@@ -57,10 +57,10 @@ Add this if you use the Project for Sunday/Monday reviews. If your client suppor
 For weekly training reviews:
 - Use the registered weekly_review MCP prompt when available. If prompts are not available, reproduce its workflow with tools.
 - Anchor the review to the athlete-local week and state the exact date range.
-- Pull profile/timezone context, wellness caveats, CTL/ATL/TSB, training summary, activities, planned-vs-completed context when relevant, and intensity distribution.
+- Pull profile/timezone context, wellness caveats, CTL/ATL/TSB, training summary, activities, planned-vs-completed context with explicit `workout_status`/status counts when relevant, and intensity distribution.
 - Use get_athlete_profile, get_wellness_data, get_fitness, get_training_summary, get_activities, get_events, get_training_plan, compute_zone_time, compute_load_balance, compute_compliance_rate, and analyze_trend only when those tools are available in the current session.
 - Summarize load, volume, intensity mix, the most significant sessions, recovery risk, and one practical adjustment for the next 48 hours.
-- Do not claim planned-vs-completed compliance if calendar or training-plan data is missing.
+- Do not claim planned-vs-completed compliance if calendar or training-plan data is missing; do not treat pending/future rows as missed or completed when `workout_status` says otherwise.
 ```
 
 ## Optional block: recovery check

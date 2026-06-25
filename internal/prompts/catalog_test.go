@@ -159,6 +159,8 @@ func TestWeeklyReviewIncludesFallbackAndSafetyGuidance(t *testing.T) {
 		"do not include wellness, activities, or summary rows after that end date",
 		"current-day `_meta.as_of` as partial-day context only",
 		"icuvisor_list_advanced_capabilities",
+		"workout_status",
+		"status counts",
 		"_meta.stale",
 		"provenance warnings",
 		"Do not call write or delete tools unless the user explicitly approves the exact change first.",
@@ -206,10 +208,14 @@ func TestPlanHealthReviewIncludesTransparentRiskGuidance(t *testing.T) {
 		"compute_compliance_rate",
 		"get_fitness_projection",
 		"completed-lookback, planned-window, and race-scenario dates",
+		"resolve_calendar_dates",
+		"instead of UTC, client-time, or model arithmetic",
 		"do not mix current-day or post-window wellness into completed adherence evidence",
 		"current-day `_meta.as_of` as partial-day context only",
 		"_meta.method",
 		"_meta.assumptions",
+		"missed/planned/future/completed status counts",
+		"before calling anything skipped, missed, or completed",
 		"Prefer terse default tool responses; use include_full only when the user asks or evidence is missing.",
 		"Do not invent a black-box plan-health score",
 		"no race event is found",
@@ -239,10 +245,13 @@ func TestPlanningPromptsIncludeSeasonContextAndWriteGuardrails(t *testing.T) {
 			for _, want := range []string{
 				"priority/category",
 				"get_training_plan",
+				"resolve_calendar_dates",
 				"compute_compliance_rate",
 				"icuvisor_list_advanced_capabilities",
+				"workout_status",
 				"Do not automatically fill the calendar, create ATP notes, or call write/delete tools",
 				"approval of exact changes",
+				"instead of UTC, client-time, or model arithmetic",
 			} {
 				if !strings.Contains(text, want) {
 					t.Fatalf("%s prompt missing %q:\n%s", tc.name, want, text)
@@ -257,6 +266,9 @@ func TestPlanningPromptsIncludeSeasonContextAndWriteGuardrails(t *testing.T) {
 						t.Fatalf("%s prompt missing workout preview guidance %q:\n%s", tc.name, want, text)
 					}
 				}
+			}
+			if tc.name == "race-week taper" && !strings.Contains(text, "get_fitness_projection") {
+				t.Fatalf("race-week taper prompt missing get_fitness_projection:\n%s", text)
 			}
 		})
 	}

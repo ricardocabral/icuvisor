@@ -64,11 +64,15 @@ func TestGetActivityMessagesSendsQueryAndPreservesRawNulls(t *testing.T) {
 		if got, want := r.URL.Path, "/activity/a123/messages"; got != want {
 			t.Fatalf("path = %q, want %q", got, want)
 		}
-		if got := r.URL.Query().Get("sinceId"); got != "10" {
+		query := r.URL.Query()
+		if got := query.Get("sinceId"); got != "10" {
 			t.Fatalf("sinceId = %q, want 10", got)
 		}
-		if got := r.URL.Query().Get("limit"); got != "25" {
+		if got := query.Get("limit"); got != "25" {
 			t.Fatalf("limit = %q, want 25", got)
+		}
+		if got := query.Get("since_id"); got != "" {
+			t.Fatalf("since_id = %q, want absent", got)
 		}
 		fixture, err := os.ReadFile("testdata/activity_messages.json")
 		if err != nil {

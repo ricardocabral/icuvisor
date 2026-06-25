@@ -417,6 +417,68 @@ func TestComputeCompliancePairingDeltasAndBreakdowns(t *testing.T) {
 	}
 }
 
+func TestComputeComplianceWorkoutStatusCountsAndCaveats(t *testing.T) {
+	client := newFakeComputeClient()
+	client.profile.Timezone = "America/Sao_Paulo"
+	client.events = []intervals.Event{
+		eventFixture("evt-missed", "Run", "2026-05-23", intPtr(3600), nil, false),
+		eventFixture("evt-planned", "Run", "2026-05-24", intPtr(3600), nil, false),
+		eventFixture("evt-future", "Run", "2026-05-25", intPtr(3600), nil, false),
+		eventFixture("evt-linked", "Run", "2026-05-22", intPtr(1800), map[string]any{"activity_id": "act-linked"}, false),
+		eventFixture("evt-auto", "Run", "2026-05-21", intPtr(2400), nil, false),
+	}
+	client.activities = []intervals.Activity{
+		activityWithTime("act-linked", "Run", "2026-05-22T07:00:00", 1800, nil),
+		activityWithTime("act-auto", "Run", "2026-05-21T07:00:00", 2400, nil),
+	}
+	tool := newComputeComplianceRateToolWithClock(client, client, client, client, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: []byte(`{"start_date":"2026-05-21","end_date":"2026-05-25","sport":"Run","target_metric":"time","include_full":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	got := resultMap(t, result)
+	resultMap := got["result"].(map[string]any)
+	if resultMap["scheduled_count"] != float64(5) || resultMap["completed_count"] != float64(2) {
+		t.Fatalf("result counts = %#v, want scheduled 5 completed 2 preserved", resultMap)
+	}
+	wantCounts := map[string]float64{
+		"missed_or_skipped_count":  1,
+		"planned_count":            1,
+		"future_count":             1,
+		"completed_linked_count":   1,
+		"completed_unlinked_count": 1,
+	}
+	for key, want := range wantCounts {
+		if resultMap[key] != want {
+			t.Fatalf("%s = %#v, want %v in result %#v", key, resultMap[key], want, resultMap)
+		}
+	}
+	resultCaveats := stringSliceFromAny(resultMap["workout_status_caveats"])
+	if !stringSliceContains(resultCaveats, workoutCaveatSkippedMissedUnavailable) || !stringSliceContains(resultCaveats, workoutCaveatDateMetricNotExplicit) {
+		t.Fatalf("result caveats = %#v, want missed/skipped and auto-pair caveats", resultCaveats)
+	}
+	rows := rowsByEventID(got["series"].([]any))
+	if rows["evt-missed"]["workout_status"] != workoutStatusMissedOrSkipped || rows["evt-planned"]["workout_status"] != workoutStatusPlanned || rows["evt-future"]["workout_status"] != workoutStatusFuture {
+		t.Fatalf("unpaired status rows = missed:%#v planned:%#v future:%#v", rows["evt-missed"], rows["evt-planned"], rows["evt-future"])
+	}
+	if rows["evt-linked"]["workout_status"] != workoutStatusCompletedLinked || rows["evt-auto"]["workout_status"] != workoutStatusCompletedUnlinked {
+		t.Fatalf("completed status rows = linked:%#v auto:%#v", rows["evt-linked"], rows["evt-auto"])
+	}
+	if !stringSliceContains(stringSliceFromAny(rows["evt-auto"]["workout_status_caveats"]), workoutCaveatDateMetricNotExplicit) {
+		t.Fatalf("auto-pair row caveats = %#v, want explicit-link caveat", rows["evt-auto"])
+	}
+	for id, row := range rows {
+		if row["workout_status"] == "deleted_or_cancelled" {
+			t.Fatalf("%s row spuriously emitted deleted_or_cancelled: %#v", id, row)
+		}
+	}
+	meta := got["_meta"].(map[string]any)
+	if !stringSliceContains(stringSliceFromAny(meta["boundaries"]), "scheduled_count includes planned/future") {
+		t.Fatalf("boundaries = %#v, want planned/future denominator caveat", meta["boundaries"])
+	}
+}
+
 func TestComputeComplianceTruncationMetadata(t *testing.T) {
 	t.Run("event cap marks partial with boundary", func(t *testing.T) {
 		client := newFakeComputeClient()

@@ -29,6 +29,11 @@ func TestListActivitiesSendsQueryAndPreservesRawNulls(t *testing.T) {
 				t.Fatalf("query %s = %q, want %q", key, got, want)
 			}
 		}
+		for _, key := range []string{"routeId", "start", "end"} {
+			if got := query.Get(key); got != "" {
+				t.Fatalf("query %s = %q, want absent", key, got)
+			}
+		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`[
 			{"id":"a1","name":null,"type":"Run","start_date_local":"2026-01-30T07:00:00","distance":5000,"icu_training_load":42,"stream_types":["time","distance"],"has_weather":true,"average_weather_temp":22.5,"average_wind_speed":4.1,"prevailing_wind_deg":180},

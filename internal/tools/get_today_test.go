@@ -108,6 +108,152 @@ func TestGetTodayFreshDigestUsesFixedAthleteLocalToday(t *testing.T) {
 	}
 }
 
+func TestGetTodayUsesAthleteLocalMidnightWhenUTCDateDiffers(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeTodayClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		fitnessRows: decodeSummaries(t, `[
+			{"date":"2026-05-24","fitness":72,"fatigue":81,"form":-9},
+			{"date":"2026-05-25","fitness":73,"fatigue":82,"form":-9}
+		]`),
+		wellnessRows: []intervals.Wellness{
+			decodeWellnessRow(t, `{"id":"2026-05-24","sleepQuality":3}`),
+			decodeWellnessRow(t, `{"id":"2026-05-25","sleepQuality":1}`),
+		},
+		activities: decodeActivityPage(t,
+			`{"id":"previous-local","name":"Late yesterday","type":"Run","start_date_local":"2026-05-23T23:55:00","start_date":"2026-05-24T02:55:00Z","timezone":"America/Sao_Paulo","distance":5000}`,
+			`{"id":"today-local","name":"Late today","type":"Ride","start_date_local":"2026-05-24T23:20:00","start_date":"2026-05-25T02:20:00Z","timezone":"America/Sao_Paulo","distance":30000}`,
+		),
+		events: decodeToolEvents(t,
+			`{"id":"previous-event","category":"WORKOUT","name":"Yesterday local","start_date_local":"2026-05-23T23:45:00"}`,
+			`{"id":"today-event","category":"WORKOUT","name":"Today local","start_date_local":"2026-05-24T23:30:00"}`,
+			`{"id":"tomorrow-event","category":"NOTE","name":"UTC tomorrow but local tomorrow too","start_date_local":"2026-05-25T00:05:00"}`,
+		),
+	}
+	tool := newGetTodayToolWithClock(client, client, nil, nil, nil, nil, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+
+	assertTodayCalls(t, client, "2026-05-24")
+	meta := out["_meta"].(map[string]any)
+	if meta["date"] != "2026-05-24" || meta["as_of_date"] != "2026-05-24" || meta["as_of_weekday"] != "Sunday" || meta["timezone"] != "America/Sao_Paulo" {
+		t.Fatalf("meta = %#v, want athlete-local 2026-05-24 despite UTC 2026-05-25", meta)
+	}
+	if got := out["fitness"].([]any)[0].(map[string]any)["date"]; got != "2026-05-24" {
+		t.Fatalf("fitness date = %#v, want athlete-local today row", got)
+	}
+	wellness := out["wellness"].([]any)
+	if len(wellness) != 1 || wellness[0].(map[string]any)["date"] != "2026-05-24" {
+		t.Fatalf("wellness = %#v, want only athlete-local today row", wellness)
+	}
+	activities := out["completed_activities"].([]any)
+	if len(activities) != 1 || activities[0].(map[string]any)["activity_id"] != "today-local" || activities[0].(map[string]any)["start_date_utc"] != "2026-05-25T02:20:00Z" {
+		t.Fatalf("completed_activities = %#v, want local-today activity even when UTC date is tomorrow", activities)
+	}
+	planned := out["planned_events"].([]any)
+	if len(planned) != 1 || planned[0].(map[string]any)["event_id"] != "today-event" || planned[0].(map[string]any)["start_date_local"] != "2026-05-24T23:30:00" {
+		t.Fatalf("planned_events = %#v, want only athlete-local today event", planned)
+	}
+}
+
+func TestGetTodayRecomputesFreshAthleteLocalAnchorAcrossCalls(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 5, 25, 2, 30, 0, 0, time.UTC)
+	client := &fakeTodayClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		fitnessRows: decodeSummaries(t, `[
+			{"date":"2026-05-24","fitness":72,"fatigue":81,"form":-9},
+			{"date":"2026-05-25","fitness":73,"fatigue":82,"form":-9}
+		]`),
+		wellnessRows: []intervals.Wellness{
+			decodeWellnessRow(t, `{"id":"2026-05-24","feel":4}`),
+			decodeWellnessRow(t, `{"id":"2026-05-25","feel":3}`),
+		},
+	}
+	tool := newGetTodayToolWithClock(client, client, nil, nil, nil, nil, "test", "UTC", false, func() time.Time { return now })
+
+	first, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("first Handler() error = %v", err)
+	}
+	firstMeta := resultMap(t, first)["_meta"].(map[string]any)
+	if firstMeta["date"] != "2026-05-24" || firstMeta["as_of"] != "2026-05-24T23:30:00-03:00" {
+		t.Fatalf("first meta = %#v, want pre-midnight athlete-local anchor", firstMeta)
+	}
+
+	now = time.Date(2026, 5, 25, 3, 10, 0, 0, time.UTC)
+	second, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("second Handler() error = %v", err)
+	}
+	secondMeta := resultMap(t, second)["_meta"].(map[string]any)
+	if secondMeta["date"] != "2026-05-25" || secondMeta["as_of"] != "2026-05-25T00:10:00-03:00" || secondMeta["as_of_weekday"] != "Monday" {
+		t.Fatalf("second meta = %#v, want fresh post-midnight athlete-local anchor", secondMeta)
+	}
+	if len(client.fitnessCalls) != 2 || client.fitnessCalls[0].Start != "2026-05-24" || client.fitnessCalls[1].Start != "2026-05-25" {
+		t.Fatalf("fitness calls = %#v, want each invocation to fetch its fresh local today", client.fitnessCalls)
+	}
+	if len(client.wellnessCalls) != 2 || client.wellnessCalls[0].Oldest != "2026-05-24" || client.wellnessCalls[1].Oldest != "2026-05-25" {
+		t.Fatalf("wellness calls = %#v, want each invocation to fetch its fresh local today", client.wellnessCalls)
+	}
+}
+
+func TestGetTodayWorkoutStatusDoesNotInferCompletionFromSameDayActivity(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeTodayClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		activities: decodeActivityPage(t,
+			`{"id":"unlinked-activity","name":"Easy jog","type":"Run","start_date_local":"2026-05-24T07:00:00","moving_time":1800}`,
+			`{"id":"linked-activity","name":"Paired ride","type":"Ride","start_date_local":"2026-05-24T09:00:00","paired_event_id":"linked-event","moving_time":3600}`,
+		),
+		events: decodeToolEvents(t,
+			`{"id":"planned-event","category":"WORKOUT","type":"Run","name":"Planned run","start_date_local":"2026-05-24","time_target":1800}`,
+			`{"id":"linked-event","category":"WORKOUT","type":"Ride","name":"Linked ride","start_date_local":"2026-05-24","activity_id":"linked-activity"}`,
+			`{"id":"note","category":"NOTE","name":"Travel","start_date_local":"2026-05-24"}`,
+		),
+	}
+	tool := newGetTodayToolWithClock(client, client, nil, nil, nil, nil, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	plannedRows := rowsByEventID(out["planned_events"].([]any))
+	if plannedRows["planned-event"]["workout_status"] != workoutStatusPlanned {
+		t.Fatalf("planned event = %#v, want planned despite same-day unlinked activity", plannedRows["planned-event"])
+	}
+	if plannedRows["linked-event"]["workout_status"] != workoutStatusCompletedLinked || plannedRows["linked-event"]["paired_activity_id"] != "linked-activity" {
+		t.Fatalf("linked event = %#v, want completed_linked", plannedRows["linked-event"])
+	}
+	activities := out["completed_activities"].([]any)
+	byActivityID := map[string]map[string]any{}
+	for _, item := range activities {
+		row := item.(map[string]any)
+		byActivityID[row["activity_id"].(string)] = row
+	}
+	if byActivityID["unlinked-activity"]["workout_status"] != workoutStatusCompletedUnlinked {
+		t.Fatalf("unlinked activity = %#v, want completed_unlinked", byActivityID["unlinked-activity"])
+	}
+	if !stringSliceContains(stringSliceFromAny(byActivityID["unlinked-activity"]["workout_status_caveats"]), workoutCaveatUnlinkedActivity) {
+		t.Fatalf("unlinked activity caveats = %#v, want completion caveat", byActivityID["unlinked-activity"])
+	}
+	if byActivityID["linked-activity"]["workout_status"] != workoutStatusCompletedLinked || byActivityID["linked-activity"]["paired_event_id"] != "linked-event" {
+		t.Fatalf("linked activity = %#v, want completed_linked", byActivityID["linked-activity"])
+	}
+	annotation := out["annotations"].([]any)[0].(map[string]any)
+	if _, ok := annotation["workout_status"]; ok {
+		t.Fatalf("annotation carried workout_status: %#v", annotation)
+	}
+}
+
 func TestGetTodayWeatherContextUsesUpstreamActivityWeatherOnly(t *testing.T) {
 	t.Parallel()
 

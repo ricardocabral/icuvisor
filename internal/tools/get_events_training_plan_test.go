@@ -245,6 +245,82 @@ func TestGetEventsCurrentDayRangeAddsAsOfMetadata(t *testing.T) {
 	}
 }
 
+func TestGetEventsRowsUseAthleteLocalDateWhenUTCDateDiffers(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		events:            decodeToolEvents(t, `{"id":"late-event","name":"Late local workout","category":"WORKOUT","type":"Ride","start_date_local":"2026-05-24T23:30:00","updated":"2026-05-25T02:35:00Z"}`),
+	}
+	tool := newGetEventsToolWithClock(client, client, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-05-24","newest":"2026-05-24","limit":10}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-05-24" || client.listCalls[0].Newest != "2026-05-24" {
+		t.Fatalf("ListEvents calls = %#v, want athlete-local date window", client.listCalls)
+	}
+	out := resultMap(t, result)
+	meta := out["_meta"].(map[string]any)
+	assertSaoPauloAsOfMeta(t, meta)
+	rows := out["events"].([]any)
+	if len(rows) != 1 {
+		t.Fatalf("events = %#v, want one local-day row", rows)
+	}
+	row := rows[0].(map[string]any)
+	if row["event_id"] != "late-event" || row["start_date_local"] != "2026-05-24T23:30:00" || row["updated_local"] != "2026-05-24T23:35:00-03:00" || row["workout_status"] != workoutStatusPlanned {
+		t.Fatalf("event row = %#v, want local-today event and planned status despite UTC date 2026-05-25", row)
+	}
+}
+
+func TestGetEventsWorkoutStatusMatrixUsesAthleteLocalAsOf(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		events: decodeToolEvents(t,
+			`{"id":"past","name":"Missed plan","category":"WORKOUT","start_date_local":"2026-05-23"}`,
+			`{"id":"today","name":"Pending plan","category":"WORKOUT","start_date_local":"2026-05-24"}`,
+			`{"id":"future","name":"Future plan","category":"WORKOUT","start_date_local":"2026-05-25"}`,
+			`{"id":"linked","name":"Done plan","category":"WORKOUT","start_date_local":"2026-05-20","activity_id":"act-linked"}`,
+			`{"id":"note","name":"Travel","category":"NOTE","start_date_local":"2026-05-23"}`,
+			`{"id":"race-target","name":"Race","category":"RACE_A","start_date_local":"2026-05-23","time_target":3600}`,
+		),
+	}
+	tool := newGetEventsToolWithClock(client, client, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-05-20","newest":"2026-05-25","limit":10}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	rows := rowsByEventID(resultMap(t, result)["events"].([]any))
+
+	if rows["past"]["workout_status"] != workoutStatusMissedOrSkipped {
+		t.Fatalf("past row = %#v, want missed/skipped", rows["past"])
+	}
+	pastCaveats := stringSliceFromAny(rows["past"]["workout_status_caveats"])
+	if !stringSliceContains(pastCaveats, workoutCaveatSkippedMissedUnavailable) || !stringSliceContains(pastCaveats, workoutCaveatDeletedAbsentUnavailable) {
+		t.Fatalf("past caveats = %#v, want skipped/deleted limitations", pastCaveats)
+	}
+	if rows["today"]["workout_status"] != workoutStatusPlanned || rows["future"]["workout_status"] != workoutStatusFuture {
+		t.Fatalf("today/future rows = %#v / %#v, want planned/future", rows["today"], rows["future"])
+	}
+	if rows["linked"]["workout_status"] != workoutStatusCompletedLinked || rows["linked"]["paired_activity_id"] != "act-linked" {
+		t.Fatalf("linked row = %#v, want completed linked", rows["linked"])
+	}
+	for _, id := range []string{"note", "race-target"} {
+		if _, ok := rows[id]["workout_status"]; ok {
+			t.Fatalf("%s row carried workout status: %#v", id, rows[id])
+		}
+	}
+	for id, row := range rows {
+		if row["workout_status"] == "deleted_or_cancelled" {
+			t.Fatalf("%s row spuriously emitted deleted_or_cancelled: %#v", id, row)
+		}
+	}
+}
+
 func TestGetEventsPastRangeOmitsAsOfMetadata(t *testing.T) {
 	t.Parallel()
 

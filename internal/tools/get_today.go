@@ -178,9 +178,11 @@ type todayDigestInputs struct {
 func shapeGetTodayResponse(in todayDigestInputs) (getTodayResponse, error) {
 	completed := make([]getActivitiesRow, 0, len(in.activities))
 	for _, activity := range in.activities {
-		completed = append(completed, activityRow(activity, in.includeFull, in.timezone, in.unitSystem, in.gearResolutions[activity.ID], in.customFieldCodes))
+		row := activityRow(activity, in.includeFull, in.timezone, in.unitSystem, in.gearResolutions[activity.ID], in.customFieldCodes)
+		applyCompletedActivityWorkoutStatus(&row, activity)
+		completed = append(completed, row)
 	}
-	planned, annotations, err := splitTodayEvents(in.events, in.includeFull, in.timezone, in.profile, in.unitSystem)
+	planned, annotations, err := splitTodayEvents(in.events, in.includeFull, in.timezone, in.today, in.profile, in.unitSystem)
 	if err != nil {
 		return getTodayResponse{}, err
 	}
@@ -278,7 +280,7 @@ func localDateMatches(value *string, today string) bool {
 	return date == today
 }
 
-func splitTodayEvents(events []intervals.Event, includeFull bool, timezoneName string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) ([]getEventsRow, []getEventsRow, error) {
+func splitTodayEvents(events []intervals.Event, includeFull bool, timezoneName string, asOfDate string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) ([]getEventsRow, []getEventsRow, error) {
 	planned := make([]getEventsRow, 0, len(events))
 	annotations := make([]getEventsRow, 0, len(events))
 	for _, event := range events {
@@ -286,6 +288,7 @@ func splitTodayEvents(events []intervals.Event, includeFull bool, timezoneName s
 		if err != nil {
 			return nil, nil, err
 		}
+		applyEventWorkoutStatus(&row, event, asOfDate)
 		if isTodayAnnotation(row.Category) {
 			annotations = append(annotations, row)
 			continue
@@ -332,5 +335,5 @@ func getTodayInputSchema() map[string]any {
 }
 
 func getTodayOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "One-call athlete-local today digest with fitness, wellness, completed_activities, planned_events, annotations, explicit weather availability/provenance, athlete-local as-of metadata, source_tools, section counts, units, and scale labels. Terse by default; include_full adds raw upstream payloads per section."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "One-call athlete-local today digest with fitness, wellness, completed_activities, planned_events, annotations, explicit workout_status/workout_status_caveats on workout and completed-activity rows, explicit weather availability/provenance, athlete-local as-of metadata, source_tools, section counts, units, and scale labels. Terse by default; include_full adds raw upstream payloads per section."}
 }

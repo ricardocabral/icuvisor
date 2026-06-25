@@ -12,6 +12,7 @@ type fakeFitnessMetricsClient struct {
 	fakeProfileClient
 	summaries    []intervals.SummaryWithCats
 	summaryCalls []intervals.AthleteSummaryParams
+	powerCalls   []intervals.CurveParams
 	curves       map[string]intervals.DataCurveSet
 }
 
@@ -21,6 +22,7 @@ func (f *fakeFitnessMetricsClient) ListAthleteSummary(_ context.Context, params 
 }
 
 func (f *fakeFitnessMetricsClient) ListAthletePowerCurves(_ context.Context, params intervals.CurveParams) (intervals.DataCurveSet, error) {
+	f.powerCalls = append(f.powerCalls, params)
 	return f.curves[params.Sport+":power"], nil
 }
 
@@ -65,6 +67,11 @@ func decodeSummaries(t *testing.T, text string) []intervals.SummaryWithCats {
 func curveSet(t *testing.T, secs []float64, values []float64) intervals.DataCurveSet {
 	t.Helper()
 	data, _ := json.Marshal(map[string]any{"list": []map[string]any{{"id": "r", "secs": secs, "values": values, "activity_id": []string{"a1", "a2", "a3"}}}, "activities": map[string]any{}})
+	return decodeCurveSet(t, data)
+}
+
+func decodeCurveSet(t *testing.T, data []byte) intervals.DataCurveSet {
+	t.Helper()
 	var out intervals.DataCurveSet
 	if err := json.Unmarshal(data, &out); err != nil {
 		t.Fatalf("decode curve set: %v", err)

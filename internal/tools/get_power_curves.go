@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sort"
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
@@ -16,6 +17,8 @@ const (
 	fetchPowerCurvesMessage   = "could not fetch power curves; check intervals.icu credentials, athlete ID, sport, and date range"
 	defaultPowerCurveSport    = "Ride"
 )
+
+var powerDurabilityCurveSuffixes = []string{"-kj0", "-kj1"}
 
 // PowerCurvesClient retrieves athlete curve sets.
 type PowerCurvesClient interface {
@@ -31,10 +34,11 @@ type powerCurvesRequest struct {
 }
 
 type powerCurvesResponse struct {
-	Sport  string            `json:"sport"`
-	Points []powerCurvePoint `json:"points"`
-	Full   map[string]any    `json:"full,omitempty"`
-	Meta   powerCurvesMeta   `json:"_meta"`
+	Sport            string                 `json:"sport"`
+	Points           []powerCurvePoint      `json:"points"`
+	DurabilityCurves []powerDurabilityCurve `json:"durability_curves,omitempty"`
+	Full             map[string]any         `json:"full,omitempty"`
+	Meta             powerCurvesMeta        `json:"_meta"`
 }
 
 type powerCurvePoint struct {
@@ -43,15 +47,29 @@ type powerCurvePoint struct {
 	ActivityID      string   `json:"activity_id,omitempty"`
 }
 
+type powerDurabilityCurve struct {
+	AfterKJ        int               `json:"after_kj"`
+	WorkThreshold  workThreshold     `json:"work_threshold"`
+	Points         []powerCurvePoint `json:"points"`
+	MissingBuckets []int             `json:"missing_buckets,omitempty"`
+}
+
+type workThreshold struct {
+	Value int    `json:"value"`
+	Unit  string `json:"unit"`
+}
+
 type powerCurvesMeta struct {
-	ServerVersion   string `json:"server_version"`
-	Sport           string `json:"sport"`
-	Oldest          string `json:"oldest"`
-	Newest          string `json:"newest"`
-	CurveSpec       string `json:"curve_spec"`
-	DurationSeconds []int  `json:"duration_seconds"`
-	MissingBuckets  []int  `json:"missing_buckets,omitempty"`
-	IncludeFull     bool   `json:"include_full"`
+	ServerVersion        string `json:"server_version"`
+	Sport                string `json:"sport"`
+	Oldest               string `json:"oldest"`
+	Newest               string `json:"newest"`
+	CurveSpec            string `json:"curve_spec"`
+	DurationSeconds      []int  `json:"duration_seconds"`
+	MissingBuckets       []int  `json:"missing_buckets,omitempty"`
+	DurabilityCurveCount int    `json:"durability_curve_count,omitempty"`
+	WorkThresholdUnit    string `json:"work_threshold_unit,omitempty"`
+	IncludeFull          bool   `json:"include_full"`
 }
 
 func newGetPowerCurvesTool(client PowerCurvesClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -66,15 +84,17 @@ func getPowerCurvesHandler(client PowerCurvesClient, version string, debugMetada
 			return Result{}, NewUserError(invalidCurveArgumentsMessage, err)
 		}
 		curveSpec := rangeCurveSpec(args.Oldest, args.Newest)
-		set, err := client.ListAthletePowerCurves(ctx, intervals.CurveParams{Sport: args.Sport, CurveSpec: curveSpec, DurationSeconds: args.DurationSeconds})
+		requestCurveSpec := powerCurveRequestSpec(curveSpec)
+		set, err := client.ListAthletePowerCurves(ctx, intervals.CurveParams{Sport: args.Sport, CurveSpec: requestCurveSpec, DurationSeconds: args.DurationSeconds})
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
 			}
 			return Result{}, NewUserError(fetchPowerCurvesMessage, err)
 		}
-		points, missing := bucketPowerCurve(firstCurve(set), args.DurationSeconds)
-		payload := powerCurvesResponse{Sport: args.Sport, Points: points, Meta: powerCurvesMeta{ServerVersion: normalizeVersion(version), Sport: args.Sport, Oldest: args.Oldest, Newest: args.Newest, CurveSpec: curveSpec, DurationSeconds: args.DurationSeconds, MissingBuckets: missing, IncludeFull: args.IncludeFull}}
+		points, missing := bucketPowerCurve(standardPowerCurve(set), args.DurationSeconds)
+		durabilityCurves := bucketDurabilityPowerCurves(set, args.DurationSeconds)
+		payload := powerCurvesResponse{Sport: args.Sport, Points: points, DurabilityCurves: durabilityCurves, Meta: powerCurvesMeta{ServerVersion: normalizeVersion(version), Sport: args.Sport, Oldest: args.Oldest, Newest: args.Newest, CurveSpec: curveSpec, DurationSeconds: args.DurationSeconds, MissingBuckets: missing, DurabilityCurveCount: len(durabilityCurves), WorkThresholdUnit: workThresholdUnit(durabilityCurves), IncludeFull: args.IncludeFull}}
 		if args.IncludeFull {
 			payload.Full = set.Raw
 		}
@@ -112,6 +132,62 @@ func bucketPowerCurve(curve intervals.DataCurve, buckets []int) ([]powerCurvePoi
 		points = append(points, powerCurvePoint{DurationSeconds: value.Bucket, Watts: value.Value, ActivityID: value.ActivityID})
 	}
 	return points, missing
+}
+
+func powerCurveRequestSpec(base string) string {
+	specs := make([]string, 0, len(powerDurabilityCurveSuffixes)+1)
+	specs = append(specs, base)
+	for _, suffix := range powerDurabilityCurveSuffixes {
+		specs = append(specs, base+suffix)
+	}
+	return strings.Join(specs, ",")
+}
+
+func standardPowerCurve(set intervals.DataCurveSet) intervals.DataCurve {
+	for _, curve := range set.List {
+		if curve.AfterKJ == nil || *curve.AfterKJ <= 0 {
+			return curve
+		}
+	}
+	return intervals.DataCurve{}
+}
+
+func bucketDurabilityPowerCurves(set intervals.DataCurveSet, buckets []int) []powerDurabilityCurve {
+	curves := make([]powerDurabilityCurve, 0)
+	for _, curve := range set.List {
+		if curve.AfterKJ == nil || *curve.AfterKJ <= 0 {
+			continue
+		}
+		points, missing := bucketPowerCurve(curve, buckets)
+		points, nonPositiveMissing := dropNonPositivePowerCurvePoints(points)
+		missing = append(missing, nonPositiveMissing...)
+		sort.Ints(missing)
+		if len(points) == 0 {
+			continue
+		}
+		curves = append(curves, powerDurabilityCurve{AfterKJ: *curve.AfterKJ, WorkThreshold: workThreshold{Value: *curve.AfterKJ, Unit: "kJ"}, Points: points, MissingBuckets: missing})
+	}
+	return curves
+}
+
+func dropNonPositivePowerCurvePoints(points []powerCurvePoint) ([]powerCurvePoint, []int) {
+	kept := make([]powerCurvePoint, 0, len(points))
+	missing := []int{}
+	for _, point := range points {
+		if point.Watts == nil || *point.Watts <= 0 {
+			missing = append(missing, point.DurationSeconds)
+			continue
+		}
+		kept = append(kept, point)
+	}
+	return kept, missing
+}
+
+func workThresholdUnit(curves []powerDurabilityCurve) string {
+	if len(curves) == 0 {
+		return ""
+	}
+	return "kJ"
 }
 
 func powerCurvesInputSchema() map[string]any {

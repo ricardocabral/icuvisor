@@ -1,12 +1,12 @@
 Prompt: Weekly planning
 Scope: week_start=2026-05-18.
 Resources: icuvisor://athlete-profile, icuvisor://event-categories, icuvisor://workout-syntax.
-Tools: get_athlete_profile, get_planning_context, get_events, get_training_plan, get_fitness, get_training_summary, get_activities, compute_compliance_rate, icuvisor_list_advanced_capabilities.
+Tools: get_athlete_profile, resolve_calendar_dates, get_planning_context, get_events, get_training_plan, get_fitness, get_training_summary, get_activities, compute_compliance_rate, icuvisor_list_advanced_capabilities.
 Do:
-- Read profile/timezone, then ask or confirm the planning anchor: race date, priority/category, goal, and constraints when missing.
+- Read profile/timezone, then ask or confirm the planning anchor: race date, priority/category, goal, and constraints when missing; for relative dates, weekdays, countdowns, or stale conversations, call resolve_calendar_dates and use its athlete-local date/weekday instead of UTC, client-time, or model arithmetic.
 - Use get_planning_context when available to gather week events, active training-plan context, upcoming races, fitness context, and SEASON_START season boundaries before suggesting changes.
 - Read planned events and active training-plan context before suggesting changes.
-- Use fitness, training summary, recent activities, and compliance to summarize current load, fatigue/freshness, and planned-versus-completed work.
+- Use fitness, training summary, recent activities, and compute_compliance_rate workout_status/status counts/caveats to summarize current load, fatigue/freshness, and planned-versus-completed work without inferring completion from calendar/activity co-occurrence.
 - If get_training_plan or compute_compliance_rate is unavailable, call icuvisor_list_advanced_capabilities and proceed from get_events, get_fitness, get_training_summary, and activities.
 - Use event categories and workout syntax resources by URI if the user asks for edits or workout details.
 - Draft a season/block/week proposal with assumptions, load constraints, and follow-up questions before any edits.

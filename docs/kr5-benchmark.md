@@ -72,7 +72,7 @@ Acceptable fixture rerun tolerance is zero for catalog token counts and zero for
 
 ## First-tool routing smoke eval
 
-The focused routing eval in `internal/toolrouting` and `scripts/toolroutingeval` covers first-tool-call selection for ambiguous prompts. It is separate from KR5: KR5 measures fixed call-plan token and response efficiency, while the routing eval checks whether catalog descriptions make the first MCP tool choice measurable for prompts such as ATP/periodization summaries versus raw calendar events, training-plan assignment, and fitness projection.
+The focused routing eval in `internal/toolrouting` and `scripts/toolroutingeval` covers first-tool-call selection for ambiguous prompts. It is separate from KR5: KR5 measures fixed call-plan token and response efficiency, while the routing eval checks whether catalog descriptions make the first MCP tool choice measurable for prompts such as arbitrary historical activity-window lists that should start with `get_activities`, ATP/periodization summaries versus raw calendar events, training-plan assignment, and fitness projection.
 
 Default execution is credential-free and CI-safe:
 

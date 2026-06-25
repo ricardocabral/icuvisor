@@ -36,6 +36,52 @@ func TestGetFitnessProjectionStandardRampGolden(t *testing.T) {
 	}
 }
 
+func TestFitnessActualAndProjectionShareTodayBoundaryWithoutGapOrDuplicate(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeFitnessMetricsClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		summaries: decodeSummaries(t, `[
+			{"date":"2026-05-23","fitness":70,"fatigue":78,"form":-8,"training_load":45},
+			{"date":"2026-05-24","fitness":72,"fatigue":81,"form":-9,"training_load":60},
+			{"date":"2026-05-25","fitness":73,"fatigue":82,"form":-9,"training_load":65}
+		]`),
+	}
+	fitnessTool := newGetFitnessTool(client, client, "test", "UTC", false)
+	fitnessResult, err := fitnessTool.Handler(context.Background(), Request{Name: fitnessTool.Name, Arguments: json.RawMessage(`{"start_date":"2026-05-24","end_date":"2026-05-24","include_full":true}`)})
+	if err != nil {
+		t.Fatalf("get_fitness Handler() error = %v", err)
+	}
+	fitnessRows := resultMap(t, fitnessResult)["fitness"].([]any)
+	if len(fitnessRows) != 1 || fitnessRows[0].(map[string]any)["date"] != "2026-05-24" {
+		t.Fatalf("fitness rows = %#v, want today included exactly once", fitnessRows)
+	}
+
+	projectionTool := newGetFitnessProjectionTool(client, client, "test", "UTC", false)
+	projectionResult, err := projectionTool.Handler(context.Background(), Request{Name: projectionTool.Name, Arguments: json.RawMessage(`{"start_date":"2026-05-24","horizon_days":2,"weekly_ramp_pct":0,"recovery_week_cadence":0,"include_full":true}`)})
+	if err != nil {
+		t.Fatalf("get_fitness_projection Handler() error = %v", err)
+	}
+	if len(client.summaryCalls) != 2 || client.summaryCalls[0].Start != "2026-05-24" || client.summaryCalls[0].End != "2026-05-24" || client.summaryCalls[1].Start != "2026-05-24" || client.summaryCalls[1].End != "2026-05-24" {
+		t.Fatalf("summary calls = %#v, want both tools seeded from athlete-local today only", client.summaryCalls)
+	}
+	root := analyzerMap(t, projectionResult.StructuredContent)
+	series := root["series"].([]any)
+	if len(series) != 3 {
+		t.Fatalf("projection series length = %d, want seed plus two projected days", len(series))
+	}
+	wantDates := []string{"2026-05-24", "2026-05-25", "2026-05-26"}
+	for i, wantDate := range wantDates {
+		point := series[i].(map[string]any)
+		if point["date"] != wantDate || point["day"] != float64(i) {
+			t.Fatalf("series[%d] = %#v, want date %s day %d", i, point, wantDate, i)
+		}
+	}
+	if series[0].(map[string]any)["training_load_source"] != "current_fitness" || series[1].(map[string]any)["training_load_source"] == "current_fitness" {
+		t.Fatalf("projection sources = %#v, want current_fitness only on seed date", series)
+	}
+}
+
 func TestGetFitnessProjectionRecoveryWeekFullGolden(t *testing.T) {
 	t.Parallel()
 

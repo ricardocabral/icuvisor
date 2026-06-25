@@ -296,6 +296,31 @@ func TestGetWellnessDataCurrentDayRangeAddsAsOfMetadata(t *testing.T) {
 	}
 }
 
+func TestGetWellnessDataCurrentDayRangeUsesAthleteLocalDateWhenUTCDateDiffers(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeWellnessClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		rows:              []intervals.Wellness{decodeWellnessRow(t, `{"id":"2026-05-24","sleepQuality":3}`)},
+	}
+	tool := newGetWellnessDataToolWithClock(client, client, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-05-24","newest":"2026-05-24"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if client.params.Oldest != "2026-05-24" || client.params.Newest != "2026-05-24" {
+		t.Fatalf("wellness params = %#v, want athlete-local current-day range", client.params)
+	}
+	payload := resultMap(t, result)
+	meta := payload["_meta"].(map[string]any)
+	assertSaoPauloAsOfMeta(t, meta)
+	rows := payload["wellness"].([]any)
+	if len(rows) != 1 || rows[0].(map[string]any)["date"] != "2026-05-24" {
+		t.Fatalf("wellness = %#v, want athlete-local current-day row despite UTC date 2026-05-25", rows)
+	}
+}
+
 func TestGetWellnessDataPastRangeOmitsAsOfMetadata(t *testing.T) {
 	t.Parallel()
 

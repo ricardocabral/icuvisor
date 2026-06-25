@@ -23,15 +23,16 @@ with my intervals.icu data.
    sleep duration, sleep quality, sleep score, HRV, resting heart rate, fatigue,
    soreness, stress, feel, mood, motivation, and any `_native` provider fields.
 3. Pull my current fitness, fatigue, and form (CTL / ATL / TSB).
-4. If a hard session is planned today, use `get_today` to read planned-event tags,
-   the planned `indoor` flag, weather availability/provenance, and any completed
-   warm-up activity tags before judging context.
+4. If a hard session is planned today, use `get_today` to read planned-event
+   `workout_status`, tags, the planned `indoor` flag, weather
+   availability/provenance, and any completed warm-up activity tags before
+   judging context.
 
 Then:
 - Give today's training-readiness guidance in one word — green, amber, or red — and why.
 - If the Intervals readiness field is missing or null, say that before using fallback signals.
 - Name the one or two signals driving that call.
-- Recommend whether to keep, modify, move, or execute indoors/outdoors today, naming any relevant planned-event tags, `indoor` flag, weather availability, or activity tags returned by icuvisor.
+- Recommend whether to keep, modify, move, or execute indoors/outdoors today, naming the planned-event `workout_status`, any relevant tags, `indoor` flag, weather availability, or activity tags returned by icuvisor.
 
 Rules: sleep quality is a 1-4 scale, sleep score is 0-100 when device-imported,
 and feel is a 1-5 scale — use the labels icuvisor returns, do not rescale them
@@ -55,7 +56,7 @@ create a second active workout for the same session.
 | 1 | [`get_athlete_profile`]({{< relref "/reference/tools#get_athlete_profile" >}}) | Confirms units and which wellness fields you track. |
 | 2 | [`get_wellness_data`]({{< relref "/reference/tools#get_wellness_data" >}}) | Readiness when present; sleep, HRV, resting HR, subjective scales, missing fields, provenance, and provider `_native` fields over the window. |
 | 3 | [`get_fitness`]({{< relref "/reference/tools#get_fitness" >}}) | CTL / ATL / TSB — the fatigue side of the picture. |
-| 4 | [`get_today`]({{< relref "/reference/tools#get_today" >}}) | Optional context for today's planned workout, `indoor` flag, weather availability/provenance, and completed activity tags. |
+| 4 | [`get_today`]({{< relref "/reference/tools#get_today" >}}) | Optional context for today's planned workout status, `indoor` flag, weather availability/provenance, and completed activity tags. |
 
 `analyze_correlation` can be added if you want to know whether a wellness metric tracks load over a longer window.
 

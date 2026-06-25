@@ -7,9 +7,11 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/analysis"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 )
 
 const (
@@ -31,19 +33,21 @@ type computeComplianceRequest struct {
 }
 
 type complianceEventRow struct {
-	EventID          string   `json:"event_id"`
-	Name             string   `json:"name,omitempty"`
-	Date             string   `json:"date,omitempty"`
-	Sport            string   `json:"sport,omitempty"`
-	EventType        string   `json:"event_type,omitempty"`
-	Target           float64  `json:"target"`
-	Actual           *float64 `json:"actual,omitempty"`
-	Delta            *float64 `json:"delta,omitempty"`
-	DeltaPercent     *float64 `json:"delta_percent,omitempty"`
-	Compliant        bool     `json:"compliant"`
-	PairedActivityID string   `json:"paired_activity_id,omitempty"`
-	PairingSource    string   `json:"pairing_source,omitempty"`
-	CautionReason    string   `json:"caution_reason,omitempty"`
+	EventID              string   `json:"event_id"`
+	Name                 string   `json:"name,omitempty"`
+	Date                 string   `json:"date,omitempty"`
+	Sport                string   `json:"sport,omitempty"`
+	EventType            string   `json:"event_type,omitempty"`
+	Target               float64  `json:"target"`
+	Actual               *float64 `json:"actual,omitempty"`
+	Delta                *float64 `json:"delta,omitempty"`
+	DeltaPercent         *float64 `json:"delta_percent,omitempty"`
+	Compliant            bool     `json:"compliant"`
+	WorkoutStatus        string   `json:"workout_status,omitempty"`
+	WorkoutStatusCaveats []string `json:"workout_status_caveats,omitempty"`
+	PairedActivityID     string   `json:"paired_activity_id,omitempty"`
+	PairingSource        string   `json:"pairing_source,omitempty"`
+	CautionReason        string   `json:"caution_reason,omitempty"`
 }
 type complianceResult struct {
 	Status                      string                `json:"status"`
@@ -65,6 +69,12 @@ type complianceResult struct {
 	ByEventType                 []complianceBreakdown `json:"by_event_type,omitempty"`
 	ExcludedEvents              int                   `json:"excluded_events,omitempty"`
 	UnpairedEvents              int                   `json:"unpaired_events,omitempty"`
+	MissedOrSkippedCount        int                   `json:"missed_or_skipped_count,omitempty"`
+	PlannedCount                int                   `json:"planned_count,omitempty"`
+	FutureCount                 int                   `json:"future_count,omitempty"`
+	CompletedLinkedCount        int                   `json:"completed_linked_count,omitempty"`
+	CompletedUnlinkedCount      int                   `json:"completed_unlinked_count,omitempty"`
+	WorkoutStatusCaveats        []string              `json:"workout_status_caveats,omitempty"`
 	AutoLapCaution              bool                  `json:"auto_lap_caution,omitempty"`
 	TruncatedActivityCandidates bool                  `json:"truncated_activity_candidates,omitempty"`
 	TruncatedEventCandidates    bool                  `json:"truncated_event_candidates,omitempty"`
@@ -102,21 +112,32 @@ type complianceAccumulator struct {
 }
 
 func newComputeComplianceRateTool(eventsClient EventsClient, activitiesClient ActivitiesClient, intervalsClient ActivityIntervalsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
-	shapeCfg := responseShapingOrDefault(shaping)
-	return fullTool(Tool{Name: computeComplianceRateName, Description: computeComplianceRateDescription, InputSchema: computeComplianceInputSchema(), OutputSchema: genericOutputSchema("Scheduled-vs-completed compliance with analyzer metadata."), Handler: computeComplianceRateHandler(eventsClient, activitiesClient, intervalsClient, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
+	return newComputeComplianceRateToolWithClock(eventsClient, activitiesClient, intervalsClient, profileClient, version, timezoneFallback, debugMetadata, time.Now, shaping...)
 }
 
-func computeComplianceRateHandler(eventsClient EventsClient, activitiesClient ActivitiesClient, intervalsClient ActivityIntervalsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
+func newComputeComplianceRateToolWithClock(eventsClient EventsClient, activitiesClient ActivitiesClient, intervalsClient ActivityIntervalsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, now func() time.Time, shaping ...responseShaping) Tool {
+	if now == nil {
+		now = time.Now
+	}
+	shapeCfg := responseShapingOrDefault(shaping)
+	return fullTool(Tool{Name: computeComplianceRateName, Description: computeComplianceRateDescription, InputSchema: computeComplianceInputSchema(), OutputSchema: genericOutputSchema("Scheduled-vs-completed compliance with analyzer metadata, explicit workout_status fields, and missed/skipped caveats."), Handler: computeComplianceRateHandler(eventsClient, activitiesClient, intervalsClient, profileClient, version, timezoneFallback, debugMetadata, now, shapeCfg)})
+}
+
+func computeComplianceRateHandler(eventsClient EventsClient, activitiesClient ActivitiesClient, intervalsClient ActivityIntervalsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, now func() time.Time, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeComputeComplianceRequest(req.Arguments)
 		if err != nil {
 			return Result{}, NewUserError(invalidComputeComplianceArgumentsMessage, err)
 		}
-		unitSystem, _, err := toolProfile(ctx, profileClient, timezoneFallback)
+		unitSystem, timezoneName, err := toolProfile(ctx, profileClient, timezoneFallback)
 		if err != nil {
 			return Result{}, NewUserError(fetchComputeComplianceMessage, err)
 		}
-		result, series, meta, err := computeCompliance(ctx, args, eventsClient, activitiesClient, intervalsClient)
+		asOf, err := response.AsOfMetadataInTimezone(now(), timezoneName)
+		if err != nil {
+			return Result{}, NewUserError(fetchComputeComplianceMessage, err)
+		}
+		result, series, meta, err := computeCompliance(ctx, args, eventsClient, activitiesClient, intervalsClient, asOf.AsOfDate)
 		if err != nil {
 			if contextError(err) {
 				return Result{}, err
@@ -164,7 +185,7 @@ func decodeComputeComplianceRequest(raw json.RawMessage) (computeComplianceReque
 	return args, nil
 }
 
-func computeCompliance(ctx context.Context, args computeComplianceRequest, eventsClient EventsClient, activitiesClient ActivitiesClient, intervalsClient ActivityIntervalsClient) (complianceResult, []complianceEventRow, analysis.AnalyzerMetaInput, error) {
+func computeCompliance(ctx context.Context, args computeComplianceRequest, eventsClient EventsClient, activitiesClient ActivitiesClient, intervalsClient ActivityIntervalsClient, asOfDate string) (complianceResult, []complianceEventRow, analysis.AnalyzerMetaInput, error) {
 	if eventsClient == nil || activitiesClient == nil {
 		return complianceResult{}, nil, analysis.AnalyzerMetaInput{}, errors.New("missing events or activities client")
 	}
@@ -212,6 +233,8 @@ func computeCompliance(ctx context.Context, args computeComplianceRequest, event
 	intervalUsed := false
 	intervalUnavailable := false
 	intervalEvidence := analysis.IntervalSourceResult{}
+	statusCounts := map[string]int{}
+	statusCaveats := []string{}
 	reservedByEvent, reservedActivities, linkConflicts := buildComplianceReservations(scheduled, activities, linked, args.TargetMetric)
 	for _, event := range scheduled {
 		target, targetKind, ok := complianceTarget(event, args.TargetMetric)
@@ -233,6 +256,7 @@ func computeCompliance(ctx context.Context, args computeComplianceRequest, event
 		if linkConflicts[eventID] {
 			unpaired++
 			row.PairingSource = "linked_conflict"
+			applyComplianceUnpairedStatus(&row, asOfDate, statusCounts, &statusCaveats)
 			series = append(series, row)
 			continue
 		}
@@ -246,6 +270,7 @@ func computeCompliance(ctx context.Context, args computeComplianceRequest, event
 		if activity == nil {
 			unpaired++
 			row.PairingSource = "unpaired"
+			applyComplianceUnpairedStatus(&row, asOfDate, statusCounts, &statusCaveats)
 			series = append(series, row)
 			continue
 		}
@@ -282,12 +307,13 @@ func computeCompliance(ctx context.Context, args computeComplianceRequest, event
 		row.Compliant = compliant
 		row.PairedActivityID = activity.ID
 		row.PairingSource = source
+		applyComplianceCompletedStatus(&row, source, statusCounts, &statusCaveats)
 		series = append(series, row)
 		addCompliance(acc, compliant, delta, pct)
 		addCompliance(sportAcc, compliant, delta, pct)
 		addCompliance(typeAcc, compliant, delta, pct)
 	}
-	result := complianceResult{Status: "ok", StartDate: args.StartDate, EndDate: args.EndDate, Sport: args.Sport, EventType: args.EventType, TargetMetric: args.TargetMetric, TolerancePercent: args.TolerancePercent, ScheduledCount: acc.scheduled, CompletedCount: acc.completed, CompliantCount: acc.compliant, ComplianceRate: ratePtr(acc.compliant, acc.scheduled), MeanDeltaPercent: meanPtr(acc.deltaPct), BySport: breakdowns(bySport), ByEventType: breakdowns(byType), ExcludedEvents: excluded, UnpairedEvents: unpaired, AutoLapCaution: autoLap, TruncatedActivityCandidates: activityTruncated, TruncatedEventCandidates: eventTruncated, DeltaSampleCount: acc.completed}
+	result := complianceResult{Status: "ok", StartDate: args.StartDate, EndDate: args.EndDate, Sport: args.Sport, EventType: args.EventType, TargetMetric: args.TargetMetric, TolerancePercent: args.TolerancePercent, ScheduledCount: acc.scheduled, CompletedCount: acc.completed, CompliantCount: acc.compliant, ComplianceRate: ratePtr(acc.compliant, acc.scheduled), MeanDeltaPercent: meanPtr(acc.deltaPct), BySport: breakdowns(bySport), ByEventType: breakdowns(byType), ExcludedEvents: excluded, UnpairedEvents: unpaired, MissedOrSkippedCount: statusCounts[workoutStatusMissedOrSkipped], PlannedCount: statusCounts[workoutStatusPlanned], FutureCount: statusCounts[workoutStatusFuture], CompletedLinkedCount: statusCounts[workoutStatusCompletedLinked], CompletedUnlinkedCount: statusCounts[workoutStatusCompletedUnlinked], WorkoutStatusCaveats: statusCaveats, AutoLapCaution: autoLap, TruncatedActivityCandidates: activityTruncated, TruncatedEventCandidates: eventTruncated, DeltaSampleCount: acc.completed}
 	switch args.TargetMetric {
 	case "time":
 		result.MeanDeltaSeconds = meanPtr(acc.delta)
@@ -305,14 +331,36 @@ func computeCompliance(ctx context.Context, args computeComplianceRequest, event
 		}
 		result.InsufficientReason = "no_scheduled_target_events"
 	}
-	meta := analysis.AnalyzerMetaInput{Method: "scheduled_completed_event_compliance", SourceTools: []string{getEventsName, getActivitiesName}, N: acc.scheduled, MissingDays: 0, MissingAction: analysis.MissingActionSkip, Assumptions: map[string]any{"target_metric": args.TargetMetric, "tolerance_percent": args.TolerancePercent, "activity_candidates_truncated": activityTruncated, "event_candidates_truncated": eventTruncated}, Boundaries: complianceBoundaries(activityTruncated, eventTruncated, intervalUnavailable), InsufficientSample: boolPtr(acc.scheduled == 0)}
+	meta := analysis.AnalyzerMetaInput{Method: "scheduled_completed_event_compliance", SourceTools: []string{getEventsName, getActivitiesName}, N: acc.scheduled, MissingDays: 0, MissingAction: analysis.MissingActionSkip, Assumptions: map[string]any{"target_metric": args.TargetMetric, "tolerance_percent": args.TolerancePercent, "activity_candidates_truncated": activityTruncated, "event_candidates_truncated": eventTruncated, "workout_status_as_of_date": asOfDate}, Boundaries: complianceBoundaries(activityTruncated, eventTruncated, intervalUnavailable, result.PlannedCount+result.FutureCount > 0), InsufficientSample: boolPtr(acc.scheduled == 0)}
 	if intervalUsed {
 		meta = analysis.ApplyIntervalSourceEvidence(meta, intervalEvidence)
 	}
 	return result, series, meta, nil
 }
 
-func complianceBoundaries(activityTruncated bool, eventTruncated bool, intervalUnavailable bool) []string {
+func applyComplianceUnpairedStatus(row *complianceEventRow, asOfDate string, counts map[string]int, resultCaveats *[]string) {
+	status, caveats := dateDerivedWorkoutStatus(row.Date, asOfDate)
+	row.WorkoutStatus = status
+	row.WorkoutStatusCaveats = caveats
+	if status != "" {
+		counts[status]++
+	}
+	*resultCaveats = appendCaveats(*resultCaveats, caveats...)
+}
+
+func applyComplianceCompletedStatus(row *complianceEventRow, source string, counts map[string]int, resultCaveats *[]string) {
+	if source == "linked" {
+		row.WorkoutStatus = workoutStatusCompletedLinked
+		counts[workoutStatusCompletedLinked]++
+		return
+	}
+	row.WorkoutStatus = workoutStatusCompletedUnlinked
+	row.WorkoutStatusCaveats = appendCaveats(row.WorkoutStatusCaveats, workoutCaveatDateMetricNotExplicit)
+	counts[workoutStatusCompletedUnlinked]++
+	*resultCaveats = appendCaveats(*resultCaveats, row.WorkoutStatusCaveats...)
+}
+
+func complianceBoundaries(activityTruncated bool, eventTruncated bool, intervalUnavailable bool, hasPendingOrFuture bool) []string {
 	boundaries := []string{"one-to-one event/activity matching", "raw streams are not used for compliance"}
 	if activityTruncated {
 		boundaries = append(boundaries, "activity candidates truncated at deterministic cap")
@@ -322,6 +370,9 @@ func complianceBoundaries(activityTruncated bool, eventTruncated bool, intervalU
 	}
 	if intervalUnavailable {
 		boundaries = append(boundaries, "interval execution evidence could not be verified for one or more paired workout-doc events")
+	}
+	if hasPendingOrFuture {
+		boundaries = append(boundaries, "scheduled_count includes planned/future target events; use workout_status counts before interpreting compliance_rate as due-workout adherence")
 	}
 	return boundaries
 }

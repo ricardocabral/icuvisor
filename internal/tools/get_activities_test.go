@@ -118,6 +118,37 @@ func TestGetActivitiesCurrentDayRangeAddsAsOfMetadata(t *testing.T) {
 	}
 }
 
+func TestGetActivitiesRowsPreserveAthleteLocalDateWhenUTCDateDiffers(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivitiesProfileClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		activities: decodeActivityPage(t,
+			`{"id":"late-local","name":"Late local ride","type":"Ride","start_date_local":"2026-05-24T23:20:00","start_date":"2026-05-25T02:20:00Z","timezone":"America/Sao_Paulo","distance":30000}`,
+		),
+	}
+	tool := newGetActivitiesToolWithGearAndClock(client, client, nil, nil, nil, nil, "test", "UTC", false, fixedTodayClock())
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-05-24","newest":"2026-05-24","page_size":10}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-05-24" || client.listCalls[0].Newest != "2026-05-24" {
+		t.Fatalf("ListActivities calls = %#v, want athlete-local date window", client.listCalls)
+	}
+	out := resultMap(t, result)
+	meta := out["_meta"].(map[string]any)
+	assertSaoPauloAsOfMeta(t, meta)
+	rows := out["activities"].([]any)
+	if len(rows) != 1 {
+		t.Fatalf("activities = %#v, want one local-day row", rows)
+	}
+	row := rows[0].(map[string]any)
+	if row["activity_id"] != "late-local" || row["start_date_local"] != "2026-05-24T23:20:00" || row["start_date_utc"] != "2026-05-25T02:20:00Z" || row["timezone"] != "America/Sao_Paulo" {
+		t.Fatalf("activity row = %#v, want local date preserved separately from UTC date", row)
+	}
+}
+
 func TestGetActivitiesPastRangeOmitsAsOfMetadata(t *testing.T) {
 	t.Parallel()
 

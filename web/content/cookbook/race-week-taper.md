@@ -18,12 +18,14 @@ The taper is where good fitness is either sharpened or wasted. This recipe makes
 I have a [RACE TYPE — e.g. hilly road race, ~3h] on [RACE_DATE]. Plan my
 taper. Use icuvisor with my intervals.icu data.
 
-1. Read my athlete profile, and my calendar events around race week to
-   confirm the race and what is already scheduled.
-2. Pull my fitness trend (CTL / ATL / TSB) and training-load summary for
+1. Read my athlete profile and resolve any relative dates, countdowns, or
+   weekday/date pairings with `resolve_calendar_dates` in my athlete timezone.
+2. Read my calendar events around race week to confirm the race and what is
+   already scheduled.
+3. Pull my fitness trend (CTL / ATL / TSB) and training-load summary for
    the last 6 weeks.
-3. Pull my recent activities and my recent wellness.
-4. Project where form (TSB) lands on race day under a reduced taper load.
+4. Pull my recent activities and my recent wellness.
+5. Project where form (TSB) lands on race day under a reduced taper load.
 
 Then give me:
 - A day-by-day taper outline from today to race day: load, intensity, and
@@ -40,10 +42,11 @@ myself. Do not invent fitness numbers; if the window is short on data, say so.
 
 | Step | Tool | Why |
 | --- | --- | --- |
-| 1 | [`get_athlete_profile`]({{< relref "/reference/tools#get_athlete_profile" >}}), [`get_events`]({{< relref "/reference/tools#get_events" >}}) | Confirms the race and race-week calendar. |
-| 2 | [`get_fitness`]({{< relref "/reference/tools#get_fitness" >}}), [`get_training_summary`]({{< relref "/reference/tools#get_training_summary" >}}) | CTL/ATL/TSB and recent load to taper from. |
-| 3 | [`get_activities`]({{< relref "/reference/tools#get_activities" >}}), [`get_wellness_data`]({{< relref "/reference/tools#get_wellness_data" >}}) | Freshness and recovery signals. |
-| 4 | [`get_fitness_projection`]({{< relref "/reference/tools#get_fitness_projection" >}}) | Simulates race-day TSB under the proposed taper load. |
+| 1 | [`get_athlete_profile`]({{< relref "/reference/tools#get_athlete_profile" >}}), [`resolve_calendar_dates`]({{< relref "/reference/tools#resolve_calendar_dates" >}}) | Pins today, countdowns, and weekday/date pairings to the athlete-local calendar before planning. |
+| 2 | [`get_events`]({{< relref "/reference/tools#get_events" >}}) | Confirms the race and race-week calendar. |
+| 3 | [`get_fitness`]({{< relref "/reference/tools#get_fitness" >}}), [`get_training_summary`]({{< relref "/reference/tools#get_training_summary" >}}) | CTL/ATL/TSB and recent load to taper from. |
+| 4 | [`get_activities`]({{< relref "/reference/tools#get_activities" >}}), [`get_wellness_data`]({{< relref "/reference/tools#get_wellness_data" >}}) | Freshness and recovery signals. |
+| 5 | [`get_fitness_projection`]({{< relref "/reference/tools#get_fitness_projection" >}}) | Simulates race-day TSB under the proposed taper load. |
 
 ## A good answer looks like
 
@@ -74,10 +77,11 @@ myself. Do not invent fitness numbers; if the window is short on data, say so.
 
 ## Why this prompt works
 
+- **Date-anchored.** `resolve_calendar_dates` prevents stale-chat, UTC, or client-time date math from shifting the taper to the wrong day.
 - **Projection-anchored.** `get_fitness_projection` turns "rest up" into a specific load percentage that hits a TSB number — testable, not vibes.
 - **No-write rule.** Race week is the worst time for an accidental calendar edit. Explicitly forbidding writes keeps the assistant advisory.
 - **Wellness watch.** Adding the freshness signals to monitor makes the taper adaptive instead of a fixed script.
 
 {{< callout type="info" >}}
-The `race_week_taper` [MCP prompt]({{< relref "/reference/resources-prompts" >}}) runs this workflow and validates the race date before starting.
+The `race_week_taper` [MCP prompt]({{< relref "/reference/resources-prompts" >}}) runs this workflow and validates the race date before starting; use `resolve_calendar_dates` first when the date came from "today," a countdown, or a weekday phrase.
 {{< /callout >}}

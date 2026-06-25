@@ -68,6 +68,9 @@ type getEventsRow struct {
 	PlanAppliedLocal         string                `json:"plan_applied_local,omitempty"`
 	Updated                  string                `json:"updated,omitempty"`
 	UpdatedLocal             string                `json:"updated_local,omitempty"`
+	WorkoutStatus            string                `json:"workout_status,omitempty"`
+	WorkoutStatusCaveats     []string              `json:"workout_status_caveats,omitempty"`
+	PairedActivityID         string                `json:"paired_activity_id,omitempty"`
 	Tags                     *[]string             `json:"tags,omitempty"`
 	Full                     map[string]any        `json:"full,omitempty"`
 }
@@ -111,7 +114,12 @@ func getEventsHandler(client EventsClient, profileClient ProfileClient, version 
 		if client == nil {
 			return Result{}, NewUserError(fetchEventsMessage, errors.New("missing events client"))
 		}
-		asOfMeta, err := currentDayAsOfMetadata(now, timezoneName, args.Oldest, args.Newest)
+		current := now()
+		statusAsOf, err := response.AsOfMetadataInTimezone(current, timezoneName)
+		if err != nil {
+			return Result{}, NewUserError(fetchEventsMessage, err)
+		}
+		asOfMeta, err := currentDayAsOfMetadata(func() time.Time { return current }, timezoneName, args.Oldest, args.Newest)
 		if err != nil {
 			return Result{}, NewUserError(fetchEventsMessage, err)
 		}
@@ -122,7 +130,7 @@ func getEventsHandler(client EventsClient, profileClient ProfileClient, version 
 			}
 			return Result{}, NewUserError(fetchEventsMessage, err)
 		}
-		payload, err := shapeGetEventsResponse(events, args, timezoneName, asOfMeta, profile, unitSystem)
+		payload, err := shapeGetEventsResponse(events, args, timezoneName, asOfMeta, statusAsOf.AsOfDate, profile, unitSystem)
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_events response: %w", err)
 		}
@@ -164,7 +172,7 @@ func decodeGetEventsRequest(raw json.RawMessage) (getEventsRequest, error) {
 	return args, nil
 }
 
-func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, timezoneName string, asOfMeta *response.AsOfMetadata, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) (getEventsResponse, error) {
+func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, timezoneName string, asOfMeta *response.AsOfMetadata, statusAsOfDate string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) (getEventsResponse, error) {
 	limit := args.Limit
 	if limit <= 0 {
 		limit = defaultEventsLimit
@@ -180,6 +188,7 @@ func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, tim
 		if err != nil {
 			return getEventsResponse{}, err
 		}
+		applyEventWorkoutStatus(&row, event, statusAsOfDate)
 		rows = append(rows, row)
 	}
 	sort.SliceStable(rows, func(i, j int) bool {
@@ -308,5 +317,5 @@ func getEventsInputSchema() map[string]any {
 }
 
 func getEventsOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Bounded calendar event rows with raw upstream category enum values, date-range metadata, truncation metadata, athlete timezone, conditional athlete-local as_of/as_of_date/as_of_weekday metadata when the range includes the current local day, and optional full raw payloads."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Bounded calendar event rows with raw upstream category enum values, explicit workout_status/workout_status_caveats for workout target rows, date-range metadata, truncation metadata, athlete timezone, conditional athlete-local as_of/as_of_date/as_of_weekday metadata when the range includes the current local day, and optional full raw payloads."}
 }

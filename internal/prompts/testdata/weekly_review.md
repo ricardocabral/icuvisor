@@ -6,7 +6,7 @@ Do:
 - Read profile first to establish athlete-local timezone, current date, sport settings, and units; compare days only after converting to athlete-local dates.
 - Define the athlete-local review window before reading data; do not include wellness, activities, or summary rows after that end date unless the user requested next-week or current-day context.
 - Use fitness, training summary, and compute_zone_time to summarize load, volume, intensity mix, and fatigue/freshness changes.
-- Use compute_load_balance and compute_compliance_rate when available; otherwise call icuvisor_list_advanced_capabilities, continue from available reads, and name the missing helper.
+- Use compute_load_balance and compute_compliance_rate when available; read compute_compliance_rate workout_status, status counts, and caveats before describing planned-vs-completed gaps; otherwise call icuvisor_list_advanced_capabilities, continue from available reads, and name the missing helper.
 - Review activities, race/other events, and training plan for planned-versus-completed work; include race date/priority when relevant and the upcoming-week preview only when include_next_week is true or the user asks.
 - Use wellness data for sleep/readiness/HRV context; check `_meta.stale`, `_meta.missing_fields`, provenance warnings, and treat current-day `_meta.as_of` as partial-day context only.
 - When readiness is present, cite `_meta.provenance.readiness.source` and `native_scale`; treat Garmin Body Battery, Oura readiness, Polar nightly recharge/ANS charge, WHOOP recovery, and unknown upstream readiness as provider-native signals, not a universal recovery score.

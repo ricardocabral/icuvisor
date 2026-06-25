@@ -88,6 +88,42 @@ func TestGetEventByIDFallbackScansDateWindowWithResolveAndCap(t *testing.T) {
 	}
 }
 
+func TestGetEventByIDNoHintFallbackUsesAthleteLocalTodayWhenUTCDateDiffers(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		eventDetailErr:    fmt.Errorf("detail: %w", intervals.ErrNotFound),
+		events:            decodeToolEvents(t, `{"id":"target","name":"Recovered local event","category":"WORKOUT","start_date_local":"2026-05-24T23:30:00"}`),
+	}
+	tool := newGetEventByIDToolWithClock(client, client, "test", "UTC", false, fixedNow("2026-05-25T02:30:00Z"))
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"event_id":"target"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.listCalls) != 1 {
+		t.Fatalf("list calls = %d, want fallback scan", len(client.listCalls))
+	}
+	call := client.listCalls[0]
+	if call.Oldest != "2026-04-24" || call.Newest != "2026-06-23" || call.Limit != fallbackEventByIDLimit || call.Resolve == nil || !*call.Resolve {
+		t.Fatalf("fallback ListEvents params = %#v, want ±30 days around athlete-local 2026-05-24", call)
+	}
+	out := resultMap(t, result)
+	row := out["event"].(map[string]any)
+	if row["event_id"] != "target" || row["start_date_local"] != "2026-05-24T23:30:00" {
+		t.Fatalf("event row = %#v, want recovered athlete-local event", row)
+	}
+	meta := out["_meta"].(map[string]any)
+	if meta["timezone"] != "America/Sao_Paulo" || meta["source"] != "list_scan" || meta["recovered"] != true {
+		t.Fatalf("meta = %#v, want local timezone list-scan recovery", meta)
+	}
+	scanned := meta["scanned_range"].(map[string]any)
+	if scanned["oldest"] != "2026-04-24" || scanned["newest"] != "2026-06-23" {
+		t.Fatalf("scanned_range = %#v, want athlete-local no-hint window", scanned)
+	}
+}
+
 func TestGetEventByIDMissReturnsStructuredUnavailable(t *testing.T) {
 	t.Parallel()
 
