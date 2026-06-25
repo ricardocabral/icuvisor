@@ -11,6 +11,15 @@
       "notes": "Confusable read case: details for one known activity should route to get_activity_details before streams or lists."
     },
     {
+      "id": "activity-around-known-reference",
+      "prompt": "For activity 123456, show me the activities recorded around it so I can compare nearby workouts without choosing dates myself.",
+      "expected_first_tool": "get_activities_around",
+      "catalog_mode": "core_safe",
+      "toolset": "core",
+      "delete_mode": "safe",
+      "notes": "Known reference activity prompts asking for nearby/around context should use get_activities_around rather than inventing a date window or fetching one activity's details."
+    },
+    {
       "id": "activity-window-explicit-date-range",
       "prompt": "List all my activities from 2025-06-01 through 2025-11-30 so I can review that historical block.",
       "expected_first_tool": "get_activities",
