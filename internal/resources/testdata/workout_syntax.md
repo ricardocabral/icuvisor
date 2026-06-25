@@ -55,6 +55,8 @@ Main set 3x
 - `hr_zone` (`hr`): Heart-rate zones. Units: `ZONE`, `HR_ZONE`.
 - `pace_percent` (`pace`): Pace as percent threshold pace; blank units default to percent threshold pace. Units: ``, `PERCENT_THRESHOLD`, `PERCENT_THRESHOLD_PACE`, `PERCENT_PACE`, `%PACE`.
 - `pace_zone` (`pace`): Pace zones. Units: `ZONE`, `PACE_ZONE`.
+- `pace_mins_km` (`pace`): Absolute running pace in seconds per kilometer, serialized as `mm:ss/km Pace`. Units: `MINS_KM`.
+- `pace_mins_mile` (`pace`): Absolute running pace in seconds per mile, serialized as `mm:ss/mi Pace`. Units: `MINS_MILE`.
 - `pace_numeric` (`pace`): Numeric PACE values as currently emitted by the serializer. Units: `PACE`.
 - `rpe` (`rpe`): Rating of perceived exertion scalar or range. Units: ``, `RPE`.
 
@@ -200,7 +202,7 @@ Heart-rate targets support percent max HR, percent LTHR, bpm, HR zones, scalar v
 
 ### Pace targets
 
-Pace targets support percent threshold pace, pace zones, numeric PACE values, and non-ramp text pace labels.
+Pace targets support percent threshold pace, pace zones, absolute seconds-per-km or seconds-per-mile values, numeric PACE values, and non-ramp text pace labels.
 
 - `pace_percent`: Percent threshold pace scalar.
 
@@ -212,6 +214,18 @@ Pace targets support percent threshold pace, pace zones, numeric PACE values, an
 
 ```text
 - Pace zone 10m Z2-Z3 Pace
+```
+
+- `pace_mins_km`: Absolute seconds-per-km pace.
+
+```text
+- Metric pace 5m 5:00/km Pace
+```
+
+- `pace_mins_mile`: Absolute seconds-per-mile pace.
+
+```text
+- Imperial pace 8m 8:00/mi Pace
 ```
 
 - `pace_numeric`: Numeric PACE unit as currently serialized.
