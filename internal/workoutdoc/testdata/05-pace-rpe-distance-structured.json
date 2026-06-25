@@ -1,7 +1,7 @@
 {
   "steps": [
     { "duration": 600, "pace": { "min": 78, "max": 82, "units": "PERCENT_THRESHOLD" } },
-    { "distance": { "value": 1, "unit": "km" }, "pace": { "text": "5:00/km Pace" } },
+    { "distance": { "value": 1, "unit": "km" }, "pace": { "value": 300, "units": "MINS_KM" } },
     { "duration": 60, "rpe": { "value": 5, "units": "RPE" } }
   ]
 }

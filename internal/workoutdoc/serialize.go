@@ -167,6 +167,9 @@ func formatTarget(family string, target Target, ramp bool, options SerializeOpti
 		return "", err
 	}
 	unit := canonicalUnit(target.Units)
+	if family == "pace" && isAbsolutePaceUnit(unit) {
+		return formatAbsolutePaceTarget(lo, hi, ranged, unit)
+	}
 	for _, syntax := range workoutTargetUnits {
 		if syntax.Family != family || !syntaxUnitMatches(syntax.Units, unit) {
 			continue
@@ -203,6 +206,32 @@ func explicitZoneMetricSuffix(family string, fallback string) string {
 	default:
 		return fallback
 	}
+}
+
+func isAbsolutePaceUnit(unit string) bool {
+	return unit == "MINS_KM" || unit == "MINS_MILE"
+}
+
+func formatAbsolutePaceTarget(lo, hi float64, ranged bool, unit string) (string, error) {
+	if lo <= 0 || (ranged && hi <= 0) {
+		return "", fmt.Errorf("absolute pace targets must be positive")
+	}
+	suffix := "/km"
+	if unit == "MINS_MILE" {
+		suffix = "/mi"
+	}
+	formatted := formatPaceDuration(lo)
+	if ranged {
+		formatted += "-" + formatPaceDuration(hi)
+	}
+	return formatted + suffix + " Pace", nil
+}
+
+func formatPaceDuration(seconds float64) string {
+	total := int(math.Round(seconds))
+	minutes := total / 60
+	remaining := total % 60
+	return fmt.Sprintf("%d:%02d", minutes, remaining)
 }
 
 func syntaxUnitMatches(units []string, unit string) bool {

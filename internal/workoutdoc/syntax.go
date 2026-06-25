@@ -82,6 +82,8 @@ var workoutTargetUnits = []TargetUnitSyntax{
 	{Key: "hr_zone", Family: "hr", Units: []string{"ZONE", "HR_ZONE"}, Suffix: " HR", Zone: true, Description: "Heart-rate zones."},
 	{Key: "pace_percent", Family: "pace", Units: []string{"", "PERCENT_THRESHOLD", "PERCENT_THRESHOLD_PACE", "PERCENT_PACE", "%PACE"}, Suffix: "% Pace", Description: "Pace as percent threshold pace; blank units default to percent threshold pace."},
 	{Key: "pace_zone", Family: "pace", Units: []string{"ZONE", "PACE_ZONE"}, Suffix: " Pace", Zone: true, Description: "Pace zones."},
+	{Key: "pace_mins_km", Family: "pace", Units: []string{"MINS_KM"}, Suffix: "/km Pace", Description: "Absolute running pace in seconds per kilometer, serialized as `mm:ss/km Pace`."},
+	{Key: "pace_mins_mile", Family: "pace", Units: []string{"MINS_MILE"}, Suffix: "/mi Pace", Description: "Absolute running pace in seconds per mile, serialized as `mm:ss/mi Pace`."},
 	{Key: "pace_numeric", Family: "pace", Units: []string{"PACE"}, Suffix: " Pace", Description: "Numeric PACE values as currently emitted by the serializer."},
 	{Key: "rpe", Family: "rpe", Units: []string{"", "RPE"}, Prefix: "RPE ", Description: "Rating of perceived exertion scalar or range."},
 }
@@ -189,10 +191,12 @@ func WorkoutSyntaxSpec() SyntaxSpec {
 			{
 				Key:         "pace_targets",
 				Title:       "Pace targets",
-				Description: "Pace targets support percent threshold pace, pace zones, numeric PACE values, and non-ramp text pace labels.",
+				Description: "Pace targets support percent threshold pace, pace zones, absolute seconds-per-km or seconds-per-mile values, numeric PACE values, and non-ramp text pace labels.",
 				Examples: []SyntaxExample{
 					{Key: "pace_percent", Description: "Percent threshold pace scalar.", Step: Step{Description: "Cruise", Duration: 600, Pace: targetValue(95, "PERCENT_THRESHOLD")}},
 					{Key: "pace_zone", Description: "Pace zone range.", Step: Step{Description: "Pace zone", Duration: 600, Pace: targetRange(2, 3, "PACE_ZONE")}},
+					{Key: "pace_mins_km", Description: "Absolute seconds-per-km pace.", Step: Step{Description: "Metric pace", Duration: 300, Pace: targetValue(300, "MINS_KM")}},
+					{Key: "pace_mins_mile", Description: "Absolute seconds-per-mile pace.", Step: Step{Description: "Imperial pace", Duration: 480, Pace: targetValue(480, "MINS_MILE")}},
 					{Key: "pace_numeric", Description: "Numeric PACE unit as currently serialized.", Step: Step{Description: "Numeric pace", Duration: 300, Pace: targetValue(5, "PACE")}},
 					{Key: "pace_text", Description: "Text pace label.", Step: Step{Description: "Marathon", Duration: 1200, Pace: &Target{Text: "Marathon Pace"}}},
 				},

@@ -16,6 +16,7 @@ var (
 	bpmTokenRE      = regexp.MustCompile(`^([0-9]+(?:\.[0-9]+)?)(?:-([0-9]+(?:\.[0-9]+)?))?bpm$`)
 	rpmTokenRE      = regexp.MustCompile(`^([0-9]+(?:\.[0-9]+)?)(?:-([0-9]+(?:\.[0-9]+)?))?rpm$`)
 	zoneTokenRE     = regexp.MustCompile(`^Z([0-9]+)(?:-Z([0-9]+))?$`)
+	paceTokenRE     = regexp.MustCompile(`^([0-9]+):([0-9]{2})(?:-([0-9]+):([0-9]{2}))?/(km|mi)$`)
 )
 
 // Parse reads the canonical Intervals.icu workout-description DSL emitted by Serialize.
@@ -212,11 +213,40 @@ func parsePrimaryTarget(step *Step, tokens []string) error {
 			return nil
 		}
 	}
+	if len(tokens) == 2 && strings.EqualFold(tokens[1], "Pace") {
+		if target, ok := parseAbsolutePaceTarget(tokens[0]); ok {
+			step.Pace = targetForStep(step, target)
+			return nil
+		}
+	}
 	if len(tokens) >= 2 && strings.EqualFold(tokens[len(tokens)-1], "Pace") {
 		step.Pace = &Target{Text: strings.Join(tokens, " ")}
 		return nil
 	}
 	return fmt.Errorf("unsupported workout target %q", strings.Join(tokens, " "))
+}
+
+func parseAbsolutePaceTarget(token string) (*Target, bool) {
+	match := paceTokenRE.FindStringSubmatch(token)
+	if match == nil {
+		return nil, false
+	}
+	lo := parsePaceDuration(match[1], match[2])
+	unit := "MINS_KM"
+	if match[5] == "mi" {
+		unit = "MINS_MILE"
+	}
+	if match[3] == "" {
+		return &Target{Value: &lo, Units: unit}, true
+	}
+	hi := parsePaceDuration(match[3], match[4])
+	return &Target{Min: &lo, Max: &hi, Units: unit}, true
+}
+
+func parsePaceDuration(minutesToken, secondsToken string) float64 {
+	minutes, _ := strconv.Atoi(minutesToken)
+	seconds, _ := strconv.Atoi(secondsToken)
+	return float64(minutes*60 + seconds)
 }
 
 func parseDurationToken(token string) (int, bool) {

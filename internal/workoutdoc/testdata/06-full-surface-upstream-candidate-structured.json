@@ -52,7 +52,7 @@
     {
       "description": "Mile Pace",
       "distance": { "value": 1, "unit": "mi" },
-      "pace": { "text": "5:55/mi Pace" }
+      "pace": { "value": 355, "units": "MINS_MILE" }
     },
     {
       "description": "Open",
