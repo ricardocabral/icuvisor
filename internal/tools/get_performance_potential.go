@@ -162,10 +162,10 @@ func getPerformancePotentialHandler(client PerformancePotentialClient, profileCl
 		}
 		unitSystem := profileUnitSystem(profile)
 		curveSpec := rangeCurveSpec(args.StartDate, args.EndDate)
-		profileResponse := athleteprofile.NewResponse(profile, version, "", false)
+		profileSports := athleteprofile.NewResponse(profile, version, "", false).SportSettings
 		payload := performancePotentialResponse{Sports: make([]performancePotentialSport, 0, len(args.Sports)), Meta: performancePotentialMeta{ServerVersion: normalizeVersion(version), StartDate: args.StartDate, EndDate: args.EndDate, Sports: append([]string(nil), args.Sports...), PowerDurationSeconds: append([]int(nil), args.PowerDurationSeconds...), HRDurationSeconds: append([]int(nil), args.HRDurationSeconds...), PaceDistanceMeters: append([]int(nil), args.PaceDistanceMeters...), CurveSpec: curveSpec, SourceTools: analysis.NormalizeSourceTools([]string{getAthleteProfileName, getPowerCurvesName, getPaceCurvesName, getHRCurvesName}), SourceEndpoints: []string{"/api/v1/athlete/{id}", "/api/v1/athlete/{id}/power-curves.json", "/api/v1/athlete/{id}/pace-curves.json", "/api/v1/athlete/{id}/hr-curves.json"}, FormulaRefs: []string{analysis.PerformancePotentialFormulaRef}, SourceUnits: performancePotentialSourceUnits(unitSystem), Caveats: []string{"This is a deterministic summary of explicit profile thresholds and upstream curve anchors, not a proprietary score or medical/lactate diagnosis.", "Aerobic threshold, critical power, and model-derived threshold estimates are unavailable unless an explicit supported upstream source exists."}, IncludeFull: args.IncludeFull}}
 		for _, sport := range args.Sports {
-			profileSport := matchPerformancePotentialProfileSport(profileResponse.SportSettings, sport)
+			profileSport := matchPerformancePotentialProfileSport(profile.SportSettings, profileSports, sport)
 			row, err := buildPerformancePotentialSport(ctx, client, sport, profileSport, unitSystem, curveSpec, args)
 			if err != nil {
 				return Result{}, err
@@ -238,32 +238,37 @@ func performancePotentialThresholdsForSport(sport string, profileSport *athletep
 		caveats = append(caveats, "Profile thresholds are unavailable for this sport; curve anchors may still be shown when upstream curve endpoints return data.")
 		return thresholds, context, unavailable, caveats
 	}
-	if profileSport.FTPWatts > 0 {
+	supportsPower := analysis.PerformancePotentialSupportsPower(sport)
+	supportsHeartRate := analysis.PerformancePotentialSupportsHeartRate(sport)
+	supportsPace := analysis.PerformancePotentialSupportsPace(sport)
+	if supportsPower && profileSport.FTPWatts > 0 {
 		thresholds.FTPWatts = intPointer(profileSport.FTPWatts)
 		context.AnaerobicThreshold = append(context.AnaerobicThreshold, performancePotentialThresholdSource{Field: "ftp_watts", Value: float64(profileSport.FTPWatts), Unit: "W", Source: getAthleteProfileName})
-	} else if analysis.PerformancePotentialSupportsPower(sport) {
+	} else if supportsPower {
 		unavailable = append(unavailable, unavailablePerformanceField("ftp_watts", "unavailable", "profile FTP is missing for this power-based sport", "get_athlete_profile sport_settings.ftp_watts"))
 	}
-	if profileSport.IndoorFTPWatts > 0 {
+	if supportsPower && profileSport.IndoorFTPWatts > 0 {
 		thresholds.IndoorFTPWatts = intPointer(profileSport.IndoorFTPWatts)
 	}
-	if profileSport.WPrimeJoules > 0 {
+	if supportsPower && profileSport.WPrimeJoules > 0 {
 		thresholds.WPrimeJoules = intPointer(profileSport.WPrimeJoules)
 	}
-	if profileSport.PMaxWatts > 0 {
+	if supportsPower && profileSport.PMaxWatts > 0 {
 		thresholds.PMaxWatts = intPointer(profileSport.PMaxWatts)
 	}
-	if profileSport.LTHRBPM > 0 {
+	if supportsHeartRate && profileSport.LTHRBPM > 0 {
 		thresholds.LTHRBPM = intPointer(profileSport.LTHRBPM)
 		context.AnaerobicThreshold = append(context.AnaerobicThreshold, performancePotentialThresholdSource{Field: "lthr_bpm", Value: float64(profileSport.LTHRBPM), Unit: "bpm", Source: getAthleteProfileName})
-	} else if analysis.PerformancePotentialSupportsHeartRate(sport) {
+	} else if supportsHeartRate {
 		unavailable = append(unavailable, unavailablePerformanceField("lthr_bpm", "unavailable", "profile LTHR is missing for this sport", "get_athlete_profile sport_settings.lthr_bpm"))
 	}
-	if profileSport.MaxHRBPM > 0 {
+	if supportsHeartRate && profileSport.MaxHRBPM > 0 {
 		thresholds.MaxHRBPM = intPointer(profileSport.MaxHRBPM)
 	}
-	assignPerformancePotentialPaceThresholds(&thresholds, &context, profileSport)
-	if analysis.PerformancePotentialSupportsPace(sport) && !hasPerformancePotentialPaceThreshold(thresholds) {
+	if supportsPace {
+		assignPerformancePotentialPaceThresholds(&thresholds, &context, profileSport)
+	}
+	if supportsPace && !hasPerformancePotentialPaceThreshold(thresholds) {
 		unavailable = append(unavailable, unavailablePerformanceField("threshold_pace", "unavailable", "profile threshold pace is missing for this pace-based sport", "get_athlete_profile sport_settings.threshold_pace"))
 	}
 	if len(context.AnaerobicThreshold) == 0 {
@@ -464,10 +469,17 @@ func normalizePerformancePotentialSports(values []string) []string {
 	return out
 }
 
-func matchPerformancePotentialProfileSport(sports []athleteprofile.Sport, requested string) *athleteprofile.Sport {
+func matchPerformancePotentialProfileSport(rawSports []intervals.SportSettings, sports []athleteprofile.Sport, requested string) *athleteprofile.Sport {
 	requestedKey := normalizePerformancePotentialSportName(requested)
-	for i := range sports {
-		for _, sportType := range sports[i].Types {
+	for i := range rawSports {
+		if i >= len(sports) {
+			break
+		}
+		sportTypes := rawSports[i].Types
+		if len(sportTypes) == 0 {
+			sportTypes = []string{rawSports[i].Type}
+		}
+		for _, sportType := range sportTypes {
 			if normalizePerformancePotentialSportName(sportType) == requestedKey {
 				return &sports[i]
 			}
