@@ -165,17 +165,7 @@ func TestFitnessMetricClientEndpoints(t *testing.T) {
 				if got := r.URL.RawQuery; got != tc.wantQuery {
 					t.Fatalf("query = %q, want %q", got, tc.wantQuery)
 				}
-				query := r.URL.Query()
-				for key, want := range tc.wantParams {
-					if got := query.Get(key); got != want {
-						t.Fatalf("query %s = %q, want %q", key, got, want)
-					}
-				}
-				for _, key := range tc.wantAbsent {
-					if got := query.Get(key); got != "" {
-						t.Fatalf("query %s = %q, want absent", key, got)
-					}
-				}
+				assertQueryParams(t, r, tc.wantParams, tc.wantAbsent)
 				w.Header().Set("Content-Type", "application/json")
 				_, _ = w.Write([]byte(tc.body))
 			}))
@@ -185,5 +175,20 @@ func TestFitnessMetricClientEndpoints(t *testing.T) {
 				t.Fatalf("call error = %v", err)
 			}
 		})
+	}
+}
+
+func assertQueryParams(t *testing.T, r *http.Request, want map[string]string, absent []string) {
+	t.Helper()
+	query := r.URL.Query()
+	for key, wantValue := range want {
+		if got := query.Get(key); got != wantValue {
+			t.Fatalf("query %s = %q, want %q", key, got, wantValue)
+		}
+	}
+	for _, key := range absent {
+		if got := query.Get(key); got != "" {
+			t.Fatalf("query %s = %q, want absent", key, got)
+		}
 	}
 }
