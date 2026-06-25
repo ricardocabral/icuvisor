@@ -41,23 +41,26 @@ func TestFitnessMetricClientEndpoints(t *testing.T) {
 			},
 		},
 		{
-			name:      "athlete power curves",
+			name:      "athlete power curves with durability curve specs",
 			wantPath:  "/athlete/i12345/power-curves.json",
-			wantQuery: "curves=r.2026-05-01.2026-05-07&secs=60%2C300&type=Ride",
+			wantQuery: "curves=r.2026-05-01.2026-05-07%2Cr.2026-05-01.2026-05-07-kj0&secs=60%2C300&type=Ride",
 			wantParams: map[string]string{
 				"type":   "Ride",
-				"curves": "r.2026-05-01.2026-05-07",
+				"curves": "r.2026-05-01.2026-05-07,r.2026-05-01.2026-05-07-kj0",
 				"secs":   "60,300",
 			},
 			wantAbsent: []string{"sport", "curve", "duration_seconds", "distances"},
-			body:       `{"list":[{"id":"r","secs":[60,300],"values":[320,260],"activity_id":["a1","a2"]}],"activities":{}}`,
+			body:       `{"list":[{"id":"r","secs":[60,300],"values":[320,260],"activity_id":["a1","a2"]},{"id":"r-kj0","after_kj":1000,"secs":[60,300],"values":[300,240],"activity_id":["a3","a4"]}],"activities":{}}`,
 			call: func(ctx context.Context, client *Client) error {
-				set, err := client.ListAthletePowerCurves(ctx, CurveParams{Sport: "Ride", CurveSpec: "r.2026-05-01.2026-05-07", DurationSeconds: []int{60, 300}})
+				set, err := client.ListAthletePowerCurves(ctx, CurveParams{Sport: "Ride", CurveSpec: "r.2026-05-01.2026-05-07,r.2026-05-01.2026-05-07-kj0", DurationSeconds: []int{60, 300}})
 				if err != nil {
 					return err
 				}
-				if len(set.List) != 1 || len(set.List[0].Values) != 2 || set.List[0].ActivityID[1] != "a2" {
+				if len(set.List) != 2 || len(set.List[0].Values) != 2 || set.List[0].ActivityID[1] != "a2" {
 					t.Fatalf("curve set = %+v", set)
+				}
+				if set.List[1].AfterKJ == nil || *set.List[1].AfterKJ != 1000 || set.List[1].Values[1] != 240 || set.List[1].ActivityID[1] != "a4" {
+					t.Fatalf("durability curve = %+v", set.List[1])
 				}
 				return nil
 			},

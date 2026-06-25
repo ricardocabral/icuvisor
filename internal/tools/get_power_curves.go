@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sort"
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
@@ -16,6 +17,8 @@ const (
 	fetchPowerCurvesMessage   = "could not fetch power curves; check intervals.icu credentials, athlete ID, sport, and date range"
 	defaultPowerCurveSport    = "Ride"
 )
+
+var powerDurabilityCurveSuffixes = []string{"-kj0", "-kj1"}
 
 // PowerCurvesClient retrieves athlete curve sets.
 type PowerCurvesClient interface {
@@ -81,7 +84,8 @@ func getPowerCurvesHandler(client PowerCurvesClient, version string, debugMetada
 			return Result{}, NewUserError(invalidCurveArgumentsMessage, err)
 		}
 		curveSpec := rangeCurveSpec(args.Oldest, args.Newest)
-		set, err := client.ListAthletePowerCurves(ctx, intervals.CurveParams{Sport: args.Sport, CurveSpec: curveSpec, DurationSeconds: args.DurationSeconds})
+		requestCurveSpec := powerCurveRequestSpec(curveSpec)
+		set, err := client.ListAthletePowerCurves(ctx, intervals.CurveParams{Sport: args.Sport, CurveSpec: requestCurveSpec, DurationSeconds: args.DurationSeconds})
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
@@ -130,6 +134,15 @@ func bucketPowerCurve(curve intervals.DataCurve, buckets []int) ([]powerCurvePoi
 	return points, missing
 }
 
+func powerCurveRequestSpec(base string) string {
+	specs := make([]string, 0, len(powerDurabilityCurveSuffixes)+1)
+	specs = append(specs, base)
+	for _, suffix := range powerDurabilityCurveSuffixes {
+		specs = append(specs, base+suffix)
+	}
+	return strings.Join(specs, ",")
+}
+
 func standardPowerCurve(set intervals.DataCurveSet) intervals.DataCurve {
 	for _, curve := range set.List {
 		if curve.AfterKJ == nil || *curve.AfterKJ <= 0 {
@@ -146,12 +159,28 @@ func bucketDurabilityPowerCurves(set intervals.DataCurveSet, buckets []int) []po
 			continue
 		}
 		points, missing := bucketPowerCurve(curve, buckets)
+		points, nonPositiveMissing := dropNonPositivePowerCurvePoints(points)
+		missing = append(missing, nonPositiveMissing...)
+		sort.Ints(missing)
 		if len(points) == 0 {
 			continue
 		}
 		curves = append(curves, powerDurabilityCurve{AfterKJ: *curve.AfterKJ, WorkThreshold: workThreshold{Value: *curve.AfterKJ, Unit: "kJ"}, Points: points, MissingBuckets: missing})
 	}
 	return curves
+}
+
+func dropNonPositivePowerCurvePoints(points []powerCurvePoint) ([]powerCurvePoint, []int) {
+	kept := make([]powerCurvePoint, 0, len(points))
+	missing := []int{}
+	for _, point := range points {
+		if point.Watts == nil || *point.Watts <= 0 {
+			missing = append(missing, point.DurationSeconds)
+			continue
+		}
+		kept = append(kept, point)
+	}
+	return kept, missing
 }
 
 func workThresholdUnit(curves []powerDurabilityCurve) string {
