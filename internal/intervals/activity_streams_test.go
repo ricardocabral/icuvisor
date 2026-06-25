@@ -36,11 +36,15 @@ func TestGetActivityStreamsBuildsQuery(t *testing.T) {
 		if got, want := r.URL.Path, "/activity/a1/streams"; got != want {
 			t.Fatalf("path = %q, want %q", got, want)
 		}
-		if got, want := r.URL.Query().Get("types"), "watts,heartrate"; got != want {
+		query := r.URL.Query()
+		if got, want := query.Get("types"), "watts,heartrate"; got != want {
 			t.Fatalf("types query = %q, want %q", got, want)
 		}
-		if got, want := r.URL.Query().Get("includeDefaults"), "true"; got != want {
+		if got, want := query.Get("includeDefaults"), "true"; got != want {
 			t.Fatalf("includeDefaults query = %q, want %q", got, want)
+		}
+		if got := query.Get("include_defaults"); got != "" {
+			t.Fatalf("include_defaults query = %q, want absent", got)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`[{"type":"watts","data":[1],"upstream_extra":"kept"}]`))

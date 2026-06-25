@@ -102,8 +102,10 @@ func TestListEventsSendsDocumentedQueryAndPreservesRaw(t *testing.T) {
 				t.Fatalf("query %s = %q, want %q", key, got, want)
 			}
 		}
-		if got := query.Get("fields"); got != "" {
-			t.Fatalf("query fields = %q, want absent", got)
+		for _, key := range []string{"calendarId", "start", "end", "fields"} {
+			if got := query.Get(key); got != "" {
+				t.Fatalf("query %s = %q, want absent", key, got)
+			}
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`[

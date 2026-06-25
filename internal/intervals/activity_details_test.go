@@ -15,8 +15,12 @@ func TestGetActivitySendsIntervalsFalseAndPreservesRaw(t *testing.T) {
 		if got, want := r.URL.Path, "/activity/a123"; got != want {
 			t.Fatalf("path = %q, want %q", got, want)
 		}
-		if got := r.URL.Query().Get("intervals"); got != "false" {
+		query := r.URL.Query()
+		if got := query.Get("intervals"); got != "false" {
 			t.Fatalf("intervals query = %q, want false", got)
+		}
+		if got := query.Get("includeIntervals"); got != "" {
+			t.Fatalf("includeIntervals query = %q, want absent", got)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"id":"a123","name":null,"type":"Run","start_date_local":"2026-01-02T07:00:00"}`))

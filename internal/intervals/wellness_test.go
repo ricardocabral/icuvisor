@@ -117,14 +117,20 @@ func TestListWellnessBuildsQueryAndDecodesNative(t *testing.T) {
 		if got, want := r.URL.Path, "/athlete/i12345/wellness.json"; got != want {
 			t.Fatalf("path = %q, want %q", got, want)
 		}
-		if got, want := r.URL.Query().Get("oldest"), "2026-05-01"; got != want {
+		query := r.URL.Query()
+		if got, want := query.Get("oldest"), "2026-05-01"; got != want {
 			t.Fatalf("oldest query = %q, want %q", got, want)
 		}
-		if got, want := r.URL.Query().Get("newest"), "2026-05-07"; got != want {
+		if got, want := query.Get("newest"), "2026-05-07"; got != want {
 			t.Fatalf("newest query = %q, want %q", got, want)
 		}
-		if got, want := r.URL.Query().Get("fields"), "sleepScore,polar_sleep_score"; got != want {
+		if got, want := query.Get("fields"), "sleepScore,polar_sleep_score"; got != want {
 			t.Fatalf("fields query = %q, want %q", got, want)
+		}
+		for _, key := range []string{"start", "end"} {
+			if got := query.Get(key); got != "" {
+				t.Fatalf("query %s = %q, want absent", key, got)
+			}
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`[{"id":"2026-05-01","sleepScore":90,"polar_sleep_score":92}]`))
