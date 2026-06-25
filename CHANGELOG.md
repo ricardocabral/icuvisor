@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added after-kJ durability curves to `get_power_curves`, including explicit kilojoule work-threshold metadata and omission of unavailable or uncomputed durability rows.
 - Added first-tool routing eval cases for arbitrary historical activity-window prompts that should start with `get_activities`.
 
 ## [1.2.0] - 2026-06-23
