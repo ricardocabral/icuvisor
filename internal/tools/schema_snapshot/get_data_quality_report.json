@@ -1,0 +1,31 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "end_date": {
+      "description": "Inclusive athlete-local report end date YYYY-MM-DD.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include bounded evidence lists (activity samples, summary dates, wellness dates, calendar events). Raw stream samples are never fetched by this report.",
+      "type": "boolean"
+    },
+    "sport": {
+      "description": "Optional sport/category filter such as Ride, Run, Swim, or VirtualRide. Leave empty to inspect all visible data.",
+      "type": "string"
+    },
+    "start_date": {
+      "description": "Inclusive athlete-local report start date YYYY-MM-DD.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "start_date",
+    "end_date"
+  ],
+  "type": "object"
+}

@@ -175,9 +175,10 @@ func getDataQualityReportHandler(client dataQualityReportClient, version string,
 			}
 			return Result{}, NewUserError(fetchDataQualityReportMessage, err)
 		}
+		activityProbeCapped := len(activities) >= dataQualityActivityFetchLimit
 		activities = filterDataQualityActivities(activities, args.Sport)
 		summaries = filterDataQualitySummaries(summaries, args.Sport)
-		payload := shapeDataQualityReport(dataQualityReportInputs{args: args, profile: profile, activities: activities, summaries: summaries, wellness: wellness, events: events, version: version, timezoneFallback: timezoneFallback})
+		payload := shapeDataQualityReport(dataQualityReportInputs{args: args, profile: profile, activities: activities, summaries: summaries, wellness: wellness, events: events, version: version, timezoneFallback: timezoneFallback, activityProbeCapped: activityProbeCapped})
 		shaped, err := response.Shape(payload, shapeCfg.options(args.IncludeFull, nil, version, debugMetadata, getDataQualityReportName, profileUnitSystem(profile)))
 		if err != nil {
 			return Result{}, err
@@ -187,14 +188,15 @@ func getDataQualityReportHandler(client dataQualityReportClient, version string,
 }
 
 type dataQualityReportInputs struct {
-	args             getDataQualityReportRequest
-	profile          intervals.AthleteWithSportSettings
-	activities       []intervals.Activity
-	summaries        []intervals.SummaryWithCats
-	wellness         []intervals.Wellness
-	events           []intervals.Event
-	version          string
-	timezoneFallback string
+	args                getDataQualityReportRequest
+	profile             intervals.AthleteWithSportSettings
+	activities          []intervals.Activity
+	summaries           []intervals.SummaryWithCats
+	wellness            []intervals.Wellness
+	events              []intervals.Event
+	version             string
+	timezoneFallback    string
+	activityProbeCapped bool
 }
 
 func decodeGetDataQualityReportRequest(raw json.RawMessage) (getDataQualityReportRequest, error) {
@@ -223,9 +225,9 @@ func shapeDataQualityReport(in dataQualityReportInputs) dataQualityReportRespons
 	windowDays := dateCount(in.args.StartDate, in.args.EndDate)
 	profileResponse := newGetAthleteProfileResponse(in.profile, in.version, in.timezoneFallback)
 	sections := dataQualitySections{
-		ActivityCoverage:   dataQualityActivityCoverageSection(in.activities, windowDays),
-		StreamAvailability: dataQualityStreamAvailabilitySection(in.activities),
-		SourceRestrictions: dataQualitySourceRestrictionsSection(in.activities),
+		ActivityCoverage:   dataQualityActivityCoverageSection(in.activities, windowDays, in.args.Sport, in.activityProbeCapped),
+		StreamAvailability: dataQualityStreamAvailabilitySection(in.activities, in.args.Sport, in.activityProbeCapped),
+		SourceRestrictions: dataQualitySourceRestrictionsSection(in.activities, in.args.Sport, in.activityProbeCapped),
 		LoadBasis:          dataQualityLoadBasisSection(in.summaries, in.args.Sport),
 		ThresholdsZones:    dataQualityThresholdsSection(filterDataQualityReadinessWarnings(profileResponse.Meta.Warnings, in.args.Sport)),
 		WellnessFreshness:  dataQualityWellnessSection(in.wellness, in.args.EndDate),
@@ -240,14 +242,20 @@ func shapeDataQualityReport(in dataQualityReportInputs) dataQualityReportRespons
 	return payload
 }
 
-func dataQualityActivityCoverageSection(activities []intervals.Activity, windowDays int) dataQualitySection {
+func dataQualityActivityCoverageSection(activities []intervals.Activity, windowDays int, sport string, probeCapped bool) dataQualitySection {
 	evidence := map[string]any{"activity_count": len(activities), "active_days": len(dataQualityActivityDays(activities)), "window_days": windowDays}
 	if len(activities) > 0 {
 		evidence["oldest_activity_date"] = dataQualityActivityDate(activities[len(activities)-1])
 		evidence["newest_activity_date"] = dataQualityActivityDate(activities[0])
 	}
 	section := dataQualitySection{Status: "ok", Severity: "info", Message: "Activity history is visible for this window.", Evidence: evidence}
-	if len(activities) == 0 {
+	if probeCapped {
+		evidence["activity_probe_capped"] = true
+		evidence["activity_probe_limit"] = dataQualityActivityFetchLimit
+	}
+	if len(activities) == 0 && probeCapped && strings.TrimSpace(sport) != "" {
+		section = dataQualitySection{Status: "unknown", Severity: "warning", Message: "No matching sport activities were found before the activity probe cap; older matching activities may exist.", Evidence: evidence, Diagnostics: []dataQualityDiagnostic{{Code: "activity_probe_capped_before_sport_filter", Severity: "warning", Message: "The unfiltered activity probe reached its cap before sport filtering, so sport-specific activity coverage may be incomplete.", Evidence: map[string]any{"sport": sport, "limit": dataQualityActivityFetchLimit}, Recommendation: dataQualityRecommendation{Action: "Use get_activities pagination with the same sport/date intent for a complete sport-specific inventory.", Tool: getActivitiesName}}}}
+	} else if len(activities) == 0 {
 		section = dataQualitySection{Status: "critical", Severity: "critical", Message: "No completed activities are visible in this date window.", Evidence: evidence, Diagnostics: []dataQualityDiagnostic{{Code: "no_visible_activities", Severity: "critical", Message: "No completed activities were returned for the requested window.", Evidence: evidence, Recommendation: dataQualityRecommendation{Action: "Confirm the date range, athlete selection, and upstream sync status, then retry get_activities for the same window.", Tool: getActivitiesName}}}}
 	} else if sparseActivityHistory(len(dataQualityActivityDays(activities)), windowDays) {
 		section.Status = "warning"
@@ -255,13 +263,17 @@ func dataQualityActivityCoverageSection(activities []intervals.Activity, windowD
 		section.Message = "Activity history is visible but sparse for reliable coaching context."
 		section.Diagnostics = append(section.Diagnostics, dataQualityDiagnostic{Code: "sparse_activity_history", Severity: "warning", Message: "Few activity days are visible in the selected window, so trend or readiness answers may lack context.", Evidence: evidence, Recommendation: dataQualityRecommendation{Action: "Use a longer date range or wait for more synced activities before asking for trend-heavy coaching analysis.", Tool: getActivitiesName}})
 	}
-	if len(activities) >= dataQualityActivityFetchLimit {
-		section.Diagnostics = append(section.Diagnostics, dataQualityDiagnostic{Code: "activity_probe_truncated", Severity: "info", Message: "The activity probe reached its safety limit; counts are lower bounds.", Evidence: map[string]any{"limit": dataQualityActivityFetchLimit}, Recommendation: dataQualityRecommendation{Action: "Use get_activities pagination for an exact activity inventory if needed.", Tool: getActivitiesName}})
+	if probeCapped {
+		section.Diagnostics = append(section.Diagnostics, dataQualityDiagnostic{Code: "activity_probe_truncated", Severity: "warning", Message: "The activity probe reached its safety limit before any optional sport filtering; counts are lower bounds.", Evidence: map[string]any{"limit": dataQualityActivityFetchLimit, "sport": sport}, Recommendation: dataQualityRecommendation{Action: "Use get_activities pagination for an exact activity inventory if needed.", Tool: getActivitiesName}})
+		if section.Status == "ok" {
+			section.Status = "warning"
+			section.Severity = "warning"
+		}
 	}
 	return section
 }
 
-func dataQualityStreamAvailabilitySection(activities []intervals.Activity) dataQualitySection {
+func dataQualityStreamAvailabilitySection(activities []intervals.Activity, sport string, probeCapped bool) dataQualitySection {
 	withStreams := 0
 	missingStreams := 0
 	streamSet := map[string]bool{}
@@ -279,6 +291,13 @@ func dataQualityStreamAvailabilitySection(activities []intervals.Activity) dataQ
 	}
 	evidence := map[string]any{"activities_checked": len(activities), "activities_with_stream_types": withStreams, "activities_missing_stream_types": missingStreams, "available_stream_types": sortedBoolKeys(streamSet)}
 	section := dataQualitySection{Status: "ok", Severity: "info", Message: "At least some activities expose stream type metadata.", Evidence: evidence}
+	if probeCapped {
+		evidence["activity_probe_capped"] = true
+		evidence["activity_probe_limit"] = dataQualityActivityFetchLimit
+		section.Diagnostics = append(section.Diagnostics, dataQualityDiagnostic{Code: "activity_probe_capped_before_stream_check", Severity: "warning", Message: "The unfiltered activity probe reached its cap before stream/source diagnostics were evaluated, so sport-filtered stream availability may be incomplete.", Evidence: map[string]any{"sport": sport, "limit": dataQualityActivityFetchLimit}, Recommendation: dataQualityRecommendation{Action: "Use get_activities pagination to identify additional matching activities, then inspect specific streams only as needed.", Tool: getActivitiesName}})
+		section.Status = "warning"
+		section.Severity = "warning"
+	}
 	if len(activities) == 0 {
 		section.Status = "unknown"
 		section.Message = "Stream availability cannot be assessed because no activities are visible."
@@ -298,7 +317,7 @@ func dataQualityStreamAvailabilitySection(activities []intervals.Activity) dataQ
 	return section
 }
 
-func dataQualitySourceRestrictionsSection(activities []intervals.Activity) dataQualitySection {
+func dataQualitySourceRestrictionsSection(activities []intervals.Activity, sport string, probeCapped bool) dataQualitySection {
 	restricted := []dataQualityActivityEvidence{}
 	for _, activity := range activities {
 		if isStravaBlocked(activity) {
@@ -307,6 +326,13 @@ func dataQualitySourceRestrictionsSection(activities []intervals.Activity) dataQ
 	}
 	evidence := map[string]any{"activities_checked": len(activities), "restricted_source_count": len(restricted)}
 	section := dataQualitySection{Status: "ok", Severity: "info", Message: "No Strava-restricted activity stubs were found in this window.", Evidence: evidence}
+	if probeCapped {
+		evidence["activity_probe_capped"] = true
+		evidence["activity_probe_limit"] = dataQualityActivityFetchLimit
+		section.Status = "warning"
+		section.Severity = "warning"
+		section.Diagnostics = append(section.Diagnostics, dataQualityDiagnostic{Code: "activity_probe_capped_before_source_check", Severity: "warning", Message: "The unfiltered activity probe reached its cap before source diagnostics were evaluated, so older restricted-source activities may be absent from this report.", Evidence: map[string]any{"sport": sport, "limit": dataQualityActivityFetchLimit}, Recommendation: dataQualityRecommendation{Action: "Use get_activities pagination for a complete source-restriction inventory in this window.", Tool: getActivitiesName}})
+	}
 	if len(restricted) > 0 {
 		section.Status = "warning"
 		section.Severity = "warning"
@@ -665,6 +691,13 @@ func boundedMapEvidence(values []map[string]any, limit int) []map[string]any {
 	return values[:limit]
 }
 
+func boundedStringEvidence(values []string, limit int) []string {
+	if limit <= 0 || len(values) <= limit {
+		return values
+	}
+	return values[:limit]
+}
+
 func dataQualityEventSamples(events []intervals.Event) []dataQualityEventEvidence {
 	limit := min(len(events), 20)
 	out := make([]dataQualityEventEvidence, 0, limit)
@@ -707,7 +740,10 @@ func dataAvailabilityEvidence(diagnostic dataAvailabilityDiagnostic) map[string]
 		evidence["missing_fields"] = diagnostic.MissingFields
 	}
 	if len(diagnostic.Dates) > 0 {
-		evidence["dates"] = diagnostic.Dates
+		evidence["date_count"] = len(diagnostic.Dates)
+		evidence["oldest_date"] = diagnostic.Dates[0]
+		evidence["newest_date"] = diagnostic.Dates[len(diagnostic.Dates)-1]
+		evidence["sample_dates"] = boundedStringEvidence(diagnostic.Dates, 5)
 	}
 	return evidence
 }
