@@ -15,7 +15,7 @@ func shapeGetActivitiesResponse(activities []intervals.Activity, gearResolutions
 	for _, activity := range activities {
 		rows = append(rows, activityRow(activity, args.IncludeFull, timezoneFallback, unitSystem, gearResolutions[activity.ID], customFieldCodes))
 	}
-	meta := getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull, Timezone: timezoneFallback, FieldSemantics: activityFieldSemantics(rows)}
+	meta := getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull, Timezone: timezoneFallback, FieldSemantics: activityFieldSemantics(rows), DataAvailability: activityAvailabilityDiagnostics(rows)}
 	if asOfMeta != nil {
 		meta.AsOf = asOfMeta.AsOf
 		meta.AsOfDate = asOfMeta.AsOfDate

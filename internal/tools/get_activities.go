@@ -140,15 +140,16 @@ type unavailableReason struct {
 }
 
 type getActivitiesMeta struct {
-	PageSize       int               `json:"page_size"`
-	NextPageToken  string            `json:"next_page_token,omitempty"`
-	MoreAvailable  bool              `json:"more_available"`
-	IncludeFull    bool              `json:"include_full"`
-	Timezone       string            `json:"timezone,omitempty"`
-	FieldSemantics map[string]string `json:"field_semantics,omitempty"`
-	AsOf           string            `json:"as_of,omitempty"`
-	AsOfDate       string            `json:"as_of_date,omitempty"`
-	AsOfWeekday    string            `json:"as_of_weekday,omitempty"`
+	PageSize         int                          `json:"page_size"`
+	NextPageToken    string                       `json:"next_page_token,omitempty"`
+	MoreAvailable    bool                         `json:"more_available"`
+	IncludeFull      bool                         `json:"include_full"`
+	Timezone         string                       `json:"timezone,omitempty"`
+	FieldSemantics   map[string]string            `json:"field_semantics,omitempty"`
+	DataAvailability []dataAvailabilityDiagnostic `json:"data_availability,omitempty"`
+	AsOf             string                       `json:"as_of,omitempty"`
+	AsOfDate         string                       `json:"as_of_date,omitempty"`
+	AsOfWeekday      string                       `json:"as_of_weekday,omitempty"`
 }
 
 var errActivitiesPaginationBoundary = errors.New("activity pagination boundary exceeded")

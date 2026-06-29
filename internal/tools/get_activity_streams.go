@@ -61,10 +61,11 @@ type activityStreamRow struct {
 }
 
 type activityStreamsMeta struct {
-	ServerVersion     string   `json:"server_version"`
-	IncludeFull       bool     `json:"include_full"`
-	SamplesIncluded   bool     `json:"samples_included"`
-	UnknownStreamKeys []string `json:"unknown_stream_keys,omitempty"`
+	ServerVersion     string                       `json:"server_version"`
+	IncludeFull       bool                         `json:"include_full"`
+	SamplesIncluded   bool                         `json:"samples_included"`
+	UnknownStreamKeys []string                     `json:"unknown_stream_keys,omitempty"`
+	DataAvailability  []dataAvailabilityDiagnostic `json:"data_availability,omitempty"`
 }
 
 type getActivitySplitsResponse struct {
@@ -92,10 +93,11 @@ type activitySplitRow struct {
 }
 
 type activitySplitsMeta struct {
-	ServerVersion string            `json:"server_version"`
-	IncludeFull   bool              `json:"include_full"`
-	Algorithm     string            `json:"algorithm"`
-	Units         map[string]string `json:"units,omitempty"`
+	ServerVersion    string                       `json:"server_version"`
+	IncludeFull      bool                         `json:"include_full"`
+	Algorithm        string                       `json:"algorithm"`
+	Units            map[string]string            `json:"units,omitempty"`
+	DataAvailability []dataAvailabilityDiagnostic `json:"data_availability,omitempty"`
 }
 
 func newGetActivityStreamsTool(client ActivityStreamsClient, detailsClient ActivityDetailsClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -215,11 +217,16 @@ func shapeActivityStreams(activityID string, rows []intervals.ActivityStream, re
 		}
 		out.Streams[key] = row
 	}
+	out.Meta.DataAvailability = activityStreamMissingDiagnostics(activityID, requested, out.Streams)
 	return out
 }
 
 func unavailableActivityStreamsResponse(unavailable activityUnavailable, includeFull bool, version string) getActivityStreamsUnavailableResponse {
-	out := getActivityStreamsUnavailableResponse{ActivityID: unavailable.ActivityID, StravaImported: unavailable.StravaImported, Unavailable: unavailable.Unavailable, Meta: activityStreamsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull}}
+	meta := activityStreamsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull}
+	if diagnostic := restrictedSourceDiagnostic(unavailable.ActivityID, unavailable.Unavailable); diagnostic != nil {
+		meta.DataAvailability = []dataAvailabilityDiagnostic{*diagnostic}
+	}
+	out := getActivityStreamsUnavailableResponse{ActivityID: unavailable.ActivityID, StravaImported: unavailable.StravaImported, Unavailable: unavailable.Unavailable, Meta: meta}
 	if includeFull {
 		out.Full = unavailable.Full
 	}
@@ -235,7 +242,11 @@ func encodeActivityStreamsPayload(payload any, includeFull bool, version string,
 }
 
 func unavailableActivitySplitsResponse(unavailable activityUnavailable, includeFull bool, version string, unitSystem response.UnitSystem) getActivitySplitsUnavailableResponse {
-	out := getActivitySplitsUnavailableResponse{ActivityID: unavailable.ActivityID, StravaImported: unavailable.StravaImported, Unavailable: unavailable.Unavailable, Meta: activitySplitsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, Algorithm: "manual intervals when available; otherwise interpolate distance/time stream samples, ignoring paused-segment semantics when moving samples are absent", Units: unitSystem.Metadata()}}
+	meta := activitySplitsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, Algorithm: "manual intervals when available; otherwise interpolate distance/time stream samples, ignoring paused-segment semantics when moving samples are absent", Units: unitSystem.Metadata()}
+	if diagnostic := restrictedSourceDiagnostic(unavailable.ActivityID, unavailable.Unavailable); diagnostic != nil {
+		meta.DataAvailability = []dataAvailabilityDiagnostic{*diagnostic}
+	}
+	out := getActivitySplitsUnavailableResponse{ActivityID: unavailable.ActivityID, StravaImported: unavailable.StravaImported, Unavailable: unavailable.Unavailable, Meta: meta}
 	if includeFull {
 		out.Full = unavailable.Full
 	}

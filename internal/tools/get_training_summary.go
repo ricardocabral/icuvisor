@@ -53,13 +53,14 @@ type trainingSportTotals struct {
 }
 
 type trainingSummaryMeta struct {
-	ServerVersion string `json:"server_version"`
-	StartDate     string `json:"start_date"`
-	EndDate       string `json:"end_date"`
-	Timezone      string `json:"timezone"`
-	ZoneFamily    string `json:"zone_family"`
-	ZoneOrder     string `json:"zone_order"`
-	IncludeFull   bool   `json:"include_full"`
+	ServerVersion   string                       `json:"server_version"`
+	StartDate       string                       `json:"start_date"`
+	EndDate         string                       `json:"end_date"`
+	Timezone        string                       `json:"timezone"`
+	ZoneFamily      string                       `json:"zone_family"`
+	ZoneOrder       string                       `json:"zone_order"`
+	IncludeFull     bool                         `json:"include_full"`
+	LoadDiagnostics []dataAvailabilityDiagnostic `json:"load_diagnostics,omitempty"`
 }
 
 func newGetTrainingSummaryTool(client FitnessClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -90,7 +91,7 @@ func getTrainingSummaryHandler(client FitnessClient, profileClient ProfileClient
 }
 
 func shapeTrainingSummary(rows []intervals.SummaryWithCats, args dateRangeRequest, timezone string, unitSystem response.UnitSystem, version string) trainingSummaryResponse {
-	payload := trainingSummaryResponse{Meta: trainingSummaryMeta{ServerVersion: normalizeVersion(version), StartDate: args.StartDate, EndDate: args.EndDate, Timezone: timezone, ZoneFamily: "upstream_timeInZones", ZoneOrder: "upstream", IncludeFull: args.IncludeFull}}
+	payload := trainingSummaryResponse{Meta: trainingSummaryMeta{ServerVersion: normalizeVersion(version), StartDate: args.StartDate, EndDate: args.EndDate, Timezone: timezone, ZoneFamily: "upstream_timeInZones", ZoneOrder: "upstream", IncludeFull: args.IncludeFull, LoadDiagnostics: loadDiagnostics(rows)}}
 	categoryTotals := map[string]*trainingSportTotals{}
 	var distanceMeters float64
 	for _, row := range rows {
@@ -100,7 +101,7 @@ func shapeTrainingSummary(rows []intervals.SummaryWithCats, args dateRangeReques
 		payload.Summary.ElapsedTimeSeconds += row.ElapsedTime
 		payload.Summary.CaloriesBurned += row.Calories
 		payload.Summary.ElevationGainM += row.TotalElevationGain
-		payload.Summary.TrainingLoad += row.TrainingLoad
+		payload.Summary.TrainingLoad += summaryTrainingLoad(row).Value
 		payload.Summary.SessionRPE += row.SRPE
 		payload.Summary.TimeInZonesSeconds = addFloatSlices(payload.Summary.TimeInZonesSeconds, row.TimeInZones)
 		payload.Summary.TimeInZonesTotalSeconds += row.TimeInZonesTot
@@ -120,7 +121,7 @@ func shapeTrainingSummary(rows []intervals.SummaryWithCats, args dateRangeReques
 			total.ElapsedTimeSeconds += category.ElapsedTime
 			total.CaloriesBurned += category.Calories
 			total.ElevationGainM += category.TotalElevationGain
-			total.TrainingLoad += category.TrainingLoad
+			total.TrainingLoad += categoryTrainingLoad(category).Value
 			total.SessionRPE += category.SRPE
 			addDistance(total, category.Distance, unitSystem)
 		}

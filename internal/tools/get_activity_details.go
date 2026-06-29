@@ -68,16 +68,17 @@ type getActivityIntervalsUnavailableResponse struct {
 }
 
 type activityReadMeta struct {
-	ServerVersion        string                  `json:"server_version"`
-	IncludeFull          bool                    `json:"include_full"`
-	Timezone             string                  `json:"timezone,omitempty"`
-	Limit                int                     `json:"limit,omitempty"`
-	SinceID              int64                   `json:"since_id,omitempty"`
-	FieldSemantics       map[string]string       `json:"field_semantics,omitempty"`
-	IntervalSource       analysis.IntervalSource `json:"interval_source,omitempty"`
-	AutoLapSuspected     *bool                   `json:"auto_lap_suspected,omitempty"`
-	IntervalSourceCaveat string                  `json:"interval_source_caveat,omitempty"`
-	RecommendedNextTool  string                  `json:"recommended_next_tool,omitempty"`
+	ServerVersion        string                       `json:"server_version"`
+	IncludeFull          bool                         `json:"include_full"`
+	Timezone             string                       `json:"timezone,omitempty"`
+	Limit                int                          `json:"limit,omitempty"`
+	SinceID              int64                        `json:"since_id,omitempty"`
+	FieldSemantics       map[string]string            `json:"field_semantics,omitempty"`
+	DataAvailability     []dataAvailabilityDiagnostic `json:"data_availability,omitempty"`
+	IntervalSource       analysis.IntervalSource      `json:"interval_source,omitempty"`
+	AutoLapSuspected     *bool                        `json:"auto_lap_suspected,omitempty"`
+	IntervalSourceCaveat string                       `json:"interval_source_caveat,omitempty"`
+	RecommendedNextTool  string                       `json:"recommended_next_tool,omitempty"`
 }
 
 type activityIntervalRow struct {
@@ -157,7 +158,7 @@ func getActivityDetailsHandler(client ActivityDetailsClient, profileClient Profi
 		}
 		activityTimezone := profileTimezone(profile.Timezone, timezoneFallback)
 		row := activityRow(activity, args.IncludeFull, activityTimezone, unitSystem, gearResolutions[activity.ID], customFieldCodes)
-		payload := getActivityDetailsResponse{Activity: row, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull, Timezone: activityTimezone, FieldSemantics: activityFieldSemantics([]getActivitiesRow{row})}}
+		payload := getActivityDetailsResponse{Activity: row, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull, Timezone: activityTimezone, FieldSemantics: activityFieldSemantics([]getActivitiesRow{row}), DataAvailability: activityAvailabilityDiagnostics([]getActivitiesRow{row})}}
 		shaped, err := response.Shape(payload, shapeCfg.options(args.IncludeFull, nil, version, debugMetadata, getActivityDetailsName, unitSystem))
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activity_details response: %w", err)
@@ -269,7 +270,12 @@ func boolPtr(value bool) *bool {
 }
 
 func stravaUnavailableIntervalsResponse(activityID string, includeFull bool, version string, raw map[string]any) getActivityIntervalsUnavailableResponse {
-	out := getActivityIntervalsUnavailableResponse{ActivityID: activityID, StravaImported: true, Unavailable: &unavailableReason{Reason: "strava_blocked", Workaround: stravaBlockedWorkaround(raw)}, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull}}
+	unavailable := &unavailableReason{Reason: "strava_blocked", Workaround: stravaBlockedWorkaround(raw)}
+	meta := activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull}
+	if diagnostic := restrictedSourceDiagnostic(activityID, unavailable); diagnostic != nil {
+		meta.DataAvailability = []dataAvailabilityDiagnostic{*diagnostic}
+	}
+	out := getActivityIntervalsUnavailableResponse{ActivityID: activityID, StravaImported: true, Unavailable: unavailable, Meta: meta}
 	if includeFull {
 		out.Full = raw
 	}
@@ -277,7 +283,11 @@ func stravaUnavailableIntervalsResponse(activityID string, includeFull bool, ver
 }
 
 func unavailableActivityIntervalsResponse(unavailable activityUnavailable, includeFull bool, version string) getActivityIntervalsUnavailableResponse {
-	out := getActivityIntervalsUnavailableResponse{ActivityID: unavailable.ActivityID, StravaImported: unavailable.StravaImported, Unavailable: unavailable.Unavailable, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull}}
+	meta := activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull}
+	if diagnostic := restrictedSourceDiagnostic(unavailable.ActivityID, unavailable.Unavailable); diagnostic != nil {
+		meta.DataAvailability = []dataAvailabilityDiagnostic{*diagnostic}
+	}
+	out := getActivityIntervalsUnavailableResponse{ActivityID: unavailable.ActivityID, StravaImported: unavailable.StravaImported, Unavailable: unavailable.Unavailable, Meta: meta}
 	if includeFull {
 		out.Full = unavailable.Full
 	}

@@ -58,13 +58,14 @@ type perSportLoadTrendRow struct {
 }
 
 type fitnessMeta struct {
-	ServerVersion      string                 `json:"server_version"`
-	StartDate          string                 `json:"start_date"`
-	EndDate            string                 `json:"end_date"`
-	Timezone           string                 `json:"timezone"`
-	Count              int                    `json:"count"`
-	IncludeFull        bool                   `json:"include_full"`
-	PerSportLoadTrends *perSportLoadTrendMeta `json:"per_sport_load_trends,omitempty"`
+	ServerVersion      string                       `json:"server_version"`
+	StartDate          string                       `json:"start_date"`
+	EndDate            string                       `json:"end_date"`
+	Timezone           string                       `json:"timezone"`
+	Count              int                          `json:"count"`
+	IncludeFull        bool                         `json:"include_full"`
+	LoadDiagnostics    []dataAvailabilityDiagnostic `json:"load_diagnostics,omitempty"`
+	PerSportLoadTrends *perSportLoadTrendMeta       `json:"per_sport_load_trends,omitempty"`
 }
 
 type perSportLoadTrendMeta struct {
@@ -108,7 +109,7 @@ func getFitnessHandler(client FitnessClient, profileClient ProfileClient, versio
 			return Result{}, NewUserError(fetchFitnessMessage, err)
 		}
 		requestedRows := filterFitnessRowsByDate(rows, args.StartDate, args.EndDate)
-		payload := fitnessResponse{Rows: shapeFitnessRows(requestedRows, args.IncludeFull), Meta: fitnessMeta{ServerVersion: normalizeVersion(version), StartDate: args.StartDate, EndDate: args.EndDate, Timezone: timezone, Count: len(requestedRows), IncludeFull: args.IncludeFull}}
+		payload := fitnessResponse{Rows: shapeFitnessRows(requestedRows, args.IncludeFull), Meta: fitnessMeta{ServerVersion: normalizeVersion(version), StartDate: args.StartDate, EndDate: args.EndDate, Timezone: timezone, Count: len(requestedRows), IncludeFull: args.IncludeFull, LoadDiagnostics: loadDiagnostics(requestedRows)}}
 		if args.IncludePerSportLoadTrends {
 			trends, meta := shapePerSportLoadTrends(rows, args.StartDate, args.EndDate, args.IncludeFull)
 			payload.PerSportLoadTrends = trends
@@ -152,7 +153,7 @@ func getFitnessInputSchema() map[string]any {
 func shapeFitnessRows(rows []intervals.SummaryWithCats, includeFull bool) []fitnessRow {
 	out := make([]fitnessRow, 0, len(rows))
 	for _, row := range rows {
-		ctl, atl, tsb := roundPtr(row.Fitness), roundPtr(row.Fatigue), roundPtr(row.Form)
+		ctl, atl, tsb := rawFloatPtr(row.Raw, "fitness", row.Fitness), rawFloatPtr(row.Raw, "fatigue", row.Fatigue), rawFloatPtr(row.Raw, "form", row.Form)
 		shaped := fitnessRow{Date: row.Date, CTL: ctl, ATL: atl, TSB: tsb}
 		if includeFull {
 			shaped.Full = row.Raw
@@ -196,27 +197,35 @@ func shapePerSportLoadTrends(rows []intervals.SummaryWithCats, startDate string,
 			warmupDates[row.Date] = true
 		}
 		rowCategoryLoad := 0
-		if len(row.ByCategory) == 0 && row.TrainingLoad > 0 {
+		rowLoad := summaryTrainingLoad(row)
+		if len(row.ByCategory) == 0 && rowLoad.Value > 0 {
 			caveatSet["some summary rows have training_load but no byCategory sport breakdown; that load cannot be assigned to a per-sport trend"] = true
 		}
+		if rowLoad.Present && rowLoad.Source != "training_load" {
+			caveatSet["some summary rows use HR/TRIMP-like load fields; per-sport trends expose neutral training_load and do not relabel it as TSS"] = true
+		}
 		for _, category := range row.ByCategory {
-			if categoryTrainingLoadMissing(category) {
+			categoryLoad := categoryTrainingLoad(category)
+			if !categoryLoad.Present {
 				caveatSet["some byCategory rows omit training_load; missing category loads are treated as 0"] = true
+			}
+			if categoryLoad.Present && categoryLoad.Source != "training_load" {
+				caveatSet["some byCategory rows use HR/TRIMP-like load fields; per-sport trends expose neutral training_load and do not relabel it as TSS"] = true
 			}
 			bucket := sportLoadBucket(category.Category)
 			label := strings.TrimSpace(category.Category)
 			if label == "" {
 				label = "unknown"
 			}
-			rowCategoryLoad += category.TrainingLoad
-			if category.TrainingLoad > 0 {
+			rowCategoryLoad += categoryLoad.Value
+			if categoryLoad.Value > 0 {
 				hasNonZeroCategoryLoad = true
 			}
-			ensureDateBucket(loadsByDate, row.Date)[bucket] += float64(category.TrainingLoad)
+			ensureDateBucket(loadsByDate, row.Date)[bucket] += float64(categoryLoad.Value)
 			ensureDateBucketCategories(categoriesByDateBucket, row.Date, bucket)[label] = true
 			ensureBucketCategories(allCategoriesByBucket, bucket)[label] = true
 		}
-		if row.TrainingLoad != 0 && rowCategoryLoad != row.TrainingLoad {
+		if rowLoad.Value != 0 && rowCategoryLoad != rowLoad.Value {
 			caveatSet["some byCategory training_load totals differ from the combined daily training_load; per-sport trends use category totals only"] = true
 		}
 	}
@@ -294,14 +303,6 @@ func ensureBucketCategories(values map[string]map[string]bool, bucket string) ma
 		values[bucket] = map[string]bool{}
 	}
 	return values[bucket]
-}
-
-func categoryTrainingLoadMissing(category intervals.CategorySummary) bool {
-	if category.Raw == nil {
-		return false
-	}
-	_, ok := category.Raw["training_load"]
-	return !ok
 }
 
 func sportLoadBucket(category string) string {
