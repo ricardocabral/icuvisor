@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added data-availability diagnostics for Strava-restricted activity streams and missing stream channels, plus load diagnostics that preserve HR/TRIMP `training_load` without relabeling it as TSS.
+
 ## [1.2.1] - 2026-06-26
 
 ### Added
