@@ -1778,6 +1778,37 @@
       }
     ]
   },
+  "get_data_quality_report": {
+    "name": "get_data_quality_report",
+    "description": "Report whether icuvisor can see enough activities, streams, load, wellness, thresholds, and calendar data to answer common coaching questions, with actionable diagnostics for Strava restrictions, HR/TRIMP-only load, stale wellness, missing thresholds, and sparse history.",
+    "arguments": [
+      {
+        "name": "end_date",
+        "required": true,
+        "type": "string",
+        "description": "Inclusive athlete-local report end date YYYY-MM-DD."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include bounded evidence lists (activity samples, summary dates, wellness dates, calendar events). Raw stream samples are never fetched by this report.",
+        "default": false
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Optional sport/category filter such as Ride, Run, Swim, or VirtualRide. Leave empty to inspect all visible data."
+      },
+      {
+        "name": "start_date",
+        "required": true,
+        "type": "string",
+        "description": "Inclusive athlete-local report start date YYYY-MM-DD."
+      }
+    ]
+  },
   "get_event_by_id": {
     "name": "get_event_by_id",
     "description": "Fetch a single calendar event detail by event_id.",

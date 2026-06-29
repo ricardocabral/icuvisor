@@ -176,6 +176,14 @@
     "anchor": "compute_zone_time"
   },
   {
+    "name": "get_data_quality_report",
+    "group": "analyzers",
+    "tier": "core",
+    "safety": "read",
+    "summary": "Report whether icuvisor can see enough activities, streams, load, wellness, thresholds, and calendar data to answer common coaching questions, with actionable diagnostics for Strava restrictions, HR/TRIMP-only load, stale wellness, missing thresholds, and sparse history.",
+    "anchor": "get_data_quality_report"
+  },
+  {
     "name": "list_athletes",
     "group": "coach",
     "tier": "core",

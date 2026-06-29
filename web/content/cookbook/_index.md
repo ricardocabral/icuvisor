@@ -21,6 +21,7 @@ Two kinds of content:
   {{< card link="prompt-library" title="Prompt library" subtitle="One-line prompts for everyday questions, grouped by task." >}}
   {{< card link="icuvisor-agent-skill" title="icuvisor Agent Skill" subtitle="Reusable SKILL.md instructions for skills-compatible AI clients." >}}
   {{< card link="weekly-review" title="Weekly training review" subtitle="Summarize load, intensity, and recovery risk for the last 7-14 days." >}}
+  {{< card link="data-quality-report" title="Data quality report" subtitle="Diagnose missing streams, stale sync, Strava restrictions, and other visibility gaps." >}}
   {{< card link="readiness-check" title="Readiness check" subtitle="Decide whether to train hard today from wellness and form." >}}
   {{< card link="activity-retrospective" title="Activity retrospective" subtitle="Break down a single ride, run, or race in detail." >}}
   {{< card link="ftp-and-zones" title="FTP and zones review" subtitle="Decide whether a threshold has moved and update zones." >}}
