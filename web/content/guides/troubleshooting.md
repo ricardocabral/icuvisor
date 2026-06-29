@@ -7,7 +7,7 @@ Use this guide when icuvisor does not start, an MCP client cannot see tools, or 
 
 ## Data access and tool-selection confusion
 
-These symptoms often appear after a first successful connection, when the assistant can call icuvisor but the answer is incomplete, stale, or based on the wrong capability.
+These symptoms often appear after a first successful connection, when the assistant can call icuvisor but the answer is incomplete, stale, or based on the wrong capability. For a single bounded check across activities, streams, load, wellness, thresholds, and calendar data, ask for the [data quality report]({{< relref "../cookbook/data-quality-report" >}}).
 
 ### Strava-restricted activities
 
