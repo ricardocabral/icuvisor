@@ -237,7 +237,7 @@ func shapeDataQualityReport(in dataQualityReportInputs) dataQualityReportRespons
 	payload.Diagnostics = collectDataQualityDiagnostics(sections)
 	payload.Summary = summarizeDataQuality(sections, windowDays)
 	if in.args.IncludeFull {
-		payload.Full = &dataQualityFull{ActivitySamples: dataQualityActivitySamples(in.activities), SummaryDates: dataQualitySummaryDates(in.summaries), WellnessDates: dataQualityWellnessDates(in.wellness), CalendarEvents: dataQualityEventSamples(in.events)}
+		payload.Full = &dataQualityFull{ActivitySamples: dataQualityActivitySamples(in.activities), SummaryDates: boundedStringEvidence(dataQualitySummaryDates(in.summaries), 60), WellnessDates: boundedStringEvidence(dataQualityWellnessDates(in.wellness), 60), CalendarEvents: dataQualityEventSamples(in.events)}
 	}
 	return payload
 }
@@ -337,13 +337,11 @@ func dataQualitySourceRestrictionsSection(activities []intervals.Activity, sport
 		section.Status = "warning"
 		section.Severity = "warning"
 		section.Message = "Some activity summaries are visible only as Strava-restricted stubs."
-		for _, item := range restricted {
-			workaround := stravaBlockedWorkaround(map[string]any{"external_id": ""})
-			if activity, ok := activityByID(activities, item.ActivityID); ok {
-				workaround = stravaBlockedWorkaround(activity.Raw)
-			}
-			section.Diagnostics = append(section.Diagnostics, dataQualityDiagnostic{Code: "restricted_source", Severity: "warning", Message: "A Strava-imported activity summary is visible, but detailed streams, intervals, and max-heart-rate samples may be unavailable through the API.", Evidence: map[string]any{"activity_id": item.ActivityID, "date": item.Date, "source": item.Source}, Recommendation: dataQualityRecommendation{Action: "Re-import historical data directly from the native provider where possible.", Tool: getActivitiesName, Workaround: workaround}})
+		workaround := stravaBlockedWorkaround(map[string]any{"external_id": ""})
+		if activity, ok := activityByID(activities, restricted[0].ActivityID); ok {
+			workaround = stravaBlockedWorkaround(activity.Raw)
 		}
+		section.Diagnostics = append(section.Diagnostics, dataQualityDiagnostic{Code: "restricted_source", Severity: "warning", Message: "One or more Strava-imported activity summaries are visible, but detailed streams, intervals, and max-heart-rate samples may be unavailable through the API.", Evidence: map[string]any{"restricted_source_count": len(restricted), "sample": boundedActivityEvidence(restricted, 5)}, Recommendation: dataQualityRecommendation{Action: "Re-import historical data directly from the native provider where possible.", Tool: getActivitiesName, Workaround: workaround}})
 	}
 	return section
 }
@@ -685,6 +683,13 @@ func dataQualityUpdatedStale(row intervals.Wellness) (string, bool) {
 }
 
 func boundedMapEvidence(values []map[string]any, limit int) []map[string]any {
+	if limit <= 0 || len(values) <= limit {
+		return values
+	}
+	return values[:limit]
+}
+
+func boundedActivityEvidence(values []dataQualityActivityEvidence, limit int) []dataQualityActivityEvidence {
 	if limit <= 0 || len(values) <= limit {
 		return values
 	}
