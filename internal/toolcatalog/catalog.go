@@ -42,6 +42,7 @@ const (
 	GetBestEfforts                   = "get_best_efforts"
 	GetCustomItemByID                = "get_custom_item_by_id"
 	GetCustomItems                   = "get_custom_items"
+	GetDataQualityReport             = "get_data_quality_report"
 	GetEventByID                     = "get_event_by_id"
 	GetEvents                        = "get_events"
 	GetExtendedMetrics               = "get_extended_metrics"
@@ -110,6 +111,7 @@ var athleteScopedToolNames = []string{
 	GetBestEfforts,
 	GetCustomItemByID,
 	GetCustomItems,
+	GetDataQualityReport,
 	GetEventByID,
 	GetEvents,
 	GetExtendedMetrics,
@@ -145,6 +147,7 @@ var compactToolNames = []string{
 	GetActivityIntervals,
 	GetActivityStreams,
 	GetAthleteProfile,
+	GetDataQualityReport,
 	GetEventByID,
 	GetEvents,
 	GetFitness,

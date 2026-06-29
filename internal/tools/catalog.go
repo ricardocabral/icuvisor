@@ -79,6 +79,7 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 		newGetTodayTool(client, client, client, opts.gearCache, client, opts.customFieldCache, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetPlanningContextTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetAnnualTrainingPlanTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newGetDataQualityReportTool(client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newResolveCalendarDatesTool(client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAnalyzeTrendTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAnalyzeDistributionTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -160,7 +161,7 @@ func toolCatalogGroup(name string) string {
 		return "wellness"
 	case getActivitiesName, getActivitiesAroundName, getActivityDetailsName, getActivityIntervalsName, getActivityStreamsName, getActivitySplitsName, getActivityHistogramName, getActivityMessagesName, addActivityMessageName, getExtendedMetricsName, deleteActivityName, updateActivityName, setActivityIntervalsName:
 		return "activities"
-	case computeActivitySegmentStatsName, analyzeTrendName, analyzeDistributionName, analyzeCorrelationName, analyzeEffortsDeltaName, computeZoneTimeName, computeLoadBalanceName, computeBaselineName, computeComplianceRateName:
+	case computeActivitySegmentStatsName, analyzeTrendName, analyzeDistributionName, analyzeCorrelationName, analyzeEffortsDeltaName, computeZoneTimeName, computeLoadBalanceName, computeBaselineName, computeComplianceRateName, getDataQualityReportName:
 		return "analyzers"
 	case resolveCalendarDatesName, getEventsName, getEventByIDName, addOrUpdateEventName, addUnavailableDateRangeName, deleteEventName, deleteEventsByDateRangeName, linkActivityToEventName:
 		return "events"

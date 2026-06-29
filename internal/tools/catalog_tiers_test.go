@@ -36,6 +36,7 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 		getActivityMessagesName:         safety.ToolsetCore,
 		getFitnessName:                  safety.ToolsetCore,
 		getTodayName:                    safety.ToolsetCore,
+		getDataQualityReportName:        safety.ToolsetCore,
 		resolveCalendarDatesName:        safety.ToolsetCore,
 		getTrainingSummaryName:          safety.ToolsetCore,
 		getBestEffortsName:              safety.ToolsetCore,
