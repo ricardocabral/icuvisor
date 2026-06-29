@@ -60,10 +60,6 @@ func listAdvancedCapabilitiesInputSchema() map[string]any {
 	}
 }
 
-func fullOnlyCapabilities(catalog []Tool) []advancedCapabilityRow {
-	return filteredHiddenCapabilities(catalog, safety.ToolsetCore, nil)
-}
-
 func hiddenCapabilities(catalog []Tool, activeToolset safety.Toolset) []advancedCapabilityRow {
 	return filteredHiddenCapabilities(catalog, activeToolset, nil)
 }
