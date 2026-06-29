@@ -105,6 +105,43 @@ func TestGetFitnessPerSportLoadTrendCaveatsAndDateGaps(t *testing.T) {
 	}
 }
 
+func TestGetFitnessPreservesTRIMPLoadAndOmitsMissingFitnessFields(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeFitnessMetricsClient(t)
+	client.summaries = decodeSummaries(t, `[
+		{"date":"2026-05-01","trimp":42,"byCategory":[{"category":"Run","trimp":42}]},
+		{"date":"2026-05-02","fitness":0,"fatigue":0,"form":0,"training_load":0,"byCategory":[{"category":"Run","training_load":0}]}
+	]`)
+	tool := newGetFitnessTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"2026-05-01","end_date":"2026-05-02","include_per_sport_load_trends":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	got := resultMap(t, result)
+	rows := got["fitness"].([]any)
+	first := rows[0].(map[string]any)
+	if _, ok := first["ctl"]; ok {
+		t.Fatalf("first fitness row = %#v, want missing CTL omitted", first)
+	}
+	second := rows[1].(map[string]any)
+	if second["ctl"] != float64(0) || second["atl"] != float64(0) || second["tsb"] != float64(0) {
+		t.Fatalf("second fitness row = %#v, want explicit zero fitness values preserved", second)
+	}
+	buckets := perSportBuckets(t, got)
+	assertTrendLoad(t, buckets, "running", "2026-05-01", 42)
+	meta := got["_meta"].(map[string]any)
+	diagnostics := meta["load_diagnostics"].([]any)
+	if !diagnosticReasonsContain(diagnostics, "trimp_or_hr_load_available") || !diagnosticReasonsContain(diagnostics, "fitness_fields_missing") {
+		t.Fatalf("load_diagnostics = %#v, want TRIMP and missing-fitness diagnostics", diagnostics)
+	}
+	trendMeta := meta["per_sport_load_trends"].(map[string]any)
+	if !strings.Contains(joinedStrings(trendMeta["caveats"].([]any)), "do not relabel it as TSS") {
+		t.Fatalf("per-sport caveats = %#v, want TRIMP/TSS wording", trendMeta["caveats"])
+	}
+}
+
 func perSportBuckets(t *testing.T, got map[string]any) map[string][]map[string]any {
 	t.Helper()
 	out := map[string][]map[string]any{}
@@ -171,4 +208,14 @@ func joinedStrings(values []any) string {
 		parts = append(parts, value.(string))
 	}
 	return strings.Join(parts, "\n")
+}
+
+func diagnosticReasonsContain(values []any, want string) bool {
+	for _, value := range values {
+		row := value.(map[string]any)
+		if row["reason"] == want {
+			return true
+		}
+	}
+	return false
 }

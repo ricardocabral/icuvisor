@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
@@ -64,6 +65,46 @@ func TestGetActivityStreamsCanonicalizesKeysAndRequiresSamplesOptIn(t *testing.T
 	unknown := payload["_meta"].(map[string]any)["unknown_stream_keys"].([]any)
 	if len(unknown) == 0 {
 		t.Fatalf("_meta = %#v, want unknown stream keys", payload["_meta"])
+	}
+}
+
+func TestGetActivityStreamsReportsMissingHeartRateGuidance(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityReadClient{streams: decodeStreamFixtures(t, `{"type":"time","data":[0,1]}`)}
+	tool := newGetActivityStreamsTool(client, client, "test", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","keys":["heart_rate"]}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	diagnostics := meta["data_availability"].([]any)
+	if len(diagnostics) != 1 {
+		t.Fatalf("data_availability = %#v, want one missing-stream diagnostic", diagnostics)
+	}
+	diagnostic := diagnostics[0].(map[string]any)
+	if diagnostic["reason"] != "missing_stream" || !strings.Contains(diagnostic["message"].(string), "max-heart-rate") || !strings.Contains(diagnostic["workaround"].(string), "re-import") {
+		t.Fatalf("diagnostic = %#v, want max-HR stream guidance", diagnostic)
+	}
+}
+
+func TestGetActivityStreamsUnavailableIncludesRestrictedSourceDiagnostic(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityReadClient{activity: decodeExtendedMetricsActivity(t, `{"id":"stub1","source":"Strava","_note":"hidden"}`), streamErr: intervals.ErrNotFound}
+	tool := newGetActivityStreamsTool(client, client, "test", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"stub1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v, want structured unavailable", err)
+	}
+	payload := resultMap(t, result)
+	assertUnavailableReason(t, payload, "strava_blocked")
+	diagnostics := payload["_meta"].(map[string]any)["data_availability"].([]any)
+	diagnostic := diagnostics[0].(map[string]any)
+	if diagnostic["reason"] != "restricted_source" || !strings.Contains(diagnostic["message"].(string), "max-heart-rate") {
+		t.Fatalf("diagnostic = %#v, want restricted source data guidance", diagnostic)
 	}
 }
 
