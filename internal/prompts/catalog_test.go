@@ -17,14 +17,14 @@ func (r *captureRegistrar) AddPrompt(prompt Prompt) error {
 	return nil
 }
 
-func TestNewRegistryRegistersEightPrompts(t *testing.T) {
+func TestNewRegistryRegistersNinePrompts(t *testing.T) {
 	t.Parallel()
 
 	registrar := &captureRegistrar{}
 	if err := NewRegistry().Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	wantNames := []string{TrainingAnalysisName, RecoveryCheckName, WeeklyPlanningName, WeeklyReviewName, ShareableTrainingReportName, PlanHealthReviewName, RaceWeekTaperName, CoachRosterTriageName}
+	wantNames := []string{TrainingAnalysisName, RecoveryCheckName, WeeklyPlanningName, WeeklyReviewName, ShareableTrainingReportName, PlanHealthReviewName, RaceWeekTaperName, CoachRosterTriageName, CoachAthleteOnboardingName}
 	if len(registrar.prompts) != len(wantNames) {
 		t.Fatalf("registered %d prompts, want %d", len(registrar.prompts), len(wantNames))
 	}
@@ -61,6 +61,7 @@ func TestRenderedPromptsGolden(t *testing.T) {
 		{name: "plan_health_review", prompt: PlanHealthReviewPrompt(), arguments: map[string]string{"planned_start": "2026-05-18", "planned_end": "2026-06-01", "completed_lookback_days": "21", "race_date": "2026-06-07", "race_name": "A Race"}, goldenFile: "plan_health_review.md"},
 		{name: "race_week_taper", prompt: RaceWeekTaperPrompt(), arguments: map[string]string{"race_date": "2026-06-07", "race_name": "A Race"}, goldenFile: "race_week_taper.md"},
 		{name: "coach_roster_triage", prompt: CoachRosterTriagePrompt(), arguments: map[string]string{"athlete_id": "i12345", "start_date": "2026-05-01", "end_date": "2026-05-14"}, goldenFile: "coach_roster_triage.md"},
+		{name: "coach_athlete_onboarding", prompt: CoachAthleteOnboardingPrompt(), arguments: map[string]string{"athlete_id": "i12345", "start_date": "2026-05-01", "end_date": "2026-05-28"}, goldenFile: "coach_athlete_onboarding.md"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -274,6 +275,39 @@ func TestPlanningPromptsIncludeSeasonContextAndWriteGuardrails(t *testing.T) {
 	}
 }
 
+func TestCoachAthleteOnboardingIncludesAuthorizationAndChecklistGuidance(t *testing.T) {
+	t.Parallel()
+
+	text := renderPromptText(t, CoachAthleteOnboardingPrompt(), map[string]string{"athlete_id": " I12345 "})
+	for _, want := range []string{
+		"athlete_id=i12345",
+		"confirm the selected athlete's canonical ID/label",
+		"authorization and athlete consent",
+		"thresholds/zones",
+		"wellness/HRV baseline",
+		"devices/sources/sync gaps",
+		"athlete_id selects a configured athlete; it is not a credential",
+		"Do not request or accept intervals.icu API keys",
+		"Do not run live account tests",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("coach onboarding prompt missing %q:\n%s", want, text)
+		}
+	}
+}
+
+func TestCoachAthleteOnboardingRejectsInvalidAthleteID(t *testing.T) {
+	t.Parallel()
+
+	_, err := CoachAthleteOnboardingPrompt().Handler(context.Background(), Request{Arguments: map[string]string{"athlete_id": "api-key-not-allowed"}})
+	if err == nil {
+		t.Fatal("Handler() error = nil, want invalid athlete_id")
+	}
+	if !strings.Contains(err.Error(), "invalid athlete_id") {
+		t.Fatalf("Handler() error = %q, want invalid athlete_id", err.Error())
+	}
+}
+
 func TestCoachRosterTriageNormalizesAthleteID(t *testing.T) {
 	t.Parallel()
 
@@ -310,7 +344,7 @@ func TestRaceWeekTaperRequiresRaceDate(t *testing.T) {
 func TestPromptResourceCitationsStayTerse(t *testing.T) {
 	t.Parallel()
 
-	for _, prompt := range []Prompt{TrainingAnalysisPrompt(), RecoveryCheckPrompt(), WeeklyPlanningPrompt(), WeeklyReviewPrompt(), ShareableTrainingReportPrompt(), PlanHealthReviewPrompt(), RaceWeekTaperPrompt(), CoachRosterTriagePrompt()} {
+	for _, prompt := range []Prompt{TrainingAnalysisPrompt(), RecoveryCheckPrompt(), WeeklyPlanningPrompt(), WeeklyReviewPrompt(), ShareableTrainingReportPrompt(), PlanHealthReviewPrompt(), RaceWeekTaperPrompt(), CoachRosterTriagePrompt(), CoachAthleteOnboardingPrompt()} {
 		text := renderPromptText(t, prompt, requiredArgsForPrompt(prompt.Name))
 		if !strings.Contains(text, "icuvisor://") {
 			t.Fatalf("prompt %s missing resource URI:\n%s", prompt.Name, text)
@@ -337,7 +371,7 @@ func renderPromptText(t *testing.T, prompt Prompt, arguments map[string]string) 
 }
 
 func requiredArgsForPrompt(name string) map[string]string {
-	if name == CoachRosterTriageName {
+	if name == CoachRosterTriageName || name == CoachAthleteOnboardingName {
 		return map[string]string{"athlete_id": "i12345"}
 	}
 	if name == RaceWeekTaperName {

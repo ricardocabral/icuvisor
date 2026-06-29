@@ -17,6 +17,7 @@ const (
 	PlanHealthReviewName        = "plan_health_review"
 	RaceWeekTaperName           = "race_week_taper"
 	CoachRosterTriageName       = "coach_roster_triage"
+	CoachAthleteOnboardingName  = "coach_athlete_onboarding"
 )
 
 // TrainingAnalysisPrompt guides training-load and trend analysis.
@@ -252,6 +253,21 @@ func RaceWeekTaperPrompt() Prompt {
 	}
 }
 
+// CoachAthleteOnboardingPrompt guides read-only coach/team athlete onboarding.
+func CoachAthleteOnboardingPrompt() Prompt {
+	return Prompt{
+		Name:        CoachAthleteOnboardingName,
+		Title:       "Coach athlete onboarding",
+		Description: "Guide a coach through authorized athlete/team onboarding using existing read-only coach-mode tools.",
+		Arguments: []Argument{
+			{Name: "athlete_id", Title: "Athlete ID", Description: "Optional intervals.icu athlete selector string; IDs are digits, optionally with a leading 'i' (e.g. i12345 or 12345). This is not an API key or proof of authorization."},
+			{Name: "start_date", Title: "Start date", Description: "Optional athlete-local date string (YYYY-MM-DD) for recent activity and wellness coverage."},
+			{Name: "end_date", Title: "End date", Description: "Optional athlete-local date string (YYYY-MM-DD) for recent activity and wellness coverage."},
+		},
+		Handler: coachAthleteOnboardingHandler,
+	}
+}
+
 // CoachRosterTriagePrompt guides coach-mode athlete triage.
 func CoachRosterTriagePrompt() Prompt {
 	return Prompt{
@@ -313,6 +329,42 @@ func raceWeekTaperHandler(ctx context.Context, req Request) (Result, error) {
 		},
 		Return: "race-week schedule proposal, taper risks, intensity guardrails, recovery priorities, missing race context, and questions before writes",
 	}, req.Arguments), nil
+}
+
+func coachAthleteOnboardingHandler(ctx context.Context, req Request) (Result, error) {
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
+	}
+	args := cloneArgs(req.Arguments)
+	if athleteID := strings.TrimSpace(args["athlete_id"]); athleteID != "" {
+		normalized, err := config.NormalizeAthleteID(athleteID)
+		if err != nil {
+			return Result{}, NewUserError("invalid athlete_id; intervals.icu IDs are digits, optionally with a leading 'i', e.g. i12345 or 12345", err)
+		}
+		args["athlete_id"] = normalized
+	}
+	return renderSpec(promptSpec{
+		Title:        "Coach athlete onboarding",
+		DefaultScope: "list the coach roster, choose one athlete, and use the last 28 athlete-local days unless a window is supplied",
+		ArgOrder:     []string{"athlete_id", "start_date", "end_date"},
+		Resources:    []string{"icuvisor://athlete-profile", "icuvisor://event-categories"},
+		Tools:        []string{"list_athletes", "select_athlete", "get_athlete_profile", "get_activities", "get_training_summary", "get_fitness", "get_wellness_data", "get_events", "get_training_plan", "icuvisor_list_advanced_capabilities"},
+		Do: []string{
+			"Start with list_athletes; if athlete_id is supplied, select_athlete for that normalized selector, otherwise ask the coach which roster athlete to onboard.",
+			"Before summarizing data, confirm the selected athlete's canonical ID/label and state that the coach must already have authorization and athlete consent to view and analyze this data.",
+			"Read profile first for identity, timezone, units, thresholds/zones, and `_meta.warnings`; then check recent activities, training summary, fitness, wellness/HRV, events/races, and training-plan context.",
+			"Call icuvisor_list_advanced_capabilities when a checklist item depends on a missing or ACL-hidden tool; name unavailable data rather than guessing.",
+			"Produce checklist rows for thresholds/zones, activity coverage, wellness/HRV baseline, races/events/goals, devices/sources/sync gaps, missing data warnings, and coach follow-up questions.",
+			"Keep this onboarding read-only; propose any calendar/settings changes separately and wait for explicit reviewed approval before using write tools.",
+		},
+		Guardrails: []string{
+			"athlete_id selects a configured athlete; it is not a credential, consent artifact, invite token, or proof of upstream authorization.",
+			"Do not request or accept intervals.icu API keys, OAuth tokens, invite links, or private identifiers in chat.",
+			"Do not expose raw wellness/location details beyond what the coach needs for onboarding; ask the coach to review/redact any summary before sharing.",
+			"Do not run live account tests or claim upstream roster import, consent capture, device inventory, or bulk team analytics exists.",
+		},
+		Return: "authorized-athlete confirmation, onboarding checklist with pass/warn/missing status, baseline profile, goals/races questions, device/source caveats, and first coach actions",
+	}, args), nil
 }
 
 func coachRosterTriageHandler(ctx context.Context, req Request) (Result, error) {

@@ -17,6 +17,7 @@ func NewRegistry() Registry {
 		PlanHealthReviewPrompt(),
 		RaceWeekTaperPrompt(),
 		CoachRosterTriagePrompt(),
+		CoachAthleteOnboardingPrompt(),
 	}}
 }
 
