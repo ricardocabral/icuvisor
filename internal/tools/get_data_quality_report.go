@@ -159,7 +159,7 @@ func getDataQualityReportHandler(client dataQualityReportClient, version string,
 			}
 			return Result{}, NewUserError(fetchDataQualityReportMessage, err)
 		}
-		wellness, err := client.ListWellness(ctx, intervals.WellnessParams{Oldest: args.StartDate, Newest: args.EndDate, Fields: dataQualityWellnessFields()})
+		wellness, err := client.ListWellness(ctx, intervals.WellnessParams{Oldest: args.StartDate, Newest: args.EndDate})
 		if err != nil {
 			if isContextError(err) {
 				return Result{}, err
@@ -225,7 +225,7 @@ func shapeDataQualityReport(in dataQualityReportInputs) dataQualityReportRespons
 		ActivityCoverage:   dataQualityActivityCoverageSection(in.activities, windowDays),
 		StreamAvailability: dataQualityStreamAvailabilitySection(in.activities),
 		SourceRestrictions: dataQualitySourceRestrictionsSection(in.activities),
-		LoadBasis:          dataQualityLoadBasisSection(in.summaries),
+		LoadBasis:          dataQualityLoadBasisSection(in.summaries, in.args.Sport),
 		ThresholdsZones:    dataQualityThresholdsSection(profileResponse.Meta.Warnings),
 		WellnessFreshness:  dataQualityWellnessSection(in.wellness, in.args.EndDate),
 		CalendarRaceData:   dataQualityCalendarSection(in.events),
@@ -321,7 +321,7 @@ func dataQualitySourceRestrictionsSection(activities []intervals.Activity) dataQ
 	return section
 }
 
-func dataQualityLoadBasisSection(rows []intervals.SummaryWithCats) dataQualitySection {
+func dataQualityLoadBasisSection(rows []intervals.SummaryWithCats, sport string) dataQualitySection {
 	evidence := map[string]any{"summary_days": len(rows), "dates": dataQualitySummaryDates(rows)}
 	section := dataQualitySection{Status: "ok", Severity: "info", Message: "Training-load and fitness summary fields are visible.", Evidence: evidence}
 	if len(rows) == 0 {
@@ -331,7 +331,12 @@ func dataQualityLoadBasisSection(rows []intervals.SummaryWithCats) dataQualitySe
 		section.Diagnostics = append(section.Diagnostics, dataQualityDiagnostic{Code: "missing_load_history", Severity: "critical", Message: "No fitness/load rows were returned for the requested window.", Evidence: evidence, Recommendation: dataQualityRecommendation{Action: "Check upstream sync and use get_fitness or get_training_summary for the same date range.", Tool: getFitnessName}})
 		return section
 	}
-	for _, diagnostic := range loadDiagnostics(rows) {
+	diagnostics := loadDiagnostics(rows)
+	if strings.TrimSpace(sport) != "" {
+		diagnostics = dataQualityCategoryLoadDiagnostics(rows)
+		evidence["sport"] = sport
+	}
+	for _, diagnostic := range diagnostics {
 		severity := "warning"
 		if diagnostic.Reason == "trimp_or_hr_load_available" {
 			severity = "warning"
@@ -344,6 +349,35 @@ func dataQualityLoadBasisSection(rows []intervals.SummaryWithCats) dataQualitySe
 		section.Message = "Load data is visible, but some rows use HR/TRIMP fallback fields or omit fitness/load fields."
 	}
 	return section
+}
+
+func dataQualityCategoryLoadDiagnostics(rows []intervals.SummaryWithCats) []dataAvailabilityDiagnostic {
+	missingLoadDates := map[string]bool{}
+	alternateFields := map[string]bool{}
+	for _, row := range rows {
+		if len(row.ByCategory) == 0 {
+			missingLoadDates[row.Date] = true
+			continue
+		}
+		for _, category := range row.ByCategory {
+			load := categoryTrainingLoad(category)
+			if !load.Present {
+				missingLoadDates[row.Date] = true
+				continue
+			}
+			if load.Source != "" && load.Source != "training_load" {
+				alternateFields[load.Source] = true
+			}
+		}
+	}
+	diagnostics := make([]dataAvailabilityDiagnostic, 0, 2)
+	if len(alternateFields) > 0 {
+		diagnostics = append(diagnostics, dataAvailabilityDiagnostic{Reason: "trimp_or_hr_load_available", SourceFields: sortedBoolKeys(alternateFields), Message: "Sport-filtered training load was preserved from HR/TRIMP-like category fields and is exposed as neutral training_load, not TSS."})
+	}
+	if len(missingLoadDates) > 0 {
+		diagnostics = append(diagnostics, dataAvailabilityDiagnostic{Reason: "missing_training_load", MissingFields: []string{"training_load"}, Dates: sortedBoolKeys(missingLoadDates), Message: "Some sport-filtered summary category rows omit training_load and have no recognized HR/TRIMP fallback field; load-dependent sport totals treat those rows as zero rather than inventing TSS."})
+	}
+	return diagnostics
 }
 
 func dataQualityThresholdsSection(warnings []athleteprofile.ReadinessWarning) dataQualitySection {
@@ -430,6 +464,14 @@ func summarizeDataQuality(sections dataQualitySections, windowDays int) dataQual
 			if summary.Status != "critical" {
 				summary.Status = "warning"
 				summary.WorstSeverity = "warning"
+			}
+		case "unknown":
+			if section.Severity == "warning" || section.Severity == "critical" {
+				summary.SectionsWarning++
+				if summary.Status != "critical" {
+					summary.Status = "warning"
+					summary.WorstSeverity = "warning"
+				}
 			}
 		case "ok":
 			summary.SectionsOK++
@@ -552,6 +594,9 @@ func dataQualityStaleWellnessRows(rows []intervals.Wellness) []map[string]any {
 		if row.ID != nil {
 			date = strings.TrimSpace(*row.ID)
 		}
+		if fetchedAt, stale := dataQualityUpdatedStale(row); stale {
+			out = append(out, map[string]any{"date": date, "field": "updated", "source": "wellness_updated", "fetched_at": fetchedAt})
+		}
 		for _, field := range []struct {
 			name    string
 			present bool
@@ -574,6 +619,14 @@ func dataQualityStaleWellnessRows(rows []intervals.Wellness) []map[string]any {
 		}
 	}
 	return out
+}
+
+func dataQualityUpdatedStale(row intervals.Wellness) (string, bool) {
+	if row.Updated == nil || row.ID == nil {
+		return "", false
+	}
+	fetchedAt, parsed, ok := parseWellnessTimestamp(*row.Updated)
+	return fetchedAt, ok && wellnessFetchedAtIsStale(row, parsed)
 }
 
 func dataQualityEventSamples(events []intervals.Event) []dataQualityEventEvidence {
@@ -646,10 +699,6 @@ func appendUniqueString(values []string, value string) []string {
 
 func dataQualityActivityFields() []string {
 	return append([]string(nil), terseActivityFields...)
-}
-
-func dataQualityWellnessFields() []string {
-	return []string{"id", "updated", "restingHR", "hrv", "hrvSDNN", "sleepSecs", "sleepScore", "readiness", "feel", "fatigue", "stress", "soreness", "injury"}
 }
 
 func dataQualityReportInputSchema() map[string]any {
