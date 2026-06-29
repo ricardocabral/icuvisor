@@ -167,8 +167,9 @@ func getDataQualityReportHandler(client dataQualityReportClient, version string,
 			}
 			return Result{}, NewUserError(fetchDataQualityReportMessage, err)
 		}
+		eventProbeEnd := dataQualityEventProbeEnd(args.StartDate, args.EndDate)
 		resolve := true
-		events, err := client.ListEvents(ctx, intervals.ListEventsParams{Oldest: args.StartDate, Newest: dataQualityEventProbeEnd(args.StartDate, args.EndDate), Limit: dataQualityEventFetchLimit, Resolve: &resolve})
+		events, err := client.ListEvents(ctx, intervals.ListEventsParams{Oldest: args.StartDate, Newest: eventProbeEnd, Limit: dataQualityEventFetchLimit, Resolve: &resolve})
 		if err != nil {
 			if isContextError(err) {
 				return Result{}, err
@@ -178,7 +179,7 @@ func getDataQualityReportHandler(client dataQualityReportClient, version string,
 		activityProbeCapped := len(activities) >= dataQualityActivityFetchLimit
 		activities = filterDataQualityActivities(activities, args.Sport)
 		summaries = filterDataQualitySummaries(summaries, args.Sport)
-		payload := shapeDataQualityReport(dataQualityReportInputs{args: args, profile: profile, activities: activities, summaries: summaries, wellness: wellness, events: events, version: version, timezoneFallback: timezoneFallback, activityProbeCapped: activityProbeCapped})
+		payload := shapeDataQualityReport(dataQualityReportInputs{args: args, profile: profile, activities: activities, summaries: summaries, wellness: wellness, events: events, version: version, timezoneFallback: timezoneFallback, activityProbeCapped: activityProbeCapped, eventProbeEnd: eventProbeEnd})
 		shaped, err := response.Shape(payload, shapeCfg.options(args.IncludeFull, nil, version, debugMetadata, getDataQualityReportName, profileUnitSystem(profile)))
 		if err != nil {
 			return Result{}, err
@@ -197,6 +198,7 @@ type dataQualityReportInputs struct {
 	version             string
 	timezoneFallback    string
 	activityProbeCapped bool
+	eventProbeEnd       string
 }
 
 func decodeGetDataQualityReportRequest(raw json.RawMessage) (getDataQualityReportRequest, error) {
@@ -231,7 +233,7 @@ func shapeDataQualityReport(in dataQualityReportInputs) dataQualityReportRespons
 		LoadBasis:          dataQualityLoadBasisSection(in.summaries, in.args.Sport),
 		ThresholdsZones:    dataQualityThresholdsSection(filterDataQualityReadinessWarnings(profileResponse.Meta.Warnings, in.args.Sport)),
 		WellnessFreshness:  dataQualityWellnessSection(in.wellness, in.args.EndDate),
-		CalendarRaceData:   dataQualityCalendarSection(in.events, in.args.EndDate),
+		CalendarRaceData:   dataQualityCalendarSection(in.events, in.args.EndDate, in.eventProbeEnd),
 	}
 	payload := dataQualityReportResponse{Sections: sections, Meta: dataQualityMeta{ServerVersion: normalizeVersion(in.version), StartDate: in.args.StartDate, EndDate: in.args.EndDate, Timezone: profileTimezone(in.profile.Timezone, in.timezoneFallback), Sport: in.args.Sport, IncludeFull: in.args.IncludeFull, ReadOnly: true, StreamPolicy: "uses activity stream_types and summary fields only; does not fetch raw stream samples by default", ActivityLimit: dataQualityActivityFetchLimit, EventLimit: dataQualityEventFetchLimit}}
 	payload.Diagnostics = collectDataQualityDiagnostics(sections)
@@ -475,7 +477,7 @@ func dataQualityWellnessSection(rows []intervals.Wellness, endDate string) dataQ
 	return section
 }
 
-func dataQualityCalendarSection(events []intervals.Event, endDate string) dataQualitySection {
+func dataQualityCalendarSection(events []intervals.Event, endDate string, eventProbeEnd string) dataQualitySection {
 	inWindowCount := 0
 	futureCount := 0
 	futureRaceCount := 0
@@ -490,8 +492,20 @@ func dataQualityCalendarSection(events []intervals.Event, endDate string) dataQu
 		}
 		inWindowCount++
 	}
-	evidence := map[string]any{"in_window_event_count": inWindowCount, "future_event_count": futureCount, "future_race_like_event_count": futureRaceCount, "future_horizon_days": dataQualityFutureEventHorizonDay}
+	inWindowComplete := eventProbeEnd >= endDate
+	actualFutureHorizon := 0
+	if inWindowComplete {
+		actualFutureHorizon = dayGap(endDate, eventProbeEnd)
+	}
+	evidence := map[string]any{"in_window_event_count": inWindowCount, "future_event_count": futureCount, "future_race_like_event_count": futureRaceCount, "requested_future_horizon_days": dataQualityFutureEventHorizonDay, "actual_future_horizon_days": actualFutureHorizon, "event_probe_end": eventProbeEnd, "in_window_complete": inWindowComplete}
 	section := dataQualitySection{Status: "ok", Severity: "info", Message: "Calendar events are visible for this window.", Evidence: evidence}
+	if !inWindowComplete {
+		section.Status = "unknown"
+		section.Severity = "warning"
+		section.Message = "Calendar diagnostics are incomplete because the requested report window exceeds the bounded event probe."
+		section.Diagnostics = append(section.Diagnostics, dataQualityDiagnostic{Code: "calendar_probe_incomplete", Severity: "warning", Message: "The event probe was clipped before the report end date to respect the get_events range limit.", Evidence: evidence, Recommendation: dataQualityRecommendation{Action: "Run get_data_quality_report or get_events over smaller date chunks for complete calendar diagnostics.", Tool: getEventsName}})
+		return section
+	}
 	if inWindowCount == 0 {
 		section.Status = "warning"
 		section.Severity = "warning"
