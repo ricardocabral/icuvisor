@@ -497,7 +497,8 @@ func dataQualityCalendarSection(events []intervals.Event, endDate string, eventP
 	if inWindowComplete {
 		actualFutureHorizon = dayGap(endDate, eventProbeEnd)
 	}
-	evidence := map[string]any{"in_window_event_count": inWindowCount, "future_event_count": futureCount, "future_race_like_event_count": futureRaceCount, "requested_future_horizon_days": dataQualityFutureEventHorizonDay, "actual_future_horizon_days": actualFutureHorizon, "event_probe_end": eventProbeEnd, "in_window_complete": inWindowComplete}
+	futureComplete := actualFutureHorizon >= dataQualityFutureEventHorizonDay
+	evidence := map[string]any{"in_window_event_count": inWindowCount, "future_event_count": futureCount, "future_race_like_event_count": futureRaceCount, "requested_future_horizon_days": dataQualityFutureEventHorizonDay, "actual_future_horizon_days": actualFutureHorizon, "event_probe_end": eventProbeEnd, "in_window_complete": inWindowComplete, "future_context_complete": futureComplete}
 	section := dataQualitySection{Status: "ok", Severity: "info", Message: "Calendar events are visible for this window.", Evidence: evidence}
 	if !inWindowComplete {
 		section.Status = "unknown"
@@ -506,9 +507,17 @@ func dataQualityCalendarSection(events []intervals.Event, endDate string, eventP
 		section.Diagnostics = append(section.Diagnostics, dataQualityDiagnostic{Code: "calendar_probe_incomplete", Severity: "warning", Message: "The event probe was clipped before the report end date to respect the get_events range limit.", Evidence: evidence, Recommendation: dataQualityRecommendation{Action: "Run get_data_quality_report or get_events over smaller date chunks for complete calendar diagnostics.", Tool: getEventsName}})
 		return section
 	}
-	if inWindowCount == 0 {
-		section.Status = "warning"
+	if !futureComplete {
+		section.Status = "unknown"
 		section.Severity = "warning"
+		section.Message = "Calendar window diagnostics are visible, but future race context is incomplete because the future probe was clipped."
+		section.Diagnostics = append(section.Diagnostics, dataQualityDiagnostic{Code: "calendar_future_probe_incomplete", Severity: "warning", Message: "The event probe could not inspect the full requested future race horizon while respecting the get_events range limit.", Evidence: evidence, Recommendation: dataQualityRecommendation{Action: "Run get_data_quality_report or get_events over a smaller historical window ending near the target date to inspect the full future race horizon.", Tool: getEventsName}})
+	}
+	if inWindowCount == 0 {
+		if section.Status == "ok" {
+			section.Status = "warning"
+			section.Severity = "warning"
+		}
 		section.Message = "No calendar events are visible inside this report window."
 		if futureCount > 0 {
 			section.Message = "No calendar events are visible inside this report window, but bounded future calendar context exists."
