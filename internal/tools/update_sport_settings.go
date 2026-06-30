@@ -21,6 +21,7 @@ const (
 	invalidUpdateSportSettingsArgumentsMessage = "invalid update_sport_settings arguments; provide sport, effective_date, and at least one documented threshold or gated zones field"
 	writeSportSettingsMessage                  = "could not update sport settings; check intervals.icu credentials, athlete ID, sport, effective date, and writable fields"
 	zoneOverwriteGateMessage                   = "zones overwrite prior sport-setting zone definitions; set ICUVISOR_DELETE_MODE=full to allow this destructive argument"
+	metersPer100Yards                          = 91.44
 )
 
 var supportedSportSettingsSports = []string{"Ride", "Run", "Swim", "VirtualRide", "Walk", "Hike", "Rowing", "WeightTraining", "AlpineSki", "NordicSki", "Other"}
@@ -57,6 +58,7 @@ type updateSportSettingsEcho struct {
 	ThresholdPaceSecondsPerKM   *float64                      `json:"threshold_pace_seconds_per_km,omitempty"`
 	ThresholdPaceSecondsPerMile *float64                      `json:"threshold_pace_seconds_per_mile,omitempty"`
 	ThresholdPaceSecondsPer100M *float64                      `json:"threshold_pace_seconds_per_100m,omitempty"`
+	ThresholdPaceSecondsPer100Y *float64                      `json:"threshold_pace_seconds_per_100y,omitempty"`
 	ThresholdPaceSecondsPer500M *float64                      `json:"threshold_pace_seconds_per_500m,omitempty"`
 	ThresholdPaceValue          *float64                      `json:"threshold_pace_value,omitempty"`
 	PaceUnitsSource             string                        `json:"pace_units_source,omitempty"`
@@ -275,6 +277,8 @@ func assignUpdateSportSettingsPace(echo *updateSportSettingsEcho, value *float64
 		echo.ThresholdPaceSecondsPerMile = value
 	case "SECS_100M":
 		echo.ThresholdPaceSecondsPer100M = value
+	case "SECS_100Y":
+		echo.ThresholdPaceSecondsPer100Y = value
 	case "SECS_500M":
 		echo.ThresholdPaceSecondsPer500M = value
 	default:
@@ -299,6 +303,8 @@ func convertThresholdPaceForUpstream(input updateSportSettingsPaceRequest, setti
 		return secondsPerMeter * 1609.344, upstreamUnit, nil
 	case "SECS_100M":
 		return secondsPerMeter * 100, upstreamUnit, nil
+	case "SECS_100Y":
+		return secondsPerMeter * metersPer100Yards, upstreamUnit, nil
 	case "SECS_500M":
 		return secondsPerMeter * 500, upstreamUnit, nil
 	default:
@@ -317,6 +323,8 @@ func inputPaceSecondsPerMeter(value float64, unit string) (float64, error) {
 		return value / 1609.344, nil
 	case "seconds_per_100m":
 		return value / 100, nil
+	case "seconds_per_100y":
+		return value / metersPer100Yards, nil
 	case "seconds_per_500m":
 		return value / 500, nil
 	case "minutes_per_km":
@@ -332,6 +340,8 @@ func upstreamPaceUnitFromInput(inputUnit string, unitSystem response.UnitSystem)
 	switch inputUnit {
 	case "seconds_per_100m":
 		return "SECS_100M"
+	case "seconds_per_100y":
+		return "SECS_100Y"
 	case "seconds_per_500m":
 		return "SECS_500M"
 	case "seconds_per_mile", "minutes_per_mile":
@@ -413,7 +423,7 @@ func normalizePaceInputUnit(value string) string {
 
 func isSupportedPaceInputUnit(value string) bool {
 	switch normalizePaceInputUnit(value) {
-	case "seconds_per_km", "seconds_per_mile", "seconds_per_100m", "seconds_per_500m", "minutes_per_km", "minutes_per_mile":
+	case "seconds_per_km", "seconds_per_mile", "seconds_per_100m", "seconds_per_100y", "seconds_per_500m", "minutes_per_km", "minutes_per_mile":
 		return true
 	default:
 		return false
@@ -427,9 +437,9 @@ func updateSportSettingsInputSchema() map[string]any {
 		"effective_date": map[string]any{"type": "string", "description": "Required athlete-local effective date as YYYY-MM-DD; used as the oldest date for upstream sport-setting recompute."},
 		"ftp":            map[string]any{"type": "integer", "minimum": 1, "description": "Functional Threshold Power in watts for the selected sport."},
 		"threshold_hr":   map[string]any{"type": "integer", "minimum": 1, "description": "Threshold heart rate in bpm for the selected sport."},
-		"threshold_pace": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"value", "unit"}, "description": "Threshold pace with an explicit pace-duration unit; seconds_per_km is 4:15/km as 255 and seconds_per_mile is 8:00/mi as 480.", "properties": map[string]any{
+		"threshold_pace": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"value", "unit"}, "description": "Threshold pace with an explicit pace-duration unit; seconds_per_km is 4:15/km as 255, seconds_per_mile is 8:00/mi as 480, and seconds_per_100y is 1:30/100y as 90.", "properties": map[string]any{
 			"value": map[string]any{"type": "number", "exclusiveMinimum": 0, "description": "Threshold pace duration in the provided unit, not speed."},
-			"unit":  map[string]any{"type": "string", "enum": []string{"seconds_per_km", "seconds_per_mile", "seconds_per_100m", "seconds_per_500m", "minutes_per_km", "minutes_per_mile"}, "description": "Pace-duration unit for threshold_pace value."},
+			"unit":  map[string]any{"type": "string", "enum": []string{"seconds_per_km", "seconds_per_mile", "seconds_per_100m", "seconds_per_100y", "seconds_per_500m", "minutes_per_km", "minutes_per_mile"}, "description": "Pace-duration unit for threshold_pace value."},
 		}},
 		"zones": map[string]any{"type": "array", "description": "Optional destructive replacement zone definitions. Supplying zones overwrites prior power/hr/pace zone definitions for this sport and is rejected unless ICUVISOR_DELETE_MODE=full.", "items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"kind", "boundaries"}, "properties": map[string]any{
 			"kind":       map[string]any{"type": "string", "enum": []string{"power", "hr", "pace"}, "description": "Zone family to overwrite."},
@@ -451,6 +461,11 @@ func updateSportSettingsInputExamples() []map[string]any {
 			"effective_date": "2026-06-01",
 			"threshold_hr":   172,
 			"threshold_pace": map[string]any{"value": 255, "unit": "seconds_per_km"},
+		},
+		{
+			"sport":          "Swim",
+			"effective_date": "2026-06-01",
+			"threshold_pace": map[string]any{"value": 90, "unit": "seconds_per_100y"},
 		},
 		{
 			"sport":          "Ride",

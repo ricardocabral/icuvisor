@@ -227,6 +227,8 @@ func paceSecondsPerMeter(value float64, sourceUnit string) (float64, bool) {
 		return value / 1609.344, true
 	case "SECS_100M":
 		return value / 100, true
+	case "SECS_100Y":
+		return value / metersPer100Yards, true
 	case "SECS_500M":
 		return value / 500, true
 	default:
@@ -238,6 +240,8 @@ func preferredPacePreviewUnit(sourceUnit string, unitSystem response.UnitSystem)
 	switch strings.ToUpper(strings.TrimSpace(sourceUnit)) {
 	case "SECS_100M":
 		return 100, "/100m"
+	case "SECS_100Y":
+		return metersPer100Yards, "/100y"
 	case "SECS_500M":
 		return 500, "/500m"
 	}

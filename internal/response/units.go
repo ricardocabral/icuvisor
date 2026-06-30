@@ -247,6 +247,8 @@ func unitFieldSuffix(unit units.Unit) string {
 		return "minutes_per_mile"
 	case units.UnitSecs100M:
 		return "seconds_per_100m"
+	case units.UnitSecs100Y:
+		return "seconds_per_100y"
 	case units.UnitSecs500M:
 		return "seconds_per_500m"
 	default:

@@ -51,6 +51,8 @@ type Sport struct {
 	PaceZonesSecondsPerMile     []float64      `json:"pace_zones_seconds_per_mile,omitempty"`
 	ThresholdPaceSecondsPer100M *float64       `json:"threshold_pace_seconds_per_100m,omitempty"`
 	PaceZonesSecondsPer100M     []float64      `json:"pace_zones_seconds_per_100m,omitempty"`
+	ThresholdPaceSecondsPer100Y *float64       `json:"threshold_pace_seconds_per_100y,omitempty"`
+	PaceZonesSecondsPer100Y     []float64      `json:"pace_zones_seconds_per_100y,omitempty"`
 	ThresholdPaceSecondsPer500M *float64       `json:"threshold_pace_seconds_per_500m,omitempty"`
 	PaceZonesSecondsPer500M     []float64      `json:"pace_zones_seconds_per_500m,omitempty"`
 	ThresholdPaceValue          *float64       `json:"threshold_pace_value,omitempty"`
@@ -117,7 +119,7 @@ func NewResponse(profile intervals.AthleteWithSportSettings, version string, tim
 			ServerVersion:      NormalizeVersion(version),
 			AthleteIDFormat:    "i-prefixed intervals.icu athlete ID",
 			TimezoneConvention: "IANA timezone from athlete profile when available; config timezone fallback otherwise",
-			PaceConvention:     "paces are seconds per athlete pace distance unit; metric athletes receive threshold_pace_seconds_per_km/pace_zones_seconds_per_km, imperial athletes receive threshold_pace_seconds_per_mile/pace_zones_seconds_per_mile, and pace_units_source preserves the upstream enum such as MINS_KM or MINS_MILE",
+			PaceConvention:     "paces are seconds per athlete pace distance unit; run pace uses threshold_pace_seconds_per_km or threshold_pace_seconds_per_mile, swim pace uses threshold_pace_seconds_per_100m or threshold_pace_seconds_per_100y when upstream reports SECS_100M/SECS_100Y, row pace uses threshold_pace_seconds_per_500m, and pace_units_source preserves the upstream enum",
 			IncludeFull:        includeFull,
 		},
 	}
@@ -342,6 +344,8 @@ func assignProfileThresholdPace(sport *Sport, converted response.PreferredUnitVa
 		sport.ThresholdPaceSecondsPerMile = &value
 	case units.UnitSecs100M:
 		sport.ThresholdPaceSecondsPer100M = &value
+	case units.UnitSecs100Y:
+		sport.ThresholdPaceSecondsPer100Y = &value
 	case units.UnitSecs500M:
 		sport.ThresholdPaceSecondsPer500M = &value
 	default:
@@ -357,6 +361,8 @@ func assignProfilePaceZones(sport *Sport, converted response.PreferredUnitValue,
 		sport.PaceZonesSecondsPerMile = values
 	case units.UnitSecs100M:
 		sport.PaceZonesSecondsPer100M = values
+	case units.UnitSecs100Y:
+		sport.PaceZonesSecondsPer100Y = values
 	case units.UnitSecs500M:
 		sport.PaceZonesSecondsPer500M = values
 	default:
@@ -372,6 +378,8 @@ func profilePaceDistanceUnit(converted response.PreferredUnitValue) string {
 		return "mile"
 	case units.UnitSecs100M:
 		return "100m"
+	case units.UnitSecs100Y:
+		return "100y"
 	case units.UnitSecs500M:
 		return "500m"
 	default:
