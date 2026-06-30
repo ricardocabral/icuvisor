@@ -26,6 +26,10 @@ type endpointDiff struct {
 	SchemasRemoved []string
 }
 
+func (diff endpointDiff) hasStructuralDrift() bool {
+	return len(diff.Added) > 0 || len(diff.Removed) > 0 || len(diff.SchemasAdded) > 0 || len(diff.SchemasRemoved) > 0
+}
+
 func readSpec(path string) ([]byte, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -126,6 +130,12 @@ func renderMarkdown(diff endpointDiff, baselineSource, latestSource string) stri
 	var b strings.Builder
 	b.WriteString("# intervals.icu OpenAPI endpoint diff\n\n")
 	b.WriteString("This report compares OpenAPI `paths` keys and `components.schemas` names. It is a human triage aid; it does not approve product scope or auto-generate icuvisor tools. Schema-name drift is only a signal to inspect upstream docs and models.\n\n")
+	b.WriteString("## Classification\n\n")
+	if diff.hasStructuralDrift() {
+		b.WriteString("Structural OpenAPI key drift detected: one or more `paths` keys or `components.schemas` names were added or removed. Review the sections below before updating the baseline.\n\n")
+	} else {
+		b.WriteString("No structural OpenAPI key drift detected: the `paths` key inventory and `components.schemas` names are unchanged. Metadata, descriptions, examples, or formatting may have changed, and method/request/response/field-level semantic edits are outside this key-level check.\n\n")
+	}
 	fmt.Fprintf(&b, "- Baseline: `%s`\n", baselineSource)
 	fmt.Fprintf(&b, "- Latest: `%s`\n", latestSource)
 	fmt.Fprintf(&b, "- Added paths: %d\n", len(diff.Added))

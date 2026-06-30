@@ -18,7 +18,7 @@ env:
 
 jobs:
   endpoint-diff:
-    name: Compare OpenAPI paths and schemas
+    name: Classify OpenAPI key drift
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -26,7 +26,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - name: Generate OpenAPI diff report
+      - name: Generate OpenAPI structural-drift report
         shell: bash
         env:
           DISPATCH_URL: ${{ github.event.inputs.latest_url }}
@@ -37,9 +37,13 @@ jobs:
             -baseline scripts/openapidiff/baseline/intervals-openapi.json \
             -latest-url "$latest_url" \
             -output openapi-endpoint-diff.md
-          cat openapi-endpoint-diff.md >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload OpenAPI diff report
+          {
+            echo "## OpenAPI structural-drift classification"
+            echo
+            cat openapi-endpoint-diff.md
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload OpenAPI structural-drift report
         uses: actions/upload-artifact@v7
         with:
-          name: openapi-endpoint-diff
+          name: openapi-structural-drift-report
           path: openapi-endpoint-diff.md
