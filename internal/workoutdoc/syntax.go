@@ -70,6 +70,7 @@ var workoutDistanceUnits = []DistanceUnitSyntax{
 	{Key: "distance_mtr", Canonical: "mtr", Aliases: []string{"m", "meter", "meters", "metre", "metres", "mtr"}, Description: "Meters serialize with the canonical `mtr` suffix."},
 	{Key: "distance_km", Canonical: "km", Aliases: []string{"km", "kilometer", "kilometers", "kilometre", "kilometres"}, Description: "Kilometers serialize with the canonical `km` suffix."},
 	{Key: "distance_mi", Canonical: "mi", Aliases: []string{"mi", "mile", "miles"}, Description: "Miles serialize with the canonical `mi` suffix."},
+	{Key: "distance_yd", Canonical: "yd", Aliases: []string{"yd", "yard", "yards"}, Description: "Yards serialize with the canonical `yd` suffix for pool-swim distances."},
 }
 
 var workoutTargetUnits = []TargetUnitSyntax{
@@ -110,6 +111,7 @@ func WorkoutSyntaxSpec() SyntaxSpec {
 			Examples: []SyntaxCheatExample{
 				{Label: "Duration step", DSL: "- Endurance 10m 75%"},
 				{Label: "Distance step", DSL: "- Stride 400mtr 120%"},
+				{Label: "Yard swim step", DSL: "- Swim 100yd 95% Pace"},
 				{Label: "Repeat block", DSL: "Main set 3x\n  - Hard 2m 105-115% 95-105rpm\n  - Easy 1m freeride"},
 				{Label: "Ramp", DSL: "- Build 8m ramp 70-95%"},
 			},
@@ -128,11 +130,12 @@ func WorkoutSyntaxSpec() SyntaxSpec {
 			{
 				Key:         "distance_steps",
 				Title:       "Distance steps",
-				Description: "Distance steps serialize with canonical mtr, km, or mi suffixes.",
+				Description: "Distance steps serialize with canonical mtr, km, mi, or yd suffixes.",
 				Examples: []SyntaxExample{
 					{Key: "distance_mtr", Description: "Meter distance canonicalizes to mtr.", Step: Step{Description: "Stride", Distance: &Length{Value: 400, Unit: "meters"}, Power: targetValue(120, "PERCENT_FTP")}},
 					{Key: "distance_km", Description: "Kilometer distance canonicalizes to km.", Step: Step{Description: "Tempo", Distance: &Length{Value: 5, Unit: "kilometers"}, Pace: targetRange(92, 96, "PERCENT_THRESHOLD")}},
 					{Key: "distance_mi", Description: "Mile distance canonicalizes to mi.", Step: Step{Description: "Cooldown", Distance: &Length{Value: 1, Unit: "miles"}, Freeride: true}},
+					{Key: "distance_yd", Description: "Yard distance canonicalizes to yd.", Step: Step{Description: "Swim", Distance: &Length{Value: 100, Unit: "yards"}, Pace: targetValue(95, "PERCENT_THRESHOLD")}},
 				},
 			},
 			{
