@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added yards-based swim workout support, including `SECS_100Y` pace fields/writes, `/100y` target previews, and canonical `yd` WorkoutDoc distance syntax.
 - Added the `coach_athlete_onboarding` MCP prompt for read-only coach/team first sessions, including authorization checks, data-quality checklist output, baseline context, races/goals, device/source caveats, and missing-data warnings.
 - Added the read-only `get_data_quality_report` MCP tool and cookbook guidance to diagnose missing streams, Strava restrictions, HR/TRIMP-only load, stale wellness, missing thresholds/zones, sparse history, and calendar/race data gaps.
 - Added `ICUVISOR_TOOLSET=compact`, a reduced read-focused MCP tool catalog for smaller/local clients, plus routing eval coverage and client guidance for choosing compact, core, or full profiles.
