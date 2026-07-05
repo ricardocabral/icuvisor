@@ -215,7 +215,10 @@ func applyAnnualTrainingPlan(ctx context.Context, client ApplyAnnualTrainingPlan
 			eventID := applyAnnualTrainingPlanUpdateEventID(proposed.Conflicts)
 			if eventID == "" {
 				payload.Meta.FailedExternalID = proposed.ExternalID
-				return payload, len(payload.Meta.AppliedExternalIDs) > 0, errors.New("updating owned phase note: missing preflighted event ID")
+				if len(payload.Meta.AppliedExternalIDs) > 0 {
+					return payload, true, nil
+				}
+				return applyAnnualTrainingPlanResponse{}, false, errors.New("updating owned phase note: missing preflighted event ID")
 			}
 			note.params.EventID = eventID
 		case "create":
