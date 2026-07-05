@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
+	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 )
 
@@ -107,11 +108,11 @@ func applyAnnualTrainingPlanHandler(client ApplyAnnualTrainingPlanClient, profil
 		if client == nil {
 			return Result{}, NewUserError(applyAnnualTrainingPlanMessage, errors.New("missing apply annual training plan client"))
 		}
-		unitSystem, timezoneName, err := toolProfile(ctx, profileClient, timezoneFallback)
+		profile, unitSystem, timezoneName, err := toolProfileDetails(ctx, profileClient, timezoneFallback)
 		if err != nil {
 			return Result{}, NewUserError(applyAnnualTrainingPlanMessage, err)
 		}
-		payload, err := applyAnnualTrainingPlan(ctx, client, args, timezoneName, capabilityOrSafe(capability))
+		payload, isPartialFailure, err := applyAnnualTrainingPlan(ctx, client, args, timezoneName, profile, unitSystem, capabilityOrSafe(capability))
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
@@ -122,7 +123,12 @@ func applyAnnualTrainingPlanHandler(client ApplyAnnualTrainingPlanClient, profil
 			}
 			return Result{}, NewUserError(applyAnnualTrainingPlanMessage, err)
 		}
-		return encodeShaped(payload, args.IncludeFull, []string{"proposed_notes", "applied_notes", "protected_events"}, version, debugMetadata, applyAnnualTrainingPlanName, unitSystem, shapeCfg)
+		result, err := encodeShaped(payload, args.IncludeFull, []string{"proposed_notes", "applied_notes", "protected_events"}, version, debugMetadata, applyAnnualTrainingPlanName, unitSystem, shapeCfg)
+		if err != nil {
+			return Result{}, err
+		}
+		result.IsError = isPartialFailure
+		return result, nil
 	}
 }
 
@@ -160,7 +166,7 @@ func decodeApplyAnnualTrainingPlanRequest(raw json.RawMessage, capability safety
 	return args, nil
 }
 
-func applyAnnualTrainingPlan(ctx context.Context, client ApplyAnnualTrainingPlanClient, args applyAnnualTrainingPlanRequest, timezoneName string, capability safety.Capability) (applyAnnualTrainingPlanResponse, error) {
+func applyAnnualTrainingPlan(ctx context.Context, client ApplyAnnualTrainingPlanClient, args applyAnnualTrainingPlanRequest, timezoneName string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem, capability safety.Capability) (applyAnnualTrainingPlanResponse, bool, error) {
 	dryRun := true
 	if args.DryRun != nil {
 		dryRun = *args.DryRun
@@ -168,7 +174,7 @@ func applyAnnualTrainingPlan(ctx context.Context, client ApplyAnnualTrainingPlan
 	prepared := prepareAnnualTrainingPlanNotes(args.Proposal)
 	eventsByDate, protectedEvents, err := fetchApplyAnnualTrainingPlanEvents(ctx, client, args.Proposal.Summary.StartDate, args.Proposal.Summary.EndDate, args.ConflictPolicy)
 	if err != nil {
-		return applyAnnualTrainingPlanResponse{}, err
+		return applyAnnualTrainingPlanResponse{}, false, err
 	}
 	payload := applyAnnualTrainingPlanResponse{ProposedNotes: make([]applyAnnualTrainingPlanProposedNote, 0, len(prepared)), ProtectedEvents: protectedEvents, Meta: applyAnnualTrainingPlanMeta{DryRun: dryRun, ConflictPolicy: args.ConflictPolicy, DeleteMode: capabilityOrSafe(capability).Mode(), Timezone: timezoneName, DateRange: dateRangeMeta{Oldest: args.Proposal.Summary.StartDate, Newest: args.Proposal.Summary.EndDate}, ProposedCount: len(prepared), RetrySafe: true}}
 	for _, note := range prepared {
@@ -192,12 +198,51 @@ func applyAnnualTrainingPlan(ctx context.Context, client ApplyAnnualTrainingPlan
 	}
 	payload.Meta.PreviewToken = applyAnnualTrainingPlanPreviewToken(payload.ProposedNotes, payload.ProtectedEvents, args.ConflictPolicy, payload.Meta.DateRange)
 	if dryRun {
-		return payload, nil
+		return payload, false, nil
 	}
 	if args.PreviewToken == "" || args.PreviewToken != payload.Meta.PreviewToken {
-		return applyAnnualTrainingPlanResponse{}, NewUserError(invalidApplyAnnualTrainingPlanArgumentsMessage, errors.New("dry_run:false requires the preview_token returned by a matching dry-run preview"))
+		return applyAnnualTrainingPlanResponse{}, false, NewUserError(invalidApplyAnnualTrainingPlanArgumentsMessage, errors.New("dry_run:false requires the preview_token returned by a matching dry-run preview"))
 	}
-	return payload, nil
+	for idx, note := range prepared {
+		proposed := payload.ProposedNotes[idx]
+		switch proposed.Operation {
+		case "blocked":
+			continue
+		case "idempotent_existing":
+			payload.Meta.AppliedExternalIDs = append(payload.Meta.AppliedExternalIDs, proposed.ExternalID)
+			continue
+		case "update_owned":
+			eventID := applyAnnualTrainingPlanUpdateEventID(proposed.Conflicts)
+			if eventID == "" {
+				payload.Meta.FailedExternalID = proposed.ExternalID
+				return payload, len(payload.Meta.AppliedExternalIDs) > 0, errors.New("updating owned phase note: missing preflighted event ID")
+			}
+			note.params.EventID = eventID
+		case "create":
+		default:
+			continue
+		}
+		written, err := client.AddOrUpdateEvent(ctx, note.params)
+		if err != nil {
+			payload.Meta.FailedExternalID = proposed.ExternalID
+			if len(payload.Meta.AppliedExternalIDs) > 0 {
+				return payload, true, nil
+			}
+			return applyAnnualTrainingPlanResponse{}, false, fmt.Errorf("writing phase note %s: %w", proposed.ExternalID, err)
+		}
+		payload.Meta.WritesPerformed = true
+		payload.Meta.AppliedExternalIDs = append(payload.Meta.AppliedExternalIDs, proposed.ExternalID)
+		row, err := eventRow(written, args.IncludeFull, timezoneName, workoutPreviewContextForEvent(written, profile, unitSystem))
+		if err != nil {
+			payload.Meta.FailedExternalID = proposed.ExternalID
+			if len(payload.Meta.AppliedExternalIDs) > 0 {
+				return payload, true, nil
+			}
+			return applyAnnualTrainingPlanResponse{}, false, err
+		}
+		payload.AppliedNotes = append(payload.AppliedNotes, row)
+	}
+	return payload, false, nil
 }
 
 func validateSeasonPlanProposalForApply(proposal seasonPlanProposalResponse) error {
@@ -407,6 +452,15 @@ func applyAnnualTrainingPlanOperation(conflicts []applyTrainingPlanConflict) str
 		}
 	}
 	return operation
+}
+
+func applyAnnualTrainingPlanUpdateEventID(conflicts []applyTrainingPlanConflict) string {
+	for _, conflict := range conflicts {
+		if conflict.Reason == "icuvisor_owned_phase_note" && !conflict.Protected && strings.TrimSpace(conflict.EventID) != "" {
+			return strings.TrimSpace(conflict.EventID)
+		}
+	}
+	return ""
 }
 
 func applyAnnualTrainingPlanExternalID(proposal seasonPlanProposalResponse, phase seasonPlanProposalPhase) string {
