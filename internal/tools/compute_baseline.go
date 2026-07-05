@@ -58,6 +58,10 @@ type computeBaselineResult struct {
 	MinSamples                  int                  `json:"min_samples"`
 	MissingBaselineDays         int                  `json:"missing_baseline_days"`
 	MissingCurrentDays          int                  `json:"missing_current_days"`
+	FreshnessStatus             string               `json:"freshness_status,omitempty"`
+	CurrentLatestSampleDate     string               `json:"current_latest_sample_date,omitempty"`
+	CurrentWindowEndDate        string               `json:"current_window_end_date,omitempty"`
+	Caveats                     []string             `json:"caveats,omitempty"`
 	TruncatedActivityCandidates bool                 `json:"truncated_activity_candidates,omitempty"`
 	InsufficientReason          string               `json:"insufficient_reason,omitempty"`
 }
@@ -83,6 +87,7 @@ type baselineCollected struct {
 	SourceTools         []string
 	Truncated           bool
 	UnsupportedReason   string
+	WellnessFreshness   *wellnessFreshnessSummary
 }
 
 func newComputeBaselineTool(fitnessClient FitnessClient, wellnessClient WellnessClient, activitiesClient ActivitiesClient, extendedClient ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -125,6 +130,19 @@ func computeBaselineHandler(fitnessClient FitnessClient, wellnessClient Wellness
 		interpretation := analysis.InterpretBaselineZScore(metric, stats.ZScore)
 		result := computeBaselineResult{Status: stats.Status, Metric: string(metric), MetricSource: sourceDTO(collected.Source), BaselineWindow: dateWindow{args.BaselineStartDate, args.BaselineEndDate}, CurrentWindow: dateWindow{args.CurrentStartDate, args.CurrentEndDate}, CurrentValue: roundOptional(stats.CurrentValue), BaselineMean: roundOptional(stats.BaselineMean), BaselineStdDev: roundOptional(stats.BaselineStdDev), ZScore: roundOptional(stats.ZScore), Interpretation: interpretation, NBaseline: len(collected.Baseline), NCurrent: len(collected.Current), MinSamples: minSamples, MissingBaselineDays: collected.MissingBaselineDays, MissingCurrentDays: collected.MissingCurrentDays, TruncatedActivityCandidates: collected.Truncated, InsufficientReason: stats.Reason}
 		assumptions := map[string]any{"metric": string(metric), "interpretation": interpretation, "interpretation_direction": baselineInterpretationDirection(metric), "activity_candidates_truncated": collected.Truncated}
+		if freshness := collected.WellnessFreshness; freshness != nil {
+			result.FreshnessStatus = freshness.Status
+			result.CurrentLatestSampleDate = freshness.LatestSampleDate
+			result.CurrentWindowEndDate = freshness.WindowEndDate
+			result.Caveats = append([]string(nil), freshness.Caveats...)
+			assumptions["wellness_freshness"] = freshness.computeAssumptions()
+			if result.Status == "ok" && (freshness.Status == "stale_current_window" || freshness.Status == "stale_provenance") {
+				result.Status = "partial"
+				if result.InsufficientReason == "" {
+					result.InsufficientReason = freshness.Status
+				}
+			}
+		}
 		meta := analysis.AnalyzerMetaInput{Method: "baseline_z_score", SourceTools: collected.SourceTools, N: len(collected.Baseline), MissingDays: collected.MissingBaselineDays + collected.MissingCurrentDays, MissingAction: analysis.MissingActionSkip, MinSamples: minSamples, FormulaRef: resources.AnalysisFormulaRefZScore, Assumptions: assumptions, Boundaries: baselineBoundaries(collected.Truncated)}
 		return encodeAnalyzerResponse(analyzerResponseInput{Result: result, Series: collected.Series, Meta: meta}, args.IncludeFull, version, debugMetadata, computeBaselineName, unitSystem, shapeCfg)
 	}
@@ -240,6 +258,7 @@ func collectWellnessBaseline(ctx context.Context, args computeBaselineRequest, m
 	}
 	out := baselineCollected{Source: source, SourceTools: []string{source.Tool}}
 	seenB, seenC := map[string]bool{}, map[string]bool{}
+	freshness := newWellnessFreshnessTracker(metric, args.CurrentStartDate, args.CurrentEndDate)
 	for _, row := range rows {
 		date := wellnessDate(row)
 		window := sampleWindow(date, args)
@@ -256,6 +275,7 @@ func collectWellnessBaseline(ctx context.Context, args computeBaselineRequest, m
 				seenB[date] = true
 			} else {
 				seenC[date] = true
+				freshness.record(row, date)
 			}
 		} else {
 			out.Series = append(out.Series, baselineSample{Date: date, Window: window, SourceTool: source.Tool, MissingReason: "missing_metric"})
@@ -263,6 +283,7 @@ func collectWellnessBaseline(ctx context.Context, args computeBaselineRequest, m
 	}
 	out.MissingBaselineDays = dateCount(args.BaselineStartDate, args.BaselineEndDate) - len(seenB)
 	out.MissingCurrentDays = dateCount(args.CurrentStartDate, args.CurrentEndDate) - len(seenC)
+	out.WellnessFreshness = freshness.baselineSummary(out.MissingCurrentDays)
 	return out, nil
 }
 

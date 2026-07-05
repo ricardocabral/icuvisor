@@ -37,6 +37,10 @@ type TrendResult struct {
 	ZScore             *float64 `json:"z_score,omitempty"`
 	TrendDirection     string   `json:"trend_direction,omitempty"`
 	BaselineSampleSize int      `json:"baseline_n,omitempty"`
+	FreshnessStatus    string   `json:"freshness_status,omitempty"`
+	LatestSampleDate   string   `json:"latest_sample_date,omitempty"`
+	WindowEndDate      string   `json:"window_end_date,omitempty"`
+	Caveats            []string `json:"caveats,omitempty"`
 	Boundaries         []string `json:"-"`
 }
 

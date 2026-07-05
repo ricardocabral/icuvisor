@@ -92,15 +92,18 @@ func loadAnalyzerSeries(ctx context.Context, clients analyzerClients, metric ana
 			return series, err
 		}
 		seen := map[string]bool{}
+		freshness := newWellnessFreshnessTracker(metric, window.StartDate, window.EndDate)
 		for _, row := range rows {
 			date := strings.TrimSpace(stringValue(row.ID))
 			if value, ok := wellnessMetricValue(row, metric); ok && date != "" {
 				series.Samples = append(series.Samples, analysis.NumericSample{Key: date, Date: date, Value: value})
 				seen[date] = true
+				freshness.record(row, date)
 			}
 		}
 		series.Samples = sortedSamples(series.Samples)
 		series.MissingDays = analysis.MissingSamples(window.Days, len(seen))
+		series.WellnessFreshness = freshness.trendSummary(series.MissingDays)
 		series.Assumptions["aggregation"] = "native_daily"
 	case analysis.SourceActivityRow:
 		if clients.activities == nil {
