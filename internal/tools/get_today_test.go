@@ -305,6 +305,13 @@ func TestGetTodayWeatherContextDoesNotInventForecast(t *testing.T) {
 	if planned["indoor"] != false {
 		t.Fatalf("planned event = %#v, want existing indoor/outdoor flag preserved", planned)
 	}
+	meta := out["_meta"].(map[string]any)
+	convention, _ := meta["planned_event_convention"].(string)
+	for _, want := range []string{"upstream event venue flag", "FTP selector", "ask or confirm adaptations"} {
+		if !strings.Contains(convention, want) {
+			t.Fatalf("planned_event_convention = %q, missing %q", convention, want)
+		}
+	}
 }
 
 func TestGetTodayDoesNotBackfillYesterdayWellness(t *testing.T) {

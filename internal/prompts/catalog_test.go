@@ -128,6 +128,10 @@ func TestRecoveryCheckIncludesWeatherAndIndoorOutdoorGuardrails(t *testing.T) {
 		"forecast_unavailable",
 		"do not invent conditions",
 		"planned_events[].indoor",
+		"Do not infer separate indoor/outdoor FTP",
+		"sport_settings[].indoor_ftp_watts only when present",
+		"otherwise ask or confirm how to adjust the workout",
+		"zone boundaries",
 		"do not create a second active workout",
 		"Do not call write or delete tools for indoor/outdoor adaptation",
 	} {

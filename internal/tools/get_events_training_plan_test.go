@@ -113,6 +113,41 @@ func TestGetEventsTerseRowsTimezoneAndCategory(t *testing.T) {
 	}
 }
 
+func TestGetEventsIndoorFlagIsVenueFlagNotFTPOrZoneData(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Types: []string{"Ride"}, FTP: 260, IndoorFTP: 240, PowerZones: []int{130, 180, 240, 300}}}}},
+		events:            decodeToolEvents(t, `{"id":"indoor-ride","name":"Trainer tempo","category":"WORKOUT","type":"Ride","start_date_local":"2026-01-03","tags":["trainer","tempo"],"indoor":true}`),
+	}
+	tool := newGetEventsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-03","newest":"2026-01-03"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	row := out["events"].([]any)[0].(map[string]any)
+	if row["indoor"] != true || row["type"] != "Ride" {
+		t.Fatalf("row indoor/type = %#v/%#v, want separate event venue flag and sport type", row["indoor"], row["type"])
+	}
+	if tags := row["tags"].([]any); len(tags) != 2 || tags[0] != "trainer" || tags[1] != "tempo" {
+		t.Fatalf("tags = %#v, want tags preserved separately from indoor", row["tags"])
+	}
+	for _, forbidden := range []string{"ftp_watts", "indoor_ftp_watts", "power_zones_watts"} {
+		if _, ok := row[forbidden]; ok {
+			t.Fatalf("event row = %#v, should not include profile field %s", row, forbidden)
+		}
+	}
+	meta := out["_meta"].(map[string]any)
+	convention, _ := meta["planned_event_convention"].(string)
+	for _, want := range []string{"upstream event venue flag", "not a sport type", "FTP selector", "sport_settings[].indoor_ftp_watts"} {
+		if !strings.Contains(convention, want) {
+			t.Fatalf("planned_event_convention = %q, missing %q", convention, want)
+		}
+	}
+}
+
 func TestGetEventsResolvesPercentFTPWorkoutTargetPreview(t *testing.T) {
 	t.Parallel()
 
