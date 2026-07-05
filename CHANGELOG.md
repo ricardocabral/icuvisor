@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Clarified athlete-profile FTP/zone metadata and planned-event indoor semantics so assistants distinguish `ftp_watts`, optional `indoor_ftp_watts`, zone boundaries, and event venue flags without hallucinating separate indoor/outdoor FTP values.
 - Added HRV/HRV-SDNN analyzer freshness guardrails so stale or absent current-window wellness samples surface visible freshness status, caveats, and metadata instead of overconfident suppression claims.
 - Hardened WorkoutDoc validation so fractional percent targets such as `0.95` in `% FTP` contexts are diagnosed instead of silently serializing as `0.95%`, with regression coverage for ramp direction, recovery cadence omission, and run/swim wording.
 - Added calendar write/delete regression coverage for today-starting unavailable ranges, protected training-plan conflicts, sparse event deletes, and explicit confirmation metadata on event writes/deletes.
