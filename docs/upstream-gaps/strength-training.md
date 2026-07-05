@@ -5,14 +5,15 @@
 icuvisor does not currently expose first-class strength-training tools or structured strength-set writes. The current safe representation is calendar-level planning:
 
 - Use `add_or_update_event` with category `NOTE` to schedule a gym time block, mobility reminder, or free-text strength plan note.
-- If the athlete account has a documented upstream workout/activity `type` for the intended session, use a simple `WORKOUT` event only for duration, name, tags, and free-text description.
-- Do not encode sets, reps, load, rest periods, exercise libraries, or progression rules into `workout_doc`; that DSL is for intervals.icu structured endurance workouts and target steps.
+- If the athlete account has a documented upstream workout/activity `type` for the intended session, such as `WeightTraining`, use a simple `WORKOUT` event only for date/time, optional duration/load targets, name, tags, and free-text description.
+- Treat `WeightTraining` as an upstream activity/event type label only. Do not infer an exercise catalog, structured set list, or strength-session schema from the type name.
+- Do not encode sets, reps, external load, bodyweight, rest periods, exercise libraries, or progression rules into `workout_doc`; that DSL is for intervals.icu structured endurance workouts and target steps.
 
 This lets a user reserve gym time and keep coach notes visible on the calendar without implying that icuvisor can round-trip structured strength data.
 
 ## Upstream gap
 
-The product scope already treats strength-training data as conditional on upstream API support. The PRD lists strength training only as included if the intervals.icu API exposes it, and the roadmap keeps strength training endpoints in the v1.x bucket behind the same assumption.
+The product scope already treats strength-training data as conditional on upstream API support. The PRD lists strength training only as included if the intervals.icu API exposes it, and the roadmap keeps strength training endpoints in the v1.x bucket behind the same assumption. The repository-held OpenAPI baseline currently shows `WeightTraining` as an activity/event sport type value, but not as a first-class strength-session schema with exercises, sets, reps, loads, rest, or dedicated strength endpoints.
 
 Open questions before implementation:
 

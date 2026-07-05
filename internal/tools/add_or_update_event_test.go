@@ -84,6 +84,42 @@ func TestAddOrUpdateEventCreatePreservesFreeTextTagsAndReadShape(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateEventAcceptsWeightTrainingAsFreeTextCalendarEvent(t *testing.T) {
+	t.Parallel()
+
+	description := "Synthetic gym note: squat 3x5 and pull-up practice."
+	client := &fakeEventWriterClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		event:             decodeToolEvents(t, `{"id":"gym-1","category":"WORKOUT","type":"WeightTraining","name":"Gym strength block","start_date_local":"2026-07-08T00:00:00","description":"Synthetic gym note: squat 3x5 and pull-up practice.","tags":["gym","strength"],"time_target":2700}`)[0],
+	}
+	tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-07-08","category":"WORKOUT","type":"WeightTraining","name":"Gym strength block","description":"Synthetic gym note: squat 3x5 and pull-up practice.","tags":["gym","strength"],"moving_time_seconds":2700}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 {
+		t.Fatalf("write calls = %d, want 1", len(client.calls))
+	}
+	call := client.calls[0]
+	if call.Type != "WeightTraining" || call.Description == nil || *call.Description != description {
+		t.Fatalf("write params = %#v, want WeightTraining free-text event", call)
+	}
+	row := resultMap(t, result)["event"].(map[string]any)
+	if row["type"] != "WeightTraining" || row["description"] != description || row["time_target_seconds"] != float64(2700) {
+		t.Fatalf("event row = %#v, want generic WeightTraining calendar event", row)
+	}
+	for _, unsupported := range []string{"workout_doc_summary", "exercises", "sets", "reps", "load_kg"} {
+		if _, ok := row[unsupported]; ok {
+			t.Fatalf("row includes unsupported structured strength key %q: %#v", unsupported, row)
+		}
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if _, ok := meta["workout_doc_uploaded"]; ok {
+		t.Fatalf("meta includes workout_doc_uploaded for free-text WeightTraining event: %#v", meta)
+	}
+}
+
 func TestAddOrUpdateEventMapsExternalIDArgument(t *testing.T) {
 	t.Parallel()
 
