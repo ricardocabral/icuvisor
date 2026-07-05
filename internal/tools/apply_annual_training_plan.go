@@ -43,6 +43,14 @@ type applyAnnualTrainingPlanRequest struct {
 	IncludeFull    bool                       `json:"include_full,omitempty"`
 }
 
+type applyAnnualTrainingPlanWireRequest struct {
+	Proposal       json.RawMessage `json:"proposal"`
+	DryRun         *bool           `json:"dry_run,omitempty"`
+	ConflictPolicy string          `json:"conflict_policy,omitempty"`
+	PreviewToken   string          `json:"preview_token,omitempty"`
+	IncludeFull    bool            `json:"include_full,omitempty"`
+}
+
 type applyAnnualTrainingPlanResponse struct {
 	ProposedNotes   []applyAnnualTrainingPlanProposedNote `json:"proposed_notes"`
 	AppliedNotes    []getEventsRow                        `json:"applied_notes,omitempty"`
@@ -123,11 +131,18 @@ func decodeApplyAnnualTrainingPlanRequest(raw json.RawMessage, capability safety
 	if strings.TrimSpace(string(raw)) == "" {
 		return args, errors.New("arguments must be a JSON object")
 	}
-	decoded, err := DecodeStrict[applyAnnualTrainingPlanRequest](raw)
+	decoded, err := DecodeStrict[applyAnnualTrainingPlanWireRequest](raw)
 	if err != nil {
 		return args, err
 	}
-	args = decoded
+	if len(decoded.Proposal) == 0 || strings.TrimSpace(string(decoded.Proposal)) == "" {
+		return args, errors.New("proposal is required")
+	}
+	var proposal seasonPlanProposalResponse
+	if err := json.Unmarshal(decoded.Proposal, &proposal); err != nil {
+		return args, fmt.Errorf("decoding proposal: %w", err)
+	}
+	args = applyAnnualTrainingPlanRequest{Proposal: proposal, DryRun: decoded.DryRun, ConflictPolicy: decoded.ConflictPolicy, PreviewToken: decoded.PreviewToken, IncludeFull: decoded.IncludeFull}
 	args.ConflictPolicy = strings.TrimSpace(args.ConflictPolicy)
 	args.PreviewToken = strings.TrimSpace(args.PreviewToken)
 	if args.ConflictPolicy == "" {
