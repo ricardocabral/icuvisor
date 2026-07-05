@@ -19,6 +19,8 @@ const (
 	sameDayConflictWarning                  = "Same-day calendar events already exist; verify this create is not an unintended duplicate."
 	duplicateCreateSkippedWarning           = "Skipped create because an existing same-day event already matches the requested writable fields."
 	duplicateExternalIDSkippedWarning       = "Skipped create because an existing same-day event already has the requested external_id."
+	writeReturnedByUpstreamStatus           = "write_returned_by_upstream"
+	skippedExistingEventStatus              = "skipped_existing_event"
 	invalidAddOrUpdateEventArgumentsMessage = "invalid add_or_update_event arguments; provide date as athlete-local YYYY-MM-DD, category, type for WORKOUT events, name for NOTE creates, and optional event_id for updates"
 	writeEventMessage                       = "could not write event; check intervals.icu credentials, athlete ID, event ID, and writable event fields"
 )
@@ -63,6 +65,7 @@ type addOrUpdateEventMeta struct {
 	DuplicateWarning              string                      `json:"duplicate_warning,omitempty"`
 	DuplicateEventID              string                      `json:"duplicate_event_id,omitempty"`
 	SameDayConflicts              []applyTrainingPlanConflict `json:"same_day_conflicts,omitempty"`
+	ConfirmationStatus            string                      `json:"confirmation_status"`
 	IncludeFull                   bool                        `json:"include_full"`
 }
 
@@ -218,9 +221,10 @@ func shapeAddOrUpdateEventResponse(event intervals.Event, args addOrUpdateEventR
 	if args.EventID != "" {
 		operation = "update"
 	}
-	meta := addOrUpdateEventMeta{Operation: operation, Date: args.Date, Timezone: timezoneName, WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(args.WorkoutDoc, event.WorkoutDoc), DescriptionOnlyWorkoutWarning: addOrUpdateEventDescriptionOnlyWorkoutWarning(args), IncludeFull: args.IncludeFull}
+	meta := addOrUpdateEventMeta{Operation: operation, Date: args.Date, Timezone: timezoneName, WorkoutDocUploaded: workoutDocUploaded, WorkoutDocWarning: workoutDocRenderWarning(args.WorkoutDoc, event.WorkoutDoc), DescriptionOnlyWorkoutWarning: addOrUpdateEventDescriptionOnlyWorkoutWarning(args), ConfirmationStatus: writeReturnedByUpstreamStatus, IncludeFull: args.IncludeFull}
 	if preflight.Duplicate != nil {
 		meta.Operation = "skip_duplicate"
+		meta.ConfirmationStatus = skippedExistingEventStatus
 		meta.DuplicateEventID = preflight.Duplicate.ID
 		meta.DuplicateWarning = duplicateCreateSkippedWarning
 		if len(preflight.Conflicts) > 0 && preflight.Conflicts[0].Reason == "matching_external_id" {
@@ -506,5 +510,5 @@ func addOrUpdateEventInputExamples() []map[string]any {
 }
 
 func addOrUpdateEventOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Write confirmation containing the same terse event row shape used by get_event_by_id plus operation/date/timezone metadata. _meta.workout_doc_warning is set when intervals.icu stored the event but did not parse the uploaded workout_doc into a graphically rendered structured workout. _meta.description_only_workout_warning is set for WORKOUT event updates that supplied description without workout_doc."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Write confirmation containing the same terse event row shape used by get_event_by_id plus operation/date/timezone metadata. _meta.confirmation_status is write_returned_by_upstream when intervals.icu returned a write payload, or skipped_existing_event when icuvisor skipped a duplicate create before writing. _meta.workout_doc_warning is set when intervals.icu stored the event but did not parse the uploaded workout_doc into a graphically rendered structured workout. _meta.description_only_workout_warning is set for WORKOUT event updates that supplied description without workout_doc."}
 }

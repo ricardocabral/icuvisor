@@ -16,14 +16,15 @@ type deleteResourceResponse struct {
 }
 
 type deleteResourceMeta struct {
-	Operation      string         `json:"operation"`
-	ResourceType   string         `json:"resource_type"`
-	SourceEndpoint string         `json:"source_endpoint"`
-	Deleted        map[string]any `json:"deleted"`
+	Operation          string         `json:"operation"`
+	ResourceType       string         `json:"resource_type"`
+	SourceEndpoint     string         `json:"source_endpoint"`
+	ConfirmationStatus string         `json:"confirmation_status"`
+	Deleted            map[string]any `json:"deleted"`
 }
 
 func newDeleteResourceResponse(deletedID string, resourceType string, sourceEndpoint string, before map[string]any) deleteResourceResponse {
-	return deleteResourceResponse{DeletedID: deletedID, Status: "deleted", Meta: deleteResourceMeta{Operation: "delete", ResourceType: resourceType, SourceEndpoint: sourceEndpoint, Deleted: before}}
+	return deleteResourceResponse{DeletedID: deletedID, Status: "deleted", Meta: deleteResourceMeta{Operation: "delete", ResourceType: resourceType, SourceEndpoint: sourceEndpoint, ConfirmationStatus: "upstream_delete_succeeded_post_delete_unverified", Deleted: before}}
 }
 
 func structToJSONMap(value any) (map[string]any, error) {

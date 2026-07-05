@@ -79,8 +79,8 @@ func TestAddOrUpdateEventCreatePreservesFreeTextTagsAndReadShape(t *testing.T) {
 		t.Fatalf("row tags = %#v, want returned event tags", rowTags)
 	}
 	meta := out["_meta"].(map[string]any)
-	if meta["operation"] != "create" || meta["date"] != "2026-06-01" || meta["timezone"] != "America/Sao_Paulo" {
-		t.Fatalf("meta = %#v, want create metadata", meta)
+	if meta["operation"] != "create" || meta["date"] != "2026-06-01" || meta["timezone"] != "America/Sao_Paulo" || meta["confirmation_status"] != writeReturnedByUpstreamStatus {
+		t.Fatalf("meta = %#v, want create metadata with returned-write confirmation", meta)
 	}
 }
 
@@ -128,7 +128,7 @@ func TestAddOrUpdateEventCreateSkipsSameDayMatchingExternalID(t *testing.T) {
 		t.Fatalf("event row = %#v, want existing external_id duplicate", row)
 	}
 	meta := out["_meta"].(map[string]any)
-	if meta["operation"] != "skip_duplicate" || meta["duplicate_event_id"] != "evt-existing-ext" || meta["duplicate_warning"] != duplicateExternalIDSkippedWarning {
+	if meta["operation"] != "skip_duplicate" || meta["duplicate_event_id"] != "evt-existing-ext" || meta["duplicate_warning"] != duplicateExternalIDSkippedWarning || meta["confirmation_status"] != skippedExistingEventStatus {
 		t.Fatalf("meta = %#v, want external_id duplicate skip metadata", meta)
 	}
 	conflicts := meta["same_day_conflicts"].([]any)
@@ -364,8 +364,8 @@ func TestAddOrUpdateEventUpdateUsesEventID(t *testing.T) {
 	}
 	out := resultMap(t, result)
 	meta := out["_meta"].(map[string]any)
-	if meta["operation"] != "update" {
-		t.Fatalf("meta operation = %#v, want update", meta["operation"])
+	if meta["operation"] != "update" || meta["confirmation_status"] != writeReturnedByUpstreamStatus {
+		t.Fatalf("meta = %#v, want update with returned-write confirmation", meta)
 	}
 }
 
