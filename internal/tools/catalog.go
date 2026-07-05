@@ -71,7 +71,7 @@ func catalogTools() []Tool {
 
 func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Tool {
 	capability := capabilityOrSafe(opts.capability)
-	tools := make([]Tool, 0, 45)
+	tools := make([]Tool, 0, 46)
 	tools = append(tools,
 		newGetAthleteProfileTool(client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetFitnessTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -80,6 +80,7 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 		newGetPlanningContextTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetAnnualTrainingPlanTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newProposeAnnualTrainingPlanTool(client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newApplyAnnualTrainingPlanTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, capability, opts.shaping),
 		newGetDataQualityReportTool(client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newResolveCalendarDatesTool(client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAnalyzeTrendTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -166,7 +167,7 @@ func toolCatalogGroup(name string) string {
 		return "analyzers"
 	case resolveCalendarDatesName, getEventsName, getEventByIDName, addOrUpdateEventName, addUnavailableDateRangeName, deleteEventName, deleteEventsByDateRangeName, linkActivityToEventName:
 		return "events"
-	case getPlanningContextName, getAnnualTrainingPlanName, proposeAnnualTrainingPlanName, getTrainingPlanName, applyTrainingPlanName, getWorkoutLibraryName, getWorkoutsInFolderName, createWorkoutName, updateWorkoutName, deleteWorkoutName, validateWorkoutName:
+	case getPlanningContextName, getAnnualTrainingPlanName, proposeAnnualTrainingPlanName, applyAnnualTrainingPlanName, getTrainingPlanName, applyTrainingPlanName, getWorkoutLibraryName, getWorkoutsInFolderName, createWorkoutName, updateWorkoutName, deleteWorkoutName, validateWorkoutName:
 		return "workout-library"
 	case getCustomItemsName, getCustomItemByIDName, createCustomItemName, updateCustomItemName, deleteCustomItemName:
 		return "custom-items"

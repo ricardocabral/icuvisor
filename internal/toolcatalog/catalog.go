@@ -14,6 +14,7 @@ const (
 	AnalyzeDistribution              = "analyze_distribution"
 	AnalyzeEffortsDelta              = "analyze_efforts_delta"
 	AnalyzeTrend                     = "analyze_trend"
+	ApplyAnnualTrainingPlan          = "apply_annual_training_plan"
 	ApplyTrainingPlan                = "apply_training_plan"
 	ComputeActivitySegmentStats      = "compute_activity_segment_stats"
 	ComputeBaseline                  = "compute_baseline"
@@ -84,6 +85,7 @@ var athleteScopedToolNames = []string{
 	AnalyzeDistribution,
 	AnalyzeEffortsDelta,
 	AnalyzeTrend,
+	ApplyAnnualTrainingPlan,
 	ApplyTrainingPlan,
 	ComputeActivitySegmentStats,
 	ComputeBaseline,

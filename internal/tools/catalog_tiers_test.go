@@ -73,6 +73,7 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 		getPlanningContextName:          safety.ToolsetFull,
 		getAnnualTrainingPlanName:       safety.ToolsetFull,
 		proposeAnnualTrainingPlanName:   safety.ToolsetFull,
+		applyAnnualTrainingPlanName:     safety.ToolsetFull,
 		getTrainingPlanName:             safety.ToolsetFull,
 		applyTrainingPlanName:           safety.ToolsetFull,
 		getWorkoutLibraryName:           safety.ToolsetFull,

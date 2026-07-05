@@ -448,6 +448,14 @@
     "anchor": "update_wellness"
   },
   {
+    "name": "apply_annual_training_plan",
+    "group": "workout-library",
+    "tier": "full",
+    "safety": "write",
+    "summary": "Safely preview and apply phase notes from propose_annual_training_plan.",
+    "anchor": "apply_annual_training_plan"
+  },
+  {
     "name": "apply_training_plan",
     "group": "workout-library",
     "tier": "full",

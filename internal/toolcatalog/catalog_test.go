@@ -53,7 +53,7 @@ func TestToolSets(t *testing.T) {
 			t.Fatalf("compact tool %q should be compact and known", name)
 		}
 	}
-	for _, hidden := range []string{AddOrUpdateEvent, AnalyzeTrend, GetWorkoutLibrary, UpdateWellness} {
+	for _, hidden := range []string{AddOrUpdateEvent, AnalyzeTrend, ApplyAnnualTrainingPlan, GetWorkoutLibrary, UpdateWellness} {
 		if IsCompactTool(hidden) {
 			t.Fatalf("%s should not be in compact allow-list", hidden)
 		}
@@ -79,6 +79,9 @@ func TestToolSets(t *testing.T) {
 	}
 	if !IsKnownTool(GetPlanningContext) || !IsAthleteScopedTool(GetPlanningContext) {
 		t.Fatal("get_planning_context should be known and athlete-scoped")
+	}
+	if !IsKnownTool(ApplyAnnualTrainingPlan) || !IsAthleteScopedTool(ApplyAnnualTrainingPlan) {
+		t.Fatal("apply_annual_training_plan should be known and athlete-scoped")
 	}
 	if !IsKnownTool(GetPaceCurves) || !IsAthleteScopedTool(GetPaceCurves) {
 		t.Fatal("get_pace_curves should be known and athlete-scoped")

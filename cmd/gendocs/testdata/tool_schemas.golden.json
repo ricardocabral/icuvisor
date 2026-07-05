@@ -700,6 +700,139 @@
       }
     ]
   },
+  "apply_annual_training_plan": {
+    "name": "apply_annual_training_plan",
+    "description": "Safely preview and apply phase notes from propose_annual_training_plan.",
+    "arguments": [
+      {
+        "name": "conflict_policy",
+        "required": false,
+        "type": "string",
+        "description": "skip_existing reports conflicts and protects existing rows. replace_icuvisor_notes is accepted only when ICUVISOR_DELETE_MODE=full and may replace only Icuvisor-owned phase notes with deterministic external_id values; races, notes, workouts, existing ATP rows without Icuvisor external IDs, and unknown categories remain protected.",
+        "enum": [
+          "skip_existing",
+          "replace_icuvisor_notes"
+        ],
+        "default": "skip_existing"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "type": "boolean",
+        "description": "Safety default is true. dry_run:false is rejected unless preview_token exactly matches the token returned by a fresh dry-run preview for the same proposal/conflicts/policy.",
+        "default": true
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include full applied event rows when writes are performed; dry-run remains terse.",
+        "default": false
+      },
+      {
+        "name": "preview_token",
+        "required": false,
+        "type": "string",
+        "description": "Required for dry_run:false. Copy exactly from _meta.preview_token returned by the dry-run preview."
+      },
+      {
+        "name": "proposal",
+        "required": true,
+        "type": "object",
+        "description": "Required unmodified structured response from propose_annual_training_plan. The proposal must have _meta.schema_version season_plan_proposal.v1, read_only:true, writes_performed:false, valid bounded dates, consistent counts, unique phases, and weekly/recovery rows referencing known phases.",
+        "additional_properties": "allowed"
+      }
+    ],
+    "examples": [
+      {
+        "dry_run": true,
+        "proposal": {
+          "_meta": {
+            "read_only": true,
+            "schema_version": "season_plan_proposal.v1",
+            "writes_performed": false
+          },
+          "assumptions": [],
+          "phases": [
+            {
+              "end_date": "2026-08-09",
+              "end_week_index": 4,
+              "name": "Base",
+              "phase_id": "phase_01_base",
+              "phase_type": "base",
+              "start_date": "2026-07-13",
+              "start_week_index": 1,
+              "week_count": 4
+            }
+          ],
+          "race_anchors": [
+            {
+              "date": "2026-08-03",
+              "source": "input",
+              "type": "race",
+              "week_start_date": "2026-08-03"
+            }
+          ],
+          "recovery_weeks": [],
+          "summary": {
+            "end_date": "2026-08-09",
+            "goal_date": "2026-08-03",
+            "phase_count": 1,
+            "race_anchor_count": 1,
+            "recovery_week_count": 0,
+            "start_date": "2026-07-13",
+            "total_weeks": 4
+          },
+          "warnings": [],
+          "weekly_targets": []
+        }
+      },
+      {
+        "dry_run": false,
+        "preview_token": "season-plan-preview-v1-copy-from-dry-run",
+        "proposal": {
+          "_meta": {
+            "read_only": true,
+            "schema_version": "season_plan_proposal.v1",
+            "writes_performed": false
+          },
+          "assumptions": [],
+          "phases": [
+            {
+              "end_date": "2026-08-09",
+              "end_week_index": 4,
+              "name": "Base",
+              "phase_id": "phase_01_base",
+              "phase_type": "base",
+              "start_date": "2026-07-13",
+              "start_week_index": 1,
+              "week_count": 4
+            }
+          ],
+          "race_anchors": [
+            {
+              "date": "2026-08-03",
+              "source": "input",
+              "type": "race",
+              "week_start_date": "2026-08-03"
+            }
+          ],
+          "recovery_weeks": [],
+          "summary": {
+            "end_date": "2026-08-09",
+            "goal_date": "2026-08-03",
+            "phase_count": 1,
+            "race_anchor_count": 1,
+            "recovery_week_count": 0,
+            "start_date": "2026-07-13",
+            "total_weeks": 4
+          },
+          "warnings": [],
+          "weekly_targets": []
+        }
+      }
+    ]
+  },
   "apply_training_plan": {
     "name": "apply_training_plan",
     "description": "Apply a workout-library training plan to the athlete calendar from an anchor start date.",

@@ -1,0 +1,218 @@
+{
+  "additionalProperties": false,
+  "examples": [
+    {
+      "dry_run": true,
+      "proposal": {
+        "_meta": {
+          "read_only": true,
+          "schema_version": "season_plan_proposal.v1",
+          "writes_performed": false
+        },
+        "assumptions": [],
+        "phases": [
+          {
+            "end_date": "2026-08-09",
+            "end_week_index": 4,
+            "name": "Base",
+            "phase_id": "phase_01_base",
+            "phase_type": "base",
+            "start_date": "2026-07-13",
+            "start_week_index": 1,
+            "week_count": 4
+          }
+        ],
+        "race_anchors": [
+          {
+            "date": "2026-08-03",
+            "source": "input",
+            "type": "race",
+            "week_start_date": "2026-08-03"
+          }
+        ],
+        "recovery_weeks": [],
+        "summary": {
+          "end_date": "2026-08-09",
+          "goal_date": "2026-08-03",
+          "phase_count": 1,
+          "race_anchor_count": 1,
+          "recovery_week_count": 0,
+          "start_date": "2026-07-13",
+          "total_weeks": 4
+        },
+        "warnings": [],
+        "weekly_targets": []
+      }
+    },
+    {
+      "dry_run": false,
+      "preview_token": "season-plan-preview-v1-copy-from-dry-run",
+      "proposal": {
+        "_meta": {
+          "read_only": true,
+          "schema_version": "season_plan_proposal.v1",
+          "writes_performed": false
+        },
+        "assumptions": [],
+        "phases": [
+          {
+            "end_date": "2026-08-09",
+            "end_week_index": 4,
+            "name": "Base",
+            "phase_id": "phase_01_base",
+            "phase_type": "base",
+            "start_date": "2026-07-13",
+            "start_week_index": 1,
+            "week_count": 4
+          }
+        ],
+        "race_anchors": [
+          {
+            "date": "2026-08-03",
+            "source": "input",
+            "type": "race",
+            "week_start_date": "2026-08-03"
+          }
+        ],
+        "recovery_weeks": [],
+        "summary": {
+          "end_date": "2026-08-09",
+          "goal_date": "2026-08-03",
+          "phase_count": 1,
+          "race_anchor_count": 1,
+          "recovery_week_count": 0,
+          "start_date": "2026-07-13",
+          "total_weeks": 4
+        },
+        "warnings": [],
+        "weekly_targets": []
+      }
+    }
+  ],
+  "input_examples": [
+    {
+      "dry_run": true,
+      "proposal": {
+        "_meta": {
+          "read_only": true,
+          "schema_version": "season_plan_proposal.v1",
+          "writes_performed": false
+        },
+        "assumptions": [],
+        "phases": [
+          {
+            "end_date": "2026-08-09",
+            "end_week_index": 4,
+            "name": "Base",
+            "phase_id": "phase_01_base",
+            "phase_type": "base",
+            "start_date": "2026-07-13",
+            "start_week_index": 1,
+            "week_count": 4
+          }
+        ],
+        "race_anchors": [
+          {
+            "date": "2026-08-03",
+            "source": "input",
+            "type": "race",
+            "week_start_date": "2026-08-03"
+          }
+        ],
+        "recovery_weeks": [],
+        "summary": {
+          "end_date": "2026-08-09",
+          "goal_date": "2026-08-03",
+          "phase_count": 1,
+          "race_anchor_count": 1,
+          "recovery_week_count": 0,
+          "start_date": "2026-07-13",
+          "total_weeks": 4
+        },
+        "warnings": [],
+        "weekly_targets": []
+      }
+    },
+    {
+      "dry_run": false,
+      "preview_token": "season-plan-preview-v1-copy-from-dry-run",
+      "proposal": {
+        "_meta": {
+          "read_only": true,
+          "schema_version": "season_plan_proposal.v1",
+          "writes_performed": false
+        },
+        "assumptions": [],
+        "phases": [
+          {
+            "end_date": "2026-08-09",
+            "end_week_index": 4,
+            "name": "Base",
+            "phase_id": "phase_01_base",
+            "phase_type": "base",
+            "start_date": "2026-07-13",
+            "start_week_index": 1,
+            "week_count": 4
+          }
+        ],
+        "race_anchors": [
+          {
+            "date": "2026-08-03",
+            "source": "input",
+            "type": "race",
+            "week_start_date": "2026-08-03"
+          }
+        ],
+        "recovery_weeks": [],
+        "summary": {
+          "end_date": "2026-08-09",
+          "goal_date": "2026-08-03",
+          "phase_count": 1,
+          "race_anchor_count": 1,
+          "recovery_week_count": 0,
+          "start_date": "2026-07-13",
+          "total_weeks": 4
+        },
+        "warnings": [],
+        "weekly_targets": []
+      }
+    }
+  ],
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "conflict_policy": {
+      "default": "skip_existing",
+      "description": "skip_existing reports conflicts and protects existing rows. replace_icuvisor_notes is accepted only when ICUVISOR_DELETE_MODE=full and may replace only Icuvisor-owned phase notes with deterministic external_id values; races, notes, workouts, existing ATP rows without Icuvisor external IDs, and unknown categories remain protected.",
+      "enum": [
+        "skip_existing",
+        "replace_icuvisor_notes"
+      ],
+      "type": "string"
+    },
+    "dry_run": {
+      "default": true,
+      "description": "Safety default is true. dry_run:false is rejected unless preview_token exactly matches the token returned by a fresh dry-run preview for the same proposal/conflicts/policy.",
+      "type": "boolean"
+    },
+    "include_full": {
+      "default": false,
+      "description": "When true, include full applied event rows when writes are performed; dry-run remains terse.",
+      "type": "boolean"
+    },
+    "preview_token": {
+      "description": "Required for dry_run:false. Copy exactly from _meta.preview_token returned by the dry-run preview.",
+      "type": "string"
+    },
+    "proposal": {
+      "description": "Required unmodified structured response from propose_annual_training_plan. The proposal must have _meta.schema_version season_plan_proposal.v1, read_only:true, writes_performed:false, valid bounded dates, consistent counts, unique phases, and weekly/recovery rows referencing known phases.",
+      "type": "object"
+    }
+  },
+  "required": [
+    "proposal"
+  ],
+  "type": "object"
+}

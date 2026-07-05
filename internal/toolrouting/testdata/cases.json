@@ -119,6 +119,42 @@
       "notes": "C-race prompts are event writes and should use add_or_update_event with category RACE_C; add_race_event should not be invented."
     },
     {
+      "id": "full-race-a-event-create",
+      "prompt": "Schedule an A priority race on 2026-10-04 named Harbor Road Race with a short goal note.",
+      "expected_first_tool": "add_or_update_event",
+      "catalog_mode": "full_safe",
+      "toolset": "full",
+      "delete_mode": "safe",
+      "notes": "Even when full-only season-plan apply is visible, standalone race scheduling remains a generic calendar event upsert using RACE_A rather than apply_annual_training_plan."
+    },
+    {
+      "id": "full-race-b-event-create",
+      "prompt": "Add a B race to my Intervals calendar on 2026-08-15 called Mountain Gravel Classic.",
+      "expected_first_tool": "add_or_update_event",
+      "catalog_mode": "full_safe",
+      "toolset": "full",
+      "delete_mode": "safe",
+      "notes": "Full catalog race writes should still start with add_or_update_event; apply_annual_training_plan is only for committing season-plan phase notes from a preview/proposal."
+    },
+    {
+      "id": "full-race-c-event-create",
+      "prompt": "Put a C-priority tune-up 5K named Park Tune Up on my calendar for 2026-07-18.",
+      "expected_first_tool": "add_or_update_event",
+      "catalog_mode": "full_safe",
+      "toolset": "full",
+      "delete_mode": "safe",
+      "notes": "C race creation is not a season-plan apply flow; route to add_or_update_event even with full write tools enabled."
+    },
+    {
+      "id": "full-season-plan-apply-preview",
+      "prompt": "I have the propose_annual_training_plan response ready; preview applying that season plan to my calendar and give me the dry-run token before any writes.",
+      "expected_first_tool": "apply_annual_training_plan",
+      "catalog_mode": "full_safe",
+      "toolset": "full",
+      "delete_mode": "safe",
+      "notes": "Explicit apply/preview wording for a propose_annual_training_plan proposal should use the safe season-plan apply tool rather than the generic event upsert."
+    },
+    {
       "id": "event-delete-hidden-in-safe-mode",
       "prompt": "Delete the calendar event evt-789 from my intervals.icu calendar.",
       "expected_first_tool": "icuvisor_list_advanced_capabilities",

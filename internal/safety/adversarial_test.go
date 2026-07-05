@@ -28,6 +28,7 @@ var v03ToolCatalog = []catalogToolSpec{
 	{name: "analyze_distribution", requirement: tools.RequirementRead},
 	{name: "analyze_efforts_delta", requirement: tools.RequirementRead},
 	{name: "analyze_trend", requirement: tools.RequirementRead},
+	{name: "apply_annual_training_plan", requirement: tools.RequirementWrite},
 	{name: "apply_training_plan", requirement: tools.RequirementWrite},
 	{name: "compute_activity_segment_stats", requirement: tools.RequirementRead},
 	{name: "compute_baseline", requirement: tools.RequirementRead},
