@@ -35,6 +35,13 @@ Before adding strength-training MCP tools, collect black-box or public API evide
 5. Safe-delete/update behavior so destructive operations can be registered behind icuvisor's existing capability gates.
 6. Terse response shape that summarizes the session without dumping large exercise/set payloads unless `include_full: true` is requested.
 
+Safe follow-up probe, with operator approval and a synthetic test athlete only:
+
+1. Create one free-text `WORKOUT` event with `type: "WeightTraining"`, no `workout_doc`, and no real athlete notes.
+2. Read it back through event detail and event list endpoints and verify which generic fields round-trip.
+3. Complete or import a synthetic strength activity if the upstream UI/device flow permits it, then inspect activities and any documented strength endpoints for exercise/set payload fields.
+4. Delete the synthetic calendar item using the existing gated delete flow after capturing redacted schema evidence.
+
 ## Implementation criteria
 
 First-class strength/gym tools should not be added until the evidence above can answer each contract question below:
