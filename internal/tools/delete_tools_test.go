@@ -137,6 +137,49 @@ func TestDeletePerIDToolsSuccessAndEcho(t *testing.T) {
 	}
 }
 
+func TestDeleteEventSparseUntitledAndUnknownCategoryPayloads(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		raw   string
+		want  string
+		field string
+	}{
+		{name: "minimal", raw: `{"id":"evt-minimal"}`, want: "evt-minimal", field: "event_id"},
+		{name: "untitled", raw: `{"id":"evt-untitled","category":"NOTE","start_date_local":"2026-06-01"}`, want: "NOTE", field: "category"},
+		{name: "unknown category", raw: `{"id":"evt-unknown","category":"CUSTOM_BLOCK","type":"Other","start_date_local":"2026-06-01"}`, want: "CUSTOM_BLOCK", field: "category"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &fakeDeleteToolsClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, event: mustEvent(t, tc.raw)}
+			tool := newDeleteEventTool(client, client, "test", "UTC", false)
+
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"event_id":"` + client.event.ID + `"}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			if len(client.deletedEventIDs) != 1 || client.deletedEventIDs[0] != client.event.ID {
+				t.Fatalf("deleted event IDs = %#v, want %s", client.deletedEventIDs, client.event.ID)
+			}
+			out := resultMap(t, result)
+			if out["status"] != "deleted" || out["deleted_id"] != client.event.ID {
+				t.Fatalf("response = %#v, want delete status for sparse event", out)
+			}
+			meta := out["_meta"].(map[string]any)
+			if meta["confirmation_status"] != "upstream_delete_succeeded_post_delete_unverified" {
+				t.Fatalf("meta = %#v, want explicit unverifiable post-delete confirmation", meta)
+			}
+			deleted := meta["deleted"].(map[string]any)
+			if deleted["event_id"] != client.event.ID || deleted[tc.field] != tc.want {
+				t.Fatalf("deleted echo = %#v, want %s=%s and event_id preserved", deleted, tc.field, tc.want)
+			}
+		})
+	}
+}
+
 func TestDeletePerIDToolsRejectConfirmArgument(t *testing.T) {
 	t.Parallel()
 

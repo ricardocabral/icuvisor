@@ -150,6 +150,19 @@ func TestValidateDocUnsupportedStepError(t *testing.T) {
 	}
 }
 
+func TestValidateDocRejectsFractionalPercentTarget(t *testing.T) {
+	t.Parallel()
+	doc := WorkoutDoc{Steps: []Step{{Description: "Threshold", Duration: 600, Power: &Target{Value: ptrFloat(0.95), Units: "PERCENT_FTP"}}}}
+	got := ValidateDoc(doc)
+	codes := errorCodes(got.Errors)
+	if !diagListContains(codes, "UNSUPPORTED_STEP") {
+		t.Fatalf("expected UNSUPPORTED_STEP error, got %+v", codes)
+	}
+	if len(got.Errors) == 0 || !strings.Contains(got.Errors[0].Message, "percent points") {
+		t.Fatalf("ValidateDoc() errors = %+v, want percent-point guidance", got.Errors)
+	}
+}
+
 func TestEstimateDurationSecondsWithRepeats(t *testing.T) {
 	t.Parallel()
 	doc := WorkoutDoc{Steps: []Step{

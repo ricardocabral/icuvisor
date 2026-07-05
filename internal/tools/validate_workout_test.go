@@ -77,6 +77,24 @@ func TestValidateWorkoutStepsOnlyHappyPath(t *testing.T) {
 	}
 }
 
+func TestValidateWorkoutRejectsFractionalPercentFTP(t *testing.T) {
+	t.Parallel()
+	payload := `{"workout_doc":{"steps":[{"description":"Threshold","duration":600,"power":{"value":0.95,"units":"PERCENT_FTP"}}]}}`
+	resp := runValidateWorkout(t, payload)
+	if resp.Valid {
+		t.Fatalf("Valid = true, want false; canonical=%q warnings=%+v", resp.CanonicalDSL, resp.Warnings)
+	}
+	if resp.CanonicalDSL != "" || strings.Contains(resp.CanonicalDSL, "0.95%") {
+		t.Fatalf("CanonicalDSL = %q, want no silently serialized fractional percent", resp.CanonicalDSL)
+	}
+	if !diagContains(diagCodes(resp.Errors), "UNSUPPORTED_STEP") {
+		t.Fatalf("expected UNSUPPORTED_STEP error; got %+v", resp.Errors)
+	}
+	if !strings.Contains(resp.Errors[0].Message, "percent points") {
+		t.Fatalf("error = %q, want percent-point guidance", resp.Errors[0].Message)
+	}
+}
+
 func TestValidateWorkoutBothSetMergesWithSentinel(t *testing.T) {
 	t.Parallel()
 	prose := "Threshold day.\n" + workoutdoc.StepsSentinel + "\nCool down well."
@@ -160,6 +178,51 @@ func TestValidateWorkoutProsePassesThroughVerbatim(t *testing.T) {
 	}
 	if len(resp.Errors) != 0 {
 		t.Fatalf("prose passthrough should never error; got %+v", resp.Errors)
+	}
+}
+
+func TestValidateWorkoutSportSpecificGeneratedDescriptionsAvoidCyclingWords(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name    string
+		payload string
+	}{
+		{
+			name:    "run workout",
+			payload: `{"workout_doc":{"steps":[{"description":"Run warmup","duration":600,"pace":{"value":85,"units":"PERCENT_THRESHOLD"}},{"description":"Run intervals","duration":1200,"pace":{"min":95,"max":100,"units":"PERCENT_THRESHOLD"}},{"description":"Run cooldown","duration":600,"rpe":{"value":2,"units":"RPE"}}]}}`,
+		},
+		{
+			name:    "swim workout",
+			payload: `{"workout_doc":{"steps":[{"description":"Swim warmup","distance":{"value":200,"unit":"yards"},"pace":{"value":85,"units":"PERCENT_THRESHOLD"}},{"description":"Swim main","distance":{"value":800,"unit":"yards"},"pace":{"value":95,"units":"PERCENT_THRESHOLD"}},{"description":"Swim cooldown","distance":{"value":100,"unit":"yards"},"rpe":{"value":2,"units":"RPE"}}]}}`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			resp := runValidateWorkout(t, tc.payload)
+			if !resp.Valid {
+				t.Fatalf("Valid = false; errors=%+v", resp.Errors)
+			}
+			lower := strings.ToLower(resp.CanonicalDSL)
+			for _, forbidden := range []string{"ride", "spin"} {
+				if strings.Contains(lower, forbidden) {
+					t.Fatalf("CanonicalDSL = %q contains cycling-only word %q", resp.CanonicalDSL, forbidden)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateWorkoutKeepsUserProvidedCyclingProse(t *testing.T) {
+	t.Parallel()
+
+	resp := runValidateWorkout(t, `{"description":"Coach note: relaxed spin if legs are heavy.","workout_doc":{"steps":[{"description":"Run easy","duration":1800,"pace":{"value":80,"units":"PERCENT_THRESHOLD"}}]}}`)
+	if !resp.Valid {
+		t.Fatalf("Valid = false; errors=%+v", resp.Errors)
+	}
+	if !strings.Contains(resp.CanonicalDSL, "relaxed spin") {
+		t.Fatalf("CanonicalDSL = %q, want user-provided prose preserved", resp.CanonicalDSL)
 	}
 }
 

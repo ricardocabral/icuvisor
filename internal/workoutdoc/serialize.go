@@ -174,6 +174,9 @@ func formatTarget(family string, target Target, ramp bool, options SerializeOpti
 		if syntax.Family != family || !syntaxUnitMatches(syntax.Units, unit) {
 			continue
 		}
+		if err := rejectFractionalPercentTarget(lo, hi, ranged, syntax); err != nil {
+			return "", err
+		}
 		if syntax.Zone {
 			suffix := syntax.Suffix
 			if explicitZoneMetricSuffixes(options) {
@@ -184,6 +187,20 @@ func formatTarget(family string, target Target, ramp bool, options SerializeOpti
 		return syntax.Prefix + formatRange(lo, hi, ranged, syntax.Suffix), nil
 	}
 	return "", fmt.Errorf("unsupported %s target units %q", family, target.Units)
+}
+
+func rejectFractionalPercentTarget(lo float64, hi float64, ranged bool, syntax TargetUnitSyntax) error {
+	if !strings.Contains(syntax.Suffix, "%") {
+		return nil
+	}
+	if isFractionalPercentPoint(lo) || (ranged && isFractionalPercentPoint(hi)) {
+		return fmt.Errorf("%s targets use percent points, not fractional ratios; use 95 for 95%%, not 0.95", syntax.Family)
+	}
+	return nil
+}
+
+func isFractionalPercentPoint(value float64) bool {
+	return value > 0 && value < 1
 }
 
 func explicitZoneMetricSuffixes(options SerializeOptions) bool {

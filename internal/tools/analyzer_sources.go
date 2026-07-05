@@ -23,13 +23,159 @@ type analyzerMetricSelection struct {
 }
 
 type analyzerSampleSeries struct {
-	Metric      analysis.Metric
-	Unit        string
-	ScaleLabel  string
-	Samples     []analysis.NumericSample
-	MissingDays int
-	SourceTools []string
-	Assumptions map[string]any
+	Metric            analysis.Metric
+	Unit              string
+	ScaleLabel        string
+	Samples           []analysis.NumericSample
+	MissingDays       int
+	SourceTools       []string
+	Assumptions       map[string]any
+	WellnessFreshness *wellnessFreshnessSummary
+}
+
+type wellnessFreshnessSummary struct {
+	Status           string
+	MetricLabel      string
+	WindowStartDate  string
+	WindowEndDate    string
+	LatestSampleDate string
+	MissingDays      int
+	StaleSampleDates []string
+	StaleSource      string
+	Caveats          []string
+}
+
+type wellnessFreshnessTracker struct {
+	metric           analysis.Metric
+	metricLabel      string
+	field            string
+	windowStartDate  string
+	windowEndDate    string
+	latestSampleDate string
+	staleSampleDates []string
+	staleSource      string
+}
+
+func newWellnessFreshnessTracker(metric analysis.Metric, startDate string, endDate string) wellnessFreshnessTracker {
+	field, label, ok := wellnessFreshnessField(metric)
+	if !ok {
+		return wellnessFreshnessTracker{}
+	}
+	return wellnessFreshnessTracker{metric: metric, metricLabel: label, field: field, windowStartDate: startDate, windowEndDate: endDate}
+}
+
+func (t *wellnessFreshnessTracker) enabled() bool { return t.metricLabel != "" }
+
+func (t *wellnessFreshnessTracker) record(row intervals.Wellness, date string) {
+	if !t.enabled() || date == "" {
+		return
+	}
+	if date > t.latestSampleDate {
+		t.latestSampleDate = date
+	}
+	entry, stale := wellnessProvenanceEntry(row, t.field)
+	if !stale {
+		return
+	}
+	t.staleSampleDates = append(t.staleSampleDates, date)
+	if t.staleSource == "" {
+		if source, ok := entry["source"].(string); ok {
+			t.staleSource = source
+		}
+	}
+}
+
+func (t wellnessFreshnessTracker) baselineSummary(missingDays int) *wellnessFreshnessSummary {
+	return t.summary(missingDays, "current window", "current-window")
+}
+
+func (t wellnessFreshnessTracker) trendSummary(missingDays int) *wellnessFreshnessSummary {
+	return t.summary(missingDays, "trend window", "")
+}
+
+func (t wellnessFreshnessTracker) summary(missingDays int, windowLabel string, missingLabel string) *wellnessFreshnessSummary {
+	if !t.enabled() {
+		return nil
+	}
+	summary := &wellnessFreshnessSummary{MetricLabel: t.metricLabel, WindowStartDate: t.windowStartDate, WindowEndDate: t.windowEndDate, LatestSampleDate: t.latestSampleDate, MissingDays: missingDays, StaleSampleDates: append([]string(nil), t.staleSampleDates...), StaleSource: t.staleSource}
+	if t.latestSampleDate == "" {
+		summary.Status = "absent_current_window"
+		summary.Caveats = append(summary.Caveats, fmt.Sprintf("no %s samples in current window %s..%s", t.metricLabel, t.windowStartDate, t.windowEndDate))
+		return summary
+	}
+	if t.latestSampleDate < t.windowEndDate {
+		summary.Status = "stale_current_window"
+		summary.Caveats = append(summary.Caveats, fmt.Sprintf("latest %s sample %s predates %s end %s", t.metricLabel, t.latestSampleDate, windowLabel, t.windowEndDate))
+		if missingDays > 0 {
+			label := "missing days"
+			if missingDays == 1 {
+				label = "missing day"
+			}
+			if missingLabel != "" {
+				label = "missing " + missingLabel + " days"
+				if missingDays == 1 {
+					label = "missing " + missingLabel + " day"
+				}
+			}
+			summary.Caveats = append(summary.Caveats, fmt.Sprintf("%d %s", missingDays, label))
+		}
+		return summary
+	}
+	if len(t.staleSampleDates) > 0 {
+		summary.Status = "stale_provenance"
+		source := t.staleSource
+		if source == "" {
+			source = "unknown"
+		}
+		summary.Caveats = append(summary.Caveats, fmt.Sprintf("%s bridge data for %s sample %s is older than 24h", source, t.metricLabel, t.staleSampleDates[0]))
+		return summary
+	}
+	return nil
+}
+
+func (s *wellnessFreshnessSummary) computeAssumptions() map[string]any {
+	if s == nil {
+		return nil
+	}
+	out := map[string]any{"status": s.Status, "metric": s.MetricLabel, "current_window_end_date": s.WindowEndDate, "missing_current_days": s.MissingDays}
+	if s.LatestSampleDate != "" {
+		out["latest_current_sample_date"] = s.LatestSampleDate
+	}
+	if len(s.StaleSampleDates) > 0 {
+		out["stale_sample_dates"] = append([]string(nil), s.StaleSampleDates...)
+	}
+	if s.StaleSource != "" {
+		out["stale_source"] = s.StaleSource
+	}
+	return out
+}
+
+func (s *wellnessFreshnessSummary) trendAssumptions() map[string]any {
+	if s == nil {
+		return nil
+	}
+	out := map[string]any{"status": s.Status, "metric": s.MetricLabel, "window_end_date": s.WindowEndDate, "missing_days": s.MissingDays}
+	if s.LatestSampleDate != "" {
+		out["latest_sample_date"] = s.LatestSampleDate
+	}
+	if len(s.StaleSampleDates) > 0 {
+		out["stale_sample_dates"] = append([]string(nil), s.StaleSampleDates...)
+	}
+	if s.StaleSource != "" {
+		out["stale_source"] = s.StaleSource
+	}
+	return out
+}
+
+func wellnessFreshnessField(metric analysis.Metric) (string, string, bool) {
+	switch metric {
+	case "hrv":
+		return "hrv", "HRV", true
+	case "hrv_sdnn":
+		return "hrvSDNN", "HRV-SDNN", true
+	default:
+		return "", "", false
+	}
 }
 
 func selectAnalyzerMetricSource(metric analysis.Metric, grain analysis.SampleGrain, allowWeekly bool) (analyzerMetricSelection, error) {

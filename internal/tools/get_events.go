@@ -18,6 +18,7 @@ const (
 	getEventsDescription             = "List calendar events across a bounded athlete-local YYYY-MM-DD date range. Returns terse rows by default, raw upstream event payloads only with include_full:true, and preserves upstream category enum values."
 	invalidGetEventsArgumentsMessage = "invalid get_events arguments; provide oldest/newest as YYYY-MM-DD with an optional capped limit"
 	fetchEventsMessage               = "could not fetch events; check intervals.icu credentials, athlete ID, and date range"
+	plannedEventConvention           = "planned-event indoor is the upstream event venue flag; it is not a sport type, FTP selector, or instruction to infer separate indoor/outdoor FTP. Use get_athlete_profile sport_settings[].indoor_ftp_watts only when present, otherwise ask or confirm adaptations."
 	defaultEventsLimit               = 100
 	maxEventsLimit                   = 500
 	maxEventsRangeDays               = 366
@@ -76,15 +77,16 @@ type getEventsRow struct {
 }
 
 type getEventsMeta struct {
-	DateRange   dateRangeMeta `json:"date_range"`
-	Timezone    string        `json:"timezone"`
-	Limit       int           `json:"limit"`
-	Count       int           `json:"count"`
-	Truncated   bool          `json:"truncated"`
-	IncludeFull bool          `json:"include_full"`
-	AsOf        string        `json:"as_of,omitempty"`
-	AsOfDate    string        `json:"as_of_date,omitempty"`
-	AsOfWeekday string        `json:"as_of_weekday,omitempty"`
+	DateRange              dateRangeMeta `json:"date_range"`
+	Timezone               string        `json:"timezone"`
+	Limit                  int           `json:"limit"`
+	Count                  int           `json:"count"`
+	Truncated              bool          `json:"truncated"`
+	IncludeFull            bool          `json:"include_full"`
+	PlannedEventConvention string        `json:"planned_event_convention"`
+	AsOf                   string        `json:"as_of,omitempty"`
+	AsOfDate               string        `json:"as_of_date,omitempty"`
+	AsOfWeekday            string        `json:"as_of_weekday,omitempty"`
 }
 
 type dateRangeMeta struct {
@@ -197,7 +199,7 @@ func shapeGetEventsResponse(events []intervals.Event, args getEventsRequest, tim
 		}
 		return rows[i].EventID < rows[j].EventID
 	})
-	meta := getEventsMeta{DateRange: dateRangeMeta{Oldest: args.Oldest, Newest: args.Newest}, Timezone: timezoneName, Limit: limit, Count: len(rows), Truncated: truncated, IncludeFull: args.IncludeFull}
+	meta := getEventsMeta{DateRange: dateRangeMeta{Oldest: args.Oldest, Newest: args.Newest}, Timezone: timezoneName, Limit: limit, Count: len(rows), Truncated: truncated, IncludeFull: args.IncludeFull, PlannedEventConvention: plannedEventConvention}
 	if asOfMeta != nil {
 		meta.AsOf = asOfMeta.AsOf
 		meta.AsOfDate = asOfMeta.AsOfDate

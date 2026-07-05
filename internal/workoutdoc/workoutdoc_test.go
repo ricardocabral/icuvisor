@@ -235,6 +235,111 @@ func TestSerializeTargetUnitSemantics(t *testing.T) {
 	}
 }
 
+func TestSerializeRejectsFractionalPercentTargets(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name string
+		step Step
+	}{
+		{name: "power percent FTP scalar", step: Step{Description: "Bad FTP", Duration: 600, Power: targetValue(0.95, "PERCENT_FTP")}},
+		{name: "power percent FTP alias", step: Step{Description: "Bad alias", Duration: 600, Power: targetValue(0.95, "%FTP")}},
+		{name: "power blank percent default", step: Step{Description: "Bad blank", Duration: 600, Power: targetValue(0.95, "")}},
+		{name: "power percent FTP range", step: Step{Description: "Bad range", Duration: 600, Power: targetRange(0.88, 0.94, "PERCENT_FTP")}},
+		{name: "heart rate percent", step: Step{Description: "Bad HR", Duration: 600, HR: targetValue(0.8, "PERCENT_HR")}},
+		{name: "pace percent", step: Step{Description: "Bad pace", Duration: 600, Pace: targetValue(0.95, "PERCENT_THRESHOLD")}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := Serialize(WorkoutDoc{Steps: []Step{tc.step}})
+			if err == nil {
+				t.Fatalf("Serialize() = %q, want fractional percent error", got)
+			}
+			if strings.Contains(got, "0.") || strings.Contains(err.Error(), "0.95%") {
+				t.Fatalf("fractional percent was silently serialized: dsl=%q err=%q", got, err.Error())
+			}
+			if !strings.Contains(err.Error(), "percent points") {
+				t.Fatalf("Serialize() error = %q, want percent-point guidance", err.Error())
+			}
+		})
+	}
+}
+
+func TestSerializeRampDirectionsAreExplicit(t *testing.T) {
+	t.Parallel()
+
+	doc := WorkoutDoc{Steps: []Step{
+		{Description: "Warmup", Duration: 600, Ramp: true, Power: targetRamp(55, 75, "PERCENT_FTP")},
+		{Description: "Cooldown", Duration: 600, Ramp: true, Power: targetRamp(65, 45, "PERCENT_FTP")},
+	}}
+	got, err := Serialize(doc)
+	if err != nil {
+		t.Fatalf("Serialize() error = %v", err)
+	}
+	want := "- Warmup 10m ramp 55-75%\n- Cooldown 10m ramp 65-45%"
+	if got != want {
+		t.Fatalf("Serialize() = %q, want %q", got, want)
+	}
+
+	parsed, err := Parse(got)
+	if err != nil {
+		t.Fatalf("Parse(serialized ramps) error = %v", err)
+	}
+	if !reflect.DeepEqual(parsed.Steps, doc.Steps) {
+		gotJSON, _ := json.MarshalIndent(parsed.Steps, "", "  ")
+		wantJSON, _ := json.MarshalIndent(doc.Steps, "", "  ")
+		t.Fatalf("Parse(Serialize(ramps)) mismatch\n--- got ---\n%s\n--- want ---\n%s", gotJSON, wantJSON)
+	}
+
+	var syntaxRamp Step
+	for _, feature := range WorkoutSyntaxSpec().Features {
+		if feature.Key != "ramps" || len(feature.Examples) == 0 {
+			continue
+		}
+		syntaxRamp = feature.Examples[0].Step
+		break
+	}
+	syntaxDSL, err := Serialize(WorkoutDoc{Steps: []Step{syntaxRamp}})
+	if err != nil {
+		t.Fatalf("Serialize(syntax ramp) error = %v", err)
+	}
+	if !strings.Contains(syntaxDSL, "ramp 70-95%") {
+		t.Fatalf("syntax ramp = %q, want ascending generated ramp example", syntaxDSL)
+	}
+}
+
+func TestSerializeRecoveryStepsOmitCadenceUnlessExplicit(t *testing.T) {
+	t.Parallel()
+
+	doc := WorkoutDoc{Steps: []Step{
+		{Description: "Recovery", Duration: 240, Power: targetValue(50, "PERCENT_FTP")},
+		{Description: "Cooldown", Duration: 600, Freeride: true},
+		{Description: "Recovery spin", Duration: 180, Power: targetValue(55, "PERCENT_FTP"), Cadence: targetRange(85, 95, "RPM")},
+	}}
+	got, err := Serialize(doc)
+	if err != nil {
+		t.Fatalf("Serialize() error = %v", err)
+	}
+	want := "- Recovery 4m 50%\n- Cooldown 10m freeride\n- Recovery spin 3m 55% 85-95rpm"
+	if got != want {
+		t.Fatalf("Serialize() = %q, want %q", got, want)
+	}
+	if strings.Contains(strings.Split(got, "\n")[0], "rpm") || strings.Contains(strings.Split(got, "\n")[1], "rpm") {
+		t.Fatalf("recovery/cooldown without cadence emitted rpm: %q", got)
+	}
+
+	parsed, err := Parse("- Recovery 4m 50%\n- Cooldown 10m freeride")
+	if err != nil {
+		t.Fatalf("Parse(recovery without cadence) error = %v", err)
+	}
+	for i, step := range parsed.Steps {
+		if step.Cadence != nil {
+			t.Fatalf("parsed step %d Cadence = %#v, want nil", i, step.Cadence)
+		}
+	}
+}
+
 func TestFullSurfaceCandidateGoldenLocksIssue25RiskAreas(t *testing.T) {
 	t.Parallel()
 

@@ -113,6 +113,68 @@ func TestGetEventsTerseRowsTimezoneAndCategory(t *testing.T) {
 	}
 }
 
+func TestGetEventsKeepsWeightTrainingAsCalendarEventOnly(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
+		events:            decodeToolEvents(t, `{"id":"gym-1","name":"Gym strength block","category":"WORKOUT","type":"WeightTraining","start_date_local":"2026-07-08T18:00:00","description":"Bench press 3x5 and mobility notes are free-text only.","tags":["gym","strength"],"time_target":2700}`),
+	}
+	tool := newGetEventsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-07-08","newest":"2026-07-08","category":"WORKOUT"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	row := resultMap(t, result)["events"].([]any)[0].(map[string]any)
+	if row["type"] != "WeightTraining" || row["description"] != "Bench press 3x5 and mobility notes are free-text only." {
+		t.Fatalf("row = %#v, want WeightTraining type and free-text description", row)
+	}
+	if row["time_target_seconds"] != float64(2700) {
+		t.Fatalf("time_target_seconds = %#v, want generic calendar target", row["time_target_seconds"])
+	}
+	for _, unsupported := range []string{"workout_doc_summary", "exercises", "sets", "reps", "load_kg"} {
+		if _, ok := row[unsupported]; ok {
+			t.Fatalf("row includes unsupported structured strength key %q: %#v", unsupported, row)
+		}
+	}
+}
+
+func TestGetEventsIndoorFlagIsVenueFlagNotFTPOrZoneData(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeEventsTrainingPlanClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Types: []string{"Ride"}, FTP: 260, IndoorFTP: 240, PowerZones: []int{130, 180, 240, 300}}}}},
+		events:            decodeToolEvents(t, `{"id":"indoor-ride","name":"Trainer tempo","category":"WORKOUT","type":"Ride","start_date_local":"2026-01-03","tags":["trainer","tempo"],"indoor":true}`),
+	}
+	tool := newGetEventsTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"oldest":"2026-01-03","newest":"2026-01-03"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	out := resultMap(t, result)
+	row := out["events"].([]any)[0].(map[string]any)
+	if row["indoor"] != true || row["type"] != "Ride" {
+		t.Fatalf("row indoor/type = %#v/%#v, want separate event venue flag and sport type", row["indoor"], row["type"])
+	}
+	if tags := row["tags"].([]any); len(tags) != 2 || tags[0] != "trainer" || tags[1] != "tempo" {
+		t.Fatalf("tags = %#v, want tags preserved separately from indoor", row["tags"])
+	}
+	for _, forbidden := range []string{"ftp_watts", "indoor_ftp_watts", "power_zones_watts"} {
+		if _, ok := row[forbidden]; ok {
+			t.Fatalf("event row = %#v, should not include profile field %s", row, forbidden)
+		}
+	}
+	meta := out["_meta"].(map[string]any)
+	convention, _ := meta["planned_event_convention"].(string)
+	for _, want := range []string{"upstream event venue flag", "not a sport type", "FTP selector", "sport_settings[].indoor_ftp_watts"} {
+		if !strings.Contains(convention, want) {
+			t.Fatalf("planned_event_convention = %q, missing %q", convention, want)
+		}
+	}
+}
+
 func TestGetEventsResolvesPercentFTPWorkoutTargetPreview(t *testing.T) {
 	t.Parallel()
 

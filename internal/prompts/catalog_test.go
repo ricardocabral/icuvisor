@@ -244,6 +244,10 @@ func TestRecoveryCheckIncludesWeatherAndIndoorOutdoorGuardrails(t *testing.T) {
 		"forecast_unavailable",
 		"do not invent conditions",
 		"planned_events[].indoor",
+		"Do not infer separate indoor/outdoor FTP",
+		"sport_settings[].indoor_ftp_watts only when present",
+		"otherwise ask or confirm how to adjust the workout",
+		"zone boundaries",
 		"do not create a second active workout",
 		"Do not call write or delete tools for indoor/outdoor adaptation",
 	} {
@@ -378,9 +382,12 @@ func TestPlanningPromptsIncludeSeasonContextAndWriteGuardrails(t *testing.T) {
 				for _, want := range []string{
 					"total duration, key steps, target intensities, load/distance/time changes",
 					"what existing title/prose/tags/structured steps are preserved",
+					"When the user asks for gym or strength work",
+					"simple `NOTE` time block or free-text supported calendar event",
+					"do not invent structured exercises, sets, reps, loads, or rest periods",
 				} {
 					if !strings.Contains(text, want) {
-						t.Fatalf("%s prompt missing workout preview guidance %q:\n%s", tc.name, want, text)
+						t.Fatalf("%s prompt missing workout preview/strength boundary guidance %q:\n%s", tc.name, want, text)
 					}
 				}
 			}

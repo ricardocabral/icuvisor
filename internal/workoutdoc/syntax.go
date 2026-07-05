@@ -229,6 +229,7 @@ func WorkoutSyntaxSpec() SyntaxSpec {
 			{Key: "no_nested_repeats", Description: "No nested repeats. An `Nx` block cannot contain another `Nx` block."},
 			{Key: "repeat_header_carries_only_reps", Description: "Repeat headers carry only `Nx` and an optional label. Duration and targets belong on the child steps, not the header."},
 			{Key: "ramps_need_numeric_targets", Description: "Ramps cannot use text or zone-label pace targets. Use percentages or absolute pace bounds for the start/end."},
+			{Key: "sport_specific_labels", Description: "Structured step descriptions are emitted verbatim. For run or swim workouts, choose run/swim labels and avoid cycling-only words like ride or spin unless that prose came from the user."},
 			{Key: "prose_and_steps_coexist", Description: "`workout_doc` and `description` coexist in the same description field — prose, headers, and comments pass through untouched while structured-step lines are validated. You do not need a separate event or note to attach coach/athlete prose alongside structure."},
 			{Key: "preflight_validate", Description: "Pre-flight: when uncertain about syntax, call `validate_workout` (when registered) with the proposed `workout_doc` and/or `description` before writing to get a diagnostic. If the tool is not available the write tools still apply the same parser server-side."},
 		},

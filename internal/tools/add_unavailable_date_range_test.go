@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/safety"
@@ -188,6 +189,36 @@ func TestAddUnavailableDateRangeCreatesInclusivePerDayEvents(t *testing.T) {
 	}
 	if meta["operation"] != "create_range" || meta["category"] != "HOLIDAY" || meta["timezone"] != "America/Sao_Paulo" || meta["requested_days"] != float64(3) || meta["created_count"] != float64(3) || meta["skipped_count"] != float64(0) || meta["range_cap_days"] != float64(31) || meta["include_full"] != false {
 		t.Fatalf("meta = %#v, want created range counts", meta)
+	}
+}
+
+func TestAddUnavailableDateRangeAcceptsAthleteLocalTodayStartDate(t *testing.T) {
+	t.Parallel()
+
+	location, err := time.LoadLocation("America/Sao_Paulo")
+	if err != nil {
+		t.Fatalf("load location: %v", err)
+	}
+	today := time.Now().In(location).Format(time.DateOnly)
+	client := &fakeUnavailableDateRangeClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+		created:           decodeToolEvents(t, `{"id":"evt-today","category":"SICK","type":"Unavailable","name":"Sick","start_date_local":"`+today+`"}`),
+	}
+	tool := newAddUnavailableDateRangeTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"start_date":"` + today + `","end_date":"` + today + `","category":"sick"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v, want athlete-local today accepted", err)
+	}
+	if len(client.calls) != 1 || client.calls[0].Date != today {
+		t.Fatalf("write calls = %#v, want one unavailable write for local today %s", client.calls, today)
+	}
+	if len(client.listCalls) != 1 || client.listCalls[0].Oldest != today || client.listCalls[0].Newest != today {
+		t.Fatalf("list calls = %#v, want exact local-today preflight", client.listCalls)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["created_count"] != float64(1) || meta["timezone"] != "America/Sao_Paulo" {
+		t.Fatalf("meta = %#v, want one local-today create in athlete timezone", meta)
 	}
 }
 

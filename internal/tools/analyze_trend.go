@@ -93,6 +93,13 @@ func analyzeTrendHandler(clients analyzerClients, profileClient ProfileClient, v
 		}
 		trend, points := analysis.ComputeTrend(analysis.TrendInput{Metric: string(metric), Unit: currentSeries.Unit, Samples: currentSeries.Samples, BaselineSamples: baselineSeries.Samples, RollingWindow: rolling, MinSamples: minSamples, BaselineMinSamples: minSamples, SampleGrain: grain})
 		assumptions := analyzerMetaAssumptions(currentSeries.Assumptions, window.Window, args.IncludeFull)
+		if freshness := currentSeries.WellnessFreshness; freshness != nil {
+			trend.FreshnessStatus = freshness.Status
+			trend.LatestSampleDate = freshness.LatestSampleDate
+			trend.WindowEndDate = freshness.WindowEndDate
+			trend.Caveats = append([]string(nil), freshness.Caveats...)
+			assumptions["wellness_freshness"] = freshness.trendAssumptions()
+		}
 		assumptions["baseline_window"] = baseline.Window
 		assumptions["rolling_window_days"] = effectiveRollingDays
 		if grain == analysis.SampleGrainWeekly {

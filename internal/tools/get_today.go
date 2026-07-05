@@ -51,15 +51,16 @@ type getTodayWeather struct {
 }
 
 type getTodayMeta struct {
-	Date           string         `json:"date"`
-	AsOf           string         `json:"as_of"`
-	AsOfDate       string         `json:"as_of_date"`
-	AsOfWeekday    string         `json:"as_of_weekday"`
-	Timezone       string         `json:"timezone"`
-	IncludeFull    bool           `json:"include_full"`
-	SourceTools    []string       `json:"source_tools"`
-	SectionCounts  map[string]int `json:"section_counts"`
-	ActivityWindow string         `json:"activity_window"`
+	Date                   string         `json:"date"`
+	AsOf                   string         `json:"as_of"`
+	AsOfDate               string         `json:"as_of_date"`
+	AsOfWeekday            string         `json:"as_of_weekday"`
+	Timezone               string         `json:"timezone"`
+	IncludeFull            bool           `json:"include_full"`
+	SourceTools            []string       `json:"source_tools"`
+	SectionCounts          map[string]int `json:"section_counts"`
+	ActivityWindow         string         `json:"activity_window"`
+	PlannedEventConvention string         `json:"planned_event_convention"`
 }
 
 func newGetTodayTool(client todayClient, profileClient ProfileClient, gearClient GearListClient, gearCache *gearListCache, customFieldClient ActivityCustomFieldClient, customFieldCache *customFieldCache, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -194,15 +195,16 @@ func shapeGetTodayResponse(in todayDigestInputs) (getTodayResponse, error) {
 		Annotations:         annotations,
 		Weather:             todayWeatherContext(completed),
 		Meta: getTodayMeta{
-			Date:           in.today,
-			AsOf:           in.asOf.AsOf,
-			AsOfDate:       in.asOf.AsOfDate,
-			AsOfWeekday:    in.asOf.AsOfWeekday,
-			Timezone:       in.asOf.Timezone,
-			IncludeFull:    in.includeFull,
-			SourceTools:    []string{getFitnessName, getWellnessDataName, getActivitiesName, getEventsName},
-			SectionCounts:  map[string]int{"fitness": len(in.fitnessRows), "wellness": len(in.wellnessRows), "completed_activities": len(completed), "planned_events": len(planned), "annotations": len(annotations)},
-			ActivityWindow: "from athlete-local midnight through upstream now",
+			Date:                   in.today,
+			AsOf:                   in.asOf.AsOf,
+			AsOfDate:               in.asOf.AsOfDate,
+			AsOfWeekday:            in.asOf.AsOfWeekday,
+			Timezone:               in.asOf.Timezone,
+			IncludeFull:            in.includeFull,
+			SourceTools:            []string{getFitnessName, getWellnessDataName, getActivitiesName, getEventsName},
+			SectionCounts:          map[string]int{"fitness": len(in.fitnessRows), "wellness": len(in.wellnessRows), "completed_activities": len(completed), "planned_events": len(planned), "annotations": len(annotations)},
+			ActivityWindow:         "from athlete-local midnight through upstream now",
+			PlannedEventConvention: plannedEventConvention,
 		},
 	}, nil
 }

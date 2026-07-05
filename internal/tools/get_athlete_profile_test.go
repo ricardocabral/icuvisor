@@ -192,6 +192,75 @@ func TestGetAthleteProfileHandlerSuccess(t *testing.T) {
 	}
 }
 
+func TestGetAthleteProfileKeepsFTPAndZoneBoundariesSeparate(t *testing.T) {
+	t.Parallel()
+
+	response := newGetAthleteProfileResponse(intervals.AthleteWithSportSettings{
+		ID: "i12345",
+		SportSettings: []intervals.SportSettings{{
+			Types:          []string{"Ride"},
+			FTP:            250,
+			IndoorFTP:      235,
+			PowerZones:     []int{125, 188, 250, 300},
+			PowerZoneNames: []string{"Z1", "Z2", "Boundary matching FTP", "Z4"},
+		}},
+	}, "test", "UTC")
+
+	if len(response.SportSettings) != 1 {
+		t.Fatalf("sport settings count = %d, want 1", len(response.SportSettings))
+	}
+	sport := response.SportSettings[0]
+	if sport.FTPWatts != 250 || sport.IndoorFTPWatts != 235 {
+		t.Fatalf("FTP fields = ftp:%d indoor:%d, want separate threshold values", sport.FTPWatts, sport.IndoorFTPWatts)
+	}
+	if len(sport.PowerZonesWatts) != 4 || sport.PowerZonesWatts[2] != 250 {
+		t.Fatalf("power_zones_watts = %#v, want boundary array retaining 250", sport.PowerZonesWatts)
+	}
+	if sport.PowerZoneNames[2] != "Boundary matching FTP" {
+		t.Fatalf("power_zone_names = %#v, want zone-boundary name preserved separately", sport.PowerZoneNames)
+	}
+	if !strings.Contains(response.Meta.PowerThresholdConvention, "ftp_watts is the upstream sport FTP threshold") || !strings.Contains(response.Meta.ZoneBoundaryConvention, "zone boundary arrays, not FTP") {
+		t.Fatalf("profile semantic metadata = %#v / %#v", response.Meta.PowerThresholdConvention, response.Meta.ZoneBoundaryConvention)
+	}
+}
+
+func TestGetAthleteProfileDoesNotTreatZoneBoundaryAsIndoorFTP(t *testing.T) {
+	t.Parallel()
+
+	response := newGetAthleteProfileResponse(intervals.AthleteWithSportSettings{
+		ID: "i12345",
+		SportSettings: []intervals.SportSettings{{
+			Types:          []string{"Ride"},
+			FTP:            260,
+			PowerZones:     []int{130, 180, 240, 300},
+			PowerZoneNames: []string{"Z1", "Z2", "Looks like indoor FTP", "Z4"},
+		}},
+	}, "test", "UTC")
+
+	encoded, err := json.Marshal(response)
+	if err != nil {
+		t.Fatalf("marshal response: %v", err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(encoded, &raw); err != nil {
+		t.Fatalf("decode response map: %v", err)
+	}
+	sport := raw["sport_settings"].([]any)[0].(map[string]any)
+	if sport["ftp_watts"] != float64(260) {
+		t.Fatalf("ftp_watts = %#v, want upstream FTP threshold", sport["ftp_watts"])
+	}
+	if _, ok := sport["indoor_ftp_watts"]; ok {
+		t.Fatalf("sport row = %#v, did not expect absent upstream indoor_ftp to be synthesized", sport)
+	}
+	zones := sport["power_zones_watts"].([]any)
+	if zones[2] != float64(240) || sport["power_zone_names"].([]any)[2] != "Looks like indoor FTP" {
+		t.Fatalf("zone fields = %#v / %#v, want numeric boundary kept as zone data", zones, sport["power_zone_names"])
+	}
+	if !strings.Contains(response.Meta.PowerThresholdConvention, "Absence of indoor_ftp_watts means Icuvisor has no separate indoor FTP") || !strings.Contains(response.Meta.PowerThresholdConvention, "not that it should be inferred from zones") {
+		t.Fatalf("power threshold convention = %q, want absent-indoor-FTP limitation", response.Meta.PowerThresholdConvention)
+	}
+}
+
 func TestGetAthleteProfileReadinessWarnings(t *testing.T) {
 	t.Parallel()
 
@@ -284,7 +353,7 @@ func TestGetAthleteProfileHandlerSerializesReadinessWarnings(t *testing.T) {
 		t.Fatalf("warning codes = %#v, want %#v", got, wantCodes)
 	}
 	text := resultText(t, result)
-	for _, want := range []string{"\"warnings\"", "\"missing_power_threshold\"", "threshold_hr", "kind=pace"} {
+	for _, want := range []string{"\"warnings\"", "\"missing_power_threshold\"", "threshold_hr", "kind=pace", "\"power_threshold_convention\"", "\"zone_boundary_convention\""} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("serialized response missing %s: %s", want, text)
 		}

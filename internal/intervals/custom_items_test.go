@@ -10,6 +10,38 @@ import (
 	"testing"
 )
 
+func TestCustomItemsClientListUsesSingularEndpointForum404Regression(t *testing.T) {
+	t.Parallel()
+
+	var gotPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/athlete/i12345/custom-items" {
+			http.NotFound(w, r)
+			return
+		}
+		if r.URL.Path != "/athlete/i12345/custom-item" {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write([]byte(`[{"id":7,"type":"FITNESS_CHART","name":"CTL Chart","content":{"series":[{"field":"ctl"}]}}]`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+	items, err := client.ListCustomItems(context.Background())
+	if err != nil {
+		t.Fatalf("ListCustomItems() error = %v, want singular custom-item endpoint to avoid forum 404 regression", err)
+	}
+	if gotPath != "/athlete/i12345/custom-item" {
+		t.Fatalf("path = %q, want singular custom-item endpoint", gotPath)
+	}
+	if len(items) != 1 || items[0].ID != "7" {
+		t.Fatalf("items = %+v, want decoded custom items", items)
+	}
+}
+
 func TestCustomItemsClientListsAndGetsItems(t *testing.T) {
 	t.Parallel()
 
@@ -51,7 +83,7 @@ func TestCustomItemsClientGetCustomItemUsesByIDEndpointAndPreservesRawFields(t *
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		paths = append(paths, r.Method+" "+r.URL.EscapedPath())
 		if r.Method != http.MethodGet || r.URL.Path != "/athlete/i12345/custom-item/7" {
-			t.Fatalf("request = %s %s, want detail endpoint only", r.Method, r.URL.Path)
+			t.Fatalf("request = %s %s, want singular custom-item detail endpoint only", r.Method, r.URL.Path)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"id":7,"type":"FITNESS_CHART","name":"CTL Chart","content":{"series":[{"field":"ctl","future":"kept"}]},"future_top_level":{"nested":true}}`))
@@ -120,7 +152,7 @@ func TestCustomItemsClientGetCustomItemStatusErrors(t *testing.T) {
 	}
 }
 
-func TestCustomItemsClientCreatesAndUpdatesItem(t *testing.T) {
+func TestCustomItemsClientCreatesAndUpdatesItemWithSingularEndpoints(t *testing.T) {
 	t.Parallel()
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +173,7 @@ func TestCustomItemsClientCreatesAndUpdatesItem(t *testing.T) {
 			}
 			_, _ = w.Write([]byte(`{"id":9,"type":"FITNESS_CHART","name":"Renamed","content":{"layout":{"height":260}}}`))
 		default:
-			t.Fatalf("request = %s %s, want custom-item create or update", r.Method, r.URL.Path)
+			t.Fatalf("request = %s %s, want singular custom-item create or update", r.Method, r.URL.Path)
 		}
 	}))
 	defer server.Close()

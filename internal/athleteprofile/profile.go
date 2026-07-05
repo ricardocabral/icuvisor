@@ -76,12 +76,14 @@ type ReadinessWarning struct {
 
 // Meta contains response-shaping metadata.
 type Meta struct {
-	ServerVersion      string             `json:"server_version"`
-	AthleteIDFormat    string             `json:"athlete_id_format"`
-	TimezoneConvention string             `json:"timezone_convention"`
-	PaceConvention     string             `json:"pace_convention"`
-	IncludeFull        bool               `json:"include_full"`
-	Warnings           []ReadinessWarning `json:"warnings,omitempty"`
+	ServerVersion            string             `json:"server_version"`
+	AthleteIDFormat          string             `json:"athlete_id_format"`
+	TimezoneConvention       string             `json:"timezone_convention"`
+	PaceConvention           string             `json:"pace_convention"`
+	PowerThresholdConvention string             `json:"power_threshold_convention"`
+	ZoneBoundaryConvention   string             `json:"zone_boundary_convention"`
+	IncludeFull              bool               `json:"include_full"`
+	Warnings                 []ReadinessWarning `json:"warnings,omitempty"`
 }
 
 // Shape returns the shaped athlete profile used by get_athlete_profile and icuvisor://athlete-profile.
@@ -116,11 +118,13 @@ func NewResponse(profile intervals.AthleteWithSportSettings, version string, tim
 		Units:         units,
 		SportSettings: make([]Sport, 0, len(profile.SportSettings)),
 		Meta: Meta{
-			ServerVersion:      NormalizeVersion(version),
-			AthleteIDFormat:    "i-prefixed intervals.icu athlete ID",
-			TimezoneConvention: "IANA timezone from athlete profile when available; config timezone fallback otherwise",
-			PaceConvention:     "paces are seconds per athlete pace distance unit; run pace uses threshold_pace_seconds_per_km or threshold_pace_seconds_per_mile, swim pace uses threshold_pace_seconds_per_100m or threshold_pace_seconds_per_100y when upstream reports SECS_100M/SECS_100Y, row pace uses threshold_pace_seconds_per_500m, and pace_units_source preserves the upstream enum",
-			IncludeFull:        includeFull,
+			ServerVersion:            NormalizeVersion(version),
+			AthleteIDFormat:          "i-prefixed intervals.icu athlete ID",
+			TimezoneConvention:       "IANA timezone from athlete profile when available; config timezone fallback otherwise",
+			PaceConvention:           "paces are seconds per athlete pace distance unit; run pace uses threshold_pace_seconds_per_km or threshold_pace_seconds_per_mile, swim pace uses threshold_pace_seconds_per_100m or threshold_pace_seconds_per_100y when upstream reports SECS_100M/SECS_100Y, row pace uses threshold_pace_seconds_per_500m, and pace_units_source preserves the upstream enum",
+			PowerThresholdConvention: "ftp_watts is the upstream sport FTP threshold; indoor_ftp_watts is the optional upstream indoor FTP override when intervals.icu provides indoor_ftp. Absence of indoor_ftp_watts means Icuvisor has no separate indoor FTP for that sport, not that it should be inferred from zones or planned-event indoor flags.",
+			ZoneBoundaryConvention:   "power_zones_watts, hr_zones_bpm, and pace_zones_* are upstream zone boundary arrays, not FTP, LTHR, or pace-threshold values; pair them with matching *_zone_names by index when present.",
+			IncludeFull:              includeFull,
 		},
 	}
 	if includeFull && profile.MeasurementPreference != "" && profile.MeasurementPreference != units.MeasurementPreference {

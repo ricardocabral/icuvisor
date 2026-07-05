@@ -92,5 +92,5 @@ func deleteEventInputSchema() map[string]any {
 }
 
 func deleteEventOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Delete confirmation with deleted_id, status, and _meta.deleted containing a terse echo of the event before deletion."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Delete result with deleted_id, status, _meta.confirmation_status, and _meta.deleted containing a terse echo of the event before deletion. A successful upstream delete call is reported as upstream_delete_succeeded_post_delete_unverified because the tool does not perform a post-delete read."}
 }

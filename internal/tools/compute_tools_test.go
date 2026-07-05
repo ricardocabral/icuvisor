@@ -71,8 +71,19 @@ func (c *fakeComputeClient) GetActivityPowerVsHR(context.Context, string) (inter
 	return intervals.PowerVsHR{}, nil
 }
 
-func (c *fakeComputeClient) ListWellness(context.Context, intervals.WellnessParams) ([]intervals.Wellness, error) {
-	return append([]intervals.Wellness(nil), c.wellness...), nil
+func (c *fakeComputeClient) ListWellness(_ context.Context, params intervals.WellnessParams) ([]intervals.Wellness, error) {
+	rows := make([]intervals.Wellness, 0, len(c.wellness))
+	for _, row := range c.wellness {
+		date := wellnessDate(row)
+		if params.Oldest != "" && date < params.Oldest {
+			continue
+		}
+		if params.Newest != "" && date > params.Newest {
+			continue
+		}
+		rows = append(rows, row)
+	}
+	return rows, nil
 }
 
 func (c *fakeComputeClient) ListEvents(context.Context, intervals.ListEventsParams) ([]intervals.Event, error) {
@@ -217,6 +228,97 @@ func TestComputeBaselineWellnessZScoreIncludesFormulaAndInterpretation(t *testin
 	}
 	if len(got["series"].([]any)) != 3 {
 		t.Fatalf("series len = %d, want 3", len(got["series"].([]any)))
+	}
+}
+
+func TestComputeBaselineHRVCurrentWindowFreshnessCaveat(t *testing.T) {
+	client := newFakeComputeClient()
+	client.wellness = []intervals.Wellness{
+		decodeWellnessRow(t, `{"id":"2026-05-01","hrv":82,"source":"garmin","bridge_fetched_at":"2026-05-01T08:00:00Z"}`),
+		decodeWellnessRow(t, `{"id":"2026-05-02","hrv":80,"source":"garmin","bridge_fetched_at":"2026-05-02T08:00:00Z"}`),
+		decodeWellnessRow(t, `{"id":"2026-05-03","hrv":65,"source":"garmin","bridge_fetched_at":"2026-05-03T08:00:00Z"}`),
+	}
+	tool := newComputeBaselineTool(nil, client, nil, nil, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: []byte(`{"metric":"hrv","baseline_start_date":"2026-05-01","baseline_end_date":"2026-05-02","current_start_date":"2026-05-03","current_end_date":"2026-05-05","min_samples":2,"include_full":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	got := resultMap(t, result)
+	body := got["result"].(map[string]any)
+	meta := got["_meta"].(map[string]any)
+	if body["status"] == "ok" && body["interpretation"] == "suppressed" {
+		t.Fatalf("result = %#v, must not present stale current HRV as fresh ok suppressed", body)
+	}
+	if body["freshness_status"] != "stale_current_window" || body["current_latest_sample_date"] != "2026-05-03" || body["current_window_end_date"] != "2026-05-05" {
+		t.Fatalf("result freshness fields = %#v, want stale_current_window with latest/end dates", body)
+	}
+	if body["missing_current_days"] != float64(2) {
+		t.Fatalf("missing_current_days = %#v, want 2", body["missing_current_days"])
+	}
+	caveats := joinedStrings(body["caveats"].([]any))
+	if !strings.Contains(caveats, "latest HRV sample 2026-05-03 predates current window end 2026-05-05") || !strings.Contains(caveats, "2 missing current-window days") {
+		t.Fatalf("caveats = %q, want latest-sample and missing-day wording", caveats)
+	}
+	if !slices.Contains(stringSliceFromAny(meta["source_tools"]), getWellnessDataName) {
+		t.Fatalf("source_tools = %#v, want get_wellness_data", meta["source_tools"])
+	}
+	freshness := meta["assumptions"].(map[string]any)["wellness_freshness"].(map[string]any)
+	if freshness["status"] != "stale_current_window" || freshness["latest_current_sample_date"] != "2026-05-03" || freshness["current_window_end_date"] != "2026-05-05" {
+		t.Fatalf("wellness_freshness = %#v", freshness)
+	}
+}
+
+func TestComputeBaselineHRVStaleProvenanceVisible(t *testing.T) {
+	client := newFakeComputeClient()
+	client.wellness = []intervals.Wellness{
+		decodeWellnessRow(t, `{"id":"2026-05-01","hrv":82,"source":"garmin","bridge_fetched_at":"2026-05-01T08:00:00Z","garmin":{"hrv":82}}`),
+		decodeWellnessRow(t, `{"id":"2026-05-02","hrv":80,"source":"garmin","bridge_fetched_at":"2026-05-02T08:00:00Z","garmin":{"hrv":80}}`),
+		decodeWellnessRow(t, `{"id":"2026-05-03","hrv":79,"source":"garmin","bridge_fetched_at":"2026-05-01T00:00:00Z","garmin":{"hrv":79}}`),
+		decodeWellnessRow(t, `{"id":"2026-05-04","hrv":78,"source":"garmin","bridge_fetched_at":"2026-05-04T08:00:00Z","garmin":{"hrv":78}}`),
+	}
+	tool := newComputeBaselineTool(nil, client, nil, nil, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: []byte(`{"metric":"hrv","baseline_start_date":"2026-05-01","baseline_end_date":"2026-05-02","current_start_date":"2026-05-03","current_end_date":"2026-05-04","min_samples":2}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	got := resultMap(t, result)
+	body := got["result"].(map[string]any)
+	if body["freshness_status"] != "stale_provenance" {
+		t.Fatalf("freshness_status = %#v, want stale_provenance in result %#v", body["freshness_status"], body)
+	}
+	caveats := joinedStrings(body["caveats"].([]any))
+	if !strings.Contains(caveats, "garmin bridge data for HRV sample 2026-05-03 is older than 24h") {
+		t.Fatalf("caveats = %q, want stale provenance wording", caveats)
+	}
+	freshness := got["_meta"].(map[string]any)["assumptions"].(map[string]any)["wellness_freshness"].(map[string]any)
+	staleRows := freshness["stale_sample_dates"].([]any)
+	if !slices.Contains(staleRows, any("2026-05-03")) || freshness["stale_source"] != "garmin" {
+		t.Fatalf("wellness_freshness = %#v, want stale 2026-05-03 garmin", freshness)
+	}
+}
+
+func TestComputeBaselineHRVNoCurrentSamplesStaysInsufficient(t *testing.T) {
+	client := newFakeComputeClient()
+	client.wellness = []intervals.Wellness{
+		decodeWellnessRow(t, `{"id":"2026-05-01","hrv":82,"source":"garmin","bridge_fetched_at":"2026-05-01T08:00:00Z"}`),
+		decodeWellnessRow(t, `{"id":"2026-05-02","hrv":80,"source":"garmin","bridge_fetched_at":"2026-05-02T08:00:00Z"}`),
+	}
+	tool := newComputeBaselineTool(nil, client, nil, nil, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: []byte(`{"metric":"hrv","baseline_start_date":"2026-05-01","baseline_end_date":"2026-05-02","current_start_date":"2026-05-03","current_end_date":"2026-05-05","min_samples":2}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	got := resultMap(t, result)
+	body := got["result"].(map[string]any)
+	if body["status"] != "insufficient_current_sample" || body["insufficient_reason"] != "no_current_samples" || body["freshness_status"] != "absent_current_window" {
+		t.Fatalf("result = %#v, want visible insufficient current HRV and absent_current_window freshness", body)
+	}
+	caveats := joinedStrings(body["caveats"].([]any))
+	if !strings.Contains(caveats, "no HRV samples in current window 2026-05-03..2026-05-05") {
+		t.Fatalf("caveats = %q, want no-current-HRV wording", caveats)
 	}
 }
 
