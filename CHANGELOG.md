@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Hardened WorkoutDoc validation so fractional percent targets such as `0.95` in `% FTP` contexts are diagnosed instead of silently serializing as `0.95%`, with regression coverage for ramp direction, recovery cadence omission, and run/swim wording.
 - Added calendar write/delete regression coverage for today-starting unavailable ranges, protected training-plan conflicts, sparse event deletes, and explicit confirmation metadata on event writes/deletes.
 
 ## [1.3.0] - 2026-06-30
