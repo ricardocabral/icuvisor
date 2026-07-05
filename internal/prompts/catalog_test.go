@@ -156,7 +156,6 @@ func TestClientPromptPacksAvoidSecretsAndConcreteAthleteIDs(t *testing.T) {
 		regexp.MustCompile(`(?i)athlete[_ -]?id\s*[:=]\s*["']?\d{3,}`),
 	}
 	for _, file := range files {
-		file := file
 		t.Run(filepath.Base(file), func(t *testing.T) {
 			t.Parallel()
 

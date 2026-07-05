@@ -24,7 +24,7 @@ const (
 	applyAnnualTrainingPlanConflictSkip            = "skip_existing"
 	applyAnnualTrainingPlanConflictReplaceOwned    = "replace_icuvisor_notes"
 	applyAnnualTrainingPlanExternalIDPrefix        = "icuvisor-season-plan-v1-"
-	applyAnnualTrainingPlanPreviewTokenPrefix      = "season-plan-preview-v1-"
+	applyAnnualTrainingPlanPreviewTokenPrefix      = "season-plan-preview-v1-" // #nosec G101 -- public deterministic preview-token prefix, not a credential value.
 	applyAnnualTrainingPlanDigestLength            = 24
 	applyAnnualTrainingPlanMaxWeeks                = seasonPlanMaxWeeks
 	applyAnnualTrainingPlanNoteMarker              = "<!-- icuvisor:season-plan:v1 -->"
