@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"math"
 	"strings"
 	"testing"
@@ -185,6 +186,9 @@ func TestComputeActivitySegmentStatsHandlerOutOfRangeMessage(t *testing.T) {
 	_, err := handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"a1","stat":"mean","metric":"watts","start_seconds":0,"end_seconds":30}`)})
 	if err == nil || !strings.Contains(err.Error(), "activity segment range is outside available stream coverage") {
 		t.Fatalf("handler error = %v, want out-of-coverage message", err)
+	}
+	if !errors.Is(err, ErrInvalidInput) {
+		t.Fatalf("handler error = %v, want ErrInvalidInput", err)
 	}
 }
 

@@ -78,6 +78,7 @@ func computeActivitySegmentStatsHandler(client ActivityStreamsClient, version st
 			message := computeActivitySegmentStatsMessage
 			if errors.Is(err, analysis.ErrSegmentOutOfRange) {
 				message = "activity segment range is outside available stream coverage"
+				err = fmt.Errorf("%w: %w", ErrInvalidInput, err)
 			} else if errors.Is(err, analysis.ErrInvalidSegmentStatsInput) || errors.Is(err, analysis.ErrMissingSegmentStream) {
 				message = invalidActivitySegmentStatsMessage
 			}
