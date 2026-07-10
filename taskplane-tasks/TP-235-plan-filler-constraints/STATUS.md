@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** L
 
@@ -23,6 +23,10 @@
 ### Step 1: Define the constraint contract
 
 **Status:** 🟨 In Progress
+
+<!-- R008 revision items -->
+- [ ] R008-1: Replace greedy first-fit slot assignment with augmenting-path bipartite matching so all feasible day schedules are accepted regardless of candidate order
+- [ ] R008-2: Fix Reconcile to skip invalid-input (NaN/negative) candidates, same as ValidateCandidates
 
 <!-- R007 revision items -->
 - [x] R007-1: ValidateCandidates must treat MaxSessionsPerDay==0 as day_unavailable (same as ValidateCandidate), before calling validateAgainstDay
@@ -154,3 +158,4 @@
 | 2026-07-10 14:32 | Review R005 | code Step 1: REVISE |
 | 2026-07-10 14:38 | Review R006 | code Step 1: REVISE |
 | 2026-07-10 14:45 | Review R007 | code Step 1: REVISE |
+| 2026-07-10 14:48 | Review R008 | code Step 1: REVISE |
