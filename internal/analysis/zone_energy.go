@@ -115,6 +115,166 @@ func ZoneEnergyInputDiagnostics(input ZoneEnergyInput) ZoneEnergyDiagnostics {
 	return diagnostics
 }
 
+// ComputeZoneEnergy integrates left-endpoint power over elapsed sample timestamps.
+func ComputeZoneEnergy(input ZoneEnergyInput) (ZoneEnergyResult, error) {
+	if err := ValidatePowerZoneConfig(input.ZoneConfig); err != nil {
+		return ZoneEnergyResult{}, err
+	}
+
+	result := ZoneEnergyResult{
+		Zones:       newZoneEnergyZones(input.ZoneConfig),
+		Diagnostics: ZoneEnergyInputDiagnostics(input),
+	}
+	if len(input.PowerWatts) != len(input.TimestampsSeconds) || len(input.PowerWatts) < 2 {
+		return result, nil
+	}
+
+	for i := 0; i < len(input.PowerWatts)-1; i++ {
+		start, end := input.TimestampsSeconds[i], input.TimestampsSeconds[i+1]
+		power := input.PowerWatts[i]
+		if !validZoneEnergyInterval(&result.Diagnostics, start, end, power) {
+			continue
+		}
+
+		integrateZoneEnergyInterval(&result, input.ZoneConfig, power, end-start)
+	}
+	finalizeZoneEnergyResult(&result)
+	return result, nil
+}
+
+func finalizeZoneEnergyResult(result *ZoneEnergyResult) {
+	result.TotalSeconds = 0
+	result.TotalKJ = 0
+	for i := range result.Zones {
+		result.Zones[i].Seconds = roundZoneEnergy(result.Zones[i].Seconds, 3)
+		result.Zones[i].KJ = roundZoneEnergy(result.Zones[i].KJ, 3)
+		result.TotalSeconds += result.Zones[i].Seconds
+		result.TotalKJ += result.Zones[i].KJ
+	}
+	result.TotalSeconds = roundZoneEnergy(result.TotalSeconds, 3)
+	result.TotalKJ = roundZoneEnergy(result.TotalKJ, 3)
+	setZoneEnergyShares(result.Zones, result.TotalSeconds, true)
+	setZoneEnergyShares(result.Zones, result.TotalKJ, false)
+}
+
+func setZoneEnergyShares(zones []ZoneEnergyZone, total float64, timeShare bool) {
+	if total == 0 {
+		return
+	}
+	lastNonzero := -1
+	sum := 0.0
+	for i := range zones {
+		value := zones[i].KJ
+		if timeShare {
+			value = zones[i].Seconds
+		}
+		share := roundZoneEnergy(value/total, 4)
+		if timeShare {
+			zones[i].TimeShare = share
+		} else {
+			zones[i].EnergyShare = share
+		}
+		if value > 0 {
+			lastNonzero = i
+		}
+		sum += share
+	}
+	if lastNonzero < 0 {
+		return
+	}
+	adjustment := roundZoneEnergy(1-sum, 4)
+	if timeShare {
+		zones[lastNonzero].TimeShare = roundZoneEnergy(zones[lastNonzero].TimeShare+adjustment, 4)
+	} else {
+		zones[lastNonzero].EnergyShare = roundZoneEnergy(zones[lastNonzero].EnergyShare+adjustment, 4)
+	}
+}
+
+func roundZoneEnergy(value float64, places int) float64 {
+	factor := math.Pow10(places)
+	return math.Round(value*factor) / factor
+}
+
+func validZoneEnergyInterval(diagnostics *ZoneEnergyDiagnostics, start, end, power float64) bool {
+	delta := end - start
+	switch {
+	case !zoneEnergyFinite(start) || !zoneEnergyFinite(end):
+		diagnostics.SkippedNonFiniteTimestamp++
+	case delta == 0:
+		diagnostics.SkippedDuplicateTimestamp++
+	case delta < 0:
+		diagnostics.SkippedReversedTimestamp++
+	case delta > ZoneEnergyMaxIntervalSeconds:
+		diagnostics.SkippedLargeGap++
+	case !zoneEnergyFinite(power):
+		diagnostics.SkippedNonFinitePower++
+	case power < 0:
+		diagnostics.SkippedNegativePower++
+	default:
+		return true
+	}
+	diagnostics.SkippedIntervals++
+	return false
+}
+
+func zoneEnergyFinite(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0)
+}
+
+func integrateZoneEnergyInterval(result *ZoneEnergyResult, config PowerZoneConfig, power, seconds float64) {
+	zoneIndex := zoneEnergyIndex(config, power)
+	workKJ := power * seconds / 1000
+	result.Zones[zoneIndex].Seconds += seconds
+	result.Zones[zoneIndex].KJ += workKJ
+	result.TotalSeconds += seconds
+	result.TotalKJ += workKJ
+	result.Diagnostics.UsableIntervals++
+}
+
+func newZoneEnergyZones(config PowerZoneConfig) []ZoneEnergyZone {
+	zones := make([]ZoneEnergyZone, 0, len(config.BoundariesWatts)+1)
+	if config.BoundariesWatts[0] > 0 {
+		upper := config.BoundariesWatts[0]
+		zones = append(zones, ZoneEnergyZone{
+			Zone:       0,
+			Name:       "Below " + powerZoneName(config, 0),
+			LowerWatts: 0,
+			UpperWatts: &upper,
+		})
+	}
+	for i, lower := range config.BoundariesWatts {
+		zone := ZoneEnergyZone{
+			Zone:       i + 1,
+			Name:       powerZoneName(config, i),
+			LowerWatts: lower,
+		}
+		if i+1 < len(config.BoundariesWatts) {
+			upper := config.BoundariesWatts[i+1]
+			zone.UpperWatts = &upper
+		}
+		zones = append(zones, zone)
+	}
+	return zones
+}
+
+func zoneEnergyIndex(config PowerZoneConfig, power float64) int {
+	if config.BoundariesWatts[0] > 0 && power < config.BoundariesWatts[0] {
+		return 0
+	}
+	offset := 0
+	if config.BoundariesWatts[0] > 0 {
+		offset = 1
+	}
+	index := len(config.BoundariesWatts) - 1
+	for i := 1; i < len(config.BoundariesWatts); i++ {
+		if power < config.BoundariesWatts[i] {
+			index = i - 1
+			break
+		}
+	}
+	return offset + index
+}
+
 func powerZoneName(config PowerZoneConfig, index int) string {
 	if index >= 0 && index < len(config.Names) {
 		if name := strings.TrimSpace(config.Names[index]); name != "" {
