@@ -1,6 +1,6 @@
 # TP-238: Add grounded fueling review prompt pack — Status
 
-**Current Step:** Step 3: Publish cookbook, portable pack, and evals
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 1
@@ -47,7 +47,7 @@
 
 ### Step 3: Publish cookbook, portable pack, and evals
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Publish a `fueling-review` cookbook recipe and preserve the single registered portable pack contract
 - [x] Replace unsafe prompt-library fueling examples and matching eval copy with source-correct, no-target language
@@ -58,14 +58,14 @@
 
 ### Step 4: Testing & Verification
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] FULL test suite passing
-- [ ] Prompt eval validation passing
-- [ ] Lint passing
-- [ ] All failures fixed
-- [ ] Build passes
-- [ ] Markdown and diff clean
+- [x] FULL test suite passing
+- [x] Prompt eval validation passing
+- [x] Lint passing
+- [x] All failures fixed
+- [x] Build passes
+- [x] Markdown and diff clean
 
 ---
 
