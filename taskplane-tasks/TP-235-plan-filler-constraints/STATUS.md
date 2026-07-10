@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 1
 **Size:** L
 
@@ -23,6 +23,10 @@
 ### Step 1: Define the constraint contract
 
 **Status:** 🟨 In Progress
+
+<!-- R010 revision items -->
+- [ ] R010-1: Reconciliation target fields use *float64 to preserve nil vs 0 distinction; RemainingLoad/RemainingMin are nil when untracked; fix nil+nonzero completed calculation
+- [ ] R010-2: Fix design-doc batch-validation and boundary-condition sections to distinguish nil (no cap) from pointer-to-0 (hard zero)
 
 <!-- R009 revision items -->
 - [x] R009-1: Change WeeklyTargetLoad, WeeklyTargetMinutes, RequestedSessionCount to *float64/*int (nil=no cap; 0=explicit zero)
@@ -165,3 +169,4 @@
 | 2026-07-10 14:45 | Review R007 | code Step 1: REVISE |
 | 2026-07-10 14:48 | Review R008 | code Step 1: REVISE |
 | 2026-07-10 14:58 | Review R009 | code Step 1: REVISE |
+| 2026-07-10 15:08 | Review R010 | code Step 1: REVISE |
