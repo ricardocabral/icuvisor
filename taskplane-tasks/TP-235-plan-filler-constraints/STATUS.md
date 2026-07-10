@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 12
+**Review Counter:** 13
 **Iteration:** 1
 **Size:** L
 
@@ -23,6 +23,9 @@
 ### Step 1: Define the constraint contract
 
 **Status:** 🟨 In Progress
+
+<!-- R013 revision items -->
+- [ ] R013-1: Detect float64 overflow in Reconcile; change to (Reconciliation, error); in ValidateCandidates use WarnArithmeticOverflow on overflow; test overflow JSON-marshal safety
 
 <!-- R012 revision items -->
 - [x] R012-1: ValidateCandidate must also emit ViolationRequestedSessionCountExceeded when RequestedSessionCount is pointer-to-0
@@ -179,3 +182,4 @@
 | 2026-07-10 15:08 | Review R010 | code Step 1: REVISE |
 | 2026-07-10 15:14 | Review R011 | code Step 1: REVISE |
 | 2026-07-10 15:18 | Review R012 | code Step 1: REVISE |
+| 2026-07-10 15:22 | Review R013 | code Step 1: REVISE |
