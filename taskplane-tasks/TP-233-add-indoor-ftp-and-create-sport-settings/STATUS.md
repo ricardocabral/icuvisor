@@ -1,10 +1,10 @@
 # TP-233: Support indoor FTP and missing sport-setting creation — Status
 
-**Current Step:** Step 3: Regression and safety coverage
+**Current Step:** Step 4: Generated docs and public contract
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 7
+**Review Counter:** 9
 **Iteration:** 4
 **Size:** L
 
@@ -47,7 +47,7 @@
 
 ### Step 3: Regression and safety coverage
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Exact create wire tests added
 - [x] Invalid input avoids network calls
@@ -143,3 +143,4 @@
 | 2026-07-10 23:37 | Review R006 | plan Step 3: REVISE |
 | 2026-07-10 23:38 | Review R006 | plan Step 3: REVISE |
 | 2026-07-10 23:40 | Review R007 | plan Step 3: APPROVE |
+| 2026-07-10 23:49 | Review R009 | code Step 3: APPROVE |
