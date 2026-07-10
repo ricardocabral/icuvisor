@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** L
 
@@ -25,11 +25,11 @@
 **Status:** 🟨 In Progress
 
 - [x] Exact update/apply request contract documented
-- [ ] Public schema migration for effective_date decided
-- [ ] Implicit historical apply removed from design
-- [ ] Truthful response metadata defined
-- [ ] R001: Presence-aware `recalc_hr_zones` defaults to true while forwarding explicit false
-- [ ] R001: Regression plan covers default/false forwarding, no implicit apply, no-query/no-body apply, and legacy argument rejection
+- [x] Public schema migration for effective_date decided
+- [x] Implicit historical apply removed from design
+- [x] Truthful response metadata defined
+- [x] R001: Presence-aware `recalc_hr_zones` defaults to true while forwarding explicit false
+- [x] R001: Regression plan covers default/false forwarding, no implicit apply, no-query/no-body apply, and legacy argument rejection
 
 ---
 
@@ -113,3 +113,4 @@
 
 - R001 plan review: legacy `effective_date` must be rejected by strict decoding before an upstream request; response metadata may only report the requested HR-zone recalculation boolean.
 | 2026-07-10 11:40 | Review R001 | plan Step 1: REVISE |
+| 2026-07-10 11:42 | Review R002 | plan Step 1: APPROVE |
