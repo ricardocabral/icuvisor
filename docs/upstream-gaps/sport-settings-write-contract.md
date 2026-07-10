@@ -32,7 +32,7 @@ The request uses `*bool` while decoding to preserve whether `recalc_hr_zones` wa
 
 The response `_meta` always emits `hr_zone_recalculation_requested`, exactly the resolved option. It retains delete-mode and unit metadata but removes `effective_date` and `recompute_pending`.
 
-Schema stability retains its generic property-removal protection. TP-228 adds a narrow documented approval for removal of only `effective_date` from only `update_sport_settings`; tests prove that unrelated removed properties remain failures. The schema snapshot and generated website data are refreshed with `make docs-tools`.
+Schema stability retains its generic property-removal protection. Production `internal/toolchecks/schema_stability.go` holds an `approvedSchemaPropertyRemovals` policy keyed by tool and property. Its sole entry is `update_sport_settings.effective_date`, with the TP-228 safety-correction rationale that the field falsely implied date-scoped upstream recomputation. `compareStableSchema` consults that policy only before emitting a `property-removed` failure. Tests exercise `CheckSchemaStability` itself: the one approved removal passes, while another `update_sport_settings` property and `effective_date` on a different tool fail. The schema snapshot and generated website data are refreshed with `make docs-tools`.
 
 ## Regression boundary
 
