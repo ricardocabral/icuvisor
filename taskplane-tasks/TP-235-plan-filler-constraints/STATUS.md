@@ -25,13 +25,13 @@
 **Status:** 🟨 In Progress
 
 <!-- R002 revision items -->
-- [ ] R002-1: Resolve WarnZeroRemainingLoad trigger inconsistency (code vs design doc boundary table — remove "with Load > 0" qualifier)
-- [ ] R002-2: Add WarnZeroRemainingTime parallel handling when remainingMin <= 0 (symmetric with load case)
-- [ ] R002-3: Add "Field semantics / Units" section to design doc documenting float64-minutes rationale
-- [ ] R002-A: Document batch accumulation behavior (all candidates, not just valid, consume weekly budget)
-- [ ] R002-B: Note in design doc that WarnInfeasibleLoad uses all candidates including invalid ones
-- [ ] R002-C: Note in design doc that availableSlotCount is structural capacity, not candidate-filtered
-- [ ] R002-D: Update STATUS.md Step 2 to reflect implementation already present
+- [x] R002-1: Resolve WarnZeroRemainingLoad trigger inconsistency (code vs design doc boundary table — remove "with Load > 0" qualifier)
+- [x] R002-2: Add WarnZeroRemainingTime parallel handling when remainingMin <= 0 (symmetric with load case)
+- [x] R002-3: Add "Field semantics / Units" section to design doc documenting float64-minutes rationale
+- [x] R002-A: Document batch accumulation behavior (all candidates, not just valid, consume weekly budget)
+- [x] R002-B: Note in design doc that WarnInfeasibleLoad uses all candidates including invalid ones
+- [x] R002-C: Note in design doc that availableSlotCount is structural capacity, not candidate-filtered
+- [x] R002-D: Update STATUS.md Step 2 to reflect implementation already present
 
 - [x] Weekly constraint struct defined: WeekTarget (full-week target, remaining target, completed load, fixed load), RequestedSessionCount, AvailableDays (per-day slot list)
 - [x] Daily slot struct defined: date, max sessions per day, slots with per-slot duration cap, indoor/outdoor cap, sport allow-list, mode allow-list
@@ -45,12 +45,12 @@
 
 ### Step 2: Implement validation and reconciliation
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Daily, session, mode, sport, and weekly constraints validated
-- [ ] Weekly time/load reconciliation implemented
-- [ ] Infeasible requests reported explicitly
-- [ ] Package remains pure and write-free
+- [x] Daily, session, mode, sport, and weekly constraints validated
+- [x] Weekly time/load reconciliation implemented
+- [x] Infeasible requests reported explicitly
+- [x] Package remains pure and write-free
 
 ---
 

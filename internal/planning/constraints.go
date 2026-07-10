@@ -155,6 +155,11 @@ const (
 	// negative, meaning completed and fixed events already meet or exceed the
 	// weekly target. No additional load is needed.
 	WarnZeroRemainingLoad WarningCode = "zero_remaining_load"
+
+	// WarnZeroRemainingTime fires when the remaining time budget is zero or
+	// negative, meaning completed and fixed events already meet or exceed the
+	// weekly time target. No additional time is needed.
+	WarnZeroRemainingTime WarningCode = "zero_remaining_time"
 )
 
 // Violation reports a hard constraint breach.
@@ -381,13 +386,22 @@ func validateWithState(wc WeekConstraints, sessionsAlreadyOnDay int, dailyMinute
 		}
 	}
 
-	if wc.WeeklyTargetMinutes > 0 && remainingMin > 0 && candidate.DurationMinutes > remainingMin {
-		violations = append(violations, Violation{
-			Code:    ViolationWeeklyTimeOvershoot,
-			Message: "candidate duration exceeds remaining weekly time budget",
-			Field:   "weekly_target_minutes",
-			Value:   remainingMin,
-		})
+	if wc.WeeklyTargetMinutes > 0 {
+		if remainingMin <= 0 {
+			warnings = append(warnings, Warning{
+				Code:    WarnZeroRemainingTime,
+				Message: "remaining weekly time budget is zero or negative; no additional time is needed",
+				Field:   "remaining_minutes",
+				Value:   remainingMin,
+			})
+		} else if candidate.DurationMinutes > remainingMin {
+			violations = append(violations, Violation{
+				Code:    ViolationWeeklyTimeOvershoot,
+				Message: "candidate duration exceeds remaining weekly time budget",
+				Field:   "weekly_target_minutes",
+				Value:   remainingMin,
+			})
+		}
 	}
 
 	return CandidateResult{

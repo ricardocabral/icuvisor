@@ -6,6 +6,21 @@
 
 ---
 
+## Field Semantics and Units
+
+All duration fields (`MaxDurationMinutes`, `MaxIndoorMinutes`, `MaxTotalDailyMinutes`, `WeeklyTargetMinutes`, `CompletedMinutes`, `FixedMinutes`, `CandidateMinutes`, `RemainingMinutes`, `ProjectedMinutes`, and `DurationMinutes` in `CandidateSession`) use **`float64` representing minutes**.
+
+`time.Duration` (nanoseconds) was not used because:
+- This domain operates on human-scale planning intervals (30 min, 90 min, 2 h) where `float64` minutes are natural, readable, and free of unit-conversion error when multiplied or compared.
+- All JSON-serialisable output fields use `float64` for forward-compatible transport; `time.Duration` (an `int64`) would require custom marshalling.
+- The constraint model has no sub-minute precision requirement; `float64` minutes carry sufficient accuracy for the target use case.
+
+The convention is uniform across all four input structs (`SlotConstraint`, `DayConstraints`, `WeekConstraints`, `CandidateSession`) and all `Reconciliation` fields.
+
+Load fields (`WeeklyTargetLoad`, `CompletedLoad`, `FixedLoad`, `CandidateLoad`, `RemainingLoad`, `ProjectedLoad`, and `Load` in `CandidateSession`) use **`float64` representing TSS/ATL load points** — the same unit convention used by `propose_annual_training_plan` and `get_fitness_projection`.
+
+---
+
 ## Purpose
 
 The planning constraint package provides a deterministic, pure validator for the plan-filler scheduling domain. It answers one question before any calendar writes happen:
@@ -151,9 +166,10 @@ Outcome for all candidates in a week.
 
 | Code | Trigger |
 |---|---|
-| `infeasible_session_count` | `RequestedSessionCount` exceeds total available slots across all days. |
-| `infeasible_load` | Candidate load total is less than the remaining weekly load target. |
-| `zero_remaining_load` | Remaining load budget is zero or negative; completed + fixed events already meet the target. |
+| `infeasible_session_count` | `RequestedSessionCount` exceeds total structural slots across all days. Structural capacity only; does not filter by sport or mode. |
+| `infeasible_load` | Total candidate load (including invalid candidates) is less than the remaining weekly load target. |
+| `zero_remaining_load` | Remaining load budget is zero or negative. Fires unconditionally when remaining ≤ 0, regardless of the candidate's own Load value. |
+| `zero_remaining_time` | Remaining time budget is zero or negative. Parallel to `zero_remaining_load` for the time dimension. |
 
 ---
 
@@ -165,15 +181,22 @@ Outcome for all candidates in a week.
 2. **Daily session count:** if `sessionsAlreadyOnDay >= MaxSessionsPerDay`, emit `daily_session_count_exceeded`.
 3. **Combined daily duration:** if `MaxTotalDailyMinutes > 0` and the new total would exceed it, emit `daily_time_exceeded`.
 4. **Slot matching:** find one slot where all constraints pass. If none found, emit all applicable slot violation codes (`slot_duration_exceeded`, `indoor_duration_exceeded`, `sport_not_allowed`, `mode_not_allowed`).
-5. **Weekly load/time:** compute remaining = target − completed − fixed − prior candidate totals. If remaining ≤ 0, emit `zero_remaining_load` warning. If candidate load > remaining, emit `weekly_load_overshoot`. If candidate duration > remaining minutes, emit `weekly_time_overshoot`.
+5. **Weekly load:** compute `remainingLoad = WeeklyTargetLoad - CompletedLoad - FixedLoad - priorLoad`. If `remainingLoad ≤ 0`, emit `zero_remaining_load` warning (unconditional; fires regardless of `candidate.Load`). Otherwise if `candidate.Load > remainingLoad`, emit `weekly_load_overshoot`.
+6. **Weekly time:** compute `remainingMin = WeeklyTargetMinutes - CompletedMinutes - FixedMinutes - priorMinutes`. If `remainingMin ≤ 0`, emit `zero_remaining_time` warning (parallel to `zero_remaining_load`). Otherwise if `candidate.DurationMinutes > remainingMin`, emit `weekly_time_overshoot`.
 
 ### Batch validation (`ValidateCandidates`)
 
-Processes candidates in order, maintaining per-day session counts, per-day cumulative duration, and accumulated weekly load/time from prior candidates. All proposed candidates (valid or not) increment the day counter — this ensures deterministic violation assignment when the daily cap would be exceeded by position in the batch.
+Processes candidates in order, maintaining per-day session counts, per-day cumulative duration, and accumulated weekly load/time from prior candidates.
+
+**Accumulation is pessimistic (all candidates, including invalid ones).** All proposed candidates increment the day session counter and the per-day minute total, regardless of their validity. This ensures deterministic, position-based rejection: if sessions 1 and 2 are proposed for a day with `MaxSessionsPerDay: 1`, session 2 receives `daily_session_count_exceeded` regardless of whether session 1 is valid for other reasons. Weekly `priorLoad` and `priorMinutes` are likewise accumulated from all candidates, so that budget checks for candidate N account for the full load of candidates 1…N-1. Invalid candidates that would never be placed are included in this total.
+
+The `WarnInfeasibleLoad` check uses the sum of all candidates' load (including invalid ones). A batch containing invalid sessions with non-zero load may suppress this warning even though those sessions will not be placed.
+
+**Slot-count feasibility** (`WarnInfeasibleSessionCount`) compares `RequestedSessionCount` against structural slot capacity (sum of `min(MaxSessionsPerDay, len(Slots))` across available days). This count does not filter by sport or mode; a "Swim" candidate against a Ride-only slot would still count as a structural slot.
 
 After individual validation, adds week-level warnings:
-- `infeasible_session_count` if `RequestedSessionCount > totalAvailableSlots`.
-- `infeasible_load` if candidate totals cannot satisfy the remaining load budget.
+- `infeasible_session_count` if `RequestedSessionCount > structuralSlotCount`.
+- `infeasible_load` if total candidate load cannot satisfy the remaining load budget.
 
 ### Reconciliation (`Reconcile`)
 
@@ -249,7 +272,8 @@ BatchResult.Warnings: [infeasible_session_count (requested 5, have 2 slots)]
 |---|---|
 | `WeeklyTargetLoad == 0` | Load overshoot checks are skipped; no load violations or zero-load warnings. |
 | `WeeklyTargetMinutes == 0` | Time overshoot checks are skipped. |
-| `FixedLoad + CompletedLoad > WeeklyTargetLoad` | RemainingLoad is negative; `zero_remaining_load` warning fires for any candidate with Load > 0. |
+| `FixedLoad + CompletedLoad > WeeklyTargetLoad` | RemainingLoad is negative; `zero_remaining_load` warning fires unconditionally (regardless of `candidate.Load`). |
+| `FixedMinutes + CompletedMinutes > WeeklyTargetMinutes` | RemainingMinutes is negative; `zero_remaining_time` warning fires unconditionally. |
 | `MaxSessionsPerDay == 0` | Day is treated as unavailable; `day_unavailable` fires. |
 | `len(Slots) == 0` | Slot constraints are skipped; only day-level and weekly checks apply. |
 | `MaxDurationMinutes == 0` on a slot | Duration cap is uncapped for that slot. |
