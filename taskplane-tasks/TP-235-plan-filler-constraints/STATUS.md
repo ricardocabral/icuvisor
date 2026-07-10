@@ -141,12 +141,12 @@
 
 **Status:** ⬜ Not Started
 
-- [ ] FULL test suite passing
-- [ ] Race suite passing
-- [ ] Lint passing
-- [ ] All failures fixed
-- [ ] Build passes
-- [ ] Formatting and docs diff clean
+- [x] FULL test suite passing (`make test`)
+- [x] Race suite passing (`make test-race`)
+- [x] Lint passing (`make lint`)
+- [x] All failures fixed (verification commands completed with zero failures)
+- [x] Build passes (`make build`)
+- [x] Formatting and docs diff clean (`gofmt -d internal/planning/*.go`; `git diff --check`)
 
 ---
 
