@@ -56,13 +56,13 @@ Top-level container for one calendar week.
 | Field | Type | Description |
 |---|---|---|
 | `WeekStartDate` | `string` | Athlete-local Monday, YYYY-MM-DD. |
-| `WeeklyTargetMinutes` | `float64` | Full-week training-time target. |
-| `WeeklyTargetLoad` | `float64` | Full-week training-load target (e.g. TSS). |
+| `WeeklyTargetMinutes` | `*float64` | Full-week training-time target. Nil means no time budget is tracked. Pointer-to-0 means an explicit zero time budget (all positive-duration candidates are blocked). |
+| `WeeklyTargetLoad` | `*float64` | Full-week training-load target. Nil means no load budget is tracked. Pointer-to-0 is an explicit zero load budget. |
 | `CompletedMinutes` | `float64` | Already-logged training time (read-only past data). |
 | `CompletedLoad` | `float64` | Already-logged training load (read-only past data). |
 | `FixedMinutes` | `float64` | Committed future time from locked events (races, etc.). |
 | `FixedLoad` | `float64` | Committed future load from locked events. |
-| `RequestedSessionCount` | `int` | How many sessions the caller wants placed. May exceed available slots (produces a warning). |
+| `RequestedSessionCount` | `*int` | How many sessions the caller wants placed. Nil means no session-count cap. Pointer-to-0 means zero sessions (all candidates are excess). |
 | `AvailableDays` | `[]DayConstraints` | Days where sessions may be placed; absent days are unavailable. |
 
 ### `DayConstraints`
@@ -116,8 +116,8 @@ Computed weekly totals — no rounding, no redistribution.
 | `CompletedLoad` | Completed load (from input). |
 | `FixedMinutes` | Fixed future time (from input). |
 | `FixedLoad` | Fixed future load (from input). |
-| `CandidateMinutes` | Sum of all candidate durations. |
-| `CandidateLoad` | Sum of all candidate loads. |
+| `CandidateMinutes` | Sum of `DurationMinutes` for valid-input candidates only (NaN/negative excluded). |
+| `CandidateLoad` | Sum of `Load` for valid-input candidates only (NaN/negative excluded). |
 | `RemainingMinutes` | `WeeklyTargetMinutes - CompletedMinutes - FixedMinutes`. Scheduling budget. May be negative. |
 | `RemainingLoad` | `WeeklyTargetLoad - CompletedLoad - FixedLoad`. Load budget. May be negative. |
 | `ProjectedMinutes` | `CompletedMinutes + FixedMinutes + CandidateMinutes`. |

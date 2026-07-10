@@ -25,9 +25,9 @@
 **Status:** 🟨 In Progress
 
 <!-- R009 revision items -->
-- [ ] R009-1: Change WeeklyTargetLoad, WeeklyTargetMinutes, RequestedSessionCount to *float64/*int (nil=no cap; 0=explicit zero)
-- [ ] R009-2: Write constraints_test.go with boundary tests (zero/nil, matching, reconcile NaN, all Step 3 cases)
-- [ ] R009-3: Fix Reconciliation table in design doc — CandidateLoad/CandidateMinutes are valid-input only
+- [x] R009-1: Change WeeklyTargetLoad, WeeklyTargetMinutes, RequestedSessionCount to *float64/*int (nil=no cap; 0=explicit zero)
+- [x] R009-2: Write constraints_test.go with boundary tests (zero/nil, matching, reconcile NaN, all Step 3 cases)
+- [x] R009-3: Fix Reconciliation table in design doc — CandidateLoad/CandidateMinutes are valid-input only
 
 <!-- R008 revision items -->
 - [x] R008-1: Replace greedy first-fit slot assignment with augmenting-path bipartite matching so all feasible day schedules are accepted regardless of candidate order
