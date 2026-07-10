@@ -1,0 +1,7 @@
+# Plan Review — TP-229 Step 4
+
+## Verdict: REVISE
+
+The revised plan covers R016, but its proposed fixture audit still leaves two duration-shaped upstream sport settings outside the named files. Step 4 is specifically responsible for removing these misleading records, so the plan must include them and their verification.
+
+1. **Complete the repository-wide synthetic-fixture migration.** In addition to the get-athlete-profile and data-quality fixtures, `internal/tools/get_activity_histogram_test.go:136` supplies Run `PaceZones: []float64{300, 360}`. Those are still duration values in an upstream percentage field, even though the empty `PaceUnits` makes this fallback test ignore configured zones. Replace them with valid ascending percentages (for example `[77.5, 100]`) while retaining the no-threshold/unknown-display fallback condition. `internal/tools/get_performance_potential_test.go:19` also supplies a Ride `ThresholdPace: 240` with `MINS_KM`, which represents a duration as m/s. Remove the irrelevant pace fields from that cycling fixture (the valid Run fixture already exercises pace) or replace them with a semantically valid m/s value. Explicitly include both files/tests in the fixture audit and targeted verification command. The plan should state that all remaining `PaceThreshold` duration fixtures and implausibly large `ThresholdPace` values are eliminated, rather than limiting the audit to the two currently named test files.
