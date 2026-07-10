@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** L
 
@@ -23,6 +23,11 @@
 ### Step 1: Define the constraint contract
 
 **Status:** 🟨 In Progress
+
+<!-- R003 revision items -->
+- [ ] R003-1: Add ViolationRequestedSessionCountExceeded code; enforce RequestedSessionCount cap in ValidateCandidates (reject excess valid candidates)
+- [ ] R003-2: Implement slot consumption in ValidateCandidates (each slot holds one session; consumed slots unavailable to subsequent candidates)
+- [ ] R003-3: Fix slot violation semantics to use universal (all-slots) aggregation; add ViolationNoCompatibleSlot fallback for mixed-reason rejections
 
 <!-- R002 revision items -->
 - [x] R002-1: Resolve WarnZeroRemainingLoad trigger inconsistency (code vs design doc boundary table — remove "with Load > 0" qualifier)
@@ -125,3 +130,4 @@
 *Reserved for execution notes*
 | 2026-07-10 13:57 | Review R001 | plan Step 1: APPROVE |
 | 2026-07-10 14:10 | Review R002 | code Step 1: REVISE |
+| 2026-07-10 14:16 | Review R003 | code Step 1: REVISE |
