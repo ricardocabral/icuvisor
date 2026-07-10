@@ -370,8 +370,8 @@ func TestGetAthleteProfileHandlerOmitsReadinessWarningsWhenAliasesComplete(t *te
 		ID: "i12345",
 		SportSettings: []intervals.SportSettings{
 			{Types: []string{"Ride"}, FTP: 250, FTHR: 170, PowerZones: []int{100, 150}, HRZones: []int{120, 140}},
-			{Types: []string{"Run"}, FTHR: 170, HRZones: []int{120, 140}, PaceThreshold: 300, PaceUnits: "MINS_KM", PaceZones: []float64{360, 330}},
-			{Types: []string{"Swim"}, FTHR: 150, HRZones: []int{120, 140}, PaceThreshold: 90, PaceUnits: "SECS_100M", PaceZones: []float64{100, 90}},
+			{Types: []string{"Run"}, FTHR: 170, HRZones: []int{120, 140}, ThresholdPace: 3.5714285, PaceUnits: "MINS_KM", PaceLoadType: "RUN", PaceZones: []float64{77.5, 90, 100}},
+			{Types: []string{"Swim"}, FTHR: 150, HRZones: []int{120, 140}, ThresholdPace: 2, PaceUnits: "SECS_100M", PaceLoadType: "SWIM", PaceZones: []float64{77.5, 100}},
 		},
 	})
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
@@ -438,8 +438,8 @@ func TestGetAthleteProfileReadinessWarningsOmittedWhenComplete(t *testing.T) {
 		ID: "i12345",
 		SportSettings: []intervals.SportSettings{
 			{Types: []string{"Ride"}, FTP: 250, LTHR: 170, PowerZones: []int{100, 150}, HRZones: []int{120, 140}},
-			{Types: []string{"Run"}, LTHR: 170, HRZones: []int{120, 140}, ThresholdPace: 300, PaceUnits: "MINS_KM", PaceZones: []float64{360, 330}},
-			{Types: []string{"Swim"}, LTHR: 150, HRZones: []int{120, 140}, ThresholdPace: 90, PaceUnits: "SECS_100M", PaceZones: []float64{100, 90}},
+			{Types: []string{"Run"}, LTHR: 170, HRZones: []int{120, 140}, ThresholdPace: 3.5714285, PaceUnits: "MINS_KM", PaceLoadType: "RUN", PaceZones: []float64{77.5, 90, 100}},
+			{Types: []string{"Swim"}, LTHR: 150, HRZones: []int{120, 140}, ThresholdPace: 2, PaceUnits: "SECS_100M", PaceLoadType: "SWIM", PaceZones: []float64{77.5, 100}},
 		},
 	}, "test", "UTC")
 	if len(response.Meta.Warnings) != 0 {

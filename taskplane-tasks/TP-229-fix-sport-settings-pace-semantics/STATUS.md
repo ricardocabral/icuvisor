@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
-**Review Counter:** 17
+**Review Counter:** 18
 **Iteration:** 1
 **Size:** L
 
@@ -67,10 +67,10 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Realistic upstream fixture values installed
-- [ ] Run/swim/row round-trip scenarios covered
-- [ ] m/s regression assertions added
-- [ ] Percentage zones remain unchanged
+- [x] Realistic upstream fixture values installed
+- [x] Run/swim/row round-trip scenarios covered
+- [x] m/s regression assertions added
+- [x] Percentage zones remain unchanged
 - [x] R016: Lock fixture consumers, replace remaining duration-shaped fixtures, and test returned m/s echoes
 - [x] R017: Complete the repository-wide duration-shaped fixture audit
 
@@ -119,6 +119,7 @@
 | R015 | Code | 3 | APPROVE | — |
 | R016 | Plan | 4 | REVISE | `.reviews/R016-plan-step4.md` |
 | R017 | Plan | 4 | REVISE | `.reviews/R017-plan-step4.md` |
+| R018 | Plan | 4 | APPROVE | — |
 
 ## Discoveries
 
@@ -161,3 +162,4 @@
 | 2026-07-10 20:44 | Review R015 | code Step 3: APPROVE |
 | 2026-07-10 20:48 | Review R016 | plan Step 4: REVISE |
 | 2026-07-10 20:50 | Review R017 | plan Step 4: REVISE |
+| 2026-07-10 20:53 | Review R018 | plan Step 4: APPROVE |

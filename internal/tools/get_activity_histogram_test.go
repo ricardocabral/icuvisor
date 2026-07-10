@@ -133,7 +133,7 @@ func TestGetActivityHistogramPaceImperialFallbackForUnknownPaceUnits(t *testing.
 	t.Parallel()
 
 	client := &fakeActivityReadClient{
-		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "imperial", SportSettings: []intervals.SportSettings{{ID: 9, Type: "Run", PaceUnits: "", PaceZones: []float64{300, 360}, PaceZoneNames: []string{"Fast", "Steady"}}}}},
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "imperial", SportSettings: []intervals.SportSettings{{ID: 9, Type: "Run", PaceUnits: "", PaceZones: []float64{77.5, 100}, PaceZoneNames: []string{"Easy", "Threshold"}}}}},
 		activity:          decodeActivityFixture(t, `{"id":"run1","type":"Run"}`),
 		streams: decodeStreamFixtures(t,
 			`{"type":"distance","data":[0,1609.344,3218.688]}`,

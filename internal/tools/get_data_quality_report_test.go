@@ -150,7 +150,7 @@ func TestGetDataQualityReportStep2RegressionDiagnostics(t *testing.T) {
 	client := &fakeDataQualityReportClient{
 		profile: intervals.AthleteWithSportSettings{ID: "i12345", Timezone: "UTC", PreferredUnits: "metric", SportSettings: []intervals.SportSettings{
 			{Types: []string{"Ride"}},
-			{Types: []string{"Run"}, LTHR: 170, HRZones: []int{120, 140, 160}, PaceThreshold: 240, PaceZones: []float64{300, 270, 240}},
+			{Types: []string{"Run"}, LTHR: 170, HRZones: []int{120, 140, 160}, ThresholdPace: 3.5714285, PaceUnits: "MINS_KM", PaceLoadType: "RUN", PaceZones: []float64{77.5, 90, 100}},
 		}},
 		activities: activities,
 		summaries:  decodeSummaries(t, `[{"date":"2026-01-02","training_load":99,"fitness":10,"fatigue":11,"form":-1,"byCategory":[{"category":"Run","trimp":22}]}]`),
@@ -214,7 +214,7 @@ func TestGetDataQualityReportAggregatesRestrictedSources(t *testing.T) {
 func healthyDataQualityProfile() intervals.AthleteWithSportSettings {
 	return intervals.AthleteWithSportSettings{ID: "i12345", Timezone: "UTC", PreferredUnits: "metric", SportSettings: []intervals.SportSettings{
 		{Types: []string{"Ride"}, FTP: 250, PowerZones: []int{100, 150, 200}, LTHR: 170, HRZones: []int{120, 140, 160}},
-		{Types: []string{"Run"}, LTHR: 170, HRZones: []int{120, 140, 160}, PaceThreshold: 240, PaceZones: []float64{300, 270, 240}},
+		{Types: []string{"Run"}, LTHR: 170, HRZones: []int{120, 140, 160}, ThresholdPace: 3.5714285, PaceUnits: "MINS_KM", PaceLoadType: "RUN", PaceZones: []float64{77.5, 90, 100}},
 	}}
 }
 

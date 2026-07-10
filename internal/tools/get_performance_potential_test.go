@@ -16,7 +16,7 @@ func TestGetPerformancePotentialCyclingAndRunningContracts(t *testing.T) {
 
 	client := newFakeFitnessMetricsClient(t)
 	client.profile = intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{
-		{Types: []string{"Ride"}, FTP: 260, IndoorFTP: 250, WPrime: 21000, PMax: 1050, LTHR: 172, MaxHR: 190, ThresholdPace: 240, PaceUnits: "MINS_KM"},
+		{Types: []string{"Ride"}, FTP: 260, IndoorFTP: 250, WPrime: 21000, PMax: 1050, LTHR: 172, MaxHR: 190},
 		{Types: []string{"Run"}, FTP: 999, LTHR: 181, MaxHR: 195, ThresholdPace: 3.5714285, PaceUnits: "MINS_KM"},
 	}}
 	tool := newGetPerformancePotentialTool(client, client, "test", false)
