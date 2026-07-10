@@ -3,8 +3,10 @@ package intervals
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -50,6 +52,214 @@ func TestUpdateSportSettingsSendsSparseBodyWithoutApply(t *testing.T) {
 	}
 	if updateBody["power_zones"] != nil || updateBody["hr_zones"] != nil || updateBody["pace_zones"] != nil {
 		t.Fatalf("update body = %#v, want no zone fields when zones omitted", updateBody)
+	}
+}
+
+func TestUpdateSportSettingsSendsOnlyIndoorFTP(t *testing.T) {
+	t.Parallel()
+
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		if r.Method != http.MethodPut {
+			t.Fatalf("method = %s, want PUT", r.Method)
+		}
+		if r.URL.Path != "/athlete/i12345/sport-settings/7" {
+			t.Fatalf("path = %s", r.URL.Path)
+		}
+		if r.URL.RawQuery != "recalcHrZones=false" {
+			t.Fatalf("raw query = %q, want recalcHrZones=false", r.URL.RawQuery)
+		}
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if len(body) != 1 || body["indoor_ftp"] != float64(245) {
+			t.Fatalf("body = %#v, want only indoor_ftp", body)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":7,"type":"Ride","indoor_ftp":245}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+	indoorFTP := 245
+	got, err := client.UpdateSportSettings(context.Background(), WriteSportSettingsParams{SportSettingID: 7, IndoorFTP: &indoorFTP})
+	if err != nil {
+		t.Fatalf("UpdateSportSettings() error = %v", err)
+	}
+	if requests != 1 {
+		t.Fatalf("requests = %d, want 1", requests)
+	}
+	if got.IndoorFTP != indoorFTP {
+		t.Fatalf("returned indoor FTP = %d, want %d", got.IndoorFTP, indoorFTP)
+	}
+}
+
+func TestCreateSportSettingsSendsSparseThresholdBody(t *testing.T) {
+	t.Parallel()
+
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		if r.Method != http.MethodPost {
+			t.Fatalf("method = %s, want POST", r.Method)
+		}
+		if r.URL.Path != "/athlete/i12345/sport-settings" {
+			t.Fatalf("path = %s", r.URL.Path)
+		}
+		if r.URL.RawQuery != "" {
+			t.Fatalf("raw query = %q, want empty", r.URL.RawQuery)
+		}
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if types, ok := body["types"].([]any); !ok || len(types) != 1 || types[0] != "Ride" {
+			t.Fatalf("types = %#v, want [Ride]", body["types"])
+		}
+		if len(body) != 2 || body["indoor_ftp"] != float64(245) {
+			t.Fatalf("body = %#v, want types and indoor_ftp", body)
+		}
+		for _, forbidden := range []string{"recalcHrZones", "power_zones", "hr_zones", "pace_zones"} {
+			if _, ok := body[forbidden]; ok {
+				t.Fatalf("body = %#v, must not contain %q", body, forbidden)
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":8,"type":"Ride","types":["Ride"],"indoor_ftp":245}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+	indoorFTP := 245
+	got, err := client.CreateSportSettings(context.Background(), CreateSportSettingsParams{Sport: "Ride", IndoorFTP: &indoorFTP})
+	if err != nil {
+		t.Fatalf("CreateSportSettings() error = %v", err)
+	}
+	if requests != 1 {
+		t.Fatalf("requests = %d, want 1", requests)
+	}
+	if got.ID != 8 || got.IndoorFTP != indoorFTP || got.Type != "Ride" {
+		t.Fatalf("created setting = %+v", got)
+	}
+}
+
+func TestCreateSportSettingsPreservesCanonicalThresholdPace(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if r.Method != http.MethodPost || r.URL.Path != "/athlete/i12345/sport-settings" || r.URL.RawQuery != "" {
+			t.Fatalf("request = %s %s?%s, want POST sport-settings without query", r.Method, r.URL.Path, r.URL.RawQuery)
+		}
+		if body["threshold_pace"] != 3.5714285 || body["pace_units"] != "MINS_KM" || body["pace_load_type"] != "RUN" {
+			t.Fatalf("body = %#v, want canonical m/s and explicit pace metadata", body)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":8,"type":"Run","threshold_pace":3.5714285,"pace_units":"MINS_KM","pace_load_type":"RUN"}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+	pace := SportSettingsPace{Value: 3.5714285, PaceUnits: "MINS_KM", PaceLoadType: "RUN"}
+	if _, err := client.CreateSportSettings(context.Background(), CreateSportSettingsParams{Sport: "Run", ThresholdPace: &pace}); err != nil {
+		t.Fatalf("CreateSportSettings() error = %v", err)
+	}
+}
+
+func TestSportSettingsThresholdValidationAvoidsHTTP(t *testing.T) {
+	t.Parallel()
+
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		t.Fatal("invalid parameters must not make an HTTP request")
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+	zero := 0
+	negative := -1
+	nanPace := SportSettingsPace{Value: math.NaN()}
+	infinitePace := SportSettingsPace{Value: math.Inf(1)}
+	for _, tc := range []struct {
+		name      string
+		operation string
+		call      func() error
+	}{
+		{name: "update FTP", operation: "updating sport settings", call: func() error {
+			_, err := client.UpdateSportSettings(context.Background(), WriteSportSettingsParams{SportSettingID: 7, FTP: &zero})
+			return err
+		}},
+		{name: "update indoor FTP", operation: "updating sport settings", call: func() error {
+			_, err := client.UpdateSportSettings(context.Background(), WriteSportSettingsParams{SportSettingID: 7, IndoorFTP: &negative})
+			return err
+		}},
+		{name: "update threshold HR", operation: "updating sport settings", call: func() error {
+			_, err := client.UpdateSportSettings(context.Background(), WriteSportSettingsParams{SportSettingID: 7, ThresholdHR: &zero})
+			return err
+		}},
+		{name: "update non-finite pace", operation: "updating sport settings", call: func() error {
+			_, err := client.UpdateSportSettings(context.Background(), WriteSportSettingsParams{SportSettingID: 7, ThresholdPace: &nanPace})
+			return err
+		}},
+		{name: "create blank sport", operation: "creating sport settings", call: func() error {
+			_, err := client.CreateSportSettings(context.Background(), CreateSportSettingsParams{Sport: "  "})
+			return err
+		}},
+		{name: "create FTP", operation: "creating sport settings", call: func() error {
+			_, err := client.CreateSportSettings(context.Background(), CreateSportSettingsParams{Sport: "Ride", FTP: &zero})
+			return err
+		}},
+		{name: "create indoor FTP", operation: "creating sport settings", call: func() error {
+			_, err := client.CreateSportSettings(context.Background(), CreateSportSettingsParams{Sport: "Ride", IndoorFTP: &negative})
+			return err
+		}},
+		{name: "create threshold HR", operation: "creating sport settings", call: func() error {
+			_, err := client.CreateSportSettings(context.Background(), CreateSportSettingsParams{Sport: "Ride", ThresholdHR: &zero})
+			return err
+		}},
+		{name: "create non-finite pace", operation: "creating sport settings", call: func() error {
+			_, err := client.CreateSportSettings(context.Background(), CreateSportSettingsParams{Sport: "Ride", ThresholdPace: &infinitePace})
+			return err
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.call()
+			if err == nil || !strings.Contains(err.Error(), tc.operation) {
+				t.Fatalf("error = %v, want %q validation error", err, tc.operation)
+			}
+		})
+	}
+	if requests != 0 {
+		t.Fatalf("requests = %d, want 0", requests)
+	}
+}
+
+func TestCreateSportSettingsAllowsIndoorFTPAboveFTP(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if body["ftp"] != float64(200) || body["indoor_ftp"] != float64(300) {
+			t.Fatalf("body = %#v, want independent valid FTP values", body)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":8,"type":"Ride","ftp":200,"indoor_ftp":300}`))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+	ftp, indoorFTP := 200, 300
+	if _, err := client.CreateSportSettings(context.Background(), CreateSportSettingsParams{Sport: "Ride", FTP: &ftp, IndoorFTP: &indoorFTP}); err != nil {
+		t.Fatalf("CreateSportSettings() error = %v", err)
 	}
 }
 
