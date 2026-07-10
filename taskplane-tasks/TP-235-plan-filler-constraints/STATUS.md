@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** L
 
@@ -23,6 +23,11 @@
 ### Step 1: Define the constraint contract
 
 **Status:** 🟨 In Progress
+
+<!-- R006 revision items -->
+- [ ] R006-1: ValidateCandidate single-candidate path must also sanitize embedded candidate for NaN-safe serialization
+- [ ] R006-2: ValidateWeekConstraints must parse and validate WeekStartDate (Monday), day dates (YYYY-MM-DD), and each day within the declared week
+- [ ] R006-3: Update design doc to match R005 isolation: invalid candidates excluded from numeric accumulations (not pessimistic); add invalid_input to codes table; fix "echoed verbatim" note; clean R001 artifact whitespace
 
 <!-- R005 revision items -->
 - [x] R005-1: Invalid candidates (NaN/negative) must not pollute priorLoad/priorMinutes or reconciliation; sanitize embedded Candidate to avoid JSON NaN failure
@@ -143,3 +148,4 @@
 | 2026-07-10 14:16 | Review R003 | code Step 1: REVISE |
 | 2026-07-10 14:25 | Review R004 | code Step 1: REVISE |
 | 2026-07-10 14:32 | Review R005 | code Step 1: REVISE |
+| 2026-07-10 14:38 | Review R006 | code Step 1: REVISE |
