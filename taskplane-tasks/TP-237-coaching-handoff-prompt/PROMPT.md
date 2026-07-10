@@ -178,4 +178,8 @@ Commits happen at step boundaries. All commits MUST include TP-237:
 
 ## Amendments (Added During Execution)
 
-<!-- Workers add amendments here if prerequisites or instructions are contradictory. -->
+### R001 plan clarification
+
+- `docs/prompts/README.md` is added to File Scope and Documentation Requirements so the portable pack remains discoverable from the existing pack index.
+- Step 1 owns the contract-bearing `CoachingHandoffPrompt` function and portable pack, plus focused contract tests in `internal/prompts/coaching_handoff_test.go`. Step 2 registers the function, adds it to shared catalog/golden expectations, and creates the deterministic golden fixture.
+- Step 1 verification is non-vacuous: `go test ./internal/prompts -run 'CoachingHandoff'` runs the focused contract tests created in Step 1.
