@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 1
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** M
 
@@ -43,10 +43,10 @@
 
 **Status:** 🟨 In Progress
 
-<!-- R006 plan revision items -->
-- [ ] R006-1: Replace the static prompt handler with a validating handler: default to a 14-day athlete-local planned review (today through day 13), 28 completed-history days immediately before planned_start, and 56 personal-baseline days immediately before history; resolve the same non-overlapping sequence for supplied planned dates. Accept history 1-90 days and baseline 1-180 days; require strict paired YYYY-MM-DD planned dates in ascending order and no more than 90 days inclusive; trim and strictly validate race_date and require it for race_name; return short UserErrors and render normalized supplied values
-- [ ] R006-2: Extend `masters_plan_review_test.go` with table-driven valid/default and invalid handler cases (non-integer, zero, out-of-range lookbacks; malformed, reversed, and overlong planned dates; malformed/name-only race; whitespace normalization), use `errors.As` to assert a `UserError` and its exact public message, and add the normalized valid scope to the golden fixture
-- [ ] R006-3: Register `MastersPlanReviewPrompt()` in `NewRegistry()` and update the catalog and protocol prompt-list counts/order, rendered golden case, `TestPromptResourceCitationsStayTerse`, and portable-pack registry-link coverage. Test the exact six-argument allowlist (no credential, age-policy, write, or delete arguments), deterministic analyzer/advanced-capability fallback route, and the pack's bounded/default scope contract
+<!-- R007 plan revision items -->
+- [ ] R007-1: Replace the static prompt handler with a validating handler: default to a 14-day athlete-local planned review (today through day 13), 28 completed-history days immediately before planned_start, and 56 personal-baseline days immediately before history; resolve the same non-overlapping sequence for supplied planned dates. Accept history 1-90 days and baseline 1-180 days; require strict paired YYYY-MM-DD planned dates in ascending order and no more than 90 days inclusive (same-day is valid); trim and strictly validate race_date and require it for race_name; return short UserErrors and render normalized supplied values
+- [ ] R007-2: Extend `masters_plan_review_test.go` with table-driven valid/default and invalid handler cases (non-integer, zero, out-of-range lookbacks; malformed, start-only, end-only, reversed, and overlong planned dates; valid same-day and 90-day boundary; malformed/name-only race; whitespace normalization), use `errors.As` to assert a `UserError` and its exact public message, and add the normalized valid scope to the golden fixture
+- [ ] R007-3: Update the portable pack to mirror the handler's normalized scope/defaults, lookback ranges, paired-date/max-window validation, and race-name/date dependency. Register `MastersPlanReviewPrompt()` in `NewRegistry()` and update the catalog and protocol prompt-list counts/order, rendered golden case, `TestPromptResourceCitationsStayTerse`, and portable-pack registry-link coverage. Test the exact six-argument allowlist (no credential, age-policy, write, or delete arguments), deterministic analyzer/advanced-capability fallback route, and the pack's bounded/default scope terms
 - [ ] Prompt implemented and registered
 - [ ] Existing analyzers and fallback routing used
 - [ ] Focused test and golden fixture added
@@ -97,6 +97,7 @@
 | R003 | Plan | 1 | REVISE | `.reviews/R003-plan-step1.md` |
 | R005 | Plan | 2 | REVISE | `.reviews/R005-plan-step2.md` |
 | R006 | Plan | 2 | REVISE | `.reviews/R006-plan-step2.md` |
+| R007 | Plan | 2 | REVISE | `.reviews/R007-plan-step2.md` |
 
 ## Discoveries
 
@@ -125,3 +126,4 @@
 | 2026-07-10 21:53 | Review R004 | plan Step 1: APPROVE |
 | 2026-07-10 22:01 | Review R005 | plan Step 2: REVISE |
 | 2026-07-10 22:04 | Review R006 | plan Step 2: REVISE |
+| 2026-07-10 22:07 | Review R007 | plan Step 2: REVISE |
