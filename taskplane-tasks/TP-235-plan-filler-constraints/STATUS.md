@@ -5,7 +5,7 @@
 **Last Updated:** 2026-07-10
 **Review Level:** 2
 **Review Counter:** 14
-**Iteration:** 1
+**Iteration:** 2
 **Size:** L
 
 ---
@@ -25,9 +25,9 @@
 **Status:** 🟨 In Progress
 
 <!-- R014 revision items -->
-- [ ] R014-1: Protect intermediate arithmetic in validateCore (remaining budget subtraction can produce -Inf when completed+fixed overflow; guard before embedding in Violation.Value/Warning.Value)
-- [ ] R014-2: Guard priorLoad/priorMinutes accumulation in ValidateCandidates; emit arithmetic_overflow violation when prior totals exceed float64 range
-- [ ] R014-3: Add ValidateWeekConstraints preflight check for completed+fixed overflow; tests for all three overflow paths
+- [x] R014-1: Protect intermediate arithmetic in validateCore (remaining budget subtraction can produce -Inf when completed+fixed overflow; guard before embedding in Violation.Value/Warning.Value)
+- [x] R014-2: Guard priorLoad/priorMinutes accumulation in ValidateCandidates; emit arithmetic_overflow violation when prior totals exceed float64 range
+- [x] R014-3: Add ValidateWeekConstraints preflight check for completed+fixed overflow; tests for all three overflow paths
 
 <!-- R013 revision items -->
 - [x] R013-1: Detect float64 overflow in Reconcile; change to (Reconciliation, error); in ValidateCandidates use WarnArithmeticOverflow on overflow; test overflow JSON-marshal safety
@@ -97,7 +97,7 @@
 
 ### Step 2: Implement validation and reconciliation
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Daily, session, mode, sport, and weekly constraints validated
 - [x] Weekly time/load reconciliation implemented
@@ -167,6 +167,7 @@
 | 2026-07-10 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-07-10 13:51 | Task started | Runtime V2 lane-runner execution |
 | 2026-07-10 13:51 | Step 0 started | Preflight |
+| 2026-07-10 15:45 | Worker iter 1 | done in 6871s, tools: 266 |
 
 ## Blockers
 

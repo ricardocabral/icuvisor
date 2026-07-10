@@ -164,6 +164,12 @@ const (
 	// Fires for any candidate with DurationMinutes > 0 when remainingMin <= 0.
 	ViolationWeeklyTimeOvershoot ViolationCode = "weekly_time_overshoot"
 
+	// ViolationArithmeticOverflow fires when the budget computation for this candidate
+	// overflows float64 — for example, when completed + fixed totals exceed MaxFloat64
+	// and the subtraction from the target would produce -Inf. The candidate cannot be
+	// certified without a computable budget; it is marked invalid.
+	ViolationArithmeticOverflow ViolationCode = "arithmetic_overflow"
+
 	// ViolationRequestedSessionCountExceeded fires when the candidate would be the
 	// (N+1)th valid session and RequestedSessionCount is pointer-to-N.
 	// Position within the candidate batch determines which sessions are accepted.
@@ -312,6 +318,16 @@ func ValidateWeekConstraints(wc WeekConstraints) error {
 	}
 	if wc.RequestedSessionCount != nil && *wc.RequestedSessionCount < 0 {
 		return fmt.Errorf("requested_session_count must be non-negative when set, got %d", *wc.RequestedSessionCount)
+	}
+	// Preflight: completed + fixed sums must not overflow float64.
+	// Overflow here would make remaining-budget subtraction produce -Inf in validators.
+	completedFixedLoad := wc.CompletedLoad + wc.FixedLoad
+	if math.IsInf(completedFixedLoad, 0) {
+		return fmt.Errorf("completed_load + fixed_load overflows float64")
+	}
+	completedFixedMin := wc.CompletedMinutes + wc.FixedMinutes
+	if math.IsInf(completedFixedMin, 0) {
+		return fmt.Errorf("completed_minutes + fixed_minutes overflows float64")
 	}
 
 	seen := map[string]struct{}{}
@@ -555,11 +571,23 @@ func ValidateCandidates(wc WeekConstraints, candidates []CandidateSession) Batch
 				result.Valid = len(result.Violations) == 0
 
 				ds.sessions++
-				ds.minutes += candidate.DurationMinutes
+				if minutes, ok := addFinite(ds.minutes, candidate.DurationMinutes); ok {
+					ds.minutes = minutes
+				}
 			}
 
-			priorLoad += candidate.Load
-			priorMinutes += candidate.DurationMinutes
+			if load, ok := addFinite(priorLoad, candidate.Load); ok {
+				priorLoad = load
+			} else {
+				result.Violations = append(result.Violations, arithmeticOverflowViolation("prior_load"))
+				result.Valid = false
+			}
+			if minutes, ok := addFinite(priorMinutes, candidate.DurationMinutes); ok {
+				priorMinutes = minutes
+			} else {
+				result.Violations = append(result.Violations, arithmeticOverflowViolation("prior_minutes"))
+				result.Valid = false
+			}
 		}
 
 		// Enforce RequestedSessionCount cap.
@@ -717,7 +745,10 @@ func validateCore(wc WeekConstraints, day DayConstraints, availableSlots []SlotC
 		})
 	}
 
-	if day.MaxTotalDailyMinutes > 0 && dailyMinutesAlready+candidate.DurationMinutes > day.MaxTotalDailyMinutes {
+	dailyMinutes, dailyMinutesOK := addFinite(dailyMinutesAlready, candidate.DurationMinutes)
+	if !dailyMinutesOK {
+		violations = append(violations, arithmeticOverflowViolation("daily_minutes"))
+	} else if day.MaxTotalDailyMinutes > 0 && dailyMinutes > day.MaxTotalDailyMinutes {
 		violations = append(violations, Violation{
 			Code:    ViolationDailyTimeExceeded,
 			Message: "combined daily training duration would exceed the daily cap",
@@ -740,9 +771,10 @@ func validateCore(wc WeekConstraints, day DayConstraints, availableSlots []SlotC
 	}
 
 	if wc.WeeklyTargetLoad != nil {
-		targetLoad := *wc.WeeklyTargetLoad
-		remainingLoad := targetLoad - wc.CompletedLoad - wc.FixedLoad - priorLoad
-		if remainingLoad <= 0 {
+		remainingLoad, remainingLoadOK := remainingBudget(*wc.WeeklyTargetLoad, wc.CompletedLoad, wc.FixedLoad, priorLoad)
+		if !remainingLoadOK {
+			violations = append(violations, arithmeticOverflowViolation("weekly_load"))
+		} else if remainingLoad <= 0 {
 			warnings = append(warnings, Warning{
 				Code:    WarnZeroRemainingLoad,
 				Message: "remaining weekly load budget is zero or negative",
@@ -768,9 +800,10 @@ func validateCore(wc WeekConstraints, day DayConstraints, availableSlots []SlotC
 	}
 
 	if wc.WeeklyTargetMinutes != nil {
-		targetMin := *wc.WeeklyTargetMinutes
-		remainingMin := targetMin - wc.CompletedMinutes - wc.FixedMinutes - priorMinutes
-		if remainingMin <= 0 {
+		remainingMin, remainingMinOK := remainingBudget(*wc.WeeklyTargetMinutes, wc.CompletedMinutes, wc.FixedMinutes, priorMinutes)
+		if !remainingMinOK {
+			violations = append(violations, arithmeticOverflowViolation("weekly_minutes"))
+		} else if remainingMin <= 0 {
 			warnings = append(warnings, Warning{
 				Code:    WarnZeroRemainingTime,
 				Message: "remaining weekly time budget is zero or negative",
@@ -952,6 +985,40 @@ func findDay(days []DayConstraints, date string) (DayConstraints, bool) {
 		}
 	}
 	return DayConstraints{}, false
+}
+
+func addFinite(values ...float64) (float64, bool) {
+	var total float64
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return 0, false
+		}
+		total += value
+		if math.IsNaN(total) || math.IsInf(total, 0) {
+			return 0, false
+		}
+	}
+	return total, true
+}
+
+func remainingBudget(target float64, commitments ...float64) (float64, bool) {
+	committed, ok := addFinite(commitments...)
+	if !ok || math.IsNaN(target) || math.IsInf(target, 0) {
+		return 0, false
+	}
+	remaining := target - committed
+	if math.IsNaN(remaining) || math.IsInf(remaining, 0) {
+		return 0, false
+	}
+	return remaining, true
+}
+
+func arithmeticOverflowViolation(field string) Violation {
+	return Violation{
+		Code:    ViolationArithmeticOverflow,
+		Message: "constraint arithmetic exceeds float64 range",
+		Field:   field,
+	}
 }
 
 func requireFiniteNonNegative(field string, v float64) error {

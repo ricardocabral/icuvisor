@@ -678,3 +678,131 @@ func TestValidateWeekConstraints_ZeroTargets_Valid(t *testing.T) {
 		t.Errorf("zero targets should be valid, got: %v", err)
 	}
 }
+
+func TestValidateWeekConstraints_CompletedFixedOverflowRejected(t *testing.T) {
+	tests := []struct {
+		name string
+		week planning.WeekConstraints
+	}{
+		{
+			name: "load",
+			week: planning.WeekConstraints{
+				WeekStartDate: "2026-07-06",
+				CompletedLoad: math.MaxFloat64,
+				FixedLoad:     math.MaxFloat64,
+			},
+		},
+		{
+			name: "minutes",
+			week: planning.WeekConstraints{
+				WeekStartDate:    "2026-07-06",
+				CompletedMinutes: math.MaxFloat64,
+				FixedMinutes:     math.MaxFloat64,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := planning.ValidateWeekConstraints(tc.week); err == nil {
+				t.Error("expected completed plus fixed overflow to be rejected")
+			}
+		})
+	}
+}
+
+func TestValidation_CompletedFixedOverflowJSONSafe(t *testing.T) {
+	tests := []struct {
+		name      string
+		week      planning.WeekConstraints
+		candidate planning.CandidateSession
+	}{
+		{
+			name: "load",
+			week: planning.WeekConstraints{
+				WeekStartDate:    "2026-07-06",
+				WeeklyTargetLoad: ptrF(0),
+				CompletedLoad:    math.MaxFloat64,
+				FixedLoad:        math.MaxFloat64,
+				AvailableDays:    []planning.DayConstraints{{Date: "2026-07-06", MaxSessionsPerDay: 1}},
+			},
+			candidate: planning.CandidateSession{Date: "2026-07-06", Load: 1},
+		},
+		{
+			name: "minutes",
+			week: planning.WeekConstraints{
+				WeekStartDate:       "2026-07-06",
+				WeeklyTargetMinutes: ptrF(0),
+				CompletedMinutes:    math.MaxFloat64,
+				FixedMinutes:        math.MaxFloat64,
+				AvailableDays:       []planning.DayConstraints{{Date: "2026-07-06", MaxSessionsPerDay: 1}},
+			},
+			candidate: planning.CandidateSession{Date: "2026-07-06", DurationMinutes: 1},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			single := planning.ValidateCandidate(tc.week, tc.candidate)
+			if !hasViolation(single, planning.ViolationArithmeticOverflow) {
+				t.Errorf("single validation should report arithmetic overflow: %v", single.Violations)
+			}
+			if _, err := json.Marshal(single); err != nil {
+				t.Fatalf("single validation result must marshal: %v", err)
+			}
+
+			batch := planning.ValidateCandidates(tc.week, []planning.CandidateSession{tc.candidate})
+			if !hasViolation(batch.Results[0], planning.ViolationArithmeticOverflow) {
+				t.Errorf("batch validation should report arithmetic overflow: %v", batch.Results[0].Violations)
+			}
+			if _, err := json.Marshal(batch); err != nil {
+				t.Fatalf("batch validation result must marshal: %v", err)
+			}
+		})
+	}
+}
+
+func TestValidateCandidates_PriorAccumulationOverflowJSONSafe(t *testing.T) {
+	tests := []struct {
+		name       string
+		week       planning.WeekConstraints
+		candidates []planning.CandidateSession
+	}{
+		{
+			name: "load",
+			week: planning.WeekConstraints{
+				WeekStartDate:    "2026-07-06",
+				WeeklyTargetLoad: ptrF(math.MaxFloat64),
+				AvailableDays:    []planning.DayConstraints{{Date: "2026-07-06", MaxSessionsPerDay: 2}},
+			},
+			candidates: []planning.CandidateSession{
+				{Date: "2026-07-06", Load: math.MaxFloat64},
+				{Date: "2026-07-06", Load: math.MaxFloat64},
+			},
+		},
+		{
+			name: "minutes",
+			week: planning.WeekConstraints{
+				WeekStartDate:       "2026-07-06",
+				WeeklyTargetMinutes: ptrF(math.MaxFloat64),
+				AvailableDays:       []planning.DayConstraints{{Date: "2026-07-06", MaxSessionsPerDay: 2}},
+			},
+			candidates: []planning.CandidateSession{
+				{Date: "2026-07-06", DurationMinutes: math.MaxFloat64},
+				{Date: "2026-07-06", DurationMinutes: math.MaxFloat64},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			batch := planning.ValidateCandidates(tc.week, tc.candidates)
+			if !hasViolation(batch.Results[1], planning.ViolationArithmeticOverflow) {
+				t.Errorf("second candidate should report prior accumulation overflow: %v", batch.Results[1].Violations)
+			}
+			if _, err := json.Marshal(batch); err != nil {
+				t.Fatalf("batch validation result must marshal: %v", err)
+			}
+		})
+	}
+}
