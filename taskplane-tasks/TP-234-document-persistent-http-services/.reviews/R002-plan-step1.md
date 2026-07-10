@@ -1,0 +1,14 @@
+# Plan Review — TP-234 Step 1
+
+## Verdict: REVISE
+
+The R001 expansion selects appropriate per-user mechanisms and correctly keeps credentials in the existing credential chain, but the recipe and verification designs are not yet concrete enough to safely implement.
+
+1. **Account for every existing executable HTTP example, not only the LAN block.** `web/content/guides/http-transport.md` still has the macOS and Windows `ICUVISOR_TRANSPORT=http` launch examples without a literal loopback bind. The design only commits service invocations to `--http-bind 127.0.0.1:8765`. Revise it to replace those foreground examples too (with explicit flags or an explicit loopback environment value), so every HTTP-start command and sample configuration is pinned as the task requires; retain the LAN risk explanation as prose only.
+
+2. **Lock down executable service-definition and recovery mechanics.** The status says the guide “will specify” commands, but does not yet specify the unit/plist/task construction needed for copy-pasteable recipes. In particular:
+   - Define how Linux obtains and writes the actual absolute binary path (the current Linux install guidance has no single fixed path), and how macOS writes an actual absolute `StandardOutPath`/`StandardErrorPath`; `~` and `$HOME` in a plist path are not shell-expanded by launchd.
+   - State the exact `launchctl`, `systemctl --user`, and Task Scheduler/PowerShell install, status/log, restart, stop/disable, and removal command families and identifiers. For Windows, pin the task principal to the current interactive user, the logon trigger, and the `PT0S`/equivalent unlimited execution setting rather than relying on a UI default.
+   - Define the Windows wrapper's invocation quoting, log redirection, and child exit-code behavior, and select an automatic failure-restart policy (Task Scheduler retry settings or a bounded-backoff supervisor). A task that only runs at logon and exits after an icuvisor failure does not meet the durable-service goal. Its cleanup must remove the task, wrapper, and log without touching config or Credential Manager.
+
+3. **Make the documentation contract implementable and CI-reachable.** Specify whether `Makefile`'s existing `docs-guidance-test` target will invoke `test_http_service_docs.py` (which makes the current Ubuntu CI job run it) or which new target/workflow changes are required. Define the test boundary as the new guide plus `http-transport.md`, and require it to inspect executable fenced snippets/directives rather than reject needed prose warnings: every HTTP bind directive must be exactly `127.0.0.1:8765`, no API-key assignment, `.env`/`--env-file`, `api_key`, or service environment credential source may occur, and required lifecycle, `/mcp`, hosted URL/OAuth, no-tunnel, and `icuvisor` connector-key text must remain present.

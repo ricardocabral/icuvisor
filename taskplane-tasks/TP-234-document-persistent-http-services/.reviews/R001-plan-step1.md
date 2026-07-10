@@ -1,0 +1,17 @@
+# Plan Review — TP-234 Step 1
+
+## Verdict: REVISE
+
+No implementation plan was submitted for this design checkpoint: `PROMPT.md` and the unchecked Step 1 items name outcomes, but do not define service files, execution identities, commands, or the security contract that later documentation can implement and test.
+
+A revised plan must lock down the following:
+
+1. **One concrete, user-scoped recipe per OS.** Specify the exact files, service identifiers, startup/restart policy, log sink, and lifecycle commands: a `launchd` LaunchAgent in `~/Library/LaunchAgents` using the `gui/$(id -u)` domain; a `systemd --user` unit (with `Restart=on-failure` and journal commands); and a Task Scheduler task configured to run only for the interactive current user, with its task and application-log commands. The Windows task must have no finite default execution limit if it is intended to remain running. All process invocations need an absolute binary path and the literal arguments `--transport http --http-bind 127.0.0.1:8765`; the client URL, not the server arguments, is `http://127.0.0.1:8765/mcp`.
+
+2. **A credential and session-boundary design.** Require `icuvisor setup` to be completed interactively under the same OS account before installing the service, then rely on its default per-user non-secret config and OS credential store. Explicitly forbid API-key environment variables, `.env`/`--env-file`, service-manager `Environment`/`EnvironmentVariables`, config `api_key`, and Task Scheduler arguments containing credentials. State that these are per-user, logged-in recipes: do not enable Linux lingering or a background/service-account task as a way to outlive the desktop session, since the user keychain/Secret Service may be locked or unavailable. The plan must also select a safe working-directory/log-file approach so the implicit `.env` lookup cannot accidentally become the credential source.
+
+3. **Failure recovery that is actually actionable.** Define the commands to inspect each manager's state and logs, restart after a corrected config/keychain/port-conflict failure, and cleanly stop, disable/unload, and remove both the manager definition and any non-secret wrapper/log files. Do not use a shell wrapper unless its quoting, exit-code propagation, and log redirection are specified, particularly for the Windows Task Scheduler recipe.
+
+4. **Resolve the existing LAN-example conflict.** `web/content/guides/http-transport.md` currently contains an executable `ICUVISOR_HTTP_BIND=192.168.1.10:8765` example. Step 2 modifies that page, while the task says every executable sample must be loopback-only. Plan to remove/replace that code block while retaining the unauthenticated-LAN warning as prose; otherwise the completion criterion is false before the new guide is added.
+
+5. **Verification and remote boundary.** Define a path-specific documentation contract, wired into a Make target and CI, that checks the new guide and the updated HTTP guide for all three lifecycle mechanisms, loopback-only executable snippets, no credential assignments/plaintext config, lifecycle/log coverage, and the canonical `/mcp` URL. It must retain TP-232's hosted URL (`https://connect.icuvisor.app/mcp`) and explicit no-public-tunnel guidance, and explain that provider-hosted connector UIs cannot reach local loopback and use hosted OAuth rather than the local API key. Clarify that a client connector key is `icuvisor`; OS service labels may follow their platform conventions.

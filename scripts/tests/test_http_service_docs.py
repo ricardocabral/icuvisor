@@ -10,7 +10,18 @@ SERVICE_GUIDE = ROOT / "web/content/guides/persistent-http-service.md"
 HTTP_GUIDE = ROOT / "web/content/guides/http-transport.md"
 GUIDES = (SERVICE_GUIDE, HTTP_GUIDE)
 EXECUTABLE_LANGUAGES = frozenset(
-    {"bash", "sh", "shell", "powershell", "ps1", "json", "xml", "plist", "ini", "systemd"}
+    {
+        "bash",
+        "sh",
+        "shell",
+        "powershell",
+        "ps1",
+        "json",
+        "xml",
+        "plist",
+        "ini",
+        "systemd",
+    }
 )
 FENCE = re.compile(r"```(?P<language>[\w+-]*)\n(?P<body>.*?)```", re.DOTALL)
 CANONICAL_BIND = "127.0.0.1:8765"
