@@ -1,10 +1,10 @@
 # TP-230: Distinguish ATP-generated notes from personal calendar notes — Status
 
-**Current Step:** Step 1: Design provenance-aware note shaping
+**Current Step:** Step 2: Implement and cover classification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -22,7 +22,7 @@
 
 ### Step 1: Design provenance-aware note shaping
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] ATP and personal note statuses defined
 - [x] plan_applied provenance rule defined
@@ -36,7 +36,7 @@
 
 ### Step 2: Implement and cover classification
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Provenance-aware note shape implemented
 - [ ] English keyword dependence removed or constrained
@@ -85,6 +85,7 @@
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | 1 | REVISE | `.reviews/R002-plan-step1.md` |
 | R003 | Plan | 1 | APPROVE | `.reviews/R003-plan-step1.md` |
+| R004 | Code | 1 | APPROVE | `.reviews/R004-code-step1.md` |
 
 ## Discoveries
 
@@ -116,3 +117,4 @@
 | 2026-07-10 12:31 | Review R001 | plan Step 1: REVISE |
 | 2026-07-10 12:34 | Review R002 | plan Step 1: REVISE |
 | 2026-07-10 12:36 | Review R003 | plan Step 1: APPROVE |
+| 2026-07-10 12:38 | Review R004 | code Step 1: APPROVE |
