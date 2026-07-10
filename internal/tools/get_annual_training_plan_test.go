@@ -56,7 +56,7 @@ func TestGetAnnualTrainingPlanExtractsPhasesTargetsNotesAndBridge(t *testing.T) 
 			`{"id":"p2","category":"PLAN","type":"Build","name":"Build phase","start_date_local":"2026-01-29"}`,
 			`{"id":"t1","category":"TARGET","name":"Week load","start_date_local":"2026-01-05","load_target":300,"time_target":36000,"distance_target":100000}`,
 			`{"id":"t2","category":"TARGET","name":"Extra load","start_date_local":"2026-01-06","load_target":50}`,
-			`{"id":"n1","category":"NOTE","name":"Recovery week","description":"Deload and rest","start_date_local":"2026-01-12","end_date_local":"2026-01-18","tags":["recovery"]}`,
+			`{"id":"n1","category":"NOTE","name":"Recovery week","description":"Deload and rest","start_date_local":"2026-01-12","end_date_local":"2026-01-18","tags":["recovery"],"plan_applied":"2025-12-15T09:30:00Z"}`,
 			`{"id":"w1","category":"WORKOUT","name":"Ignored workout","start_date_local":"2026-01-05","load_target":999}`,
 		),
 	}
@@ -71,8 +71,8 @@ func TestGetAnnualTrainingPlanExtractsPhasesTargetsNotesAndBridge(t *testing.T) 
 		t.Fatalf("ListEvents calls = %#v, want bounded ATP scan with limit %d", client.calls, annualTrainingPlanEventLimit)
 	}
 	summary := out["summary"].(map[string]any)
-	if summary["phase_count"] != float64(2) || summary["target_event_count"] != float64(2) || summary["note_count"] != float64(1) || summary["total_load_target"] != float64(350) {
-		t.Fatalf("summary = %#v, want phase/target/note counts and total load", summary)
+	if summary["phase_count"] != float64(2) || summary["target_event_count"] != float64(2) || summary["atp_note_count"] != float64(1) || summary["context_note_count"] != float64(0) || summary["total_load_target"] != float64(350) {
+		t.Fatalf("summary = %#v, want phase/target/ATP-note counts and total load", summary)
 	}
 	phases := out["phases"].([]any)
 	if len(phases) != 2 || phases[0].(map[string]any)["phase_id"] != "phase_p1" || phases[1].(map[string]any)["end_date_source"] != "range_end" {
@@ -93,12 +93,15 @@ func TestGetAnnualTrainingPlanExtractsPhasesTargetsNotesAndBridge(t *testing.T) 
 	if targetWeek == nil || targetWeek["target_event_count"] != float64(2) || targetWeek["load_target"] != float64(350) || targetWeek["time_target_seconds"] != float64(36000) || targetWeek["distance_target_meters"] != float64(100000) {
 		t.Fatalf("target week = %#v, want summed TARGET load/time/distance", targetWeek)
 	}
-	if noteWeek == nil || noteWeek["note_count"] != float64(1) || noteWeek["recovery_note_count"] != float64(1) {
-		t.Fatalf("note week = %#v, want recovery note counts", noteWeek)
+	if noteWeek == nil || noteWeek["atp_note_count"] != float64(1) || noteWeek["context_note_count"] != float64(0) {
+		t.Fatalf("note week = %#v, want ATP note count without personal context", noteWeek)
 	}
 	notes := out["notes"].([]any)
-	if len(notes) != 1 || notes[0].(map[string]any)["recovery_hint"] != true {
-		t.Fatalf("notes = %#v, want explicit recovery hint", notes)
+	if len(notes) != 1 || notes[0].(map[string]any)["status"] != "atp_generated" || notes[0].(map[string]any)["plan_applied"] != "2025-12-15T09:30:00Z" {
+		t.Fatalf("notes = %#v, want terse ATP provenance", notes)
+	}
+	if _, ok := notes[0].(map[string]any)["recovery_hint"]; ok {
+		t.Fatalf("notes = %#v, must not infer recovery semantics from English keywords", notes)
 	}
 	bridge := out["_meta"].(map[string]any)["projection_bridge"].(map[string]any)
 	bridgeRows := bridge["weekly_plan_targets"].([]any)
@@ -148,8 +151,8 @@ func TestGetAnnualTrainingPlanEmptyResponseUsesUnavailableAndEmptyArrays(t *test
 		t.Fatalf("Handler() error = %v", err)
 	}
 	out := resultMap(t, result)
-	if len(out["phases"].([]any)) != 0 || len(out["weeks"].([]any)) != 0 || len(out["notes"].([]any)) != 0 {
-		t.Fatalf("empty ATP arrays = phases %#v weeks %#v notes %#v, want all empty", out["phases"], out["weeks"], out["notes"])
+	if len(out["phases"].([]any)) != 0 || len(out["weeks"].([]any)) != 0 || len(out["notes"].([]any)) != 0 || len(out["context_notes"].([]any)) != 0 {
+		t.Fatalf("empty ATP arrays = phases %#v weeks %#v notes %#v context_notes %#v, want all empty", out["phases"], out["weeks"], out["notes"], out["context_notes"])
 	}
 	summary := out["summary"].(map[string]any)
 	if summary["phase_count"] != float64(0) || summary["week_count"] != float64(0) || summary["target_event_count"] != float64(0) {
@@ -169,7 +172,7 @@ func TestGetAnnualTrainingPlanIncludeFullWidensOnlySourceRows(t *testing.T) {
 		events: decodeToolEvents(t,
 			`{"id":"p1","category":"PLAN","name":"Base","start_date_local":"2026-01-01","raw_extra":"phase"}`,
 			`{"id":"t1","category":"TARGET","name":"Target","start_date_local":"2026-01-05","load_target":100,"raw_extra":"target"}`,
-			`{"id":"n1","category":"NOTE","name":"Note","start_date_local":"2026-01-06","raw_extra":"note"}`,
+			`{"id":"n1","category":"NOTE","name":"Note","start_date_local":"2026-01-06","plan_applied":"2025-12-15T09:30:00Z","raw_extra":"note"}`,
 		),
 	}
 	tool := newGetAnnualTrainingPlanToolWithClock(client, client, "test", "UTC", false, fixedTodayClock())
@@ -208,7 +211,7 @@ func TestGetAnnualTrainingPlanSharedBoundaryAndOverlappingNotes(t *testing.T) {
 		events: decodeToolEvents(t,
 			`{"id":"p1","category":"PLAN","name":"Base","start_date_local":"2026-01-01","end_date_local":"2026-01-28"}`,
 			`{"id":"p2","category":"PLAN","name":"Build","start_date_local":"2026-01-28","end_date_local":"2026-02-28"}`,
-			`{"id":"n1","category":"NOTE","name":"Boundary recovery","description":"Recovery day before build","start_date_local":"2026-01-28"}`,
+			`{"id":"n1","category":"NOTE","name":"Boundary recovery","description":"Recovery day before build","start_date_local":"2026-01-28","plan_applied":"2025-12-15T09:30:00Z"}`,
 		),
 	}
 	tool := newGetAnnualTrainingPlanToolWithClock(client, client, "test", "UTC", false, fixedTodayClock())
@@ -248,7 +251,7 @@ func TestGetAnnualTrainingPlanMalformedAndMissingFieldsDegradeGracefully(t *test
 			`{"id":"bad-plan","category":"PLAN","name":"Bad phase","start_date_local":"not-a-date"}`,
 			`{"id":"bad-target","category":"TARGET","name":"Missing date"}`,
 			`{"id":"target-missing-load","category":"TARGET","name":"Target without load","start_date_local":"2026-01-12","time_target":18000}`,
-			`{"id":"note-ok","category":"NOTE","name":"Coach note","start_date_local":"2026-01-10"}`,
+			`{"id":"note-ok","category":"NOTE","name":"Coach note","start_date_local":"2026-01-10","plan_applied":"2025-12-15T09:30:00Z"}`,
 		),
 	}
 	tool := newGetAnnualTrainingPlanToolWithClock(client, client, "test", "UTC", false, fixedTodayClock())

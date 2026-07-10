@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** M
 
@@ -38,11 +38,11 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Provenance-aware note shape implemented
-- [ ] English keyword dependence removed or constrained
-- [ ] Personal and localized ATP fixtures covered
-- [ ] Real TARGET week boundaries preserved
-- [ ] Projection bridge remains explicit-target-only
+- [x] Provenance-aware note shape implemented
+- [x] English keyword dependence removed or constrained
+- [x] Personal and localized ATP fixtures covered
+- [x] Real TARGET week boundaries preserved
+- [x] Projection bridge remains explicit-target-only
 
 ---
 
@@ -86,6 +86,7 @@
 | R002 | Plan | 1 | REVISE | `.reviews/R002-plan-step1.md` |
 | R003 | Plan | 1 | APPROVE | `.reviews/R003-plan-step1.md` |
 | R004 | Code | 1 | APPROVE | `.reviews/R004-code-step1.md` |
+| R005 | Plan | 2 | APPROVE | `.reviews/R005-plan-step2.md` |
 
 ## Discoveries
 
@@ -118,3 +119,4 @@
 | 2026-07-10 12:34 | Review R002 | plan Step 1: REVISE |
 | 2026-07-10 12:36 | Review R003 | plan Step 1: APPROVE |
 | 2026-07-10 12:38 | Review R004 | code Step 1: APPROVE |
+| 2026-07-10 12:39 | Review R005 | plan Step 2: APPROVE |

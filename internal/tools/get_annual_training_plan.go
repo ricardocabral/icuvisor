@@ -22,7 +22,7 @@ const (
 	annualTrainingPlanEventLimit = 500
 	annualTrainingPlanMaxRange   = 366
 	annualTrainingPlanEndpoint   = "/athlete/{id}/events"
-	annualTrainingPlanSchema     = "annual_training_plan.v1"
+	annualTrainingPlanSchema     = "annual_training_plan.v2"
 )
 
 type annualTrainingPlanRequest struct {
@@ -34,18 +34,20 @@ type annualTrainingPlanRequest struct {
 }
 
 type annualTrainingPlanResponse struct {
-	Summary     annualTrainingPlanSummary      `json:"summary"`
-	Phases      []annualTrainingPlanPhase      `json:"phases"`
-	Weeks       []annualTrainingPlanWeek       `json:"weeks"`
-	Notes       []annualTrainingPlanNote       `json:"notes"`
-	Unavailable *annualTrainingPlanUnavailable `json:"unavailable,omitempty"`
-	Meta        annualTrainingPlanMeta         `json:"_meta"`
+	Summary      annualTrainingPlanSummary      `json:"summary"`
+	Phases       []annualTrainingPlanPhase      `json:"phases"`
+	Weeks        []annualTrainingPlanWeek       `json:"weeks"`
+	Notes        []annualTrainingPlanNote       `json:"notes"`
+	ContextNotes []annualTrainingPlanNote       `json:"context_notes"`
+	Unavailable  *annualTrainingPlanUnavailable `json:"unavailable,omitempty"`
+	Meta         annualTrainingPlanMeta         `json:"_meta"`
 }
 
 type annualTrainingPlanSummary struct {
 	PhaseCount                int           `json:"phase_count"`
 	WeekCount                 int           `json:"week_count"`
-	NoteCount                 int           `json:"note_count"`
+	ATPNoteCount              int           `json:"atp_note_count"`
+	ContextNoteCount          int           `json:"context_note_count"`
 	TargetEventCount          int           `json:"target_event_count"`
 	WeeksWithLoadTargets      int           `json:"weeks_with_load_targets"`
 	TotalLoadTarget           float64       `json:"total_load_target"`
@@ -83,9 +85,10 @@ type annualTrainingPlanWeek struct {
 	TimeTargetSeconds      *int                            `json:"time_target_seconds,omitempty"`
 	DistanceTargetMeters   *float64                        `json:"distance_target_meters,omitempty"`
 	MissingLoadTargetCount int                             `json:"missing_load_target_count"`
-	NoteCount              int                             `json:"note_count"`
-	RecoveryNoteCount      int                             `json:"recovery_note_count"`
-	NoteIDs                []string                        `json:"note_ids"`
+	ATPNoteCount           int                             `json:"atp_note_count"`
+	ContextNoteCount       int                             `json:"context_note_count"`
+	ATPNoteIDs             []string                        `json:"atp_note_ids"`
+	ContextNoteIDs         []string                        `json:"context_note_ids"`
 	TargetEvents           []annualTrainingPlanTargetEvent `json:"target_events,omitempty"`
 }
 
@@ -103,13 +106,14 @@ type annualTrainingPlanTargetEvent struct {
 type annualTrainingPlanNote struct {
 	NoteID         string         `json:"note_id"`
 	SourceEventID  string         `json:"source_event_id,omitempty"`
+	Status         string         `json:"status"`
+	PlanApplied    string         `json:"plan_applied,omitempty"`
 	Name           string         `json:"name,omitempty"`
 	Type           string         `json:"type,omitempty"`
 	StartDate      string         `json:"start_date"`
 	EndDate        string         `json:"end_date"`
 	Description    string         `json:"description,omitempty"`
 	Tags           []string       `json:"tags,omitempty"`
-	RecoveryHint   bool           `json:"recovery_hint"`
 	PhaseIDs       []string       `json:"phase_ids"`
 	WeekStartDates []string       `json:"week_start_dates"`
 	Full           map[string]any `json:"full,omitempty"`
@@ -129,7 +133,8 @@ type annualTrainingPlanMeta struct {
 	PeriodizationEventCount int                                `json:"periodization_event_count"`
 	PlanEventCount          int                                `json:"plan_event_count"`
 	TargetEventCount        int                                `json:"target_event_count"`
-	NoteEventCount          int                                `json:"note_event_count"`
+	ATPNoteEventCount       int                                `json:"atp_note_event_count"`
+	ContextNoteEventCount   int                                `json:"context_note_event_count"`
 	MalformedEventCount     int                                `json:"malformed_event_count"`
 	Truncated               bool                               `json:"truncated"`
 	IncludeFull             bool                               `json:"include_full"`
@@ -153,10 +158,11 @@ type annualTrainingPlanProjectionWeeklyTarget struct {
 }
 
 type annualTrainingPlanEvents struct {
-	plans     []annualTrainingPlanEvent
-	targets   []annualTrainingPlanEvent
-	notes     []annualTrainingPlanEvent
-	malformed int
+	plans        []annualTrainingPlanEvent
+	targets      []annualTrainingPlanEvent
+	notes        []annualTrainingPlanEvent
+	contextNotes []annualTrainingPlanEvent
+	malformed    int
 }
 
 type annualTrainingPlanEvent struct {
@@ -251,15 +257,18 @@ func shapeAnnualTrainingPlanResponse(events []intervals.Event, args annualTraini
 	newest, _ := time.Parse(time.DateOnly, args.Newest)
 	classified := annualTrainingPlanPeriodizationEvents(events)
 	periodizationCount := len(classified.plans) + len(classified.targets) + len(classified.notes)
+	classifiedCount := periodizationCount + len(classified.contextNotes)
 	phases := []annualTrainingPlanPhase{}
 	weeks := []annualTrainingPlanWeek{}
 	notes := []annualTrainingPlanNote{}
+	contextNotes := []annualTrainingPlanNote{}
 	phaseCaveats := []string{}
 	weekCaveats := []string{}
-	if periodizationCount > 0 {
+	if classifiedCount > 0 {
 		phases, phaseCaveats = annualTrainingPlanPhases(classified.plans, args.IncludeFull, oldest, newest)
-		notes = annualTrainingPlanNotes(classified.notes, phases, oldest, newest, args.IncludeFull)
-		weeks, weekCaveats = annualTrainingPlanWeeks(classified.targets, phases, notes, oldest, newest, args.IncludeFull)
+		notes = annualTrainingPlanNotes(classified.notes, phases, oldest, newest, args.IncludeFull, "atp_generated", "note")
+		contextNotes = annualTrainingPlanNotes(classified.contextNotes, phases, oldest, newest, args.IncludeFull, "personal_context", "context_note")
+		weeks, weekCaveats = annualTrainingPlanWeeks(classified.targets, phases, notes, contextNotes, oldest, newest, args.IncludeFull)
 	}
 	bridge := annualTrainingPlanBridge(weeks)
 	caveats := []string{"upstream athlete-level periodization parameters such as ramp rate, recovery cadence, taper percent, and intensity distribution are not exposed; this summarizes calendar PLAN/TARGET/NOTE events only"}
@@ -272,7 +281,7 @@ func shapeAnnualTrainingPlanResponse(events []intervals.Event, args annualTraini
 	if truncated {
 		caveats = append(caveats, "event scan reached the requested limit; additional periodization events may exist")
 	}
-	summary := annualTrainingPlanSummary{PhaseCount: len(phases), WeekCount: len(weeks), NoteCount: len(notes), TargetEventCount: len(classified.targets), DateRange: dateRangeMeta{Oldest: args.Oldest, Newest: args.Newest}}
+	summary := annualTrainingPlanSummary{PhaseCount: len(phases), WeekCount: len(weeks), ATPNoteCount: len(notes), ContextNoteCount: len(contextNotes), TargetEventCount: len(classified.targets), DateRange: dateRangeMeta{Oldest: args.Oldest, Newest: args.Newest}}
 	for _, week := range weeks {
 		if week.LoadTarget != nil {
 			summary.WeeksWithLoadTargets++
@@ -296,9 +305,9 @@ func shapeAnnualTrainingPlanResponse(events []intervals.Event, args annualTraini
 			}
 		}
 	}
-	payload := annualTrainingPlanResponse{Summary: summary, Phases: phases, Weeks: weeks, Notes: notes, Meta: annualTrainingPlanMeta{SourceEndpoint: annualTrainingPlanEndpoint, DateRange: dateRangeMeta{Oldest: args.Oldest, Newest: args.Newest}, Timezone: timezoneName, Limit: args.Limit, FetchedEventCount: len(events), PeriodizationEventCount: periodizationCount, PlanEventCount: len(classified.plans), TargetEventCount: len(classified.targets), NoteEventCount: len(classified.notes), MalformedEventCount: classified.malformed, Truncated: truncated, IncludeFull: args.IncludeFull, SchemaVersion: annualTrainingPlanSchema, Caveats: uniqueStrings(caveats), ProjectionBridge: bridge}}
+	payload := annualTrainingPlanResponse{Summary: summary, Phases: phases, Weeks: weeks, Notes: notes, ContextNotes: contextNotes, Meta: annualTrainingPlanMeta{SourceEndpoint: annualTrainingPlanEndpoint, DateRange: dateRangeMeta{Oldest: args.Oldest, Newest: args.Newest}, Timezone: timezoneName, Limit: args.Limit, FetchedEventCount: len(events), PeriodizationEventCount: periodizationCount, PlanEventCount: len(classified.plans), TargetEventCount: len(classified.targets), ATPNoteEventCount: len(classified.notes), ContextNoteEventCount: len(classified.contextNotes), MalformedEventCount: classified.malformed, Truncated: truncated, IncludeFull: args.IncludeFull, SchemaVersion: annualTrainingPlanSchema, Caveats: uniqueStrings(caveats), ProjectionBridge: bridge}}
 	if periodizationCount == 0 {
-		payload.Unavailable = &annualTrainingPlanUnavailable{Reason: "no_periodization_events", Detail: "no PLAN, TARGET, or NOTE calendar events were returned for the requested range"}
+		payload.Unavailable = &annualTrainingPlanUnavailable{Reason: "no_periodization_events", Detail: "no PLAN, TARGET, or ATP-generated NOTE calendar events were returned for the requested range; personal NOTE rows, when present, are retained separately in context_notes"}
 	}
 	return payload
 }
@@ -326,12 +335,17 @@ func annualTrainingPlanPeriodizationEvents(events []intervals.Event) annualTrain
 		case "TARGET":
 			out.targets = append(out.targets, item)
 		case "NOTE":
-			out.notes = append(out.notes, item)
+			if strings.TrimSpace(stringValue(event.PlanApplied)) != "" {
+				out.notes = append(out.notes, item)
+			} else {
+				out.contextNotes = append(out.contextNotes, item)
+			}
 		}
 	}
 	sortAnnualTrainingPlanEvents(out.plans)
 	sortAnnualTrainingPlanEvents(out.targets)
 	sortAnnualTrainingPlanEvents(out.notes)
+	sortAnnualTrainingPlanEvents(out.contextNotes)
 	return out
 }
 
@@ -388,7 +402,7 @@ func annualTrainingPlanPhases(events []annualTrainingPlanEvent, includeFull bool
 	return phases, caveats
 }
 
-func annualTrainingPlanNotes(events []annualTrainingPlanEvent, phases []annualTrainingPlanPhase, oldest time.Time, newest time.Time, includeFull bool) []annualTrainingPlanNote {
+func annualTrainingPlanNotes(events []annualTrainingPlanEvent, phases []annualTrainingPlanPhase, oldest time.Time, newest time.Time, includeFull bool, status string, idPrefix string) []annualTrainingPlanNote {
 	notes := make([]annualTrainingPlanNote, 0, len(events))
 	for _, event := range events {
 		start := event.startDate
@@ -402,7 +416,7 @@ func annualTrainingPlanNotes(events []annualTrainingPlanEvent, phases []annualTr
 		if end.After(newest) {
 			end = newest
 		}
-		note := annualTrainingPlanNote{NoteID: annualTrainingPlanRowID("note", event.event.ID, len(notes)+1), SourceEventID: event.event.ID, Name: stringValue(event.event.Name), Type: stringValue(event.event.Type), StartDate: formatDate(start), EndDate: formatDate(end), Description: stringValue(event.event.Description), Tags: event.tags, RecoveryHint: annualTrainingPlanRecoveryHint(event), PhaseIDs: annualTrainingPlanOverlappingPhaseIDs(phases, start, end), WeekStartDates: annualTrainingPlanWeekStarts(start, end)}
+		note := annualTrainingPlanNote{NoteID: annualTrainingPlanRowID(idPrefix, event.event.ID, len(notes)+1), SourceEventID: event.event.ID, Status: status, PlanApplied: strings.TrimSpace(stringValue(event.event.PlanApplied)), Name: stringValue(event.event.Name), Type: stringValue(event.event.Type), StartDate: formatDate(start), EndDate: formatDate(end), Description: stringValue(event.event.Description), Tags: event.tags, PhaseIDs: annualTrainingPlanOverlappingPhaseIDs(phases, start, end), WeekStartDates: annualTrainingPlanWeekStarts(start, end)}
 		if includeFull {
 			note.Full = cloneJSONMap(event.event.Raw)
 		}
@@ -411,14 +425,14 @@ func annualTrainingPlanNotes(events []annualTrainingPlanEvent, phases []annualTr
 	return notes
 }
 
-func annualTrainingPlanWeeks(events []annualTrainingPlanEvent, phases []annualTrainingPlanPhase, notes []annualTrainingPlanNote, oldest time.Time, newest time.Time, includeFull bool) ([]annualTrainingPlanWeek, []string) {
+func annualTrainingPlanWeeks(events []annualTrainingPlanEvent, phases []annualTrainingPlanPhase, notes []annualTrainingPlanNote, contextNotes []annualTrainingPlanNote, oldest time.Time, newest time.Time, includeFull bool) ([]annualTrainingPlanWeek, []string) {
 	weeksByStart := map[string]*annualTrainingPlanWeek{}
 	for weekStart := isoWeekStart(oldest); !weekStart.After(newest); weekStart = weekStart.AddDate(0, 0, 7) {
 		weekEnd := weekStart.AddDate(0, 0, 6)
 		overlapStart := maxDate(weekStart, oldest)
 		overlapEnd := minDate(weekEnd, newest)
 		key := formatDate(weekStart)
-		weeksByStart[key] = &annualTrainingPlanWeek{WeekStartDate: key, WeekEndDate: formatDate(weekEnd), RangeOverlapStart: formatDate(overlapStart), RangeOverlapEnd: formatDate(overlapEnd), PartialWeek: weekStart.Before(oldest) || weekEnd.After(newest), PhaseIDs: annualTrainingPlanOverlappingPhaseIDs(phases, overlapStart, overlapEnd), NoteIDs: []string{}}
+		weeksByStart[key] = &annualTrainingPlanWeek{WeekStartDate: key, WeekEndDate: formatDate(weekEnd), RangeOverlapStart: formatDate(overlapStart), RangeOverlapEnd: formatDate(overlapEnd), PartialWeek: weekStart.Before(oldest) || weekEnd.After(newest), PhaseIDs: annualTrainingPlanOverlappingPhaseIDs(phases, overlapStart, overlapEnd), ATPNoteIDs: []string{}, ContextNoteIDs: []string{}}
 	}
 	for _, event := range events {
 		week := weeksByStart[formatDate(isoWeekStart(event.startDate))]
@@ -447,17 +461,25 @@ func annualTrainingPlanWeeks(events []annualTrainingPlanEvent, phases []annualTr
 			if week == nil {
 				continue
 			}
-			week.NoteCount++
-			if note.RecoveryHint {
-				week.RecoveryNoteCount++
+			week.ATPNoteCount++
+			week.ATPNoteIDs = append(week.ATPNoteIDs, note.NoteID)
+		}
+	}
+	for _, note := range contextNotes {
+		for _, weekStart := range note.WeekStartDates {
+			week := weeksByStart[weekStart]
+			if week == nil {
+				continue
 			}
-			week.NoteIDs = append(week.NoteIDs, note.NoteID)
+			week.ContextNoteCount++
+			week.ContextNoteIDs = append(week.ContextNoteIDs, note.NoteID)
 		}
 	}
 	weeks := make([]annualTrainingPlanWeek, 0, len(weeksByStart))
 	for _, week := range weeksByStart {
 		sort.Strings(week.PhaseIDs)
-		sort.Strings(week.NoteIDs)
+		sort.Strings(week.ATPNoteIDs)
+		sort.Strings(week.ContextNoteIDs)
 		weeks = append(weeks, *week)
 	}
 	sort.SliceStable(weeks, func(i, j int) bool { return weeks[i].WeekStartDate < weeks[j].WeekStartDate })
@@ -518,19 +540,6 @@ func annualTrainingPlanTimeTarget(event intervals.Event) *int {
 		return event.TimeTarget
 	}
 	return event.ElapsedTimeTarget
-}
-
-func annualTrainingPlanRecoveryHint(event annualTrainingPlanEvent) bool {
-	parts := make([]string, 0, len(event.tags)+3)
-	parts = append(parts, stringValue(event.event.Name), stringValue(event.event.Type), stringValue(event.event.Description))
-	parts = append(parts, event.tags...)
-	text := strings.ToLower(strings.Join(parts, " "))
-	for _, needle := range []string{"recovery", "rest", "taper", "deload"} {
-		if strings.Contains(text, needle) {
-			return true
-		}
-	}
-	return false
 }
 
 func annualTrainingPlanTags(event intervals.Event) []string {
