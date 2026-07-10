@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
-**Review Counter:** 4
+**Review Counter:** 5
 **Iteration:** 1
 **Size:** L
 
@@ -37,12 +37,12 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Required recalcHrZones query implemented
-- [ ] Apply PUT sends no date or semantic body
-- [ ] Update no longer invokes apply
-- [ ] Client contract tests pass
-- [ ] R004: Use retry-safe body-plus-query and bodyless PUT transport helpers without changing existing callers
-- [ ] R004: Exact wire coverage verifies true/false query, no implicit apply, and a zero-byte bodyless apply request
+- [x] Required recalcHrZones query implemented
+- [x] Apply PUT sends no date or semantic body
+- [x] Update no longer invokes apply
+- [x] Client contract tests pass
+- [x] R004: Use retry-safe body-plus-query and bodyless PUT transport helpers without changing existing callers
+- [x] R004: Exact wire coverage verifies true/false query, no implicit apply, and a zero-byte bodyless apply request
 
 ---
 
@@ -119,3 +119,4 @@
 | 2026-07-10 11:42 | Review R002 | plan Step 1: APPROVE |
 | 2026-07-10 11:45 | Review R003 | code Step 1: APPROVE |
 | 2026-07-10 11:47 | Review R004 | plan Step 2: REVISE |
+| 2026-07-10 11:50 | Review R005 | plan Step 2: APPROVE |

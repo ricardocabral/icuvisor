@@ -209,18 +209,35 @@ func writeEventStartDateLocal(date string, category string) string {
 }
 
 func (c *Client) doJSONBody(ctx context.Context, method string, body any, out any, pathParts ...string) error {
+	return c.doJSONBodyQuery(ctx, method, body, out, nil, pathParts...)
+}
+
+func (c *Client) doJSONBodyQuery(ctx context.Context, method string, body any, out any, query url.Values, pathParts ...string) error {
 	payload, err := json.Marshal(body)
 	if err != nil {
 		return fmt.Errorf("encoding intervals.icu request: %w", err)
 	}
+	return c.doJSONPayload(ctx, method, payload, out, query, pathParts...)
+}
+
+func (c *Client) doJSONNoBody(ctx context.Context, method string, out any, pathParts ...string) error {
+	return c.doJSONPayload(ctx, method, nil, out, nil, pathParts...)
+}
+
+func (c *Client) doJSONPayload(ctx context.Context, method string, payload []byte, out any, query url.Values, pathParts ...string) error {
 	for attempt := 1; ; attempt++ {
 		req, err := c.newRequest(ctx, method, pathParts...)
 		if err != nil {
 			return err
 		}
-		req.Body = io.NopCloser(bytes.NewReader(payload))
-		req.ContentLength = int64(len(payload))
-		req.Header.Set("Content-Type", "application/json")
+		if len(query) > 0 {
+			req.URL.RawQuery = query.Encode()
+		}
+		if payload != nil {
+			req.Body = io.NopCloser(bytes.NewReader(payload))
+			req.ContentLength = int64(len(payload))
+			req.Header.Set("Content-Type", "application/json")
+		}
 		req.Header.Set("Accept", "application/json")
 
 		resp, err := c.httpClient.Do(req)

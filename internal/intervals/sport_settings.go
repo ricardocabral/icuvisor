@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -12,6 +13,7 @@ import (
 type WriteSportSettingsParams struct {
 	SportSettingID int
 	EffectiveDate  string
+	RecalcHRZones  bool
 	FTP            *int
 	ThresholdHR    *int
 	ThresholdPace  *SportSettingsPace
@@ -32,7 +34,7 @@ type SportSettingsZoneDefinition struct {
 	Names      []string
 }
 
-// UpdateSportSettings updates sparse sport settings and applies them from the effective date when supplied.
+// UpdateSportSettings updates sparse sport settings.
 func (c *Client) UpdateSportSettings(ctx context.Context, params WriteSportSettingsParams) (SportSettings, error) {
 	if params.SportSettingID <= 0 {
 		return SportSettings{}, fmt.Errorf("updating sport settings: sport setting ID is required")
@@ -43,29 +45,21 @@ func (c *Client) UpdateSportSettings(ctx context.Context, params WriteSportSetti
 	}
 	var setting SportSettings
 	id := strconv.Itoa(params.SportSettingID)
-	if err := c.doJSONBody(ctx, http.MethodPut, body, &setting, "athlete", c.athleteID, "sport-settings", id); err != nil {
+	query := url.Values{"recalcHrZones": []string{strconv.FormatBool(params.RecalcHRZones)}}
+	if err := c.doJSONBodyQuery(ctx, http.MethodPut, body, &setting, query, "athlete", c.athleteID, "sport-settings", id); err != nil {
 		return SportSettings{}, fmt.Errorf("updating sport settings %s: %w", id, err)
-	}
-	if effectiveDate := strings.TrimSpace(params.EffectiveDate); effectiveDate != "" {
-		if err := c.ApplySportSettings(ctx, params.SportSettingID, effectiveDate); err != nil {
-			return SportSettings{}, err
-		}
 	}
 	return setting, nil
 }
 
 // ApplySportSettings asks upstream to recompute activities affected by a sport-setting change.
-func (c *Client) ApplySportSettings(ctx context.Context, sportSettingID int, oldest string) error {
+func (c *Client) ApplySportSettings(ctx context.Context, sportSettingID int) error {
 	if sportSettingID <= 0 {
 		return fmt.Errorf("applying sport settings: sport setting ID is required")
 	}
-	body := map[string]any{}
-	if oldest = strings.TrimSpace(oldest); oldest != "" {
-		body["oldest"] = oldest
-	}
 	var response map[string]any
 	id := strconv.Itoa(sportSettingID)
-	if err := c.doJSONBody(ctx, http.MethodPut, body, &response, "athlete", c.athleteID, "sport-settings", id, "apply"); err != nil {
+	if err := c.doJSONNoBody(ctx, http.MethodPut, &response, "athlete", c.athleteID, "sport-settings", id, "apply"); err != nil {
 		return fmt.Errorf("applying sport settings %s: %w", id, err)
 	}
 	return nil

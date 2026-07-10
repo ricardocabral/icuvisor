@@ -8,11 +8,10 @@ import (
 	"testing"
 )
 
-func TestUpdateSportSettingsSendsSparseBodyAndApplyDate(t *testing.T) {
+func TestUpdateSportSettingsSendsSparseBodyWithoutApply(t *testing.T) {
 	t.Parallel()
 
 	var updateBody map[string]any
-	var applyBody map[string]any
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/athlete/i12345/sport-settings/7":
@@ -24,15 +23,6 @@ func TestUpdateSportSettingsSendsSparseBodyAndApplyDate(t *testing.T) {
 			}
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"id":7,"type":"Ride","ftp":275,"lthr":171,"threshold_pace":255,"pace_units":"MINS_KM"}`))
-		case "/athlete/i12345/sport-settings/7/apply":
-			if r.Method != http.MethodPut {
-				t.Fatalf("method = %s, want PUT", r.Method)
-			}
-			if err := json.NewDecoder(r.Body).Decode(&applyBody); err != nil {
-				t.Fatalf("decode apply body: %v", err)
-			}
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"ok":true}`))
 		default:
 			t.Fatalf("unexpected path %s", r.URL.Path)
 		}
@@ -43,7 +33,7 @@ func TestUpdateSportSettingsSendsSparseBodyAndApplyDate(t *testing.T) {
 	ftp := 275
 	lthr := 171
 	pace := SportSettingsPace{Value: 255, Unit: "MINS_KM"}
-	got, err := client.UpdateSportSettings(context.Background(), WriteSportSettingsParams{SportSettingID: 7, EffectiveDate: "2026-05-01", FTP: &ftp, ThresholdHR: &lthr, ThresholdPace: &pace})
+	got, err := client.UpdateSportSettings(context.Background(), WriteSportSettingsParams{SportSettingID: 7, RecalcHRZones: true, FTP: &ftp, ThresholdHR: &lthr, ThresholdPace: &pace})
 	if err != nil {
 		t.Fatalf("UpdateSportSettings() error = %v", err)
 	}
@@ -56,9 +46,6 @@ func TestUpdateSportSettingsSendsSparseBodyAndApplyDate(t *testing.T) {
 	if updateBody["power_zones"] != nil || updateBody["hr_zones"] != nil || updateBody["pace_zones"] != nil {
 		t.Fatalf("update body = %#v, want no zone fields when zones omitted", updateBody)
 	}
-	if applyBody["oldest"] != "2026-05-01" {
-		t.Fatalf("apply body = %#v, want effective date oldest", applyBody)
-	}
 }
 
 func TestUpdateSportSettingsSendsZoneOverwriteFieldsWhenProvided(t *testing.T) {
@@ -66,11 +53,6 @@ func TestUpdateSportSettingsSendsZoneOverwriteFieldsWhenProvided(t *testing.T) {
 
 	var updateBody map[string]any
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/athlete/i12345/sport-settings/7/apply" {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"ok":true}`))
-			return
-		}
 		if r.URL.Path != "/athlete/i12345/sport-settings/7" {
 			t.Fatalf("unexpected path %s", r.URL.Path)
 		}
@@ -83,7 +65,7 @@ func TestUpdateSportSettingsSendsZoneOverwriteFieldsWhenProvided(t *testing.T) {
 	defer server.Close()
 
 	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
-	_, err := client.UpdateSportSettings(context.Background(), WriteSportSettingsParams{SportSettingID: 7, EffectiveDate: "2026-05-01", ZonesProvided: true, Zones: []SportSettingsZoneDefinition{{Kind: "power", Boundaries: []float64{100.2, 200.8}, Names: []string{"Z1", "Z2"}}}})
+	_, err := client.UpdateSportSettings(context.Background(), WriteSportSettingsParams{SportSettingID: 7, RecalcHRZones: true, ZonesProvided: true, Zones: []SportSettingsZoneDefinition{{Kind: "power", Boundaries: []float64{100.2, 200.8}, Names: []string{"Z1", "Z2"}}}})
 	if err != nil {
 		t.Fatalf("UpdateSportSettings() error = %v", err)
 	}
