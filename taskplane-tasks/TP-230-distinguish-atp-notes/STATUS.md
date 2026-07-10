@@ -1,10 +1,10 @@
 # TP-230: Distinguish ATP-generated notes from personal calendar notes — Status
 
-**Current Step:** Step 3: Update schema and generated surfaces
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 8
+**Review Counter:** 9
 **Iteration:** 1
 **Size:** M
 
@@ -48,7 +48,7 @@
 
 ### Step 3: Update schema and generated surfaces
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Output schema snapshot updated
 - [x] Generated website data updated
@@ -59,7 +59,7 @@
 
 ### Step 4: Testing & Verification
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing
 - [ ] Race suite passing
@@ -91,6 +91,7 @@
 | R006 | Code | 2 | APPROVE | `.reviews/R006-code-step2.md` |
 | R007 | Plan | 3 | APPROVE | `.reviews/R007-plan-step3.md` |
 | R008 | Code | 3 | REVISE | `.reviews/R008-code-step3.md` |
+| R009 | Code | 3 | APPROVE | `.reviews/R009-code-step3.md` |
 
 ## Discoveries
 
@@ -127,3 +128,4 @@
 | 2026-07-10 12:49 | Review R006 | code Step 2: APPROVE |
 | 2026-07-10 12:54 | Review R007 | plan Step 3: APPROVE |
 | 2026-07-10 13:04 | Review R008 | code Step 3: REVISE |
+| 2026-07-10 13:09 | Review R009 | code Step 3: APPROVE |
