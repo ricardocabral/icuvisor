@@ -1,6 +1,6 @@
 # TP-236: Add deterministic power-zone energy analysis — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Lock the numerical and response contract
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
@@ -12,7 +12,7 @@
 
 ### Step 0: Preflight
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -22,7 +22,7 @@
 
 ### Step 1: Lock the numerical and response contract
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Integration and boundary rules defined
 - [ ] Range limits and statuses defined
