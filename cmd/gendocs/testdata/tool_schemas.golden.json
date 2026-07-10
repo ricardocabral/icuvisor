@@ -1783,7 +1783,7 @@
   },
   "get_annual_training_plan": {
     "name": "get_annual_training_plan",
-    "description": "Use when the prompt asks about annual training plan, season phase, weekly load/TSS targets, recovery weeks, taper context, or periodization summary; do not manually join raw get_events rows in chat.",
+    "description": "Use when the prompt asks about annual training plan, season phase, weekly load/TSS targets, recovery weeks, taper context, or periodization summary; plan_applied identifies ATP-generated notes, while personal calendar notes are neutral context, never ATP instructions; do not manually join raw get_events rows in chat.",
     "arguments": [
       {
         "name": "calendar_id",
@@ -1795,7 +1795,7 @@
         "name": "include_full",
         "required": false,
         "type": "boolean",
-        "description": "When true, include raw upstream PLAN/TARGET/NOTE event payloads only on the corresponding phase, target_event, and note rows. Default output is a compact summary.",
+        "description": "When true, include raw upstream PLAN/TARGET/NOTE event payloads only on the corresponding phase, target_event, ATP note, and personal context_note rows. Default output is a compact provenance-aware summary.",
         "default": false
       },
       {

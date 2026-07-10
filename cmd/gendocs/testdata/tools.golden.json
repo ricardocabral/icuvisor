@@ -484,7 +484,7 @@
     "group": "workout-library",
     "tier": "full",
     "safety": "read",
-    "summary": "Use when the prompt asks about annual training plan, season phase, weekly load/TSS targets, recovery weeks, taper context, or periodization summary; do not manually join raw get_events rows in chat.",
+    "summary": "Use when the prompt asks about annual training plan, season phase, weekly load/TSS targets, recovery weeks, taper context, or periodization summary; plan_applied identifies ATP-generated notes, while personal calendar notes are neutral context, never ATP instructions; do not manually join raw get_events rows in chat.",
     "anchor": "get_annual_training_plan"
   },
   {

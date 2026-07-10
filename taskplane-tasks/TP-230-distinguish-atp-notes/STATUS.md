@@ -53,7 +53,7 @@
 - [x] Output schema snapshot updated
 - [x] Generated website data updated
 - [x] Tool description clarifies personal context
-- [ ] Gendocs golden fixtures updated and generator test passes
+- [x] Gendocs golden fixtures updated and generator test passes
 
 ---
 
