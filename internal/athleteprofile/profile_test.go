@@ -1,6 +1,7 @@
 package athleteprofile
 
 import (
+	"math"
 	"strings"
 	"testing"
 
@@ -23,6 +24,21 @@ func TestNewResponseTreatsNonePaceUnitsAsKnownMPSFallback(t *testing.T) {
 	}
 	if len(sport.PaceZonesPercentOfThreshold) != 2 || sport.PaceZonesPercentOfThreshold[0] != 77.5 || sport.PaceZonesPercentOfThreshold[1] != 100 {
 		t.Fatalf("NONE pace zones = %#v, want unchanged percentages", sport.PaceZonesPercentOfThreshold)
+	}
+}
+
+func TestNewResponseFallsBackToMPSWhenPaceDisplayOverflows(t *testing.T) {
+	response := NewResponse(intervals.AthleteWithSportSettings{
+		ID: "i12345",
+		SportSettings: []intervals.SportSettings{{
+			ThresholdPace: math.SmallestNonzeroFloat64,
+			PaceUnits:     "MINS_KM",
+		}},
+	}, "test", "UTC", false)
+
+	sport := response.SportSettings[0]
+	if sport.ThresholdPaceSecondsPerKM != nil || sport.ThresholdPaceMetersPerSecond == nil || *sport.ThresholdPaceMetersPerSecond != math.SmallestNonzeroFloat64 {
+		t.Fatalf("overflowing pace display = %+v, want finite m/s fallback", sport)
 	}
 }
 

@@ -30,7 +30,7 @@
 - [x] Compatibility migration decided
 - [x] R002: Apply the declared m/s and percentage response migration before advertising it in `_meta`
 - [x] R003: Propagate every recognized pace display unit and treat `NONE` as a known m/s fallback
-- [ ] R004: Reject finite pace inputs whose reciprocal conversion overflows
+- [x] R004: Reject finite pace inputs whose reciprocal conversion overflows
 
 ---
 

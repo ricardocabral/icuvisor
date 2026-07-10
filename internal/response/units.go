@@ -48,7 +48,11 @@ func PaceSecondsFromMetersPerSecond(metersPerSecond float64, paceUnit units.Unit
 	if !ok {
 		return 0, false
 	}
-	return distanceMeters / metersPerSecond, true
+	seconds := distanceMeters / metersPerSecond
+	if seconds <= 0 || math.IsNaN(seconds) || math.IsInf(seconds, 0) {
+		return 0, false
+	}
+	return seconds, true
 }
 
 // PaceMetersPerSecondFromSeconds converts an explicit seconds-per-distance pace
@@ -61,7 +65,11 @@ func PaceMetersPerSecondFromSeconds(seconds float64, paceUnit units.Unit) (float
 	if !ok {
 		return 0, false
 	}
-	return distanceMeters / seconds, true
+	metersPerSecond := distanceMeters / seconds
+	if metersPerSecond <= 0 || math.IsNaN(metersPerSecond) || math.IsInf(metersPerSecond, 0) {
+		return 0, false
+	}
+	return metersPerSecond, true
 }
 
 // UnitSystem is the athlete's response-boundary distance unit preference.

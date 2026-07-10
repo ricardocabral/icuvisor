@@ -164,6 +164,15 @@ func TestPaceMetersPerSecondConversionsRejectInvalidValues(t *testing.T) {
 	}
 }
 
+func TestPaceMetersPerSecondConversionsRejectOverflowingResults(t *testing.T) {
+	if _, ok := PaceSecondsFromMetersPerSecond(math.SmallestNonzeroFloat64, units.UnitMinsKM); ok {
+		t.Fatal("PaceSecondsFromMetersPerSecond accepted an overflowing read conversion")
+	}
+	if _, ok := PaceMetersPerSecondFromSeconds(math.SmallestNonzeroFloat64, units.UnitMinsKM); ok {
+		t.Fatal("PaceMetersPerSecondFromSeconds accepted an overflowing write conversion")
+	}
+}
+
 func TestUnitSystemDistanceHelpers(t *testing.T) {
 	if got := UnitSystemMetric.DistanceFieldName("distance"); got != "distance_km" {
 		t.Fatalf("metric field = %q", got)
