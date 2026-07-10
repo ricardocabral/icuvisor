@@ -16,6 +16,12 @@ The MCP `update_sport_settings` input exposes this as optional `recalc_hr_zones`
 
 The upstream operation is asynchronous and its public contract does not provide a date boundary. Consequently, icuvisor does not claim a date-scoped historical recomputation.
 
+## Client implementation boundary
+
+`WriteSportSettingsParams` carries a resolved `RecalcHRZones bool`. The update client encodes it as the required `recalcHrZones` query key with `strconv.FormatBool`; the sparse JSON body never contains that option. The MCP decoder, rather than a client zero-value heuristic, resolves omission to true before constructing these parameters.
+
+`ApplySportSettings` takes only `(ctx, sportSettingID)` so callers cannot pass a date. Its transport uses a bodyless PUT helper that creates a fresh `http.Request` with a nil body for each retry, retains the existing retry/error behavior, and closes each response body. The update path uses a body-plus-query helper with the same retry and error semantics. Neither helper changes existing callers. `UpdateSportSettings` does not call apply; an internal `EffectiveDate`, if temporarily retained during migration, has no transport effect and is removed with the MCP producer.
+
 ## Response metadata
 
 The update response reports `hr_zone_recalculation_requested`, the boolean sent as `recalcHrZones`. This describes the requested update option only; it does not claim that activity recomputation is pending or complete. The former `effective_date` and `recompute_pending` metadata claims are removed.

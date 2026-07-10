@@ -1,10 +1,10 @@
 # TP-228: Align sport-settings update and apply requests with live OpenAPI — Status
 
-**Current Step:** Step 1: Define the corrected write boundary
+**Current Step:** Step 2: Align the intervals.icu client
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** L
 
@@ -35,12 +35,14 @@
 
 ### Step 2: Align the intervals.icu client
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Required recalcHrZones query implemented
 - [ ] Apply PUT sends no date or semantic body
 - [ ] Update no longer invokes apply
 - [ ] Client contract tests pass
+- [ ] R004: Use retry-safe body-plus-query and bodyless PUT transport helpers without changing existing callers
+- [ ] R004: Exact wire coverage verifies true/false query, no implicit apply, and a zero-byte bodyless apply request
 
 ---
 
@@ -112,6 +114,8 @@
 ## Notes
 
 - R001 plan review: legacy `effective_date` must be rejected by strict decoding before an upstream request; response metadata may only report the requested HR-zone recalculation boolean.
+- R004 plan review: client resolves no input defaults; it encodes a resolved `RecalcHRZones` bool and uses body-plus-query update and bodyless-PUT apply transports that preserve retries and 422 handling.
 | 2026-07-10 11:40 | Review R001 | plan Step 1: REVISE |
 | 2026-07-10 11:42 | Review R002 | plan Step 1: APPROVE |
 | 2026-07-10 11:45 | Review R003 | code Step 1: APPROVE |
+| 2026-07-10 11:47 | Review R004 | plan Step 2: REVISE |
