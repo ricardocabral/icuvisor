@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 17
+**Review Counter:** 18
 **Iteration:** 3
 **Size:** L
 
@@ -124,7 +124,12 @@
 
 ### Step 4: Align roadmap and product contract
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
+
+<!-- R018 revision items -->
+- [ ] R018-1: Add explicit v2.0 acceptance criteria for the future Plan Filler constraint validator without claiming its tool/write path is shipped
+- [ ] R018-2: Record the PRD/changelog review and no-change rationale for this internal unregistered validator
+- [ ] R018-3: Verify roadmap/design boundary wording with a focused documentation diff review
 
 - [ ] v2.0 acceptance criteria updated
 - [ ] v2.2 boundary clarified
@@ -200,3 +205,4 @@
 | 2026-07-10 16:00 | Review R015 | code Step 1: UNAVAILABLE |
 | 2026-07-10 15:54 | Review R016 | plan Step 3: REVISE |
 | 2026-07-10 15:59 | Review R017 | code Step 3: APPROVE |
+| 2026-07-10 16:01 | Review R018 | plan Step 4: REVISE |
