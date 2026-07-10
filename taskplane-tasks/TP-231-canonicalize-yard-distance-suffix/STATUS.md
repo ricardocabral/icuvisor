@@ -24,15 +24,15 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Add yrd, yard, yards to distanceTokenRE (before yd in alternation)
-- [ ] Update workoutDistanceUnits: Canonical → yrd, add yrd to Aliases, update Description
-- [ ] Update CheatSheet.Examples yard DSL string → 100yrd
-- [ ] Update SyntaxExample distance_yd description → canonicalizes to yrd
-- [ ] Update distance_steps feature description to mention yrd
-- [ ] Update TestWorkoutDocYardDistanceSerializeParseValidate expectation → 100yrd
-- [ ] Update TestWorkoutDocDistanceAliasesRemainCanonical yards row → 100yrd
-- [ ] Add yard_suffix_test.go with alias round-trips and description-token checks
-- [ ] go test ./internal/workoutdoc passes cleanly
+- [x] Add yrd, yard, yards to distanceTokenRE (before yd in alternation)
+- [x] Update workoutDistanceUnits: Canonical → yrd, add yrd to Aliases, update Description
+- [x] Update CheatSheet.Examples yard DSL string → 100yrd
+- [x] Update SyntaxExample distance_yd description → canonicalizes to yrd
+- [x] Update distance_steps feature description to mention yrd
+- [x] Update TestWorkoutDocYardDistanceSerializeParseValidate expectation → 100yrd
+- [x] Update TestWorkoutDocDistanceAliasesRemainCanonical yards row → 100yrd
+- [x] Add yard_suffix_test.go with alias round-trips and description-token checks
+- [x] go test ./internal/workoutdoc passes cleanly
 
 ---
 

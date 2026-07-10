@@ -127,15 +127,15 @@ func TestWorkoutDocYardDistanceSerializeParseValidate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Serialize() error = %v", err)
 	}
-	if got != "- Swim 100yd 95% Pace" {
-		t.Fatalf("Serialize() = %q, want canonical yd", got)
+	if got != "- Swim 100yrd 95% Pace" {
+		t.Fatalf("Serialize() = %q, want canonical yrd", got)
 	}
 	parsed, err := Parse(got)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	if parsed.Steps[0].Distance == nil || parsed.Steps[0].Distance.Unit != "yd" || parsed.Steps[0].Distance.Value != 100 {
-		t.Fatalf("parsed distance = %#v, want 100yd", parsed.Steps[0].Distance)
+	if parsed.Steps[0].Distance == nil || parsed.Steps[0].Distance.Unit != "yrd" || parsed.Steps[0].Distance.Value != 100 {
+		t.Fatalf("parsed distance = %#v, want 100yrd", parsed.Steps[0].Distance)
 	}
 	validated := ValidateDoc(doc)
 	if len(validated.Errors) != 0 {
@@ -155,7 +155,7 @@ func TestWorkoutDocDistanceAliasesRemainCanonical(t *testing.T) {
 		{name: "meters alias remains meters", unit: "meters", want: "- Stride 400mtr 120%"},
 		{name: "kilometers alias remains km", unit: "kilometers", want: "- Stride 0.4km 120%"},
 		{name: "miles alias remains mi", unit: "miles", want: "- Stride 0.25mi 120%"},
-		{name: "yards alias emits yd", unit: "yards", want: "- Stride 25yd 120%"},
+		{name: "yards alias emits yrd", unit: "yards", want: "- Stride 25yrd 120%"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()

@@ -10,7 +10,7 @@ import (
 var (
 	repeatLineRE    = regexp.MustCompile(`^(.*?\S\s+)?([1-9][0-9]*)x$`)
 	durationTokenRE = regexp.MustCompile(`^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$`)
-	distanceTokenRE = regexp.MustCompile(`^([0-9]+(?:\.[0-9]+)?)(mtr|km|mi|yd)$`)
+	distanceTokenRE = regexp.MustCompile(`^([0-9]+(?:\.[0-9]+)?)(mtr|km|mi|yrd|yards?|yd)$`)
 	wattsTokenRE    = regexp.MustCompile(`^([0-9]+(?:\.[0-9]+)?)(?:-([0-9]+(?:\.[0-9]+)?))?w$`)
 	percentTokenRE  = regexp.MustCompile(`^([0-9]+(?:\.[0-9]+)?)(?:-([0-9]+(?:\.[0-9]+)?))?%$`)
 	bpmTokenRE      = regexp.MustCompile(`^([0-9]+(?:\.[0-9]+)?)(?:-([0-9]+(?:\.[0-9]+)?))?bpm$`)
