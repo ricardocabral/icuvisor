@@ -43,7 +43,7 @@ Create or edit the JSON config file you pass with `--config` or `ICUVISOR_CONFIG
 }
 ```
 
-Athlete IDs may be written as `12345` or `i12345`; icuvisor normalizes them to `i12345`.
+Athlete IDs may be written as `12345` or `i12345`. icuvisor trims surrounding whitespace, lowercases only an optional leading `I`, validates the remaining digits, and preserves the ID shape: `12345` remains `12345`, while `i12345` remains `i12345`.
 
 `coach.default_athlete_id` must name an athlete in the roster. In enabled coach mode, it becomes the initial selected athlete and wins over legacy top-level `athlete_id` so startup and session defaults are unambiguous.
 

@@ -13,7 +13,7 @@ HUGO_PORT  ?= 1313
 
 .DEFAULT_GOAL := help
 
-.PHONY: all build install run test test-race cover bench lint fmt fmt-check vet tidy \
+.PHONY: all build install run test test-race docs-guidance-test cover bench lint fmt fmt-check vet tidy \
         download verify generate goimports check clean snapshot release release-preflight \
         validate-registry validate-distribution docs-tools eval-validate eval-tool-routing web-serve web-preview web-build web-clean help
 
@@ -31,6 +31,9 @@ run: ## Run the binary
 
 test: ## Run unit tests
 	$(GO) test ./...
+
+docs-guidance-test: ## Verify published athlete-ID and hosted HTTP guidance
+	python3 scripts/tests/test_docs_guidance.py
 
 test-race: ## Run tests with the race detector
 	$(GO) test -race -count=1 ./...
@@ -51,11 +54,8 @@ fmt: ## Format Go code (gofmt + goimports)
 		echo "goimports not installed; run 'go install golang.org/x/tools/cmd/goimports@latest'"
 
 fmt-check: ## Fail if files are not gofmt/goimports clean
-	@diff=`gofmt -l .`; \
-	if [ -n "$$diff" ]; then echo "gofmt diff:"; echo "$$diff"; exit 1; fi
-	@command -v $(GOIMPORTS) >/dev/null 2>&1 && \
-		diff=`$(GOIMPORTS) -l -local $(PKG) .`; \
-		if [ -n "$$diff" ]; then echo "goimports diff:"; echo "$$diff"; exit 1; fi || true
+	@if gofmt -l . | grep -q .; then echo "gofmt diff:"; gofmt -l .; exit 1; fi
+	@if command -v $(GOIMPORTS) >/dev/null 2>&1; then if $(GOIMPORTS) -l -local $(PKG) . | grep -q .; then echo "goimports diff:"; $(GOIMPORTS) -l -local $(PKG) .; exit 1; fi; fi
 
 goimports: ## Run goimports with the project's local import group
 	$(GOIMPORTS) -w -local $(PKG) .
@@ -84,14 +84,17 @@ release: ## Run a goreleaser release (requires tag + creds)
 	$(GORELEASER) release --clean
 
 release-preflight: validate-distribution ## Run non-publishing release validation checks
-	@output="$$( $(GORELEASER) check 2>&1 )"; status=$$?; printf '%s\n' "$$output"; \
-		if [ $$status -ne 0 ]; then \
-			if printf '%s\n' "$$output" | grep -q "configuration is valid, but uses deprecated properties"; then \
-				echo "warning: local GoReleaser reports a deprecation for the existing Homebrew formula config; workflow-pinned GoReleaser remains authoritative"; \
-			else \
-				exit $$status; \
-			fi; \
-		fi
+	@rm -f /tmp/icuvisor-goreleaser-check.log; \
+	if $(GORELEASER) check > /tmp/icuvisor-goreleaser-check.log 2>&1; then \
+		cat /tmp/icuvisor-goreleaser-check.log; \
+	elif grep -q "configuration is valid, but uses deprecated properties" /tmp/icuvisor-goreleaser-check.log; then \
+		cat /tmp/icuvisor-goreleaser-check.log; \
+		echo "warning: local GoReleaser reports a deprecation for the existing Homebrew formula config; workflow-pinned GoReleaser remains authoritative"; \
+	else \
+		cat /tmp/icuvisor-goreleaser-check.log; \
+		rm -f /tmp/icuvisor-goreleaser-check.log; exit 1; \
+	fi; \
+	rm -f /tmp/icuvisor-goreleaser-check.log
 	npx --yes "$(MCPB_CLI_PACKAGE)" validate packaging/mcpb/manifest.json
 
 validate-registry: ## Validate MCP Registry server.json metadata
