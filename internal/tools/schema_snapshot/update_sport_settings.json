@@ -21,6 +21,22 @@
       }
     },
     {
+      "sport": "Run",
+      "zones": [
+        {
+          "boundaries": [
+            77.5,
+            100
+          ],
+          "kind": "pace",
+          "names": [
+            "Easy",
+            "Threshold"
+          ]
+        }
+      ]
+    },
+    {
       "ftp": 290,
       "recalc_hr_zones": false,
       "sport": "Ride",
@@ -63,6 +79,22 @@
         "unit": "seconds_per_100y",
         "value": 90
       }
+    },
+    {
+      "sport": "Run",
+      "zones": [
+        {
+          "boundaries": [
+            77.5,
+            100
+          ],
+          "kind": "pace",
+          "names": [
+            "Easy",
+            "Threshold"
+          ]
+        }
+      ]
     },
     {
       "ftp": 290,
@@ -160,7 +192,7 @@
         "additionalProperties": false,
         "properties": {
           "boundaries": {
-            "description": "Ordered zone boundary values: watts for power, bpm for hr, and pace durations in seconds per sport pace distance for pace (for example seconds_per_km or seconds_per_mile), not speed.",
+            "description": "Ordered zone boundary values: watts for power, bpm for hr, and strictly increasing percent-of-threshold-pace values in (0, 200] for pace. For pace, 100 means threshold pace; values such as 77.5 and 100 are percentages, never durations.",
             "items": {
               "minimum": 0,
               "type": "number"

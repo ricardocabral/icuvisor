@@ -13,6 +13,7 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/response"
 	"github.com/ricardocabral/icuvisor/internal/safety"
+	"github.com/ricardocabral/icuvisor/internal/units"
 )
 
 const (
@@ -51,20 +52,23 @@ type updateSportSettingsResponse struct {
 }
 
 type updateSportSettingsEcho struct {
-	Sport                       string                        `json:"sport"`
-	SportSettingID              int                           `json:"sport_setting_id,omitempty"`
-	FTPWatts                    *int                          `json:"ftp_watts,omitempty"`
-	ThresholdHRBPM              *int                          `json:"threshold_hr_bpm,omitempty"`
-	ThresholdPaceSecondsPerKM   *float64                      `json:"threshold_pace_seconds_per_km,omitempty"`
-	ThresholdPaceSecondsPerMile *float64                      `json:"threshold_pace_seconds_per_mile,omitempty"`
-	ThresholdPaceSecondsPer100M *float64                      `json:"threshold_pace_seconds_per_100m,omitempty"`
-	ThresholdPaceSecondsPer100Y *float64                      `json:"threshold_pace_seconds_per_100y,omitempty"`
-	ThresholdPaceSecondsPer500M *float64                      `json:"threshold_pace_seconds_per_500m,omitempty"`
-	ThresholdPaceValue          *float64                      `json:"threshold_pace_value,omitempty"`
-	PaceUnitsSource             string                        `json:"pace_units_source,omitempty"`
-	Zones                       []updateSportSettingsZoneEcho `json:"zones,omitempty"`
-	ZoneDefinitionsOverwritten  bool                          `json:"zone_definitions_overwritten,omitempty"`
-	Upstream                    map[string]any                `json:"upstream,omitempty"`
+	Sport                        string                        `json:"sport"`
+	SportSettingID               int                           `json:"sport_setting_id,omitempty"`
+	FTPWatts                     *int                          `json:"ftp_watts,omitempty"`
+	ThresholdHRBPM               *int                          `json:"threshold_hr_bpm,omitempty"`
+	ThresholdPaceSecondsPerKM    *float64                      `json:"threshold_pace_seconds_per_km,omitempty"`
+	ThresholdPaceSecondsPerMile  *float64                      `json:"threshold_pace_seconds_per_mile,omitempty"`
+	ThresholdPaceSecondsPer100M  *float64                      `json:"threshold_pace_seconds_per_100m,omitempty"`
+	ThresholdPaceSecondsPer100Y  *float64                      `json:"threshold_pace_seconds_per_100y,omitempty"`
+	ThresholdPaceSecondsPer500M  *float64                      `json:"threshold_pace_seconds_per_500m,omitempty"`
+	ThresholdPaceSecondsPer400M  *float64                      `json:"threshold_pace_seconds_per_400m,omitempty"`
+	ThresholdPaceSecondsPer250M  *float64                      `json:"threshold_pace_seconds_per_250m,omitempty"`
+	ThresholdPaceMetersPerSecond *float64                      `json:"threshold_pace_meters_per_second,omitempty"`
+	PaceUnitsSource              string                        `json:"pace_units_source,omitempty"`
+	PaceLoadType                 string                        `json:"pace_load_type,omitempty"`
+	Zones                        []updateSportSettingsZoneEcho `json:"zones,omitempty"`
+	ZoneDefinitionsOverwritten   bool                          `json:"zone_definitions_overwritten,omitempty"`
+	Upstream                     map[string]any                `json:"upstream,omitempty"`
 }
 
 type updateSportSettingsMeta struct {
@@ -75,7 +79,8 @@ type updateSportSettingsMeta struct {
 	HRZoneRecalculationRequested bool              `json:"hr_zone_recalculation_requested"`
 	ZonesProvided                bool              `json:"zones_provided"`
 	PaceInputUnit                string            `json:"pace_input_unit,omitempty"`
-	PaceUpstreamUnit             string            `json:"pace_upstream_unit,omitempty"`
+	PaceDisplayUnit              string            `json:"pace_display_unit,omitempty"`
+	PaceLoadType                 string            `json:"pace_load_type,omitempty"`
 	Units                        map[string]string `json:"units,omitempty"`
 }
 
@@ -216,13 +221,14 @@ func sportSettingsWriteParams(args updateSportSettingsRequest, setting intervals
 	params := intervals.WriteSportSettingsParams{SportSettingID: setting.ID, RecalcHRZones: recalcHRZones, FTP: args.FTP, ThresholdHR: args.ThresholdHR, ZonesProvided: args.zonesProvided}
 	meta := updateSportSettingsMeta{ServerVersion: normalizeVersion(version), DeleteMode: deleteMode, Timezone: profileTimezone(profile.Timezone, timezoneFallback), FieldsUpdated: updateSportSettingsFieldsUpdated(args), HRZoneRecalculationRequested: recalcHRZones, ZonesProvided: args.zonesProvided, Units: profileUnitSystem(profile).Metadata()}
 	if args.ThresholdPace != nil {
-		pace, upstreamUnit, err := convertThresholdPaceForUpstream(*args.ThresholdPace, setting, profileUnitSystem(profile))
+		metersPerSecond, paceUnits, paceLoadType, err := convertThresholdPaceForUpstream(*args.ThresholdPace, setting, args.Sport)
 		if err != nil {
 			return params, meta, err
 		}
-		params.ThresholdPace = &intervals.SportSettingsPace{Value: pace, Unit: upstreamUnit}
+		params.ThresholdPace = &intervals.SportSettingsPace{Value: metersPerSecond, PaceUnits: paceUnits, PaceLoadType: paceLoadType}
 		meta.PaceInputUnit = normalizePaceInputUnit(args.ThresholdPace.Unit)
-		meta.PaceUpstreamUnit = upstreamUnit
+		meta.PaceDisplayUnit = paceUnits
+		meta.PaceLoadType = paceLoadType
 	}
 	if args.zonesProvided {
 		params.Zones = sportSettingsZoneDefinitions(args.Zones)
@@ -275,12 +281,18 @@ func shapeUpdateSportSettingsResponse(args updateSportSettingsRequest, params in
 		echo.ThresholdHRBPM = value
 	}
 	paceValue := firstPositiveFloat(firstNonZeroFloat(updated.ThresholdPace, updated.PaceThreshold), nil)
-	if params.ThresholdPace != nil {
+	if params.ThresholdPace != nil && paceValue == nil {
 		paceValue = &params.ThresholdPace.Value
-		echo.PaceUnitsSource = params.ThresholdPace.Unit
 	}
-	if updated.PaceUnits != "" && echo.PaceUnitsSource == "" {
-		echo.PaceUnitsSource = updated.PaceUnits
+	if params.ThresholdPace != nil {
+		echo.PaceUnitsSource = params.ThresholdPace.PaceUnits
+		echo.PaceLoadType = params.ThresholdPace.PaceLoadType
+	}
+	if strings.TrimSpace(updated.PaceUnits) != "" {
+		echo.PaceUnitsSource = strings.TrimSpace(updated.PaceUnits)
+	}
+	if strings.TrimSpace(updated.PaceLoadType) != "" {
+		echo.PaceLoadType = strings.TrimSpace(updated.PaceLoadType)
 	}
 	assignUpdateSportSettingsPace(&echo, paceValue, echo.PaceUnitsSource)
 	if args.zonesProvided {
@@ -289,96 +301,101 @@ func shapeUpdateSportSettingsResponse(args updateSportSettingsRequest, params in
 	return updateSportSettingsResponse{SportSettings: echo, Meta: meta}
 }
 
-func assignUpdateSportSettingsPace(echo *updateSportSettingsEcho, value *float64, unit string) {
+func assignUpdateSportSettingsPace(echo *updateSportSettingsEcho, value *float64, paceUnits string) {
 	if value == nil {
 		return
 	}
-	switch strings.TrimSpace(unit) {
-	case "MINS_KM":
-		echo.ThresholdPaceSecondsPerKM = value
-	case "MINS_MILE":
-		echo.ThresholdPaceSecondsPerMile = value
-	case "SECS_100M":
-		echo.ThresholdPaceSecondsPer100M = value
-	case "SECS_100Y":
-		echo.ThresholdPaceSecondsPer100Y = value
-	case "SECS_500M":
-		echo.ThresholdPaceSecondsPer500M = value
-	default:
-		echo.ThresholdPaceValue = value
+	paceUnit, _ := units.ParseUnit(paceUnits)
+	seconds, ok := response.PaceSecondsFromMetersPerSecond(*value, paceUnit)
+	if !ok {
+		metersPerSecond := *value
+		echo.ThresholdPaceMetersPerSecond = &metersPerSecond
+		return
+	}
+	switch paceUnit {
+	case units.UnitMinsKM:
+		echo.ThresholdPaceSecondsPerKM = &seconds
+	case units.UnitMinsMile:
+		echo.ThresholdPaceSecondsPerMile = &seconds
+	case units.UnitSecs100M:
+		echo.ThresholdPaceSecondsPer100M = &seconds
+	case units.UnitSecs100Y:
+		echo.ThresholdPaceSecondsPer100Y = &seconds
+	case units.UnitSecs500M:
+		echo.ThresholdPaceSecondsPer500M = &seconds
+	case units.UnitSecs400M:
+		echo.ThresholdPaceSecondsPer400M = &seconds
+	case units.UnitSecs250M:
+		echo.ThresholdPaceSecondsPer250M = &seconds
 	}
 }
 
-func convertThresholdPaceForUpstream(input updateSportSettingsPaceRequest, setting intervals.SportSettings, unitSystem response.UnitSystem) (float64, string, error) {
-	inputUnit := normalizePaceInputUnit(input.Unit)
-	secondsPerMeter, err := inputPaceSecondsPerMeter(input.Value, inputUnit)
+func convertThresholdPaceForUpstream(input updateSportSettingsPaceRequest, setting intervals.SportSettings, sport string) (float64, string, string, error) {
+	seconds, inputPaceUnit, err := inputPaceSeconds(input.Value, normalizePaceInputUnit(input.Unit))
 	if err != nil {
-		return 0, "", err
+		return 0, "", "", err
 	}
-	upstreamUnit := strings.TrimSpace(setting.PaceUnits)
-	if inputUnit == "seconds_per_100y" {
-		upstreamUnit = "SECS_100Y"
+	metersPerSecond, ok := response.PaceMetersPerSecondFromSeconds(seconds, inputPaceUnit)
+	if !ok {
+		return 0, "", "", errors.New("threshold_pace must resolve to a finite m/s value")
 	}
-	if upstreamUnit == "" {
-		upstreamUnit = upstreamPaceUnitFromInput(inputUnit, unitSystem)
-	}
-	switch upstreamUnit {
-	case "MINS_KM":
-		return secondsPerMeter * 1000, upstreamUnit, nil
-	case "MINS_MILE":
-		return secondsPerMeter * 1609.344, upstreamUnit, nil
-	case "SECS_100M":
-		return secondsPerMeter * 100, upstreamUnit, nil
-	case "SECS_100Y":
-		return secondsPerMeter * metersPer100Yards, upstreamUnit, nil
-	case "SECS_500M":
-		return secondsPerMeter * 500, upstreamUnit, nil
-	default:
-		return input.Value, upstreamUnit, nil
-	}
+	return metersPerSecond, paceDisplayUnit(setting.PaceUnits, inputPaceUnit), paceLoadTypeForWrite(setting.PaceLoadType, sport), nil
 }
 
-func inputPaceSecondsPerMeter(value float64, unit string) (float64, error) {
+func inputPaceSeconds(value float64, inputUnit string) (float64, units.Unit, error) {
 	if value <= 0 || math.IsNaN(value) || math.IsInf(value, 0) {
-		return 0, errors.New("threshold_pace value must be finite and > 0")
+		return 0, units.UnitUnknown, errors.New("threshold_pace value must be finite and > 0")
 	}
-	switch unit {
+	var seconds float64
+	var paceUnit units.Unit
+	switch inputUnit {
 	case "seconds_per_km":
-		return value / 1000, nil
+		seconds, paceUnit = value, units.UnitMinsKM
 	case "seconds_per_mile":
-		return value / 1609.344, nil
+		seconds, paceUnit = value, units.UnitMinsMile
 	case "seconds_per_100m":
-		return value / 100, nil
+		seconds, paceUnit = value, units.UnitSecs100M
 	case "seconds_per_100y":
-		return value / metersPer100Yards, nil
+		seconds, paceUnit = value, units.UnitSecs100Y
 	case "seconds_per_500m":
-		return value / 500, nil
+		seconds, paceUnit = value, units.UnitSecs500M
 	case "minutes_per_km":
-		return value * 60 / 1000, nil
+		seconds, paceUnit = value*60, units.UnitMinsKM
 	case "minutes_per_mile":
-		return value * 60 / 1609.344, nil
+		seconds, paceUnit = value*60, units.UnitMinsMile
 	default:
-		return 0, fmt.Errorf("unsupported threshold_pace unit %q", unit)
+		return 0, units.UnitUnknown, fmt.Errorf("unsupported threshold_pace unit %q", inputUnit)
 	}
+	if seconds <= 0 || math.IsNaN(seconds) || math.IsInf(seconds, 0) {
+		return 0, units.UnitUnknown, errors.New("threshold_pace must resolve to finite seconds")
+	}
+	return seconds, paceUnit, nil
 }
 
-func upstreamPaceUnitFromInput(inputUnit string, unitSystem response.UnitSystem) string {
-	switch inputUnit {
-	case "seconds_per_100m":
-		return "SECS_100M"
-	case "seconds_per_100y":
-		return "SECS_100Y"
-	case "seconds_per_500m":
-		return "SECS_500M"
-	case "seconds_per_mile", "minutes_per_mile":
-		return "MINS_MILE"
-	case "seconds_per_km", "minutes_per_km":
-		return "MINS_KM"
+func paceDisplayUnit(existing string, fallback units.Unit) string {
+	if paceUnit, _ := units.ParseUnit(existing); responsePaceUnit(paceUnit) {
+		return string(paceUnit)
+	}
+	return string(fallback)
+}
+
+func responsePaceUnit(paceUnit units.Unit) bool {
+	_, ok := response.PaceDistanceMeters(paceUnit)
+	return ok
+}
+
+func paceLoadTypeForWrite(existing string, sport string) string {
+	switch strings.ToUpper(strings.TrimSpace(existing)) {
+	case "RUN", "SWIM":
+		return strings.ToUpper(strings.TrimSpace(existing))
+	}
+	switch canonicalSport(sport) {
+	case "Run":
+		return "RUN"
+	case "Swim":
+		return "SWIM"
 	default:
-		if unitSystem == response.UnitSystemImperial {
-			return "MINS_MILE"
-		}
-		return "MINS_KM"
+		return ""
 	}
 }
 
@@ -469,7 +486,7 @@ func updateSportSettingsInputSchema() map[string]any {
 		}},
 		"zones": map[string]any{"type": "array", "description": "Optional destructive replacement zone definitions. Supplying zones overwrites prior power/hr/pace zone definitions for this sport and is rejected unless ICUVISOR_DELETE_MODE=full.", "items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"kind", "boundaries"}, "properties": map[string]any{
 			"kind":       map[string]any{"type": "string", "enum": []string{"power", "hr", "pace"}, "description": "Zone family to overwrite."},
-			"boundaries": map[string]any{"type": "array", "minItems": 1, "items": map[string]any{"type": "number", "minimum": 0}, "description": "Ordered zone boundary values: watts for power, bpm for hr, and pace durations in seconds per sport pace distance for pace (for example seconds_per_km or seconds_per_mile), not speed."},
+			"boundaries": map[string]any{"type": "array", "minItems": 1, "items": map[string]any{"type": "number", "minimum": 0}, "description": "Ordered zone boundary values: watts for power, bpm for hr, and strictly increasing percent-of-threshold-pace values in (0, 200] for pace. For pace, 100 means threshold pace; values such as 77.5 and 100 are percentages, never durations."},
 			"names":      map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional zone names; when supplied, length must match boundaries."},
 		}}},
 	}}
@@ -489,6 +506,12 @@ func updateSportSettingsInputExamples() []map[string]any {
 		{
 			"sport":          "Swim",
 			"threshold_pace": map[string]any{"value": 90, "unit": "seconds_per_100y"},
+		},
+		{
+			"sport": "Run",
+			"zones": []any{
+				map[string]any{"kind": "pace", "boundaries": []any{77.5, 100}, "names": []any{"Easy", "Threshold"}},
+			},
 		},
 		{
 			"sport":           "Ride",

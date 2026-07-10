@@ -64,8 +64,8 @@ func TestUpdateSportSettingsSchemaDocumentsInputsAndZoneGate(t *testing.T) {
 	}
 	zoneProps := zones["items"].(map[string]any)["properties"].(map[string]any)
 	boundaryDescription := zoneProps["boundaries"].(map[string]any)["description"].(string)
-	if !strings.Contains(boundaryDescription, "seconds_per_km") || !strings.Contains(boundaryDescription, "seconds_per_mile") || !strings.Contains(boundaryDescription, "not speed") {
-		t.Fatalf("zone boundary description = %q, want explicit pace-duration wording", boundaryDescription)
+	if !strings.Contains(boundaryDescription, "percent-of-threshold-pace") || !strings.Contains(boundaryDescription, "77.5") || !strings.Contains(boundaryDescription, "never durations") {
+		t.Fatalf("zone boundary description = %q, want explicit pace-percentage wording", boundaryDescription)
 	}
 }
 
@@ -79,19 +79,20 @@ func TestUpdateSportSettingsThresholdFieldsAndPaceConversion(t *testing.T) {
 		wantHR        *int
 		wantPace      bool
 		wantPaceValue float64
+		wantEchoValue float64
 		wantInputUnit string
 		wantFields    []string
 		wantRecalc    bool
 	}{
 		{name: "ftp defaults HR zone recalculation to true", args: `{"sport":"Run","ftp":290}`, wantFTP: intPtr(290), wantFields: []string{"ftp"}, wantRecalc: true},
 		{name: "threshold hr does not recalculate HR zones when false", args: `{"sport":"Run","recalc_hr_zones":false,"threshold_hr":171}`, wantHR: intPtr(171), wantFields: []string{"threshold_hr"}, wantRecalc: false},
-		{name: "threshold pace seconds per km converts to upstream mile pace", args: `{"sport":"Run","threshold_pace":{"value":300,"unit":"seconds_per_km"}}`, wantPace: true, wantPaceValue: 482.8032, wantInputUnit: "seconds_per_km", wantFields: []string{"threshold_pace"}, wantRecalc: true},
-		{name: "threshold pace seconds per mile stays in upstream mile pace", args: `{"sport":"Run","threshold_pace":{"value":480,"unit":"seconds_per_mile"}}`, wantPace: true, wantPaceValue: 480, wantInputUnit: "seconds_per_mile", wantFields: []string{"threshold_pace"}, wantRecalc: true},
+		{name: "threshold pace seconds per km writes mps with preserved mile display", args: `{"sport":"Run","threshold_pace":{"value":300,"unit":"seconds_per_km"}}`, wantPace: true, wantPaceValue: 1000.0 / 300, wantEchoValue: 482.8032, wantInputUnit: "seconds_per_km", wantFields: []string{"threshold_pace"}, wantRecalc: true},
+		{name: "threshold pace seconds per mile writes mps with preserved mile display", args: `{"sport":"Run","threshold_pace":{"value":480,"unit":"seconds_per_mile"}}`, wantPace: true, wantPaceValue: 1609.344 / 480, wantEchoValue: 480, wantInputUnit: "seconds_per_mile", wantFields: []string{"threshold_pace"}, wantRecalc: true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			client := newFakeSportSettingsClient(intervals.SportSettings{ID: 8, Types: []string{"Run"}, PaceUnits: "MINS_MILE"})
-			client.setting = intervals.SportSettings{ID: 8, Type: "Run", FTP: valueOrZero(tc.wantFTP), FTHR: valueOrZero(tc.wantHR), PaceUnits: "MINS_MILE"}
+			client := newFakeSportSettingsClient(intervals.SportSettings{ID: 8, Types: []string{"Run"}, PaceUnits: "MINS_MILE", PaceLoadType: "RUN"})
+			client.setting = intervals.SportSettings{ID: 8, Type: "Run", FTP: valueOrZero(tc.wantFTP), FTHR: valueOrZero(tc.wantHR), PaceUnits: "MINS_MILE", PaceLoadType: "RUN"}
 			tool := newUpdateSportSettingsTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
 
 			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.args)})
@@ -106,8 +107,8 @@ func TestUpdateSportSettingsThresholdFieldsAndPaceConversion(t *testing.T) {
 				t.Fatalf("write call = %+v, want ftp=%v threshold_hr=%v recalc_hr_zones=%t", call, tc.wantFTP, tc.wantHR, tc.wantRecalc)
 			}
 			if tc.wantPace {
-				if call.ThresholdPace == nil || call.ThresholdPace.Unit != "MINS_MILE" || math.Abs(call.ThresholdPace.Value-tc.wantPaceValue) > 0.0001 {
-					t.Fatalf("threshold pace call = %+v, want %.4f sec/mile", call.ThresholdPace, tc.wantPaceValue)
+				if call.ThresholdPace == nil || call.ThresholdPace.PaceUnits != "MINS_MILE" || call.ThresholdPace.PaceLoadType != "RUN" || math.Abs(call.ThresholdPace.Value-tc.wantPaceValue) > 0.0001 {
+					t.Fatalf("threshold pace call = %+v, want %.4f m/s with MINS_MILE/RUN metadata", call.ThresholdPace, tc.wantPaceValue)
 				}
 			} else if call.ThresholdPace != nil {
 				t.Fatalf("threshold pace call = %+v, want nil", call.ThresholdPace)
@@ -120,7 +121,13 @@ func TestUpdateSportSettingsThresholdFieldsAndPaceConversion(t *testing.T) {
 				t.Fatalf("meta = %#v, want fields %v, hr_zone_recalculation_requested=%t, and zones_provided=false", meta, tc.wantFields, tc.wantRecalc)
 			}
 			assertKeyAbsent(t, settings, "zone_definitions_overwritten")
-			if tc.wantPace && (meta["pace_input_unit"] != tc.wantInputUnit || meta["pace_upstream_unit"] != "MINS_MILE") {
+			if tc.wantPace {
+				if math.Abs(settings["threshold_pace_seconds_per_mile"].(float64)-tc.wantEchoValue) > 0.0001 || settings["pace_units_source"] != "MINS_MILE" || settings["pace_load_type"] != "RUN" {
+					t.Fatalf("settings = %#v, want m/s params rendered as the selected mile display", settings)
+				}
+				assertKeyAbsent(t, settings, "threshold_pace_meters_per_second")
+			}
+			if tc.wantPace && (meta["pace_input_unit"] != tc.wantInputUnit || meta["pace_display_unit"] != "MINS_MILE" || meta["pace_load_type"] != "RUN") {
 				t.Fatalf("meta = %#v, want pace conversion metadata", meta)
 			}
 		})
@@ -142,18 +149,71 @@ func TestUpdateSportSettingsWritesYardSwimPace(t *testing.T) {
 		t.Fatalf("write calls = %d, want 1", len(client.calls))
 	}
 	call := client.calls[0]
-	if call.ThresholdPace == nil || call.ThresholdPace.Unit != "SECS_100Y" || call.ThresholdPace.Value != 90 {
-		t.Fatalf("threshold pace call = %+v, want 90 sec/100y", call.ThresholdPace)
+	if call.ThresholdPace == nil || call.ThresholdPace.PaceUnits != "SECS_100M" || call.ThresholdPace.PaceLoadType != "SWIM" || math.Abs(call.ThresholdPace.Value-(91.44/90)) > 0.000001 {
+		t.Fatalf("threshold pace call = %+v, want m/s with preserved SECS_100M/SWIM metadata", call.ThresholdPace)
 	}
 	out := resultMap(t, result)
 	settings := out["sport_settings"].(map[string]any)
-	if settings["threshold_pace_seconds_per_100y"] != float64(90) || settings["pace_units_source"] != "SECS_100Y" {
-		t.Fatalf("settings = %#v, want explicit sec/100y echo", settings)
+	if math.Abs(settings["threshold_pace_seconds_per_100m"].(float64)-(100/(91.44/90))) > 0.000001 || settings["pace_units_source"] != "SECS_100M" || settings["pace_load_type"] != "SWIM" {
+		t.Fatalf("settings = %#v, want explicit sec/100m echo from m/s", settings)
 	}
-	assertKeyAbsent(t, settings, "threshold_pace_value")
+	assertKeyAbsent(t, settings, "threshold_pace_meters_per_second")
 	meta := out["_meta"].(map[string]any)
-	if meta["pace_input_unit"] != "seconds_per_100y" || meta["pace_upstream_unit"] != "SECS_100Y" {
+	if meta["pace_input_unit"] != "seconds_per_100y" || meta["pace_display_unit"] != "SECS_100M" || meta["pace_load_type"] != "SWIM" {
 		t.Fatalf("meta = %#v, want yard pace metadata", meta)
+	}
+}
+
+func TestUpdateSportSettingsUsesReturnedMPSForPaceEcho(t *testing.T) {
+	client := newFakeSportSettingsClient(intervals.SportSettings{ID: 8, Types: []string{"Run"}, PaceUnits: "MINS_KM", PaceLoadType: "RUN"})
+	client.setting = intervals.SportSettings{ID: 8, Type: "Run", ThresholdPace: 3.5714285, PaceUnits: "MINS_KM", PaceLoadType: "RUN"}
+	tool := newUpdateSportSettingsTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"sport":"Run","threshold_pace":{"value":300,"unit":"seconds_per_km"}}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 || client.calls[0].ThresholdPace == nil || math.Abs(client.calls[0].ThresholdPace.Value-(1000.0/300)) > 0.0001 {
+		t.Fatalf("write calls = %#v, want m/s request value", client.calls)
+	}
+	settings := resultMap(t, result)["sport_settings"].(map[string]any)
+	if math.Abs(settings["threshold_pace_seconds_per_km"].(float64)-280) > 0.0001 || settings["pace_units_source"] != "MINS_KM" || settings["pace_load_type"] != "RUN" {
+		t.Fatalf("settings = %#v, want returned 3.5714285 m/s rendered as 280 s/km", settings)
+	}
+}
+
+func TestUpdateSportSettingsInfersValidDisplayAndLoadMetadata(t *testing.T) {
+	client := newFakeSportSettingsClient(intervals.SportSettings{ID: 8, Types: []string{"Run"}, PaceUnits: "NONE"})
+	client.setting = intervals.SportSettings{ID: 8, Type: "Run"}
+	tool := newUpdateSportSettingsTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"sport":"Run","threshold_pace":{"value":280,"unit":"seconds_per_km"}}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	call := client.calls[0].ThresholdPace
+	if call == nil || math.Abs(call.Value-3.5714285714285716) > 0.000001 || call.PaceUnits != "MINS_KM" || call.PaceLoadType != "RUN" {
+		t.Fatalf("threshold pace call = %+v, want inferred m/s display/load metadata", call)
+	}
+	settings := resultMap(t, result)["sport_settings"].(map[string]any)
+	if settings["threshold_pace_seconds_per_km"] != float64(280) || settings["pace_units_source"] != "MINS_KM" || settings["pace_load_type"] != "RUN" {
+		t.Fatalf("settings = %#v, want inferred display metadata", settings)
+	}
+}
+
+func TestShapeUpdateSportSettingsPaceFallbacksUseMPS(t *testing.T) {
+	value := 3.5714285
+	for _, paceUnits := range []string{"NONE", "FEET"} {
+		t.Run(paceUnits, func(t *testing.T) {
+			payload := shapeUpdateSportSettingsResponse(updateSportSettingsRequest{Sport: "Run"}, intervals.WriteSportSettingsParams{SportSettingID: 8}, intervals.SportSettings{ID: 8, ThresholdPace: value, PaceUnits: paceUnits, PaceLoadType: "RUN"}, updateSportSettingsMeta{})
+			echo := payload.SportSettings
+			if echo.ThresholdPaceMetersPerSecond == nil || *echo.ThresholdPaceMetersPerSecond != value || echo.PaceUnitsSource != paceUnits || echo.PaceLoadType != "RUN" {
+				t.Fatalf("pace fallback = %+v, want unambiguous m/s response", echo)
+			}
+			if echo.ThresholdPaceSecondsPerKM != nil || echo.ThresholdPaceSecondsPerMile != nil || echo.ThresholdPaceSecondsPer100M != nil {
+				t.Fatalf("pace fallback = %+v, want no duration fields", echo)
+			}
+		})
 	}
 }
 

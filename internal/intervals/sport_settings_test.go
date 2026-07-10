@@ -24,7 +24,7 @@ func TestUpdateSportSettingsSendsSparseBodyWithoutApply(t *testing.T) {
 				t.Fatalf("decode update body: %v", err)
 			}
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"id":7,"type":"Ride","ftp":275,"lthr":171,"threshold_pace":255,"pace_units":"MINS_KM"}`))
+			_, _ = w.Write([]byte(`{"id":7,"type":"Ride","ftp":275,"lthr":171,"threshold_pace":3.5714285,"pace_units":"MINS_KM","pace_load_type":"RUN"}`))
 		default:
 			t.Fatalf("unexpected path %s", r.URL.Path)
 		}
@@ -34,7 +34,7 @@ func TestUpdateSportSettingsSendsSparseBodyWithoutApply(t *testing.T) {
 	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
 	ftp := 275
 	lthr := 171
-	pace := SportSettingsPace{Value: 255, Unit: "MINS_KM"}
+	pace := SportSettingsPace{Value: 3.5714285, PaceUnits: "MINS_KM", PaceLoadType: "RUN"}
 	got, err := client.UpdateSportSettings(context.Background(), WriteSportSettingsParams{SportSettingID: 7, RecalcHRZones: true, FTP: &ftp, ThresholdHR: &lthr, ThresholdPace: &pace})
 	if err != nil {
 		t.Fatalf("UpdateSportSettings() error = %v", err)
@@ -42,10 +42,10 @@ func TestUpdateSportSettingsSendsSparseBodyWithoutApply(t *testing.T) {
 	if updateRequests != 1 {
 		t.Fatalf("update requests = %d, want exactly one with no implicit apply", updateRequests)
 	}
-	if got.ID != 7 || got.Type != "Ride" || got.FTP != 275 || got.LTHR != 171 || got.ThresholdPace != 255 {
+	if got.ID != 7 || got.Type != "Ride" || got.FTP != 275 || got.LTHR != 171 || got.ThresholdPace != 3.5714285 || got.PaceLoadType != "RUN" {
 		t.Fatalf("updated setting = %+v", got)
 	}
-	if updateBody["ftp"] != float64(275) || updateBody["lthr"] != float64(171) || updateBody["threshold_pace"] != float64(255) || updateBody["pace_units"] != "MINS_KM" {
+	if updateBody["ftp"] != float64(275) || updateBody["lthr"] != float64(171) || updateBody["threshold_pace"] != float64(3.5714285) || updateBody["pace_units"] != "MINS_KM" || updateBody["pace_load_type"] != "RUN" {
 		t.Fatalf("update body = %#v, want sparse thresholds", updateBody)
 	}
 	if updateBody["power_zones"] != nil || updateBody["hr_zones"] != nil || updateBody["pace_zones"] != nil {

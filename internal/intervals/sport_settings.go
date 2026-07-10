@@ -20,10 +20,11 @@ type WriteSportSettingsParams struct {
 	Zones          []SportSettingsZoneDefinition
 }
 
-// SportSettingsPace contains a threshold pace value in an intervals.icu pace unit.
+// SportSettingsPace contains a threshold pace stored in m/s with independent display metadata.
 type SportSettingsPace struct {
-	Value float64
-	Unit  string
+	Value        float64
+	PaceUnits    string
+	PaceLoadType string
 }
 
 // SportSettingsZoneDefinition contains one replacement zone set for a sport-setting metric.
@@ -70,8 +71,11 @@ func writeSportSettingsBody(params WriteSportSettingsParams) (map[string]any, er
 	setSparse(body, "lthr", params.ThresholdHR)
 	if params.ThresholdPace != nil {
 		body["threshold_pace"] = params.ThresholdPace.Value
-		if unit := strings.TrimSpace(params.ThresholdPace.Unit); unit != "" {
-			body["pace_units"] = unit
+		if paceUnits := strings.TrimSpace(params.ThresholdPace.PaceUnits); paceUnits != "" {
+			body["pace_units"] = paceUnits
+		}
+		if paceLoadType := strings.TrimSpace(params.ThresholdPace.PaceLoadType); paceLoadType != "" {
+			body["pace_load_type"] = paceLoadType
 		}
 	}
 	if params.ZonesProvided {

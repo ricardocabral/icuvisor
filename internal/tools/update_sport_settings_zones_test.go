@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"strings"
 	"testing"
 
@@ -41,18 +42,44 @@ func TestUpdateSportSettingsOmittedZonesDoesNotWriteZones(t *testing.T) {
 func TestUpdateSportSettingsSafeModeRejectsZonesBeforeWrite(t *testing.T) {
 	t.Parallel()
 
-	client := newFakeSportSettingsClient(intervals.SportSettings{ID: 7, Types: []string{"Ride"}})
+	client := newFakeSportSettingsClient(intervals.SportSettings{ID: 7, Types: []string{"Run"}})
 	tool := newUpdateSportSettingsTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
 
-	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"sport":"Ride","zones":[{"kind":"power","boundaries":[100,200],"names":["Z1","Z2"]}]}`)})
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"sport":"Run","zones":[{"kind":"pace","boundaries":[77.5,100],"names":["Easy","Threshold"]}]}`)})
 	if err == nil || !strings.Contains(err.Error(), "zones overwrite prior") {
 		t.Fatalf("Handler() error = %v, want zone gate user error", err)
 	}
 	if message, ok := PublicErrorMessage(err); !ok || !strings.Contains(message, "ICUVISOR_DELETE_MODE=full") {
 		t.Fatalf("PublicErrorMessage() = %q, %v; want typed public gate message", message, ok)
 	}
-	if len(client.calls) != 0 {
-		t.Fatalf("write calls = %#v, want none in safe mode", client.calls)
+	if client.fakeProfileClient.calls != 0 || len(client.calls) != 0 {
+		t.Fatalf("profile calls = %d, write calls = %#v; want neither in safe mode", client.fakeProfileClient.calls, client.calls)
+	}
+}
+
+func TestValidateSportSettingsPaceZonePercentages(t *testing.T) {
+	tests := []struct {
+		name       string
+		boundaries []float64
+		wantErr    bool
+	}{
+		{name: "valid percentages", boundaries: []float64{77.5, 100}},
+		{name: "zero", boundaries: []float64{0, 100}, wantErr: true},
+		{name: "non finite", boundaries: []float64{77.5, math.Inf(1)}, wantErr: true},
+		{name: "above maximum", boundaries: []float64{77.5, 200.1}, wantErr: true},
+		{name: "duplicate", boundaries: []float64{77.5, 77.5}, wantErr: true},
+		{name: "descending", boundaries: []float64{100, 77.5}, wantErr: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateSportSettingsZones([]updateSportSettingsZoneRequest{{Kind: "pace", Boundaries: tc.boundaries}})
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("validateSportSettingsZones() error = %v, wantErr %t", err, tc.wantErr)
+			}
+		})
+	}
+	if err := validateSportSettingsZones([]updateSportSettingsZoneRequest{{Kind: "power", Boundaries: []float64{0, 100}}, {Kind: "hr", Boundaries: []float64{0, 120}}}); err != nil {
+		t.Fatalf("validateSportSettingsZones() changed power/hr zero handling: %v", err)
 	}
 }
 
@@ -85,10 +112,10 @@ func TestUpdateSportSettingsFullModeAppliesZonesAndResponseMeta(t *testing.T) {
 
 func TestUpdateSportSettingsFullModeRoundTripsRunPaceZones(t *testing.T) {
 	client := newFakeSportSettingsClient(intervals.SportSettings{ID: 8, Type: "Run", Types: []string{"Run"}, PaceUnits: "MINS_MILE"})
-	client.setting = intervals.SportSettings{ID: 8, Type: "Run", PaceUnits: "MINS_MILE", PaceZones: []float64{480, 420}, PaceZoneNames: []string{"Aerobic", "Threshold"}}
+	client.setting = intervals.SportSettings{ID: 8, Type: "Run", PaceUnits: "MINS_MILE", PaceZones: []float64{77.5, 100}, PaceZoneNames: []string{"Easy", "Threshold"}}
 	tool := newUpdateSportSettingsTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeFull), responseShaping{deleteMode: safety.ModeFull, toolset: safety.ToolsetCore})
 
-	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"sport":"Run","zones":[{"kind":"pace","boundaries":[480,420],"names":["Aerobic","Threshold"]}]}`)})
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"sport":"Run","zones":[{"kind":"pace","boundaries":[77.5,100],"names":["Easy","Threshold"]}]}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
@@ -96,15 +123,15 @@ func TestUpdateSportSettingsFullModeRoundTripsRunPaceZones(t *testing.T) {
 		t.Fatalf("write calls = %#v, want one gated pace-zone overwrite", client.calls)
 	}
 	zone := client.calls[0].Zones[0]
-	if zone.Kind != "pace" || len(zone.Boundaries) != 2 || zone.Boundaries[0] != 480 || zone.Boundaries[1] != 420 || len(zone.Names) != 2 || zone.Names[0] != "Aerobic" || zone.Names[1] != "Threshold" {
-		t.Fatalf("pace zone call = %#v, want boundary/name round trip", zone)
+	if zone.Kind != "pace" || len(zone.Boundaries) != 2 || zone.Boundaries[0] != 77.5 || zone.Boundaries[1] != 100 || len(zone.Names) != 2 || zone.Names[0] != "Easy" || zone.Names[1] != "Threshold" {
+		t.Fatalf("pace zone call = %#v, want percentage/name round trip", zone)
 	}
 	payload := resultMap(t, result)
 	settings := payload["sport_settings"].(map[string]any)
 	zones := settings["zones"].([]any)
 	echo := zones[0].(map[string]any)
-	if echo["kind"] != "pace" || echo["boundaries"].([]any)[0] != 480.0 || echo["names"].([]any)[1] != "Threshold" || settings["zone_definitions_overwritten"] != true {
-		t.Fatalf("settings = %#v, want pace-zone boundary/name echo", settings)
+	if echo["kind"] != "pace" || echo["boundaries"].([]any)[0] != 77.5 || echo["boundaries"].([]any)[1] != 100.0 || echo["names"].([]any)[1] != "Threshold" || settings["zone_definitions_overwritten"] != true {
+		t.Fatalf("settings = %#v, want pace-zone percentage/name echo", settings)
 	}
 	meta := payload["_meta"].(map[string]any)
 	if meta["delete_mode"] != "full" || meta["zones_provided"] != true {

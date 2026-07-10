@@ -3,6 +3,7 @@ package tools
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
@@ -48,7 +49,16 @@ func validateSportSettingsZones(zones []updateSportSettingsZoneRequest) error {
 		if len(zone.Names) > 0 && len(zone.Names) != len(zone.Boundaries) {
 			return fmt.Errorf("%s zone names must match boundaries length", kind)
 		}
-		for _, boundary := range zone.Boundaries {
+		for index, boundary := range zone.Boundaries {
+			if kind == "pace" {
+				if boundary <= 0 || boundary > 200 || math.IsNaN(boundary) || math.IsInf(boundary, 0) {
+					return errors.New("pace zone boundaries must be finite percentages in (0, 200]")
+				}
+				if index > 0 && boundary <= zone.Boundaries[index-1] {
+					return errors.New("pace zone boundaries must be strictly increasing percentages")
+				}
+				continue
+			}
 			if boundary < 0 {
 				return fmt.Errorf("%s zone boundaries must be >= 0", kind)
 			}
