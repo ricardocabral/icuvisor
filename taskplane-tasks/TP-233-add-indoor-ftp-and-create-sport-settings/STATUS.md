@@ -29,7 +29,7 @@
 - [ ] Corrected threshold pace conversion reused
 - [ ] Threshold validation defined without invented constraints
 - [ ] Targeted client tests pass
-- [ ] R001 plan: exact typed boundary, sparse POST contract, validation, and client regression coverage recorded
+- [x] R001 plan: exact typed boundary, sparse POST contract, validation, and client regression coverage recorded
 
 ---
 
@@ -113,5 +113,9 @@
 
 ## Notes
 
-*Reserved for execution notes*
-| 2026-07-10 22:40 | Review R001 | plan Step 1: REVISE |
+| Date | Topic | Detail |
+|---|---|---|
+| 2026-07-10 | R001 Step 1 plan | Add `IndoorFTP *int` only to `WriteSportSettingsParams`; introduce separate `CreateSportSettingsParams{Sport, FTP, IndoorFTP, ThresholdHR, ThresholdPace}` and return `SportSettings`. `SportSettingsPace` is pre-normalized m/s plus selected `PaceUnits` and explicit/preserved `PaceLoadType`, serialized without client reinterpretation. |
+| 2026-07-10 | R001 HTTP contract | Update remains `PUT /athlete/{athleteID}/sport-settings/{id}?recalcHrZones=<bool>` and writes `indoor_ftp` only when supplied. Create is no-retry `POST /athlete/{athleteID}/sport-settings`, no query string, with sparse `types:[sport]` and only `ftp`, `indoor_ftp`, `lthr`, `threshold_pace` (m/s), `pace_units`, and `pace_load_type`; it cannot carry ID, recalculation, or zones. |
+| 2026-07-10 | R001 validation | Before transport reject blank sport, non-positive FTP/indoor FTP/HR, and non-finite/non-positive canonical pace; errors name create/update and make no request. No `indoor_ftp <= ftp` restriction: no confirmed upstream/product rule. Client leaves sport enum ownership to the MCP layer. |
+| 2026-07-10 | R001 client tests | Local-server cases will assert update-only `indoor_ftp` and create `types:["Ride"]`/indoor FTP method/path/raw-query/sparse body/no zone-or-recalc fields plus returned echo, m/s pace keys, and table-driven invalid update/create calls with zero requests. |
