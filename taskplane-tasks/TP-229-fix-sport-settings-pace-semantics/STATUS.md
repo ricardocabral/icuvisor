@@ -1,10 +1,10 @@
 # TP-229: Treat threshold pace as m/s and pace zones as percentages — Status
 
-**Current Step:** Step 2: Correct read shaping and typed models
+**Current Step:** Step 3: Correct sport-settings writes
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
-**Review Counter:** 11
+**Review Counter:** 12
 **Iteration:** 1
 **Size:** L
 
@@ -41,7 +41,7 @@
 
 ### Step 2: Correct read shaping and typed models
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Typed upstream fields completed
 - [x] Threshold pace read shaping corrected
@@ -53,7 +53,7 @@
 
 ### Step 3: Correct sport-settings writes
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Explicit pace inputs convert to m/s
 - [ ] pace_units and pace_load_type are correct
@@ -110,6 +110,7 @@
 | R009 | Code | 1 | APPROVE | — |
 | R010 | Plan | 2 | REVISE | `.reviews/R010-plan-step2.md` |
 | R011 | Plan | 2 | APPROVE | — |
+| R012 | Code | 2 | APPROVE | — |
 
 ## Discoveries
 
@@ -144,3 +145,4 @@
 | 2026-07-10 20:15 | Review R009 | code Step 1: APPROVE |
 | 2026-07-10 20:18 | Review R010 | plan Step 2: REVISE |
 | 2026-07-10 20:21 | Review R011 | plan Step 2: APPROVE |
+| 2026-07-10 20:26 | Review R012 | code Step 2: APPROVE |
