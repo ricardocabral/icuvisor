@@ -75,7 +75,7 @@
 - [x] PRD and roadmap aligned
 - [x] Generated website data and cookbook updated
 - [x] Changelog updated
-- [ ] R012 below-first-boundary and open-final-zone formula semantics documented
+- [x] R012 below-first-boundary and open-final-zone formula semantics documented
 
 ---
 

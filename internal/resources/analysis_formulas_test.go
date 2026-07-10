@@ -12,7 +12,7 @@ import (
 func TestAnalysisFormulasMarkdownGolden(t *testing.T) {
 	t.Parallel()
 
-	const wantSHA256 = "3c711ada96391e6eed1c4d4be803a61a286bea8571c399585c9e7413d5bc1d4e"
+	const wantSHA256 = "1d7aa6e75501914a935f7c3d2f1c15e94d306e170c7ac23f4a3deda66be9295c"
 
 	got := AnalysisFormulasMarkdown()
 	want, err := os.ReadFile("testdata/analysis_formulas.md")
@@ -82,7 +82,7 @@ func TestAnalysisFormulasMarkdownPinsRequiredFormulaRefs(t *testing.T) {
 		{
 			ref:      AnalysisFormulaRefPowerZoneMechanicalWork,
 			formula:  "work_i = power_i * delta_t_i",
-			boundary: "external mechanical work only, not metabolic energy",
+			boundary: "final zone open-ended and an explicit below-zone bucket `[0, first_boundary)`",
 			citation: "BIPM",
 		},
 	}
