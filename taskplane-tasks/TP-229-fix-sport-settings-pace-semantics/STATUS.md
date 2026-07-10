@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
-**Review Counter:** 6
+**Review Counter:** 7
 **Iteration:** 1
 **Size:** L
 
@@ -34,6 +34,7 @@
 - [x] R005: Correct workout previews and configured histogram zones for m/s thresholds and percentage boundaries
 - [x] R005: Omit ambiguous source-unit fallback values
 - [x] R006: Honor every recognized `pace_units` display distance in workout target previews
+- [ ] R007: Route previews through finite canonical pace conversion
 
 ---
 
@@ -102,6 +103,7 @@
 | R004 | Code | 1 | REVISE | `.reviews/R004-code-step1.md` |
 | R005 | Code | 1 | REVISE | `.reviews/R005-code-step1.md` |
 | R006 | Code | 1 | REVISE | `.reviews/R006-code-step1.md` |
+| R007 | Code | 1 | REVISE | `.reviews/R007-code-step1.md` |
 
 ## Discoveries
 
@@ -130,3 +132,4 @@
 | 2026-07-10 19:45 | Review R004 | code Step 1: REVISE |
 | 2026-07-10 19:50 | Review R005 | code Step 1: REVISE |
 | 2026-07-10 20:00 | Review R006 | code Step 1: REVISE |
+| 2026-07-10 20:05 | Review R007 | code Step 1: REVISE |
