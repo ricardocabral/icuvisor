@@ -35,7 +35,7 @@
 - [x] R005: Omit ambiguous source-unit fallback values
 - [x] R006: Honor every recognized `pace_units` display distance in workout target previews
 - [x] R007: Route previews through finite canonical pace conversion
-- [ ] R008: Reject pace durations at the signed-int formatting boundary
+- [x] R008: Reject pace durations at the signed-int formatting boundary
 
 ---
 

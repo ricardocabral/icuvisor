@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
@@ -224,7 +225,7 @@ func paceSecondsAreFormattable(seconds float64) bool {
 	if seconds <= 0 || math.IsNaN(seconds) || math.IsInf(seconds, 0) {
 		return false
 	}
-	return math.Round(seconds) <= float64(^uint(0)>>1)
+	return math.Round(seconds) < math.Exp2(float64(strconv.IntSize-1))
 }
 
 func preferredPacePreviewUnit(sourceUnit string, unitSystem response.UnitSystem) (units.Unit, string) {

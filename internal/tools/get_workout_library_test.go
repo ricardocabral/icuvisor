@@ -3,6 +3,8 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"math"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -223,6 +225,13 @@ func TestPaceTargetPreviewHonorsSportDisplayUnits(t *testing.T) {
 func TestPaceTargetPreviewRejectsUnformattableMPS(t *testing.T) {
 	if _, _, ok := paceTargetPreview(workoutTargetBounds{Values: []float64{100}}, 1e-306, "MINS_KM", response.UnitSystemMetric); ok {
 		t.Fatal("paceTargetPreview accepted an overflowing m/s-to-duration conversion")
+	}
+}
+
+func TestPaceTargetPreviewRejectsSignedIntBoundary(t *testing.T) {
+	thresholdMetersPerSecond := 1000 / math.Exp2(float64(strconv.IntSize-1))
+	if _, _, ok := paceTargetPreview(workoutTargetBounds{Values: []float64{100}}, thresholdMetersPerSecond, "MINS_KM", response.UnitSystemMetric); ok {
+		t.Fatal("paceTargetPreview accepted a duration at the signed-int formatting boundary")
 	}
 }
 
