@@ -270,7 +270,7 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 
 **Analyzers (`analyze_*` / `compute_*`) — v0.6 shipped scope**
 
-The analyzer family is part of the registered MCP tool catalog as of the v0.6 Taskplane batch. It is a small, deterministic family of derivation tools so the LLM reaches for a documented primitive instead of fetching `get_*` rows and writing an ad-hoc reduction in chat. Every analyzer aggregates from existing reads first and only falls back to stream math when intervals.icu has no windowed view of the field. The split is intentional: `analyze_*` is inferential (baseline, fit, correlation), `compute_*` is deterministic aggregation (sums, counts, time-in-zone).
+The analyzer family is part of the registered MCP tool catalog as of the v0.6 Taskplane batch. It is a small, deterministic family of derivation tools so the LLM reaches for a documented primitive instead of fetching `get_*` rows and writing an ad-hoc reduction in chat. Analyzers aggregate from existing reads first; only explicitly stream-backed analyzers use canonical samples when intervals.icu has no suitable windowed view. The split is intentional: `analyze_*` is inferential (baseline, fit, correlation), `compute_*` is deterministic aggregation (sums, counts, time-in-zone, mechanical work).
 
 Design rules that apply to every tool in this family:
 
@@ -293,9 +293,10 @@ Tool catalog:
 - `analyze_correlation` — Pearson r, Spearman ρ, n, slope, intercept for two daily or per-activity fields, with optional `lag_days` for lagged correlation (sleep quality → next-day RPE).
 - `analyze_efforts_delta` — best-effort durations or distances (5-min power, 20-min power, 5k pace) current window vs baseline window, unit-aware, with Δ%.
 - `compute_zone_time` — sum of time per power / HR / pace zone over a window, sport-filtered, with polarization index. Aggregates per-activity zone times from `get_activity_intervals` / `get_extended_metrics` — does not recompute from streams when upstream zone time is present.
+- `compute_zone_energy` — full-toolset, read-only timestamp integration of recorded power into seconds and kJ of external mechanical work per configured athlete power zone over a bounded date range. It uses canonical power/time streams, skips and reports invalid or missing intervals and activities, and never labels mechanical work as metabolic energy, calorie expenditure, or food calories.
 - `compute_load_balance` — share of time in Z1+Z2 / Z3 / Z4+ across a window; classifies the block (`polarized` / `pyramidal` / `threshold`).
 - `compute_baseline` — rolling baseline (mean, std), current-window value, z-score, and "suppressed" / "elevated" flag for wellness metrics (the HRV-deviation primitive used by HRV4Training-style readiness checks). HRV/HRV-SDNN baselines downgrade stale-current-window conclusions from plain `ok` and expose absent/stale current samples through visible freshness fields and caveats.
-- `compute_activity_segment_stats` — within-activity stream math: mean / median / p90 / decoupling / drift / NP / IF over a specified time or distance range inside one activity, pulled from `get_activity_streams`. The only analyzer that touches raw streams by default.
+- `compute_activity_segment_stats` — within-activity stream math: mean / median / p90 / decoupling / drift / NP / IF over a specified time or distance range inside one activity, pulled from `get_activity_streams`. Along with `compute_zone_energy`, it is an explicit stream-backed analyzer; neither returns raw samples by default.
 - `compute_compliance_rate` — scheduled vs completed events across a window, mean delta to target, per sport / event type. Reuses `link_activity_to_event` pairings and returns per-row workout status plus status counts for linked completions, unlinked deterministic matches, planned, future, and missed/skipped rows so assistants do not collapse pending/future workouts into failures or completions.
 - `get_fitness_projection` — forward CTL/ATL/TSB simulation given a hypothetical ramp %, recovery-week cadence, date horizon, optional explicit `planned_daily_loads`, and optional `weekly_plan_targets` copied from planning/training-plan context or `get_annual_training_plan._meta.projection_bridge.weekly_plan_targets`. Weekly targets are athlete-local ISO Monday anchors distributed deterministically as `training_load/7` across projected future dates; explicit daily loads override exact dates without redistribution. Lives in this family (moved up from v1.x — forum thread 123739 post #49). Returns projected curve plus modeled/bridge assumptions in `_meta` so the LLM can explain the result.
 
@@ -314,7 +315,7 @@ Combined with the v0.4 MCP Prompt set (`training analysis`, `recovery check`, `w
 
 Toolset placement: most of the family lands in `full`; `analyze_trend`, `compute_zone_time`, and `compute_baseline` are in `core` after the KR5 benchmark confirmed net token savings vs the fetch-and-reduce baseline.
 
-The generated tool catalog is the source of truth for the current registered tool count. As of the current generated website data, the catalog has 66 tools total: 30 in `core` and 36 additional `full` tools behind `ICUVISOR_TOOLSET=full`.
+The generated tool catalog is the source of truth for the current registered tool count. As of the current generated website data, the catalog has 69 tools total: 30 in `core` and 39 additional `full` tools behind `ICUVISOR_TOOLSET=full`.
 
 #### D. Response shaping (the second differentiator)
 

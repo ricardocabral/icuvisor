@@ -1205,6 +1205,37 @@
       }
     ]
   },
+  "compute_zone_energy": {
+    "name": "compute_zone_energy",
+    "description": "Use when the prompt asks for timestamp-weighted mechanical work or kJ by configured power zone across activities in a bounded date range; do not fetch get_activity_streams and reduce them in chat.",
+    "arguments": [
+      {
+        "name": "end_date",
+        "required": true,
+        "type": "string",
+        "description": "Inclusive end date as YYYY-MM-DD in the athlete timezone; must be on or after start_date."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "When true, include bounded per-activity audit rows and diagnostics. Raw stream samples are never returned.",
+        "default": false
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "Optional exact case-insensitive activity type or subtype filter."
+      },
+      {
+        "name": "start_date",
+        "required": true,
+        "type": "string",
+        "description": "Inclusive start date as YYYY-MM-DD in the athlete timezone; the range may contain at most 366 days."
+      }
+    ]
+  },
   "compute_zone_time": {
     "name": "compute_zone_time",
     "description": "Use when the prompt asks for zone-time totals or intensity distribution (seconds/share in Z1-Zn) across activities in a date window; do not fetch get_* rows or streams and reduce them in chat.",

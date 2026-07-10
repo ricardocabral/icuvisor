@@ -9,13 +9,14 @@ const (
 	AnalysisFormulasURI      = "icuvisor://analysis-formulas"
 	AnalysisFormulasMIMEType = "text/markdown"
 
-	AnalysisFormulaRefHRDrift              = AnalysisFormulasURI + "#hr_drift"
-	AnalysisFormulaRefPwHRDecoupling       = AnalysisFormulasURI + "#pw_hr_decoupling"
-	AnalysisFormulaRefPolarization         = AnalysisFormulasURI + "#polarization_index"
-	AnalysisFormulaRefEfficiencyFactor     = AnalysisFormulasURI + "#efficiency_factor"
-	AnalysisFormulaRefVariabilityIndex     = AnalysisFormulasURI + "#variability_index"
-	AnalysisFormulaRefZScore               = AnalysisFormulasURI + "#z_score"
-	AnalysisFormulaRefPerformancePotential = AnalysisFormulasURI + "#performance_potential"
+	AnalysisFormulaRefHRDrift                 = AnalysisFormulasURI + "#hr_drift"
+	AnalysisFormulaRefPwHRDecoupling          = AnalysisFormulasURI + "#pw_hr_decoupling"
+	AnalysisFormulaRefPolarization            = AnalysisFormulasURI + "#polarization_index"
+	AnalysisFormulaRefEfficiencyFactor        = AnalysisFormulasURI + "#efficiency_factor"
+	AnalysisFormulaRefVariabilityIndex        = AnalysisFormulasURI + "#variability_index"
+	AnalysisFormulaRefZScore                  = AnalysisFormulasURI + "#z_score"
+	AnalysisFormulaRefPerformancePotential    = AnalysisFormulasURI + "#performance_potential"
+	AnalysisFormulaRefPowerZoneMechanicalWork = AnalysisFormulasURI + "#power_zone_mechanical_work"
 )
 
 type analysisFormulaEntry struct {
@@ -60,6 +61,11 @@ var analysisFormulaEntries = []analysisFormulaEntry{
 		ref:       AnalysisFormulaRefPerformancePotential,
 		label:     "Performance potential summary",
 		paragraph: "Performance potential is a deterministic per-sport summary, not a numeric score: copy only explicit athlete-profile threshold fields for the requested sport family (FTP/indoor FTP/W′/Pmax for power sports, LTHR/max HR for HR-supported sports, threshold pace in the athlete/sport pace unit for pace sports) and pair them with selected upstream power, pace, and heart-rate curve anchors for the requested date range. Return unsupported or missing critical power, aerobic threshold, profile thresholds, and absent curves as explicit unavailable/caveat objects; never zero-fill missing thresholds, estimate hidden physiology from curve shape, or compare watts and pace across sports as equivalent units. Sources: intervals.icu athlete profile sport settings and upstream curve endpoints exposed through get_athlete_profile, get_power_curves, get_pace_curves, and get_hr_curves.",
+	},
+	{
+		ref:       AnalysisFormulaRefPowerZoneMechanicalWork,
+		label:     "Power-zone mechanical work",
+		paragraph: "Power-zone mechanical work integrates canonical recorded power over elapsed sample timestamps using the left endpoint: for each eligible interval calculate `delta_t_i = t_(i+1) - t_i`, assign `delta_t_i` and `work_i = power_i * delta_t_i` to the configured lower-inclusive, upper-exclusive power zone containing `power_i`, then sum zone seconds and joules and convert with `zone_kJ = zone_joules / 1000`. Require finite timestamps, `0 < delta_t_i <= 60 seconds`, and finite nonnegative left-endpoint power; skip invalid or longer intervals, do not interpolate missing power, and give the final sample zero duration because it has no following timestamp. Reported kJ is external mechanical work only, not metabolic energy, calorie expenditure, or food calories. Source: BIPM, The International System of Units (SI Brochure), 9th edition, definitions of the joule and watt (`W = J/s`).",
 	},
 }
 

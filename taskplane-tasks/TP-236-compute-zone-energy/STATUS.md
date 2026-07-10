@@ -1,10 +1,10 @@
 # TP-236: Add deterministic power-zone energy analysis — Status
 
-**Current Step:** Step 3: Add and register the MCP analyzer
+**Current Step:** Step 4: Formula resource, generated data, and docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 4
 **Size:** L
 
@@ -69,12 +69,12 @@
 
 ### Step 4: Formula resource, generated data, and docs
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Formula resource updated
-- [ ] PRD and roadmap aligned
-- [ ] Generated website data and cookbook updated
-- [ ] Changelog updated
+- [x] Formula resource updated
+- [x] PRD and roadmap aligned
+- [x] Generated website data and cookbook updated
+- [x] Changelog updated
 
 ---
 

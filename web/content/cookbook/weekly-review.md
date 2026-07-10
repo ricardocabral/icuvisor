@@ -28,6 +28,7 @@ Pull, in this order:
 3. My training-load and volume summary for the window.
 4. The list of activities in the window.
 5. My time-in-zone and training-load balance for the window.
+6. If the full toolset is enabled, my recorded external mechanical work in kJ by configured power zone. Keep this separate from calories or metabolic energy.
 
 Then give me:
 - A three-sentence summary of the period: load, volume, intensity mix.
@@ -51,6 +52,9 @@ The assistant should call, in roughly this order:
 | 3 | [`get_training_summary`]({{< relref "/reference/tools#get_training_summary" >}}) | Aggregated load, time, and volume. |
 | 4 | [`get_activities`]({{< relref "/reference/tools#get_activities" >}}) | Per-session detail to name notable workouts. |
 | 5 | [`compute_zone_time`]({{< relref "/reference/tools#compute_zone_time" >}}) and [`compute_load_balance`]({{< relref "/reference/tools#compute_load_balance" >}}) | Intensity distribution and whether the block is polarized, pyramidal, or threshold-heavy. |
+| 6 (optional, full toolset) | [`compute_zone_energy`]({{< relref "/reference/tools#compute_zone_energy" >}}) | Timestamp-weighted external mechanical work by configured power zone; report missing coverage and never describe kJ as calories or metabolic expenditure. |
+
+A focused follow-up can be as short as: `For 2026-06-01 through 2026-06-14, use compute_zone_energy to report recorded cycling mechanical work by configured power zone. Keep include_full false; state any partial coverage and do not convert kJ to calories.`
 
 `analyze_trend` may also be used to state whether load is meaningfully rising or falling. For athlete-defined activity custom fields (for example a VO2Max estimate recorded on workouts), ask the assistant to request that field explicitly and use `analyze_correlation` with `metric_x` or `metric_y` set to `custom:<field_code>` plus `custom_fields: ["<field_code>"]`; do not draw a trend from one visible activity detail row.
 

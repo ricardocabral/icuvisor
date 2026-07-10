@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added the full-toolset, read-only `compute_zone_energy` analyzer for timestamp-weighted external mechanical work in seconds and kJ by configured power zone, with explicit stream/zone coverage diagnostics and a pinned formula that distinguishes mechanical work from metabolic energy or calories.
+
 ### Fixed
 
 - Corrected the canonical yard-distance suffix in the workout DSL from `yd` to `yrd`, aligning with the public intervals.icu workout-builder syntax. The serializer now emits `100yrd` for pool-swim yard distances; legacy `yd`, `yard`, and `yards` are accepted as backward-compatible input aliases and canonicalize to `yrd` on re-serialization.
