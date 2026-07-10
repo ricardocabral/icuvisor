@@ -24,10 +24,13 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Weekly, daily, and candidate-session fields defined
-- [ ] Deterministic result codes defined
-- [ ] Remaining-week and fixed-event accounting specified
-- [ ] Availability/session-count distinction documented
+- [ ] Weekly constraint struct defined: WeekTarget (full-week target, remaining target, completed load, fixed load), RequestedSessionCount, AvailableDays (per-day slot list)
+- [ ] Daily slot struct defined: date, max sessions per day, slots with per-slot duration cap, indoor/outdoor cap, sport allow-list, mode allow-list
+- [ ] Candidate session struct defined: sport, mode, indoor/outdoor flag, proposed duration, proposed load
+- [ ] Result codes defined: ViolationCode enum covering daily-cap, slot-duration-cap, indoor-cap, session-count-cap, weekly-load-overshoot, infeasible-slots
+- [ ] ReconciliationResult struct defined: completed, fixed, candidate, remaining, projected totals
+- [ ] Design doc `docs/design/plan-filler-constraints.md` written with field semantics, invariants, result codes, and examples
+- [ ] Availability/session-count distinction documented (availability = where, requested = how many)
 
 ---
 
