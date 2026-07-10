@@ -64,6 +64,31 @@ func TestValidateDescriptionParsesYardDistanceWithoutMAmbiguity(t *testing.T) {
 	}
 }
 
+func TestValidateDescriptionParsesCanonicalYrdDistanceWithoutMAmbiguity(t *testing.T) {
+	t.Parallel()
+
+	got := ValidateDescription("- Swim 100yrd 95% Pace")
+	if len(got.Errors) != 0 || len(got.Warnings) != 0 {
+		t.Fatalf("ValidateDescription() errors=%+v warnings=%+v, want clean yrd parse", got.Errors, got.Warnings)
+	}
+	if len(got.Doc.Steps) != 1 || got.Doc.Steps[0].Distance == nil || got.Doc.Steps[0].Distance.Unit != "yrd" {
+		t.Fatalf("Doc = %#v, want one 100yrd step", got.Doc)
+	}
+}
+
+func TestValidateDescriptionParsesYardsDistanceAlias(t *testing.T) {
+	t.Parallel()
+
+	// yards (plural, multi-char suffix) should also be accepted without M_AMBIGUITY.
+	got := ValidateDescription("- Swim 100yards 95% Pace")
+	if len(got.Errors) != 0 || len(got.Warnings) != 0 {
+		t.Fatalf("ValidateDescription() errors=%+v warnings=%+v, want clean yards parse", got.Errors, got.Warnings)
+	}
+	if len(got.Doc.Steps) != 1 || got.Doc.Steps[0].Distance == nil {
+		t.Fatalf("Doc = %#v, want one distance step", got.Doc)
+	}
+}
+
 func TestValidateDescriptionMalformedStepLine(t *testing.T) {
 	t.Parallel()
 	got := ValidateDescription("- not a valid step token")

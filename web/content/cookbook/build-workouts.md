@@ -43,8 +43,9 @@ in prose or step labels. For zone targets, rely on icuvisor's structured
 metric suffixes like `Z2 Power`, `Z2 HR`, or `Z2 Pace` when needed, including
 sports whose target priority is Pace > HR > Power or Power > Pace > HR. For
 pool swims in 25-yard pools, use structured yard distances such as
-`{"distance":{"value":100,"unit":"yd"}}`; icuvisor serializes these as
-canonical `100yd` steps and resolves `SECS_100Y` swim pace targets as `/100y`.
+`{"distance":{"value":100,"unit":"yrd"}}`; icuvisor serializes these as
+canonical `100yrd` steps and resolves `SECS_100Y` swim pace targets as `/100y`.
+The legacy `yd` unit alias is also accepted.
 Use structured `workout_doc` only for endurance workouts supported by the
 intervals.icu DSL. If I ask for gym or strength work, schedule a simple `NOTE`
 time block or a free-text supported calendar event;
