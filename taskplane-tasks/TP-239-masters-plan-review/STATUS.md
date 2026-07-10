@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 1
-**Review Counter:** 1
+**Review Counter:** 2
 **Iteration:** 1
 **Size:** M
 
@@ -24,10 +24,11 @@
 
 **Status:** 🟨 In Progress
 
-<!-- R001 plan revision items -->
-- [ ] R001-1: Define mandatory, visibly separate sourced evidence, athlete-stated preference, cautious interpretation, insufficient-evidence/question, and conditional reviewable-proposal output sections; masters is an audience label only
-- [ ] R001-2: Bind hard-session, personal-baseline, and load-ramp conclusions to supported deterministic evidence and surface projection assumptions without a combined score or invented policy
-- [ ] R001-3: Map every unavailable/ambiguous evidence trigger to no conclusion plus a focused question, retain TP-235 availability/duration terminology, and add Step 1 boundary regression coverage
+<!-- R002 plan revision items -->
+- [ ] R002-1: Define mandatory, visibly separate sourced evidence, athlete-stated preference, cautious interpretation, insufficient-evidence/question, and conditional reviewable-proposal output sections; masters is an audience label only
+- [ ] R002-2: Permit hard-session spacing only for athlete-identified sessions or detailed, sourced activity/plan intensity evidence; use compute_baseline one eligible metric at a time with status, sample, missing-day, freshness, method, and formula metadata; use only copyable plan targets or athlete-supplied projection values, surface every projection assumption, and never treat projection defaults as policy
+- [ ] R002-3: Make the workflow absolutely read-only: it never calls write/delete tools, including after approval, and every change remains an unapplied conditional proposal
+- [ ] R002-4: Add a Step 1 boundary-test artifact and matrix for ambiguous/unavailable hard-session or plan detail, absent/invalid zones, short/partial/truncated/missing history, missing/stale/partial wellness or missing/provider-native readiness, missing race context, and insufficient explicit projection targets; every gap names evidence, makes no affected conclusion, and asks one focused question while availability/requested duration remain athlete-stated context
 - [ ] Review evidence sequence defined
 - [ ] Evidence, preferences, interpretation, and proposals separated
 - [ ] Unsupported age and medical claims prohibited
@@ -85,6 +86,7 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
+| R002 | Plan | 1 | REVISE | `.reviews/R002-plan-step1.md` |
 
 ## Discoveries
 
@@ -108,3 +110,4 @@
 
 *Reserved for execution notes*
 | 2026-07-10 21:46 | Review R001 | plan Step 1: REVISE |
+| 2026-07-10 21:48 | Review R002 | plan Step 1: REVISE |
