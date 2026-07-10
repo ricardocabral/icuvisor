@@ -1,6 +1,6 @@
 # TP-228: Align sport-settings update and apply requests with live OpenAPI — Status
 
-**Current Step:** Step 5: Testing & Verification
+**Current Step:** Step 6: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
@@ -86,11 +86,11 @@
 
 ### Step 6: Documentation & Delivery
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Must Update docs modified
-- [ ] Check If Affected docs reviewed
-- [ ] Discoveries logged
+- [x] Must Update docs modified
+- [x] Check If Affected docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -103,6 +103,8 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| Live OpenAPI declares required `recalcHrZones` on single-setting update and a bodyless, queryless apply PUT. | Implemented and covered by local-server wire tests. | `docs/upstream-gaps/sport-settings-write-contract.md` |
+| `cmd/gendocs` golden schema data must be regenerated alongside website catalog data. | Regenerated; full and race suites pass. | `cmd/gendocs/testdata/tool_schemas.golden.json` |
 
 ## Execution Log
 
