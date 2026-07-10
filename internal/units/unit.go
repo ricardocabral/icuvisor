@@ -25,6 +25,8 @@ const (
 	UnitSecs100M Unit = "SECS_100M"
 	UnitSecs100Y Unit = "SECS_100Y"
 	UnitSecs500M Unit = "SECS_500M"
+	UnitSecs400M Unit = "SECS_400M"
+	UnitSecs250M Unit = "SECS_250M"
 
 	// Speed units.
 	UnitKMH Unit = "KMH"
@@ -71,6 +73,8 @@ var knownUnits = map[string]Unit{
 	string(UnitSecs100M):     UnitSecs100M,
 	string(UnitSecs100Y):     UnitSecs100Y,
 	string(UnitSecs500M):     UnitSecs500M,
+	string(UnitSecs400M):     UnitSecs400M,
+	string(UnitSecs250M):     UnitSecs250M,
 	string(UnitKMH):          UnitKMH,
 	string(UnitMPH):          UnitMPH,
 	string(UnitMS):           UnitMS,

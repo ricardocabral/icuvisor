@@ -121,9 +121,9 @@ func NewResponse(profile intervals.AthleteWithSportSettings, version string, tim
 			ServerVersion:            NormalizeVersion(version),
 			AthleteIDFormat:          "i-prefixed intervals.icu athlete ID",
 			TimezoneConvention:       "IANA timezone from athlete profile when available; config timezone fallback otherwise",
-			PaceConvention:           "paces are seconds per athlete pace distance unit; run pace uses threshold_pace_seconds_per_km or threshold_pace_seconds_per_mile, swim pace uses threshold_pace_seconds_per_100m or threshold_pace_seconds_per_100y when upstream reports SECS_100M/SECS_100Y, row pace uses threshold_pace_seconds_per_500m, and pace_units_source preserves the upstream enum",
+			PaceConvention:           "intervals.icu stores threshold_pace in meters per second; pace_units is presentation-only and selects the athlete-facing seconds-per-distance field, while pace_units_source preserves the upstream enum",
 			PowerThresholdConvention: "ftp_watts is the upstream sport FTP threshold; indoor_ftp_watts is the optional upstream indoor FTP override when intervals.icu provides indoor_ftp. Absence of indoor_ftp_watts means Icuvisor has no separate indoor FTP for that sport, not that it should be inferred from zones or planned-event indoor flags.",
-			ZoneBoundaryConvention:   "power_zones_watts, hr_zones_bpm, and pace_zones_* are upstream zone boundary arrays, not FTP, LTHR, or pace-threshold values; pair them with matching *_zone_names by index when present.",
+			ZoneBoundaryConvention:   "power_zones_watts and hr_zones_bpm are upstream zone boundary arrays; pace_zones_percent_of_threshold contains upstream percentage-of-threshold boundaries, never pace durations. Pair each zone array with its matching *_zone_names by index when present.",
 			IncludeFull:              includeFull,
 		},
 	}

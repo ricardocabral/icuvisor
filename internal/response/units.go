@@ -1,6 +1,7 @@
 package response
 
 import (
+	"math"
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/units"
@@ -13,6 +14,55 @@ const (
 	metersPerYard      = 0.9144
 	secondsPerHour     = 3600
 )
+
+// PaceDistanceMeters returns the athlete-facing distance selected by an upstream
+// pace_units display preference. threshold_pace itself is always stored in m/s.
+func PaceDistanceMeters(paceUnit units.Unit) (float64, bool) {
+	switch paceUnit {
+	case units.UnitMinsKM:
+		return metersPerKilometer, true
+	case units.UnitMinsMile:
+		return metersPerMile, true
+	case units.UnitSecs100M:
+		return 100, true
+	case units.UnitSecs100Y:
+		return 100 * metersPerYard, true
+	case units.UnitSecs500M:
+		return 500, true
+	case units.UnitSecs400M:
+		return 400, true
+	case units.UnitSecs250M:
+		return 250, true
+	default:
+		return 0, false
+	}
+}
+
+// PaceSecondsFromMetersPerSecond converts stored threshold pace to seconds for
+// the distance identified by pace_units. pace_units selects presentation only.
+func PaceSecondsFromMetersPerSecond(metersPerSecond float64, paceUnit units.Unit) (float64, bool) {
+	if metersPerSecond <= 0 || math.IsNaN(metersPerSecond) || math.IsInf(metersPerSecond, 0) {
+		return 0, false
+	}
+	distanceMeters, ok := PaceDistanceMeters(paceUnit)
+	if !ok {
+		return 0, false
+	}
+	return distanceMeters / metersPerSecond, true
+}
+
+// PaceMetersPerSecondFromSeconds converts an explicit seconds-per-distance pace
+// to the m/s value required for intervals.icu threshold_pace storage.
+func PaceMetersPerSecondFromSeconds(seconds float64, paceUnit units.Unit) (float64, bool) {
+	if seconds <= 0 || math.IsNaN(seconds) || math.IsInf(seconds, 0) {
+		return 0, false
+	}
+	distanceMeters, ok := PaceDistanceMeters(paceUnit)
+	if !ok {
+		return 0, false
+	}
+	return distanceMeters / seconds, true
+}
 
 // UnitSystem is the athlete's response-boundary distance unit preference.
 type UnitSystem string

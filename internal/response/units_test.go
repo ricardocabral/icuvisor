@@ -119,6 +119,51 @@ func TestToPreferredPreservesSportSpecificAndUnknownUnits(t *testing.T) {
 	}
 }
 
+func TestPaceMetersPerSecondConversions(t *testing.T) {
+	tests := []struct {
+		name       string
+		metersPerS float64
+		unit       units.Unit
+		wantSecond float64
+	}{
+		{name: "run kilometer", metersPerS: 3.5714285, unit: units.UnitMinsKM, wantSecond: 280},
+		{name: "run mile", metersPerS: 3.5714285, unit: units.UnitMinsMile, wantSecond: 450.616329012327},
+
+		{name: "swim 100 meters", metersPerS: 2, unit: units.UnitSecs100M, wantSecond: 50},
+		{name: "swim 100 yards", metersPerS: 2, unit: units.UnitSecs100Y, wantSecond: 45.72},
+		{name: "rowing 500 meters", metersPerS: 4, unit: units.UnitSecs500M, wantSecond: 125},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			seconds, ok := PaceSecondsFromMetersPerSecond(tt.metersPerS, tt.unit)
+			if !ok {
+				t.Fatalf("PaceSecondsFromMetersPerSecond(%v, %q) did not convert", tt.metersPerS, tt.unit)
+			}
+			assertPaceClose(t, seconds, tt.wantSecond)
+
+			metersPerSecond, ok := PaceMetersPerSecondFromSeconds(seconds, tt.unit)
+			if !ok {
+				t.Fatalf("PaceMetersPerSecondFromSeconds(%v, %q) did not convert", seconds, tt.unit)
+			}
+			assertClose(t, metersPerSecond, tt.metersPerS)
+		})
+	}
+}
+
+func TestPaceMetersPerSecondConversionsRejectInvalidValues(t *testing.T) {
+	for _, value := range []float64{0, -1, math.NaN(), math.Inf(1)} {
+		if _, ok := PaceSecondsFromMetersPerSecond(value, units.UnitMinsKM); ok {
+			t.Fatalf("PaceSecondsFromMetersPerSecond(%v) converted invalid value", value)
+		}
+		if _, ok := PaceMetersPerSecondFromSeconds(value, units.UnitMinsKM); ok {
+			t.Fatalf("PaceMetersPerSecondFromSeconds(%v) converted invalid value", value)
+		}
+	}
+	if _, ok := PaceSecondsFromMetersPerSecond(3.5, units.UnitUnknown); ok {
+		t.Fatal("PaceSecondsFromMetersPerSecond converted unknown pace unit")
+	}
+}
+
 func TestUnitSystemDistanceHelpers(t *testing.T) {
 	if got := UnitSystemMetric.DistanceFieldName("distance"); got != "distance_km" {
 		t.Fatalf("metric field = %q", got)
@@ -131,6 +176,13 @@ func TestUnitSystemDistanceHelpers(t *testing.T) {
 	}
 	if got := UnitSystemImperial.ConvertDistanceKM(10); got < 6.2137 || got > 6.2138 {
 		t.Fatalf("imperial distance = %v", got)
+	}
+}
+
+func assertPaceClose(t *testing.T, got float64, want float64) {
+	t.Helper()
+	if math.Abs(got-want) > 0.0001 {
+		t.Fatalf("pace value = %.12f, want %.12f", got, want)
 	}
 }
 
