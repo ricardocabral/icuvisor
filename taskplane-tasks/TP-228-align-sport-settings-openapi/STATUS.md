@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** L
 
@@ -35,7 +35,7 @@
 
 ### Step 2: Align the intervals.icu client
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required recalcHrZones query implemented
 - [x] Apply PUT sends no date or semantic body
@@ -120,3 +120,4 @@
 | 2026-07-10 11:45 | Review R003 | code Step 1: APPROVE |
 | 2026-07-10 11:47 | Review R004 | plan Step 2: REVISE |
 | 2026-07-10 11:50 | Review R005 | plan Step 2: APPROVE |
+| 2026-07-10 11:55 | Review R006 | code Step 2: APPROVE |
