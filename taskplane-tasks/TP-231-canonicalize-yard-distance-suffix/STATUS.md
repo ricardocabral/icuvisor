@@ -38,12 +38,14 @@
 
 ### Step 2: Update resources, examples, and round-trip fixtures
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] Canonical output expectations use yrd
-- [ ] Legacy yd to canonical yrd round trip covered
-- [ ] Yard validation scenarios covered
-- [ ] Website and PRD updated
+- [ ] Update workout_syntax.md golden file (yd → yrd)
+- [ ] Update validate_test.go yard coverage
+- [ ] Update web/content/cookbook/build-workouts.md
+- [ ] Update docs/prd/PRD-icuvisor.md
+- [ ] Update CHANGELOG.md
+- [ ] Run targeted tests: go test ./internal/workoutdoc ./internal/resources ./internal/tools -run 'Workout|Yard|Syntax'
 
 ---
 
