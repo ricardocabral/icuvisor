@@ -25,9 +25,9 @@
 **Status:** 🟨 In Progress
 
 <!-- R004 revision items -->
-- [ ] R004-1: Exhausted budgets (remaining <= 0) must also violate when candidate.Load > 0 / candidate.DurationMinutes > 0 (not just warn)
-- [ ] R004-2: Add input validation — finite non-negative candidate.Load and DurationMinutes; ValidateWeekConstraints() for constraint struct validation; ViolationInvalidInput code
-- [ ] R004-3: Fix duplicate-date inconsistency — ValidateCandidates must use first-match (same as findDay); add duplicate detection to ValidateWeekConstraints
+- [x] R004-1: Exhausted budgets (remaining <= 0) must also violate when candidate.Load > 0 / candidate.DurationMinutes > 0 (not just warn)
+- [x] R004-2: Add input validation — finite non-negative candidate.Load and DurationMinutes; ValidateWeekConstraints() for constraint struct validation; ViolationInvalidInput code
+- [x] R004-3: Fix duplicate-date inconsistency — ValidateCandidates must use first-match (same as findDay); add duplicate detection to ValidateWeekConstraints
 
 <!-- R003 revision items -->
 - [x] R003-1: Add ViolationRequestedSessionCountExceeded code; enforce RequestedSessionCount cap in ValidateCandidates (reject excess valid candidates)

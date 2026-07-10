@@ -171,8 +171,8 @@ Outcome for all candidates in a week.
 |---|---|
 | `infeasible_session_count` | `RequestedSessionCount` exceeds total structural slots across all days. Structural capacity only; does not filter by sport or mode. |
 | `infeasible_load` | Total candidate load (including invalid candidates) is less than the remaining weekly load target. |
-| `zero_remaining_load` | Remaining load budget is zero or negative. Fires unconditionally when remaining ≤ 0, regardless of the candidate's own Load value. |
-| `zero_remaining_time` | Remaining time budget is zero or negative. Parallel to `zero_remaining_load` for the time dimension. |
+| `zero_remaining_load` | Remaining load budget is zero or negative. Fires unconditionally when remaining ≤ 0. Accompanied by `weekly_load_overshoot` when `candidate.Load > 0`. |
+| `zero_remaining_time` | Remaining time budget is zero or negative. Parallel to `zero_remaining_load`. Accompanied by `weekly_time_overshoot` when `candidate.DurationMinutes > 0`. |
 
 ---
 
@@ -273,14 +273,31 @@ BatchResult.Warnings: [infeasible_session_count (requested 5, have 2 slots)]
 
 ---
 
+## Input Validation
+
+### `ValidateWeekConstraints(wc WeekConstraints) error`
+
+Call before `ValidateCandidate` or `ValidateCandidates` to ensure the constraint struct is sound. Returns a non-nil error for:
+- Any `float64` field that is NaN, infinite, or negative (targets, completed, fixed, slot caps, daily caps).
+- `RequestedSessionCount < 0`.
+- Duplicate `Date` values in `AvailableDays`.
+
+Constraint struct errors are returned as `error` rather than `Violation` because they represent a programming error in how the caller built the struct, not a property of the candidate session.
+
+### Candidate input validation
+
+`ValidateCandidate` and `ValidateCandidates` check each candidate for finite, non-negative `DurationMinutes` and `Load` before applying any other constraints. Invalid inputs return `ViolationInvalidInput` immediately. This prevents NaN/negative values from propagating into comparisons, budget accumulations, or `Reconciliation` fields.
+
+---
+
 ## Boundary Conditions
 
 | Condition | Behaviour |
 |---|---|
 | `WeeklyTargetLoad == 0` | Load overshoot checks are skipped; no load violations or zero-load warnings. |
 | `WeeklyTargetMinutes == 0` | Time overshoot checks are skipped. |
-| `FixedLoad + CompletedLoad > WeeklyTargetLoad` | RemainingLoad is negative; `zero_remaining_load` warning fires unconditionally (regardless of `candidate.Load`). |
-| `FixedMinutes + CompletedMinutes > WeeklyTargetMinutes` | RemainingMinutes is negative; `zero_remaining_time` warning fires unconditionally. |
+| `FixedLoad + CompletedLoad > WeeklyTargetLoad` | RemainingLoad is negative; `zero_remaining_load` warning fires unconditionally. If `candidate.Load > 0`, `weekly_load_overshoot` also fires (session cannot be placed without exceeding the already-exhausted budget). |
+| `FixedMinutes + CompletedMinutes > WeeklyTargetMinutes` | RemainingMinutes is negative; `zero_remaining_time` warning fires unconditionally. If `candidate.DurationMinutes > 0`, `weekly_time_overshoot` also fires. |
 | `MaxSessionsPerDay == 0` | Day is treated as unavailable; `day_unavailable` fires. |
 | `len(Slots) == 0` | Slot constraints are skipped; only day-level and weekly checks apply. Sessions per day are capped only by `MaxSessionsPerDay`. |
 | All slots consumed by prior candidates | `no_available_slot` fires even if `MaxSessionsPerDay` not yet reached. |
