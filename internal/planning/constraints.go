@@ -179,6 +179,11 @@ const (
 	// min(MaxSessionsPerDay, len(Slots)) per day; sport/mode filtering is not applied.
 	WarnInfeasibleSessionCount WarningCode = "infeasible_session_count"
 
+	// WarnRequestedSessionCountUnmet fires when the batch contains fewer valid sessions
+	// than *RequestedSessionCount. The warning includes both the requested count and the
+	// accepted count, so callers can detect underfilled schedules deterministically.
+	WarnRequestedSessionCountUnmet WarningCode = "requested_session_count_unmet"
+
 	// WarnInfeasibleLoad fires when the total load of valid-input candidates is less than
 	// the remaining weekly load target. Invalid-input candidates (NaN/negative) are
 	// excluded from this total.
@@ -527,6 +532,15 @@ func ValidateCandidates(wc WeekConstraints, candidates []CandidateSession) Batch
 				Value:   *wc.RequestedSessionCount,
 			})
 		}
+		// Warn when the batch is underfilled: fewer valid sessions than requested.
+		if validCount < *wc.RequestedSessionCount {
+			weekWarnings = append(weekWarnings, Warning{
+				Code:    WarnRequestedSessionCountUnmet,
+				Message: "batch contains fewer valid sessions than requested; schedule is underfilled",
+				Field:   "requested_session_count",
+				Value:   map[string]int{"requested": *wc.RequestedSessionCount, "accepted": validCount},
+			})
+		}
 	}
 
 	recon := Reconcile(wc, candidates)
@@ -796,13 +810,13 @@ func universalSlotViolations(slots []SlotConstraint, candidate CandidateSession)
 		if !(slot.MaxDurationMinutes > 0 && candidate.DurationMinutes > slot.MaxDurationMinutes) {
 			allDuration = false
 		}
-		if !(candidate.Indoor && slot.MaxIndoorMinutes > 0 && candidate.DurationMinutes > slot.MaxIndoorMinutes) {
+		if !candidate.Indoor || slot.MaxIndoorMinutes == 0 || candidate.DurationMinutes <= slot.MaxIndoorMinutes {
 			allIndoor = false
 		}
-		if !(len(slot.AllowedSports) > 0 && !slices.Contains(slot.AllowedSports, candidate.Sport)) {
+		if len(slot.AllowedSports) == 0 || slices.Contains(slot.AllowedSports, candidate.Sport) {
 			allSport = false
 		}
-		if !(len(slot.AllowedModes) > 0 && !slices.Contains(slot.AllowedModes, candidate.Mode)) {
+		if len(slot.AllowedModes) == 0 || slices.Contains(slot.AllowedModes, candidate.Mode) {
 			allMode = false
 		}
 	}

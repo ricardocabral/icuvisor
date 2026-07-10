@@ -350,6 +350,27 @@ func TestValidateCandidates_RequestedSessionCount_Zero_BlocksAll(t *testing.T) {
 	}
 }
 
+func TestValidateCandidates_UnderfillWarns(t *testing.T) {
+	// RequestedSessionCount=3 but only 1 valid candidate → underfill warning.
+	wc := planning.WeekConstraints{
+		WeekStartDate:         "2026-07-06",
+		RequestedSessionCount: ptrI(3),
+		AvailableDays: []planning.DayConstraints{
+			{Date: "2026-07-06", MaxSessionsPerDay: 3},
+		},
+	}
+	candidates := []planning.CandidateSession{
+		{Date: "2026-07-06", DurationMinutes: 30}, // valid
+	}
+	batch := planning.ValidateCandidates(wc, candidates)
+	if !batch.Results[0].Valid {
+		t.Errorf("single valid candidate should be valid, got violations: %v", batch.Results[0].Violations)
+	}
+	if !hasBatchWarning(batch, planning.WarnRequestedSessionCountUnmet) {
+		t.Errorf("expected requested_session_count_unmet warning, got warnings: %v", batch.Warnings)
+	}
+}
+
 func TestValidateCandidates_InfeasibleSessionCount_Warns(t *testing.T) {
 	// RequestedSessionCount=5 but only 2 structural slots → warn.
 	wc := planning.WeekConstraints{

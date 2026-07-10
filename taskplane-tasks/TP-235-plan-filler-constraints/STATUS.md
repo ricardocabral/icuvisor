@@ -25,8 +25,8 @@
 **Status:** 🟨 In Progress
 
 <!-- R011 revision items -->
-- [ ] R011-1: Add WarnRequestedSessionCountUnmet batch warning when validCount < *RequestedSessionCount (underfill detection)
-- [ ] R011-2: Fix QF1001 lint issues at constraints.go:802,805 (De Morgan's law)
+- [x] R011-1: Add WarnRequestedSessionCountUnmet batch warning when validCount < *RequestedSessionCount (underfill detection)
+- [x] R011-2: Fix QF1001 lint issues at constraints.go:802,805 (De Morgan's law)
 
 <!-- R010 revision items -->
 - [x] R010-1: Reconciliation target fields use *float64 to preserve nil vs 0 distinction; RemainingLoad/RemainingMin are nil when untracked; fix nil+nonzero completed calculation
