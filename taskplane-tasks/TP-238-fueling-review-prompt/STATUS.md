@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 1
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -24,13 +24,13 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Define executable date-only arguments, mode precedence, validated athlete-local dates, source-tool route, pagination, and optional race context
-- [ ] Require all-session date-range activity reads to retain unnamed rows and report their availability separately
-- [ ] Add a `FuelingReview` portable-pack contract test before Step 2's function, registry, and golden-fixture work
-- [ ] Define a nutrition-only wellness field projection, closed vocabulary, source-labelled return layout, and missing/freshness/availability reporting
-- [ ] Define grams-per-hour denominator, non-negative logged-intake eligibility, range aggregation, and coverage/exclusion rules
-- [ ] Define read-only health, product, target, and custom-field boundaries
-- [ ] Resolve Step 1/2 ownership for contract verification, handler validation, prompt function/registry, golden fixture, and portable-pack discoverability
+- [x] Define executable date-only arguments, mode precedence, validated athlete-local dates, source-tool route, pagination, and optional race context
+- [x] Require all-session date-range activity reads to retain unnamed rows and report their availability separately
+- [x] Add a `FuelingReview` portable-pack contract test before Step 2's function, registry, and golden-fixture work
+- [x] Define a nutrition-only wellness field projection, closed vocabulary, source-labelled return layout, and missing/freshness/availability reporting
+- [x] Define grams-per-hour denominator, non-negative logged-intake eligibility, range aggregation, and coverage/exclusion rules
+- [x] Define read-only health, product, target, and custom-field boundaries
+- [x] Resolve Step 1/2 ownership for contract verification, handler validation, prompt function/registry, golden fixture, and portable-pack discoverability
 
 ---
 
@@ -88,6 +88,7 @@
 | R003 | Plan | 1 | REVISE | `.reviews/R003-plan-step1.md` |
 | R004 | Plan | 1 | REVISE | `.reviews/R004-plan-step1.md` |
 | R005 | Plan | 1 | REVISE | `.reviews/R005-plan-step1.md` |
+| R006 | Plan | 1 | APPROVE | `.reviews/R006-plan-step1.md` |
 
 ## Discoveries
 
@@ -121,3 +122,4 @@
 | 2026-07-10 18:34 | Review R003 | plan Step 1: REVISE |
 | 2026-07-10 18:38 | Review R004 | plan Step 1: REVISE |
 | 2026-07-10 18:41 | Review R005 | plan Step 1: REVISE |
+| 2026-07-10 18:44 | Review R006 | plan Step 1: APPROVE |
