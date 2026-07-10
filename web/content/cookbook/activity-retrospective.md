@@ -6,6 +6,8 @@ weight: 40
 
 After a key session you want more than "nice ride". This recipe makes the assistant pull one activity apart — intervals, splits, time-in-zone, decoupling — and turn it into two takeaways, while being honest about Strava-imported activities that come back nearly empty.
 
+For logged carbohydrate evidence, missing-log coverage, and source-labelled grams-per-hour calculations without nutrition targets, use the dedicated [Fueling review]({{< relref "fueling-review" >}}) recipe.
+
 ## When to use this
 
 - After an interval session, to check whether the hard parts held their targets.

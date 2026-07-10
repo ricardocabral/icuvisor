@@ -1,6 +1,6 @@
 # TP-238: Add grounded fueling review prompt pack — Status
 
-**Current Step:** Step 4: Testing & Verification
+**Current Step:** Step 5: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 1
@@ -58,7 +58,7 @@
 
 ### Step 4: Testing & Verification
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] FULL test suite passing
 - [x] Prompt eval validation passing
@@ -71,11 +71,11 @@
 
 ### Step 5: Documentation & Delivery
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Must Update docs modified
-- [ ] Check If Affected docs reviewed
-- [ ] Discoveries logged
+- [x] Must Update docs modified
+- [x] Check If Affected docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -99,6 +99,7 @@
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
 | Referenced area-context file is absent; all task implementation paths are present | Proceeded using the listed Tier 3 source/docs instead | `taskplane-tasks/CONTEXT.md` |
+| Existing fueling examples invited target-based underfueling and cross-source intake inference | Replaced them and the matching eval with source-correct missing-log and no-target language | `web/content/cookbook/prompt-library.md`; `scripts/eval/scenarios/cookbook_scenarios.json` |
 
 ## Execution Log
 
