@@ -52,15 +52,33 @@ func weekWithDay(date string, slots ...planning.SlotConstraint) planning.WeekCon
 	}
 }
 
+func assertReconciliation(t *testing.T, got planning.Reconciliation, remainingMinutes, remainingLoad, projectedMinutes, projectedLoad float64) {
+	t.Helper()
+	if got.RemainingMinutes == nil || *got.RemainingMinutes != remainingMinutes {
+		t.Errorf("RemainingMinutes = %v, want %v", got.RemainingMinutes, remainingMinutes)
+	}
+	if got.RemainingLoad == nil || *got.RemainingLoad != remainingLoad {
+		t.Errorf("RemainingLoad = %v, want %v", got.RemainingLoad, remainingLoad)
+	}
+	if got.ProjectedMinutes != projectedMinutes {
+		t.Errorf("ProjectedMinutes = %v, want %v", got.ProjectedMinutes, projectedMinutes)
+	}
+	if got.ProjectedLoad != projectedLoad {
+		t.Errorf("ProjectedLoad = %v, want %v", got.ProjectedLoad, projectedLoad)
+	}
+}
+
 // ─── ValidateCandidate boundary tests ───────────────────────────────────────
 
-func TestValidateCandidate_InProgressWeekOvershoot(t *testing.T) {
+func TestConstraintInProgressWeekReconciliationPreventsFullTargetOvershoot(t *testing.T) {
 	// Full-week target 300 load; 120 already completed → remaining 180.
 	// A 200-load candidate should overshoot; a 180-load candidate should fit.
 	wc := planning.WeekConstraints{
-		WeekStartDate:    "2026-07-06",
-		WeeklyTargetLoad: ptrF(300),
-		CompletedLoad:    120,
+		WeekStartDate:       "2026-07-06",
+		WeeklyTargetMinutes: ptrF(300),
+		WeeklyTargetLoad:    ptrF(300),
+		CompletedMinutes:    120,
+		CompletedLoad:       120,
 		AvailableDays: []planning.DayConstraints{
 			{Date: "2026-07-06", MaxSessionsPerDay: 1},
 		},
@@ -75,14 +93,20 @@ func TestValidateCandidate_InProgressWeekOvershoot(t *testing.T) {
 		t.Errorf("expected weekly_load_overshoot, got violations: %v", r.Violations)
 	}
 
-	justFit := planning.CandidateSession{Date: "2026-07-06", Load: 180}
+	justFit := planning.CandidateSession{Date: "2026-07-06", DurationMinutes: 180, Load: 180}
 	r2 := planning.ValidateCandidate(wc, justFit)
 	if !r2.Valid {
 		t.Errorf("load 180 = remaining 180: expected valid, got violations: %v", r2.Violations)
 	}
+
+	recon, err := planning.Reconcile(wc, []planning.CandidateSession{justFit})
+	if err != nil {
+		t.Fatalf("Reconcile unexpectedly failed: %v", err)
+	}
+	assertReconciliation(t, recon, 180, 180, 300, 300)
 }
 
-func TestValidateCandidate_TwoSlotsCannotCombine(t *testing.T) {
+func TestConstraintSeparateSlotsCannotCombineSession(t *testing.T) {
 	// Two 45-minute slots; a 95-minute session must not fit.
 	slot45 := planning.SlotConstraint{MaxDurationMinutes: 45}
 	wc := weekWithDay("2026-07-06", slot45, slot45)
@@ -103,7 +127,7 @@ func TestValidateCandidate_TwoSlotsCannotCombine(t *testing.T) {
 	}
 }
 
-func TestValidateCandidate_IndoorCapDoesNotConstrainOutdoor(t *testing.T) {
+func TestConstraintIndoorCapDoesNotConstrainOutdoor(t *testing.T) {
 	// One slot: MaxDuration=120, MaxIndoor=60.
 	slot := planning.SlotConstraint{MaxDurationMinutes: 120, MaxIndoorMinutes: 60}
 	wc := weekWithDay("2026-07-06", slot)
@@ -124,12 +148,14 @@ func TestValidateCandidate_IndoorCapDoesNotConstrainOutdoor(t *testing.T) {
 	}
 }
 
-func TestValidateCandidate_FixedEventsReduceBudget(t *testing.T) {
+func TestConstraintFixedEventsReduceBudget(t *testing.T) {
 	// Target 400 load; fixed events commit 150. Remaining = 250.
 	wc := planning.WeekConstraints{
-		WeekStartDate:    "2026-07-06",
-		WeeklyTargetLoad: ptrF(400),
-		FixedLoad:        150,
+		WeekStartDate:       "2026-07-06",
+		WeeklyTargetMinutes: ptrF(400),
+		WeeklyTargetLoad:    ptrF(400),
+		FixedMinutes:        150,
+		FixedLoad:           150,
 		AvailableDays: []planning.DayConstraints{
 			{Date: "2026-07-06", MaxSessionsPerDay: 1},
 		},
@@ -140,13 +166,19 @@ func TestValidateCandidate_FixedEventsReduceBudget(t *testing.T) {
 		t.Error("300 load > remaining 250: expected invalid")
 	}
 
-	exact := planning.CandidateSession{Date: "2026-07-06", Load: 250}
+	exact := planning.CandidateSession{Date: "2026-07-06", DurationMinutes: 250, Load: 250}
 	if r := planning.ValidateCandidate(wc, exact); !r.Valid {
 		t.Errorf("250 load = remaining 250: expected valid, got violations: %v", r.Violations)
 	}
+
+	recon, err := planning.Reconcile(wc, []planning.CandidateSession{exact})
+	if err != nil {
+		t.Fatalf("Reconcile unexpectedly failed: %v", err)
+	}
+	assertReconciliation(t, recon, 250, 250, 400, 400)
 }
 
-func TestValidateCandidate_ZeroRemainingLoad(t *testing.T) {
+func TestConstraintZeroRemainingLoad(t *testing.T) {
 	// Completed + fixed already exceed target → remaining is negative.
 	wc := planning.WeekConstraints{
 		WeekStartDate:    "2026-07-06",
@@ -182,7 +214,7 @@ func TestValidateCandidate_ZeroRemainingLoad(t *testing.T) {
 	}
 }
 
-func TestValidateCandidate_UnavailableDay(t *testing.T) {
+func TestConstraintUnavailableDay(t *testing.T) {
 	wc := planning.WeekConstraints{
 		WeekStartDate: "2026-07-06",
 		AvailableDays: []planning.DayConstraints{},
@@ -390,8 +422,48 @@ func TestValidateCandidates_UnderfillWarns(t *testing.T) {
 	}
 }
 
-func TestValidateCandidates_InfeasibleSessionCount_Warns(t *testing.T) {
-	// RequestedSessionCount=5 but only 2 structural slots → warn.
+func TestConstraintBatchSlotsAndRequestedCountPreserveOrder(t *testing.T) {
+	wc := planning.WeekConstraints{
+		WeekStartDate:         "2026-07-06",
+		RequestedSessionCount: ptrI(2),
+		AvailableDays: []planning.DayConstraints{{
+			Date:              "2026-07-06",
+			MaxSessionsPerDay: 4,
+			Slots: []planning.SlotConstraint{
+				{MaxDurationMinutes: 45},
+				{MaxDurationMinutes: 45},
+				{MaxDurationMinutes: 45},
+				{MaxDurationMinutes: 45},
+			},
+		}},
+	}
+	candidates := []planning.CandidateSession{
+		{Date: "2026-07-06", DurationMinutes: 45}, // accepted in first slot
+		{Date: "2026-07-06", DurationMinutes: 95}, // rejected: slots do not combine
+		{Date: "2026-07-06", DurationMinutes: 45}, // accepted in second slot
+		{Date: "2026-07-06", DurationMinutes: 45}, // rejected: requested count reached
+	}
+
+	batch := planning.ValidateCandidates(wc, candidates)
+	if len(batch.Results) != len(candidates) {
+		t.Fatalf("result count = %d, want %d", len(batch.Results), len(candidates))
+	}
+	if !batch.Results[0].Valid || !batch.Results[2].Valid {
+		t.Errorf("expected candidates 0 and 2 to be valid, got %+v", batch.Results)
+	}
+	if batch.Results[1].Valid || !hasViolation(batch.Results[1], planning.ViolationSlotDuration) {
+		t.Errorf("candidate 1 should fail slot_duration_exceeded, got %+v", batch.Results[1])
+	}
+	if batch.Results[3].Valid || !hasViolation(batch.Results[3], planning.ViolationRequestedSessionCountExceeded) {
+		t.Errorf("candidate 3 should fail requested_session_count_exceeded, got %+v", batch.Results[3])
+	}
+	if len(batch.Warnings) != 0 {
+		t.Errorf("fully met requested count should not warn, got %v", batch.Warnings)
+	}
+}
+
+func TestConstraintBatchInfeasibleSessionCountWarns(t *testing.T) {
+	// RequestedSessionCount=5 but only 2 structural slots → infeasible and underfilled.
 	wc := planning.WeekConstraints{
 		WeekStartDate:         "2026-07-06",
 		RequestedSessionCount: ptrI(5),
@@ -403,6 +475,9 @@ func TestValidateCandidates_InfeasibleSessionCount_Warns(t *testing.T) {
 	batch := planning.ValidateCandidates(wc, nil)
 	if !hasBatchWarning(batch, planning.WarnInfeasibleSessionCount) {
 		t.Errorf("expected infeasible_session_count warning, got warnings: %v", batch.Warnings)
+	}
+	if !hasBatchWarning(batch, planning.WarnRequestedSessionCountUnmet) {
+		t.Errorf("expected requested_session_count_unmet warning, got warnings: %v", batch.Warnings)
 	}
 }
 

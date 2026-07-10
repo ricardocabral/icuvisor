@@ -111,14 +111,14 @@
 **Status:** 🟨 In Progress
 
 <!-- R016 revision items -->
-- [ ] R016-1: Ensure the targeted Step 3 command selects every boundary regression group and verify its selection
-- [ ] R016-2: Assert reconciliation remaining/projected load and minutes in in-progress-week and fixed-event coverage
-- [ ] R016-3: Exercise batch validation for slots and requested-count/infeasibility, including ordered results and warnings
+- [x] R016-1: Ensure the targeted Step 3 command selects every boundary regression group and verify its selection (`go test -list '^(TestConstraint|TestReconciliation)'` selected all eight Step 3 tests)
+- [x] R016-2: Assert reconciliation remaining/projected load and minutes in in-progress-week and fixed-event coverage
+- [x] R016-3: Exercise batch validation for slots and requested-count/infeasibility, including ordered results and warnings
 
-- [ ] In-progress week overshoot covered
-- [ ] Separate 45-minute slots versus 95-minute session covered
-- [ ] Indoor versus outdoor cap covered
-- [ ] Fixed, zero-load, unavailable, and infeasible cases covered
+- [x] In-progress week overshoot covered
+- [x] Separate 45-minute slots versus 95-minute session covered
+- [x] Indoor versus outdoor cap covered
+- [x] Fixed, zero-load, unavailable, and infeasible cases covered
 
 ---
 
