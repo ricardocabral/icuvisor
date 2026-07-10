@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 1
 **Size:** L
 
@@ -57,6 +57,7 @@
 - [x] R007: Preserve explicit-false/default-true decoding and always emit truthful recalculation-requested metadata
 - [x] R007: Narrowly approve only update_sport_settings effective_date removal without weakening generic schema-removal protection
 - [x] R009: Add production schema-stability policy keyed by tool/property and test approved versus unrelated removals through CheckSchemaStability
+- [ ] R011: Reject explicit null recalc_hr_zones before profile or writer calls
 
 ---
 
@@ -119,7 +120,7 @@
 - R001 plan review: legacy `effective_date` must be rejected by strict decoding before an upstream request; response metadata may only report the requested HR-zone recalculation boolean.
 - R004 plan review: client resolves no input defaults; it encodes a resolved `RecalcHRZones` bool and uses body-plus-query update and bodyless-PUT apply transports that preserve retries and 422 handling.
 - R007 plan review: schema stability needs a TP-228-only approved effective_date-removal exception; generic property-removal detection remains enforced.
-- Step 3 implementation plan: (1) replace `EffectiveDate` with `*bool RecalcHRZones` in the tool request; decoding resolves nil to true and passes the resulting bool to `WriteSportSettingsParams.RecalcHRZones`; remove `EffectiveDate` from internal params. (2) Delete `effective_date` from the strict type, validation, public strings, schema requirements/properties/examples, metadata, and tests, relying on `DecodeStrict` to reject it before profile/writer calls. (3) Replace date/recompute metadata with always-emitted `hr_zone_recalculation_requested` equal to the resolved option. (4) Make sport the sole required schema field, add `recalc_hr_zones` as optional boolean default true with an LLM-readable description, then regenerate snapshot and website catalogs with `make docs-tools`. (5) Add table-driven omitted/default-true and explicit-false forwarding/metadata tests plus legacy-date/unknown rejection with zero client calls. (6) Add production `approvedSchemaPropertyRemovals` keyed by tool/property in schema_stability.go; `compareStableSchema` consults it solely before a property-removed failure. Its sole durable TP-228 rationale approves `update_sport_settings.effective_date`; CheckSchemaStability tests prove a different property and another tool's effective_date still fail. Run `go test ./internal/tools ./internal/toolchecks`.
+- Step 3 implementation plan: (1) replace `EffectiveDate` with `*bool RecalcHRZones` in the tool request; decoding resolves nil to true and passes the resulting bool to `WriteSportSettingsParams.RecalcHRZones`; remove `EffectiveDate` from internal params. (2) Delete `effective_date` from the strict type, validation, public strings, schema requirements/properties/examples, metadata, and tests, relying on `DecodeStrict` to reject it before profile/writer calls. (3) Replace date/recompute metadata with always-emitted `hr_zone_recalculation_requested` equal to the resolved option. (4) Make sport the sole required schema field, add `recalc_hr_zones` as optional boolean default true with an LLM-readable description, then regenerate snapshot and website catalogs with `make docs-tools`. (5) Add table-driven omitted/default-true and explicit-false forwarding/metadata tests plus legacy-date/unknown/null rejection with zero client calls. (6) Add production `approvedSchemaPropertyRemovals` keyed by tool/property in schema_stability.go; `compareStableSchema` consults it solely before a property-removed failure. Its sole durable TP-228 rationale approves `update_sport_settings.effective_date`; CheckSchemaStability tests prove a different property and another tool's effective_date still fail. Run `go test ./internal/tools ./internal/toolchecks`.
 | 2026-07-10 11:40 | Review R001 | plan Step 1: REVISE |
 | 2026-07-10 11:42 | Review R002 | plan Step 1: APPROVE |
 | 2026-07-10 11:45 | Review R003 | code Step 1: APPROVE |
@@ -130,3 +131,4 @@
 | 2026-07-10 11:58 | Review R008 | plan Step 3: REVISE |
 | 2026-07-10 12:00 | Review R009 | plan Step 3: REVISE |
 | 2026-07-10 12:02 | Review R010 | plan Step 3: APPROVE |
+| 2026-07-10 12:11 | Review R011 | code Step 3: REVISE |
