@@ -577,7 +577,7 @@ func TestGetAthleteProfileShapesYardSwimPace(t *testing.T) {
 	if sport.PaceDistanceUnit != "100y" || sport.PaceUnitsSource != "SECS_100Y" {
 		t.Fatalf("yard swim pace metadata = %+v", sport)
 	}
-	if sport.ThresholdPaceSecondsPer100M != nil || sport.ThresholdPaceMetersPerSecond != nil || sport.ThresholdPaceValue != nil {
+	if sport.ThresholdPaceSecondsPer100M != nil || sport.ThresholdPaceMetersPerSecond != nil {
 		t.Fatalf("yard swim pace used wrong fields: %+v", sport)
 	}
 }
@@ -612,8 +612,15 @@ func TestGetAthleteProfilePaceConversionPolicies(t *testing.T) {
 		t.Fatalf("swim pace pass-through = %+v", swim)
 	}
 	unknown := response.SportSettings[2]
-	if unknown.ThresholdPaceMetersPerSecond == nil || *unknown.ThresholdPaceMetersPerSecond != 7 || unknown.ThresholdPaceValue == nil || *unknown.ThresholdPaceValue != 7 || len(unknown.PaceZonesPercentOfThreshold) != 2 || unknown.Meta["unknown_unit"] != "FEET" || unknown.PaceDistanceUnit != "FEET" {
+	if unknown.ThresholdPaceMetersPerSecond == nil || *unknown.ThresholdPaceMetersPerSecond != 7 || len(unknown.PaceZonesPercentOfThreshold) != 2 || unknown.Meta["unknown_unit"] != "FEET" || unknown.PaceDistanceUnit != "FEET" {
 		t.Fatalf("unknown pace pass-through = %+v", unknown)
+	}
+	encoded, err := json.Marshal(response)
+	if err != nil {
+		t.Fatalf("marshal profile response: %v", err)
+	}
+	if strings.Contains(string(encoded), "threshold_pace_value") {
+		t.Fatalf("unknown-unit fallback retained ambiguous threshold_pace_value: %s", encoded)
 	}
 }
 

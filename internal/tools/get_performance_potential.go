@@ -71,7 +71,6 @@ type performancePotentialThresholds struct {
 	ThresholdPaceSecondsPer400M  *float64                                 `json:"threshold_pace_seconds_per_400m,omitempty"`
 	ThresholdPaceSecondsPer250M  *float64                                 `json:"threshold_pace_seconds_per_250m,omitempty"`
 	ThresholdPaceMetersPerSecond *float64                                 `json:"threshold_pace_meters_per_second,omitempty"`
-	ThresholdPaceValue           *float64                                 `json:"threshold_pace_value,omitempty"`
 	PaceDistanceUnit             string                                   `json:"pace_distance_unit,omitempty"`
 	PaceUnitsSource              string                                   `json:"pace_units_source,omitempty"`
 	CriticalPower                analysis.PerformancePotentialUnavailable `json:"critical_power"`
@@ -306,8 +305,6 @@ func assignPerformancePotentialPaceThresholds(thresholds *performancePotentialTh
 	add("threshold_pace_seconds_per_250m", profileSport.ThresholdPaceSecondsPer250M, "s/250m")
 	thresholds.ThresholdPaceMetersPerSecond = profileSport.ThresholdPaceMetersPerSecond
 	add("threshold_pace_meters_per_second", profileSport.ThresholdPaceMetersPerSecond, "m/s")
-	thresholds.ThresholdPaceValue = profileSport.ThresholdPaceValue
-	add("threshold_pace_value", profileSport.ThresholdPaceValue, "source_unit")
 }
 
 func performancePotentialPowerAnchors(ctx context.Context, client PerformancePotentialClient, sport string, curveSpec string, buckets []int, includeFull bool, row *performancePotentialSport) (performancePotentialPowerCurve, error) {
@@ -516,7 +513,7 @@ func ensurePerformancePotentialFull(row *performancePotentialSport) map[string]a
 }
 
 func hasPerformancePotentialPaceThreshold(thresholds performancePotentialThresholds) bool {
-	return thresholds.ThresholdPaceSecondsPerKM != nil || thresholds.ThresholdPaceSecondsPerMile != nil || thresholds.ThresholdPaceSecondsPer100M != nil || thresholds.ThresholdPaceSecondsPer100Y != nil || thresholds.ThresholdPaceSecondsPer500M != nil || thresholds.ThresholdPaceSecondsPer400M != nil || thresholds.ThresholdPaceSecondsPer250M != nil || thresholds.ThresholdPaceMetersPerSecond != nil || thresholds.ThresholdPaceValue != nil
+	return thresholds.ThresholdPaceSecondsPerKM != nil || thresholds.ThresholdPaceSecondsPerMile != nil || thresholds.ThresholdPaceSecondsPer100M != nil || thresholds.ThresholdPaceSecondsPer100Y != nil || thresholds.ThresholdPaceSecondsPer500M != nil || thresholds.ThresholdPaceSecondsPer400M != nil || thresholds.ThresholdPaceSecondsPer250M != nil || thresholds.ThresholdPaceMetersPerSecond != nil
 }
 
 func performancePotentialPaceUnit(sport string, unitSystem response.UnitSystem) string {

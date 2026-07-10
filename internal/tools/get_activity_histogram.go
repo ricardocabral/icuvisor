@@ -268,11 +268,9 @@ func histogramZoneConfig(metric analysis.HistogramMetric, emittedUnit string, ac
 		}
 		config.Names = append([]string(nil), setting.HRZoneNames...)
 	case analysis.HistogramMetricPaceSeconds:
-		if strings.TrimSpace(setting.PaceUnits) == "" {
-			return nil
-		}
+		thresholdMetersPerSecond := firstNonZeroFloat(setting.ThresholdPace, setting.PaceThreshold)
 		for _, boundary := range setting.PaceZones {
-			converted, ok := analysis.ConvertPaceZoneBoundary(boundary, setting.PaceUnits, emittedUnit)
+			converted, ok := analysis.ConvertPaceZonePercentage(boundary, thresholdMetersPerSecond, emittedUnit)
 			if !ok {
 				return nil
 			}

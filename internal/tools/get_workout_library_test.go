@@ -200,7 +200,7 @@ func TestGetWorkoutsInFolderResolvesHRAndPaceTargetPreviews(t *testing.T) {
 	t.Parallel()
 
 	client := &fakeWorkoutLibraryClient{
-		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Types: []string{"Run"}, LTHR: 170, MaxHR: 190, ThresholdPace: 300, PaceUnits: "MINS_KM"}}}},
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Types: []string{"Run"}, LTHR: 170, MaxHR: 190, ThresholdPace: 3.3333333333333335, PaceUnits: "MINS_KM"}}}},
 		workouts: decodeToolWorkouts(t,
 			`{"id":2,"name":"Run Targets","type":"Run","folder_id":20,"workout_doc":{"steps":[{"description":"Tempo HR","duration":600,"hr":{"min":95,"max":99,"units":"PERCENT_LTHR"}},{"description":"Cruise","duration":600,"pace":{"value":95,"units":"PERCENT_THRESHOLD"}}]}}`,
 		),
@@ -230,7 +230,7 @@ func TestGetWorkoutsInFolderResolvesYardSwimPaceTargetPreviews(t *testing.T) {
 	t.Parallel()
 
 	client := &fakeWorkoutLibraryClient{
-		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Types: []string{"Swim"}, ThresholdPace: 90, PaceUnits: "SECS_100Y"}}}},
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Types: []string{"Swim"}, ThresholdPace: 1.016, PaceUnits: "SECS_100Y"}}}},
 		workouts: decodeToolWorkouts(t,
 			`{"id":3,"name":"Pool Targets","type":"Swim","folder_id":20,"workout_doc":{"steps":[{"description":"Cruise","duration":600,"pace":{"value":95,"units":"PERCENT_THRESHOLD"}}]}}`,
 		),

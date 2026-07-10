@@ -53,7 +53,6 @@ type Sport struct {
 	ThresholdPaceSecondsPer400M  *float64       `json:"threshold_pace_seconds_per_400m,omitempty"`
 	ThresholdPaceSecondsPer250M  *float64       `json:"threshold_pace_seconds_per_250m,omitempty"`
 	ThresholdPaceMetersPerSecond *float64       `json:"threshold_pace_meters_per_second,omitempty"`
-	ThresholdPaceValue           *float64       `json:"threshold_pace_value,omitempty"`
 	PaceZonesPercentOfThreshold  []float64      `json:"pace_zones_percent_of_threshold,omitempty"`
 	PaceUnitsSource              string         `json:"pace_units_source,omitempty"`
 	PaceDistanceUnit             string         `json:"pace_distance_unit,omitempty"`
@@ -324,7 +323,6 @@ func applyProfilePace(sport *Sport, setting intervals.SportSettings, _ response.
 		} else {
 			value := pace
 			sport.ThresholdPaceMetersPerSecond = &value
-			sport.ThresholdPaceValue = &value
 		}
 	}
 	if len(setting.PaceZones) > 0 {

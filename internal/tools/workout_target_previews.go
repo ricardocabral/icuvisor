@@ -199,8 +199,8 @@ func integerTargetPreview(bounds workoutTargetBounds, basis float64, suffix stri
 	return formatIntegerValues(values) + " " + suffix
 }
 
-func paceTargetPreview(bounds workoutTargetBounds, threshold float64, sourceUnit string, unitSystem response.UnitSystem) (string, string, bool) {
-	secondsPerMeter, ok := paceSecondsPerMeter(threshold, sourceUnit)
+func paceTargetPreview(bounds workoutTargetBounds, thresholdMetersPerSecond float64, sourceUnit string, unitSystem response.UnitSystem) (string, string, bool) {
+	secondsPerMeter, ok := paceSecondsPerMeter(thresholdMetersPerSecond)
 	if !ok {
 		return "", "", false
 	}
@@ -216,24 +216,15 @@ func paceTargetPreview(bounds workoutTargetBounds, threshold float64, sourceUnit
 	return formatPaceValues(values, suffix), fmt.Sprintf("threshold pace %s", formatPaceSeconds(basisSeconds, suffix)), true
 }
 
-func paceSecondsPerMeter(value float64, sourceUnit string) (float64, bool) {
-	if value <= 0 || math.IsNaN(value) || math.IsInf(value, 0) {
+func paceSecondsPerMeter(metersPerSecond float64) (float64, bool) {
+	if metersPerSecond <= 0 || math.IsNaN(metersPerSecond) || math.IsInf(metersPerSecond, 0) {
 		return 0, false
 	}
-	switch strings.ToUpper(strings.TrimSpace(sourceUnit)) {
-	case "", "MINS_KM":
-		return value / 1000, true
-	case "MINS_MILE":
-		return value / 1609.344, true
-	case "SECS_100M":
-		return value / 100, true
-	case "SECS_100Y":
-		return value / metersPer100Yards, true
-	case "SECS_500M":
-		return value / 500, true
-	default:
+	secondsPerMeter := 1 / metersPerSecond
+	if secondsPerMeter <= 0 || math.IsNaN(secondsPerMeter) || math.IsInf(secondsPerMeter, 0) {
 		return 0, false
 	}
+	return secondsPerMeter, true
 }
 
 func preferredPacePreviewUnit(sourceUnit string, unitSystem response.UnitSystem) (float64, string) {

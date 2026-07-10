@@ -31,8 +31,8 @@
 - [x] R002: Apply the declared m/s and percentage response migration before advertising it in `_meta`
 - [x] R003: Propagate every recognized pace display unit and treat `NONE` as a known m/s fallback
 - [x] R004: Reject finite pace inputs whose reciprocal conversion overflows
-- [ ] R005: Correct workout previews and configured histogram zones for m/s thresholds and percentage boundaries
-- [ ] R005: Omit ambiguous source-unit fallback values
+- [x] R005: Correct workout previews and configured histogram zones for m/s thresholds and percentage boundaries
+- [x] R005: Omit ambiguous source-unit fallback values
 
 ---
 

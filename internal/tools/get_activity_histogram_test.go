@@ -89,6 +89,46 @@ func TestGetActivityHistogramRequestsOnlyMetricStreams(t *testing.T) {
 	}
 }
 
+func TestGetActivityHistogramConvertsPaceZonePercentagesFromMPS(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityReadClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric", SportSettings: []intervals.SportSettings{{
+			ID:            9,
+			Type:          "Run",
+			ThresholdPace: 3.5714285,
+			PaceUnits:     "MINS_KM",
+			PaceZones:     []float64{77.5, 100},
+			PaceZoneNames: []string{"Easy", "Threshold"},
+		}}}},
+		activity: decodeActivityFixture(t, `{"id":"run-percent-zones","type":"Run"}`),
+		streams: decodeStreamFixtures(t,
+			`{"type":"distance","data":[0,1000,2000]}`,
+			`{"type":"time","data":[0,300,700]}`,
+		),
+	}
+	tool := newGetActivityHistogramTool(client, client, client, "test", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"run-percent-zones","metric":"pace"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	payload := resultMap(t, result)
+	meta := payload["_meta"].(map[string]any)
+	if meta["bucket_method"] != "configured_zones" || meta["emitted_unit"] != "seconds_per_km" {
+		t.Fatalf("meta = %#v, want configured pace zones in seconds_per_km", meta)
+	}
+	zone := meta["zone_source"].(map[string]any)
+	boundaries := zone["boundaries"].([]any)
+	if len(boundaries) != 2 || boundaries[0].(float64) < 279.9 || boundaries[0].(float64) > 280.1 || boundaries[1].(float64) < 361.2 || boundaries[1].(float64) > 361.4 || zone["boundary_unit"] != "seconds_per_km" {
+		t.Fatalf("zone source = %#v, want duration boundaries derived from 77.5/100 percentages", zone)
+	}
+	buckets := payload["buckets"].([]any)
+	if len(buckets) != 3 || buckets[1].(map[string]any)["label"] != "Threshold" || buckets[1].(map[string]any)["seconds"] != float64(300) || buckets[2].(map[string]any)["label"] != "Easy" || buckets[2].(map[string]any)["seconds"] != float64(400) {
+		t.Fatalf("pace buckets = %#v, want samples classified by derived pace durations", buckets)
+	}
+}
+
 func TestGetActivityHistogramPaceImperialFallbackForUnknownPaceUnits(t *testing.T) {
 	t.Parallel()
 

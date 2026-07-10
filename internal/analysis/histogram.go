@@ -121,34 +121,26 @@ func BuildHistogram(samples []HistogramSample, unit string, zones *HistogramZone
 	return result
 }
 
-func ConvertPaceZoneBoundary(value float64, paceUnits string, emittedUnit string) (float64, bool) {
-	if !finite(value) {
+// ConvertPaceZonePercentage derives a pace-duration boundary from an upstream
+// percent-of-threshold pace zone and the stored m/s threshold.
+func ConvertPaceZonePercentage(percent float64, thresholdMetersPerSecond float64, emittedUnit string) (float64, bool) {
+	if percent <= 0 || thresholdMetersPerSecond <= 0 || !finite(percent) || !finite(thresholdMetersPerSecond) {
 		return 0, false
 	}
-	switch strings.TrimSpace(paceUnits) {
-	case "MINS_KM":
-		if emittedUnit == "seconds_per_mile" {
-			return value * 1609.344 / 1000, true
-		}
-		return value, true
-	case "MINS_MILE":
-		if emittedUnit == "seconds_per_mile" {
-			return value, true
-		}
-		return value * 1000 / 1609.344, true
-	case "SECS_100M":
-		if emittedUnit == "seconds_per_mile" {
-			return value * 16.09344, true
-		}
-		return value * 10, true
-	case "SECS_500M":
-		if emittedUnit == "seconds_per_mile" {
-			return value * 1609.344 / 500, true
-		}
-		return value * 2, true
+	var distanceMeters float64
+	switch emittedUnit {
+	case "seconds_per_km":
+		distanceMeters = 1000
+	case "seconds_per_mile":
+		distanceMeters = 1609.344
 	default:
 		return 0, false
 	}
+	seconds := distanceMeters * 100 / (thresholdMetersPerSecond * percent)
+	if seconds <= 0 || !finite(seconds) {
+		return 0, false
+	}
+	return seconds, true
 }
 
 func validHistogramSamples(samples []HistogramSample) []HistogramSample {

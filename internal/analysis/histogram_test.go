@@ -70,26 +70,27 @@ func TestBuildHistogramIdenticalValuesUsesOneFixedBucket(t *testing.T) {
 	}
 }
 
-func TestPaceZoneBoundaryConversion(t *testing.T) {
+func TestPaceZonePercentageConversion(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name  string
-		value float64
-		unit  string
-		emit  string
-		want  float64
-		ok    bool
+		name      string
+		percent   float64
+		threshold float64
+		emit      string
+		want      float64
+		ok        bool
 	}{
-		{name: "mins km stored as seconds per km to mile", value: 300, unit: "MINS_KM", emit: "seconds_per_mile", want: 482.8032, ok: true},
-		{name: "mins mile stored as seconds per mile to km", value: 480, unit: "MINS_MILE", emit: "seconds_per_km", want: 298.2581722739203, ok: true},
-		{name: "secs 100m to km", value: 35, unit: "SECS_100M", emit: "seconds_per_km", want: 350, ok: true},
-		{name: "secs 500m to mile", value: 120, unit: "SECS_500M", emit: "seconds_per_mile", want: 386.24256, ok: true},
-		{name: "unknown", value: 1, unit: "", emit: "seconds_per_km", ok: false},
+		{name: "100 percent m/s threshold to kilometer pace", percent: 100, threshold: 3.5714285, emit: "seconds_per_km", want: 280.0000056, ok: true},
+		{name: "77 point 5 percent m/s threshold to kilometer pace", percent: 77.5, threshold: 3.5714285, emit: "seconds_per_km", want: 361.29033, ok: true},
+		{name: "100 percent m/s threshold to mile pace", percent: 100, threshold: 3.5714285, emit: "seconds_per_mile", want: 450.616329, ok: true},
+		{name: "invalid percent", percent: 0, threshold: 3.5714285, emit: "seconds_per_km", ok: false},
+		{name: "invalid threshold", percent: 100, threshold: 0, emit: "seconds_per_km", ok: false},
+		{name: "unknown output", percent: 100, threshold: 3.5714285, emit: "seconds_per_100m", ok: false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got, ok := ConvertPaceZoneBoundary(tc.value, tc.unit, tc.emit)
+			got, ok := ConvertPaceZonePercentage(tc.percent, tc.threshold, tc.emit)
 			if ok != tc.ok {
 				t.Fatalf("ok = %v, want %v", ok, tc.ok)
 			}
