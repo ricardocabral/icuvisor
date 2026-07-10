@@ -24,7 +24,7 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Exact update/apply request contract documented
+- [x] Exact update/apply request contract documented
 - [ ] Public schema migration for effective_date decided
 - [ ] Implicit historical apply removed from design
 - [ ] Truthful response metadata defined
