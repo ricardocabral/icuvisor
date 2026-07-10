@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 1
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 2
 **Size:** M
 
@@ -56,6 +56,10 @@
 - [ ] Cookbook page and client pack added
 - [ ] Eval scenario added
 - [ ] References, PRD, and changelog updated
+- [ ] R004 cookbook and canonical pack publish one six-section manual fresh-chat contract
+- [ ] R004 self-contained `CB-HANDOFF-*` eval enforces required reads, source/freshness separation, privacy, and forbidden routes
+- [ ] R004 registry-backed prompt and pack discovery surfaces reconciled without stale counts
+- [ ] R004 valid front matter, internal links, PRD catalog, and Unreleased entry verified
 
 ---
 
@@ -87,6 +91,9 @@
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
+| R002 | Plan | 1 | APPROVE | `.reviews/R002-plan-step1.md` |
+| R003 | Plan | 2 | APPROVE | `.reviews/R003-plan-step2.md` |
+| R004 | Plan | 3 | REVISE | `.reviews/R004-plan-step3.md` |
 
 ## Discoveries
 
@@ -120,4 +127,12 @@
 - **Artifacts/checkpoint:** Step 1 creates the prompt function, portable pack, and focused `TestCoachingHandoff...` contract tests, making `go test ./internal/prompts -run 'CoachingHandoff'` non-vacuous. Step 2 only registers it, updates shared catalog/golden expectations, and adds the golden fixture. Step 3 updates `docs/prompts/README.md` along with public docs.
 | 2026-07-10 17:46 | Review R001 | plan Step 1: REVISE |
 | 2026-07-10 17:49 | Review R002 | plan Step 1: APPROVE |
+
+### Step 3 revised implementation plan (R004)
+
+- Publish one canonical contract: the cookbook links the existing pack and both explain registry-prompt and pasted-pack entry points, six ordered sections, strict conversation/tool source separation, evidence row dates/freshness, `not provided`, privacy exclusions, and manual review/copy into a fresh chat.
+- Add a self-contained `CB-HANDOFF-*` scenario whose prompt supplies explicit goals, constraints, and accepted decisions; requires profile/date resolution and bounded evidence/plan reads; checks source/freshness/gaps/manual-copy output; and forbids writes, deletes, streams, full payloads, invented calculations/physiology, and sensitive identifiers.
+- Reconcile public discovery against the eleven-entry registry: index the canonical pack, add the recipe card, document arguments/resources/read-only route/output in the prompt reference, add Claude Project fresh-chat guidance, and correct or remove stale prompt counts/lists (including omitted `ride_analysis`). Review README's pack enumeration and record its disposition.
+- Use established cookbook front matter and `relref` links; add the PRD catalog row and concise Unreleased entry, then run prompt tests and eval validation.
 | 2026-07-10 17:57 | Review R003 | plan Step 2: APPROVE |
+| 2026-07-10 18:05 | Review R004 | plan Step 3: REVISE |
