@@ -4,8 +4,8 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 3
-**Iteration:** 1
+**Review Counter:** 4
+**Iteration:** 2
 **Size:** L
 
 ---
@@ -24,21 +24,21 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Integration and boundary rules defined
-- [ ] Range limits and statuses defined
-- [ ] Terse/full response contract defined
-- [ ] Mechanical versus metabolic boundary explicit
-- [ ] R001 pure input, diagnostics, invalid-sample, and rounding contract locked
-- [ ] R001 configured-zone validation, selection, and mixed-configuration policy locked
-- [ ] R001 deterministic range cap and exact status state machine locked
-- [ ] R001 concrete JSON/meta contract and coherent formula/test checkpoints locked
-- [ ] R002 operational-versus-absence stream error classification locked
-- [ ] R002 tool-specific metadata emission path and exact metadata shapes locked
-- [ ] R002 deterministic mixed-zone identity, ordering, shares, counts, and audit enums locked
-- [ ] R002 pure validation, mismatch, and short-input result semantics locked
-- [ ] R003 serialized analysis-units and shared analyzer-meta semantics locked
-- [ ] R003 insufficient-reason precedence and zone-config absence semantics locked
-- [ ] R003 literal interpretation and ordered boundary text locked
+- [x] Integration and boundary rules defined
+- [x] Range limits and statuses defined
+- [x] Terse/full response contract defined
+- [x] Mechanical versus metabolic boundary explicit
+- [x] R001 pure input, diagnostics, invalid-sample, and rounding contract locked
+- [x] R001 configured-zone validation, selection, and mixed-configuration policy locked
+- [x] R001 deterministic range cap and exact status state machine locked
+- [x] R001 concrete JSON/meta contract and coherent formula/test checkpoints locked
+- [x] R002 operational-versus-absence stream error classification locked
+- [x] R002 tool-specific metadata emission path and exact metadata shapes locked
+- [x] R002 deterministic mixed-zone identity, ordering, shares, counts, and audit enums locked
+- [x] R002 pure validation, mismatch, and short-input result semantics locked
+- [x] R003 serialized analysis-units and shared analyzer-meta semantics locked
+- [x] R003 insufficient-reason precedence and zone-config absence semantics locked
+- [x] R003 literal interpretation and ordered boundary text locked
 
 ---
 
@@ -119,6 +119,7 @@
 | 2026-07-10 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-07-10 16:11 | Task started | Runtime V2 lane-runner execution |
 | 2026-07-10 16:11 | Step 0 started | Preflight |
+| 2026-07-10 16:30 | Worker iter 1 | done in 1177s, tools: 86 |
 
 ## Blockers
 
@@ -152,3 +153,4 @@
 - **Literal model-visible text:** `result.interpretation` is exactly `"Power-derived kJ is external mechanical work only; it is not metabolic energy, calorie expenditure, or food calories."` The ordered `_meta.boundaries` array is exactly: (1) `"Mechanical work from recorded power is not metabolic energy, calorie expenditure, or food calories."`; (2) `"Left-endpoint integration; the final sample contributes no duration or work."`; (3) `"Intervals longer than 60 seconds and invalid samples are skipped; missing power is not interpolated."`; (4) `"Raw stream samples are never returned."`.
 | 2026-07-10 16:20 | Review R002 | plan Step 1: REVISE |
 | 2026-07-10 16:24 | Review R003 | plan Step 1: REVISE |
+| 2026-07-10 16:27 | Review R004 | plan Step 1: APPROVE |
