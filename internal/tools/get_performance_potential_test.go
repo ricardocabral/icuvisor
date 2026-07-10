@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ricardocabral/icuvisor/internal/athleteprofile"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 )
 
@@ -131,6 +132,58 @@ func TestGetPerformancePotentialSwimUsesSportSpecificPaceUnit(t *testing.T) {
 	point := pace["points"].([]any)[0].(map[string]any)
 	if pace["preferred_unit"] != "seconds_per_100m" || point["pace_seconds_per_100m"] != float64(90) {
 		t.Fatalf("swim pace anchors = %#v", pace)
+	}
+}
+
+func TestAssignPerformancePotentialPaceThresholdsKeepsEveryRecognizedDisplay(t *testing.T) {
+	km := 280.0
+	mile := 450.0
+	meters := 50.0
+	yards := 45.72
+	fiveHundred := 125.0
+	fourHundred := 100.0
+	twoHundredFifty := 62.5
+	metersPerSecond := 3.5714285
+
+	profileSport := &athleteprofile.Sport{
+		ThresholdPaceSecondsPerKM:    &km,
+		ThresholdPaceSecondsPerMile:  &mile,
+		ThresholdPaceSecondsPer100M:  &meters,
+		ThresholdPaceSecondsPer100Y:  &yards,
+		ThresholdPaceSecondsPer500M:  &fiveHundred,
+		ThresholdPaceSecondsPer400M:  &fourHundred,
+		ThresholdPaceSecondsPer250M:  &twoHundredFifty,
+		ThresholdPaceMetersPerSecond: &metersPerSecond,
+	}
+	var thresholds performancePotentialThresholds
+	var thresholdContext performancePotentialThresholdContext
+	assignPerformancePotentialPaceThresholds(&thresholds, &thresholdContext, profileSport)
+
+	if thresholds.ThresholdPaceSecondsPer100Y != &yards || thresholds.ThresholdPaceSecondsPer400M != &fourHundred || thresholds.ThresholdPaceSecondsPer250M != &twoHundredFifty || thresholds.ThresholdPaceMetersPerSecond != &metersPerSecond {
+		t.Fatalf("pace thresholds = %+v, want every recognized pace display and m/s fallback", thresholds)
+	}
+	if !hasPerformancePotentialPaceThreshold(thresholds) {
+		t.Fatal("hasPerformancePotentialPaceThreshold() = false, want true")
+	}
+	wantFields := map[string]bool{
+		"threshold_pace_seconds_per_km":    false,
+		"threshold_pace_seconds_per_mile":  false,
+		"threshold_pace_seconds_per_100m":  false,
+		"threshold_pace_seconds_per_100y":  false,
+		"threshold_pace_seconds_per_500m":  false,
+		"threshold_pace_seconds_per_400m":  false,
+		"threshold_pace_seconds_per_250m":  false,
+		"threshold_pace_meters_per_second": false,
+	}
+	for _, threshold := range thresholdContext.AnaerobicThreshold {
+		if _, ok := wantFields[threshold.Field]; ok {
+			wantFields[threshold.Field] = true
+		}
+	}
+	for field, found := range wantFields {
+		if !found {
+			t.Fatalf("anaerobic threshold fields = %#v, missing %q", thresholdContext.AnaerobicThreshold, field)
+		}
 	}
 }
 

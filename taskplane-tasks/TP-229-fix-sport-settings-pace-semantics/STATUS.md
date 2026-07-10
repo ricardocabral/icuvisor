@@ -29,7 +29,7 @@
 - [x] pace_zones percentage contract defined
 - [x] Compatibility migration decided
 - [x] R002: Apply the declared m/s and percentage response migration before advertising it in `_meta`
-- [ ] R003: Propagate every recognized pace display unit and treat `NONE` as a known m/s fallback
+- [x] R003: Propagate every recognized pace display unit and treat `NONE` as a known m/s fallback
 
 ---
 

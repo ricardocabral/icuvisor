@@ -1,7 +1,7 @@
 # Review R002 — Code Review: Step 1
 
-**Task:** TP-229 — Treat threshold pace as m/s and pace zones as percentages  
-**Step:** Step 1: Define canonical pace conversions  
+**Task:** TP-229 — Treat threshold pace as m/s and pace zones as percentages
+**Step:** Step 1: Define canonical pace conversions
 **Verdict:** REVISE
 
 ## Blocking finding

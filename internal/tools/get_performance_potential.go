@@ -57,20 +57,24 @@ type performancePotentialSport struct {
 }
 
 type performancePotentialThresholds struct {
-	FTPWatts                    *int                                     `json:"ftp_watts,omitempty"`
-	IndoorFTPWatts              *int                                     `json:"indoor_ftp_watts,omitempty"`
-	WPrimeJoules                *int                                     `json:"w_prime_joules,omitempty"`
-	PMaxWatts                   *int                                     `json:"p_max_watts,omitempty"`
-	LTHRBPM                     *int                                     `json:"lthr_bpm,omitempty"`
-	MaxHRBPM                    *int                                     `json:"max_hr_bpm,omitempty"`
-	ThresholdPaceSecondsPerKM   *float64                                 `json:"threshold_pace_seconds_per_km,omitempty"`
-	ThresholdPaceSecondsPerMile *float64                                 `json:"threshold_pace_seconds_per_mile,omitempty"`
-	ThresholdPaceSecondsPer100M *float64                                 `json:"threshold_pace_seconds_per_100m,omitempty"`
-	ThresholdPaceSecondsPer500M *float64                                 `json:"threshold_pace_seconds_per_500m,omitempty"`
-	ThresholdPaceValue          *float64                                 `json:"threshold_pace_value,omitempty"`
-	PaceDistanceUnit            string                                   `json:"pace_distance_unit,omitempty"`
-	PaceUnitsSource             string                                   `json:"pace_units_source,omitempty"`
-	CriticalPower               analysis.PerformancePotentialUnavailable `json:"critical_power"`
+	FTPWatts                     *int                                     `json:"ftp_watts,omitempty"`
+	IndoorFTPWatts               *int                                     `json:"indoor_ftp_watts,omitempty"`
+	WPrimeJoules                 *int                                     `json:"w_prime_joules,omitempty"`
+	PMaxWatts                    *int                                     `json:"p_max_watts,omitempty"`
+	LTHRBPM                      *int                                     `json:"lthr_bpm,omitempty"`
+	MaxHRBPM                     *int                                     `json:"max_hr_bpm,omitempty"`
+	ThresholdPaceSecondsPerKM    *float64                                 `json:"threshold_pace_seconds_per_km,omitempty"`
+	ThresholdPaceSecondsPerMile  *float64                                 `json:"threshold_pace_seconds_per_mile,omitempty"`
+	ThresholdPaceSecondsPer100M  *float64                                 `json:"threshold_pace_seconds_per_100m,omitempty"`
+	ThresholdPaceSecondsPer100Y  *float64                                 `json:"threshold_pace_seconds_per_100y,omitempty"`
+	ThresholdPaceSecondsPer500M  *float64                                 `json:"threshold_pace_seconds_per_500m,omitempty"`
+	ThresholdPaceSecondsPer400M  *float64                                 `json:"threshold_pace_seconds_per_400m,omitempty"`
+	ThresholdPaceSecondsPer250M  *float64                                 `json:"threshold_pace_seconds_per_250m,omitempty"`
+	ThresholdPaceMetersPerSecond *float64                                 `json:"threshold_pace_meters_per_second,omitempty"`
+	ThresholdPaceValue           *float64                                 `json:"threshold_pace_value,omitempty"`
+	PaceDistanceUnit             string                                   `json:"pace_distance_unit,omitempty"`
+	PaceUnitsSource              string                                   `json:"pace_units_source,omitempty"`
+	CriticalPower                analysis.PerformancePotentialUnavailable `json:"critical_power"`
 }
 
 type performancePotentialCurveAnchors struct {
@@ -292,8 +296,16 @@ func assignPerformancePotentialPaceThresholds(thresholds *performancePotentialTh
 	add("threshold_pace_seconds_per_mile", profileSport.ThresholdPaceSecondsPerMile, "s/mile")
 	thresholds.ThresholdPaceSecondsPer100M = profileSport.ThresholdPaceSecondsPer100M
 	add("threshold_pace_seconds_per_100m", profileSport.ThresholdPaceSecondsPer100M, "s/100m")
+	thresholds.ThresholdPaceSecondsPer100Y = profileSport.ThresholdPaceSecondsPer100Y
+	add("threshold_pace_seconds_per_100y", profileSport.ThresholdPaceSecondsPer100Y, "s/100y")
 	thresholds.ThresholdPaceSecondsPer500M = profileSport.ThresholdPaceSecondsPer500M
 	add("threshold_pace_seconds_per_500m", profileSport.ThresholdPaceSecondsPer500M, "s/500m")
+	thresholds.ThresholdPaceSecondsPer400M = profileSport.ThresholdPaceSecondsPer400M
+	add("threshold_pace_seconds_per_400m", profileSport.ThresholdPaceSecondsPer400M, "s/400m")
+	thresholds.ThresholdPaceSecondsPer250M = profileSport.ThresholdPaceSecondsPer250M
+	add("threshold_pace_seconds_per_250m", profileSport.ThresholdPaceSecondsPer250M, "s/250m")
+	thresholds.ThresholdPaceMetersPerSecond = profileSport.ThresholdPaceMetersPerSecond
+	add("threshold_pace_meters_per_second", profileSport.ThresholdPaceMetersPerSecond, "m/s")
 	thresholds.ThresholdPaceValue = profileSport.ThresholdPaceValue
 	add("threshold_pace_value", profileSport.ThresholdPaceValue, "source_unit")
 }
@@ -504,7 +516,7 @@ func ensurePerformancePotentialFull(row *performancePotentialSport) map[string]a
 }
 
 func hasPerformancePotentialPaceThreshold(thresholds performancePotentialThresholds) bool {
-	return thresholds.ThresholdPaceSecondsPerKM != nil || thresholds.ThresholdPaceSecondsPerMile != nil || thresholds.ThresholdPaceSecondsPer100M != nil || thresholds.ThresholdPaceSecondsPer500M != nil || thresholds.ThresholdPaceValue != nil
+	return thresholds.ThresholdPaceSecondsPerKM != nil || thresholds.ThresholdPaceSecondsPerMile != nil || thresholds.ThresholdPaceSecondsPer100M != nil || thresholds.ThresholdPaceSecondsPer100Y != nil || thresholds.ThresholdPaceSecondsPer500M != nil || thresholds.ThresholdPaceSecondsPer400M != nil || thresholds.ThresholdPaceSecondsPer250M != nil || thresholds.ThresholdPaceMetersPerSecond != nil || thresholds.ThresholdPaceValue != nil
 }
 
 func performancePotentialPaceUnit(sport string, unitSystem response.UnitSystem) string {

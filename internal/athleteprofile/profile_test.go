@@ -7,6 +7,25 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 )
 
+func TestNewResponseTreatsNonePaceUnitsAsKnownMPSFallback(t *testing.T) {
+	response := NewResponse(intervals.AthleteWithSportSettings{
+		ID: "i12345",
+		SportSettings: []intervals.SportSettings{{
+			ThresholdPace: 3.5714285,
+			PaceUnits:     "NONE",
+			PaceZones:     []float64{77.5, 100},
+		}},
+	}, "test", "UTC", false)
+
+	sport := response.SportSettings[0]
+	if sport.ThresholdPaceMetersPerSecond == nil || *sport.ThresholdPaceMetersPerSecond != 3.5714285 || sport.PaceUnitsSource != "NONE" || sport.Meta != nil {
+		t.Fatalf("NONE pace fallback = %+v, want known m/s fallback without unknown-unit metadata", sport)
+	}
+	if len(sport.PaceZonesPercentOfThreshold) != 2 || sport.PaceZonesPercentOfThreshold[0] != 77.5 || sport.PaceZonesPercentOfThreshold[1] != 100 {
+		t.Fatalf("NONE pace zones = %#v, want unchanged percentages", sport.PaceZonesPercentOfThreshold)
+	}
+}
+
 func TestNewResponsePaceMetadataUsesStorageAndPercentageSemantics(t *testing.T) {
 	response := NewResponse(intervals.AthleteWithSportSettings{ID: "i12345"}, "test", "UTC", false)
 
