@@ -25,7 +25,7 @@
 **Status:** 🟨 In Progress
 
 <!-- R012 revision items -->
-- [ ] R012-1: ValidateCandidate must also emit ViolationRequestedSessionCountExceeded when RequestedSessionCount is pointer-to-0
+- [x] R012-1: ValidateCandidate must also emit ViolationRequestedSessionCountExceeded when RequestedSessionCount is pointer-to-0
 
 <!-- R011 revision items -->
 - [x] R011-1: Add WarnRequestedSessionCountUnmet batch warning when validCount < *RequestedSessionCount (underfill detection)

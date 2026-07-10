@@ -253,6 +253,25 @@ func TestValidateCandidate_NilTargets_NoChecks(t *testing.T) {
 	}
 }
 
+func TestValidateCandidate_ZeroRequestedSessions_BlocksCandidate(t *testing.T) {
+	// ptrI(0) = zero sessions wanted; single-candidate API should also enforce this.
+	wc := planning.WeekConstraints{
+		WeekStartDate:         "2026-07-06",
+		RequestedSessionCount: ptrI(0),
+		AvailableDays: []planning.DayConstraints{
+			{Date: "2026-07-06", MaxSessionsPerDay: 1},
+		},
+	}
+	c := planning.CandidateSession{Date: "2026-07-06", DurationMinutes: 30}
+	r := planning.ValidateCandidate(wc, c)
+	if r.Valid {
+		t.Error("ValidateCandidate with RequestedSessionCount=0: expected invalid")
+	}
+	if !hasViolation(r, planning.ViolationRequestedSessionCountExceeded) {
+		t.Errorf("expected requested_session_count_exceeded, got violations: %v", r.Violations)
+	}
+}
+
 func TestValidateCandidate_ZeroTargets_BlockPositiveWork(t *testing.T) {
 	// ptrF(0) means explicit zero budget → positive load/duration are blocked.
 	wc := planning.WeekConstraints{

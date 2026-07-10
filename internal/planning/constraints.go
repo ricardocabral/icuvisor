@@ -364,6 +364,20 @@ func ValidateCandidate(wc WeekConstraints, candidate CandidateSession) Candidate
 	if v := invalidCandidateInputViolation(candidate); v != nil {
 		return CandidateResult{Candidate: sanitizeCandidateForResult(candidate), Valid: false, Violations: []Violation{*v}}
 	}
+	// A pointer-to-zero RequestedSessionCount means zero sessions are wanted;
+	// this candidate is excess regardless of availability.
+	if wc.RequestedSessionCount != nil && *wc.RequestedSessionCount == 0 {
+		return CandidateResult{
+			Candidate: candidate,
+			Valid:     false,
+			Violations: []Violation{{
+				Code:    ViolationRequestedSessionCountExceeded,
+				Message: "requested session count already reached; this candidate is excess",
+				Field:   "requested_session_count",
+				Value:   *wc.RequestedSessionCount,
+			}},
+		}
+	}
 	day, ok := findDay(wc.AvailableDays, candidate.Date)
 	if !ok || day.MaxSessionsPerDay == 0 {
 		return CandidateResult{
