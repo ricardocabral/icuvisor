@@ -28,7 +28,7 @@
 - [x] pace_units presentation role defined
 - [x] pace_zones percentage contract defined
 - [x] Compatibility migration decided
-- [ ] R002: Apply the declared m/s and percentage response migration before advertising it in `_meta`
+- [x] R002: Apply the declared m/s and percentage response migration before advertising it in `_meta`
 
 ---
 

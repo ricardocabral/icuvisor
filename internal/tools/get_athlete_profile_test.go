@@ -140,9 +140,9 @@ func TestGetAthleteProfileHandlerSuccess(t *testing.T) {
 			MaxHR:          190,
 			HRZones:        []int{120, 140, 160},
 			HRZoneNames:    []string{"Z1", "Z2", "Z3"},
-			ThresholdPace:  255.5,
+			ThresholdPace:  3.5714285,
 			PaceUnits:      "MINS_KM",
-			PaceZones:      []float64{330, 300, 270},
+			PaceZones:      []float64{77.5, 90, 100},
 			PaceZoneNames:  []string{"Z1", "Z2", "Z3"},
 		}},
 	})
@@ -178,11 +178,14 @@ func TestGetAthleteProfileHandlerSuccess(t *testing.T) {
 	if sport.FTPWatts != 250 || sport.IndoorFTPWatts != 240 || sport.LTHRBPM != 170 || sport.MaxHRBPM != 190 {
 		t.Fatalf("sport thresholds = %+v", sport)
 	}
-	if sport.ThresholdPaceSecondsPerKM == nil || *sport.ThresholdPaceSecondsPerKM != 255.5 || len(sport.PaceZonesSecondsPerKM) != 3 {
+	if sport.ThresholdPaceSecondsPerKM == nil || math.Abs(*sport.ThresholdPaceSecondsPerKM-280) > 0.0001 || len(sport.PaceZonesPercentOfThreshold) != 3 || sport.PaceZonesPercentOfThreshold[0] != 77.5 || sport.PaceZonesPercentOfThreshold[2] != 100 {
 		t.Fatalf("km pace fields = %+v", sport)
 	}
-	if sport.ThresholdPaceSecondsPerMile != nil || len(sport.PaceZonesSecondsPerMile) != 0 {
-		t.Fatalf("mile pace fields should be omitted for MINS_KM: %+v", sport)
+	if sport.ThresholdPaceSecondsPerMile != nil {
+		t.Fatalf("mile pace field should be omitted for MINS_KM: %+v", sport)
+	}
+	if strings.Contains(resultText(t, result), "pace_zones_seconds_per_") {
+		t.Fatalf("profile result retained misleading pace-zone duration fields: %s", resultText(t, result))
 	}
 	if sport.PaceUnitsSource != "MINS_KM" || sport.PaceDistanceUnit != "km" {
 		t.Fatalf("pace metadata = %q/%q", sport.PaceUnitsSource, sport.PaceDistanceUnit)
@@ -219,7 +222,7 @@ func TestGetAthleteProfileKeepsFTPAndZoneBoundariesSeparate(t *testing.T) {
 	if sport.PowerZoneNames[2] != "Boundary matching FTP" {
 		t.Fatalf("power_zone_names = %#v, want zone-boundary name preserved separately", sport.PowerZoneNames)
 	}
-	if !strings.Contains(response.Meta.PowerThresholdConvention, "ftp_watts is the upstream sport FTP threshold") || !strings.Contains(response.Meta.ZoneBoundaryConvention, "zone boundary arrays, not FTP") {
+	if !strings.Contains(response.Meta.PowerThresholdConvention, "ftp_watts is the upstream sport FTP threshold") || !strings.Contains(response.Meta.ZoneBoundaryConvention, "power_zones_watts and hr_zones_bpm are upstream zone boundary arrays") {
 		t.Fatalf("profile semantic metadata = %#v / %#v", response.Meta.PowerThresholdConvention, response.Meta.ZoneBoundaryConvention)
 	}
 }
@@ -512,9 +515,9 @@ func TestGetAthleteProfileResponseShapingVariants(t *testing.T) {
 				ID:           "i12345",
 				WeightPrefLB: true,
 				SportSettings: []intervals.SportSettings{{
-					ThresholdPace: 400,
+					ThresholdPace: 3.5714285,
 					PaceUnits:     "MINS_MILE",
-					PaceZones:     []float64{420, 390},
+					PaceZones:     []float64{77.5, 100},
 				}},
 			},
 		},
@@ -541,11 +544,11 @@ func TestGetAthleteProfileResponseShapingVariants(t *testing.T) {
 			}
 			if tc.wantMilePace {
 				sport := response.SportSettings[0]
-				if sport.ThresholdPaceSecondsPerMile == nil || len(sport.PaceZonesSecondsPerMile) != 2 || sport.PaceDistanceUnit != "mile" || sport.PaceUnitsSource != "MINS_MILE" {
+				if sport.ThresholdPaceSecondsPerMile == nil || math.Abs(*sport.ThresholdPaceSecondsPerMile-450.616329012327) > 0.0001 || len(sport.PaceZonesPercentOfThreshold) != 2 || sport.PaceDistanceUnit != "mile" || sport.PaceUnitsSource != "MINS_MILE" {
 					t.Fatalf("mile pace shaping = %+v", sport)
 				}
-				if sport.ThresholdPaceSecondsPerKM != nil || len(sport.PaceZonesSecondsPerKM) != 0 {
-					t.Fatalf("km pace fields should be omitted for mile pace: %+v", sport)
+				if sport.ThresholdPaceSecondsPerKM != nil {
+					t.Fatalf("km pace field should be omitted for mile pace: %+v", sport)
 				}
 			}
 		})
@@ -559,22 +562,22 @@ func TestGetAthleteProfileShapesYardSwimPace(t *testing.T) {
 		ID: "i12345",
 		SportSettings: []intervals.SportSettings{{
 			Types:         []string{"Swim"},
-			ThresholdPace: 90,
+			ThresholdPace: 2,
 			PaceUnits:     "SECS_100Y",
-			PaceZones:     []float64{95, 90},
+			PaceZones:     []float64{77.5, 100},
 		}},
 	}, "test", "UTC")
 	if len(response.SportSettings) != 1 {
 		t.Fatalf("sport settings = %d, want 1", len(response.SportSettings))
 	}
 	sport := response.SportSettings[0]
-	if sport.ThresholdPaceSecondsPer100Y == nil || *sport.ThresholdPaceSecondsPer100Y != 90 || len(sport.PaceZonesSecondsPer100Y) != 2 {
+	if sport.ThresholdPaceSecondsPer100Y == nil || *sport.ThresholdPaceSecondsPer100Y != 45.72 || len(sport.PaceZonesPercentOfThreshold) != 2 || sport.PaceZonesPercentOfThreshold[0] != 77.5 || sport.PaceZonesPercentOfThreshold[1] != 100 {
 		t.Fatalf("yard swim pace shaping = %+v", sport)
 	}
 	if sport.PaceDistanceUnit != "100y" || sport.PaceUnitsSource != "SECS_100Y" {
 		t.Fatalf("yard swim pace metadata = %+v", sport)
 	}
-	if sport.ThresholdPaceSecondsPer100M != nil || len(sport.PaceZonesSecondsPer100M) != 0 || sport.ThresholdPaceValue != nil {
+	if sport.ThresholdPaceSecondsPer100M != nil || sport.ThresholdPaceMetersPerSecond != nil || sport.ThresholdPaceValue != nil {
 		t.Fatalf("yard swim pace used wrong fields: %+v", sport)
 	}
 }
@@ -588,9 +591,9 @@ func TestGetAthleteProfilePaceConversionPolicies(t *testing.T) {
 		ID:             "i12345",
 		PreferredUnits: "miles",
 		SportSettings: []intervals.SportSettings{
-			{Types: []string{"Run"}, ThresholdPace: 5, PaceUnits: "MINS_KM", PaceZones: []float64{4, 5}},
-			{Types: []string{"Swim"}, ThresholdPace: 82, PaceUnits: "SECS_100M", PaceZones: []float64{80, 85}},
-			{Types: []string{"Other"}, ThresholdPace: 7, PaceUnits: "FEET", PaceZones: []float64{6, 7}},
+			{Types: []string{"Run"}, ThresholdPace: 3.5714285, PaceUnits: "MINS_KM", PaceZones: []float64{77.5, 100}},
+			{Types: []string{"Swim"}, ThresholdPace: 2, PaceUnits: "SECS_100M", PaceZones: []float64{80, 100}},
+			{Types: []string{"Other"}, ThresholdPace: 7, PaceUnits: "FEET", PaceZones: []float64{77.5, 100}},
 		},
 	}
 	response := newGetAthleteProfileResponse(profile, "test", "UTC")
@@ -598,18 +601,18 @@ func TestGetAthleteProfilePaceConversionPolicies(t *testing.T) {
 		t.Fatalf("sport settings = %d, want 3", len(response.SportSettings))
 	}
 	run := response.SportSettings[0]
-	if run.ThresholdPaceSecondsPerMile == nil || math.Abs(*run.ThresholdPaceSecondsPerMile-8.04672) > 0.000001 || len(run.PaceZonesSecondsPerMile) != 2 || run.PaceDistanceUnit != "mile" {
+	if run.ThresholdPaceSecondsPerKM == nil || math.Abs(*run.ThresholdPaceSecondsPerKM-280) > 0.0001 || len(run.PaceZonesPercentOfThreshold) != 2 || run.PaceDistanceUnit != "km" {
 		t.Fatalf("run pace conversion = %+v", run)
 	}
-	if run.ThresholdPaceSecondsPerKM != nil || len(run.PaceZonesSecondsPerKM) != 0 {
-		t.Fatalf("run km fields should be omitted after imperial conversion: %+v", run)
+	if run.ThresholdPaceSecondsPerMile != nil {
+		t.Fatalf("run mile pace should be omitted when pace_units is MINS_KM: %+v", run)
 	}
 	swim := response.SportSettings[1]
-	if swim.ThresholdPaceSecondsPer100M == nil || *swim.ThresholdPaceSecondsPer100M != 82 || len(swim.PaceZonesSecondsPer100M) != 2 || swim.PaceDistanceUnit != "100m" {
+	if swim.ThresholdPaceSecondsPer100M == nil || *swim.ThresholdPaceSecondsPer100M != 50 || len(swim.PaceZonesPercentOfThreshold) != 2 || swim.PaceDistanceUnit != "100m" {
 		t.Fatalf("swim pace pass-through = %+v", swim)
 	}
 	unknown := response.SportSettings[2]
-	if unknown.ThresholdPaceValue == nil || *unknown.ThresholdPaceValue != 7 || len(unknown.PaceZonesValues) != 2 || unknown.Meta["unknown_unit"] != "FEET" || unknown.PaceDistanceUnit != "FEET" {
+	if unknown.ThresholdPaceMetersPerSecond == nil || *unknown.ThresholdPaceMetersPerSecond != 7 || unknown.ThresholdPaceValue == nil || *unknown.ThresholdPaceValue != 7 || len(unknown.PaceZonesPercentOfThreshold) != 2 || unknown.Meta["unknown_unit"] != "FEET" || unknown.PaceDistanceUnit != "FEET" {
 		t.Fatalf("unknown pace pass-through = %+v", unknown)
 	}
 }
