@@ -4,8 +4,8 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 0
-**Iteration:** 1
+**Review Counter:** 1
+**Iteration:** 2
 **Size:** L
 
 ---
@@ -29,6 +29,7 @@
 - [ ] Corrected threshold pace conversion reused
 - [ ] Threshold validation defined without invented constraints
 - [ ] Targeted client tests pass
+- [ ] R001 plan: exact typed boundary, sparse POST contract, validation, and client regression coverage recorded
 
 ---
 
@@ -90,6 +91,7 @@
 
 | # | Type | Step | Verdict | File |
 |---|------|------|---------|------|
+| R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 
 ## Discoveries
 
@@ -103,6 +105,7 @@
 | 2026-07-10 | Task staged | PROMPT.md and STATUS.md created |
 | 2026-07-10 22:35 | Task started | Runtime V2 lane-runner execution |
 | 2026-07-10 22:35 | Step 0 started | Preflight |
+| 2026-07-10 22:40 | Worker iter 1 | done in 264s, tools: 25 |
 
 ## Blockers
 
@@ -111,3 +114,4 @@
 ## Notes
 
 *Reserved for execution notes*
+| 2026-07-10 22:40 | Review R001 | plan Step 1: REVISE |
