@@ -2821,16 +2821,17 @@
     "description": "Update one sport's FTP, threshold heart rate, threshold pace, or zone definitions referenced by get_athlete_profile _meta.warnings.",
     "arguments": [
       {
-        "name": "effective_date",
-        "required": true,
-        "type": "string",
-        "description": "Required athlete-local effective date as YYYY-MM-DD; used as the oldest date for upstream sport-setting recompute."
-      },
-      {
         "name": "ftp",
         "required": false,
         "type": "integer",
         "description": "Functional Threshold Power in watts for the selected sport."
+      },
+      {
+        "name": "recalc_hr_zones",
+        "required": false,
+        "type": "boolean",
+        "description": "Whether intervals.icu should recalculate heart-rate zones for the updated sport; defaults to true.",
+        "default": true
       },
       {
         "name": "sport",
@@ -2899,12 +2900,10 @@
     ],
     "examples": [
       {
-        "effective_date": "2026-06-01",
         "ftp": 285,
         "sport": "Ride"
       },
       {
-        "effective_date": "2026-06-01",
         "sport": "Run",
         "threshold_hr": 172,
         "threshold_pace": {

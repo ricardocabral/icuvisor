@@ -1,6 +1,6 @@
 # TP-228: Align sport-settings update and apply requests with live OpenAPI — Status
 
-**Current Step:** Step 4: Regression coverage
+**Current Step:** Step 5: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
@@ -74,13 +74,13 @@
 
 ### Step 5: Testing & Verification
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
-- [ ] FULL test suite passing
-- [ ] Race suite passing
-- [ ] Lint passing
-- [ ] Build passes
-- [ ] Generated docs clean
+- [x] FULL test suite passing
+- [x] Race suite passing
+- [x] Lint passing
+- [x] Build passes
+- [x] Generated docs clean
 
 ---
 
