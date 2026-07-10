@@ -1,6 +1,6 @@
 # TP-238: Add grounded fueling review prompt pack — Status
 
-**Current Step:** Step 0: Preflight
+**Current Step:** Step 1: Define the fueling evidence contract
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 1
@@ -12,7 +12,7 @@
 
 ### Step 0: Preflight
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Required files and paths exist
 - [x] Dependencies satisfied
@@ -22,7 +22,7 @@
 
 ### Step 1: Define the fueling evidence contract
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Review modes and source tools defined
 - [ ] Fueling fields remain distinct
