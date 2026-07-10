@@ -70,7 +70,7 @@ Each new tool must:
 - Have a clear name in `snake_case`, matching the catalog in the PRD.
 - Declare every argument with a JSON Schema description an LLM can read.
 - Include scale metadata in its description for any ambiguous numeric field (e.g. `feel` is 1-5, `sleepQuality` is 1-4).
-- Render dates in the athlete's configured timezone and normalize athlete IDs to `i12345`.
+- Render dates in the athlete's configured timezone and preserve athlete-ID shapes: trim whitespace, lowercase only an optional leading `I`, validate digits, and never add or remove the `i` prefix.
 - Have a terse default response under ~500 tokens and an `include_full: bool` opt-in.
 
 ### Tool schema snapshots
