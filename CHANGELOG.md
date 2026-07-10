@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected the canonical yard-distance suffix in the workout DSL from `yd` to `yrd`, aligning with the public intervals.icu workout-builder syntax. The serializer now emits `100yrd` for pool-swim yard distances; legacy `yd`, `yard`, and `yards` are accepted as backward-compatible input aliases and canonicalize to `yrd` on re-serialization.
 - Corrected `get_annual_training_plan` note shaping to use upstream `plan_applied` provenance instead of English recovery keywords, keep personal calendar notes as neutral context, and exclude them from ATP note counts and recovery conclusions.
 - Aligned `update_sport_settings` with the live intervals.icu contract: requests now send the required HR-zone recalculation option, reject the unsupported `effective_date` argument, and never implicitly apply settings to historical activities.
+- Corrected sport-setting pace semantics: `threshold_pace` now reads and writes as upstream m/s with explicit athlete-facing duration fields, `pace_units` is display-only, and `pace_zones` are validated and returned as percentage-of-threshold boundaries rather than false durations.
 
 ## [1.4.0] - 2026-07-05
 

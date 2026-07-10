@@ -94,9 +94,9 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Must Update docs modified
-- [ ] Check If Affected docs reviewed
-- [ ] Discoveries logged
+- [x] Must Update docs modified
+- [x] Check If Affected docs reviewed
+- [x] Discoveries logged
 
 ---
 
@@ -132,7 +132,9 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
-| The planned `internal/athleteprofile/profile_test.go` does not exist; equivalent profile coverage currently lives under `internal/tools/get_athlete_profile_test.go`. | Create focused athleteprofile package tests during Step 2 if needed; all implementation paths and fixture locations exist. | `internal/athleteprofile/`, `internal/tools/get_athlete_profile_test.go` |
+| The planned `internal/athleteprofile/profile_test.go` does not exist; equivalent profile coverage currently lives under `internal/tools/get_athlete_profile_test.go`. | Created focused athleteprofile package tests in Step 1/2. | `internal/athleteprofile/profile_test.go` |
+| Public OpenAPI includes `SECS_400M`, `SECS_250M`, and `NONE` alongside documented run/swim/row pace displays. | Added typed support; `NONE` uses the safe m/s fallback. | `internal/units/unit.go`, `internal/response/units.go` |
+| Workout target previews and configured pace histograms consume sport thresholds/zones beyond profile reads and writes. | Corrected both to use m/s thresholds and percentage-zone derivation with regressions. | `internal/tools/workout_target_previews.go`, `internal/tools/get_activity_histogram.go` |
 
 ## Execution Log
 
@@ -144,7 +146,7 @@
 
 ## Blockers
 
-- TP-228 must complete first.
+*None*
 
 ## Notes
 
@@ -154,6 +156,7 @@
 - Step 3 plan: redesign `intervals.SportSettingsPace` so `Value` is m/s while separate `PaceUnits` and `PaceLoadType` fields are emitted by `writeSportSettingsBody`; local HTTP tests will assert the exact m/s body value, preserved valid display/load values, inferred input display, derived RUN/SWIM only when upstream load type is absent, and no preservation of `NONE`/unknown display tokens. Convert each explicit duration input to seconds for its named distance, then call `response.PaceMetersPerSecondFromSeconds`. Rewrite the update echo via `units.ParseUnit` and `response.PaceSecondsFromMetersPerSecond`, returning explicit seconds fields only for known display units and `threshold_pace_meters_per_second` for `NONE`, unknown, or overflow; preserve selected source/load metadata and cover returned plus params-fallback `3.5714285` m/s → 280 s/km. Treat pace-zone boundaries as finite, strictly increasing percent values in `(0, 200]`; do not transform their values, keep the full delete-mode gate before clients, replace duration schema descriptions/examples with `[77.5,100]`, and test zero/non-finite/>200/duplicate/descending validation plus safe-mode no-client calls. Regenerate schema snapshot, website data, and gendocs goldens; run the targeted tool/intervals/gendocs tests.
 - Step 4 plan: change the checked-in athlete profile fixture to a RUN setting with `threshold_pace: 3.5714285`, display-only `MINS_KM`, `pace_load_type: RUN`, and percentage zones `[77.5,90,100]`; strengthen its real client decode test to assert type, m/s, presentation/load metadata, percentages, and names. Replace all remaining duration-shaped test records in get-athlete-profile readiness, data-quality, and histogram fallback tests with `ThresholdPace` m/s where a threshold is used, explicit applicable display units, and ascending percentage zones; retain the histogram fallback's no-threshold/empty-display condition while changing its zones to percentages. Remove the irrelevant duration-valued pace fields from the cycling performance-potential fixture. Audit the repository so no duration-shaped `PaceThreshold` fixtures or implausibly large `ThresholdPace` values remain. Add a table-driven semantic regression file that exercises tool-level duration input → m/s transport → returned upstream m/s selected-display echo for metric/imperial run, 100m/100y swim, and 500m row; explicitly prove 3.5714285 m/s renders as approximately 280 s/km and a 280 s/km write returns the same m/s; assert [77.5,100] is copied untouched into a pace-zone definition. Extend response converter tests only where necessary and run response, athleteprofile, intervals, get-athlete-profile, data-quality, histogram, performance-potential, and semantic tool targets.
 - Step 5 plan: run `make test`, `make test-race`, `make lint`, and `make build`; execute `make docs-tools && git diff --exit-code -- web/data/tools.json web/data/tool_schemas.json && git diff --check` from the committed baseline, so generated-data drift and whitespace errors both fail verification. Record each gate in the execution log and rerun any gate affected by a correction.
+- Check-if-affected review: `web/content/cookbook/ftp-and-zones.md` contains cycling-only zone advice and makes no duration/percentage pace-zone claim; no change needed. `internal/resources/analysis_formulas.go` refers to already-shaped athlete/sport pace response fields without encoding upstream storage semantics; no change needed. Generated website tool data was regenerated and verified clean in Step 5.
 | 2026-07-10 19:30 | Review R002 | code Step 1: REVISE |
 | 2026-07-10 19:39 | Review R003 | code Step 1: REVISE |
 | 2026-07-10 19:45 | Review R004 | code Step 1: REVISE |
