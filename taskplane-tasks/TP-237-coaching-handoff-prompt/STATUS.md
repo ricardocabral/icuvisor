@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 1
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 2
 **Size:** M
 
@@ -68,10 +68,12 @@
 **Status:** 🟨 In Progress
 
 - [ ] FULL test suite passing
+- [ ] Race detector suite passing
 - [ ] Prompt eval validation passing
 - [ ] Lint passing
 - [ ] All failures fixed
 - [ ] Build passes
+- [ ] Hugo documentation build passes
 - [ ] Markdown and diff clean
 
 ---
@@ -95,6 +97,7 @@
 | R003 | Plan | 2 | APPROVE | `.reviews/R003-plan-step2.md` |
 | R004 | Plan | 3 | REVISE | `.reviews/R004-plan-step3.md` |
 | R005 | Plan | 3 | APPROVE | `.reviews/R005-plan-step3.md` |
+| R006 | Plan | 4 | REVISE | `.reviews/R006-plan-step4.md` |
 
 ## Discoveries
 
@@ -135,6 +138,15 @@
 - Add a self-contained `CB-HANDOFF-*` scenario whose prompt supplies explicit goals, constraints, and accepted decisions; requires profile/date resolution and bounded evidence/plan reads; checks source/freshness/gaps/manual-copy output; and forbids writes, deletes, streams, full payloads, invented calculations/physiology, and sensitive identifiers.
 - Reconcile public discovery against the eleven-entry registry: index the canonical pack, add the recipe card, document arguments/resources/read-only route/output in the prompt reference, add Claude Project fresh-chat guidance, and correct or remove stale prompt counts/lists (including omitted `ride_analysis`). Review README's pack enumeration and record its disposition.
 - Use established cookbook front matter and `relref` links; add the PRD catalog row and concise Unreleased entry, then run prompt tests and eval validation.
+
+### Step 4 revised verification plan (R006)
+
+- Retain `make test`, `make eval-validate`, `make lint`, `make build`, and `git diff --check`.
+- Run `make test-race` after the full test suite to verify prompt-handler code under the race detector.
+- Run `make web-build` after the code gates to validate cookbook front matter and internal `relref` links.
+- Fix every failure before delivery.
+
 | 2026-07-10 17:57 | Review R003 | plan Step 2: APPROVE |
 | 2026-07-10 18:05 | Review R004 | plan Step 3: REVISE |
 | 2026-07-10 18:07 | Review R005 | plan Step 3: APPROVE |
+| 2026-07-10 18:17 | Review R006 | plan Step 4: REVISE |
