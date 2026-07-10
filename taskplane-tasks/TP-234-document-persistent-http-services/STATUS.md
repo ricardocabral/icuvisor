@@ -1,10 +1,10 @@
 # TP-234: Add persistent loopback HTTP service recipes — Status
 
-**Current Step:** Step 1: Design secure service recipes
+**Current Step:** Step 2: Write and integrate the guide
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -22,7 +22,7 @@
 
 ### Step 1: Design secure service recipes
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 **Expanded plan (R001):** The guide will define three per-user, logged-in recipes: `app.icuvisor.http` at `~/Library/LaunchAgents/app.icuvisor.http.plist`, launched in `gui/$(id -u)` with `RunAtLoad`, `KeepAlive.SuccessfulExit=false`, `/` working directory, and `~/Library/Logs/icuvisor/http-service.log`; `icuvisor-http.service` at `~/.config/systemd/user/icuvisor-http.service`, with `Restart=on-failure`, `RestartSec=5`, `/` working directory, and journal inspection; and a current-user interactive-only `icuvisor-http` Task Scheduler task with an unlimited execution limit, a non-secret PowerShell wrapper/log in `%LOCALAPPDATA%\icuvisor\http-service`, and `C:\Windows\System32` as the task working directory. All service launches use an absolute icuvisor binary path with literal `--transport http --http-bind 127.0.0.1:8765`; `http://127.0.0.1:8765/mcp` is client-only.
 
@@ -48,7 +48,7 @@ All foreground HTTP-start commands in `http-transport.md`, including macOS and W
 
 ### Step 2: Write and integrate the guide
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Cross-platform recipes written
 - [ ] Guide navigation and HTTP links added
@@ -95,6 +95,7 @@ All foreground HTTP-start commands in `http-transport.md`, including macOS and W
 |---|------|------|---------|------|
 | R001 | Plan | 1 | REVISE | `.reviews/R001-plan-step1.md` |
 | R002 | Plan | 1 | REVISE | `.reviews/R002-plan-step1.md` |
+| R003 | Plan | 1 | APPROVE | inline |
 
 ## Discoveries
 
@@ -118,3 +119,4 @@ All foreground HTTP-start commands in `http-transport.md`, including macOS and W
 *Reserved for execution notes*
 | 2026-07-10 21:16 | Review R001 | plan Step 1: REVISE |
 | 2026-07-10 21:22 | Review R002 | plan Step 1: REVISE |
+| 2026-07-10 21:26 | Review R003 | plan Step 1: APPROVE |
