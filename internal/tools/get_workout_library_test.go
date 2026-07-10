@@ -220,6 +220,12 @@ func TestPaceTargetPreviewHonorsSportDisplayUnits(t *testing.T) {
 	}
 }
 
+func TestPaceTargetPreviewRejectsUnformattableMPS(t *testing.T) {
+	if _, _, ok := paceTargetPreview(workoutTargetBounds{Values: []float64{100}}, 1e-306, "MINS_KM", response.UnitSystemMetric); ok {
+		t.Fatal("paceTargetPreview accepted an overflowing m/s-to-duration conversion")
+	}
+}
+
 func TestGetWorkoutsInFolderResolvesHRAndPaceTargetPreviews(t *testing.T) {
 	t.Parallel()
 
