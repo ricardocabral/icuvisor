@@ -18,6 +18,7 @@ func NewRegistry() Registry {
 		CoachingHandoffPrompt(),
 		ShareableTrainingReportPrompt(),
 		PlanHealthReviewPrompt(),
+		MastersPlanReviewPrompt(),
 		RaceWeekTaperPrompt(),
 		CoachRosterTriagePrompt(),
 		CoachAthleteOnboardingPrompt(),
