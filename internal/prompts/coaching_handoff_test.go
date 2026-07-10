@@ -25,6 +25,7 @@ func TestCoachingHandoffPromptContract(t *testing.T) {
 		"current-day partial",
 		"next_page_token",
 		"icuvisor_list_advanced_capabilities",
+		"instead of calculating a substitute in chat",
 		"manually copy it into a fresh Claude, ChatGPT, Cursor, or other client conversation",
 		"raw athlete identifiers",
 		"local or config paths",

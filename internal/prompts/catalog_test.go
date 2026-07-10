@@ -18,14 +18,14 @@ func (r *captureRegistrar) AddPrompt(prompt Prompt) error {
 	return nil
 }
 
-func TestNewRegistryRegistersTenPrompts(t *testing.T) {
+func TestNewRegistryRegistersElevenPrompts(t *testing.T) {
 	t.Parallel()
 
 	registrar := &captureRegistrar{}
 	if err := NewRegistry().Register(context.Background(), registrar); err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
-	wantNames := []string{TrainingAnalysisName, RideAnalysisName, RecoveryCheckName, WeeklyPlanningName, WeeklyReviewName, ShareableTrainingReportName, PlanHealthReviewName, RaceWeekTaperName, CoachRosterTriageName, CoachAthleteOnboardingName}
+	wantNames := []string{TrainingAnalysisName, RideAnalysisName, RecoveryCheckName, WeeklyPlanningName, WeeklyReviewName, CoachingHandoffName, ShareableTrainingReportName, PlanHealthReviewName, RaceWeekTaperName, CoachRosterTriageName, CoachAthleteOnboardingName}
 	if len(registrar.prompts) != len(wantNames) {
 		t.Fatalf("registered %d prompts, want %d", len(registrar.prompts), len(wantNames))
 	}
@@ -59,6 +59,7 @@ func TestRenderedPromptsGolden(t *testing.T) {
 		{name: "recovery_check", prompt: RecoveryCheckPrompt(), arguments: map[string]string{"date": "2026-05-14", "lookback_days": "10"}, goldenFile: "recovery_check.md"},
 		{name: "weekly_planning", prompt: WeeklyPlanningPrompt(), arguments: map[string]string{"week_start": "2026-05-18"}, goldenFile: "weekly_planning.md"},
 		{name: "weekly_review", prompt: WeeklyReviewPrompt(), arguments: nil, goldenFile: "weekly_review.md"},
+		{name: "coaching_handoff", prompt: CoachingHandoffPrompt(), arguments: map[string]string{"lookback_days": "42", "race_context_days": "180"}, goldenFile: "coaching_handoff.md"},
 		{name: "shareable_training_report", prompt: ShareableTrainingReportPrompt(), arguments: map[string]string{"report_type": "race_prep", "start_date": "2026-05-01", "end_date": "2026-06-07", "race_date": "2026-06-07", "audience": "family"}, goldenFile: "shareable_training_report.md"},
 		{name: "plan_health_review", prompt: PlanHealthReviewPrompt(), arguments: map[string]string{"planned_start": "2026-05-18", "planned_end": "2026-06-01", "completed_lookback_days": "21", "race_date": "2026-06-07", "race_name": "A Race"}, goldenFile: "plan_health_review.md"},
 		{name: "race_week_taper", prompt: RaceWeekTaperPrompt(), arguments: map[string]string{"race_date": "2026-06-07", "race_name": "A Race"}, goldenFile: "race_week_taper.md"},
@@ -113,6 +114,7 @@ func TestClientPromptPacksStayLinkedToRegistry(t *testing.T) {
 		args   map[string]string
 	}{
 		{name: "weekly_review", file: "weekly-review.md", prompt: WeeklyReviewPrompt()},
+		{name: "coaching_handoff", file: "coaching-handoff.md", prompt: CoachingHandoffPrompt()},
 		{name: "race_week_taper", file: "race-week-taper.md", prompt: RaceWeekTaperPrompt(), args: map[string]string{"race_date": "2026-06-07", "race_name": "A Race"}},
 		{name: "ride_analysis", file: "ride-analysis.md", prompt: RideAnalysisPrompt(), args: map[string]string{"activity_id": "ride-123", "activity_date": "2026-05-17", "focus": "interval execution"}},
 		{name: "coach_roster_triage", file: "coach-roster-triage.md", prompt: CoachRosterTriagePrompt(), args: map[string]string{"athlete_id": "i12345", "start_date": "2026-05-01", "end_date": "2026-05-14"}},
@@ -466,7 +468,7 @@ func TestRaceWeekTaperRequiresRaceDate(t *testing.T) {
 func TestPromptResourceCitationsStayTerse(t *testing.T) {
 	t.Parallel()
 
-	for _, prompt := range []Prompt{TrainingAnalysisPrompt(), RecoveryCheckPrompt(), WeeklyPlanningPrompt(), WeeklyReviewPrompt(), ShareableTrainingReportPrompt(), PlanHealthReviewPrompt(), RaceWeekTaperPrompt(), CoachRosterTriagePrompt(), CoachAthleteOnboardingPrompt()} {
+	for _, prompt := range []Prompt{TrainingAnalysisPrompt(), RecoveryCheckPrompt(), WeeklyPlanningPrompt(), WeeklyReviewPrompt(), CoachingHandoffPrompt(), ShareableTrainingReportPrompt(), PlanHealthReviewPrompt(), RaceWeekTaperPrompt(), CoachRosterTriagePrompt(), CoachAthleteOnboardingPrompt()} {
 		text := renderPromptText(t, prompt, requiredArgsForPrompt(prompt.Name))
 		if !strings.Contains(text, "icuvisor://") {
 			t.Fatalf("prompt %s missing resource URI:\n%s", prompt.Name, text)

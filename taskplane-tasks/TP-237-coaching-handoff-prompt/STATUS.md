@@ -1,10 +1,10 @@
 # TP-237: Add coaching conversation handoff prompt — Status
 
-**Current Step:** Step 2: Register the prompt and add golden coverage
+**Current Step:** Step 3: Publish the portable workflow and eval
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 1
-**Review Counter:** 2
+**Review Counter:** 3
 **Iteration:** 2
 **Size:** M
 
@@ -40,18 +40,18 @@
 
 ### Step 2: Register the prompt and add golden coverage
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Prompt implemented and registered
-- [ ] Catalog expectations updated
-- [ ] Focused test and golden fixture added
-- [ ] Advanced-tool fallback behavior covered
+- [x] Prompt implemented and registered
+- [x] Catalog expectations updated
+- [x] Focused test and golden fixture added
+- [x] Advanced-tool fallback behavior covered
 
 ---
 
 ### Step 3: Publish the portable workflow and eval
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Cookbook page and client pack added
 - [ ] Eval scenario added
@@ -120,3 +120,4 @@
 - **Artifacts/checkpoint:** Step 1 creates the prompt function, portable pack, and focused `TestCoachingHandoff...` contract tests, making `go test ./internal/prompts -run 'CoachingHandoff'` non-vacuous. Step 2 only registers it, updates shared catalog/golden expectations, and adds the golden fixture. Step 3 updates `docs/prompts/README.md` along with public docs.
 | 2026-07-10 17:46 | Review R001 | plan Step 1: REVISE |
 | 2026-07-10 17:49 | Review R002 | plan Step 1: APPROVE |
+| 2026-07-10 17:57 | Review R003 | plan Step 2: APPROVE |
