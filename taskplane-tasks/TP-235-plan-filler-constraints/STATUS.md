@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 11
+**Review Counter:** 12
 **Iteration:** 1
 **Size:** L
 
@@ -23,6 +23,9 @@
 ### Step 1: Define the constraint contract
 
 **Status:** 🟨 In Progress
+
+<!-- R012 revision items -->
+- [ ] R012-1: ValidateCandidate must also emit ViolationRequestedSessionCountExceeded when RequestedSessionCount is pointer-to-0
 
 <!-- R011 revision items -->
 - [x] R011-1: Add WarnRequestedSessionCountUnmet batch warning when validCount < *RequestedSessionCount (underfill detection)
@@ -175,3 +178,4 @@
 | 2026-07-10 14:58 | Review R009 | code Step 1: REVISE |
 | 2026-07-10 15:08 | Review R010 | code Step 1: REVISE |
 | 2026-07-10 15:14 | Review R011 | code Step 1: REVISE |
+| 2026-07-10 15:18 | Review R012 | code Step 1: REVISE |
