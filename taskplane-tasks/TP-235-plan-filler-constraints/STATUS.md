@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** L
 
@@ -24,13 +24,13 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Weekly constraint struct defined: WeekTarget (full-week target, remaining target, completed load, fixed load), RequestedSessionCount, AvailableDays (per-day slot list)
-- [ ] Daily slot struct defined: date, max sessions per day, slots with per-slot duration cap, indoor/outdoor cap, sport allow-list, mode allow-list
-- [ ] Candidate session struct defined: sport, mode, indoor/outdoor flag, proposed duration, proposed load
-- [ ] Result codes defined: ViolationCode enum covering daily-cap, slot-duration-cap, indoor-cap, session-count-cap, weekly-load-overshoot, infeasible-slots
-- [ ] ReconciliationResult struct defined: completed, fixed, candidate, remaining, projected totals
-- [ ] Design doc `docs/design/plan-filler-constraints.md` written with field semantics, invariants, result codes, and examples
-- [ ] Availability/session-count distinction documented (availability = where, requested = how many)
+- [x] Weekly constraint struct defined: WeekTarget (full-week target, remaining target, completed load, fixed load), RequestedSessionCount, AvailableDays (per-day slot list)
+- [x] Daily slot struct defined: date, max sessions per day, slots with per-slot duration cap, indoor/outdoor cap, sport allow-list, mode allow-list
+- [x] Candidate session struct defined: sport, mode, indoor/outdoor flag, proposed duration, proposed load
+- [x] Result codes defined: ViolationCode enum covering daily-cap, slot-duration-cap, indoor-cap, session-count-cap, weekly-load-overshoot, infeasible-slots
+- [x] ReconciliationResult struct defined: completed, fixed, candidate, remaining, projected totals
+- [x] Design doc `docs/design/plan-filler-constraints.md` written with field semantics, invariants, result codes, and examples
+- [x] Availability/session-count distinction documented (availability = where, requested = how many)
 
 ---
 
@@ -114,3 +114,4 @@
 ## Notes
 
 *Reserved for execution notes*
+| 2026-07-10 13:57 | Review R001 | plan Step 1: APPROVE |
