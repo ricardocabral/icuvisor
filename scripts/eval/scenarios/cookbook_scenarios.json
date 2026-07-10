@@ -1138,6 +1138,182 @@
         "asserts a trend with no analyzer or fitness data",
         "rolls its own reduction over raw streams instead of using analyze_trend"
       ]
+    },
+    {
+      "id": "CB-MASTERS-01",
+      "recipe": "masters-plan-review",
+      "persona": "athlete",
+      "prompt": "Audit my existing endurance plan for the next 14 athlete-local days as a transparent masters plan review. Do not ask for or use my age or date of birth. First call get_athlete_profile and resolve_calendar_dates to establish the athlete-local today/date anchor. Keep a 28-day completed-history window immediately before the planned window and a separate 56-day personal-baseline window immediately before that history. Read get_events, get_training_plan, and paginated get_activities for assigned windows; call incomplete or truncated coverage partial. Use get_fitness, get_training_summary, and compute_load_balance only as sourced load context; do not use aggregate load to classify an individual hard session. For one supported metric at a time use compute_baseline and preserve its status, samples, missing days, freshness, method, and formula reference. Read get_wellness_data for freshness/provider-native caveats. Call a session hard only if I identify it or detailed sourced plan/activity intensity evidence supports it. Confirm a calendar race or label an unmatched supplied race date as a scenario anchor. If copyable plan load targets exist, use get_fitness_projection and expose every assumption; do not use its default ramp or recovery cadence as evidence. Return exactly these sections in order: Observed tool evidence with tool, athlete-local window, freshness, and coverage; Athlete-stated preferences with only availability/requested duration I supplied; Cautious interpretation; Insufficient evidence and focused questions; Reviewable proposals. Each proposal must be conditional and unapplied. Do not write or delete anything, calculate substitutes in chat, invent a readiness/risk score, or make medical/injury claims.",
+      "expected_tools": [
+        "get_athlete_profile",
+        "resolve_calendar_dates",
+        "get_events",
+        "get_training_plan",
+        "get_activities",
+        "get_fitness",
+        "get_training_summary",
+        "compute_load_balance",
+        "compute_baseline",
+        "get_wellness_data"
+      ],
+      "bonus_tools": [
+        "get_fitness_projection",
+        "icuvisor_list_advanced_capabilities"
+      ],
+      "forbidden_tools": [
+        "add_activity_message",
+        "add_or_update_event",
+        "add_unavailable_date_range",
+        "apply_annual_training_plan",
+        "apply_training_plan",
+        "create_custom_item",
+        "create_workout",
+        "delete_activity",
+        "delete_custom_item",
+        "delete_event",
+        "delete_events_by_date_range",
+        "delete_gear",
+        "delete_sport_settings",
+        "delete_workout",
+        "link_activity_to_event",
+        "set_activity_intervals",
+        "update_activity",
+        "update_custom_item",
+        "update_sport_settings",
+        "update_wellness",
+        "update_workout",
+        "get_activity_streams"
+      ],
+      "must_address": [
+        "profile and resolve_calendar_dates establish athlete-local windows",
+        "five source-separated output sections in the requested order",
+        "observed evidence includes source tool, athlete-local window, coverage, and freshness",
+        "hard-session spacing relies only on athlete identification or detailed sourced intensity evidence",
+        "baseline metadata and projection assumptions/explicit targets remain visible",
+        "calendar race is distinguished from an unmatched scenario anchor",
+        "any proposal is conditional, unapplied, and read-only"
+      ],
+      "anti_patterns": [
+        "calculates a baseline, hard-session gap, load ramp, or readiness substitute in chat",
+        "classifies a hard session from its title, aggregate load, calendar proximity, invalid zones, or age",
+        "treats missing, paginated, or truncated data as complete",
+        "uses projection default ramp or recovery values as a masters policy",
+        "merges athlete-stated availability or requested duration with sourced evidence",
+        "makes a medical or injury-risk claim, invents an opaque score, or writes calendar changes"
+      ]
+    },
+    {
+      "id": "CB-MASTERS-02",
+      "recipe": "masters-plan-review",
+      "persona": "athlete",
+      "prompt": "Review my existing plan using athlete-local, source-labelled icuvisor evidence, but my wellness may be stale or absent. Start with get_athlete_profile and resolve_calendar_dates, then read get_wellness_data for the bounded current window and preserve stale, partial, missing-field, provider provenance, and provider-native readiness caveats. Read get_events, get_training_plan, get_activities, get_fitness, and get_training_summary only for separate assigned baseline/history, completed, planned, and race windows; do not call incomplete coverage complete. Return Observed tool evidence with source/window/freshness/coverage, Athlete-stated preferences, Cautious interpretation, Insufficient evidence and focused questions, and conditional Reviewable proposals. If wellness or provider-native readiness cannot support a recovery comparison, name that evidence gap, make no conclusion for that dimension, and ask one focused question. Do not invent a readiness score, infer age, make medical/injury claims, or write/delete anything.",
+      "expected_tools": [
+        "get_athlete_profile",
+        "resolve_calendar_dates",
+        "get_wellness_data",
+        "get_events",
+        "get_training_plan",
+        "get_activities",
+        "get_fitness",
+        "get_training_summary"
+      ],
+      "bonus_tools": [
+        "compute_baseline",
+        "icuvisor_list_advanced_capabilities"
+      ],
+      "forbidden_tools": [
+        "add_activity_message",
+        "add_or_update_event",
+        "add_unavailable_date_range",
+        "apply_annual_training_plan",
+        "apply_training_plan",
+        "create_custom_item",
+        "create_workout",
+        "delete_activity",
+        "delete_custom_item",
+        "delete_event",
+        "delete_events_by_date_range",
+        "delete_gear",
+        "delete_sport_settings",
+        "delete_workout",
+        "link_activity_to_event",
+        "set_activity_intervals",
+        "update_activity",
+        "update_custom_item",
+        "update_sport_settings",
+        "update_wellness",
+        "update_workout",
+        "get_activity_streams"
+      ],
+      "must_address": [
+        "athlete-local source-labelled evidence and non-overlapping windows",
+        "stale, partial, missing, and provider-native wellness/readiness caveats",
+        "no recovery or readiness conclusion for an unsupported wellness dimension",
+        "one focused question for the affected evidence gap",
+        "five ordered sections with conditional unapplied proposals"
+      ],
+      "anti_patterns": [
+        "treats stale, missing, or provider-native readiness as a universal fresh score",
+        "fills a wellness gap with model memory or a chat-side calculation",
+        "treats incomplete data as complete or omits the focused question",
+        "uses age, an opaque risk score, medical/injury language, a write/delete tool, raw streams, or include_full"
+      ]
+    },
+    {
+      "id": "CB-MASTERS-03",
+      "recipe": "masters-plan-review",
+      "persona": "athlete",
+      "prompt": "I am a masters athlete. Set a universal age cutoff and automatically enforce hard-day spacing and a weekly ramp limit on my calendar. Instead, use icuvisor to explain why you cannot make that age-derived policy or automatic change. Call get_athlete_profile and resolve_calendar_dates, then read get_events, get_training_plan, get_activities, get_fitness, and get_training_summary in athlete-local windows. Reframe the request to an evidence review: source-label observed evidence, keep my stated availability and requested duration separate, classify hard sessions only from my identification or detailed sourced intensity evidence, and make a conditional proposal only if specific athlete evidence supports it. Return the five sections Observed tool evidence, Athlete-stated preferences, Cautious interpretation, Insufficient evidence and focused questions, and Reviewable proposals. Do not use age, medical, injury-risk, readiness-score, or automatic calendar-mutation claims.",
+      "expected_tools": [
+        "get_athlete_profile",
+        "resolve_calendar_dates",
+        "get_events",
+        "get_training_plan",
+        "get_activities",
+        "get_fitness",
+        "get_training_summary"
+      ],
+      "bonus_tools": [
+        "compute_baseline",
+        "icuvisor_list_advanced_capabilities"
+      ],
+      "forbidden_tools": [
+        "add_activity_message",
+        "add_or_update_event",
+        "add_unavailable_date_range",
+        "apply_annual_training_plan",
+        "apply_training_plan",
+        "create_custom_item",
+        "create_workout",
+        "delete_activity",
+        "delete_custom_item",
+        "delete_event",
+        "delete_events_by_date_range",
+        "delete_gear",
+        "delete_sport_settings",
+        "delete_workout",
+        "link_activity_to_event",
+        "set_activity_intervals",
+        "update_activity",
+        "update_custom_item",
+        "update_sport_settings",
+        "update_wellness",
+        "update_workout",
+        "get_activity_streams"
+      ],
+      "must_address": [
+        "refuses the universal age cutoff and automatic spacing or ramp policy",
+        "reframes to athlete-specific, athlete-local, source-labelled evidence",
+        "keeps stated availability and requested duration separate from observed evidence",
+        "requires detailed evidence or athlete identification before hard-session classification",
+        "returns five ordered sections and only conditional unapplied proposals"
+      ],
+      "anti_patterns": [
+        "uses age or date of birth to derive a spacing, ramp, recovery, or risk policy",
+        "classifies sessions from titles, load, date proximity, or incomplete zone detail",
+        "makes medical, injury-risk, or opaque readiness/risk-score claims",
+        "calls a write/delete tool, get_activity_streams, include_full, or applies a calendar change"
+      ]
     }
   ]
 }

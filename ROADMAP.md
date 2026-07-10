@@ -90,7 +90,7 @@ Forum-derived analytics requests are prioritized by whether icuvisor already has
 
 ### v2.2 - Plan safety and coaching guardrails
 
-- Science-backed validation tool for generated plans, with transparent rules and citations rather than hidden coaching opinion. This evidence-based layer is separate from v2.0's deterministic placement, availability, and budget validation.
+- Science-backed validation tool for generated plans, with transparent rules and citations rather than hidden coaching opinion. This evidence-based layer is separate from v2.0's deterministic placement, availability, and budget validation and from the shipped `masters_plan_review` prompt, which is a strictly read-only, no-rule evidence review rather than an age-aware physiology model.
 - Guardrails for ramp rate, recovery weeks, taper shape, intensity distribution, and race-week workload when the required inputs are available.
 - Explicit "insufficient evidence" responses when a plan cannot be validated from available athlete data.
 - Versioned rule definitions so plan-validation behavior does not drift silently.

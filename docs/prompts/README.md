@@ -11,6 +11,7 @@ These downloadable prompt packs turn Icuvisor's MCP prompts and deterministic to
 | [Race-week taper](client-prompt-packs/race-week-taper.md) | Preparing the final week before a known race with calendar, plan, and projection context. | `race_week_taper` |
 | [Ride analysis](client-prompt-packs/ride-analysis.md) | Analyzing one ride with activity details, intervals, streams only when needed, and deterministic analyzers. | `ride_analysis` |
 | [Fueling review](client-prompt-packs/fueling-review.md) | Reviewing logged activity and daily nutrition evidence without estimating intake or prescribing targets. | `fueling_review` |
+| [Masters plan review](client-prompt-packs/masters-plan-review.md) | Auditing an existing plan from athlete-specific evidence and stated preferences without age rules, opaque scores, or calendar edits. | `masters_plan_review` |
 | [Coach roster triage](client-prompt-packs/coach-roster-triage.md) | Scanning one authorized coach-mode roster athlete for recovery, compliance, race/event risk, and stale data. | `coach_roster_triage` |
 
 ## How to use a pack

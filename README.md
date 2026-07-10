@@ -84,7 +84,7 @@ Learn how to connect your AI assistant, try beginner prompt examples, read the t
 
 ### Downloadable prompt packs
 
-Copyable client prompt packs are available in [`docs/prompts/`](docs/prompts/README.md) for Weekly review, Coaching conversation handoff, Race-week taper, Ride analysis, Fueling review, and Coach roster triage modes. Use them as custom mode/profile instructions in clients that support saved modes, or paste the prompt block at the start of a fresh chat in clients that do not. The packs are designed to route assistants through Icuvisor's deterministic tools, `_meta.method`/unit metadata, and explicit caveats instead of generic prompt-only coaching or invented baselines.
+Copyable client prompt packs are available in [`docs/prompts/`](docs/prompts/README.md) for Weekly review, Coaching conversation handoff, Race-week taper, Ride analysis, Fueling review, Masters plan review, and Coach roster triage modes. Use them as custom mode/profile instructions in clients that support saved modes, or paste the prompt block at the start of a fresh chat in clients that do not. The packs are designed to route assistants through Icuvisor's deterministic tools, `_meta.method`/unit metadata, and explicit caveats instead of generic prompt-only coaching or invented baselines.
 
 ### Fitness projection with ATP/periodization targets
 

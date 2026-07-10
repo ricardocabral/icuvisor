@@ -1,10 +1,10 @@
 # TP-239: Add transparent masters plan review prompt — Status
 
-**Current Step:** Step 3: Publish the portable workflow and evals
+**Current Step:** Step 4: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 1
-**Review Counter:** 9
+**Review Counter:** 10
 **Iteration:** 1
 **Size:** M
 
@@ -56,17 +56,17 @@
 
 ### Step 3: Publish the portable workflow and evals
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 <!-- R009 plan revision items -->
-- [ ] R009-1: Deliberately revise the existing canonical pack and add a front-matter-valid `masters-plan-review` cookbook page plus index card. Present both MCP-prompt and pasted-pack entry points, bounded/default athlete-local windows, the five ordered sections, source/window/coverage/freshness evidence, stated preferences, race/current-day caveats, hard-session/baseline/projection limits, absolute read-only behavior, and affected-dimension insufficient-evidence questions.
-- [ ] R009-2: Add self-contained `CB-MASTERS-*` well-instrumented, stale/missing-wellness, and universal-age-rule eval records for `recipe: "masters-plan-review"`. Encode the athlete-local/source route, expected registered reads, all registered write/delete and raw/heavy routes as forbidden, required output/limitations, and anti-patterns for chat-side calculations, weak hard-session classification, missing-data completeness, age policy, opaque scores, and writes.
-- [ ] R009-3: Update prompt reference and guardrail prose; every registry-backed public prompt count/list in cookbook index and PRD; roadmap v2.2; Unreleased changelog; `docs/prompts/README.md`; and the root README's pack list. Record the `season-and-block-plan.md` cross-link and other Check If Affected dispositions.
-- [ ] R009-4: Validate prompt tests, eval schema, and Hugo build with `go test ./internal/prompts`, `python3 scripts/eval/run_eval.py --validate`, and `make web-build`.
-- [ ] Cookbook page and prompt pack added
-- [ ] Positive and refusal eval scenarios added
-- [ ] References, PRD, roadmap, and changelog updated
-- [ ] Future rule engine remains separate
+- [x] R009-1: Deliberately revise the existing canonical pack and add a front-matter-valid `masters-plan-review` cookbook page plus index card. Present both MCP-prompt and pasted-pack entry points, bounded/default athlete-local windows, the five ordered sections, source/window/coverage/freshness evidence, stated preferences, race/current-day caveats, hard-session/baseline/projection limits, absolute read-only behavior, and affected-dimension insufficient-evidence questions.
+- [x] R009-2: Add self-contained `CB-MASTERS-*` well-instrumented, stale/missing-wellness, and universal-age-rule eval records for `recipe: "masters-plan-review"`. Encode the athlete-local/source route, expected registered reads, all registered write/delete and raw/heavy routes as forbidden, required output/limitations, and anti-patterns for chat-side calculations, weak hard-session classification, missing-data completeness, age policy, opaque scores, and writes.
+- [x] R009-3: Update prompt reference and guardrail prose; every registry-backed public prompt count/list in cookbook index and PRD; roadmap v2.2; Unreleased changelog; `docs/prompts/README.md`; and the root README's pack list. Record the `season-and-block-plan.md` cross-link and other Check If Affected dispositions.
+- [x] R009-4: Validate prompt tests, eval schema, and Hugo build with `go test ./internal/prompts`, `python3 scripts/eval/run_eval.py --validate`, and `make web-build`.
+- [x] Cookbook page and prompt pack added
+- [x] Positive and refusal eval scenarios added
+- [x] References, PRD, roadmap, and changelog updated
+- [x] Future rule engine remains separate
 
 ---
 
@@ -109,6 +109,7 @@
 
 | Discovery | Disposition | Location |
 |-----------|-------------|----------|
+| `season-and-block-plan` is a related existing-plan audit entry point. | Added a focused link to the strictly read-only masters evidence review; prompt-pack indexes and README were also updated. | `web/content/cookbook/season-and-block-plan.md`, `docs/prompts/README.md`, `README.md` |
 
 ## Execution Log
 
@@ -135,3 +136,4 @@
 | 2026-07-10 22:07 | Review R007 | plan Step 2: REVISE |
 | 2026-07-10 22:10 | Review R008 | plan Step 2: APPROVE |
 | 2026-07-10 22:21 | Review R009 | plan Step 3: REVISE |
+| 2026-07-10 22:23 | Review R010 | plan Step 3: APPROVE |

@@ -48,4 +48,4 @@ Guardrails:
 
 ## Source link
 
-This pack is derived from the `masters_plan_review` MCP prompt in `internal/prompts/catalog.go`.
+This pack is the canonical portable counterpart to the `masters_plan_review` MCP prompt in `internal/prompts/catalog.go`. The [cookbook workflow](https://icuvisor.app/cookbook/masters-plan-review/) describes the same evidence contract and limits; keep both entry points aligned.

@@ -12,7 +12,7 @@ Asking an assistant to "make me a training plan" in one shot produces a generic 
 - At the start of a season, to lay out base/build/peak/taper blocks.
 - After a goal event, to plan the next macrocycle.
 
-Do not use this workflow for a quick health check of an already-written plan. For that, use the `plan_health_review` MCP prompt or the [prompt-library copy-paste prompt]({{< relref "prompt-library" >}}): it audits planned-vs-completed adherence, load/form trajectory, deload/recovery-week caveats, missing wellness/readiness data, and race-date risk without designing a new season.
+Do not use this workflow for a quick health check of an already-written plan. For that, use the `plan_health_review` MCP prompt or the [prompt-library copy-paste prompt]({{< relref "prompt-library" >}}): it audits planned-vs-completed adherence, load/form trajectory, deload/recovery-week caveats, missing wellness/readiness data, and race-date risk without designing a new season. For a strictly read-only, evidence-limited audit that keeps athlete-stated availability/duration separate from observations and never derives an age rule, use [Masters plan review]({{< relref "masters-plan-review" >}}).
 
 ## The recipe
 

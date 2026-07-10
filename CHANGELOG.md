@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added the strictly read-only `masters_plan_review` MCP prompt, canonical portable pack, cookbook recipe, and `CB-MASTERS-*` evals for athlete-specific plan evidence, explicit data gaps, and conditional unapplied proposals without age-derived rules, medical claims, opaque scores, or calendar writes.
 - Added cross-platform persistent loopback HTTP service recipes for macOS LaunchAgent, Linux systemd user service, and Windows Task Scheduler, including lifecycle recovery and hosted-connector boundaries.
 - Added the read-only `fueling_review` MCP prompt, portable client prompt pack, cookbook recipe, and `CB-FUEL-*` eval coverage for source-labelled logged intake, transparent eligible-session grams/hour calculations, missing-data reporting, and no-target nutrition boundaries.
 - Added the read-only `coaching_handoff` MCP prompt, portable client prompt pack, and cookbook workflow for manually carrying reviewed coaching decisions and source-labelled, athlete-local evidence into a fresh conversation.

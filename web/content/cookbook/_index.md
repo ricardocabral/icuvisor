@@ -28,6 +28,7 @@ Two kinds of content:
   {{< card link="fueling-review" title="Fueling review" subtitle="Review logged carbohydrate evidence and data gaps without prescribing targets." >}}
   {{< card link="ftp-and-zones" title="FTP and zones review" subtitle="Decide whether a threshold has moved and update zones." >}}
   {{< card link="season-and-block-plan" title="Season and block plan" subtitle="Build a periodized plan toward a goal event." >}}
+  {{< card link="masters-plan-review" title="Masters plan review" subtitle="Audit an existing plan with transparent athlete-specific evidence and no age rules." >}}
   {{< card link="build-workouts" title="Build and schedule workouts" subtitle="Create structured workouts and put them on the calendar." >}}
   {{< card link="race-week-taper" title="Race-week taper" subtitle="Plan the final days before a goal event." >}}
   {{< card link="coach-roster-triage" title="Coach roster triage" subtitle="Scan a roster of athletes for red flags (coach mode)." >}}
@@ -58,4 +59,4 @@ Knowing the limits keeps you from chasing answers icuvisor cannot give:
 
 ## Cookbook recipes vs. MCP prompts
 
-If your client supports [MCP prompts]({{< relref "/reference/resources-prompts" >}}), icuvisor ships twelve curated ones (`training_analysis`, `ride_analysis`, `fueling_review`, `recovery_check`, `weekly_planning`, `weekly_review`, `coaching_handoff`, `shareable_training_report`, `plan_health_review`, `race_week_taper`, `coach_roster_triage`, `coach_athlete_onboarding`) you can invoke directly — they carry the same guardrails server-side. The cookbook recipes are the portable equivalent: plain text that works in any client, including ones with no prompt support. Each recipe notes its matching MCP prompt where one exists.
+If your client supports [MCP prompts]({{< relref "/reference/resources-prompts" >}}), icuvisor ships thirteen curated ones (`training_analysis`, `ride_analysis`, `fueling_review`, `recovery_check`, `weekly_planning`, `weekly_review`, `coaching_handoff`, `shareable_training_report`, `plan_health_review`, `masters_plan_review`, `race_week_taper`, `coach_roster_triage`, `coach_athlete_onboarding`) you can invoke directly — they carry the same guardrails server-side. The cookbook recipes are the portable equivalent: plain text that works in any client, including ones with no prompt support. Each recipe notes its matching MCP prompt where one exists.
