@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
-**Review Counter:** 20
+**Review Counter:** 21
 **Iteration:** 1
 **Size:** L
 
@@ -86,6 +86,7 @@
 - [ ] Lint passing
 - [ ] Build passes
 - [ ] Generated docs clean
+- [ ] R021: Verify generator output has no committed-data drift
 
 ---
 
@@ -123,6 +124,7 @@
 | R018 | Plan | 4 | APPROVE | — |
 | R019 | Code | 4 | REVISE | `.reviews/R019-code-step4.md` |
 | R020 | Code | 4 | APPROVE | — |
+| R021 | Plan | 5 | REVISE | `.reviews/R021-plan-step5.md` |
 
 ## Discoveries
 
@@ -168,3 +170,4 @@
 | 2026-07-10 20:53 | Review R018 | plan Step 4: APPROVE |
 | 2026-07-10 20:59 | Review R019 | code Step 4: REVISE |
 | 2026-07-10 21:02 | Review R020 | code Step 4: APPROVE |
+| 2026-07-10 21:03 | Review R021 | plan Step 5: REVISE |
