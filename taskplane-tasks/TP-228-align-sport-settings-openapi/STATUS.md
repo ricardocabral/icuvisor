@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
-**Review Counter:** 14
+**Review Counter:** 15
 **Iteration:** 1
 **Size:** L
 
@@ -63,7 +63,7 @@
 
 ### Step 4: Regression coverage
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Exact update/apply wire tests added
 - [x] No-implicit-apply regression added
@@ -137,3 +137,4 @@
 | 2026-07-10 12:14 | Review R012 | code Step 3: APPROVE |
 | 2026-07-10 12:16 | Review R013 | plan Step 4: REVISE |
 | 2026-07-10 12:17 | Review R014 | plan Step 4: APPROVE |
+| 2026-07-10 12:20 | Review R015 | code Step 4: APPROVE |
