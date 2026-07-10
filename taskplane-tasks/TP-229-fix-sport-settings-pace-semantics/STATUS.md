@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 3
-**Review Counter:** 10
+**Review Counter:** 11
 **Iteration:** 1
 **Size:** L
 
@@ -43,10 +43,10 @@
 
 **Status:** 🟨 In Progress
 
-- [ ] Typed upstream fields completed
-- [ ] Threshold pace read shaping corrected
-- [ ] Percentage zone response added
-- [ ] Unknown-unit fallback preserved
+- [x] Typed upstream fields completed
+- [x] Threshold pace read shaping corrected
+- [x] Percentage zone response added
+- [x] Unknown-unit fallback preserved
 - [x] R010: Document the typed-field, response/fallback, and table-driven coverage plan
 
 ---
@@ -109,6 +109,7 @@
 | R008 | Code | 1 | REVISE | `.reviews/R008-code-step1.md` |
 | R009 | Code | 1 | APPROVE | — |
 | R010 | Plan | 2 | REVISE | `.reviews/R010-plan-step2.md` |
+| R011 | Plan | 2 | APPROVE | — |
 
 ## Discoveries
 
@@ -142,3 +143,4 @@
 | 2026-07-10 20:11 | Review R008 | code Step 1: REVISE |
 | 2026-07-10 20:15 | Review R009 | code Step 1: APPROVE |
 | 2026-07-10 20:18 | Review R010 | plan Step 2: REVISE |
+| 2026-07-10 20:21 | Review R011 | plan Step 2: APPROVE |

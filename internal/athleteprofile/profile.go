@@ -55,6 +55,7 @@ type Sport struct {
 	ThresholdPaceMetersPerSecond *float64       `json:"threshold_pace_meters_per_second,omitempty"`
 	PaceZonesPercentOfThreshold  []float64      `json:"pace_zones_percent_of_threshold,omitempty"`
 	PaceUnitsSource              string         `json:"pace_units_source,omitempty"`
+	PaceLoadType                 string         `json:"pace_load_type,omitempty"`
 	PaceDistanceUnit             string         `json:"pace_distance_unit,omitempty"`
 	PaceZoneNames                []string       `json:"pace_zone_names,omitempty"`
 	SportSettingID               int            `json:"sport_setting_id,omitempty"`
@@ -190,6 +191,7 @@ func profileSport(setting intervals.SportSettings, includeFull bool, unitSystem 
 		HRZonesBPM:      setting.HRZones,
 		HRZoneNames:     setting.HRZoneNames,
 		PaceUnitsSource: strings.TrimSpace(setting.PaceUnits),
+		PaceLoadType:    strings.TrimSpace(setting.PaceLoadType),
 		PaceZoneNames:   setting.PaceZoneNames,
 	}
 	applyProfilePace(&sport, setting, unitSystem)

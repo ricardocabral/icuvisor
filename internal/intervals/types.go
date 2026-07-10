@@ -35,6 +35,7 @@ type SportSettings struct {
 	PaceThreshold  float64   `json:"pace_threshold"`
 	ThresholdPace  float64   `json:"threshold_pace"`
 	PaceUnits      string    `json:"pace_units"`
+	PaceLoadType   string    `json:"pace_load_type"`
 	WorkoutOrder   string    `json:"workout_order"`
 	PaceZones      []float64 `json:"pace_zones"`
 	PaceZoneNames  []string  `json:"pace_zone_names"`
