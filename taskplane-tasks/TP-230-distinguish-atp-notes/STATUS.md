@@ -1,10 +1,10 @@
 # TP-230: Distinguish ATP-generated notes from personal calendar notes — Status
 
-**Current Step:** Step 2: Implement and cover classification
+**Current Step:** Step 3: Update schema and generated surfaces
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 5
+**Review Counter:** 6
 **Iteration:** 1
 **Size:** M
 
@@ -36,7 +36,7 @@
 
 ### Step 2: Implement and cover classification
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 - [x] Provenance-aware note shape implemented
 - [x] English keyword dependence removed or constrained
@@ -48,7 +48,7 @@
 
 ### Step 3: Update schema and generated surfaces
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Output schema snapshot updated
 - [ ] Generated website data updated
@@ -87,6 +87,7 @@
 | R003 | Plan | 1 | APPROVE | `.reviews/R003-plan-step1.md` |
 | R004 | Code | 1 | APPROVE | `.reviews/R004-code-step1.md` |
 | R005 | Plan | 2 | APPROVE | `.reviews/R005-plan-step2.md` |
+| R006 | Code | 2 | APPROVE | `.reviews/R006-code-step2.md` |
 
 ## Discoveries
 
@@ -120,3 +121,4 @@
 | 2026-07-10 12:36 | Review R003 | plan Step 1: APPROVE |
 | 2026-07-10 12:38 | Review R004 | code Step 1: APPROVE |
 | 2026-07-10 12:39 | Review R005 | plan Step 2: APPROVE |
+| 2026-07-10 12:49 | Review R006 | code Step 2: APPROVE |
