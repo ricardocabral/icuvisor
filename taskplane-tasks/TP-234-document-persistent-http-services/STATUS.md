@@ -1,10 +1,10 @@
 # TP-234: Add persistent loopback HTTP service recipes — Status
 
-**Current Step:** Step 4: Testing & Verification
+**Current Step:** Step 5: Documentation & Delivery
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 1
-**Review Counter:** 7
+**Review Counter:** 8
 **Iteration:** 1
 **Size:** M
 
@@ -85,22 +85,22 @@ The executable-only negative assertions will reject `INTERVALS_ICU_API_KEY` assi
 
 ### Step 4: Testing & Verification
 
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
 **Verification plan:** Run `make test`, the standalone service-doc contract, `make docs-guidance-test`, `make web-build`, `make lint`, and `make build` from the repository root. Fix and rerun any failed command before continuing, then finish with `git diff --check` and a clean status review.
 
-- [ ] FULL test suite passing
-- [ ] Documentation contract test passing
-- [ ] Website build passes
-- [ ] Lint passing
-- [ ] Binary build passes
-- [ ] Markdown and diff checks clean
+- [x] FULL test suite passing
+- [x] Documentation contract test passing
+- [x] Website build passes
+- [x] Lint passing
+- [x] Binary build passes
+- [x] Markdown and diff checks clean
 
 ---
 
 ### Step 5: Documentation & Delivery
 
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Must Update docs modified
 - [ ] Check If Affected docs reviewed
@@ -119,6 +119,7 @@ The executable-only negative assertions will reject `INTERVALS_ICU_API_KEY` assi
 | R005 | Plan | 2 | APPROVE | inline |
 | R006 | Plan | 3 | REVISE | `.reviews/R006-plan-step3.md` |
 | R007 | Plan | 3 | APPROVE | inline |
+| R008 | Plan | 4 | APPROVE | inline |
 
 ## Discoveries
 
@@ -147,3 +148,4 @@ The executable-only negative assertions will reject `INTERVALS_ICU_API_KEY` assi
 | 2026-07-10 21:30 | Review R005 | plan Step 2: APPROVE |
 | 2026-07-10 21:34 | Review R006 | plan Step 3: REVISE |
 | 2026-07-10 21:36 | Review R007 | plan Step 3: APPROVE |
+| 2026-07-10 21:39 | Review R008 | plan Step 4: APPROVE |
