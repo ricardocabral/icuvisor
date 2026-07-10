@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 13
+**Review Counter:** 14
 **Iteration:** 1
 **Size:** L
 
@@ -23,6 +23,11 @@
 ### Step 1: Define the constraint contract
 
 **Status:** 🟨 In Progress
+
+<!-- R014 revision items -->
+- [ ] R014-1: Protect intermediate arithmetic in validateCore (remaining budget subtraction can produce -Inf when completed+fixed overflow; guard before embedding in Violation.Value/Warning.Value)
+- [ ] R014-2: Guard priorLoad/priorMinutes accumulation in ValidateCandidates; emit arithmetic_overflow violation when prior totals exceed float64 range
+- [ ] R014-3: Add ValidateWeekConstraints preflight check for completed+fixed overflow; tests for all three overflow paths
 
 <!-- R013 revision items -->
 - [x] R013-1: Detect float64 overflow in Reconcile; change to (Reconciliation, error); in ValidateCandidates use WarnArithmeticOverflow on overflow; test overflow JSON-marshal safety
@@ -183,3 +188,4 @@
 | 2026-07-10 15:14 | Review R011 | code Step 1: REVISE |
 | 2026-07-10 15:18 | Review R012 | code Step 1: REVISE |
 | 2026-07-10 15:22 | Review R013 | code Step 1: REVISE |
+| 2026-07-10 15:29 | Review R014 | code Step 1: REVISE |
