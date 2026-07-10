@@ -72,6 +72,7 @@ All foreground HTTP-start commands in `http-transport.md`, including macOS and W
 - [ ] Three-platform content contract added
 - [ ] Loopback, lifecycle, and credential assertions added
 - [ ] Insecure executable examples rejected
+- [ ] Documentation contract wired into existing Make and CI path
 
 ---
 
