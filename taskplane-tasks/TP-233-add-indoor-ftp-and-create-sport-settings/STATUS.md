@@ -4,7 +4,7 @@
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 13
+**Review Counter:** 14
 **Iteration:** 4
 **Size:** L
 
@@ -84,6 +84,7 @@
 - [ ] Lint passing
 - [ ] Build passes
 - [ ] Generated docs clean
+- [ ] R014: Docs regeneration leaves no tracked output changes and passes whitespace validation
 
 ---
 
@@ -143,6 +144,7 @@
 | 2026-07-10 | R006 Step 3 plan | Client local-server wire tests must reject all extra keys across Ride/Run/Swim. Separate malformed pre-I/O/no-profile validation from duplicate `Type`/`Types` lookup/no-write behavior. Assert raw and registered create schemas exclude credential/confirm/recalc/zones (not update), add create to safety v03 catalog with safe/full/default counts 60/68/46, and target `internal/safety`. |
 | 2026-07-10 | R010 Step 4 plan | Regenerate website plus `cmd/gendocs/testdata` goldens to 70 tools; inspect settings/full/write create and update indoor FTP schema. PRD/changelog must state threshold-only missing-sport semantics, one threshold requirement, no zones/recalc/history application, and no FTP ordering invention. Run docs generation and uncached gendocs/catalog/toolcheck tests. |
 | 2026-07-10 | R011 Step 4 plan | Update every PRD statement of the current generated catalog to 70 total tools, 30 core tools, and 40 additional full tools, alongside the behavior contract and generated output refresh. |
+| 2026-07-10 | R014 Step 5 plan | After docs regeneration, verify both `git diff --check` and no tracked changes relative to the pre-regeneration baseline; investigate and commit any intended output before rerunning verification. |
 | 2026-07-10 22:43 | Review R002 | plan Step 1: APPROVE |
 | 2026-07-10 22:49 | Review R003 | code Step 1: APPROVE |
 | 2026-07-10 22:53 | Review R004 | plan Step 2: REVISE |
@@ -152,8 +154,10 @@
 | 2026-07-10 23:40 | Review R007 | plan Step 3: APPROVE |
 | 2026-07-10 23:47 | Review R010 | plan Step 4: REVISE |
 | 2026-07-10 23:48 | Review R011 | plan Step 4: REVISE |
+| 2026-07-10 23:51 | Review R014 | plan Step 5: REVISE |
 | 2026-07-10 23:49 | Review R009 | code Step 3: APPROVE |
 | 2026-07-10 23:51 | Review R010 | plan Step 4: REVISE |
 | 2026-07-10 23:54 | Review R011 | plan Step 4: REVISE |
 | 2026-07-10 23:55 | Review R012 | plan Step 4: APPROVE |
 | 2026-07-11 00:00 | Review R013 | code Step 4: APPROVE |
+| 2026-07-11 00:03 | Review R014 | plan Step 5: REVISE |
