@@ -400,6 +400,14 @@
     "anchor": "icuvisor_list_advanced_capabilities"
   },
   {
+    "name": "create_sport_settings",
+    "group": "settings",
+    "tier": "full",
+    "safety": "write",
+    "summary": "Create threshold-only sport settings for a sport that does not yet have settings.",
+    "anchor": "create_sport_settings"
+  },
+  {
     "name": "delete_gear",
     "group": "settings",
     "tier": "full",
@@ -436,7 +444,7 @@
     "group": "settings",
     "tier": "full",
     "safety": "write",
-    "summary": "Update one sport's FTP, threshold heart rate, threshold pace, or zone definitions referenced by get_athlete_profile _meta.warnings.",
+    "summary": "Update one sport's FTP, indoor FTP, threshold heart rate, threshold pace, or zone definitions referenced by get_athlete_profile _meta.warnings.",
     "anchor": "update_sport_settings"
   },
   {

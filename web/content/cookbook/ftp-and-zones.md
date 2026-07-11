@@ -66,6 +66,7 @@ exact before/after first and wait for my explicit OK.
 ## Variations
 
 - **Running:** swap to threshold pace and heart rate — "review my threshold pace from the last 90 days".
+- **Indoor cycling:** compare trainer and outdoor evidence separately. If a distinct indoor threshold is warranted, show the before/after and, after explicit approval, update only `indoor_ftp`; leave outdoor FTP and zone definitions unchanged.
 - **Ramp test extraction:** "Find my most recent ramp or threshold test — make one `get_activities` call over the last 120 days and scan names for 'ramp', 'FTP test', or 'threshold'. Read FTP, threshold HR, and any VO2max estimate from that activity only; if none is found after one scan, say so rather than re-querying."
 - **Heart-rate athletes:** ask for [`get_hr_curves`]({{< relref "/reference/tools#get_hr_curves" >}}) and a threshold-HR check instead of power.
 

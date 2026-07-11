@@ -23,6 +23,7 @@ const (
 	ComputeZoneEnergy                = "compute_zone_energy"
 	ComputeZoneTime                  = "compute_zone_time"
 	CreateCustomItem                 = "create_custom_item"
+	CreateSportSettings              = "create_sport_settings"
 	CreateWorkout                    = "create_workout"
 	DeleteActivity                   = "delete_activity"
 	DeleteCustomItem                 = "delete_custom_item"
@@ -95,6 +96,7 @@ var athleteScopedToolNames = []string{
 	ComputeZoneEnergy,
 	ComputeZoneTime,
 	CreateCustomItem,
+	CreateSportSettings,
 	CreateWorkout,
 	DeleteActivity,
 	DeleteCustomItem,

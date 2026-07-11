@@ -36,7 +36,7 @@ func TestUpdateSportSettingsSchemaDocumentsInputsAndZoneGate(t *testing.T) {
 		t.Fatalf("required = %#v, want only sport", required)
 	}
 	props := schema["properties"].(map[string]any)
-	for _, field := range []string{"sport", "recalc_hr_zones", "ftp", "threshold_hr", "threshold_pace", "zones"} {
+	for _, field := range []string{"sport", "recalc_hr_zones", "ftp", "indoor_ftp", "threshold_hr", "threshold_pace", "zones"} {
 		if _, ok := props[field]; !ok {
 			t.Fatalf("schema missing field %s", field)
 		}
@@ -131,6 +131,31 @@ func TestUpdateSportSettingsThresholdFieldsAndPaceConversion(t *testing.T) {
 				t.Fatalf("meta = %#v, want pace conversion metadata", meta)
 			}
 		})
+	}
+}
+
+func TestUpdateSportSettingsWritesIndoorFTP(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeSportSettingsClient(intervals.SportSettings{ID: 7, Types: []string{"Ride"}})
+	client.setting = intervals.SportSettings{ID: 7, Type: "Ride", IndoorFTP: 260}
+	tool := newUpdateSportSettingsTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"sport":"Ride","indoor_ftp":260}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.calls) != 1 || !sameIntPtr(client.calls[0].IndoorFTP, intPtr(260)) {
+		t.Fatalf("write calls = %#v, want indoor FTP 260", client.calls)
+	}
+	out := resultMap(t, result)
+	settings := out["sport_settings"].(map[string]any)
+	if settings["indoor_ftp_watts"] != float64(260) {
+		t.Fatalf("settings = %#v, want indoor_ftp_watts=260", settings)
+	}
+	meta := out["_meta"].(map[string]any)
+	if fields := meta["fields_updated"].([]any); len(fields) != 1 || fields[0] != "indoor_ftp" {
+		t.Fatalf("fields_updated = %#v, want [indoor_ftp]", fields)
 	}
 }
 

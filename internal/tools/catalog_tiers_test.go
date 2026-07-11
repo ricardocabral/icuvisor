@@ -83,6 +83,7 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 		updateWorkoutName:               safety.ToolsetFull,
 		deleteWorkoutName:               safety.ToolsetFull,
 		updateSportSettingsName:         safety.ToolsetFull,
+		createSportSettingsName:         safety.ToolsetFull,
 		deleteSportSettingsName:         safety.ToolsetFull,
 		getCustomItemsName:              safety.ToolsetFull,
 		getCustomItemByIDName:           safety.ToolsetFull,

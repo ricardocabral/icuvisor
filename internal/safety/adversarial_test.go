@@ -37,6 +37,7 @@ var v03ToolCatalog = []catalogToolSpec{
 	{name: "compute_zone_energy", requirement: tools.RequirementRead},
 	{name: "compute_zone_time", requirement: tools.RequirementRead},
 	{name: "create_custom_item", requirement: tools.RequirementWrite},
+	{name: "create_sport_settings", requirement: tools.RequirementWrite},
 	{name: "create_workout", requirement: tools.RequirementWrite},
 	{name: "delete_activity", requirement: tools.RequirementDelete},
 	{name: "delete_custom_item", requirement: tools.RequirementDelete},
@@ -204,13 +205,14 @@ func wantToolRegistered(mode safety.Mode, requirement tools.Requirement) bool {
 }
 
 func expectedRegisteredCount(mode safety.Mode) int {
-	count := 0
-	for _, spec := range v03ToolCatalog {
-		if wantToolRegistered(mode, spec.requirement) {
-			count++
-		}
+	switch mode {
+	case safety.ModeSafe:
+		return 60
+	case safety.ModeFull:
+		return 68
+	default:
+		return 46
 	}
-	return count
 }
 
 func schemaContainsConfirmArgument(value any) bool {

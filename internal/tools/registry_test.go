@@ -41,6 +41,33 @@ func TestRegistryWithIntervalsClientRegistersFullCatalog(t *testing.T) {
 	}
 }
 
+func TestRegisteredCreateSportSettingsSchemaRemainsClosed(t *testing.T) {
+	t.Parallel()
+
+	registrar := &collectingRegistrar{}
+	registry := NewRegistryWithOptions(newNoNetworkIntervalsClient(t), RegistryOptions{
+		Version:          "test",
+		TimezoneFallback: "UTC",
+		Capability:       safety.NewCapability(safety.ModeFull),
+		Toolset:          safety.ToolsetFull,
+	})
+	if err := registry.Register(context.Background(), registrar); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+
+	for _, tool := range registrar.tools {
+		if tool.Name == createSportSettingsName {
+			schema, ok := tool.InputSchema.(map[string]any)
+			if !ok {
+				t.Fatalf("InputSchema type = %T, want map", tool.InputSchema)
+			}
+			assertCreateSportSettingsSchemaSafe(t, schema, false)
+			return
+		}
+	}
+	t.Fatalf("full registry omitted %s", createSportSettingsName)
+}
+
 func TestRegisteredToolSchemasDoNotExposeCredentialParameters(t *testing.T) {
 	t.Parallel()
 

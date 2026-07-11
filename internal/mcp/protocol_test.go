@@ -904,26 +904,40 @@ func TestProtocolComputeZoneEnergyIsFullOnlyReadAnalyzer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("core ListTools() error = %v", err)
 	}
-	if hasTool(core.Tools, toolcatalog.ComputeZoneEnergy) {
-		t.Fatalf("core tools/list exposed full-only %s", toolcatalog.ComputeZoneEnergy)
+	if len(core.Tools) != 28 {
+		t.Fatalf("core tools/list count = %d, want 28", len(core.Tools))
+	}
+	for _, fullOnly := range []string{toolcatalog.ComputeZoneEnergy, toolcatalog.CreateSportSettings} {
+		if hasTool(core.Tools, fullOnly) {
+			t.Fatalf("core tools/list exposed full-only %s", fullOnly)
+		}
 	}
 
-	fullRegistry := tools.NewRegistryWithOptions(client, tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeNone), Toolset: safety.ToolsetFull})
-	fullCtx, fullSession, fullCleanup := connectTestClientWithOptions(t, Options{Registry: fullRegistry, Capability: safety.NewCapability(safety.ModeNone), Toolset: safety.ToolsetFull})
+	fullRegistry := tools.NewRegistryWithOptions(client, tools.RegistryOptions{Version: "test", TimezoneFallback: "UTC", Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
+	fullCtx, fullSession, fullCleanup := connectTestClientWithOptions(t, Options{Registry: fullRegistry, Capability: safety.NewCapability(safety.ModeFull), Toolset: safety.ToolsetFull})
 	defer fullCleanup()
 	full, err := fullSession.ListTools(fullCtx, nil)
 	if err != nil {
 		t.Fatalf("full ListTools() error = %v", err)
 	}
+	if len(full.Tools) != 68 {
+		t.Fatalf("full tools/list count = %d, want 68", len(full.Tools))
+	}
 	var zoneEnergy *sdkmcp.Tool
+	var createSportSettings *sdkmcp.Tool
 	for _, tool := range full.Tools {
-		if tool.Name == toolcatalog.ComputeZoneEnergy {
+		switch tool.Name {
+		case toolcatalog.ComputeZoneEnergy:
 			zoneEnergy = tool
-			break
+		case toolcatalog.CreateSportSettings:
+			createSportSettings = tool
 		}
 	}
 	if zoneEnergy == nil {
-		t.Fatalf("full read-only tools/list missing %s", toolcatalog.ComputeZoneEnergy)
+		t.Fatalf("full tools/list missing %s", toolcatalog.ComputeZoneEnergy)
+	}
+	if createSportSettings == nil {
+		t.Fatalf("full tools/list missing %s", toolcatalog.CreateSportSettings)
 	}
 	if zoneEnergy.Annotations == nil || !zoneEnergy.Annotations.ReadOnlyHint {
 		t.Fatalf("%s annotations = %#v, want readOnlyHint true", toolcatalog.ComputeZoneEnergy, zoneEnergy.Annotations)
@@ -956,6 +970,9 @@ func TestProtocolAthleteScopedSchemasExposeUniformAthleteID(t *testing.T) {
 			if arg["description"] != athleteIDArgumentDescription {
 				t.Fatalf("%s athlete_id description = %#v, want %q", tool.Name, arg["description"], athleteIDArgumentDescription)
 			}
+			if tool.Name == toolcatalog.CreateSportSettings {
+				assertCoachCreateSportSettingsSchemaSafe(t, schema)
+			}
 		} else if hasAthleteID {
 			t.Fatalf("non-athlete tool %s unexpectedly has athlete_id", tool.Name)
 		}
@@ -963,6 +980,38 @@ func TestProtocolAthleteScopedSchemasExposeUniformAthleteID(t *testing.T) {
 	for _, name := range toolcatalog.AthleteScopedToolNames() {
 		if _, ok := seen[name]; !ok {
 			t.Fatalf("athlete-scoped tool %s was not registered in full catalog", name)
+		}
+	}
+}
+
+func assertCoachCreateSportSettingsSchemaSafe(t *testing.T, schema map[string]any) {
+	t.Helper()
+
+	if schema["type"] != "object" || schema["additionalProperties"] != false {
+		t.Fatalf("create_sport_settings schema = %#v, want closed object", schema)
+	}
+	properties, ok := schema["properties"].(map[string]any)
+	if !ok {
+		t.Fatalf("create_sport_settings properties = %#v, want object", schema["properties"])
+	}
+	allowed := map[string]struct{}{
+		"sport": {}, "ftp": {}, "indoor_ftp": {}, "threshold_hr": {}, "threshold_pace": {}, "athlete_id": {},
+	}
+	if len(properties) != len(allowed) {
+		t.Fatalf("create_sport_settings properties = %#v, want only documented arguments plus athlete_id", properties)
+	}
+	for name := range allowed {
+		if _, ok := properties[name]; !ok {
+			t.Fatalf("create_sport_settings properties = %#v, missing %q", properties, name)
+		}
+	}
+	for _, forbidden := range []string{
+		"api_key", "apikey", "apiKey", "token", "credential", "credential_ref", "credentials",
+		"confirm", "recalc_hr_zones", "recalcHrZones", "zones", "power_zones", "power_zone_names",
+		"hr_zones", "hr_zone_names", "pace_zones", "pace_zone_names", "apply", "apply_to_activities",
+	} {
+		if _, ok := properties[forbidden]; ok {
+			t.Fatalf("create_sport_settings coach schema exposes forbidden %q: %#v", forbidden, properties)
 		}
 	}
 }

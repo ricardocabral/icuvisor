@@ -3,6 +3,7 @@
   "examples": [
     {
       "ftp": 285,
+      "indoor_ftp": 265,
       "sport": "Ride"
     },
     {
@@ -63,6 +64,7 @@
   "input_examples": [
     {
       "ftp": 285,
+      "indoor_ftp": 265,
       "sport": "Ride"
     },
     {
@@ -127,6 +129,11 @@
     },
     "ftp": {
       "description": "Functional Threshold Power in watts for the selected sport.",
+      "minimum": 1,
+      "type": "integer"
+    },
+    "indoor_ftp": {
+      "description": "Indoor Functional Threshold Power in watts for the selected sport.",
       "minimum": 1,
       "type": "integer"
     },

@@ -18,7 +18,7 @@ import (
 
 const (
 	updateSportSettingsName                    = "update_sport_settings"
-	updateSportSettingsDescription             = "Update one sport's FTP, threshold heart rate, threshold pace, or zone definitions referenced by get_athlete_profile _meta.warnings. Threshold-only writes are allowed in safe/full modes; supplying zones overwrites prior zone definitions and requires ICUVISOR_DELETE_MODE=full."
+	updateSportSettingsDescription             = "Update one sport's FTP, indoor FTP, threshold heart rate, threshold pace, or zone definitions referenced by get_athlete_profile _meta.warnings. Threshold-only writes are allowed in safe/full modes; supplying zones overwrites prior zone definitions and requires ICUVISOR_DELETE_MODE=full."
 	invalidUpdateSportSettingsArgumentsMessage = "invalid update_sport_settings arguments; provide sport and at least one documented threshold or gated zones field"
 	writeSportSettingsMessage                  = "could not update sport settings; check intervals.icu credentials, athlete ID, sport, and writable fields"
 	zoneOverwriteGateMessage                   = "zones overwrite prior sport-setting zone definitions; set ICUVISOR_DELETE_MODE=full to allow this destructive argument"
@@ -35,6 +35,7 @@ type updateSportSettingsRequest struct {
 	Sport         string                           `json:"sport"`
 	RecalcHRZones *bool                            `json:"recalc_hr_zones,omitempty"`
 	FTP           *int                             `json:"ftp,omitempty"`
+	IndoorFTP     *int                             `json:"indoor_ftp,omitempty"`
 	ThresholdHR   *int                             `json:"threshold_hr,omitempty"`
 	ThresholdPace *updateSportSettingsPaceRequest  `json:"threshold_pace,omitempty"`
 	Zones         []updateSportSettingsZoneRequest `json:"zones,omitempty"`
@@ -55,6 +56,7 @@ type updateSportSettingsEcho struct {
 	Sport                        string                        `json:"sport"`
 	SportSettingID               int                           `json:"sport_setting_id,omitempty"`
 	FTPWatts                     *int                          `json:"ftp_watts,omitempty"`
+	IndoorFTPWatts               *int                          `json:"indoor_ftp_watts,omitempty"`
 	ThresholdHRBPM               *int                          `json:"threshold_hr_bpm,omitempty"`
 	ThresholdPaceSecondsPerKM    *float64                      `json:"threshold_pace_seconds_per_km,omitempty"`
 	ThresholdPaceSecondsPerMile  *float64                      `json:"threshold_pace_seconds_per_mile,omitempty"`
@@ -202,6 +204,9 @@ func validateSportSettingsThresholds(args updateSportSettingsRequest) error {
 	if args.FTP != nil && *args.FTP <= 0 {
 		return errors.New("ftp must be > 0 watts")
 	}
+	if args.IndoorFTP != nil && *args.IndoorFTP <= 0 {
+		return errors.New("indoor_ftp must be > 0 watts")
+	}
 	if args.ThresholdHR != nil && *args.ThresholdHR <= 0 {
 		return errors.New("threshold_hr must be > 0 bpm")
 	}
@@ -218,7 +223,7 @@ func sportSettingsWriteParams(args updateSportSettingsRequest, setting intervals
 	if args.RecalcHRZones != nil {
 		recalcHRZones = *args.RecalcHRZones
 	}
-	params := intervals.WriteSportSettingsParams{SportSettingID: setting.ID, RecalcHRZones: recalcHRZones, FTP: args.FTP, ThresholdHR: args.ThresholdHR, ZonesProvided: args.zonesProvided}
+	params := intervals.WriteSportSettingsParams{SportSettingID: setting.ID, RecalcHRZones: recalcHRZones, FTP: args.FTP, IndoorFTP: args.IndoorFTP, ThresholdHR: args.ThresholdHR, ZonesProvided: args.zonesProvided}
 	meta := updateSportSettingsMeta{ServerVersion: normalizeVersion(version), DeleteMode: deleteMode, Timezone: profileTimezone(profile.Timezone, timezoneFallback), FieldsUpdated: updateSportSettingsFieldsUpdated(args), HRZoneRecalculationRequested: recalcHRZones, ZonesProvided: args.zonesProvided, Units: profileUnitSystem(profile).Metadata()}
 	if args.ThresholdPace != nil {
 		metersPerSecond, paceUnits, paceLoadType, err := convertThresholdPaceForUpstream(*args.ThresholdPace, setting, args.Sport)
@@ -240,6 +245,9 @@ func updateSportSettingsFieldsUpdated(args updateSportSettingsRequest) []string 
 	fields := []string{}
 	if args.FTP != nil {
 		fields = append(fields, "ftp")
+	}
+	if args.IndoorFTP != nil {
+		fields = append(fields, "indoor_ftp")
 	}
 	if args.ThresholdHR != nil {
 		fields = append(fields, "threshold_hr")
@@ -276,6 +284,9 @@ func shapeUpdateSportSettingsResponse(args updateSportSettingsRequest, params in
 	}
 	if value := firstPositiveInt(updated.FTP, params.FTP); value != nil {
 		echo.FTPWatts = value
+	}
+	if value := firstPositiveInt(updated.IndoorFTP, params.IndoorFTP); value != nil {
+		echo.IndoorFTPWatts = value
 	}
 	if value := firstPositiveInt(firstNonZero(updated.LTHR, updated.FTHR), params.ThresholdHR); value != nil {
 		echo.ThresholdHRBPM = value
@@ -479,6 +490,7 @@ func updateSportSettingsInputSchema() map[string]any {
 		"sport":           map[string]any{"type": "string", "enum": supportedSportSettingsSports, "description": "Sport setting to update, matching intervals.icu sport type (for example Ride, Run, Swim)."},
 		"recalc_hr_zones": map[string]any{"type": "boolean", "default": true, "description": "Whether intervals.icu should recalculate heart-rate zones for the updated sport; defaults to true."},
 		"ftp":             map[string]any{"type": "integer", "minimum": 1, "description": "Functional Threshold Power in watts for the selected sport."},
+		"indoor_ftp":      map[string]any{"type": "integer", "minimum": 1, "description": "Indoor Functional Threshold Power in watts for the selected sport."},
 		"threshold_hr":    map[string]any{"type": "integer", "minimum": 1, "description": "Threshold heart rate in bpm for the selected sport."},
 		"threshold_pace": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"value", "unit"}, "description": "Threshold pace with an explicit pace-duration unit; seconds_per_km is 4:15/km as 255, seconds_per_mile is 8:00/mi as 480, and seconds_per_100y is 1:30/100y as 90.", "properties": map[string]any{
 			"value": map[string]any{"type": "number", "exclusiveMinimum": 0, "description": "Threshold pace duration in the provided unit, not speed."},
@@ -495,8 +507,9 @@ func updateSportSettingsInputSchema() map[string]any {
 func updateSportSettingsInputExamples() []map[string]any {
 	return []map[string]any{
 		{
-			"sport": "Ride",
-			"ftp":   285,
+			"sport":      "Ride",
+			"ftp":        285,
+			"indoor_ftp": 265,
 		},
 		{
 			"sport":          "Run",
