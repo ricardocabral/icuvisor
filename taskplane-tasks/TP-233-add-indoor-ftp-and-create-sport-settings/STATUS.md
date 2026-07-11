@@ -1,10 +1,10 @@
 # TP-233: Support indoor FTP and missing sport-setting creation — Status
 
-**Current Step:** Step 4: Generated docs and public contract
+**Current Step:** Step 5: Testing & Verification
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-07-10
 **Review Level:** 2
-**Review Counter:** 12
+**Review Counter:** 13
 **Iteration:** 4
 **Size:** L
 
@@ -62,7 +62,7 @@
 
 ### Step 4: Generated docs and public contract
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 - [x] PRD catalog updated
 - [x] Website tool/schema data regenerated
@@ -156,3 +156,4 @@
 | 2026-07-10 23:51 | Review R010 | plan Step 4: REVISE |
 | 2026-07-10 23:54 | Review R011 | plan Step 4: REVISE |
 | 2026-07-10 23:55 | Review R012 | plan Step 4: APPROVE |
+| 2026-07-11 00:00 | Review R013 | code Step 4: APPROVE |
