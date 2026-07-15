@@ -11,7 +11,7 @@ WORKOUT_WARNING = (
     "structured workouts, with warnings when returned intervals.icu steps are missing or changed"
 )
 FITNESS_SCENARIO = (
-    "Show a deterministic race-day fitness scenario from my planned load — not a forecast."
+    "Show a deterministic race-day fitness scenario from my planned load, not a forecast."
 )
 SEO_DESCRIPTION = (
     "Open-source MCP for intervals.icu data. Run locally by default or use the hosted HTTPS "
