@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added conditional `completion_load_evidence` to `get_today` planned workout rows for exact upstream event/activity links with a positive `load_target` and completed activity load, reporting the factual target, actual, and signed delta without inferring completion or a coaching verdict.
+
 ## [1.5.1] - 2026-07-11
 
 ### Fixed

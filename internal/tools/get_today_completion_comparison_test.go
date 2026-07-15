@@ -83,6 +83,22 @@ func TestGetTodayCompletionLoadEvidenceUsesExactLinksOnly(t *testing.T) {
 	if !stringSliceContains(stringSliceFromAny(unlinked["workout_status_caveats"]), workoutCaveatUnlinkedActivity) {
 		t.Fatalf("same-day unlinked activity caveats = %#v, want %q", unlinked["workout_status_caveats"], workoutCaveatUnlinkedActivity)
 	}
+
+	var legacy struct {
+		PlannedEvents []struct {
+			EventID       string `json:"event_id"`
+			WorkoutStatus string `json:"workout_status"`
+		} `json:"planned_events"`
+	}
+	if err := json.Unmarshal([]byte(result.Content[0].Text), &legacy); err != nil {
+		t.Fatalf("legacy decode error = %v", err)
+	}
+	if len(legacy.PlannedEvents) != len(planned) {
+		t.Fatalf("legacy planned events = %#v, want %d rows", legacy.PlannedEvents, len(planned))
+	}
+	if legacy.PlannedEvents[1].EventID != "matching-event" || legacy.PlannedEvents[1].WorkoutStatus != workoutStatusCompletedLinked {
+		t.Fatalf("legacy matching event = %#v, want existing fields despite additive evidence", legacy.PlannedEvents[1])
+	}
 }
 
 func TestGetTodayCompletionLoadEvidenceIsDocumentedInOutputSchema(t *testing.T) {
