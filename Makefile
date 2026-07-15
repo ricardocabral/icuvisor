@@ -36,6 +36,7 @@ docs-guidance-test: ## Verify published documentation guidance contracts
 	python3 scripts/tests/test_docs_guidance.py
 	python3 scripts/tests/test_http_service_docs.py
 	python3 scripts/tests/test_build_workouts_guidance.py
+	python3 scripts/tests/test_homepage_capability_copy.py
 
 test-race: ## Run tests with the race detector
 	$(GO) test -race -count=1 ./...
