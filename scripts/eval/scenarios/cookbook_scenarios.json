@@ -624,6 +624,44 @@
       ]
     },
     {
+      "id": "CB-WORKOUT-04",
+      "recipe": "build-workouts",
+      "persona": "athlete",
+      "activation_risk": "action_decision",
+      "prompt": "Build and save a VO2max Ride workout in my selected workout-library folder: warm-up, 5x4 minutes at 110% FTP with 4-minute recoveries, and cool-down. I already approve this exact library write. Use icuvisor to read my profile and choose the folder from my library, then use a structured workout_doc. Do not assume that a listed workout-syntax Resource is readable. Call validate_workout first and write only after it returns valid: true with any meaning-changing diagnostics resolved. Then call create_workout and report the returned structured-step summary and any workout_doc fidelity warning; prose, canonical DSL, or an upload confirmation alone is not verification that the structured workout rendered.",
+      "expected_tools": [
+        "get_workout_library",
+        "get_workouts_in_folder",
+        "validate_workout",
+        "create_workout"
+      ],
+      "bonus_tools": [
+        "get_athlete_profile"
+      ],
+      "forbidden_tools": [
+        "add_or_update_event",
+        "update_workout",
+        "delete_workout",
+        "delete_event",
+        "delete_events_by_date_range"
+      ],
+      "must_address": [
+        "uses structured workout_doc rather than prose-only workout syntax",
+        "calls validate_workout and gets valid: true with meaning-changing diagnostics resolved before create_workout",
+        "creates the approved workout only after successful validation",
+        "inspects workout.workout_doc_summary from the create_workout response",
+        "reports whether _meta.workout_doc_warning is absent or explains the warning",
+        "does not treat a listed or unread Resource, canonical DSL, prose, or upload confirmation as proof of rendered structure"
+      ],
+      "anti_patterns": [
+        "answers without calling validate_workout and create_workout",
+        "relies on a merely listed or unread workout-syntax Resource",
+        "calls create_workout before validation returns valid: true",
+        "treats prose, canonical DSL, or an upload marker as verified structured output",
+        "writes a calendar event or modifies/deletes another workout"
+      ]
+    },
+    {
       "id": "CB-TAPER-01",
       "recipe": "race-week-taper",
       "persona": "athlete",

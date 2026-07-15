@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Documented a resource-independent structured-workout authoring path: use `workout_doc` and `validate_workout` before approved writes, then verify the returned structured-step summary and fidelity warning when an MCP host does not make Resource contents available to the model.
+
 ## [1.5.1] - 2026-07-11
 
 ### Fixed
