@@ -16,7 +16,7 @@ import (
 
 const (
 	getTodayName        = "get_today"
-	getTodayDescription = "Answer how's today looking with one terse daily digest: today's CTL/ATL/TSB fitness, wellness, completed activities, planned events, and NOTE/race annotations. Reuses the same response shaping as get_fitness, get_wellness_data, get_activities, and get_events; include_full widens each section with raw upstream payloads."
+	getTodayDescription = "Answer how's today looking with one terse daily digest: today's CTL/ATL/TSB fitness, wellness, completed activities, planned events with factual linked-workout load evidence when available, and NOTE/race annotations. Explicitly linked workout rows may include factual planned-versus-actual load evidence; it is not a coaching verdict. Reuses the same response shaping as get_fitness, get_wellness_data, get_activities, and get_events; include_full widens each section with raw upstream payloads."
 	fetchTodayMessage   = "could not fetch today's digest; check intervals.icu credentials and athlete timezone"
 
 	defaultTodayEventsLimit = 100
@@ -48,6 +48,12 @@ type getTodayWeather struct {
 	Summary                       string `json:"summary"`
 	Provenance                    string `json:"provenance"`
 	CompletedActivityWeatherCount int    `json:"completed_activity_weather_count,omitempty"`
+}
+
+type completionLoadEvidence struct {
+	PlannedLoadTarget     float64 `json:"planned_load_target"`
+	CompletedActivityLoad int     `json:"completed_activity_load"`
+	ActualMinusTargetLoad float64 `json:"actual_minus_target_load"`
 }
 
 type getTodayMeta struct {
@@ -183,7 +189,7 @@ func shapeGetTodayResponse(in todayDigestInputs) (getTodayResponse, error) {
 		applyCompletedActivityWorkoutStatus(&row, activity)
 		completed = append(completed, row)
 	}
-	planned, annotations, err := splitTodayEvents(in.events, in.includeFull, in.timezone, in.today, in.profile, in.unitSystem)
+	planned, annotations, err := splitTodayEvents(in.events, in.activities, in.includeFull, in.timezone, in.today, in.profile, in.unitSystem)
 	if err != nil {
 		return getTodayResponse{}, err
 	}
@@ -282,7 +288,7 @@ func localDateMatches(value *string, today string) bool {
 	return date == today
 }
 
-func splitTodayEvents(events []intervals.Event, includeFull bool, timezoneName string, asOfDate string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) ([]getEventsRow, []getEventsRow, error) {
+func splitTodayEvents(events []intervals.Event, activities []intervals.Activity, includeFull bool, timezoneName string, asOfDate string, profile intervals.AthleteWithSportSettings, unitSystem response.UnitSystem) ([]getEventsRow, []getEventsRow, error) {
 	planned := make([]getEventsRow, 0, len(events))
 	annotations := make([]getEventsRow, 0, len(events))
 	for _, event := range events {
@@ -295,11 +301,92 @@ func splitTodayEvents(events []intervals.Event, includeFull bool, timezoneName s
 			annotations = append(annotations, row)
 			continue
 		}
+		row.CompletionLoadEvidence = completionLoadEvidenceForEvent(event, activities)
 		planned = append(planned, row)
 	}
 	sort.SliceStable(planned, func(i, j int) bool { return eventRowsBefore(planned[i], planned[j]) })
 	sort.SliceStable(annotations, func(i, j int) bool { return eventRowsBefore(annotations[i], annotations[j]) })
 	return planned, annotations, nil
+}
+
+var (
+	eventActivityLinkFields = []string{"activity_id", "icu_activity_id", "paired_activity_id", "completed_activity_id"}
+	activityEventLinkFields = []string{"paired_event_id", "event_id", "calendar_event_id", "icu_event_id"}
+)
+
+func completionLoadEvidenceForEvent(event intervals.Event, activities []intervals.Activity) *completionLoadEvidence {
+	if !isWorkoutTargetEvent(event) || event.LoadTarget == nil || *event.LoadTarget <= 0 {
+		return nil
+	}
+	activity := exactlyLinkedTodayActivity(event, activities)
+	if activity == nil || activity.TrainingLoad == nil {
+		return nil
+	}
+	return &completionLoadEvidence{
+		PlannedLoadTarget:     *event.LoadTarget,
+		CompletedActivityLoad: *activity.TrainingLoad,
+		ActualMinusTargetLoad: round(float64(*activity.TrainingLoad)-*event.LoadTarget, 3),
+	}
+}
+
+func exactlyLinkedTodayActivity(event intervals.Event, activities []intervals.Activity) *intervals.Activity {
+	eventLinks := uniqueLinkIDs(event.Raw, eventActivityLinkFields)
+	if len(eventLinks) > 1 {
+		return nil
+	}
+
+	candidates := make(map[int]bool)
+	if len(eventLinks) == 1 {
+		linkedID := onlyLinkID(eventLinks)
+		for index := range activities {
+			if activities[index].ID == linkedID {
+				candidates[index] = true
+			}
+		}
+		if len(candidates) != 1 {
+			return nil
+		}
+	}
+
+	for index := range activities {
+		activityLinks := uniqueLinkIDs(activities[index].Raw, activityEventLinkFields)
+		if !activityLinks[event.ID] {
+			continue
+		}
+		if len(activityLinks) != 1 {
+			return nil
+		}
+		candidates[index] = true
+	}
+	if len(candidates) != 1 {
+		return nil
+	}
+
+	for index := range candidates {
+		activityLinks := uniqueLinkIDs(activities[index].Raw, activityEventLinkFields)
+		if len(eventLinks) == 1 && len(activityLinks) > 0 && (len(activityLinks) != 1 || !activityLinks[event.ID]) {
+			return nil
+		}
+		return &activities[index]
+	}
+	return nil
+}
+
+func uniqueLinkIDs(raw map[string]any, fields []string) map[string]bool {
+	ids := make(map[string]bool, len(fields))
+	for _, field := range fields {
+		if id := anyString(raw[field]); id != "" {
+			ids[id] = true
+		}
+	}
+	return ids
+}
+
+func onlyLinkID(ids map[string]bool) string {
+	for id := range ids {
+		return id
+	}
+	return ""
 }
 
 func isTodayAnnotation(category string) bool {
@@ -337,5 +424,5 @@ func getTodayInputSchema() map[string]any {
 }
 
 func getTodayOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "One-call athlete-local today digest with fitness, wellness, completed_activities, planned_events, annotations, explicit workout_status/workout_status_caveats on workout and completed-activity rows, explicit weather availability/provenance, athlete-local as-of metadata, source_tools, section counts, units, and scale labels. Terse by default; include_full adds raw upstream payloads per section."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "One-call athlete-local today digest with fitness, wellness, completed_activities, planned_events, annotations, explicit workout_status/workout_status_caveats on workout and completed-activity rows, and conditional completion_load_evidence on explicitly linked planned workout rows with positive planned_load_target, completed_activity_load, and signed actual_minus_target_load. This factual load evidence is absent without an exact link or either value and is not a coaching verdict. Also includes explicit weather availability/provenance, athlete-local as-of metadata, source_tools, section counts, units, and scale labels. Terse by default; include_full adds raw upstream payloads per section."}
 }
