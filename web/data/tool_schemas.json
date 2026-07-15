@@ -2517,7 +2517,7 @@
   },
   "get_today": {
     "name": "get_today",
-    "description": "Answer how's today looking with one terse daily digest: today's CTL/ATL/TSB fitness, wellness, completed activities, planned events, and NOTE/race annotations.",
+    "description": "Answer how's today looking with one terse daily digest: today's CTL/ATL/TSB fitness, wellness, completed activities, planned events with factual linked-workout load evidence when available, and NOTE/race annotations.",
     "arguments": [
       {
         "name": "include_full",
