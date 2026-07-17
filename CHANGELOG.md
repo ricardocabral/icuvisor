@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `icuvisor-cli`, a standalone direct-tool CLI view with JSON `list`, `describe`, and `call` commands. It shares the registered core-tool handlers and registration-time toolset/delete policy with MCP while keeping JSON results on stdout and diagnostics/errors on stderr.
+
 ## [1.5.2] - 2026-07-15
 
 ### Added

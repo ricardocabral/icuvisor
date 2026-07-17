@@ -37,6 +37,7 @@ commit=${commit:-local}
 bundle_version=${ICUVISOR_BUNDLE_VERSION:-$commit}
 
 binary_path=${ICUVISOR_DARWIN_BINARY:-}
+cli_binary_path=${ICUVISOR_DARWIN_CLI_BINARY:-}
 if [[ -z "$binary_path" ]]; then
     while IFS= read -r candidate; do
         binary_path=$candidate
@@ -46,6 +47,16 @@ fi
 
 if [[ -z "$binary_path" || ! -f "$binary_path" ]]; then
     echo "error: universal darwin binary not found under $dist_dir" >&2
+    exit 1
+fi
+if [[ -z "$cli_binary_path" ]]; then
+    while IFS= read -r candidate; do
+        cli_binary_path=$candidate
+        break
+    done < <(find "$dist_dir" -path '*_darwin_all/icuvisor-cli' -type f | sort)
+fi
+if [[ -z "$cli_binary_path" || ! -f "$cli_binary_path" ]]; then
+    echo "error: universal standalone CLI binary not found under $dist_dir" >&2
     exit 1
 fi
 
@@ -79,7 +90,8 @@ Path(dst).write_text(text, encoding="utf-8")
 PY
 
 cp "$binary_path" "$app_path/Contents/MacOS/icuvisor"
-chmod 0755 "$app_path/Contents/MacOS/icuvisor"
+cp "$cli_binary_path" "$app_path/Contents/MacOS/icuvisor-cli"
+chmod 0755 "$app_path/Contents/MacOS/icuvisor" "$app_path/Contents/MacOS/icuvisor-cli"
 
 if [[ "$release_mode" == "1" ]]; then
     : "${APPLE_TEAM_ID:?APPLE_TEAM_ID is required for release packaging}"

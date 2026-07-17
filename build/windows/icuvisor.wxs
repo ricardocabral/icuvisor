@@ -9,6 +9,7 @@
   Variables are passed by the CI build at `wix build` time:
     -d Version=<x.y.z>         (no leading "v"; max N.N.N.N MSI version)
     -d BinarySource=<path>     path to icuvisor.exe
+    -d CLIExecutableSource=<path> path to icuvisor-cli.exe
     -d LicenseSource=<path>    path to LICENSE
     -d IconSource=<path>       path to icuvisor.ico
 
@@ -51,6 +52,10 @@
             Part="first"
             System="no"
             Value="[INSTALLFOLDER]" />
+      </Component>
+
+      <Component Id="IcuvisorCLIExe" Directory="INSTALLFOLDER" Guid="*">
+        <File Id="icuvisor-cli.exe" Source="$(var.CLIExecutableSource)" KeyPath="yes" />
       </Component>
 
       <Component Id="LicenseFile" Directory="INSTALLFOLDER" Guid="*">

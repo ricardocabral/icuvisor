@@ -4,10 +4,13 @@ package icuvisor
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
+	"slices"
+	"strings"
 	"time"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -18,6 +21,7 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/prompts"
 	"github.com/ricardocabral/icuvisor/internal/resources"
 	"github.com/ricardocabral/icuvisor/internal/safety"
+	"github.com/ricardocabral/icuvisor/internal/toolcatalog"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
@@ -199,6 +203,118 @@ type Server struct {
 	inner *internalmcp.Server
 }
 
+// Invoker invokes registered core tools without an MCP transport.
+type Invoker struct {
+	tools map[string]tools.Tool
+}
+
+// InvokerOptions configures direct core-tool invocation for local CLI and agent views.
+type InvokerOptions struct {
+	Config     Config
+	Registry   Registry
+	DeleteMode DeleteMode
+	Toolset    Toolset
+}
+
+// NewInvoker constructs a direct invoker from the same registry and safety policy used by MCP.
+func NewInvoker(ctx context.Context, opts InvokerOptions) (*Invoker, error) {
+	cfg, err := opts.Config.toInternalValidated()
+	if err != nil {
+		return nil, err
+	}
+	deleteMode, toolset, err := effectivePolicy(opts.DeleteMode, opts.Toolset, opts.Config)
+	if err != nil {
+		return nil, err
+	}
+	registry := registryForConfig(opts.Registry, opts.Config)
+	if opts.Registry.core != nil {
+		catalogHash, err := internalmcp.ComputeToolCatalogHash(ctx, internalmcp.CatalogHashOptions{
+			Config:     cfg,
+			Registry:   registry,
+			Capability: safety.NewCapability(deleteMode.toInternal()),
+			Toolset:    toolset.toInternal(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		registry = registryForConfigWithCatalogHash(opts.Registry, opts.Config, catalogHash)
+	}
+	registrar := directRegistrar{
+		tools:      make(map[string]tools.Tool),
+		capability: safety.NewCapability(deleteMode.toInternal()),
+		toolset:    toolset.toInternal(),
+	}
+	if err := registry.Register(ctx, &registrar); err != nil {
+		return nil, err
+	}
+	return &Invoker{tools: registrar.tools}, nil
+}
+
+// Tools returns the tools available to this direct invocation view.
+func (i *Invoker) Tools() []ToolInfo {
+	if i == nil {
+		return nil
+	}
+	out := make([]ToolInfo, 0, len(i.tools))
+	for _, tool := range i.tools {
+		out = append(out, toolInfoFromInternal(tool))
+	}
+	slices.SortFunc(out, func(a, b ToolInfo) int { return strings.Compare(a.Name, b.Name) })
+	return out
+}
+
+// Invoke calls one registered tool without an MCP transport.
+func (i *Invoker) Invoke(ctx context.Context, name string, arguments json.RawMessage) (ToolResult, error) {
+	if i == nil {
+		return ToolResult{}, errors.New("invoking tool: nil invoker")
+	}
+	tool, ok := i.tools[name]
+	if !ok {
+		return ToolResult{}, fmt.Errorf("unknown or unavailable tool %q", name)
+	}
+	result, err := tool.Handler(ctx, tools.Request{Name: name, Arguments: arguments})
+	if err != nil {
+		return ToolResult{}, err
+	}
+	return toolResultFromInternal(result), nil
+}
+
+// directRegistrar applies the same registration-time safety and toolset policy as MCP.
+type directRegistrar struct {
+	tools      map[string]tools.Tool
+	capability safety.Capability
+	toolset    safety.Toolset
+}
+
+func (r *directRegistrar) AddTool(tool tools.Tool) error {
+	if _, exists := r.tools[tool.Name]; exists {
+		return fmt.Errorf("duplicate tool name %q", tool.Name)
+	}
+	if !directCapabilityAllows(r.capability, tool) || !directToolsetAllows(r.toolset, tool) {
+		return nil
+	}
+	r.tools[tool.Name] = tool
+	return nil
+}
+
+func directCapabilityAllows(capability safety.Capability, tool tools.Tool) bool {
+	if tool.RequiresDelete() && !capability.CanDelete() {
+		return false
+	}
+	return !tool.RequiresWrite() || capability.CanWrite()
+}
+
+func directToolsetAllows(active safety.Toolset, tool tools.Tool) bool {
+	switch safety.ParseToolset(active.String()) {
+	case safety.ToolsetFull:
+		return true
+	case safety.ToolsetCompact:
+		return toolcatalog.IsCompactTool(tool.Name)
+	default:
+		return tool.EffectiveToolset() == safety.ToolsetCore
+	}
+}
+
 // ServerOptions configures core MCP server construction.
 type ServerOptions struct {
 	Config                     Config
@@ -314,12 +430,12 @@ func ComputeToolCatalogHash(ctx context.Context, opts CatalogOptions) (string, e
 
 // ToolInfo is public non-secret metadata about a registered tool.
 type ToolInfo struct {
-	Name         string
-	Description  string
-	InputSchema  any
-	OutputSchema any
-	Requirement  Requirement
-	Toolset      Toolset
+	Name         string      `json:"name"`
+	Description  string      `json:"description"`
+	InputSchema  any         `json:"input_schema"`
+	OutputSchema any         `json:"output_schema"`
+	Requirement  Requirement `json:"requirement"`
+	Toolset      Toolset     `json:"toolset"`
 }
 
 // Tool is a public custom tool definition for host diagnostics and policy extensions.
@@ -427,6 +543,14 @@ func internalResult(result ToolResult) tools.Result {
 		content = append(content, tools.Content{Type: tools.ContentType(item.Type), Text: item.Text})
 	}
 	return tools.Result{Content: content, StructuredContent: result.StructuredContent, IsError: result.IsError}
+}
+
+func toolResultFromInternal(result tools.Result) ToolResult {
+	content := make([]Content, 0, len(result.Content))
+	for _, item := range result.Content {
+		content = append(content, Content{Type: ContentType(item.Type), Text: item.Text})
+	}
+	return ToolResult{Content: content, StructuredContent: result.StructuredContent, IsError: result.IsError}
 }
 
 func internalToolFilter(filter func(ToolInfo) bool) func(tools.Tool) bool {

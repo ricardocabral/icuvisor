@@ -603,6 +603,48 @@ func TestStreamableHTTPHandlerFacadeDefaultsToPublicFactoryError(t *testing.T) {
 	}
 }
 
+func TestDirectInvokerUsesMCPRegistrationPolicyAndHandlers(t *testing.T) {
+	t.Parallel()
+
+	client := newFacadeTestClient(t)
+	registry := NewCoreRegistry(client, RegistryOptions{
+		Version: "v-public",
+		ExtraTools: []Tool{{
+			Name:         "direct_echo",
+			Description:  "Returns its arguments for direct-invocation coverage.",
+			InputSchema:  map[string]any{"type": "object"},
+			OutputSchema: map[string]any{"type": "object"},
+			Requirement:  RequirementRead,
+			Toolset:      ToolsetCore,
+			Handler: func(_ context.Context, req ToolRequest) (ToolResult, error) {
+				return TextResult(map[string]string{"name": req.Name, "arguments": string(req.Arguments)}), nil
+			},
+		}},
+	})
+	cfg := facadeTestConfig()
+	invoker, err := NewInvoker(context.Background(), InvokerOptions{Config: cfg, Registry: registry, DeleteMode: DeleteModeSafe, Toolset: ToolsetCore})
+	if err != nil {
+		t.Fatalf("NewInvoker() error = %v", err)
+	}
+	if !hasTool(invoker.Tools(), "direct_echo") {
+		t.Fatal("direct invoker catalog missing extra core tool")
+	}
+	result, err := invoker.Invoke(context.Background(), "direct_echo", json.RawMessage(`{"message":"hello"}`))
+	if err != nil {
+		t.Fatalf("Invoke() error = %v", err)
+	}
+	if result.IsError {
+		t.Fatal("Invoke() returned an error result")
+	}
+	payload, ok := result.StructuredContent.(map[string]string)
+	if !ok || payload["name"] != "direct_echo" || payload["arguments"] != `{"message":"hello"}` {
+		t.Fatalf("Invoke() result = %#v, want direct handler result", result.StructuredContent)
+	}
+	if _, err := invoker.Invoke(context.Background(), "delete_event", json.RawMessage(`{}`)); err == nil {
+		t.Fatal("safe direct invoker exposed delete_event")
+	}
+}
+
 func newHTTPFacadeTestClient(t *testing.T, cfg Config) *Client {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

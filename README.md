@@ -119,11 +119,26 @@ make build
 ./bin/icuvisor version
 ```
 
+### Direct CLI
+
+The release also includes `icuvisor-cli`, a standalone view over the same registered tool catalog used by MCP. It is useful for scripts or local agents that load a concise skill/command contract instead of an MCP tool schema. Run `icuvisor setup` once to provision credentials; never pass an API key as a tool argument.
+
+```bash
+icuvisor-cli list
+icuvisor-cli describe get_today
+icuvisor-cli call get_today --args '{}'
+icuvisor-cli call get_activities --args-file request.json
+```
+
+`list`, `describe`, and successful `call` results are JSON on stdout. Diagnostics and errors are written to stderr. `call` accepts exactly one JSON object through `--args <json>` or `--args-file <path>` (and defaults to `{}`). The standalone view uses the configured local athlete only; coach workflows remain MCP-only.
+
 ### Project layout
 
 ```
-cmd/icuvisor/             Binary entrypoint
-internal/app/             CLI dispatch, startup wiring, `setup` / `diagnostics` commands
+cmd/icuvisor/             MCP server binary entrypoint
+cmd/icuvisor-cli/         Standalone direct-tool CLI binary entrypoint
+internal/app/             MCP process dispatch, startup wiring, `setup` / `diagnostics` commands
+internal/cli/             Standalone CLI view and setup prompting
 internal/cli/prompt/      Terminal prompting (masked input) for first-run setup
 internal/config/          Config load/validate/write, athlete-ID/timezone normalization, HTTP bind, dotenv, redaction
 internal/credstore/       OS keychain wrapper (macOS Keychain, Windows Credential Manager, libsecret)

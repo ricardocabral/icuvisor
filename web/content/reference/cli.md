@@ -7,6 +7,23 @@ The icuvisor binary is both the MCP server and the setup/diagnostics CLI. Runnin
 
 Use this page when you need the exact command-line surface. The full output below is rendered from `internal/app/testdata/help.golden`, which is the CLI golden fixture used by tests.
 
+## Standalone direct-tool CLI
+
+`icuvisor-cli` is a separate binary for local users, scripts, and agents that prefer commands over MCP tool registration. It invokes the same safety-gated core handlers as the MCP binary, but does not start an MCP transport.
+
+```sh
+icuvisor-cli list
+icuvisor-cli describe get_today
+icuvisor-cli call get_today --args '{}'
+icuvisor-cli call get_activities --args-file request.json
+```
+
+- `list` writes the available direct-view catalog as JSON to stdout.
+- `describe <tool>` writes that tool's name, description, input schema, and output schema as JSON to stdout.
+- `call <tool>` writes the tool's structured result as JSON to stdout. Supply one JSON object with `--args <json>` or `--args-file <path>`; omitted arguments default to `{}`.
+- Errors and diagnostics are written to stderr. API keys remain configuration/keychain inputs and are never tool arguments.
+- The standalone CLI uses the configured local athlete only; coach-mode routing remains MCP-only.
+
 ## Commands
 
 | Command                                           | What it does                                                                                                                                      |

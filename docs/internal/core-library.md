@@ -30,6 +30,7 @@ The facade intentionally exposes a narrow host-safe surface:
   - `NewPromptRegistry()`.
   - `NewServer(context.Context, ServerOptions)`.
   - `Server.CatalogHash()`, `Run`, `ServeStreamableHTTP`, and `RunStreamableHTTP`.
+  - `NewInvoker(context.Context, InvokerOptions)`, `Invoker.Tools()`, and `Invoker.Invoke()` for a non-MCP local view over the same safety-gated core catalog.
   - `RecentToolCallRecorder` for host or CLI diagnostics that record tool names without exposing arguments or payloads.
 - Catalog helpers:
   - `CollectToolCatalog(context.Context, CatalogOptions)`.
@@ -46,7 +47,7 @@ The public types are not aliases of `internal/...` types. Callers should treat t
 
 ## Public CLI adoption
 
-The local `icuvisor` CLI's default non-coach MCP startup path now constructs the Intervals API-key client, core tool registry, resource registry, prompt registry, and MCP server through `pkg/icuvisor`. This keeps the public facade exercised by production CLI behavior instead of only by host-side tests.
+The local `icuvisor` MCP binary and `icuvisor-cli` standalone direct-tool binary both construct the Intervals API-key client and core tool registry through `pkg/icuvisor`. The standalone view invokes registry handlers through `Invoker` rather than serializing an MCP request, while preserving the configured toolset and registration-time delete/write policy. This keeps the public facade exercised by both production views instead of only by host-side tests.
 
 Coach mode remains on the existing internal wiring path for now because it still depends on internal selection-store and coach ACL machinery that is not part of the public host-safe contract. The public facade is covered by parity tests against the internal registries for catalog hashes/tool names, resources, prompts, delete-mode/toolset combinations, and API-key Basic Auth behavior.
 
