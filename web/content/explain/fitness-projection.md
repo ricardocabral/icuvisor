@@ -44,6 +44,14 @@ Because the result depends entirely on its assumptions, the tool reports them ba
 
 Treat those fields as the fine print of the projection. If a scenario assumed a 5%-per-week ramp and you would never train that way, the curve is answering a different question than the one you asked — change the assumption and run it again.
 
+## Planned targets are inputs, not evidence
+
+Annual-plan tools can summarize explicit weekly TARGET loads already on your calendar or produce a read-only season proposal. Their projection bridge contains only weekly targets with an explicit load; it does not infer an athlete's preferred ramp, recovery cadence, taper, or intensity distribution from calendar text.
+
+When those targets are supplied to `get_fitness_projection`, each `week_start_date` is an athlete-local ISO Monday. The tool distributes its `training_load` evenly across the seven dates of that week. A `planned_daily_loads` entry wins for its matching date and is not redistributed over the other days. Partial weeks remain partial rather than being reweighted.
+
+That makes a calendar target a transparent scenario input, not proof that training happened or a prediction that it will. Compare the resulting curve with future completed load as it becomes available, and keep the assumptions in the answer.
+
 ## Reading the output
 
 By default the tool returns only the summary. Set `include_full: true` to get the daily projected CTL/ATL/TSB curve — see [Terse by default]({{< relref "terse-by-default" >}}) for when that opt-in is worth the extra tokens. If wellness/readiness or race-event data is missing, the projection does not fill it in; the assistant should say what is missing and treat a user-supplied race date as a scenario anchor when no matching race event is found.

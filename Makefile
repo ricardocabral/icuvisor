@@ -103,8 +103,7 @@ release-preflight: validate-distribution ## Run non-publishing release validatio
 validate-registry: ## Validate MCP Registry server.json metadata
 	python3 scripts/validate_server_json.py server.json
 
-validate-distribution: validate-registry ## Validate registry metadata and README install/deeplink CTAs
-	python3 scripts/validate_readme_distribution.py
+validate-distribution: validate-registry ## Validate MCP Registry distribution metadata
 
 clean: web-clean ## Remove build artifacts (binary + site)
 	rm -rf bin dist coverage.txt coverage.html

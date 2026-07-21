@@ -12,6 +12,7 @@ ATHLETE_ID_GUIDES = (
     ROOT / "CONTRIBUTING.md",
 )
 HTTP_GUIDE = ROOT / "web/content/guides/http-transport.md"
+README = ROOT / "README.md"
 
 
 def require(content: str, phrase: str, path: Path) -> list[str]:
@@ -70,6 +71,24 @@ def main() -> int:
         "a tunnel URL is not authentication",
     ):
         failures.extend(require(http_content, phrase, HTTP_GUIDE))
+
+    readme_content = README.read_text(encoding="utf-8")
+    for phrase in (
+        "https://icuvisor.app/install/",
+        "https://icuvisor.app/connect/",
+        "https://icuvisor.app/cookbook/",
+    ):
+        failures.extend(require(readme_content, phrase, README))
+    for heading in (
+        "### Connect from Cursor",
+        "### MCP discovery",
+        "### Downloadable prompt packs",
+        "### Fitness projection with ATP/periodization targets",
+    ):
+        if heading in readme_content:
+            failures.append(
+                f"README.md must route user documentation to icuvisor.app instead of retaining {heading!r}"
+            )
 
     if failures:
         print("Documentation guidance contract failed:", file=sys.stderr)

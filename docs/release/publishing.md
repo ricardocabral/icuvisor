@@ -8,10 +8,9 @@ Before tagging a release, run:
 
 ```bash
 make release-preflight
-python3 scripts/validate_readme_distribution.py --check-links
 ```
 
-`make release-preflight` validates `server.json`, README Cursor/discovery CTAs, the GoReleaser config, and the MCPB manifest. The link check performs network requests for stable public URLs only.
+`make release-preflight` validates `server.json`, the GoReleaser config, and the MCPB manifest.
 
 ## Publish gates
 
