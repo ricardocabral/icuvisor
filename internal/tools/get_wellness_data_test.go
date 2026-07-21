@@ -440,6 +440,28 @@ func TestGetWellnessDataNullStrippingAndIncludeFull(t *testing.T) {
 	}
 }
 
+func TestGetWellnessDataSportInfoNull(t *testing.T) {
+	t.Parallel()
+
+	terse := shapedFixtureRow(t, "sport_info_null.json", false)
+	if _, ok := terse["sportInfo"]; ok {
+		t.Fatalf("terse row kept null sportInfo: %+v", terse)
+	}
+	terseMeta := terse["_meta"].(map[string]any)
+	if !containsAny(terseMeta["missing_fields"].([]any), "sportInfo") {
+		t.Fatalf("terse missing_fields = %+v, want sportInfo", terseMeta["missing_fields"])
+	}
+
+	full := shapedFixtureRow(t, "sport_info_null.json", true)
+	if sportInfo, ok := full["sportInfo"]; !ok || sportInfo != nil {
+		t.Fatalf("full sportInfo = %#v, %t, want present nil", sportInfo, ok)
+	}
+	fullPayload := full["full"].(map[string]any)
+	if sportInfo, ok := fullPayload["sportInfo"]; !ok || sportInfo != nil {
+		t.Fatalf("full payload sportInfo = %#v, %t, want present nil", sportInfo, ok)
+	}
+}
+
 func TestGetWellnessDataIncludeFullRetainsRawNutritionNames(t *testing.T) {
 	t.Parallel()
 

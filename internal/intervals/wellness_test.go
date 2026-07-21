@@ -147,6 +147,42 @@ func TestListWellnessBuildsQueryAndDecodesNative(t *testing.T) {
 	}
 }
 
+func TestWellnessListWellnessSportInfoNull(t *testing.T) {
+	t.Parallel()
+
+	fixture, err := os.ReadFile("testdata/wellness/sport_info_null.json")
+	if err != nil {
+		t.Fatalf("read sportInfo null fixture: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got, want := r.URL.Path, "/athlete/i12345/wellness.json"; got != want {
+			t.Fatalf("path = %q, want %q", got, want)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte("[" + string(fixture) + "]"))
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+	got, err := client.ListWellness(context.Background(), WellnessParams{Oldest: "2026-07-19"})
+	if err != nil {
+		t.Fatalf("ListWellness() error = %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("ListWellness() rows = %#v, want one row", got)
+	}
+	if _, ok := got[0].Raw["sportInfo"]; !ok {
+		t.Fatalf("Raw omitted present sportInfo key: %#v", got[0].Raw)
+	}
+	if got[0].SportInfo != nil {
+		t.Fatalf("SportInfo = %#v, want nil", got[0].SportInfo)
+	}
+	if got[0].SleepQuality == nil || *got[0].SleepQuality != 3 {
+		t.Fatalf("SleepQuality = %#v, want 3", got[0].SleepQuality)
+	}
+}
+
 func TestUpdateWellnessSendsSparseBody(t *testing.T) {
 	t.Parallel()
 
