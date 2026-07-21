@@ -28,7 +28,7 @@ type getActivityStreamsRequest struct {
 	ActivityID  string   `json:"activity_id"`
 	Keys        []string `json:"keys,omitempty"`
 	IncludeFull bool     `json:"include_full,omitempty"`
-	MaxPoints   int      `json:"max_points,omitempty"`
+	MaxPoints   *int     `json:"max_points,omitempty"`
 }
 
 type getActivitySplitsRequest struct {
@@ -120,11 +120,15 @@ func getActivityStreamsHandler(client ActivityStreamsClient, detailsClient Activ
 		if err := decodeJSONArgs(req.Arguments, &args); err != nil || strings.TrimSpace(args.ActivityID) == "" {
 			return Result{}, NewUserError(invalidActivityReadArgumentsMessage, err)
 		}
-		if args.MaxPoints != 0 && !args.IncludeFull {
+		if args.MaxPoints != nil && !args.IncludeFull {
 			return Result{}, NewUserError("max_points requires include_full:true", errors.New("max_points was provided without include_full"))
 		}
-		if args.MaxPoints != 0 && (args.MaxPoints < 2 || args.MaxPoints > 5000) {
+		if args.MaxPoints != nil && (*args.MaxPoints < 2 || *args.MaxPoints > 5000) {
 			return Result{}, NewUserError("max_points must be between 2 and 5000", errors.New("max_points is outside the supported range"))
+		}
+		maxPoints := 0
+		if args.MaxPoints != nil {
+			maxPoints = *args.MaxPoints
 		}
 		canonicalKeys, unknown := canonicalStreamKeys(args.Keys)
 		upstreamTypes := append([]string(nil), args.Keys...)
@@ -140,7 +144,7 @@ func getActivityStreamsHandler(client ActivityStreamsClient, detailsClient Activ
 			payload := unavailableActivityStreamsResponse(unavailable, args.IncludeFull, version)
 			return encodeActivityStreamsPayload(payload, args.IncludeFull, version, debugMetadata, shapeCfg)
 		}
-		payload := shapeActivityStreams(args.ActivityID, streamsRows, canonicalKeys, args.IncludeFull, args.IncludeFull, args.MaxPoints, version, unknown)
+		payload := shapeActivityStreams(args.ActivityID, streamsRows, canonicalKeys, args.IncludeFull, args.IncludeFull, maxPoints, version, unknown)
 		return encodeActivityStreamsPayload(payload, args.IncludeFull, version, debugMetadata, shapeCfg)
 	}
 }

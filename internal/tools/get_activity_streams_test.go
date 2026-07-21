@@ -115,6 +115,7 @@ func TestGetActivityStreamsRejectsInvalidMaxPoints(t *testing.T) {
 		name string
 		args string
 	}{
+		{name: "explicit zero", args: `{"activity_id":"a1","include_full":true,"max_points":0}`},
 		{name: "below minimum", args: `{"activity_id":"a1","include_full":true,"max_points":1}`},
 		{name: "above maximum", args: `{"activity_id":"a1","include_full":true,"max_points":5001}`},
 		{name: "without include full", args: `{"activity_id":"a1","max_points":3}`},
