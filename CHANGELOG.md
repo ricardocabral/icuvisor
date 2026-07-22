@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added `icuvisor-cli`, a standalone direct-tool CLI view with JSON `list`, `describe`, and `call` commands. It shares the registered core-tool handlers and registration-time toolset/delete policy with MCP while keeping JSON results on stdout and diagnostics/errors on stderr.
+- Added the tools-only `icuvisor-cli` contract with namespaced `tools list`, `tools describe`, and `tools call` commands, stdin argument support, compact progressive catalog discovery, canonical MCP descriptors, redacted `doctor` readiness, and machine-readable `capabilities`. MCP and direct calls now share local-athlete routing, registration gates, public-error sanitization, and per-call panic recovery; Resources and Prompts remain required follow-ups.
 
 ## [1.5.2] - 2026-07-15
 

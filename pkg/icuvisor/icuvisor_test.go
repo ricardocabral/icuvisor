@@ -645,6 +645,56 @@ func TestDirectInvokerUsesMCPRegistrationPolicyAndHandlers(t *testing.T) {
 	}
 }
 
+func TestDirectInvokerSanitizesHandlerErrorsAndPanics(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name    string
+		handler Handler
+		want    string
+	}{
+		{
+			name: "raw error",
+			handler: func(context.Context, ToolRequest) (ToolResult, error) {
+				return ToolResult{}, errors.New("secret upstream detail")
+			},
+			want: "tool failed; try again or check icuvisor logs",
+		},
+		{
+			name: "public error",
+			handler: func(context.Context, ToolRequest) (ToolResult, error) {
+				return ToolResult{}, NewUserError("use a supported value", errors.New("secret cause"))
+			},
+			want: "use a supported value",
+		},
+		{
+			name: "panic",
+			handler: func(context.Context, ToolRequest) (ToolResult, error) {
+				panic("secret panic value")
+			},
+			want: "tool failed; try again or check icuvisor logs",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tool := facadeExtraTool("Failure parity tool.", ToolsetCore)
+			tool.Handler = tc.handler
+			registry := NewCoreRegistry(newFacadeTestClient(t), RegistryOptions{Version: "v-public", ExtraTools: []Tool{tool}})
+			invoker, err := NewInvoker(context.Background(), InvokerOptions{Config: facadeTestConfig(), Registry: registry})
+			if err != nil {
+				t.Fatalf("NewInvoker() error = %v", err)
+			}
+			_, err = invoker.Invoke(context.Background(), tool.Name, json.RawMessage(`{}`))
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("Invoke() error = %v, want %q", err, tc.want)
+			}
+			if strings.Contains(err.Error(), "secret") {
+				t.Fatalf("Invoke() leaked internal detail: %v", err)
+			}
+		})
+	}
+}
+
 func TestDirectInvokerRejectsMissingRegistry(t *testing.T) {
 	t.Parallel()
 

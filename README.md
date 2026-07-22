@@ -124,13 +124,15 @@ make build
 The release also includes `icuvisor-cli`, a standalone view over the same registered tool catalog used by MCP. It is useful for scripts or local agents that load a concise skill/command contract instead of an MCP tool schema. Run `icuvisor setup` once to provision credentials; never pass an API key as a tool argument.
 
 ```bash
-icuvisor-cli list
-icuvisor-cli describe get_today
-icuvisor-cli call get_today --args '{}'
-icuvisor-cli call get_activities --args-file request.json
+icuvisor-cli capabilities
+icuvisor-cli doctor
+icuvisor-cli tools list
+icuvisor-cli tools describe get_today
+icuvisor-cli tools call get_today --args '{}'
+echo '{}' | icuvisor-cli tools call get_today --args-file -
 ```
 
-`list`, `describe`, and successful `call` results are JSON on stdout. Diagnostics and errors are written to stderr. `call` accepts exactly one JSON object through `--args <json>` or `--args-file <path>` (and defaults to `{}`). The standalone view uses the configured local athlete only; coach workflows remain MCP-only.
+This PR's standalone contract is tools-only; Resources and Prompts are required follow-ups. `tools list`, `tools describe`, and successful `tools call` results are JSON on stdout. `tools call` accepts exactly one JSON object through `--args <json>`, `--args-file <path>`, or `--args-file -` for stdin (and defaults to `{}`). Failures leave stdout empty and write one JSON error to stderr (exit `2` for usage errors, `1` for runtime errors). The standalone view uses the configured local athlete only; coach workflows remain MCP-only.
 
 ### Project layout
 
