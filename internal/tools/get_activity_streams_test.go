@@ -59,12 +59,81 @@ func TestGetActivityStreamsCanonicalizesKeysAndRequiresSamplesOptIn(t *testing.T
 	}
 	payload := resultMap(t, keyedResult)
 	streamsMap := payload["streams"].(map[string]any)
-	if _, ok := streamsMap["watts"].(map[string]any)["samples"]; !ok {
-		t.Fatalf("streams = %#v, want watts samples for explicit key", streamsMap)
+	if _, ok := streamsMap["watts"].(map[string]any)["samples"]; ok {
+		t.Fatalf("streams = %#v, want watts metadata without samples for explicit key", streamsMap)
+	}
+	if got := payload["_meta"].(map[string]any)["samples_included"]; got != false {
+		t.Fatalf("_meta.samples_included = %#v, want false", got)
 	}
 	unknown := payload["_meta"].(map[string]any)["unknown_stream_keys"].([]any)
 	if len(unknown) == 0 {
 		t.Fatalf("_meta = %#v, want unknown stream keys", payload["_meta"])
+	}
+
+	fullResult, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","keys":["Power"],"include_full":true}`)})
+	if err != nil {
+		t.Fatalf("full Handler() error = %v", err)
+	}
+	fullPayload := resultMap(t, fullResult)
+	fullStreams := fullPayload["streams"].(map[string]any)
+	if got := fullStreams["watts"].(map[string]any)["samples"]; !equalFloatSlices(got.([]any), []float64{250, 260}) {
+		t.Fatalf("streams = %#v, want watts samples [250 260]", fullStreams)
+	}
+	if got := fullPayload["_meta"].(map[string]any)["samples_included"]; got != true {
+		t.Fatalf("_meta.samples_included = %#v, want true", got)
+	}
+
+	sampledClient := &fakeActivityReadClient{streams: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20,30,40]}`)}
+	sampledTool := newGetActivityStreamsTool(sampledClient, sampledClient, "test", false)
+	sampledResult, err := sampledTool.Handler(context.Background(), Request{Name: sampledTool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","include_full":true,"max_points":3}`)})
+	if err != nil {
+		t.Fatalf("sampled Handler() error = %v", err)
+	}
+	sampledStreams := resultMap(t, sampledResult)["streams"].(map[string]any)
+	sampled := sampledStreams["time"].(map[string]any)
+	if got := sampled["samples"]; !equalFloatSlices(got.([]any), []float64{0, 20, 40}) {
+		t.Fatalf("samples = %#v, want [0 20 40]", got)
+	}
+	if got := sampled["sample_count"]; got != float64(5) {
+		t.Fatalf("sample_count = %#v, want 5", got)
+	}
+	if got := sampled["returned_sample_count"]; got != float64(3) {
+		t.Fatalf("returned_sample_count = %#v, want 3", got)
+	}
+	if got := sampled["sampling_method"]; got != "uniform_index" {
+		t.Fatalf("sampling_method = %#v, want uniform_index", got)
+	}
+	if got := sampled["full"].(map[string]any)["data"]; !equalFloatSlices(got.([]any), []float64{0, 20, 40}) {
+		t.Fatalf("full.data = %#v, want [0 20 40]", got)
+	}
+}
+
+func TestGetActivityStreamsRejectsInvalidMaxPoints(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		args string
+	}{
+		{name: "explicit zero", args: `{"activity_id":"a1","include_full":true,"max_points":0}`},
+		{name: "below minimum", args: `{"activity_id":"a1","include_full":true,"max_points":1}`},
+		{name: "above maximum", args: `{"activity_id":"a1","include_full":true,"max_points":5001}`},
+		{name: "without include full", args: `{"activity_id":"a1","max_points":3}`},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := &fakeActivityReadClient{}
+			tool := newGetActivityStreamsTool(client, client, "test", false)
+			_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.args)})
+			if _, ok := PublicErrorMessage(err); !ok {
+				t.Fatalf("PublicErrorMessage(%v) = _, false, want NewUserError", err)
+			}
+			if client.streamCalls != 0 {
+				t.Fatalf("GetActivityStreams calls = %d, want 0", client.streamCalls)
+			}
+		})
 	}
 }
 
@@ -171,4 +240,16 @@ func decodeStreamFixtures(t *testing.T, raws ...string) []intervals.ActivityStre
 		out = append(out, stream)
 	}
 	return out
+}
+
+func equalFloatSlices(got []any, want []float64) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for i, wantValue := range want {
+		if gotValue, ok := got[i].(float64); !ok || gotValue != wantValue {
+			return false
+		}
+	}
+	return true
 }

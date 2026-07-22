@@ -15,7 +15,7 @@ import (
 const (
 	getActivityStreamsName        = "get_activity_streams"
 	getActivitySplitsName         = "get_activity_splits"
-	getActivityStreamsDescription = "Get canonical activity stream channels by activity_id. For a described or date-based activity, resolve it with get_activities first and pass the returned activity_id. Streams are heavy: default returns only available stream metadata; include samples only with include_full:true or explicit keys."
+	getActivityStreamsDescription = "Get canonical activity stream channels by activity_id. For a described or date-based activity, resolve it with get_activities first and pass the returned activity_id. Streams are heavy: default returns only available stream metadata; raw samples require include_full:true and can be uniformly bounded per channel with max_points."
 	getActivitySplitsDescription  = "Get manual or virtual per-km/per-mile activity splits by activity_id. For split/lap requests on a described or date-based activity, resolve it with get_activities over the athlete-local date window first. Uses manual intervals when present, otherwise derives virtual splits from distance/time streams and honors preferred_units."
 )
 
@@ -28,6 +28,7 @@ type getActivityStreamsRequest struct {
 	ActivityID  string   `json:"activity_id"`
 	Keys        []string `json:"keys,omitempty"`
 	IncludeFull bool     `json:"include_full,omitempty"`
+	MaxPoints   *int     `json:"max_points,omitempty"`
 }
 
 type getActivitySplitsRequest struct {
@@ -51,13 +52,16 @@ type getActivityStreamsUnavailableResponse struct {
 }
 
 type activityStreamRow struct {
-	Type    string         `json:"type,omitempty"`
-	Name    string         `json:"name,omitempty"`
-	Samples []float64      `json:"samples,omitempty"`
-	Data2   []float64      `json:"data2,omitempty"`
-	AllNull bool           `json:"all_null,omitempty"`
-	Custom  bool           `json:"custom,omitempty"`
-	Full    map[string]any `json:"full,omitempty"`
+	Type                string         `json:"type,omitempty"`
+	Name                string         `json:"name,omitempty"`
+	Samples             []float64      `json:"samples,omitempty"`
+	Data2               []float64      `json:"data2,omitempty"`
+	SampleCount         int            `json:"sample_count,omitempty"`
+	ReturnedSampleCount int            `json:"returned_sample_count,omitempty"`
+	SamplingMethod      string         `json:"sampling_method,omitempty"`
+	AllNull             bool           `json:"all_null,omitempty"`
+	Custom              bool           `json:"custom,omitempty"`
+	Full                map[string]any `json:"full,omitempty"`
 }
 
 type activityStreamsMeta struct {
@@ -116,6 +120,16 @@ func getActivityStreamsHandler(client ActivityStreamsClient, detailsClient Activ
 		if err := decodeJSONArgs(req.Arguments, &args); err != nil || strings.TrimSpace(args.ActivityID) == "" {
 			return Result{}, NewUserError(invalidActivityReadArgumentsMessage, err)
 		}
+		if args.MaxPoints != nil && !args.IncludeFull {
+			return Result{}, NewUserError("max_points requires include_full:true", errors.New("max_points was provided without include_full"))
+		}
+		if args.MaxPoints != nil && (*args.MaxPoints < 2 || *args.MaxPoints > 5000) {
+			return Result{}, NewUserError("max_points must be between 2 and 5000", errors.New("max_points is outside the supported range"))
+		}
+		maxPoints := 0
+		if args.MaxPoints != nil {
+			maxPoints = *args.MaxPoints
+		}
 		canonicalKeys, unknown := canonicalStreamKeys(args.Keys)
 		upstreamTypes := append([]string(nil), args.Keys...)
 		streamsRows, err := client.GetActivityStreams(ctx, intervals.ActivityStreamsParams{ActivityID: args.ActivityID, Types: upstreamTypes, IncludeDefaults: true})
@@ -130,8 +144,7 @@ func getActivityStreamsHandler(client ActivityStreamsClient, detailsClient Activ
 			payload := unavailableActivityStreamsResponse(unavailable, args.IncludeFull, version)
 			return encodeActivityStreamsPayload(payload, args.IncludeFull, version, debugMetadata, shapeCfg)
 		}
-		samples := args.IncludeFull || len(args.Keys) > 0
-		payload := shapeActivityStreams(args.ActivityID, streamsRows, canonicalKeys, samples, args.IncludeFull, version, unknown)
+		payload := shapeActivityStreams(args.ActivityID, streamsRows, canonicalKeys, args.IncludeFull, args.IncludeFull, maxPoints, version, unknown)
 		return encodeActivityStreamsPayload(payload, args.IncludeFull, version, debugMetadata, shapeCfg)
 	}
 }
@@ -193,7 +206,37 @@ func canonicalStreamKeys(keys []string) ([]string, []string) {
 	return canonical, unknown
 }
 
-func shapeActivityStreams(activityID string, rows []intervals.ActivityStream, requested []string, samples bool, includeFull bool, version string, unknown []string) getActivityStreamsResponse {
+func uniformlySampleStreamSeries(values []float64, maxPoints int) ([]float64, bool) {
+	if maxPoints == 0 || maxPoints >= len(values) {
+		return values, false
+	}
+	sampled := make([]float64, maxPoints)
+	lastIndex := len(values) - 1
+	for i := range sampled {
+		index := int(math.Round(float64(i) * float64(lastIndex) / float64(maxPoints-1)))
+		sampled[i] = values[index]
+	}
+	return sampled, true
+}
+
+func sampledActivityStreamRaw(raw map[string]any, samples []float64, data2 []float64, samplesReduced bool, data2Reduced bool) map[string]any {
+	if raw == nil || (!samplesReduced && !data2Reduced) {
+		return raw
+	}
+	rawCopy := make(map[string]any, len(raw))
+	for key, value := range raw {
+		rawCopy[key] = value
+	}
+	if samplesReduced {
+		rawCopy["data"] = samples
+	}
+	if data2Reduced {
+		rawCopy["data2"] = data2
+	}
+	return rawCopy
+}
+
+func shapeActivityStreams(activityID string, rows []intervals.ActivityStream, requested []string, samples bool, includeFull bool, maxPoints int, version string, unknown []string) getActivityStreamsResponse {
 	requestedSet := make(map[string]bool, len(requested))
 	for _, key := range requested {
 		requestedSet[key] = true
@@ -208,12 +251,22 @@ func shapeActivityStreams(activityID string, rows []intervals.ActivityStream, re
 			continue
 		}
 		row := activityStreamRow{Type: streamRow.Type, Name: streamRow.Name, AllNull: streamRow.AllNull, Custom: streamRow.Custom}
+		var samplesReduced, data2Reduced bool
 		if samples {
-			row.Samples = streamRow.Data
-			row.Data2 = streamRow.Data2
+			row.Samples, samplesReduced = uniformlySampleStreamSeries(streamRow.Data, maxPoints)
+			row.Data2, data2Reduced = uniformlySampleStreamSeries(streamRow.Data2, maxPoints)
+			if maxPoints != 0 && (samplesReduced || data2Reduced) {
+				row.SampleCount = len(streamRow.Data)
+				row.ReturnedSampleCount = len(row.Samples)
+				if len(streamRow.Data2) > len(streamRow.Data) {
+					row.SampleCount = len(streamRow.Data2)
+					row.ReturnedSampleCount = len(row.Data2)
+				}
+				row.SamplingMethod = "uniform_index"
+			}
 		}
 		if includeFull {
-			row.Full = streamRow.Raw
+			row.Full = sampledActivityStreamRaw(streamRow.Raw, row.Samples, row.Data2, samplesReduced, data2Reduced)
 		}
 		out.Streams[key] = row
 	}
@@ -353,8 +406,9 @@ func newSplitRow(index int, meters float64, duration float64, splitUnit string) 
 func activityStreamsInputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"activity_id"}, "properties": map[string]any{
 		"activity_id":  map[string]any{"type": "string", "description": "Required intervals.icu activity ID whose stream channels should be listed."},
-		"keys":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional stream keys to include as samples. Values are canonicalized to snake_case when known; unknown keys are reported in _meta. Supplying keys includes samples even when include_full is false."},
-		"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, include raw upstream stream payloads and samples for available stream channels; default returns metadata only unless keys is supplied."},
+		"keys":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional stream channels to return. Values are canonicalized to snake_case when known; unknown keys are reported in _meta. Keys filter channels only and never opt in to raw samples."},
+		"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, include raw upstream stream payloads and samples for available stream channels. Raw samples are otherwise omitted."},
+		"max_points":   map[string]any{"type": "integer", "minimum": 2, "maximum": 5000, "description": "Optional per-channel cap for raw sample arrays. Requires include_full:true; uniformly samples indices while preserving first and last samples, and reports sampling provenance."},
 	}}
 }
 func activitySplitsInputSchema() map[string]any {

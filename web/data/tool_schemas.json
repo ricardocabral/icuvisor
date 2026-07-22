@@ -1884,18 +1884,24 @@
         "name": "include_full",
         "required": false,
         "type": "boolean",
-        "description": "When true, include raw upstream stream payloads and samples for available stream channels; default returns metadata only unless keys is supplied.",
+        "description": "When true, include raw upstream stream payloads and samples for available stream channels. Raw samples are otherwise omitted.",
         "default": false
       },
       {
         "name": "keys",
         "required": false,
         "type": "array",
-        "description": "Optional stream keys to include as samples. Values are canonicalized to snake_case when known; unknown keys are reported in _meta. Supplying keys includes samples even when include_full is false.",
+        "description": "Optional stream channels to return. Values are canonicalized to snake_case when known; unknown keys are reported in _meta. Keys filter channels only and never opt in to raw samples.",
         "items": {
           "required": false,
           "type": "string"
         }
+      },
+      {
+        "name": "max_points",
+        "required": false,
+        "type": "integer",
+        "description": "Optional per-channel cap for raw sample arrays. Requires include_full:true; uniformly samples indices while preserving first and last samples, and reports sampling provenance."
       }
     ]
   },
