@@ -4,10 +4,13 @@ package icuvisor
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
+	"slices"
+	"strings"
 	"time"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -18,6 +21,7 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/prompts"
 	"github.com/ricardocabral/icuvisor/internal/resources"
 	"github.com/ricardocabral/icuvisor/internal/safety"
+	"github.com/ricardocabral/icuvisor/internal/toolexec"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
@@ -199,6 +203,122 @@ type Server struct {
 	inner *internalmcp.Server
 }
 
+// Invoker invokes registered core tools without an MCP transport.
+type Invoker struct {
+	tools       map[string]tools.Tool
+	athleteID   string
+	version     string
+	deleteMode  DeleteMode
+	toolset     Toolset
+	catalogHash string
+}
+
+// InvokerOptions configures direct core-tool invocation for local CLI and agent views.
+type InvokerOptions struct {
+	Config     Config
+	Registry   Registry
+	Version    string
+	DeleteMode DeleteMode
+	Toolset    Toolset
+}
+
+// NewInvoker constructs a direct invoker from the same registry and safety policy used by MCP.
+func NewInvoker(ctx context.Context, opts InvokerOptions) (*Invoker, error) {
+	cfg, err := opts.Config.toInternalValidated()
+	if err != nil {
+		return nil, err
+	}
+	deleteMode, toolset, err := effectivePolicy(opts.DeleteMode, opts.Toolset, opts.Config)
+	if err != nil {
+		return nil, err
+	}
+	registry := registryForConfig(opts.Registry, opts.Config)
+	if registry == nil {
+		return nil, errors.New("creating invoker: missing tool registry")
+	}
+	capability := safety.NewCapability(deleteMode.toInternal())
+	catalogHash, err := internalmcp.ComputeToolCatalogHash(ctx, internalmcp.CatalogHashOptions{
+		Config:     cfg,
+		Registry:   registry,
+		Capability: capability,
+		Toolset:    toolset.toInternal(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if opts.Registry.core != nil {
+		registry = registryForConfigWithCatalogHash(opts.Registry, opts.Config, catalogHash)
+	}
+	registrar := directRegistrar{
+		tools:      make(map[string]tools.Tool),
+		capability: capability,
+		toolset:    toolset.toInternal(),
+	}
+	if err := registry.Register(ctx, &registrar); err != nil {
+		return nil, err
+	}
+	version := strings.TrimSpace(opts.Version)
+	if version == "" {
+		version = "dev"
+	}
+	return &Invoker{tools: registrar.tools, athleteID: cfg.AthleteID, version: version, deleteMode: deleteMode, toolset: toolset, catalogHash: catalogHash}, nil
+}
+
+// Tools returns the tools available to this direct invocation view.
+func (i *Invoker) Tools() []ToolInfo {
+	if i == nil {
+		return nil
+	}
+	out := make([]ToolInfo, 0, len(i.tools))
+	for _, tool := range i.tools {
+		out = append(out, toolInfoFromInternal(tool))
+	}
+	slices.SortFunc(out, func(a, b ToolInfo) int { return strings.Compare(a.Name, b.Name) })
+	return out
+}
+
+// Info returns non-secret metadata about this direct invocation view.
+func (i *Invoker) Info() InvokerInfo {
+	if i == nil {
+		return InvokerInfo{}
+	}
+	return InvokerInfo{Version: i.version, DeleteMode: i.deleteMode, Toolset: i.toolset, CatalogHash: i.catalogHash}
+}
+
+// Invoke calls one registered tool without an MCP transport.
+func (i *Invoker) Invoke(ctx context.Context, name string, arguments json.RawMessage) (ToolResult, error) {
+	if i == nil {
+		return ToolResult{}, errors.New("invoking tool: nil invoker")
+	}
+	tool, ok := i.tools[name]
+	if !ok {
+		return ToolResult{}, fmt.Errorf("unknown or unavailable tool %q", name)
+	}
+	outcome := toolexec.Execute(ctx, tool, tools.Request{Name: name, Arguments: arguments}, i.athleteID)
+	if outcome.Err != nil {
+		return ToolResult{}, toolexec.PublicError(name, outcome.PublicMessage)
+	}
+	return toolResultFromInternal(outcome.Result), nil
+}
+
+// directRegistrar applies the same registration-time safety and toolset policy as MCP.
+type directRegistrar struct {
+	tools      map[string]tools.Tool
+	capability safety.Capability
+	toolset    safety.Toolset
+}
+
+func (r *directRegistrar) AddTool(tool tools.Tool) error {
+	if _, exists := r.tools[tool.Name]; exists {
+		return fmt.Errorf("duplicate tool name %q", tool.Name)
+	}
+	if !toolexec.Allows(r.capability, r.toolset, tool) {
+		return nil
+	}
+	r.tools[tool.Name] = tool
+	return nil
+}
+
 // ServerOptions configures core MCP server construction.
 type ServerOptions struct {
 	Config                     Config
@@ -312,14 +432,35 @@ func ComputeToolCatalogHash(ctx context.Context, opts CatalogOptions) (string, e
 	return internalmcp.ComputeToolCatalogHash(ctx, internalmcp.CatalogHashOptions{Config: cfg, Registry: registryForConfig(opts.Registry, opts.Config), Capability: safety.NewCapability(deleteMode.toInternal()), Toolset: toolset.toInternal(), Logger: opts.Logger})
 }
 
-// ToolInfo is public non-secret metadata about a registered tool.
+// InvokerInfo is non-secret metadata about a direct invocation view.
+type InvokerInfo struct {
+	Version     string     `json:"version"`
+	DeleteMode  DeleteMode `json:"delete_mode"`
+	Toolset     Toolset    `json:"toolset"`
+	CatalogHash string     `json:"catalog_hash"`
+}
+
+// ToolInfo is the canonical MCP descriptor plus CLI-only metadata.
 type ToolInfo struct {
-	Name         string
-	Description  string
-	InputSchema  any
-	OutputSchema any
-	Requirement  Requirement
-	Toolset      Toolset
+	Name         string                  `json:"name"`
+	Description  string                  `json:"description"`
+	InputSchema  any                     `json:"inputSchema"`
+	OutputSchema any                     `json:"outputSchema,omitempty"`
+	Annotations  *sdkmcp.ToolAnnotations `json:"annotations,omitempty"`
+	Meta         ToolInfoMeta            `json:"_meta"`
+	Requirement  Requirement             `json:"-"`
+	Toolset      Toolset                 `json:"-"`
+}
+
+// ToolInfoMeta contains metadata outside the MCP tool descriptor contract.
+type ToolInfoMeta struct {
+	ICUvisor ToolMetadata `json:"icuvisor"`
+}
+
+// ToolMetadata describes a tool's registration tier and safety class.
+type ToolMetadata struct {
+	Toolset Toolset     `json:"toolset"`
+	Safety  Requirement `json:"safety"`
 }
 
 // Tool is a public custom tool definition for host diagnostics and policy extensions.
@@ -429,6 +570,14 @@ func internalResult(result ToolResult) tools.Result {
 	return tools.Result{Content: content, StructuredContent: result.StructuredContent, IsError: result.IsError}
 }
 
+func toolResultFromInternal(result tools.Result) ToolResult {
+	content := make([]Content, 0, len(result.Content))
+	for _, item := range result.Content {
+		content = append(content, Content{Type: ContentType(item.Type), Text: item.Text})
+	}
+	return ToolResult{Content: content, StructuredContent: result.StructuredContent, IsError: result.IsError}
+}
+
 func internalToolFilter(filter func(ToolInfo) bool) func(tools.Tool) bool {
 	if filter == nil {
 		return nil
@@ -439,7 +588,18 @@ func internalToolFilter(filter func(ToolInfo) bool) func(tools.Tool) bool {
 }
 
 func toolInfoFromInternal(tool tools.Tool) ToolInfo {
-	return ToolInfo{Name: tool.Name, Description: tool.Description, InputSchema: tool.InputSchema, OutputSchema: tool.OutputSchema, Requirement: requirementFromInternal(tool), Toolset: Toolset(tool.EffectiveToolset().String())}
+	requirement := requirementFromInternal(tool)
+	toolset := Toolset(tool.EffectiveToolset().String())
+	return ToolInfo{
+		Name:         tool.Name,
+		Description:  tool.Description,
+		InputSchema:  tool.InputSchema,
+		OutputSchema: tool.OutputSchema,
+		Annotations:  internalmcp.SDKToolAnnotations(tool),
+		Meta:         ToolInfoMeta{ICUvisor: ToolMetadata{Toolset: toolset, Safety: requirement}},
+		Requirement:  requirement,
+		Toolset:      toolset,
+	}
 }
 
 func requirementFromInternal(tool tools.Tool) Requirement {

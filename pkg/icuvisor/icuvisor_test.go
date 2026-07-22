@@ -603,6 +603,145 @@ func TestStreamableHTTPHandlerFacadeDefaultsToPublicFactoryError(t *testing.T) {
 	}
 }
 
+func TestDirectInvokerUsesMCPRegistrationPolicyAndHandlers(t *testing.T) {
+	t.Parallel()
+
+	client := newFacadeTestClient(t)
+	registry := NewCoreRegistry(client, RegistryOptions{
+		Version: "v-public",
+		ExtraTools: []Tool{{
+			Name:         "direct_echo",
+			Description:  "Returns its arguments for direct-invocation coverage.",
+			InputSchema:  map[string]any{"type": "object"},
+			OutputSchema: map[string]any{"type": "object"},
+			Requirement:  RequirementRead,
+			Toolset:      ToolsetCore,
+			Handler: func(_ context.Context, req ToolRequest) (ToolResult, error) {
+				return TextResult(map[string]string{"name": req.Name, "arguments": string(req.Arguments)}), nil
+			},
+		}},
+	})
+	cfg := facadeTestConfig()
+	invoker, err := NewInvoker(context.Background(), InvokerOptions{Config: cfg, Registry: registry, DeleteMode: DeleteModeSafe, Toolset: ToolsetCore})
+	if err != nil {
+		t.Fatalf("NewInvoker() error = %v", err)
+	}
+	if !hasTool(invoker.Tools(), "direct_echo") {
+		t.Fatal("direct invoker catalog missing extra core tool")
+	}
+	result, err := invoker.Invoke(context.Background(), "direct_echo", json.RawMessage(`{"message":"hello"}`))
+	if err != nil {
+		t.Fatalf("Invoke() error = %v", err)
+	}
+	if result.IsError {
+		t.Fatal("Invoke() returned an error result")
+	}
+	payload, ok := result.StructuredContent.(map[string]string)
+	if !ok || payload["name"] != "direct_echo" || payload["arguments"] != `{"message":"hello"}` {
+		t.Fatalf("Invoke() result = %#v, want direct handler result", result.StructuredContent)
+	}
+	if _, err := invoker.Invoke(context.Background(), "delete_event", json.RawMessage(`{}`)); err == nil {
+		t.Fatal("safe direct invoker exposed delete_event")
+	}
+}
+
+func TestDirectInvokerSanitizesHandlerErrorsAndPanics(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name    string
+		handler Handler
+		want    string
+	}{
+		{
+			name: "raw error",
+			handler: func(context.Context, ToolRequest) (ToolResult, error) {
+				return ToolResult{}, errors.New("secret upstream detail")
+			},
+			want: "tool failed; try again or check icuvisor logs",
+		},
+		{
+			name: "public error",
+			handler: func(context.Context, ToolRequest) (ToolResult, error) {
+				return ToolResult{}, NewUserError("use a supported value", errors.New("secret cause"))
+			},
+			want: "use a supported value",
+		},
+		{
+			name: "panic",
+			handler: func(context.Context, ToolRequest) (ToolResult, error) {
+				panic("secret panic value")
+			},
+			want: "tool failed; try again or check icuvisor logs",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tool := facadeExtraTool("Failure parity tool.", ToolsetCore)
+			tool.Handler = tc.handler
+			registry := NewCoreRegistry(newFacadeTestClient(t), RegistryOptions{Version: "v-public", ExtraTools: []Tool{tool}})
+			invoker, err := NewInvoker(context.Background(), InvokerOptions{Config: facadeTestConfig(), Registry: registry})
+			if err != nil {
+				t.Fatalf("NewInvoker() error = %v", err)
+			}
+			_, err = invoker.Invoke(context.Background(), tool.Name, json.RawMessage(`{}`))
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("Invoke() error = %v, want %q", err, tc.want)
+			}
+			if strings.Contains(err.Error(), "secret") {
+				t.Fatalf("Invoke() leaked internal detail: %v", err)
+			}
+		})
+	}
+}
+
+func TestDirectInvokerRejectsMissingRegistry(t *testing.T) {
+	t.Parallel()
+
+	if _, err := NewInvoker(context.Background(), InvokerOptions{Config: facadeTestConfig()}); err == nil || !strings.Contains(err.Error(), "missing tool registry") {
+		t.Fatalf("NewInvoker() error = %v, want missing-registry error", err)
+	}
+}
+
+func TestDirectInvokerRoutesConfiguredAthleteAndRejectsArgumentOverride(t *testing.T) {
+	t.Parallel()
+
+	invoker, err := NewInvoker(context.Background(), InvokerOptions{
+		Config:   facadeTestConfig(),
+		Registry: Registry{inner: directTargetTestRegistry{}},
+	})
+	if err != nil {
+		t.Fatalf("NewInvoker() error = %v", err)
+	}
+	result, err := invoker.Invoke(context.Background(), "get_athlete_profile", json.RawMessage(`{}`))
+	if err != nil {
+		t.Fatalf("Invoke() error = %v", err)
+	}
+	payload, ok := result.StructuredContent.(map[string]string)
+	if !ok || payload["target_athlete_id"] != "i12345" {
+		t.Fatalf("Invoke() result = %#v, want configured athlete target", result.StructuredContent)
+	}
+	if _, err := invoker.Invoke(context.Background(), "get_athlete_profile", json.RawMessage(`{"athlete_id":"i99999"}`)); err == nil || !strings.Contains(err.Error(), "athlete_id is only supported") {
+		t.Fatalf("Invoke() athlete_id error = %v, want local-mode rejection", err)
+	}
+}
+
+type directTargetTestRegistry struct{}
+
+func (directTargetTestRegistry) Register(_ context.Context, registrar internaltools.Registrar) error {
+	return registrar.AddTool(internaltools.Tool{
+		Name:         "get_athlete_profile",
+		Description:  "Direct target routing test tool.",
+		InputSchema:  map[string]any{"type": "object"},
+		OutputSchema: map[string]any{"type": "object"},
+		Toolset:      safety.ToolsetCore,
+		Handler: func(ctx context.Context, _ internaltools.Request) (internaltools.Result, error) {
+			targetAthleteID, _ := intervals.TargetAthleteIDFromContext(ctx)
+			return internaltools.TextResult(map[string]string{"target_athlete_id": targetAthleteID}), nil
+		},
+	})
+}
+
 func newHTTPFacadeTestClient(t *testing.T, cfg Config) *Client {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

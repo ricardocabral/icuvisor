@@ -16,6 +16,21 @@
 
 The documentation covers local and hosted modes, privacy, safety modes, supported clients, troubleshooting, and the complete tool reference.
 
+## Direct CLI
+
+Releases also include `icuvisor-cli`, a tools-only command interface for local scripts and agents. It uses the same registered handlers and safety gates as MCP, loads credentials from local configuration or the OS keychain, and does not support coach mode.
+
+```bash
+icuvisor-cli capabilities
+icuvisor-cli doctor
+icuvisor-cli tools list
+icuvisor-cli tools describe get_today
+icuvisor-cli tools call get_today --args '{}'
+echo '{}' | icuvisor-cli tools call get_today --args-file -
+```
+
+Successful commands write JSON to stdout. Failures leave stdout empty and write one JSON error to stderr, using exit code `2` for usage errors and `1` for runtime errors. See the [CLI reference](https://icuvisor.app/reference/cli/) for the complete contract.
+
 ## For contributors
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution guidelines. Product scope and planned work live in the [PRD](docs/prd/PRD-icuvisor.md) and [roadmap](ROADMAP.md).

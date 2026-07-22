@@ -1,5 +1,6 @@
-BINARY := icuvisor
-PKG    := github.com/ricardocabral/icuvisor
+BINARY     := icuvisor
+CLI_BINARY := icuvisor-cli
+PKG        := github.com/ricardocabral/icuvisor
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -s -w -X main.version=$(VERSION)
 
@@ -19,14 +20,15 @@ HUGO_PORT  ?= 1313
 
 all: build ## Build the binary
 
-build: ## Build the binary into ./bin
+build: ## Build the MCP and standalone CLI binaries into ./bin
 	@mkdir -p bin
 	$(GO) build -trimpath -ldflags='$(LDFLAGS)' -o bin/$(BINARY) ./cmd/$(BINARY)
+	$(GO) build -trimpath -ldflags='$(LDFLAGS)' -o bin/$(CLI_BINARY) ./cmd/$(CLI_BINARY)
 
-install: ## Install the binary into $GOBIN
-	$(GO) install -trimpath -ldflags='$(LDFLAGS)' ./cmd/$(BINARY)
+install: ## Install the MCP and standalone CLI binaries into $GOBIN
+	$(GO) install -trimpath -ldflags='$(LDFLAGS)' ./cmd/$(BINARY) ./cmd/$(CLI_BINARY)
 
-run: ## Run the binary
+run: ## Run the MCP binary
 	$(GO) run ./cmd/$(BINARY)
 
 test: ## Run unit tests

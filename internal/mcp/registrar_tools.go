@@ -16,12 +16,13 @@ import (
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/toolcatalog"
+	"github.com/ricardocabral/icuvisor/internal/toolexec"
 	"github.com/ricardocabral/icuvisor/internal/tools"
 )
 
-const genericToolErrorMessage = "tool failed; try again or check icuvisor logs"
+const genericToolErrorMessage = toolexec.GenericErrorMessage
 
-const invalidInputToolErrorMessage = "invalid tool arguments; check the inputs and try again"
+const invalidInputToolErrorMessage = toolexec.InvalidInputErrorMessage
 
 const invalidTargetAthleteFormatMessage = "invalid athlete_id; use format i12345 or 12345"
 
@@ -29,7 +30,7 @@ const unauthorizedTargetAthleteMessage = "athlete_id is not authorized for this 
 
 const toolNotAllowedForAthleteMessage = "tool is not allowed for the selected athlete"
 
-const localModeAthleteTargetMessage = "athlete_id is only supported when coach mode is enabled"
+const localModeAthleteTargetMessage = toolexec.LocalModeAthleteTargetMessage
 
 func capabilityOrSafe(capability safety.Capability) safety.Capability {
 	if capability != nil {
@@ -64,7 +65,8 @@ type safeRegistrar struct {
 	recentToolCalls        diagnostics.RecentToolCallRecorder
 }
 
-func sdkToolAnnotations(tool tools.Tool) *sdkmcp.ToolAnnotations {
+// SDKToolAnnotations returns the canonical MCP annotations for a tool descriptor.
+func SDKToolAnnotations(tool tools.Tool) *sdkmcp.ToolAnnotations {
 	if tool.RequiresWrite() {
 		return nil
 	}
@@ -109,7 +111,7 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) error {
 			Description:  tool.Description,
 			InputSchema:  tool.InputSchema,
 			OutputSchema: tool.OutputSchema,
-			Annotations:  sdkToolAnnotations(tool),
+			Annotations:  SDKToolAnnotations(tool),
 		}, func(ctx context.Context, req *sdkmcp.CallToolRequest) (res *sdkmcp.CallToolResult, err error) {
 			started := time.Now()
 			argumentBytes := len(req.Params.Arguments)
@@ -131,17 +133,21 @@ func (r *safeRegistrar) AddTool(tool tools.Tool) error {
 				res = toolErrorResult(publicToolErrorMessage(err))
 				return res, nil
 			}
-			result, err := tool.Handler(callCtx, tools.Request{
+			localAthleteID := ""
+			if !r.config.CoachModeEnabled() {
+				localAthleteID = r.config.AthleteID
+			}
+			outcome := toolexec.Execute(callCtx, tool, tools.Request{
 				Name:      req.Params.Name,
 				Arguments: arguments,
-			})
-			if err != nil {
+			}, localAthleteID)
+			if outcome.Err != nil {
 				status = "tool_error"
-				logToolHandlerError(r.logger, tool.Name, err)
-				res = toolErrorResult(publicToolErrorMessage(err))
+				logToolHandlerError(r.logger, tool.Name, outcome.Err)
+				res = toolErrorResult(outcome.PublicMessage)
 				return res, nil
 			}
-			converted, err := convertResult(result)
+			converted, err := convertResult(outcome.Result)
 			if err != nil {
 				status = "conversion_error"
 				r.logger.Error("tool result conversion failed", "tool", tool.Name, "error", err)
@@ -228,15 +234,12 @@ func (r *safeRegistrar) resolveToolTarget(ctx context.Context, toolName string, 
 	if !toolcatalog.IsAthleteScopedTool(toolName) {
 		return ctx, raw, nil
 	}
-	arguments, suppliedAthleteID, suppliedAthleteIDPresent, err := stripAthleteID(raw)
+	arguments, suppliedAthleteID, _, err := stripAthleteID(raw)
 	if err != nil {
 		return ctx, nil, tools.NewUserError(invalidTargetAthleteFormatMessage, err)
 	}
 	if !r.config.CoachModeEnabled() {
-		if suppliedAthleteIDPresent {
-			return ctx, nil, tools.NewUserError(localModeAthleteTargetMessage, nil)
-		}
-		return intervals.WithTargetAthleteID(ctx, r.config.AthleteID), raw, nil
+		return ctx, raw, nil
 	}
 	targetAthleteID, err := r.resolveAthleteID(ctx, toolName, suppliedAthleteID)
 	if err != nil {
@@ -271,26 +274,11 @@ func (r *safeRegistrar) selectedAthleteID(ctx context.Context) string {
 }
 
 func (r *safeRegistrar) toolsetAllows(tool tools.Tool) bool {
-	active := safety.ParseToolset(string(r.toolset))
-	switch active {
-	case safety.ToolsetFull:
-		return true
-	case safety.ToolsetCompact:
-		return toolcatalog.IsCompactTool(tool.Name)
-	default:
-		return tool.EffectiveToolset() == safety.ToolsetCore
-	}
+	return toolexec.Allows(safety.NewCapability(safety.ModeFull), r.toolset, tool)
 }
 
 func (r *safeRegistrar) capabilityAllows(tool tools.Tool) bool {
-	capability := r.capability
-	if capability == nil {
-		capability = safety.NewCapability(safety.ModeSafe)
-	}
-	if tool.RequiresDelete() && !capability.CanDelete() {
-		return false
-	}
-	return !tool.RequiresWrite() || capability.CanWrite()
+	return toolexec.Allows(r.capability, safety.ToolsetFull, tool)
 }
 
 func (r *safeRegistrar) validateTool(tool tools.Tool) error {
@@ -380,13 +368,7 @@ func logToolHandlerError(logger *slog.Logger, toolName string, err error) {
 }
 
 func publicToolErrorMessage(err error) string {
-	if message, ok := tools.PublicErrorMessage(err); ok {
-		return message
-	}
-	if errors.Is(err, tools.ErrInvalidInput) {
-		return invalidInputToolErrorMessage
-	}
-	return genericToolErrorMessage
+	return toolexec.PublicErrorMessage(err)
 }
 
 func toolErrorResult(message string) *sdkmcp.CallToolResult {

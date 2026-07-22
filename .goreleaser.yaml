@@ -29,16 +29,42 @@ builds:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
     goos: [darwin]
     goarch: [amd64, arm64]
+  - id: icuvisor-cli-linux-windows
+    main: ./cmd/icuvisor-cli
+    binary: icuvisor-cli
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    goos: [linux, windows]
+    goarch: [amd64, arm64]
+  - id: icuvisor-cli-darwin
+    main: ./cmd/icuvisor-cli
+    binary: icuvisor-cli
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    goos: [darwin]
+    goarch: [amd64, arm64]
 
 universal_binaries:
   - id: icuvisor-darwin-universal
     ids: [icuvisor-darwin]
     replace: true
     name_template: icuvisor
+  - id: icuvisor-cli-darwin-universal
+    ids: [icuvisor-cli-darwin]
+    replace: true
+    name_template: icuvisor-cli
 
 archives:
   - id: default
-    ids: [icuvisor-linux-windows]
+    ids: [icuvisor-linux-windows, icuvisor-cli-linux-windows]
     name_template: >-
       {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
     formats: [tar.gz]
@@ -50,7 +76,7 @@ archives:
       - README.md
       - CHANGELOG.md
   - id: darwin-universal
-    ids: [icuvisor-darwin-universal]
+    ids: [icuvisor-darwin-universal, icuvisor-cli-darwin-universal]
     name_template: "{{ .ProjectName }}_{{ .Version }}_macos_universal"
     formats: [tar.gz]
     files:
@@ -107,6 +133,7 @@ brews:
       token: "{{ .Env.HOMEBREW_TAP_PAT }}"
     install: |
       bin.install "icuvisor"
+      bin.install "icuvisor-cli"
     test: |
       assert_match version.to_s, shell_output("#{bin}/icuvisor version")
     caveats: |

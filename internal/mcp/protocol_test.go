@@ -320,6 +320,18 @@ func TestProtocolSharedTransportSuite(t *testing.T) {
 			},
 		},
 		{
+			name: "tool_call_panic_is_sanitized",
+			opts: Options{Registry: panickingToolRegistry()},
+			run: func(t *testing.T, ctx context.Context, session *sdkmcp.ClientSession) {
+				t.Helper()
+				result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: "test_panic", Arguments: map[string]any{}})
+				if err != nil {
+					t.Fatalf("CallTool(test_panic) protocol error = %v", err)
+				}
+				assertSanitizedToolError(t, result)
+			},
+		},
+		{
 			name: "resources_list_and_read",
 			opts: Options{ResourceRegistry: testResourceRegistry{}},
 			run: func(t *testing.T, ctx context.Context, session *sdkmcp.ClientSession) {
@@ -2025,6 +2037,20 @@ func failingToolRegistry() tools.Registry {
 			Toolset:     safety.ToolsetCore,
 			Handler: func(context.Context, tools.Request) (tools.Result, error) {
 				return tools.Result{}, errors.New("secret upstream stack detail")
+			},
+		})
+	})
+}
+
+func panickingToolRegistry() tools.Registry {
+	return registryFunc(func(_ context.Context, registrar tools.Registrar) error {
+		return registrar.AddTool(tools.Tool{
+			Name:        "test_panic",
+			Description: "Panics for execution-boundary recovery tests.",
+			InputSchema: map[string]any{"type": "object"},
+			Toolset:     safety.ToolsetCore,
+			Handler: func(context.Context, tools.Request) (tools.Result, error) {
+				panic("secret panic detail")
 			},
 		})
 	})

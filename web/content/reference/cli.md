@@ -7,6 +7,36 @@ The icuvisor binary is both the MCP server and the setup/diagnostics CLI. Runnin
 
 Use this page when you need the exact command-line surface. The full output below is rendered from `internal/app/testdata/help.golden`, which is the CLI golden fixture used by tests.
 
+## Standalone direct-tool CLI
+
+`icuvisor-cli` is a separate binary for local users, scripts, and agents that prefer commands over MCP tool registration. It invokes the same safety-gated core handlers as the MCP binary, but does not start an MCP transport.
+
+```sh
+icuvisor-cli capabilities
+icuvisor-cli doctor
+icuvisor-cli tools list
+icuvisor-cli tools describe get_today
+icuvisor-cli tools call get_today --args '{}'
+echo '{}' | icuvisor-cli tools call get_today --args-file -
+```
+
+- `tools list` writes compact entries (`name`, summary, toolset, safety) plus a version/toolset/delete-mode/catalog-hash header.
+- `tools describe <tool>` writes the canonical MCP descriptor (`name`, `description`, `inputSchema`, `outputSchema`, `annotations`) plus CLI metadata under `_meta.icuvisor`.
+- `tools call <tool>` writes bare structured content, without an MCP envelope. Supply one JSON object with `--args <json>`, `--args-file <path>`, or `--args-file -` for stdin; omitted arguments default to `{}`.
+- `doctor` reports redacted config/auth/reachability readiness without credentials or raw athlete IDs.
+- `capabilities` reports contract version, active gates, catalog hash, and supported surfaces. This MVP supports Tools; Resources and Prompts are required follow-ups.
+- Success writes to stdout only. Failure leaves stdout empty and writes one JSON object to stderr, without ANSI formatting.
+- API keys remain configuration/keychain inputs and are never flags or tool arguments.
+- The standalone CLI uses the configured local athlete only; effective coach mode fails closed and remains MCP-only.
+
+### `icuvisor-cli` exit codes
+
+| Code | Meaning |
+| ---- | ------- |
+| `0` | Success, including help and version output. |
+| `2` | Usage error, such as an unknown command/flag or invalid argument JSON. |
+| `1` | Runtime error, such as config, reachability, or tool execution failure. |
+
 ## Commands
 
 | Command                                           | What it does                                                                                                                                      |

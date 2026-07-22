@@ -302,6 +302,7 @@ jobs:
           $out = "dist/icuvisor_${env:MSI_VERSION}_windows_${env:MATRIX_ARCH}.msi"
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           $binary = (Resolve-Path "stage/extracted/icuvisor.exe").Path
+          $cliBinary = (Resolve-Path "stage/extracted/icuvisor-cli.exe").Path
           $license = (Resolve-Path "stage/extracted/LICENSE").Path
           $icon = (Resolve-Path "build/windows/icuvisor.ico").Path
           wix build `
@@ -309,6 +310,7 @@ jobs:
             -arch $env:MSI_ARCH `
             -d "Version=$env:MSI_VERSION" `
             -d "BinarySource=$binary" `
+            -d "CLIExecutableSource=$cliBinary" `
             -d "LicenseSource=$license" `
             -d "IconSource=$icon" `
             -o $out
