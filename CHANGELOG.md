@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `validate_workout` now surfaces the rejected unknown structured field in its user-facing diagnostic, preventing invented device-control fields such as press-lap controls from being mistaken for valid workout steps.
+
 ## [1.5.3] - 2026-07-24
 
 ### Fixed

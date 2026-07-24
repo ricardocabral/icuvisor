@@ -27,13 +27,14 @@ not its contents are available, use the portable structured-tool path below.
 3. Draft this workout as a structured `workout_doc`: [DESCRIBE IT — e.g.
 VO2max bike session, 5x4min at 110% FTP with 4min recoveries, plus warm-up and
 cool-down]. Put duration and distance in structured fields, and targets in
-structured power, pace, heart-rate, or RPE fields — not only in prose. Before
-any structured write, call `validate_workout` with that `workout_doc`; this is
-the required portable preflight, not evidence of device behavior. Continue only
-when `valid: true`; resolve every returned error or warning that changes the
-intended workout. Use the returned `canonical_dsl` and estimated duration in
-the proposed-change preview, with total duration, key steps, target
-intensities, planned load/distance/time changes, and anything being preserved.
+structured power, pace, heart-rate, or RPE fields — not only in prose.
+Call
+`validate_workout` with that `workout_doc`. Before any structured write, this is
+the required portable preflight, not evidence of device behavior. Continue only when `valid: true`;
+resolve every returned error or warning that changes the intended workout. Use
+the returned `canonical_dsl` and estimated duration in the proposed-change
+preview, with total duration, key steps, target intensities, planned
+load/distance/time changes, and anything being preserved.
 If adapting an existing planned session for indoor vs outdoor execution, read
 `get_today` first and use only its weather availability/provenance, planned
 `indoor` flag, tags, equipment context I provide, and athlete preference.
