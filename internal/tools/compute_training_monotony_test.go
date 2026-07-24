@@ -168,6 +168,30 @@ func TestComputeTrainingMonotonyDuplicateRowsRejectEveryOccurrence(t *testing.T)
 	}
 }
 
+func TestComputeTrainingMonotonyTerseAndFullEvidenceShapes(t *testing.T) {
+	client := &monotonyTestClient{rows: monotonyRows(t,
+		`{"date":"2026-01-01","training_load":0,"sport":"Ride"}`,
+		`{"date":"2026-01-02","training_load":20,"sport":"Run"}`,
+	)}
+	tool := newComputeTrainingMonotonyTool(client, "test", false)
+	terse, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"start_date":"2026-01-01","end_date":"2026-01-02"}`)})
+	if err != nil {
+		t.Fatalf("terse Handler() error = %v", err)
+	}
+	tersePayload := monotonyPayload(t, terse)
+	if _, ok := tersePayload["series"]; ok {
+		t.Fatalf("terse response includes daily series: %#v", tersePayload)
+	}
+	full, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"start_date":"2026-01-01","end_date":"2026-01-02","include_full":true}`)})
+	if err != nil {
+		t.Fatalf("full Handler() error = %v", err)
+	}
+	series := monotonyPayload(t, full)["series"].([]any)
+	if len(series) != 2 || series[0].(map[string]any)["training_load"] != float64(0) || series[1].(map[string]any)["training_load"] != float64(20) {
+		t.Fatalf("full series = %#v, want validated daily loads only", series)
+	}
+}
+
 func TestComputeTrainingMonotonyRefusalAndZeroVarianceOutputsOmitStatistics(t *testing.T) {
 	cases := []struct {
 		name   string
