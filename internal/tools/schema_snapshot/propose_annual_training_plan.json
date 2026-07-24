@@ -66,6 +66,20 @@
       "maxLength": 500,
       "type": "string"
     },
+    "taper_target_load_pct": {
+      "default": 60,
+      "description": "Optional taper weekly load as a percentage of target_weekly_load, bounded 1-100. This is a caller-selected deterministic scenario, not a suitability or physiology recommendation.",
+      "maximum": 100,
+      "minimum": 1,
+      "type": "number"
+    },
+    "taper_weeks": {
+      "default": 1,
+      "description": "Optional number of final contiguous taper weeks to model; bounded 1-3 and clamped to a shorter proposal horizon. This changes load scenario only, not intensity or calendar data.",
+      "maximum": 3,
+      "minimum": 1,
+      "type": "integer"
+    },
     "target_hours_per_week": {
       "description": "Target weekly training hours; may cap time targets independently from load.",
       "maximum": 80,

@@ -2756,6 +2756,20 @@
         "description": "Free-form caller-provided strength context echoed as an assumption; not first-class upstream strength data."
       },
       {
+        "name": "taper_target_load_pct",
+        "required": false,
+        "type": "number",
+        "description": "Optional taper weekly load as a percentage of target_weekly_load, bounded 1-100. This is a caller-selected deterministic scenario, not a suitability or physiology recommendation.",
+        "default": 60
+      },
+      {
+        "name": "taper_weeks",
+        "required": false,
+        "type": "integer",
+        "description": "Optional number of final contiguous taper weeks to model; bounded 1-3 and clamped to a shorter proposal horizon. This changes load scenario only, not intensity or calendar data.",
+        "default": 1
+      },
+      {
         "name": "target_hours_per_week",
         "required": false,
         "type": "number",
