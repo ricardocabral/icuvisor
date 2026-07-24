@@ -4,14 +4,15 @@
 
 **Decision: `unverified`.**
 
-As of 2026-07-24, icuvisor has no public, portable, round-trippable evidence that
-an intervals.icu workout description can encode “press lap when ready” (or an
-equivalent device-control instruction). The decision rule is conservative: this
-request is `supported` only when a public upstream grammar/schema names the
-control and a returned-document example proves that it survives a write/read
-round trip; it is `unsupported` only when upstream explicitly says the control
-is unavailable; otherwise it is `unverified`. The current evidence satisfies
-neither positive condition.
+As of 2026-07-24, current public upstream evidence was unavailable for this
+task because live or authenticated upstream access is prohibited. The local
+baseline contains no portable, round-trippable representation for “press lap
+when ready,” but that absence is not attributed to the current upstream API.
+The decision rule is conservative: this request is `supported` only when a
+public upstream grammar/schema names the control and a returned-document example
+proves that it survives a write/read round trip; it is `unsupported` only when
+upstream explicitly says the control is unavailable; otherwise it is
+`unverified`. The current evidence cannot establish either positive condition.
 
 This is a documentation and validation boundary, not a device feature. icuvisor
 must not add a `press_lap`, `lap_button`, `manual_lap`, or similar structured
@@ -20,22 +21,23 @@ assistant request or a vendor convention.
 
 ## Reproducible evidence record
 
-### Public sources consulted
+### Public source references (current contents not fetched)
 
-The following are the public upstream documentation sources to consult for a
-future re-check. They were identified from the repository's existing upstream
-API references and compared with the repository-held OpenAPI baseline on
-2026-07-24; this task made no authenticated or live API request.
+These are the exact public sources identified for a future re-check. They are
+recorded here for reproducibility, but are not claimed as consulted current
+evidence: task policy prohibited a live request, and no public documentation
+snapshot containing a press-lap contract is checked in. A future re-check must
+record its retrieval date and the excerpt it observes.
 
-| Source | Area consulted | Observed evidence | Retrieval/provenance |
+| Source | Exact area to inspect | Evidence available in this task | Retrieval/provenance |
 | --- | --- | --- | --- |
-| <https://intervals.icu/api-docs.html> | Public API documentation landing page; workout/event API documentation pointer | The public API surface is the authority for endpoint and payload contracts; this task found no published press-lap control contract in the repository's captured evidence. | URL recorded in `docs/upstream-gaps/periodization-parameters.md`; checked against local references on 2026-07-24. No network retrieval in this task. |
-| <https://intervals.icu/api/v1/docs> | OpenAPI `Workout` schema and workout/event operations | The repository-held OpenAPI baseline describes `description` as a string and `workout_doc` as a generic object; it does not define a portable step field or control token for manual/press-lap behavior. | Local baseline `scripts/openapidiff/baseline/intervals-openapi.json`, revision `b61b6e6b431bb49473f5222cd761e29f68aa6892`, inspected 2026-07-24. The URL was not fetched during this task. |
+| <https://intervals.icu/api-docs.html> | API documentation landing page and linked workout/event operations | No current excerpt was available locally; the URL is referenced by existing repository evidence records. | Reference recorded in `docs/upstream-gaps/periodization-parameters.md`; URL recorded 2026-07-24; not fetched in this task. |
+| <https://intervals.icu/api/v1/docs> | `components.schemas.Workout.properties.description`, `components.schemas.Workout.properties.workout_doc`, and workout/event create/read operations | Local snapshot only: `description` is `{"type":"string"}` and `workout_doc` is `{"type":"object","additionalProperties":{"type":"object"}}`; neither local entry defines a press-lap field. | `scripts/openapidiff/baseline/intervals-openapi.json`, revision `b61b6e6b431bb49473f5222cd761e29f68aa6892`, inspected 2026-07-24; URL not fetched. |
 
-The source URLs alone are not evidence of a device capability. Any future
-re-check must record the retrieval date, relevant endpoint/schema path, and a
-sanitized response or documentation excerpt rather than treating an absent
-field in an old local snapshot as proof of upstream behavior.
+The local snapshot is implementation evidence, not current public-upstream
+proof. In particular, its missing field cannot establish that the live API
+supports or rejects press-lap control. The source URLs alone are not evidence
+of a device capability.
 
 ### Local implementation baseline (not upstream proof)
 
@@ -76,14 +78,17 @@ become a structured control merely because it appears beside a valid duration
 or target, and prose such as `Press lap when ready before the next interval`
 is not a verified instruction to a watch or head unit.
 
-Negative evidence is equally important: the public schema evidence does not
-name a press-lap/manual-lap field or a portable device-control token, and the
-available repository-held returned-document evidence contains no such control
-field or public round-trip example. A model-controlled invented JSON key must
-therefore fail strict structured input validation rather than be silently
-converted into a step or ordinary duration semantics. A prose fallback may be
-stored as prose only when the user explicitly wants a note; it must never be
-presented as device-compatible control.
+Negative evidence is equally important: the local schema snapshot and local
+WorkoutDoc types do not name a press-lap/manual-lap field or portable
+device-control token, while current public evidence was not available to
+confirm whether upstream has added one. The available repository-held
+returned-document evidence contains no such control field or public
+round-trip example; it is a local historical fixture, not a current upstream
+claim. A model-controlled invented JSON key must therefore fail strict
+structured input validation rather than be silently converted into a step or
+ordinary duration semantics. A prose fallback may be stored as prose only when
+the user explicitly wants a note; it must never be presented as
+device-compatible control.
 
 Garmin and Wahoo execution behavior is not established by the intervals.icu
 DSL. Device workout-upload capabilities, whether a device exposes a manual lap
