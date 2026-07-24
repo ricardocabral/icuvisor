@@ -920,8 +920,8 @@ func TestProtocolComputeZoneEnergyIsFullOnlyReadAnalyzer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("full ListTools() error = %v", err)
 	}
-	if len(full.Tools) != 68 {
-		t.Fatalf("full tools/list count = %d, want 68", len(full.Tools))
+	if len(full.Tools) != 69 {
+		t.Fatalf("full tools/list count = %d, want 69", len(full.Tools))
 	}
 	var zoneEnergy *sdkmcp.Tool
 	var createSportSettings *sdkmcp.Tool

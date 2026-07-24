@@ -207,11 +207,11 @@ func wantToolRegistered(mode safety.Mode, requirement tools.Requirement) bool {
 func expectedRegisteredCount(mode safety.Mode) int {
 	switch mode {
 	case safety.ModeSafe:
-		return 60
+		return 61
 	case safety.ModeFull:
-		return 68
+		return 69
 	default:
-		return 46
+		return 47
 	}
 }
 

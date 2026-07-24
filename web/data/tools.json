@@ -168,6 +168,14 @@
     "anchor": "compute_load_balance"
   },
   {
+    "name": "compute_training_monotony",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks for transparent daily training-load monotony across an inclusive athlete-local date window; returns the Foster-style descriptive statistic only when every expected get_training_summary date has exactly one valid raw training_load number.",
+    "anchor": "compute_training_monotony"
+  },
+  {
     "name": "compute_zone_energy",
     "group": "analyzers",
     "tier": "full",
