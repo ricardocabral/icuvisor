@@ -2759,6 +2759,16 @@
         "description": "Hard weekly time cap; infeasible load-derived hours warn instead of exceeding this cap."
       },
       {
+        "name": "sport_allocations",
+        "required": false,
+        "type": "array",
+        "description": "Optional explicit caller allocation. Omit for legacy sports context-only behavior; null and an empty array are invalid. Shares must total 100 within 0.000001 percentage points. No availability, priority, intensity, suitability, or calendar schedule is inferred.",
+        "items": {
+          "required": false,
+          "type": "object"
+        }
+      },
+      {
         "name": "sports",
         "required": false,
         "type": "array",

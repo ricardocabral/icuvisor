@@ -48,6 +48,41 @@
       "minimum": 0,
       "type": "number"
     },
+    "sport_allocations": {
+      "description": "Optional explicit caller allocation. Omit for legacy sports context-only behavior; null and an empty array are invalid. Shares must total 100 within 0.000001 percentage points. No availability, priority, intensity, suitability, or calendar schedule is inferred.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "load_share_pct": {
+            "description": "Caller-supplied share of each already-resolved weekly parent load; all shares must total 100 within 0.000001 percentage points.",
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "type": "number"
+          },
+          "sport": {
+            "description": "Named discipline; trimmed and lower-cased for output. Arbitrary names are accepted; no aliases are inferred.",
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "weekly_session_count": {
+            "description": "Caller-requested sessions per week for this discipline; a target count only, not a schedule.",
+            "maximum": 14,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sport",
+          "load_share_pct",
+          "weekly_session_count"
+        ],
+        "type": "object"
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "type": "array"
+    },
     "sports": {
       "description": "Caller-provided sport context echoed as assumptions only; no sport allocation is fetched or invented.",
       "items": {
