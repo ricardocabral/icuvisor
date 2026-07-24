@@ -56,6 +56,25 @@ func TestValidateWorkoutDescriptionOnlyMAmbiguityWarning(t *testing.T) {
 	}
 }
 
+func TestValidateWorkoutDescriptionWithMultipleBlocks(t *testing.T) {
+	t.Parallel()
+
+	description := "Warmup\n- 20m 60% 90-100rpm\n\nMain set 6x\n- 4m 100% 40-50rpm\n- 5m recovery at 40%\n\nCooldown\n- 20m 60% 90-100rpm"
+	resp := runValidateWorkout(t, mustMarshalArgs(t, map[string]any{"description": description}))
+	if !resp.Valid {
+		t.Fatalf("Valid = false; errors=%+v", resp.Errors)
+	}
+	if resp.CanonicalDSL != description {
+		t.Fatalf("CanonicalDSL = %q, want verbatim description %q", resp.CanonicalDSL, description)
+	}
+	if !resp.Stats.HasRepeats || resp.Stats.StructuredSteps != 3 {
+		t.Fatalf("Stats = %+v, want three steps including a repeat", resp.Stats)
+	}
+	if resp.Stats.EstimatedDurationSeconds == nil || *resp.Stats.EstimatedDurationSeconds != 5640 {
+		t.Fatalf("EstimatedDurationSeconds = %v, want 5640", resp.Stats.EstimatedDurationSeconds)
+	}
+}
+
 func TestValidateWorkoutStepsOnlyHappyPath(t *testing.T) {
 	t.Parallel()
 	payload := `{"workout_doc":{"steps":[{"description":"Warm up","duration":600,"power":{"value":60,"units":"PERCENT_FTP"}},{"reps":2,"steps":[{"duration":300,"power":{"min":95,"max":100,"units":"PERCENT_FTP"}},{"description":"Recovery","duration":120,"power":{"value":50,"units":"PERCENT_FTP"}}]}]}}`

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.3] - 2026-07-24
+
+### Fixed
+
+- `validate_workout` now accepts valid multi-block workout descriptions with headings or blank lines between structured step sections, including upstream-style unindented repeat children, while preserving description-only input verbatim.
+
 ### Changed
 
 - Raw activity stream samples now require `include_full:true` and can be uniformly bounded with `max_points`, preserving endpoint samples and reporting sampling provenance when a channel is reduced.
@@ -345,7 +351,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.5.2...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.5.3...HEAD
+[1.5.3]: https://github.com/ricardocabral/icuvisor/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/ricardocabral/icuvisor/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/ricardocabral/icuvisor/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/ricardocabral/icuvisor/compare/v1.4.0...v1.5.0

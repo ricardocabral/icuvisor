@@ -138,9 +138,28 @@ func parseSimpleLine(body string) (Step, error) {
 		return Step{}, fmt.Errorf("target missing after ramp")
 	}
 	if err := parsePrimaryTarget(&step, remaining); err != nil {
-		return Step{}, err
+		if !parseTrailingDescriptionTarget(&step, remaining) {
+			return Step{}, err
+		}
 	}
 	return step, nil
+}
+
+func parseTrailingDescriptionTarget(step *Step, tokens []string) bool {
+	for index := 1; index < len(tokens); index++ {
+		candidate := *step
+		if err := parsePrimaryTarget(&candidate, tokens[index:]); err != nil {
+			continue
+		}
+		labels := tokens[:index]
+		if len(labels) > 0 && strings.EqualFold(labels[len(labels)-1], "at") {
+			labels = labels[:len(labels)-1]
+		}
+		candidate.Description = strings.TrimSpace(strings.Join([]string{candidate.Description, strings.Join(labels, " ")}, " "))
+		*step = candidate
+		return true
+	}
+	return false
 }
 
 func parsePrimaryTarget(step *Step, tokens []string) error {

@@ -90,36 +90,50 @@ func ValidateDescription(description string) ValidationResult {
 	if len(stepBlocks) == 0 {
 		return result
 	}
-	if len(stepBlocks) > 1 {
-		first := stepBlocks[0]
-		line := first.startLine
-		result.Errors = append(result.Errors, Diagnostic{
-			Code:    "PARSE_ERROR",
-			Message: "structured workout step lines must form a single contiguous block; multiple blocks separated by prose are not supported by the intervals.icu DSL",
-			Line:    &line,
-		})
-		return result
-	}
+	for _, block := range stepBlocks {
+		doc, err := parseDescriptionStepBlock(block)
+		if err != nil {
+			line := block.startLine
+			result.Errors = append(result.Errors, Diagnostic{
+				Code:    "PARSE_ERROR",
+				Message: err.Error(),
+				Line:    &line,
+			})
+			continue
+		}
 
-	block := stepBlocks[0]
-	doc, err := Parse(block.text())
-	if err != nil {
-		startLine := block.startLine
-		result.Errors = append(result.Errors, Diagnostic{
-			Code:    "PARSE_ERROR",
-			Message: err.Error(),
-			Line:    &startLine,
-		})
-		return result
+		firstStepIndex := len(result.Doc.Steps)
+		result.Doc.Steps = append(result.Doc.Steps, doc.Steps...)
+		for index, step := range doc.Steps {
+			idx := firstStepIndex + index
+			collectStepDiagnostics(step, &idx, nil, &result)
+		}
+		collectMAmbiguity(block, &result)
 	}
-	result.Doc = doc
-
-	for index, step := range doc.Steps {
-		idx := index
-		collectStepDiagnostics(step, &idx, nil, &result)
-	}
-	collectMAmbiguity(block, &result)
 	return result
+}
+
+func parseDescriptionStepBlock(block stepBlock) (WorkoutDoc, error) {
+	doc, err := Parse(block.text())
+	if err == nil || len(block.lines) < 2 {
+		return doc, err
+	}
+
+	if !repeatHeaderRE.MatchString(strings.TrimSpace(block.lines[0])) {
+		return WorkoutDoc{}, err
+	}
+	for _, line := range block.lines[1:] {
+		if leadingDepth(line) != 0 || !strings.HasPrefix(strings.TrimSpace(line), "- ") {
+			return WorkoutDoc{}, err
+		}
+	}
+
+	normalized := make([]string, len(block.lines))
+	normalized[0] = block.lines[0]
+	for index, line := range block.lines[1:] {
+		normalized[index+1] = "  " + line
+	}
+	return Parse(strings.Join(normalized, "\n"))
 }
 
 // ValidateDoc validates a structured WorkoutDoc without any associated prose.

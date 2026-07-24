@@ -134,7 +134,9 @@ func validateWorkout(args validateWorkoutRequest) validateWorkoutResponse {
 	}
 	resp.Meta.StepsSentinelEmbedded = strings.Contains(prose, workoutdoc.StepsSentinel)
 
-	if len(resp.Errors) == 0 {
+	if len(resp.Errors) == 0 && args.WorkoutDoc == nil && args.Description != nil {
+		resp.CanonicalDSL = strings.ReplaceAll(*args.Description, "\r\n", "\n")
+	} else if len(resp.Errors) == 0 {
 		merged, err := workoutdoc.MergeDescription(prose, effectiveDoc)
 		if err != nil {
 			resp.Errors = append(resp.Errors, validateWorkoutDiagnostic{

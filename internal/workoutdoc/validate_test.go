@@ -121,14 +121,34 @@ func TestValidateDescriptionMalformedRepeatHeaders(t *testing.T) {
 	}
 }
 
-func TestValidateDescriptionMultipleStepBlocksReported(t *testing.T) {
+func TestValidateDescriptionParsesMultipleStepBlocks(t *testing.T) {
 	t.Parallel()
-	got := ValidateDescription("- 10m 60%\nProse interlude.\n- 20m 70%")
-	if len(got.Errors) == 0 {
-		t.Fatal("expected error for multi-block step regions, got none")
+	input := "Warmup\n- 20m 60% 90-100rpm\n\nMain set 6x\n- 4m 100% 40-50rpm\n- 5m recovery at 40%\n\nCooldown\n- 20m 60% 90-100rpm"
+	got := ValidateDescription(input)
+	if len(got.Errors) != 0 {
+		t.Fatalf("errors = %+v, want none", got.Errors)
 	}
-	if got.Errors[0].Code != "PARSE_ERROR" {
-		t.Fatalf("Error code = %q, want PARSE_ERROR", got.Errors[0].Code)
+	if len(got.Doc.Steps) != 3 {
+		t.Fatalf("Doc.Steps len = %d, want 3", len(got.Doc.Steps))
+	}
+	repeat := got.Doc.Steps[1]
+	if repeat.Reps != 6 || len(repeat.Steps) != 2 {
+		t.Fatalf("repeat = %#v, want six repetitions with two child steps", repeat)
+	}
+	if got.Doc.Steps[2].Duration != 20*60 {
+		t.Fatalf("cooldown = %#v, want 20-minute step", got.Doc.Steps[2])
+	}
+}
+
+func TestValidateDescriptionReportsMalformedLaterBlockLine(t *testing.T) {
+	t.Parallel()
+
+	got := ValidateDescription("- 10m 60%\nHeading\n- invalid step")
+	if len(got.Errors) != 1 {
+		t.Fatalf("errors = %+v, want one parse error", got.Errors)
+	}
+	if got.Errors[0].Code != "PARSE_ERROR" || got.Errors[0].Line == nil || *got.Errors[0].Line != 3 {
+		t.Fatalf("error = %+v, want PARSE_ERROR on line 3", got.Errors[0])
 	}
 }
 
