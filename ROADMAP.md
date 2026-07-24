@@ -76,6 +76,7 @@ Forum-derived analytics requests are prioritized by whether icuvisor already has
 
 ### v2.0 - Planning automation
 
+- The shipped `propose_annual_training_plan` supports explicit caller-supplied multisport allocation targets (including Swim) as read-only weekly load/hour/session-count rows. This does not infer availability, priority, intensity, training days, suitability, or workouts; the remaining v2.0 work below is the separate calendar plan-filler and validation surface.
 - `fill_calendar_from_library` ("Plan Filler"): propose workouts from an existing library folder over a date range using target weekly load/hours and weekday availability. Commit remains a separate explicit call. **Future-tool acceptance criteria (not shipped):** before the separate commit, validate each proposed schedule against structured constraints that keep requested session count distinct from athlete-local availability and independent slots; enforce per-session, daily, indoor, mode, sport, and remaining-week time/load caps; account for completed training and protected fixed commitments; and return deterministic violations plus reconciliation totals without silently redistributing deficits.
 - Training-plan editing workflows that preserve existing races, notes, unavailable blocks, and user-authored descriptions.
 - Workout-template curation: AI-generated and athlete-curated template sets built on top of the existing workout-library tools.
