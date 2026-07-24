@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -16,6 +17,7 @@ type toolFormulaGolden struct {
 	Polarization     toolPolarizationFormulaGolden `json:"polarization"`
 	VariabilityIndex toolVariabilityFormulaGolden  `json:"variability_index"`
 	ZScore           toolZScoreFormulaGolden       `json:"z_score"`
+	TrainingMonotony toolTrainingMonotonyGolden    `json:"training_load_monotony"`
 }
 
 type toolSegmentFormulaGolden struct {
@@ -45,6 +47,17 @@ type toolZScoreFormulaGolden struct {
 	ZScore       float64 `json:"z_score"`
 }
 
+type toolTrainingMonotonyGolden struct {
+	FormulaRef              string    `json:"formula_ref"`
+	Loads                   []float64 `json:"loads"`
+	Mean                    float64   `json:"mean"`
+	PopulationStdDev        float64   `json:"population_stddev"`
+	Monotony                float64   `json:"monotony"`
+	SerializedMean          float64   `json:"serialized_mean"`
+	SerializedPopulationStd float64   `json:"serialized_population_stddev"`
+	SerializedMonotony      float64   `json:"serialized_monotony"`
+}
+
 func loadToolFormulaGolden(t *testing.T) toolFormulaGolden {
 	t.Helper()
 	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "analysis", "formula_golden.json"))
@@ -56,6 +69,51 @@ func loadToolFormulaGolden(t *testing.T) toolFormulaGolden {
 		t.Fatalf("decode formula golden: %v", err)
 	}
 	return golden
+}
+
+func TestFormulaGoldenTrainingLoadMonotonyContract(t *testing.T) {
+	t.Parallel()
+	golden := loadToolFormulaGolden(t)
+	if golden.TrainingMonotony.FormulaRef != "icuvisor://analysis-formulas#training_load_monotony" || len(golden.TrainingMonotony.Loads) != 7 || golden.TrainingMonotony.Mean == 0 || golden.TrainingMonotony.PopulationStdDev == 0 || golden.TrainingMonotony.Monotony == 0 || golden.TrainingMonotony.SerializedMean != 28.5714 || golden.TrainingMonotony.SerializedPopulationStd != 29.966 || golden.TrainingMonotony.SerializedMonotony != 0.9535 {
+		t.Fatalf("training monotony tool golden = %#v, want pinned vector and four-decimal serialization", golden.TrainingMonotony)
+	}
+}
+
+func TestFormulaGoldenComputeTrainingMonotonyTool(t *testing.T) {
+	t.Parallel()
+	golden := loadToolFormulaGolden(t)
+	rows := make([]intervals.RawSummaryRow, 0, len(golden.TrainingMonotony.Loads))
+	for index, load := range golden.TrainingMonotony.Loads {
+		raw, err := json.Marshal(map[string]any{"date": fmt.Sprintf("2026-05-%02d", index+1), "training_load": load})
+		if err != nil {
+			t.Fatalf("marshal monotony row: %v", err)
+		}
+		var object map[string]any
+		if err := json.Unmarshal(raw, &object); err != nil {
+			t.Fatalf("decode monotony row: %v", err)
+		}
+		rows = append(rows, intervals.RawSummaryRow{Raw: object, RawJSON: raw})
+	}
+	tool := newComputeTrainingMonotonyTool(&monotonyTestClient{rows: rows}, "test", false)
+	result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"start_date":"2026-05-01","end_date":"2026-05-07"}`)})
+	if err != nil {
+		t.Fatalf("monotony handler error: %v", err)
+	}
+	payload := resultMap(t, result)
+	body := payload["result"].(map[string]any)
+	meta := payload["_meta"].(map[string]any)
+	assertToolGoldenFloat(t, "training monotony mean", body["mean_daily_load"].(float64), golden.TrainingMonotony.SerializedMean, 1e-12)
+	assertToolGoldenFloat(t, "training monotony population sd", body["standard_deviation"].(float64), golden.TrainingMonotony.SerializedPopulationStd, 1e-12)
+	assertToolGoldenFloat(t, "training monotony", body["monotony"].(float64), golden.TrainingMonotony.SerializedMonotony, 1e-12)
+	if body["status"] != "ok" || meta["formula_ref"] != golden.TrainingMonotony.FormulaRef || meta["method"] != "foster_training_load_monotony" || meta["missing_action"] != "refuse" || meta["insufficient_sample"] != false {
+		t.Fatalf("monotony body/meta = %#v/%#v", body, meta)
+	}
+	if _, ok := body["reason"]; ok {
+		t.Fatalf("successful monotony result unexpectedly has reason: %#v", body)
+	}
+	if sourceTools := meta["source_tools"].([]any); len(sourceTools) != 1 || sourceTools[0] != "get_training_summary" {
+		t.Fatalf("monotony source tools = %#v", meta["source_tools"])
+	}
 }
 
 func TestFormulaGoldenComputeActivitySegmentStatsTool(t *testing.T) {

@@ -12,7 +12,7 @@ import (
 func TestAnalysisFormulasMarkdownGolden(t *testing.T) {
 	t.Parallel()
 
-	const wantSHA256 = "1d7aa6e75501914a935f7c3d2f1c15e94d306e170c7ac23f4a3deda66be9295c"
+	const wantSHA256 = "91b696af708deb80af013180acfd3cdab82d8e262a601da44f6340d9638ffd35"
 
 	got := AnalysisFormulasMarkdown()
 	want, err := os.ReadFile("testdata/analysis_formulas.md")
@@ -84,6 +84,12 @@ func TestAnalysisFormulasMarkdownPinsRequiredFormulaRefs(t *testing.T) {
 			formula:  "work_i = power_i * delta_t_i",
 			boundary: "final zone open-ended and an explicit below-zone bucket `[0, first_boundary)`",
 			citation: "BIPM",
+		},
+		{
+			ref:      AnalysisFormulaRefTrainingLoadMonotony,
+			formula:  "mean(load_i) / SD_population(load_i)",
+			boundary: "missing, duplicate, invalid, out-of-window, non-object, malformed, or negative coverage",
+			citation: "Foster C",
 		},
 	}
 	for _, check := range checks {

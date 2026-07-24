@@ -47,5 +47,16 @@
     "sample_stddev": 7.071068,
     "z_score": 2.12132,
     "zero_variance_status": "insufficient_variance"
+  },
+  "training_load_monotony": {
+    "formula_ref": "icuvisor://analysis-formulas#training_load_monotony",
+    "loads": [0, 40, 60, 0, 80, 20, 0],
+    "mean": 28.571428571428573,
+    "population_stddev": 29.965967090575756,
+    "monotony": 0.9534625892455925,
+    "serialized_mean": 28.5714,
+    "serialized_population_stddev": 29.966,
+    "serialized_monotony": 0.9535,
+    "zero_variance": false
   }
 }

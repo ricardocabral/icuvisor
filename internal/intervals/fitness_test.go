@@ -195,3 +195,23 @@ func assertQueryParams(t *testing.T, r *http.Request, want map[string]string, ab
 		}
 	}
 }
+
+func TestListAthleteSummaryRawPreservesElementsAndDecodeMarkers(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[{"date":"2026-05-01","training_load":0,"count":"optional-type-error"},{"date":"2026-05-02","training_load":12.5},null]`))
+	}))
+	defer server.Close()
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	rows, err := client.ListAthleteSummaryRaw(context.Background(), AthleteSummaryParams{Start: "2026-05-01", End: "2026-05-02"})
+	if err != nil {
+		t.Fatalf("ListAthleteSummaryRaw() error = %v", err)
+	}
+	if len(rows) != 3 || rows[0].Raw["training_load"] != float64(0) || string(rows[1].RawJSON) != `{"date":"2026-05-02","training_load":12.5}` {
+		t.Fatalf("raw rows = %#v", rows)
+	}
+	if rows[0].DecodeError == "" || rows[1].DecodeError == "" || rows[2].DecodeError == "" {
+		t.Fatalf("decode markers = %#v, want markers preserved for typed-field errors", rows)
+	}
+}

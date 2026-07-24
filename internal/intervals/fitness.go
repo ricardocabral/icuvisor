@@ -87,6 +87,46 @@ func (s *CategorySummary) UnmarshalJSON(data []byte) error {
 
 // ListAthleteSummary retrieves daily athlete summary rows for the configured athlete.
 func (c *Client) ListAthleteSummary(ctx context.Context, params AthleteSummaryParams) ([]SummaryWithCats, error) {
+	query := athleteSummaryQuery(params)
+	var rows []SummaryWithCats
+	if err := c.doJSONQuery(ctx, &rows, query, "athlete", c.athleteID, "athlete-summary.json"); err != nil {
+		return nil, fmt.Errorf("listing athlete summary: %w", err)
+	}
+	return rows, nil
+}
+
+// RawSummaryRow preserves one athlete-summary array element for strict analyzer coverage checks.
+type RawSummaryRow struct {
+	Raw         map[string]any
+	RawJSON     json.RawMessage
+	DecodeError string
+}
+
+// ListAthleteSummaryRaw retrieves athlete summary elements without applying typed-field fallback.
+func (c *Client) ListAthleteSummaryRaw(ctx context.Context, params AthleteSummaryParams) ([]RawSummaryRow, error) {
+	var elements []json.RawMessage
+	if err := c.doJSONQuery(ctx, &elements, athleteSummaryQuery(params), "athlete", c.athleteID, "athlete-summary.json"); err != nil {
+		return nil, fmt.Errorf("listing raw athlete summary: %w", err)
+	}
+	rows := make([]RawSummaryRow, 0, len(elements))
+	for _, element := range elements {
+		row := RawSummaryRow{RawJSON: append(json.RawMessage(nil), element...)}
+		if err := json.Unmarshal(element, &row.Raw); err != nil {
+			row.DecodeError = err.Error()
+		} else if row.Raw == nil {
+			row.DecodeError = "summary row is not a JSON object"
+		} else {
+			var typed SummaryWithCats
+			if err := json.Unmarshal(element, &typed); err != nil {
+				row.DecodeError = err.Error()
+			}
+		}
+		rows = append(rows, row)
+	}
+	return rows, nil
+}
+
+func athleteSummaryQuery(params AthleteSummaryParams) url.Values {
 	query := url.Values{}
 	if start := strings.TrimSpace(params.Start); start != "" {
 		query.Set("start", start)
@@ -94,11 +134,7 @@ func (c *Client) ListAthleteSummary(ctx context.Context, params AthleteSummaryPa
 	if end := strings.TrimSpace(params.End); end != "" {
 		query.Set("end", end)
 	}
-	var rows []SummaryWithCats
-	if err := c.doJSONQuery(ctx, &rows, query, "athlete", c.athleteID, "athlete-summary.json"); err != nil {
-		return nil, fmt.Errorf("listing athlete summary: %w", err)
-	}
-	return rows, nil
+	return query
 }
 
 // CurveParams contains query parameters for athlete curve endpoints.

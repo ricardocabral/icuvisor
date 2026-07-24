@@ -71,6 +71,7 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 		computeLoadBalanceName:          safety.ToolsetFull,
 		computeBaselineName:             safety.ToolsetCore,
 		computeComplianceRateName:       safety.ToolsetFull,
+		computeTrainingMonotonyName:     safety.ToolsetFull,
 		getPlanningContextName:          safety.ToolsetFull,
 		getAnnualTrainingPlanName:       safety.ToolsetFull,
 		proposeAnnualTrainingPlanName:   safety.ToolsetFull,

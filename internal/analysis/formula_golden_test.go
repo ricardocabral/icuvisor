@@ -18,6 +18,7 @@ type formulaGolden struct {
 	EfficiencyFactor formulaStatusGolden       `json:"efficiency_factor"`
 	VariabilityIndex variabilityFormulaGolden  `json:"variability_index"`
 	ZScore           zScoreFormulaGolden       `json:"z_score"`
+	TrainingMonotony trainingMonotonyGolden    `json:"training_load_monotony"`
 }
 
 type segmentFormulaGolden struct {
@@ -66,6 +67,18 @@ type zScoreFormulaGolden struct {
 	SampleStdDev       float64   `json:"sample_stddev"`
 	ZScore             float64   `json:"z_score"`
 	ZeroVarianceStatus string    `json:"zero_variance_status"`
+}
+
+type trainingMonotonyGolden struct {
+	FormulaRef              string    `json:"formula_ref"`
+	Loads                   []float64 `json:"loads"`
+	Mean                    float64   `json:"mean"`
+	PopulationStdDev        float64   `json:"population_stddev"`
+	Monotony                float64   `json:"monotony"`
+	SerializedMean          float64   `json:"serialized_mean"`
+	SerializedPopulationStd float64   `json:"serialized_population_stddev"`
+	SerializedMonotony      float64   `json:"serialized_monotony"`
+	ZeroVariance            bool      `json:"zero_variance"`
 }
 
 func loadFormulaGolden(t *testing.T) formulaGolden {
@@ -176,6 +189,24 @@ func TestFormulaGoldenPolarization(t *testing.T) {
 	highZero := ComputeZoneBalance([]float64{700, 100, 100, 0})
 	if highZero.State != golden.Polarization.HighZeroState || highZero.Index != nil {
 		t.Fatalf("high-zero polarization = %#v, want state %s and nil index", highZero, golden.Polarization.HighZeroState)
+	}
+}
+
+func TestFormulaGoldenTrainingLoadMonotony(t *testing.T) {
+	t.Parallel()
+	golden := loadFormulaGolden(t)
+	got, err := ComputeTrainingLoadMonotony(golden.TrainingMonotony.Loads)
+	if err != nil {
+		t.Fatalf("training monotony golden computation error: %v", err)
+	}
+	assertGoldenFloat(t, "training_load_monotony.mean", got.Mean, golden.TrainingMonotony.Mean, 1e-12)
+	assertGoldenFloat(t, "training_load_monotony.population_stddev", got.PopulationStandardDev, golden.TrainingMonotony.PopulationStdDev, 1e-12)
+	assertGoldenFloat(t, "training_load_monotony.monotony", got.Monotony, golden.TrainingMonotony.Monotony, 1e-12)
+	assertGoldenFloat(t, "training_load_monotony.serialized_mean", math.Round(got.Mean*10000)/10000, golden.TrainingMonotony.SerializedMean, 1e-12)
+	assertGoldenFloat(t, "training_load_monotony.serialized_population_stddev", math.Round(got.PopulationStandardDev*10000)/10000, golden.TrainingMonotony.SerializedPopulationStd, 1e-12)
+	assertGoldenFloat(t, "training_load_monotony.serialized_monotony", math.Round(got.Monotony*10000)/10000, golden.TrainingMonotony.SerializedMonotony, 1e-12)
+	if got.ZeroVariance != golden.TrainingMonotony.ZeroVariance || resources.AnalysisFormulaRefTrainingLoadMonotony != golden.TrainingMonotony.FormulaRef {
+		t.Fatalf("training monotony result/ref = %#v/%s, want zero_variance=%v/ref=%s", got, resources.AnalysisFormulaRefTrainingLoadMonotony, golden.TrainingMonotony.ZeroVariance, golden.TrainingMonotony.FormulaRef)
 	}
 }
 
