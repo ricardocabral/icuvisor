@@ -4,7 +4,7 @@ description: "Plan the final days before a goal event — load, intensity, and t
 weight: 80
 ---
 
-The taper is where good fitness is either sharpened or wasted. This recipe makes the assistant ground the taper in your real fitness trajectory and race-week calendar, then hand you a day-by-day outline — without touching your events. For a Claude Project dedicated to race prep, add the [race-week Project instruction block]({{< relref "../guides/claude-project-instructions#optional-block-race-week-taper" >}}) so the no-write and timezone rules are always present.
+This recipe makes the assistant ground a race-week taper scenario in your real fitness trajectory and calendar, then hand you a day-by-day outline — without touching your events. Any reduced load or projected TSB is a modelled scenario, not a training prescription, intensity-preservation claim, or suitability/medical judgment. For a Claude Project dedicated to race prep, add the [race-week Project instruction block]({{< relref "../guides/claude-project-instructions#optional-block-race-week-taper" >}}) so the no-write and timezone rules are always present.
 
 ## When to use this
 
@@ -78,7 +78,7 @@ myself. Do not invent fitness numbers; if the window is short on data, say so.
 ## Why this prompt works
 
 - **Date-anchored.** `resolve_calendar_dates` prevents stale-chat, UTC, or client-time date math from shifting the taper to the wrong day.
-- **Projection-anchored.** `get_fitness_projection` turns "rest up" into a specific load percentage that hits a TSB number — testable, not vibes.
+- **Projection-anchored.** `get_fitness_projection` shows the deterministic outcome of a supplied load scenario; it does not select a percentage or establish that the taper is suitable.
 - **No-write rule.** Race week is the worst time for an accidental calendar edit. Explicitly forbidding writes keeps the assistant advisory.
 - **Wellness watch.** Adding the freshness signals to monitor makes the taper adaptive instead of a fixed script.
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added caller-selected, read-only taper scenarios to `propose_annual_training_plan`, with bounded duration/load inputs, resolved assumption metadata, and projection-bridge reconciliation.
+
 ### Fixed
 
 - `validate_workout` now surfaces the rejected unknown structured field in its user-facing diagnostic, preventing invented device-control fields such as press-lap controls from being mistaken for valid workout steps.
