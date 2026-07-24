@@ -1,11 +1,13 @@
 package tools
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"time"
 
@@ -18,39 +20,65 @@ const (
 	invalidSeasonPlanProposalMessage     = "invalid propose_annual_training_plan arguments; provide goal_date, optional future-Monday start_date, bounded load/hour targets, and a horizon of at most 53 weeks"
 	fetchSeasonPlanProposalMessage       = "could not resolve athlete profile/timezone for season-plan proposal"
 
-	seasonPlanProposalMethod        = "deterministic_read_only_season_plan_proposal"
-	seasonPlanProposalSchemaVersion = "season_plan_proposal.v1"
-	seasonPlanMaxWeeks              = 53
-	seasonPlanLoadPerHour           = 50.0
-	seasonPlanDefaultWeeklyLoad     = 300.0
-	seasonPlanDefaultTargetFactor   = 1.15
-	seasonPlanRecoveryCadenceWeeks  = 4
-	seasonPlanRecoveryLoadPct       = 60.0
-	seasonPlanDefaultTaperWeeks     = 1
-	seasonPlanMinTaperWeeks         = 1
-	seasonPlanMaxTaperWeeks         = 3
-	seasonPlanDefaultTaperLoadPct   = 60.0
-	seasonPlanMinTaperLoadPct       = 1.0
-	seasonPlanMaxTaperLoadPct       = 100.0
+	seasonPlanProposalMethod           = "deterministic_read_only_season_plan_proposal"
+	seasonPlanProposalSchemaVersion    = "season_plan_proposal.v1"
+	seasonPlanMaxWeeks                 = 53
+	seasonPlanLoadPerHour              = 50.0
+	seasonPlanDefaultWeeklyLoad        = 300.0
+	seasonPlanDefaultTargetFactor      = 1.15
+	seasonPlanRecoveryCadenceWeeks     = 4
+	seasonPlanRecoveryLoadPct          = 60.0
+	seasonPlanDefaultTaperWeeks        = 1
+	seasonPlanMinTaperWeeks            = 1
+	seasonPlanMaxTaperWeeks            = 3
+	seasonPlanDefaultTaperLoadPct      = 60.0
+	seasonPlanMinTaperLoadPct          = 1.0
+	seasonPlanMaxTaperLoadPct          = 100.0
+	seasonPlanAllocationMaxEntries     = 12
+	seasonPlanAllocationMaxSessions    = 14
+	seasonPlanAllocationShareTolerance = 0.000001
+	seasonPlanAllocationInputMessage   = "sport_allocations were provided by the caller and shaped into deterministic weekly targets; no availability, priority, intensity, suitability, or calendar schedule was inferred"
 )
 
 var allowedSeasonGoalTypes = map[string]struct{}{"race": {}, "event": {}, "season_goal": {}, "other": {}}
 
 type seasonPlanProposalRequest struct {
-	StartDate          string   `json:"start_date,omitempty"`
-	GoalDate           string   `json:"goal_date"`
-	GoalName           string   `json:"goal_name,omitempty"`
-	GoalType           string   `json:"goal_type,omitempty"`
-	TargetWeeklyLoad   *float64 `json:"target_weekly_load,omitempty"`
-	CurrentWeeklyLoad  *float64 `json:"current_weekly_load,omitempty"`
-	TargetHoursPerWeek *float64 `json:"target_hours_per_week,omitempty"`
-	CurrentWeeklyHours *float64 `json:"current_weekly_hours,omitempty"`
-	MaxHoursPerWeek    *float64 `json:"max_hours_per_week,omitempty"`
-	TaperWeeks         *int     `json:"taper_weeks,omitempty"`
-	TaperTargetLoadPct *float64 `json:"taper_target_load_pct,omitempty"`
-	Sports             []string `json:"sports,omitempty"`
-	StrengthContext    string   `json:"strength_context,omitempty"`
-	IncludeFull        bool     `json:"include_full,omitempty"`
+	StartDate          string          `json:"start_date,omitempty"`
+	GoalDate           string          `json:"goal_date"`
+	GoalName           string          `json:"goal_name,omitempty"`
+	GoalType           string          `json:"goal_type,omitempty"`
+	TargetWeeklyLoad   *float64        `json:"target_weekly_load,omitempty"`
+	CurrentWeeklyLoad  *float64        `json:"current_weekly_load,omitempty"`
+	TargetHoursPerWeek *float64        `json:"target_hours_per_week,omitempty"`
+	CurrentWeeklyHours *float64        `json:"current_weekly_hours,omitempty"`
+	MaxHoursPerWeek    *float64        `json:"max_hours_per_week,omitempty"`
+	TaperWeeks         *int            `json:"taper_weeks,omitempty"`
+	TaperTargetLoadPct *float64        `json:"taper_target_load_pct,omitempty"`
+	Sports             []string        `json:"sports,omitempty"`
+	SportAllocations   json.RawMessage `json:"sport_allocations,omitempty"`
+	StrengthContext    string          `json:"strength_context,omitempty"`
+	IncludeFull        bool            `json:"include_full,omitempty"`
+
+	sportAllocations []seasonPlanSportAllocation
+}
+
+type seasonPlanSportAllocationInput struct {
+	Sport              *string  `json:"sport"`
+	LoadSharePct       *float64 `json:"load_share_pct"`
+	WeeklySessionCount *int     `json:"weekly_session_count"`
+}
+
+type seasonPlanSportAllocation struct {
+	Sport              string
+	LoadSharePct       float64
+	WeeklySessionCount int
+}
+
+type seasonPlanProposalSportTarget struct {
+	Sport                   string  `json:"sport"`
+	AllocatedLoad           float64 `json:"allocated_load"`
+	AllocatedHours          float64 `json:"allocated_hours"`
+	RequestedWeeklySessions int     `json:"requested_weekly_session_count"`
 }
 
 type seasonPlanProposalResponse struct {
@@ -89,17 +117,18 @@ type seasonPlanProposalPhase struct {
 }
 
 type seasonPlanProposalWeeklyTarget struct {
-	WeekStartDate  string  `json:"week_start_date"`
-	WeekEndDate    string  `json:"week_end_date"`
-	WeekIndex      int     `json:"week_index"`
-	PhaseID        string  `json:"phase_id"`
-	PhaseType      string  `json:"phase_type"`
-	TrainingLoad   float64 `json:"training_load"`
-	TargetHours    float64 `json:"target_hours"`
-	IsRecoveryWeek bool    `json:"is_recovery_week"`
-	IsTaperWeek    bool    `json:"is_taper_week"`
-	LoadSource     string  `json:"load_source"`
-	HoursSource    string  `json:"hours_source"`
+	WeekStartDate  string                          `json:"week_start_date"`
+	WeekEndDate    string                          `json:"week_end_date"`
+	WeekIndex      int                             `json:"week_index"`
+	PhaseID        string                          `json:"phase_id"`
+	PhaseType      string                          `json:"phase_type"`
+	TrainingLoad   float64                         `json:"training_load"`
+	TargetHours    float64                         `json:"target_hours"`
+	IsRecoveryWeek bool                            `json:"is_recovery_week"`
+	IsTaperWeek    bool                            `json:"is_taper_week"`
+	LoadSource     string                          `json:"load_source"`
+	HoursSource    string                          `json:"hours_source"`
+	SportTargets   []seasonPlanProposalSportTarget `json:"sport_targets,omitempty"`
 }
 
 type seasonPlanProposalRecoveryWeek struct {
@@ -245,6 +274,52 @@ func decodeSeasonPlanProposalRequest(raw json.RawMessage) (seasonPlanProposalReq
 	args.GoalName = strings.TrimSpace(args.GoalName)
 	args.GoalType = strings.TrimSpace(args.GoalType)
 	args.StrengthContext = strings.TrimSpace(args.StrengthContext)
+	if len(args.SportAllocations) > 0 {
+		if strings.TrimSpace(string(args.SportAllocations)) == "null" {
+			return args, errors.New("sport_allocations must be an array when provided")
+		}
+		var inputs []seasonPlanSportAllocationInput
+		decoder := json.NewDecoder(bytes.NewReader(args.SportAllocations))
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&inputs); err != nil {
+			return args, fmt.Errorf("sport_allocations must be an array of strict objects: %w", err)
+		}
+		if len(inputs) == 0 {
+			return args, errors.New("sport_allocations must include at least one entry")
+		}
+		if len(inputs) > seasonPlanAllocationMaxEntries {
+			return args, fmt.Errorf("sport_allocations must include at most %d entries", seasonPlanAllocationMaxEntries)
+		}
+		args.sportAllocations = make([]seasonPlanSportAllocation, 0, len(inputs))
+		seenSports := make(map[string]struct{}, len(inputs))
+		shareTotal := 0.0
+		for i, input := range inputs {
+			if input.Sport == nil || input.LoadSharePct == nil || input.WeeklySessionCount == nil {
+				return args, fmt.Errorf("sport_allocations[%d] requires sport, load_share_pct, and weekly_session_count", i)
+			}
+			sport := strings.ToLower(strings.TrimSpace(*input.Sport))
+			if sport == "" || len(sport) > 40 {
+				return args, fmt.Errorf("sport_allocations[%d].sport must be non-empty and at most 40 characters", i)
+			}
+			if _, exists := seenSports[sport]; exists {
+				return args, fmt.Errorf("sport_allocations contains duplicate sport %q after normalization", sport)
+			}
+			seenSports[sport] = struct{}{}
+			share := *input.LoadSharePct
+			if math.IsNaN(share) || math.IsInf(share, 0) || share <= 0 || share > 100 {
+				return args, fmt.Errorf("sport_allocations[%d].load_share_pct must be finite and greater than 0 through 100", i)
+			}
+			sessions := *input.WeeklySessionCount
+			if sessions < 0 || sessions > seasonPlanAllocationMaxSessions {
+				return args, fmt.Errorf("sport_allocations[%d].weekly_session_count must be between 0 and %d", i, seasonPlanAllocationMaxSessions)
+			}
+			shareTotal += share
+			args.sportAllocations = append(args.sportAllocations, seasonPlanSportAllocation{Sport: sport, LoadSharePct: share, WeeklySessionCount: sessions})
+		}
+		if math.Abs(shareTotal-100) > seasonPlanAllocationShareTolerance {
+			return args, fmt.Errorf("sport_allocations load_share_pct values must total 100 within %.6f percentage points", seasonPlanAllocationShareTolerance)
+		}
+	}
 	if args.GoalDate == "" || !validDate(args.GoalDate) {
 		return args, errors.New("goal_date must be YYYY-MM-DD")
 	}
@@ -420,6 +495,11 @@ func buildSeasonPlanProposal(args seasonPlanProposalRequest, resolved seasonPlan
 	totalWeeks := int(resolved.goalWeekStart.Sub(resolved.startDate).Hours()/24)/7 + 1
 	phases := allocateSeasonPlanPhases(totalWeeks, resolved.startDate, resolved.taperWeeks)
 	weeklyTargets, recoveryWeeks := buildSeasonPlanWeeklyTargets(phases, resolved, totalWeeks)
+	if len(args.sportAllocations) > 0 {
+		for i := range weeklyTargets {
+			weeklyTargets[i].SportTargets = allocateSeasonPlanSportTargets(weeklyTargets[i].TrainingLoad, weeklyTargets[i].TargetHours, args.sportAllocations)
+		}
+	}
 	projectionTargets := make([]seasonPlanProposalProjectionWeeklyTarget, 0, len(weeklyTargets))
 	for _, target := range weeklyTargets {
 		projectionTargets = append(projectionTargets, seasonPlanProposalProjectionWeeklyTarget{WeekStartDate: target.WeekStartDate, TrainingLoad: target.TrainingLoad})
@@ -430,12 +510,19 @@ func buildSeasonPlanProposal(args seasonPlanProposalRequest, resolved seasonPlan
 	if len(args.Sports) > 0 {
 		assumptions = append(assumptions, seasonPlanProposalNotice{Code: "sports_context_input_only", Message: "sports were provided by the caller and were not fetched or allocated from upstream data", Field: "sports", Value: args.Sports})
 	}
+	if len(args.sportAllocations) > 0 {
+		allocationValue := make([]map[string]any, 0, len(args.sportAllocations))
+		for _, allocation := range args.sportAllocations {
+			allocationValue = append(allocationValue, map[string]any{"sport": allocation.Sport, "load_share_pct": allocation.LoadSharePct, "weekly_session_count": allocation.WeeklySessionCount})
+		}
+		assumptions = append(assumptions, seasonPlanProposalNotice{Code: "sport_allocations_input_only", Message: seasonPlanAllocationInputMessage, Field: "sport_allocations", Value: allocationValue})
+	}
 	if args.StrengthContext != "" {
 		assumptions = append(assumptions, seasonPlanProposalNotice{Code: "strength_context_input_only", Message: "strength context was provided by the caller and is not first-class upstream strength-set data", Field: "strength_context", Value: args.StrengthContext})
 	}
 	warnings := append([]seasonPlanProposalNotice{}, resolved.warnings...)
 	warnings = append(warnings, seasonPlanProposalNotice{Code: "missing_power_curve_profile", Message: "power curve, CTL history, and athlete planning parameters were not fetched; load/hour conversions use explicit assumptions"})
-	if len(args.Sports) > 1 {
+	if len(args.Sports) > 1 && len(args.sportAllocations) == 0 {
 		warnings = append(warnings, seasonPlanProposalNotice{Code: "multi_sport_not_allocated", Message: "multi-sport context is echoed as an assumption; weekly targets are not split by sport", Field: "sports", Value: args.Sports})
 	}
 	if args.StrengthContext != "" {
@@ -558,6 +645,56 @@ func buildSeasonPlanWeeklyTargets(phases []seasonPlanProposalPhase, resolved sea
 	return weeklyTargets, recoveryWeeks
 }
 
+func allocateSeasonPlanSportTargets(parentLoad, parentHours float64, allocations []seasonPlanSportAllocation) []seasonPlanProposalSportTarget {
+	loadUnits := allocateSeasonPlanUnits(parentLoad, 10, allocations)
+	hourUnits := allocateSeasonPlanUnits(parentHours, 100, allocations)
+	targets := make([]seasonPlanProposalSportTarget, len(allocations))
+	for i, allocation := range allocations {
+		targets[i] = seasonPlanProposalSportTarget{Sport: allocation.Sport, AllocatedLoad: float64(loadUnits[i]) / 10, AllocatedHours: float64(hourUnits[i]) / 100, RequestedWeeklySessions: allocation.WeeklySessionCount}
+	}
+	return targets
+}
+
+func allocateSeasonPlanUnits(parentTotal float64, scale int, allocations []seasonPlanSportAllocation) []int {
+	units := int(math.Round(parentTotal * float64(scale)))
+	if units <= 0 {
+		return make([]int, len(allocations))
+	}
+	allocated := make([]int, len(allocations))
+	remainders := make([]float64, len(allocations))
+	for i, allocation := range allocations {
+		ideal := float64(units) * allocation.LoadSharePct / 100
+		allocated[i] = int(math.Floor(ideal))
+		remainders[i] = ideal - float64(allocated[i])
+	}
+	remaining := units
+	for _, value := range allocated {
+		remaining -= value
+	}
+	order := make([]int, len(allocations))
+	for i := range order {
+		order[i] = i
+	}
+	if remaining < 0 {
+		sort.SliceStable(order, func(i, j int) bool { return remainders[order[i]] < remainders[order[j]] })
+		for _, index := range order {
+			if remaining == 0 {
+				break
+			}
+			if allocated[index] > 0 {
+				allocated[index]--
+				remaining++
+			}
+		}
+	} else {
+		sort.SliceStable(order, func(i, j int) bool { return remainders[order[i]] > remainders[order[j]] })
+		for i := 0; i < remaining; i++ {
+			allocated[order[i%len(order)]]++
+		}
+	}
+	return allocated
+}
+
 func interpolate(start, end float64, oneBasedIndex, totalWeeks int) float64 {
 	if totalWeeks <= 1 {
 		return end
@@ -636,6 +773,7 @@ func seasonPlanProposalInputSchema() map[string]any {
 			"taper_weeks":           map[string]any{"type": "integer", "minimum": seasonPlanMinTaperWeeks, "maximum": seasonPlanMaxTaperWeeks, "default": seasonPlanDefaultTaperWeeks, "description": "Optional number of final contiguous taper weeks to model; bounded 1-3 and clamped to a shorter proposal horizon. This changes load scenario only, not intensity or calendar data."},
 			"taper_target_load_pct": map[string]any{"type": "number", "minimum": seasonPlanMinTaperLoadPct, "maximum": seasonPlanMaxTaperLoadPct, "default": seasonPlanDefaultTaperLoadPct, "description": "Optional taper weekly load as a percentage of target_weekly_load, bounded 1-100. This is a caller-selected deterministic scenario, not a suitability or physiology recommendation."},
 			"sports":                map[string]any{"type": "array", "maxItems": 12, "items": map[string]any{"type": "string", "maxLength": 40}, "description": "Caller-provided sport context echoed as assumptions only; no sport allocation is fetched or invented."},
+			"sport_allocations":     map[string]any{"type": "array", "minItems": 1, "maxItems": seasonPlanAllocationMaxEntries, "description": "Optional explicit caller allocation. Omit for legacy sports context-only behavior; null and an empty array are invalid. Shares must total 100 within 0.000001 percentage points. No availability, priority, intensity, suitability, or calendar schedule is inferred.", "items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"sport", "load_share_pct", "weekly_session_count"}, "properties": map[string]any{"sport": map[string]any{"type": "string", "minLength": 1, "maxLength": 40, "description": "Named discipline; trimmed and lower-cased for output. Arbitrary names are accepted; no aliases are inferred."}, "load_share_pct": map[string]any{"type": "number", "exclusiveMinimum": 0, "maximum": 100, "description": "Caller-supplied share of each already-resolved weekly parent load; all shares must total 100 within 0.000001 percentage points."}, "weekly_session_count": map[string]any{"type": "integer", "minimum": 0, "maximum": seasonPlanAllocationMaxSessions, "description": "Caller-requested sessions per week for this discipline; a target count only, not a schedule."}}}},
 			"strength_context":      map[string]any{"type": "string", "maxLength": 500, "description": "Free-form caller-provided strength context echoed as an assumption; not first-class upstream strength data."},
 			"include_full":          map[string]any{"type": "boolean", "default": false, "description": "When true, include all proposal rows after normal response shaping."},
 		},
@@ -643,5 +781,5 @@ func seasonPlanProposalInputSchema() map[string]any {
 }
 
 func seasonPlanProposalOutputSchema() map[string]any {
-	return genericOutputSchema("Read-only deterministic season-plan proposal with phases, weekly_targets, recovery_weeks, race_anchors, assumptions, warnings, and _meta.projection_bridge.weekly_plan_targets for get_fitness_projection.")
+	return genericOutputSchema("Read-only deterministic season-plan proposal with phases, weekly_targets (including optional sport_targets allocated from caller shares), recovery_weeks, race_anchors, assumptions, warnings, and _meta.projection_bridge.weekly_plan_targets for get_fitness_projection. Sport targets are allocation targets only; no workouts or calendar sessions are scheduled.")
 }
