@@ -26,6 +26,12 @@ const (
 	seasonPlanDefaultTargetFactor   = 1.15
 	seasonPlanRecoveryCadenceWeeks  = 4
 	seasonPlanRecoveryLoadPct       = 60.0
+	seasonPlanDefaultTaperWeeks     = 1
+	seasonPlanMinTaperWeeks         = 1
+	seasonPlanMaxTaperWeeks         = 3
+	seasonPlanDefaultTaperLoadPct   = 60.0
+	seasonPlanMinTaperLoadPct       = 1.0
+	seasonPlanMaxTaperLoadPct       = 100.0
 )
 
 var allowedSeasonGoalTypes = map[string]struct{}{"race": {}, "event": {}, "season_goal": {}, "other": {}}
@@ -40,6 +46,8 @@ type seasonPlanProposalRequest struct {
 	TargetHoursPerWeek *float64 `json:"target_hours_per_week,omitempty"`
 	CurrentWeeklyHours *float64 `json:"current_weekly_hours,omitempty"`
 	MaxHoursPerWeek    *float64 `json:"max_hours_per_week,omitempty"`
+	TaperWeeks         *int     `json:"taper_weeks,omitempty"`
+	TaperTargetLoadPct *float64 `json:"taper_target_load_pct,omitempty"`
 	Sports             []string `json:"sports,omitempty"`
 	StrengthContext    string   `json:"strength_context,omitempty"`
 	IncludeFull        bool     `json:"include_full,omitempty"`
@@ -118,6 +126,18 @@ type seasonPlanProposalNotice struct {
 	Value   any    `json:"value,omitempty"`
 }
 
+type seasonPlanProposalTaperScenario struct {
+	RequestedTaperWeeks         *int     `json:"requested_taper_weeks"`
+	ResolvedTaperWeeks          int      `json:"resolved_taper_weeks"`
+	TaperWeeksSource            string   `json:"taper_weeks_source"`
+	RequestedTaperTargetLoadPct *float64 `json:"requested_taper_target_load_pct"`
+	ResolvedTaperTargetLoadPct  float64  `json:"resolved_taper_target_load_pct"`
+	TaperTargetLoadPctSource    string   `json:"taper_target_load_pct_source"`
+	Allocation                  string   `json:"allocation"`
+	AdjustmentCode              string   `json:"adjustment_code"`
+	AssumptionCodes             []string `json:"assumption_codes"`
+}
+
 type seasonPlanProposalMeta struct {
 	Method                  string                             `json:"method"`
 	SourceTools             []string                           `json:"source_tools"`
@@ -127,6 +147,7 @@ type seasonPlanProposalMeta struct {
 	SchemaVersion           string                             `json:"schema_version"`
 	PlanningSourceEndpoints seasonPlanProposalSourceEndpoints  `json:"planning_source_endpoints"`
 	ProjectionBridge        seasonPlanProposalProjectionBridge `json:"projection_bridge"`
+	TaperScenario           seasonPlanProposalTaperScenario    `json:"taper_scenario"`
 }
 
 type seasonPlanProposalSourceEndpoints struct {
@@ -147,18 +168,24 @@ type seasonPlanProposalProjectionWeeklyTarget struct {
 }
 
 type seasonPlanResolvedInputs struct {
-	startDate          time.Time
-	goalDate           time.Time
-	goalWeekStart      time.Time
-	currentWeeklyLoad  float64
-	targetWeeklyLoad   float64
-	currentWeeklyHours float64
-	targetWeeklyHours  float64
-	maxHoursPerWeek    *float64
-	loadSource         string
-	hoursSource        string
-	assumptions        []seasonPlanProposalNotice
-	warnings           []seasonPlanProposalNotice
+	startDate            time.Time
+	goalDate             time.Time
+	goalWeekStart        time.Time
+	currentWeeklyLoad    float64
+	targetWeeklyLoad     float64
+	currentWeeklyHours   float64
+	targetWeeklyHours    float64
+	maxHoursPerWeek      *float64
+	loadSource           string
+	hoursSource          string
+	taperWeeks           int
+	taperWeeksSource     string
+	taperTargetLoadPct   float64
+	taperTargetSource    string
+	taperAdjustmentCode  string
+	taperAssumptionCodes []string
+	assumptions          []seasonPlanProposalNotice
+	warnings             []seasonPlanProposalNotice
 }
 
 func newProposeAnnualTrainingPlanTool(profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -263,6 +290,12 @@ func decodeSeasonPlanProposalRequest(raw json.RawMessage) (seasonPlanProposalReq
 			return args, fmt.Errorf("%s must be between 0 and %.0f", field, maxValue)
 		}
 	}
+	if args.TaperWeeks != nil && (*args.TaperWeeks < seasonPlanMinTaperWeeks || *args.TaperWeeks > seasonPlanMaxTaperWeeks) {
+		return args, fmt.Errorf("taper_weeks must be between %d and %d", seasonPlanMinTaperWeeks, seasonPlanMaxTaperWeeks)
+	}
+	if args.TaperTargetLoadPct != nil && (*args.TaperTargetLoadPct < seasonPlanMinTaperLoadPct || *args.TaperTargetLoadPct > seasonPlanMaxTaperLoadPct || math.IsNaN(*args.TaperTargetLoadPct) || math.IsInf(*args.TaperTargetLoadPct, 0)) {
+		return args, fmt.Errorf("taper_target_load_pct must be between %.0f and %.0f", seasonPlanMinTaperLoadPct, seasonPlanMaxTaperLoadPct)
+	}
 	return args, nil
 }
 
@@ -291,6 +324,32 @@ func resolveSeasonPlanProposalInputs(args seasonPlanProposalRequest, asOfDate ti
 	resolved.currentWeeklyLoad, resolved.loadSource = resolveCurrentWeeklyLoad(args, &resolved)
 	resolved.targetWeeklyLoad = resolveTargetWeeklyLoad(args, resolved.currentWeeklyLoad, &resolved)
 	resolved.currentWeeklyHours, resolved.targetWeeklyHours, resolved.hoursSource = resolveWeeklyHours(args, resolved.currentWeeklyLoad, resolved.targetWeeklyLoad, &resolved)
+	resolved.taperWeeks = seasonPlanDefaultTaperWeeks
+	resolved.taperWeeksSource = "default"
+	resolved.taperAssumptionCodes = []string{"taper_weeks_default"}
+	if args.TaperWeeks != nil {
+		resolved.taperWeeks = *args.TaperWeeks
+		resolved.taperWeeksSource = "input"
+		resolved.taperAssumptionCodes[0] = "taper_weeks_input"
+		resolved.addAssumption("taper_weeks_input", "taper duration was provided by the caller; this is a load-only scenario input", "taper_weeks", *args.TaperWeeks)
+	}
+	resolved.taperTargetLoadPct = seasonPlanDefaultTaperLoadPct
+	resolved.taperTargetSource = "default"
+	resolved.taperAssumptionCodes = append(resolved.taperAssumptionCodes, "taper_target_load_pct_default")
+	if args.TaperTargetLoadPct != nil {
+		resolved.taperTargetLoadPct = *args.TaperTargetLoadPct
+		resolved.taperTargetSource = "input"
+		resolved.taperAssumptionCodes[1] = "taper_target_load_pct_input"
+		resolved.addAssumption("taper_target_load_pct_input", "taper target load percentage was provided by the caller; no intensity or suitability is inferred", "taper_target_load_pct", *args.TaperTargetLoadPct)
+	}
+	if resolved.taperWeeks > totalWeeks {
+		resolved.taperWeeks = totalWeeks
+		resolved.taperAdjustmentCode = "taper_weeks_clamped_to_horizon"
+		resolved.taperAssumptionCodes = append(resolved.taperAssumptionCodes, resolved.taperAdjustmentCode)
+		resolved.addAssumption(resolved.taperAdjustmentCode, "requested taper duration exceeded the proposal horizon and was clamped to the available weeks", "taper_weeks", totalWeeks)
+	} else {
+		resolved.taperAdjustmentCode = "none"
+	}
 	return resolved, nil
 }
 
@@ -359,7 +418,7 @@ func resolveWeeklyHours(args seasonPlanProposalRequest, currentWeeklyLoad float6
 
 func buildSeasonPlanProposal(args seasonPlanProposalRequest, resolved seasonPlanResolvedInputs, timezoneName string) seasonPlanProposalResponse {
 	totalWeeks := int(resolved.goalWeekStart.Sub(resolved.startDate).Hours()/24)/7 + 1
-	phases := allocateSeasonPlanPhases(totalWeeks, resolved.startDate)
+	phases := allocateSeasonPlanPhases(totalWeeks, resolved.startDate, resolved.taperWeeks)
 	weeklyTargets, recoveryWeeks := buildSeasonPlanWeeklyTargets(phases, resolved, totalWeeks)
 	projectionTargets := make([]seasonPlanProposalProjectionWeeklyTarget, 0, len(weeklyTargets))
 	for _, target := range weeklyTargets {
@@ -391,12 +450,16 @@ func buildSeasonPlanProposal(args seasonPlanProposalRequest, resolved seasonPlan
 		RaceAnchors:   []seasonPlanProposalRaceAnchor{raceAnchor},
 		Assumptions:   assumptions,
 		Warnings:      warnings,
-		Meta:          seasonPlanProposalMeta{Method: seasonPlanProposalMethod, SourceTools: []string{"athlete_profile", "deterministic_season_plan_proposal"}, ReadOnly: true, WritesPerformed: false, Timezone: timezoneName, SchemaVersion: seasonPlanProposalSchemaVersion, PlanningSourceEndpoints: seasonPlanProposalSourceEndpoints{ProfileTimezone: "toolProfile", NotCalled: []string{"calendar_events", "training_plan", "fitness", "power_curves", "strength"}}, ProjectionBridge: seasonPlanProposalProjectionBridge{TargetTool: getFitnessProjectionName, TargetArgument: "weekly_plan_targets", WeeklyPlanTargets: projectionTargets, IncludedWeekCount: len(projectionTargets)}},
+		Meta:          seasonPlanProposalMeta{Method: seasonPlanProposalMethod, SourceTools: []string{"athlete_profile", "deterministic_season_plan_proposal"}, ReadOnly: true, WritesPerformed: false, Timezone: timezoneName, SchemaVersion: seasonPlanProposalSchemaVersion, PlanningSourceEndpoints: seasonPlanProposalSourceEndpoints{ProfileTimezone: "toolProfile", NotCalled: []string{"calendar_events", "training_plan", "fitness", "power_curves", "strength"}}, ProjectionBridge: seasonPlanProposalProjectionBridge{TargetTool: getFitnessProjectionName, TargetArgument: "weekly_plan_targets", WeeklyPlanTargets: projectionTargets, IncludedWeekCount: len(projectionTargets)}, TaperScenario: seasonPlanProposalTaperScenario{RequestedTaperWeeks: cloneIntPtr(args.TaperWeeks), ResolvedTaperWeeks: resolved.taperWeeks, TaperWeeksSource: resolved.taperWeeksSource, RequestedTaperTargetLoadPct: cloneFloatPtr(args.TaperTargetLoadPct), ResolvedTaperTargetLoadPct: round(resolved.taperTargetLoadPct, 2), TaperTargetLoadPctSource: resolved.taperTargetSource, Allocation: "final_contiguous_weeks", AdjustmentCode: resolved.taperAdjustmentCode, AssumptionCodes: append([]string(nil), resolved.taperAssumptionCodes...)}},
 	}
 }
 
-func allocateSeasonPlanPhases(totalWeeks int, startDate time.Time) []seasonPlanProposalPhase {
-	counts := phaseWeekCounts(totalWeeks)
+func allocateSeasonPlanPhases(totalWeeks int, startDate time.Time, taperWeeks ...int) []seasonPlanProposalPhase {
+	resolvedTaperWeeks := seasonPlanDefaultTaperWeeks
+	if len(taperWeeks) > 0 {
+		resolvedTaperWeeks = taperWeeks[0]
+	}
+	counts := phaseWeekCounts(totalWeeks, resolvedTaperWeeks)
 	phases := make([]seasonPlanProposalPhase, 0, len(counts))
 	weekStart := 1
 	phaseSeq := 1
@@ -419,22 +482,45 @@ type seasonPlanPhaseCount struct {
 	weeks     int
 }
 
-func phaseWeekCounts(totalWeeks int) []seasonPlanPhaseCount {
-	switch totalWeeks {
-	case 1:
-		return []seasonPlanPhaseCount{{phaseType: "race_taper", weeks: 1}}
-	case 2:
-		return []seasonPlanPhaseCount{{phaseType: "build", weeks: 1}, {phaseType: "race_taper", weeks: 1}}
-	case 3:
-		return []seasonPlanPhaseCount{{phaseType: "base", weeks: 1}, {phaseType: "build", weeks: 1}, {phaseType: "race_taper", weeks: 1}}
-	default:
-		raceTaper := 1
-		remaining := totalWeeks - raceTaper
-		base := int(math.Floor(float64(remaining) * 0.5))
-		build := int(math.Floor(float64(remaining) * 0.3))
-		peak := totalWeeks - raceTaper - base - build
-		return []seasonPlanPhaseCount{{phaseType: "base", weeks: base}, {phaseType: "build", weeks: build}, {phaseType: "peak", weeks: peak}, {phaseType: "race_taper", weeks: raceTaper}}
+func phaseWeekCounts(totalWeeks int, taperWeeks ...int) []seasonPlanPhaseCount {
+	resolvedTaperWeeks := seasonPlanDefaultTaperWeeks
+	if len(taperWeeks) > 0 {
+		resolvedTaperWeeks = taperWeeks[0]
 	}
+	if resolvedTaperWeeks < seasonPlanMinTaperWeeks {
+		resolvedTaperWeeks = seasonPlanMinTaperWeeks
+	}
+	if resolvedTaperWeeks > totalWeeks {
+		resolvedTaperWeeks = totalWeeks
+	}
+	if totalWeeks == 1 || resolvedTaperWeeks == totalWeeks {
+		return []seasonPlanPhaseCount{{phaseType: "race_taper", weeks: totalWeeks}}
+	}
+	if resolvedTaperWeeks == 1 {
+		switch totalWeeks {
+		case 2:
+			return []seasonPlanPhaseCount{{phaseType: "build", weeks: 1}, {phaseType: "race_taper", weeks: 1}}
+		case 3:
+			return []seasonPlanPhaseCount{{phaseType: "base", weeks: 1}, {phaseType: "build", weeks: 1}, {phaseType: "race_taper", weeks: 1}}
+		default:
+			remaining := totalWeeks - 1
+			base := int(math.Floor(float64(remaining) * 0.5))
+			build := int(math.Floor(float64(remaining) * 0.3))
+			peak := remaining - base - build
+			return []seasonPlanPhaseCount{{phaseType: "base", weeks: base}, {phaseType: "build", weeks: build}, {phaseType: "peak", weeks: peak}, {phaseType: "race_taper", weeks: 1}}
+		}
+	}
+	remaining := totalWeeks - resolvedTaperWeeks
+	if remaining == 1 {
+		return []seasonPlanPhaseCount{{phaseType: "base", weeks: 1}, {phaseType: "race_taper", weeks: resolvedTaperWeeks}}
+	}
+	if remaining == 2 {
+		return []seasonPlanPhaseCount{{phaseType: "base", weeks: 1}, {phaseType: "build", weeks: 1}, {phaseType: "race_taper", weeks: resolvedTaperWeeks}}
+	}
+	base := int(math.Floor(float64(remaining) * 0.5))
+	build := int(math.Floor(float64(remaining) * 0.3))
+	peak := remaining - base - build
+	return []seasonPlanPhaseCount{{phaseType: "base", weeks: base}, {phaseType: "build", weeks: build}, {phaseType: "peak", weeks: peak}, {phaseType: "race_taper", weeks: resolvedTaperWeeks}}
 }
 
 func buildSeasonPlanWeeklyTargets(phases []seasonPlanProposalPhase, resolved seasonPlanResolvedInputs, totalWeeks int) ([]seasonPlanProposalWeeklyTarget, []seasonPlanProposalRecoveryWeek) {
@@ -449,8 +535,12 @@ func buildSeasonPlanWeeklyTargets(phases []seasonPlanProposalPhase, resolved sea
 			isRecovery := weekIndex%seasonPlanRecoveryCadenceWeeks == 0 && !isTaper
 			loadSource := resolved.loadSource
 			if isTaper {
-				load = resolved.targetWeeklyLoad * seasonPlanRecoveryLoadPct / 100
-				loadSource = "race_taper_60_pct_target"
+				load = resolved.targetWeeklyLoad * resolved.taperTargetLoadPct / 100
+				if resolved.taperTargetLoadPct == seasonPlanRecoveryLoadPct {
+					loadSource = "race_taper_60_pct_target"
+				} else {
+					loadSource = "race_taper_target_pct"
+				}
 			} else if isRecovery {
 				load = load * seasonPlanRecoveryLoadPct / 100
 				loadSource = "recovery_60_pct_interpolated"
@@ -512,6 +602,14 @@ func (r *seasonPlanResolvedInputs) addWarning(code, message, field string, value
 	r.warnings = append(r.warnings, seasonPlanProposalNotice{Code: code, Message: message, Field: field, Value: value})
 }
 
+func cloneIntPtr(value *int) *int {
+	if value == nil {
+		return nil
+	}
+	out := *value
+	return &out
+}
+
 func cloneFloatPtr(value *float64) *float64 {
 	if value == nil {
 		return nil
@@ -535,6 +633,8 @@ func seasonPlanProposalInputSchema() map[string]any {
 			"target_hours_per_week": map[string]any{"type": "number", "minimum": 0, "maximum": 80, "description": "Target weekly training hours; may cap time targets independently from load."},
 			"current_weekly_hours":  map[string]any{"type": "number", "minimum": 0, "maximum": 80, "description": "Current weekly training hours used as a fallback when current_weekly_load is absent."},
 			"max_hours_per_week":    map[string]any{"type": "number", "minimum": 0, "maximum": 80, "description": "Hard weekly time cap; infeasible load-derived hours warn instead of exceeding this cap."},
+			"taper_weeks":           map[string]any{"type": "integer", "minimum": seasonPlanMinTaperWeeks, "maximum": seasonPlanMaxTaperWeeks, "default": seasonPlanDefaultTaperWeeks, "description": "Optional number of final contiguous taper weeks to model; bounded 1-3 and clamped to a shorter proposal horizon. This changes load scenario only, not intensity or calendar data."},
+			"taper_target_load_pct": map[string]any{"type": "number", "minimum": seasonPlanMinTaperLoadPct, "maximum": seasonPlanMaxTaperLoadPct, "default": seasonPlanDefaultTaperLoadPct, "description": "Optional taper weekly load as a percentage of target_weekly_load, bounded 1-100. This is a caller-selected deterministic scenario, not a suitability or physiology recommendation."},
 			"sports":                map[string]any{"type": "array", "maxItems": 12, "items": map[string]any{"type": "string", "maxLength": 40}, "description": "Caller-provided sport context echoed as assumptions only; no sport allocation is fetched or invented."},
 			"strength_context":      map[string]any{"type": "string", "maxLength": 500, "description": "Free-form caller-provided strength context echoed as an assumption; not first-class upstream strength data."},
 			"include_full":          map[string]any{"type": "boolean", "default": false, "description": "When true, include all proposal rows after normal response shaping."},
