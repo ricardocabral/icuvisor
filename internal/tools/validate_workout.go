@@ -69,7 +69,11 @@ func validateWorkoutHandler(version string, debugMetadata bool, shapeCfg respons
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := decodeValidateWorkoutRequest(req.Arguments)
 		if err != nil {
-			return Result{}, NewUserError(invalidValidateWorkoutArgumentsMessage, err)
+			message := invalidValidateWorkoutArgumentsMessage
+			if strings.Contains(err.Error(), "unknown field") {
+				message += "; " + strings.TrimPrefix(err.Error(), "decoding arguments: ")
+			}
+			return Result{}, NewUserError(message, err)
 		}
 		payload := validateWorkout(args)
 		return encodeShaped(payload, false, nil, version, debugMetadata, validateWorkoutName, response.UnitSystemMetric, shapeCfg)

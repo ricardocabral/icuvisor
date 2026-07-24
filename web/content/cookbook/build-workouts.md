@@ -27,15 +27,16 @@ not its contents are available, use the portable structured-tool path below.
 3. Draft this workout as a structured `workout_doc`: [DESCRIBE IT — e.g.
 VO2max bike session, 5x4min at 110% FTP with 4min recoveries, plus warm-up and
 cool-down]. Put duration and distance in structured fields, and targets in
-structured power, pace, heart-rate, or RPE fields — not only in prose. Call
-`validate_workout` with that `workout_doc`. Continue only when `valid: true`;
-resolve every returned error or warning that changes the intended workout.
-Use the returned `canonical_dsl` and estimated duration in the proposed-change
-preview, with total duration, key steps, target intensities, planned
-load/distance/time changes, and anything being preserved. If adapting an
-existing planned session for indoor vs outdoor execution, read `get_today`
-first and use only its weather availability/provenance, planned `indoor` flag,
-tags, equipment context I provide, and athlete preference.
+structured power, pace, heart-rate, or RPE fields — not only in prose. Before
+any structured write, call `validate_workout` with that `workout_doc`; this is
+the required portable preflight, not evidence of device behavior. Continue only
+when `valid: true`; resolve every returned error or warning that changes the
+intended workout. Use the returned `canonical_dsl` and estimated duration in
+the proposed-change preview, with total duration, key steps, target
+intensities, planned load/distance/time changes, and anything being preserved.
+If adapting an existing planned session for indoor vs outdoor execution, read
+`get_today` first and use only its weather availability/provenance, planned
+`indoor` flag, tags, equipment context I provide, and athlete preference.
 4. Ask for approval of the exact preview. Only after I approve, either save it
 to my workout library or schedule it as a calendar event on [DATE]. Tell me
 which you did and report the planned load.
@@ -44,23 +45,32 @@ structured steps: for `create_workout`, check
 `workout.workout_doc_summary`; for `add_or_update_event`, check
 `event.workout_doc_summary`; in both responses check
 `_meta.workout_doc_warning`. An upload marker, prose, or canonical DSL alone
-does not verify structured rendering. A warning must be absent or understood,
-and the summary must show the expected structure.
+does not verify structured rendering or any device-control behavior. A warning
+must be absent or understood, and the returned structured summary/document must
+show the expected structure. Never claim that a phrase such as “press lap when
+ready” is a device instruction unless a separately documented upstream and
+device-specific contract proves it.
 
 Rules: use structured `workout_doc` only for endurance workouts supported by
-the intervals.icu DSL. If I ask for gym or strength work, schedule a simple
-`NOTE` time block or a free-text supported calendar event; do not invent
-exercises, sets, reps, or loads as structured workout steps unless my
-intervals.icu account exposes documented strength-training support. Do not dump
-the whole workout library into the chat: pick the relevant folder first, sample
-only one or two examples, and use `include_full:true` only after selecting a
-specific template that needs raw source detail. Do not overwrite an existing
-library workout; create a new one unless I explicitly name one to update. For
-multiple calendar or library writes, validate one representative workout, write
-one, inspect its returned summary and warning, then continue with the rest. For
-indoor/outdoor alternatives to the same planned session, keep only one active
-calendar workout unless I explicitly ask for both; prefer editing/replacing the
-existing event after approval so planned load is not double-counted.
+the intervals.icu DSL. A free-text mention such as “press lap when ready” is a
+note, not a structured control step; do not invent a field or DSL token for it.
+Do not infer Garmin or Wahoo compatibility, manual-lap behavior, TSS, training
+load, duration, or distance semantics from DSL syntax, a valid `canonical_dsl`,
+or a successful upload. Only claim device behavior when returned
+structured-document fidelity evidence and a separate public device contract
+support it. If I ask for gym or strength work, schedule a simple `NOTE` time
+block or a free-text supported calendar event; do not invent exercises, sets,
+reps, or loads as structured workout steps unless my intervals.icu account
+exposes documented strength-training support. Do not dump the whole workout
+library into the chat: pick the relevant folder first, sample only one or two
+examples, and use `include_full:true` only after selecting a specific template
+that needs raw source detail. Do not overwrite an existing library workout;
+create a new one unless I explicitly name one to update. For multiple calendar
+or library writes, validate one representative workout, write one, inspect its
+returned summary and warning, then continue with the rest. For indoor/outdoor
+alternatives to the same planned session, keep only one active calendar workout
+unless I explicitly ask for both; prefer editing/replacing the existing event
+after approval so planned load is not double-counted.
 ```
 
 ## What icuvisor does

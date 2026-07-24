@@ -200,6 +200,28 @@ func TestValidateWorkoutProsePassesThroughVerbatim(t *testing.T) {
 	}
 }
 
+func TestValidateWorkoutRejectsInventedPressLapField(t *testing.T) {
+	t.Parallel()
+
+	tool := newValidateWorkoutTool("test", false)
+	_, err := tool.Handler(context.Background(), Request{
+		Name:      validateWorkoutName,
+		Arguments: json.RawMessage(`{"workout_doc":{"steps":[{"description":"Press lap when ready","duration":600,"press_lap":true}]}}`),
+	})
+	if err == nil {
+		t.Fatal("Handler() error = nil, want unknown structured field rejection")
+	}
+	message, ok := PublicErrorMessage(err)
+	if !ok {
+		t.Fatalf("PublicErrorMessage(%v) did not expose a user-facing diagnostic", err)
+	}
+	for _, want := range []string{"invalid validate_workout arguments", `unknown field "press_lap"`} {
+		if !strings.Contains(message, want) {
+			t.Fatalf("PublicErrorMessage = %q, want %q", message, want)
+		}
+	}
+}
+
 func TestValidateWorkoutSportSpecificGeneratedDescriptionsAvoidCyclingWords(t *testing.T) {
 	t.Parallel()
 
