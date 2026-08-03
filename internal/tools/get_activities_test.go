@@ -452,7 +452,7 @@ func TestGetActivitiesResolvesGearNames(t *testing.T) {
 	if row == nil {
 		t.Fatalf("rows = %#v, want a-bike activity row", rows)
 	}
-	if row["gear_id"] != "123" || row["gear_name"] != "Race Bike" || row["gear_resolution"] != gearResolutionResolved {
+	if row["gear_id"] != "123" || row["gear_name"] != "Synthetic Active Bike" || row["gear_resolution"] != gearResolutionResolved {
 		t.Fatalf("row = %#v, want resolved numeric gear", row)
 	}
 	if client.gearCalls != 1 {

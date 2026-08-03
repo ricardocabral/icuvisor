@@ -1,15 +1,34 @@
 [
   {
     "id": 123,
-    "name": "Race Bike",
+    "athlete_id": "i000000",
+    "name": "Synthetic Active Bike",
     "type": "Bike",
-    "brand": "Cervelo",
-    "model": "S5",
+    "activities": 42,
+    "distance": 1234.5,
+    "use_elapsed_time": true,
+    "component_ids": ["component-1", "component-2"],
+    "reminders": [
+      {
+        "id": 9,
+        "name": "Replace chain",
+        "gear_id": "123",
+        "distance": 3000,
+        "distance_used": 450
+      }
+    ],
     "retired": null
   },
   {
     "id": "shoe-7",
+    "athlete_id": "i000000",
+    "name": "Synthetic Retired Shoes",
     "type": "Shoes",
+    "activities": 18,
+    "distance": 210.25,
+    "use_elapsed_time": false,
+    "component_ids": [],
+    "reminders": [],
     "retired": "2025-11-30"
   }
 ]
