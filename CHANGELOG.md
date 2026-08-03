@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Documented that upstream running cadence keys remain raw-full-only until their units and running-specific semantics are verified, preventing mislabeled metrics.
 - Repaired Gear reads and delete preflight echoes for upstream nullable retirement dates, preserving retired dates without misrepresenting active gear.
 - `validate_workout` now surfaces the rejected unknown structured field in its user-facing diagnostic, preventing invented device-control fields such as press-lap controls from being mistaken for valid workout steps.
 
