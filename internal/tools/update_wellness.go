@@ -15,7 +15,7 @@ import (
 
 const (
 	updateWellnessName                    = "update_wellness"
-	updateWellnessDescription             = "Update one athlete-local wellness row with sparse manual fields: subjective scales, measurements, injury text, and locked; legacy feel remains in the input schema for compatibility but rejects with field_not_writable: feel (not accepted by intervals.icu wellness write), device-owned sleepScore rejects with field_not_writable: sleepScore (device-managed), and _native rejects with field_not_writable: _native (bridge-managed)."
+	updateWellnessDescription             = "Update one athlete-local wellness row with sparse manual fields: subjective scales including hydration (1-4), measurements, injury text, and locked; hydrationVolume is read-only and unsupported for writes; legacy feel remains in the input schema for compatibility but rejects with field_not_writable: feel (not accepted by intervals.icu wellness write), device-owned sleepScore rejects with field_not_writable: sleepScore (device-managed), and _native rejects with field_not_writable: _native (bridge-managed)."
 	invalidUpdateWellnessArgumentsMessage = "invalid update_wellness arguments; provide date as YYYY-MM-DD and writable wellness fields with documented ranges"
 	writeWellnessMessage                  = "could not update wellness; check intervals.icu credentials, athlete ID, date, lock state, and writable fields"
 	poundsToKilograms                     = 0.45359237
@@ -25,6 +25,7 @@ var updateWellnessSubjectiveScaleFields = []string{
 	"fatigue",
 	"mood",
 	"sleepQuality",
+	"hydration",
 	"motivation",
 	"soreness",
 	"stress",
@@ -70,6 +71,7 @@ type updateWellnessRequest struct {
 	Fatigue        *int     `json:"fatigue,omitempty"`
 	Mood           *int     `json:"mood,omitempty"`
 	SleepQuality   *int     `json:"sleepQuality,omitempty"`
+	Hydration      *int     `json:"hydration,omitempty"`
 	Motivation     *int     `json:"motivation,omitempty"`
 	Soreness       *int     `json:"soreness,omitempty"`
 	Stress         *int     `json:"stress,omitempty"`
@@ -228,6 +230,9 @@ func validateUpdateWellnessRanges(args updateWellnessRequest) error {
 	if err := validateIntRange("sleepQuality", args.SleepQuality, 1, 4); err != nil {
 		return err
 	}
+	if err := validateIntRange("hydration", args.Hydration, 1, 4); err != nil {
+		return err
+	}
 	for field, value := range map[string]*float64{
 		"weight":       args.Weight,
 		"bodyFat":      args.BodyFat,
@@ -302,6 +307,7 @@ func wellnessWriteParams(args updateWellnessRequest, profile intervals.AthleteWi
 		Fatigue:        args.Fatigue,
 		Mood:           args.Mood,
 		SleepQuality:   args.SleepQuality,
+		Hydration:      args.Hydration,
 		Motivation:     args.Motivation,
 		Soreness:       args.Soreness,
 		Stress:         args.Stress,
@@ -344,6 +350,7 @@ func updateWellnessFieldsUpdated(args updateWellnessRequest) []string {
 	add("fatigue", args.Fatigue != nil)
 	add("mood", args.Mood != nil)
 	add("sleepQuality", args.SleepQuality != nil)
+	add("hydration", args.Hydration != nil)
 	add("motivation", args.Motivation != nil)
 	add("soreness", args.Soreness != nil)
 	add("stress", args.Stress != nil)
@@ -391,6 +398,7 @@ func updateWellnessInputSchema() map[string]any {
 		"fatigue":        scaleSchema(scales, "fatigue", 5),
 		"mood":           scaleSchema(scales, "mood", 5),
 		"sleepQuality":   scaleSchema(scales, "sleepQuality", 4),
+		"hydration":      scaleSchema(scales, "hydration", 4),
 		"motivation":     scaleSchema(scales, "motivation", 5),
 		"soreness":       scaleSchema(scales, "soreness", 5),
 		"stress":         scaleSchema(scales, "stress", 5),
@@ -416,8 +424,9 @@ func updateWellnessInputSchema() map[string]any {
 func updateWellnessInputExamples() []map[string]any {
 	return []map[string]any{
 		{
-			"date":    "2026-06-15",
-			"fatigue": 2,
+			"date":      "2026-06-15",
+			"fatigue":   2,
+			"hydration": 3,
 		},
 		{
 			"date":         "2026-06-16",
@@ -450,5 +459,5 @@ func scaleSchema(scales map[string]string, field string, max int) map[string]any
 }
 
 func updateWellnessOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Updated wellness row using the same terse read shape as get_wellness_data, plus write metadata and delete-mode/unit metadata."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Updated wellness row using the same terse read shape as get_wellness_data, including conditional hydration 1-4 scale metadata, plus write metadata and delete-mode/unit metadata."}
 }

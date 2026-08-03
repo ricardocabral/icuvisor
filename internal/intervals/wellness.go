@@ -26,6 +26,7 @@ type WriteWellnessParams struct {
 	Motivation     *int
 	Soreness       *int
 	Stress         *int
+	Hydration      *int
 	Weight         *float64
 	BodyFat        *float64
 	Systolic       *int
@@ -161,6 +162,9 @@ func writeWellnessBody(params WriteWellnessParams) (map[string]any, error) {
 	if params.Feel != nil {
 		return nil, ErrUnsupportedWellnessFeel
 	}
+	if params.Hydration != nil && (*params.Hydration < 1 || *params.Hydration > 4) {
+		return nil, fmt.Errorf("updating wellness: hydration must be 1-4")
+	}
 	body := map[string]any{}
 	setSparse(body, "fatigue", params.Fatigue)
 	setSparse(body, "mood", params.Mood)
@@ -168,6 +172,7 @@ func writeWellnessBody(params WriteWellnessParams) (map[string]any, error) {
 	setSparse(body, "motivation", params.Motivation)
 	setSparse(body, "soreness", params.Soreness)
 	setSparse(body, "stress", params.Stress)
+	setSparse(body, "hydration", params.Hydration)
 	setSparse(body, "weight", params.Weight)
 	setSparse(body, "bodyFat", params.BodyFat)
 	setSparse(body, "systolic", params.Systolic)
