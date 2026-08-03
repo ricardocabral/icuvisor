@@ -137,6 +137,28 @@ func TestDeletePerIDToolsSuccessAndEcho(t *testing.T) {
 	}
 }
 
+func TestDeleteGearEchoPreservesRetirementDate(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeDeleteToolsClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{Timezone: "UTC"}},
+		gear:              mustGear(t, `{"id":"g-retired","name":"Old Shoes","type":"Shoes","retired":"2025-11-30"}`),
+	}
+	tool := newDeleteGearTool(client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"gear_id":"g-retired"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	deleted := resultMap(t, result)["_meta"].(map[string]any)["deleted"].(map[string]any)
+	if deleted["retired"] != "2025-11-30" {
+		t.Fatalf("deleted echo = %#v, want retirement date unchanged", deleted)
+	}
+	if _, ok := deleted["brand"]; ok {
+		t.Fatalf("deleted echo = %#v, want no unsupported brand", deleted)
+	}
+}
+
 func TestDeleteEventSparseUntitledAndUnknownCategoryPayloads(t *testing.T) {
 	t.Parallel()
 

@@ -14,10 +14,8 @@ type Gear struct {
 	ID          string  `json:"-"`
 	Name        *string `json:"name"`
 	Type        *string `json:"type"`
-	Brand       *string `json:"brand"`
-	Model       *string `json:"model"`
 	Description *string `json:"description"`
-	Retired     *bool   `json:"retired"`
+	Retired     *string `json:"retired"`
 }
 
 // UnmarshalJSON decodes Gear while retaining the original object for read tools and terse delete echoes.

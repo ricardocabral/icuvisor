@@ -34,8 +34,8 @@ func TestGetGearListReturnsTerseRowsAndMeta(t *testing.T) {
 	t.Parallel()
 
 	client := &fakeGearListClient{gear: decodeToolGear(t,
-		`{"id":"g-1","name":"Race Bike","type":"Bike","brand":"Cervelo","model":"S5","retired":false}`,
-		`{"id":"g-2","type":"Shoes","retired":true}`,
+		`{"id":"g-1","name":"Race Bike","type":"Bike","retired":null}`,
+		`{"id":"g-2","type":"Shoes","retired":"2025-11-30"}`,
 	)}
 	tool := newGetGearListTool(client, newGearListCache(), "test", false)
 
@@ -52,9 +52,12 @@ func TestGetGearListReturnsTerseRowsAndMeta(t *testing.T) {
 	if first["gear_id"] != "g-1" || first["name"] != "Race Bike" || first["type"] != "Bike" || first["full"] != nil {
 		t.Fatalf("first row = %#v, want terse named gear", first)
 	}
+	if _, ok := first["retired"]; ok {
+		t.Fatalf("first row = %#v, want null retirement omitted from terse output", first)
+	}
 	second := rows[1].(map[string]any)
-	if second["gear_id"] != "g-2" || second["name_missing"] != true {
-		t.Fatalf("second row = %#v, want explicit missing name", second)
+	if second["gear_id"] != "g-2" || second["name_missing"] != true || second["retired"] != "2025-11-30" {
+		t.Fatalf("second row = %#v, want explicit missing name and retirement date", second)
 	}
 	meta := payload["_meta"].(map[string]any)
 	if meta["count"] != float64(2) || meta["unnamed_count"] != float64(1) || meta["refreshed"] != true || meta["cached"] != false || meta["include_full"] != false {

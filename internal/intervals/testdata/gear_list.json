@@ -5,11 +5,11 @@
     "type": "Bike",
     "brand": "Cervelo",
     "model": "S5",
-    "retired": false
+    "retired": null
   },
   {
     "id": "shoe-7",
     "type": "Shoes",
-    "retired": true
+    "retired": "2025-11-30"
   }
 ]

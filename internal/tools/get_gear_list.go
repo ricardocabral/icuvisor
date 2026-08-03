@@ -37,9 +37,7 @@ type gearListRow struct {
 	Name        string         `json:"name,omitempty"`
 	NameMissing bool           `json:"name_missing,omitempty"`
 	Type        string         `json:"type,omitempty"`
-	Brand       string         `json:"brand,omitempty"`
-	Model       string         `json:"model,omitempty"`
-	Retired     *bool          `json:"retired,omitempty"`
+	Retired     *string        `json:"retired,omitempty"`
 	Full        map[string]any `json:"full,omitempty"`
 }
 
@@ -104,7 +102,7 @@ func shapeGetGearListResponse(gear []intervals.Gear, includeFull bool, cached bo
 }
 
 func gearListToRow(gear intervals.Gear, includeFull bool) gearListRow {
-	row := gearListRow{GearID: gear.ID, Name: strings.TrimSpace(stringValue(gear.Name)), Type: stringValue(gear.Type), Brand: stringValue(gear.Brand), Model: stringValue(gear.Model), Retired: gear.Retired}
+	row := gearListRow{GearID: gear.ID, Name: strings.TrimSpace(stringValue(gear.Name)), Type: stringValue(gear.Type), Retired: gear.Retired}
 	if row.Name == "" {
 		row.NameMissing = true
 	}
@@ -117,7 +115,7 @@ func gearListToRow(gear intervals.Gear, includeFull bool) gearListRow {
 func getGearListInputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{
 		"refresh":      map[string]any{"type": "boolean", "default": false, "description": "When true, bypass the manual in-process per-athlete gear cache and fetch a fresh list from intervals.icu. Failed refreshes do not replace the last successful cache entry."},
-		"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, include raw upstream gear fields under each row's full object; default terse rows include gear_id, name/name_missing, type, brand, model, and retired."},
+		"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, include raw upstream gear fields under each row's full object; default terse rows include gear_id, name/name_missing, type, and retired."},
 	}}
 }
 
