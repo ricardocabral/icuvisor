@@ -2326,7 +2326,7 @@
         "name": "include_full",
         "required": false,
         "type": "boolean",
-        "description": "When true, include raw upstream gear fields under each row's full object; default terse rows include gear_id, name/name_missing, type, brand, model, and retired.",
+        "description": "When true, include raw upstream gear fields under each row's full object; default terse rows include gear_id, name/name_missing, type, and retired.",
         "default": false
       },
       {
