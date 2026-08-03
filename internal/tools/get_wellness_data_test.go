@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
@@ -495,12 +494,16 @@ func TestGetWellnessDataHydrationSemanticsAndIncludeFull(t *testing.T) {
 			t.Fatalf("terse hydration row emitted guessed/renamed %s: %+v", key, terse)
 		}
 	}
-	semantics := terse["_meta"].(map[string]any)["field_semantics"].(map[string]any)
-	if !strings.Contains(semantics["hydration"].(string), "unit semantics are not inferred") {
-		t.Fatalf("hydration semantics = %#v, want no inferred unit", semantics)
+	meta := terse["_meta"].(map[string]any)
+	if got := meta["scales"].(map[string]any)["hydration"]; got != "1-4 (athlete-reported hydration)" {
+		t.Fatalf("hydration response scale = %#v", got)
 	}
-	if !strings.Contains(semantics["hydrationVolume"].(string), "preserved separately") {
-		t.Fatalf("hydrationVolume semantics = %#v, want distinction", semantics)
+	semantics := meta["field_semantics"].(map[string]any)
+	if semantics["hydration"] != "Subjective athlete-reported hydration rating on a 1-4 scale." {
+		t.Fatalf("hydration semantics = %#v, want subjective 1-4 rating", semantics)
+	}
+	if semantics["hydrationVolume"] != "Read-only upstream hydrationVolume in litres, preserved separately from the subjective hydration rating." {
+		t.Fatalf("hydrationVolume semantics = %#v, want distinct read-only litres value", semantics)
 	}
 	if _, ok := terse["full"]; ok {
 		t.Fatalf("terse hydration row included full payload: %+v", terse)
@@ -552,6 +555,11 @@ func TestGetWellnessDataNullHydrationDoesNotEmitSemantics(t *testing.T) {
 		if semantics, ok := meta["field_semantics"].(map[string]any); ok {
 			if semantics["hydration"] != nil || semantics["hydrationVolume"] != nil {
 				t.Fatalf("null hydration left stale field_semantics: %+v", semantics)
+			}
+		}
+		if scales, ok := meta["scales"].(map[string]any); ok {
+			if _, ok := scales["hydration"]; ok {
+				t.Fatalf("null hydration retained scale metadata: %+v", scales)
 			}
 		}
 	}

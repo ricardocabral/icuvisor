@@ -137,6 +137,49 @@ func TestDeletePerIDToolsSuccessAndEcho(t *testing.T) {
 	}
 }
 
+func TestDeleteGearEchoPreservesFixtureRetirementState(t *testing.T) {
+	t.Parallel()
+
+	gear := loadGearFixtureFile(t, gearListFixture)
+	tests := []struct {
+		name        string
+		gear        intervals.Gear
+		id          string
+		retired     string
+		wantOmitted bool
+	}{
+		{name: "active", gear: gear[0], id: "123", wantOmitted: true},
+		{name: "retired", gear: gear[1], id: "shoe-7", retired: "2025-11-30"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeDeleteToolsClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{Timezone: "UTC"}},
+				gear:              tc.gear,
+			}
+			tool := newDeleteGearTool(client, client, "test", "UTC", false)
+
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"gear_id":"` + tc.id + `"}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			deleted := resultMap(t, result)["_meta"].(map[string]any)["deleted"].(map[string]any)
+			if tc.wantOmitted {
+				if _, ok := deleted["retired"]; ok {
+					t.Fatalf("deleted echo = %#v, want active retirement omitted", deleted)
+				}
+			} else if deleted["retired"] != tc.retired {
+				t.Fatalf("deleted echo = %#v, want retirement date unchanged", deleted)
+			}
+			for _, unsupported := range []string{"brand", "model", "active", "reminders"} {
+				if _, ok := deleted[unsupported]; ok {
+					t.Fatalf("deleted echo = %#v, want no unsupported %q", deleted, unsupported)
+				}
+			}
+		})
+	}
+}
+
 func TestDeleteEventSparseUntitledAndUnknownCategoryPayloads(t *testing.T) {
 	t.Parallel()
 

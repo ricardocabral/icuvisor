@@ -14,7 +14,7 @@ import (
 
 const (
 	getWellnessDataName                    = "get_wellness_data"
-	getWellnessDataDescription             = "Get daily wellness rows for a local date range with distinct sleepQuality, sleepScore, sleepSecs, nutrition keys calories_intake/carbs_g/protein_g/fat_g when present, custom fields, native provider sidecars, and provider-native provenance scale labels for sleep/readiness. Dates are athlete-local YYYY-MM-DD values."
+	getWellnessDataDescription             = "Get daily wellness rows for a local date range with distinct sleepQuality, sleepScore, sleepSecs, subjective hydration (1-4), separate read-only hydrationVolume (litres), nutrition keys calories_intake/carbs_g/protein_g/fat_g when present, custom fields, native provider sidecars, and provider-native provenance scale labels for sleep/readiness. Dates are athlete-local YYYY-MM-DD values."
 	invalidGetWellnessDataArgumentsMessage = "invalid get_wellness_data arguments; provide oldest/newest dates as YYYY-MM-DD and optional include_full"
 	fetchWellnessDataMessage               = "could not fetch wellness data; check intervals.icu credentials, athlete ID, and date range"
 )
@@ -249,8 +249,8 @@ var wellnessFieldSemantics = map[string]string{
 	"carbs_g":         "Carbohydrates consumed in grams from upstream wellness carbohydrates.",
 	"protein_g":       "Protein consumed in grams from upstream wellness protein.",
 	"fat_g":           "Fat consumed in grams from upstream wellness fatTotal.",
-	"hydration":       "Upstream wellness hydration score/count field; unit semantics are not inferred.",
-	"hydrationVolume": "Upstream wellness hydrationVolume field preserved separately from hydration; volume unit is upstream-defined.",
+	"hydration":       "Subjective athlete-reported hydration rating on a 1-4 scale.",
+	"hydrationVolume": "Read-only upstream hydrationVolume in litres, preserved separately from the subjective hydration rating.",
 }
 
 func addWellnessMeta(out map[string]any, row intervals.Wellness) {
@@ -526,5 +526,5 @@ func wellnessDataInputSchema() map[string]any {
 }
 
 func getWellnessDataOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Daily wellness rows with distinct sleepQuality (1-4), sleepScore (0-100 plus provider-native scale metadata), sleepSecs, nutrition keys calories_intake/carbs_g/protein_g/fat_g when present, custom fields, _native provider fields, _meta.provenance.<field>.native_scale labels for Garmin, WHOOP, Oura, Polar, or unknown sources, and conditional athlete-local timezone/as_of/as_of_date/as_of_weekday metadata when the range includes the current local day."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Daily wellness rows with distinct sleepQuality (1-4), sleepScore (0-100 plus provider-native scale metadata), subjective hydration (1-4), separate read-only hydrationVolume (litres), sleepSecs, nutrition keys calories_intake/carbs_g/protein_g/fat_g when present, custom fields, _native provider fields, _meta.provenance.<field>.native_scale labels for Garmin, WHOOP, Oura, Polar, or unknown sources, and conditional athlete-local timezone/as_of/as_of_date/as_of_weekday metadata when the range includes the current local day."}
 }

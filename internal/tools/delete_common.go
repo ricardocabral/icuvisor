@@ -111,12 +111,6 @@ func gearDeleteEcho(gear intervals.Gear, gearID string) map[string]any {
 	if value := stringValue(gear.Type); value != "" {
 		out["type"] = value
 	}
-	if value := stringValue(gear.Brand); value != "" {
-		out["brand"] = value
-	}
-	if value := stringValue(gear.Model); value != "" {
-		out["model"] = value
-	}
 	if gear.Retired != nil {
 		out["retired"] = *gear.Retired
 	}

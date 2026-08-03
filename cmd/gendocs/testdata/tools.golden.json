@@ -460,7 +460,7 @@
     "group": "wellness",
     "tier": "core",
     "safety": "read",
-    "summary": "Get daily wellness rows for a local date range with distinct sleepQuality, sleepScore, sleepSecs, nutrition keys calories_intake/carbs_g/protein_g/fat_g when present, custom fields, native provider sidecars, and provider-native provenance scale labels for sleep/readiness.",
+    "summary": "Get daily wellness rows for a local date range with distinct sleepQuality, sleepScore, sleepSecs, subjective hydration (1-4), separate read-only hydrationVolume (litres), nutrition keys calories_intake/carbs_g/protein_g/fat_g when present, custom fields, native provider sidecars, and provider-native provenance scale labels for sleep/readiness.",
     "anchor": "get_wellness_data"
   },
   {
@@ -468,7 +468,7 @@
     "group": "wellness",
     "tier": "core",
     "safety": "write",
-    "summary": "Update one athlete-local wellness row with sparse manual fields: subjective scales, measurements, injury text, and locked; legacy feel remains in the input schema for compatibility but rejects with field_not_writable: feel (not accepted by intervals.icu wellness write), device-owned sleepScore rejects with field_not_writable: sleepScore (device-managed), and _native rejects with field_not_writable: _native (bridge-managed).",
+    "summary": "Update one athlete-local wellness row with sparse manual fields: subjective scales including hydration (1-4), measurements, injury text, and locked; hydrationVolume is read-only and unsupported for writes; legacy feel remains in the input schema for compatibility but rejects with field_not_writable: feel (not accepted by intervals.icu wellness write), device-owned sleepScore rejects with field_not_writable: sleepScore (device-managed), and _native rejects with field_not_writable: _native (bridge-managed).",
     "anchor": "update_wellness"
   },
   {

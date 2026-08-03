@@ -379,7 +379,7 @@ func TestGetActivityDetailsResolvesGear(t *testing.T) {
 		t.Fatalf("Handler() error = %v", err)
 	}
 	activityMap := resultMap(t, result)["activity"].(map[string]any)
-	if activityMap["gear_id"] != "123" || activityMap["gear_name"] != "Race Bike" || activityMap["gear_resolution"] != gearResolutionResolved {
+	if activityMap["gear_id"] != "123" || activityMap["gear_name"] != "Synthetic Active Bike" || activityMap["gear_resolution"] != gearResolutionResolved {
 		t.Fatalf("activity = %#v, want resolved numeric gear", activityMap)
 	}
 }

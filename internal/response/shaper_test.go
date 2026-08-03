@@ -209,7 +209,7 @@ func TestShapeRequiresObjectWrapper(t *testing.T) {
 
 func TestRegisteredScaleLabelsReturnsRegistryCopy(t *testing.T) {
 	labels := RegisteredScaleLabels()
-	if labels["feel"] != "1-5 (athlete-reported feel)" || labels["sleepQuality"] != "1-4 (athlete-entered, 1=poor 4=great)" {
+	if labels["feel"] != "1-5 (athlete-reported feel)" || labels["sleepQuality"] != "1-4 (athlete-entered, 1=poor 4=great)" || labels["hydration"] != "1-4 (athlete-reported hydration)" {
 		t.Fatalf("registered scale labels = %+v", labels)
 	}
 	if _, ok := labels["injury"]; ok {
@@ -233,13 +233,14 @@ func TestShapeDoesNotAddScalesForUnregisteredFields(t *testing.T) {
 }
 
 func TestShapeAddsScalesForRegisteredFields(t *testing.T) {
-	got, err := Shape(map[string]any{"fatigue": 2, "feel": 4, "injury": "left knee", "mood": 5, "motivation": 4, "name": "athlete", "sleepQuality": 3, "sleepScore": 87, "soreness": 2, "stress": 3}, Options{})
+	got, err := Shape(map[string]any{"fatigue": 2, "feel": 4, "hydration": 3, "injury": "left knee", "mood": 5, "motivation": 4, "name": "athlete", "sleepQuality": 3, "sleepScore": 87, "soreness": 2, "stress": 3}, Options{})
 	if err != nil {
 		t.Fatalf("Shape() error = %v", err)
 	}
 	assertJSONEqual(t, got, map[string]any{
 		"fatigue":      float64(2),
 		"feel":         float64(4),
+		"hydration":    float64(3),
 		"injury":       "left knee",
 		"mood":         float64(5),
 		"motivation":   float64(4),
@@ -252,6 +253,7 @@ func TestShapeAddsScalesForRegisteredFields(t *testing.T) {
 			"scales": map[string]any{
 				"fatigue":      "1-5 (athlete-reported fatigue)",
 				"feel":         "1-5 (athlete-reported feel)",
+				"hydration":    "1-4 (athlete-reported hydration)",
 				"mood":         "1-5 (athlete-reported mood)",
 				"motivation":   "1-5 (athlete-reported motivation)",
 				"sleepQuality": "1-4 (athlete-entered, 1=poor 4=great)",

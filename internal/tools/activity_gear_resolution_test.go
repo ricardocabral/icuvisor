@@ -39,7 +39,7 @@ func TestResolveActivityGearUsesFullGearListForNumericID(t *testing.T) {
 		t.Fatalf("resolveActivityGear() error = %v", err)
 	}
 	resolution := resolutions["a-bike"]
-	if resolution.GearID != "123" || resolution.Name != "Race Bike" || resolution.Status != gearResolutionResolved {
+	if resolution.GearID != "123" || resolution.Name != "Synthetic Active Bike" || resolution.Status != gearResolutionResolved {
 		t.Fatalf("resolution = %#v, want numeric gear ID resolved from full gear list", resolution)
 	}
 	if client.calls != 1 {

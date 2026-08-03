@@ -1,0 +1,13 @@
+{
+  "id": "activity-running-dynamics-fixture",
+  "analyzed": true,
+  "icu_intervals": [
+    {
+      "id": "cadence-only",
+      "label": "Cadence data",
+      "average_cadence": 176,
+      "min_cadence": 164,
+      "max_cadence": 188
+    }
+  ]
+}

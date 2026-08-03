@@ -213,7 +213,7 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 
 **Wellness**
 
-- `get_wellness_data` — daily rows. **Includes custom fields** (issue #64, forum #92) and correct scale metadata embedded in the tool description **and the response itself** (`feel` is 1-5, `sleepQuality` is 1-4 — addresses issues #45/#48 and forum #54/#57). In-response labels are required because some MCP clients do not pass tool descriptions back to the LLM at inference time. **Sleep dual-scale handling**: the intervals.icu wellness payload exposes two separate sleep fields with different scales and provenance:
+- `get_wellness_data` — daily rows. **Includes custom fields** (issue #64, forum #92) and correct scale metadata embedded in the tool description **and the response itself** (`feel` is 1-5, `sleepQuality` and subjective `hydration` are 1-4 — addresses issues #45/#48 and forum #54/#57). `hydrationVolume` is a distinct read-only litres value, never an alias for the subjective rating. In-response labels are required because some MCP clients do not pass tool descriptions back to the LLM at inference time. **Sleep dual-scale handling**: the intervals.icu wellness payload exposes two separate sleep fields with different scales and provenance:
   - `sleepQuality` — integer 1–4 (1 = poor, 4 = great), athlete-entered, subjective.
   - `sleepScore` — integer 0–100, populated by device sync (Garmin Connect, Oura, Whoop, Apple Health) when the device computes a nightly sleep score; absent otherwise.
   - `sleepSecs` — integer seconds slept (separate from both quality fields; do not derive from `sleepScore`).
@@ -222,12 +222,13 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 
   ```json
   "_meta": { "scales": { "sleepQuality": "1-4 (athlete-entered, 1=poor 4=great)",
+                          "hydration":    "1-4 (athlete-reported hydration)",
                           "sleepScore":   "0-100 (device-imported nightly score)" } }
   ```
 
   On `update_wellness`, only `sleepQuality` is writable — `sleepScore` is device-owned and must be rejected with a clear error if submitted (return `field_not_writable: sleepScore (device-managed)` rather than silently dropping). Raw `_native` provider sidecars are bridge-managed and must likewise reject writes with `field_not_writable: _native (bridge-managed)`.
 
-- `update_wellness` — write back the full set of API-accepted fields: subjective scales (`feel`, `fatigue`, `soreness`, `stress`, `mood`, `motivation`, `sleepQuality`, `injury`), body metrics (`weight`, `bodyFat`, `abdomen`), cardiovascular (`restingHR`, `hrv`, `systolic`, `diastolic`), blood/lab (`bloodGlucose`, `lactate`, `spO2`, `vo2max`), respiration, menstrual phase, and the `locked` flag that prevents device sync from silently overwriting manual entries.
+- `update_wellness` — write back the full set of API-accepted fields: subjective scales (`hydration` 1-4, `fatigue`, `soreness`, `stress`, `mood`, `motivation`, `sleepQuality`, `injury`), body metrics (`weight`, `bodyFat`, `abdomen`), cardiovascular (`restingHR`, `hrv`, `systolic`, `diastolic`), blood/lab (`bloodGlucose`, `lactate`, `spO2`, `vo2max`), respiration, menstrual phase, and the `locked` flag that prevents device sync from silently overwriting manual entries.
 
 **Wellness provenance + freshness** (forum thread 123739, posts #56–#58): intervals.icu collapses upstream-bridged wellness fields (notably `Readiness`) across providers with different native scales — Polar's 1–6 readiness, Garmin's body battery, Oura's readiness — under one field name with no provenance flag, and Polar-bridged values only refresh when the athlete visits intervals.icu's home page in a browser (so an MCP read can return data hours or days stale). icuvisor surfaces both signals so the LLM does not silently compare incompatible scales or reason over stale numbers:
 

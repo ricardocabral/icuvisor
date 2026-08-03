@@ -33,10 +33,7 @@ func (f *fakeGearListClient) ListGear(ctx context.Context) ([]intervals.Gear, er
 func TestGetGearListReturnsTerseRowsAndMeta(t *testing.T) {
 	t.Parallel()
 
-	client := &fakeGearListClient{gear: decodeToolGear(t,
-		`{"id":"g-1","name":"Race Bike","type":"Bike","brand":"Cervelo","model":"S5","retired":false}`,
-		`{"id":"g-2","type":"Shoes","retired":true}`,
-	)}
+	client := &fakeGearListClient{gear: loadGearFixtureFile(t, gearListFixture)}
 	tool := newGetGearListTool(client, newGearListCache(), "test", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
@@ -49,33 +46,56 @@ func TestGetGearListReturnsTerseRowsAndMeta(t *testing.T) {
 		t.Fatalf("gear rows len = %d, want 2", len(rows))
 	}
 	first := rows[0].(map[string]any)
-	if first["gear_id"] != "g-1" || first["name"] != "Race Bike" || first["type"] != "Bike" || first["full"] != nil {
+	if first["gear_id"] != "123" || first["name"] != "Synthetic Active Bike" || first["type"] != "Bike" || first["full"] != nil {
 		t.Fatalf("first row = %#v, want terse named gear", first)
 	}
+	if _, ok := first["retired"]; ok {
+		t.Fatalf("first row = %#v, want null retirement omitted from terse output", first)
+	}
 	second := rows[1].(map[string]any)
-	if second["gear_id"] != "g-2" || second["name_missing"] != true {
-		t.Fatalf("second row = %#v, want explicit missing name", second)
+	if second["gear_id"] != "shoe-7" || second["name"] != "Synthetic Retired Shoes" || second["retired"] != "2025-11-30" {
+		t.Fatalf("second row = %#v, want named retired gear with retirement date", second)
+	}
+	for _, row := range []map[string]any{first, second} {
+		for _, unsupported := range []string{"brand", "model", "active", "reminders"} {
+			if _, ok := row[unsupported]; ok {
+				t.Fatalf("terse row = %#v, want no unsupported %q", row, unsupported)
+			}
+		}
 	}
 	meta := payload["_meta"].(map[string]any)
-	if meta["count"] != float64(2) || meta["unnamed_count"] != float64(1) || meta["refreshed"] != true || meta["cached"] != false || meta["include_full"] != false {
+	if meta["count"] != float64(2) || meta["unnamed_count"] != float64(0) || meta["refreshed"] != true || meta["cached"] != false || meta["include_full"] != false {
 		t.Fatalf("meta = %#v, want counts and refreshed state", meta)
 	}
 }
 
-func TestGetGearListIncludeFull(t *testing.T) {
+func TestGetGearListIncludeFullRetainsFixturePayload(t *testing.T) {
 	t.Parallel()
 
-	client := &fakeGearListClient{gear: decodeToolGear(t, `{"id":"g-1","name":"Race Bike","custom":"kept"}`)}
+	client := &fakeGearListClient{gear: loadGearFixtureFile(t, gearListFixture)}
 	tool := newGetGearListTool(client, newGearListCache(), "test", false)
 
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"include_full":true}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
-	row := resultMap(t, result)["gear"].([]any)[0].(map[string]any)
-	full := row["full"].(map[string]any)
-	if full["custom"] != "kept" {
-		t.Fatalf("full = %#v, want raw upstream fields", full)
+	rows := resultMap(t, result)["gear"].([]any)
+	active := rows[0].(map[string]any)["full"].(map[string]any)
+	if value, ok := active["retired"]; !ok || value != nil {
+		t.Fatalf("active full = %#v, want retained retired:null", active)
+	}
+	if active["activities"] != float64(42) || active["distance"] != 1234.5 || active["use_elapsed_time"] != true {
+		t.Fatalf("active full = %#v, want retained scalar Gear fields", active)
+	}
+	if componentIDs := active["component_ids"].([]any); len(componentIDs) != 2 || componentIDs[0] != "component-1" {
+		t.Fatalf("active full component_ids = %#v, want retained array", componentIDs)
+	}
+	if reminders := active["reminders"].([]any); len(reminders) != 1 || reminders[0].(map[string]any)["name"] != "Replace chain" {
+		t.Fatalf("active full reminders = %#v, want retained reminder", reminders)
+	}
+	retired := rows[1].(map[string]any)["full"].(map[string]any)
+	if retired["retired"] != "2025-11-30" {
+		t.Fatalf("retired full = %#v, want retained retirement date", retired)
 	}
 }
 

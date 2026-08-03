@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -213,6 +214,54 @@ func TestUpdateWellnessSendsSparseBody(t *testing.T) {
 	}
 	if got.Fatigue == nil || *got.Fatigue != 2 || got.Weight == nil || *got.Weight != 70.5 {
 		t.Fatalf("updated wellness = %#v, want decoded row", got)
+	}
+}
+
+func TestWriteWellnessBodyHydrationBoundaries(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name      string
+		hydration int
+		wantErr   bool
+	}{
+		{name: "minimum accepted", hydration: 1},
+		{name: "maximum accepted", hydration: 4},
+		{name: "below minimum rejected", hydration: 0, wantErr: true},
+		{name: "above maximum rejected", hydration: 5, wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			body, err := writeWellnessBody(WriteWellnessParams{Hydration: &tc.hydration})
+			if tc.wantErr {
+				if err == nil {
+					t.Fatal("writeWellnessBody() error = nil, want range error")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("writeWellnessBody() error = %v", err)
+			}
+			if !mapsEqual(body, map[string]any{"hydration": tc.hydration}) {
+				t.Fatalf("writeWellnessBody() = %#v, want sparse hydration-only body", body)
+			}
+		})
+	}
+}
+
+func TestUpdateWellnessRejectsInvalidHydrationBeforeRequest(t *testing.T) {
+	t.Parallel()
+
+	for _, hydration := range []int{0, 5} {
+		t.Run(fmt.Sprintf("hydration %d", hydration), func(t *testing.T) {
+			t.Parallel()
+
+			_, err := (&Client{}).UpdateWellness(context.Background(), WriteWellnessParams{Date: "2026-05-01", Hydration: &hydration})
+			if err == nil || !strings.Contains(err.Error(), "hydration must be 1-4") {
+				t.Fatalf("UpdateWellness() error = %v, want hydration range error before HTTP", err)
+			}
+		})
 	}
 }
 
