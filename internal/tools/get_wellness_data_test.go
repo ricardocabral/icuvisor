@@ -494,7 +494,11 @@ func TestGetWellnessDataHydrationSemanticsAndIncludeFull(t *testing.T) {
 			t.Fatalf("terse hydration row emitted guessed/renamed %s: %+v", key, terse)
 		}
 	}
-	semantics := terse["_meta"].(map[string]any)["field_semantics"].(map[string]any)
+	meta := terse["_meta"].(map[string]any)
+	if got := meta["scales"].(map[string]any)["hydration"]; got != "1-4 (athlete-reported hydration)" {
+		t.Fatalf("hydration response scale = %#v", got)
+	}
+	semantics := meta["field_semantics"].(map[string]any)
 	if semantics["hydration"] != "Subjective athlete-reported hydration rating on a 1-4 scale." {
 		t.Fatalf("hydration semantics = %#v, want subjective 1-4 rating", semantics)
 	}
@@ -551,6 +555,11 @@ func TestGetWellnessDataNullHydrationDoesNotEmitSemantics(t *testing.T) {
 		if semantics, ok := meta["field_semantics"].(map[string]any); ok {
 			if semantics["hydration"] != nil || semantics["hydrationVolume"] != nil {
 				t.Fatalf("null hydration left stale field_semantics: %+v", semantics)
+			}
+		}
+		if scales, ok := meta["scales"].(map[string]any); ok {
+			if _, ok := scales["hydration"]; ok {
+				t.Fatalf("null hydration retained scale metadata: %+v", scales)
 			}
 		}
 	}
