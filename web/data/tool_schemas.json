@@ -2599,7 +2599,7 @@
   },
   "get_wellness_data": {
     "name": "get_wellness_data",
-    "description": "Get daily wellness rows for a local date range with distinct sleepQuality, sleepScore, sleepSecs, nutrition keys calories_intake/carbs_g/protein_g/fat_g when present, custom fields, native provider sidecars, and provider-native provenance scale labels for sleep/readiness.",
+    "description": "Get daily wellness rows for a local date range with distinct sleepQuality, sleepScore, sleepSecs, subjective hydration (1-4), separate read-only hydrationVolume (litres), nutrition keys calories_intake/carbs_g/protein_g/fat_g when present, custom fields, native provider sidecars, and provider-native provenance scale labels for sleep/readiness.",
     "arguments": [
       {
         "name": "fields",
@@ -3095,7 +3095,7 @@
   },
   "update_wellness": {
     "name": "update_wellness",
-    "description": "Update one athlete-local wellness row with sparse manual fields: subjective scales, measurements, injury text, and locked; legacy feel remains in the input schema for compatibility but rejects with field_not_writable: feel (not accepted by intervals.icu wellness write), device-owned sleepScore rejects with field_not_writable: sleepScore (device-managed), and _native rejects with field_not_writable: _native (bridge-managed).",
+    "description": "Update one athlete-local wellness row with sparse manual fields: subjective scales including hydration (1-4), measurements, injury text, and locked; hydrationVolume is read-only and unsupported for writes; legacy feel remains in the input schema for compatibility but rejects with field_not_writable: feel (not accepted by intervals.icu wellness write), device-owned sleepScore rejects with field_not_writable: sleepScore (device-managed), and _native rejects with field_not_writable: _native (bridge-managed).",
     "arguments": [
       {
         "name": "abdomen",
@@ -3144,6 +3144,12 @@
         "required": false,
         "type": "number",
         "description": "Manual HRV in milliseconds rMSSD."
+      },
+      {
+        "name": "hydration",
+        "required": false,
+        "type": "integer",
+        "description": "1-4 (athlete-reported hydration); hydration scale."
       },
       {
         "name": "include_full",
@@ -3246,7 +3252,8 @@
     "examples": [
       {
         "date": "2026-06-15",
-        "fatigue": 2
+        "fatigue": 2,
+        "hydration": 3
       },
       {
         "date": "2026-06-16",

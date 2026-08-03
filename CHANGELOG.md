@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added validated sparse `hydration` 1–4 ratings to `update_wellness`, with request/response scale metadata and a distinct read-only litres `hydrationVolume` field.
 - Added the full-toolset, read-only `compute_training_monotony` analyzer for transparent Foster-style daily training-load monotony with bounded athlete-local coverage, raw-load evidence, and explicit refusal/zero-variance semantics.
 - Added caller-selected, read-only taper scenarios to `propose_annual_training_plan`, with bounded duration/load inputs, resolved assumption metadata, and projection-bridge reconciliation.
 - Added explicit caller-supplied multisport allocation targets to `propose_annual_training_plan`, including deterministic Ride/Run/Swim (or other named discipline) load/hour reconciliation and requested weekly session counts without scheduling workouts.
