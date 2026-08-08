@@ -96,14 +96,14 @@ func analyzeCorrelationHandler(clients analyzerClients, profileClient ProfileCli
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
 			}
-			return Result{}, NewUserError(fetchAnalyzeCorrelationMsg, err)
+			return Result{}, analyzerFetchUserError(fetchAnalyzeCorrelationMsg, err)
 		}
 		ySeries, err := loadCorrelationMetricSeries(ctx, clients, metricY, yWindow, grain, args.Sport, unitSystem, customFieldCodes)
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
 			}
-			return Result{}, NewUserError(fetchAnalyzeCorrelationMsg, err)
+			return Result{}, analyzerFetchUserError(fetchAnalyzeCorrelationMsg, err)
 		}
 		var pairs []analysis.PairedSample
 		if grain == analysis.SampleGrainActivity {

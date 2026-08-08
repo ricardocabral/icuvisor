@@ -70,7 +70,7 @@ func analyzeTrendHandler(clients analyzerClients, profileClient ProfileClient, v
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
 			}
-			return Result{}, NewUserError(fetchAnalyzeTrendMsg, err)
+			return Result{}, analyzerFetchUserError(fetchAnalyzeTrendMsg, err)
 		}
 		grain := analysis.SampleGrain(currentSeries.Assumptions["sample_grain"].(string))
 		effectiveRollingDays := rolling
@@ -85,7 +85,7 @@ func analyzeTrendHandler(clients analyzerClients, profileClient ProfileClient, v
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
 			}
-			return Result{}, NewUserError(fetchAnalyzeTrendMsg, err)
+			return Result{}, analyzerFetchUserError(fetchAnalyzeTrendMsg, err)
 		}
 		minSamples := analysis.MinBaselineSamples
 		if grain == analysis.SampleGrainWeekly {

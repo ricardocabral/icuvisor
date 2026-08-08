@@ -178,10 +178,17 @@ func wellnessFreshnessField(metric analysis.Metric) (string, string, bool) {
 	}
 }
 
+// unsupportedAnalyzerMetricError explains why a catalog metric cannot be served
+// at the requested grain and which tool serves it instead. Analyzer handlers
+// surface its message verbatim rather than the generic fetch-failure text.
+type unsupportedAnalyzerMetricError struct{ message string }
+
+func (e *unsupportedAnalyzerMetricError) Error() string { return e.message }
+
 func selectAnalyzerMetricSource(metric analysis.Metric, grain analysis.SampleGrain, allowWeekly bool) (analyzerMetricSelection, error) {
 	sources := analysis.MetricSources(metric)
 	if len(sources) == 0 {
-		return analyzerMetricSelection{}, fmt.Errorf("unsupported analysis metric %q", metric)
+		return analyzerMetricSelection{}, &unsupportedAnalyzerMetricError{message: fmt.Sprintf("unsupported analysis metric %q", metric)}
 	}
 	families := sourcePreference(grain, allowWeekly)
 	for _, family := range families {
@@ -191,7 +198,7 @@ func selectAnalyzerMetricSource(metric analysis.Metric, grain analysis.SampleGra
 			}
 		}
 	}
-	return analyzerMetricSelection{}, analyzerUnsupportedMetricError(sources)
+	return analyzerMetricSelection{}, analyzerUnsupportedMetricError(metric, sources)
 }
 
 func sourcePreference(grain analysis.SampleGrain, allowWeekly bool) []analysis.SourceFamily {
@@ -205,16 +212,18 @@ func sourcePreference(grain analysis.SampleGrain, allowWeekly bool) []analysis.S
 	return families
 }
 
-func analyzerUnsupportedMetricError(sources []analysis.MetricSource) error {
+func analyzerUnsupportedMetricError(metric analysis.Metric, sources []analysis.MetricSource) error {
 	for _, source := range sources {
-		if source.Family == analysis.SourceActivityInterval || source.Family == analysis.SourceExtendedInterval {
-			return errors.New("metric is interval-only; use get_activity_intervals or compute_activity_segment_stats")
-		}
 		if source.Family == analysis.SourceExtendedActivity {
-			return errors.New("metric requires per-activity extended metrics; use get_extended_metrics")
+			return &unsupportedAnalyzerMetricError{message: fmt.Sprintf("metric %s requires per-activity extended metrics; use get_extended_metrics or compute_baseline", metric)}
 		}
 	}
-	return errors.New("metric is not supported by this analyzer")
+	for _, source := range sources {
+		if source.Family == analysis.SourceActivityInterval || source.Family == analysis.SourceExtendedInterval {
+			return &unsupportedAnalyzerMetricError{message: fmt.Sprintf("metric %s is interval-only; use get_activity_intervals or compute_activity_segment_stats", metric)}
+		}
+	}
+	return &unsupportedAnalyzerMetricError{message: fmt.Sprintf("metric %s is not supported by this analyzer", metric)}
 }
 
 func loadAllAnalyzerActivities(ctx context.Context, client ActivitiesClient, oldest string, newest string, customFieldCodes []string) ([]intervals.Activity, error) {

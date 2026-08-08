@@ -250,6 +250,45 @@ func TestAnalyzeTrendHRVStaleProvenanceVisible(t *testing.T) {
 	}
 }
 
+func TestAnalyzeTrendUnsupportedMetricNamesActionableAlternative(t *testing.T) {
+	client := newFakeComputeClient()
+	tool := newAnalyzeTrendTool(nil, client, nil, client, "test", "UTC", false)
+	cases := []struct {
+		metric string
+		want   string
+	}{
+		{"dfa_alpha1", "interval-only; use get_activity_intervals"},
+		{"aerobic_decoupling_percent", "requires per-activity extended metrics; use get_extended_metrics"},
+		{"if", "requires per-activity extended metrics; use get_extended_metrics"},
+		{"vi", "requires per-activity extended metrics; use get_extended_metrics"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.metric, func(t *testing.T) {
+			_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"metric":"` + tc.metric + `","window":{"start_date":"2026-05-01","end_date":"2026-05-07"}}`)})
+			message, ok := PublicErrorMessage(err)
+			if !ok {
+				t.Fatalf("Handler() error = %v, want public error", err)
+			}
+			if !strings.Contains(message, tc.metric) || !strings.Contains(message, tc.want) {
+				t.Fatalf("public error = %q, want metric name and %q", message, tc.want)
+			}
+			if strings.Contains(message, "check credentials") {
+				t.Fatalf("public error = %q, must not fall back to generic guess list", message)
+			}
+		})
+	}
+}
+
+func TestAnalyzeDistributionUnsupportedMetricNamesActionableAlternative(t *testing.T) {
+	client := newFakeComputeClient()
+	tool := newAnalyzeDistributionTool(nil, client, nil, client, "test", "UTC", false)
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"metric":"dfa_alpha1","window":{"start_date":"2026-05-01","end_date":"2026-05-07"}}`)})
+	message, ok := PublicErrorMessage(err)
+	if !ok || !strings.Contains(message, "dfa_alpha1") || !strings.Contains(message, "interval-only") {
+		t.Fatalf("public error = %q/%v, want specific interval-only explanation; err=%v", message, ok, err)
+	}
+}
+
 func TestAnalyzeTrendPropagatesBaselineCancellation(t *testing.T) {
 	client := &cancelSecondSummaryClient{rows: decodeSummaries(t, `[
 		{"date":"2026-05-01","fitness":70},{"date":"2026-05-02","fitness":71},{"date":"2026-05-03","fitness":72},{"date":"2026-05-04","fitness":73},{"date":"2026-05-05","fitness":74},{"date":"2026-05-06","fitness":75},{"date":"2026-05-07","fitness":76}

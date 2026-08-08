@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `analyze_trend`, `analyze_distribution`, and `analyze_correlation` now report why a metric cannot be analyzed (interval-only or extended-metrics-only, naming the tool that serves it) instead of collapsing every failure into the generic check-credentials guess list.
+
 ## [1.5.4] - 2026-08-03
 
 ### Added

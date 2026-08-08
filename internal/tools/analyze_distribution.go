@@ -80,7 +80,7 @@ func analyzeDistributionHandler(clients analyzerClients, profileClient ProfileCl
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
 			}
-			return Result{}, NewUserError(fetchAnalyzeDistributionMsg, err)
+			return Result{}, analyzerFetchUserError(fetchAnalyzeDistributionMsg, err)
 		}
 		actualGrain, _ := series.Assumptions["sample_grain"].(string)
 		if actualGrain == string(analysis.SampleGrainWeekly) {
