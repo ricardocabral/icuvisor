@@ -400,6 +400,8 @@ func activityMetricValue(activity intervals.Activity, metric analysis.Metric, un
 		return intPointerValue(activity.MaxHeartRate)
 	case "average_cadence_rpm":
 		return floatPointerValue(activity.AverageCadence)
+	case "average_power_watts":
+		return intPointerValue(activity.AverageWatts)
 	case "calories_burned":
 		return intPointerValue(activity.Calories)
 	default:

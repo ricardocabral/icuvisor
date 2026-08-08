@@ -29,7 +29,7 @@ var terseActivityFields = []string{
 	"distance", "icu_distance", "moving_time", "elapsed_time", "average_speed", "max_speed",
 	"has_weather", "average_weather_temp", "min_weather_temp", "max_weather_temp", "average_wind_speed", "average_wind_gust", "prevailing_wind_deg", "headwind_percent", "tailwind_percent",
 	"total_elevation_gain", "total_elevation_loss", "icu_training_load", "average_heartrate",
-	"max_heartrate", "average_cadence", "calories", "carbs_ingested", "carbs_used",
+	"max_heartrate", "average_cadence", "icu_average_watts", "calories", "carbs_ingested", "carbs_used",
 	"device_name", "gear_id", "tags",
 }
 
@@ -101,6 +101,7 @@ type getActivitiesRow struct {
 	AverageHeartRateBPM  int                    `json:"average_heart_rate_bpm,omitempty"`
 	MaxHeartRateBPM      int                    `json:"max_heart_rate_bpm,omitempty"`
 	AverageCadenceRPM    *float64               `json:"average_cadence_rpm,omitempty"`
+	AveragePowerWatts    *int                   `json:"average_power_watts,omitempty"`
 	CaloriesBurned       *int                   `json:"calories_burned,omitempty"`
 	CarbsIngestedG       *int                   `json:"carbs_ingested_g,omitempty"`
 	CarbsUsedG           *int                   `json:"carbs_used_g,omitempty"`

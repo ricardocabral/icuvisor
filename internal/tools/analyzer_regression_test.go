@@ -250,6 +250,53 @@ func TestAnalyzeTrendHRVStaleProvenanceVisible(t *testing.T) {
 	}
 }
 
+func TestAnalyzeTrendAveragePowerUsesActivityRows(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"a1","name":"Ride 1","type":"Ride","start_date_local":"2026-05-01T07:00:00","moving_time":3600,"icu_average_watts":150}`,
+		`{"id":"a2","name":"Ride 2","type":"Ride","start_date_local":"2026-05-02T07:00:00","moving_time":3600,"icu_average_watts":170}`,
+		`{"id":"a3","name":"Ride 3","type":"Ride","start_date_local":"2026-05-03T07:00:00","moving_time":3600,"icu_average_watts":190}`,
+	}, "metric")
+	tool := newAnalyzeTrendTool(nil, nil, client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"metric":"average_power_watts","window":{"start_date":"2026-05-01","end_date":"2026-05-03"},"rolling_window_days":2,"sport":"Ride"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["n"] != float64(3) {
+		t.Fatalf("meta n = %v, want 3 daily power samples", meta["n"])
+	}
+	if !slices.Contains(stringSliceFromAny(meta["source_tools"]), getActivitiesName) {
+		t.Fatalf("source_tools = %#v, want get_activities", meta["source_tools"])
+	}
+	assumptions := meta["assumptions"].(map[string]any)
+	if assumptions["unit"] != "W" {
+		t.Fatalf("unit = %#v, want W", assumptions["unit"])
+	}
+}
+
+func TestAnalyzeDistributionAveragePowerPerActivity(t *testing.T) {
+	t.Parallel()
+
+	client := newFakeActivitiesClient(t, []string{
+		`{"id":"a1","name":"Ride 1","type":"Ride","start_date_local":"2026-05-01T07:00:00","moving_time":3600,"icu_average_watts":150}`,
+		`{"id":"a2","name":"Ride 2","type":"Ride","start_date_local":"2026-05-01T17:00:00","moving_time":3600,"icu_average_watts":170}`,
+		`{"id":"a3","name":"Run 1","type":"Run","start_date_local":"2026-05-02T07:00:00","moving_time":1800}`,
+	}, "metric")
+	tool := newAnalyzeDistributionTool(nil, nil, client, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"metric":"average_power_watts","window":{"start_date":"2026-05-01","end_date":"2026-05-03"}}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["n"] != float64(2) {
+		t.Fatalf("meta n = %v, want 2 rides with power and no sample for the powerless run", meta["n"])
+	}
+}
+
 func TestAnalyzeTrendPropagatesBaselineCancellation(t *testing.T) {
 	client := &cancelSecondSummaryClient{rows: decodeSummaries(t, `[
 		{"date":"2026-05-01","fitness":70},{"date":"2026-05-02","fitness":71},{"date":"2026-05-03","fitness":72},{"date":"2026-05-04","fitness":73},{"date":"2026-05-05","fitness":74},{"date":"2026-05-06","fitness":75},{"date":"2026-05-07","fitness":76}

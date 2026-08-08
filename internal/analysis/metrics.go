@@ -213,7 +213,7 @@ var metricCatalog = []metricEntry{
 	metric("max_heart_rate_bpm", src(SourceActivityRow, "get_activities", "max_heart_rate_bpm", GrainActivity, "bpm")),
 	metric("average_cadence_rpm", src(SourceActivityRow, "get_activities", "average_cadence_rpm", GrainActivity, "rpm")),
 	metric("calories_burned", src(SourceActivityRow, "get_activities", "calories_burned", GrainActivity, "kcal"), src(SourceTrainingSummary, "get_training_summary", "calories_burned", GrainSummaryWindow, "kcal")),
-	metric("average_power_watts", src(SourceActivityInterval, "get_activity_intervals", "average_power_watts", GrainInterval, "W")),
+	metric("average_power_watts", src(SourceActivityRow, "get_activities", "average_power_watts", GrainActivity, "W"), src(SourceActivityInterval, "get_activity_intervals", "average_power_watts", GrainInterval, "W")),
 	metric("session_rpe", src(SourceTrainingSummary, "get_training_summary", "session_rpe", GrainSummaryWindow, "RPE"), src(SourceExtendedActivity, "get_extended_metrics", "session_rpe", GrainActivity, "RPE")),
 	metric("time_in_zones_total_seconds", src(SourceTrainingSummary, "get_training_summary", "time_in_zones_total_seconds", GrainSummaryWindow, "seconds")),
 	derivedMetric("weekly_tss", "get_training_summary", "training_load", "TSS-equivalent", "weekly bucketed sum of training_load"),

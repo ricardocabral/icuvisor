@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Terse activity rows from `get_activities` and `get_activity_details` now include `average_power_watts` (upstream `icu_average_watts`) alongside average HR, cadence, and speed, and `analyze_trend`/`analyze_distribution` can analyze `average_power_watts` from activity rows (moving-time-weighted daily mean or per-activity samples).
+
 ## [1.5.4] - 2026-08-03
 
 ### Added
