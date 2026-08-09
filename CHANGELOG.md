@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.5] - 2026-08-09
+
 ### Added
 
+- Added support for the MCP 2026-07-28 protocol standard through the official Go SDK, while preserving stateful Streamable HTTP compatibility with clients that negotiate 2025-11-25.
 - Terse activity rows from `get_activities` and `get_activity_details` now include `average_power_watts` (upstream `icu_average_watts`) alongside average HR, cadence, and speed, and `analyze_trend`/`analyze_distribution` can analyze `average_power_watts` from activity rows (moving-time-weighted daily mean or per-activity samples).
 
 ### Fixed
@@ -374,7 +377,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.5.4...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.5.5...HEAD
+[1.5.5]: https://github.com/ricardocabral/icuvisor/compare/v1.5.4...v1.5.5
 [1.5.4]: https://github.com/ricardocabral/icuvisor/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/ricardocabral/icuvisor/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/ricardocabral/icuvisor/compare/v1.5.1...v1.5.2
