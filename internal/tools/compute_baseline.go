@@ -252,7 +252,7 @@ func collectSummaryBaseline(ctx context.Context, args computeBaselineRequest, me
 }
 
 func collectWellnessBaseline(ctx context.Context, args computeBaselineRequest, metric analysis.Metric, source analysis.MetricSource, client WellnessClient) (baselineCollected, error) {
-	rows, err := client.ListWellness(ctx, intervals.WellnessParams{Oldest: args.BaselineStartDate, Newest: args.CurrentEndDate, Fields: []string{source.Field}})
+	rows, err := client.ListWellness(ctx, intervals.WellnessParams{Oldest: args.BaselineStartDate, Newest: args.CurrentEndDate, Fields: analyzerWellnessFields(metric, source.Field)})
 	if err != nil {
 		return baselineCollected{}, err
 	}

@@ -118,6 +118,26 @@ func TestGetActivityDetailsTagsPreserveOrderAndFullPayload(t *testing.T) {
 	}
 }
 
+func TestGetActivityDetailsTerseIncludesAveragePower(t *testing.T) {
+	t.Parallel()
+
+	activity := decodeActivityFixture(t, `{"id":"a1","icu_athlete_id":"i12345","name":"Ride","type":"Ride","start_date_local":"2026-01-02T07:00:00","icu_average_watts":166,"average_heartrate":141,"average_cadence":85.5}`)
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
+	tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, nil, nil, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	activityMap := resultMap(t, result)["activity"].(map[string]any)
+	if activityMap["average_power_watts"] != float64(166) {
+		t.Fatalf("average_power_watts = %#v, want 166 in terse row alongside HR and cadence", activityMap["average_power_watts"])
+	}
+	if activityMap["average_heart_rate_bpm"] != float64(141) || activityMap["average_cadence_rpm"] != float64(85.5) {
+		t.Fatalf("terse row = %#v, want HR and cadence preserved", activityMap)
+	}
+}
+
 func TestGetActivityDetailsTagsPreservedInDefaultTerseResponse(t *testing.T) {
 	t.Parallel()
 

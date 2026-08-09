@@ -167,6 +167,18 @@ func (s *wellnessFreshnessSummary) trendAssumptions() map[string]any {
 	return out
 }
 
+// analyzerWellnessFields returns the upstream field filter for analyzer wellness
+// fetches. The id column carries the row date and must always be requested
+// alongside the metric field; intervals.icu omits it (and every other column)
+// from filtered responses. Metrics with freshness tracking fetch full rows
+// because provenance lives in provider sidecar fields the filter would strip.
+func analyzerWellnessFields(metric analysis.Metric, field string) []string {
+	if _, _, ok := wellnessFreshnessField(metric); ok {
+		return nil
+	}
+	return []string{"id", field}
+}
+
 func wellnessFreshnessField(metric analysis.Metric) (string, string, bool) {
 	switch metric {
 	case "hrv":
@@ -412,6 +424,8 @@ func activityMetricValue(activity intervals.Activity, metric analysis.Metric, un
 		return intPointerValue(activity.MaxHeartRate)
 	case "average_cadence_rpm":
 		return floatPointerValue(activity.AverageCadence)
+	case "average_power_watts":
+		return intPointerValue(activity.AverageWatts)
 	case "calories_burned":
 		return intPointerValue(activity.Calories)
 	default:

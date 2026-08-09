@@ -2,6 +2,7 @@ package tools
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -26,6 +27,7 @@ type fakeComputeClient struct {
 	activityCalls int
 	detailCalls   []string
 	intervalCalls int
+	wellnessCalls []intervals.WellnessParams
 }
 
 func newFakeComputeClient() *fakeComputeClient {
@@ -72,6 +74,7 @@ func (c *fakeComputeClient) GetActivityPowerVsHR(context.Context, string) (inter
 }
 
 func (c *fakeComputeClient) ListWellness(_ context.Context, params intervals.WellnessParams) ([]intervals.Wellness, error) {
+	c.wellnessCalls = append(c.wellnessCalls, params)
 	rows := make([]intervals.Wellness, 0, len(c.wellness))
 	for _, row := range c.wellness {
 		date := wellnessDate(row)
@@ -81,9 +84,32 @@ func (c *fakeComputeClient) ListWellness(_ context.Context, params intervals.Wel
 		if params.Newest != "" && date > params.Newest {
 			continue
 		}
-		rows = append(rows, row)
+		rows = append(rows, filterWellnessRowFields(row, params.Fields))
 	}
 	return rows, nil
+}
+
+// filterWellnessRowFields mimics intervals.icu column filtering: a non-empty
+// fields list drops every other column from the row, including id.
+func filterWellnessRowFields(row intervals.Wellness, fields []string) intervals.Wellness {
+	if len(fields) == 0 {
+		return row
+	}
+	filtered := map[string]any{}
+	for _, field := range fields {
+		if value, ok := row.Raw[field]; ok {
+			filtered[field] = value
+		}
+	}
+	data, err := json.Marshal(filtered)
+	if err != nil {
+		return intervals.Wellness{}
+	}
+	var out intervals.Wellness
+	if err := json.Unmarshal(data, &out); err != nil {
+		return intervals.Wellness{}
+	}
+	return out
 }
 
 func (c *fakeComputeClient) ListEvents(context.Context, intervals.ListEventsParams) ([]intervals.Event, error) {

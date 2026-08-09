@@ -97,7 +97,7 @@ func loadAnalyzerSeries(ctx context.Context, clients analyzerClients, metric ana
 		if clients.wellness == nil {
 			return series, errors.New("missing wellness client")
 		}
-		rows, err := clients.wellness.ListWellness(ctx, intervals.WellnessParams{Oldest: window.StartDate, Newest: window.EndDate, Fields: []string{selection.Source.Field}})
+		rows, err := clients.wellness.ListWellness(ctx, intervals.WellnessParams{Oldest: window.StartDate, Newest: window.EndDate, Fields: analyzerWellnessFields(metric, selection.Source.Field)})
 		if err != nil {
 			return series, err
 		}

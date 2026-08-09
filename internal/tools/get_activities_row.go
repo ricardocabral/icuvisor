@@ -44,6 +44,7 @@ func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback
 	row.AverageHeartRateBPM = intValue(activity.AverageHeartRate)
 	row.MaxHeartRateBPM = intValue(activity.MaxHeartRate)
 	row.AverageCadenceRPM = activity.AverageCadence
+	row.AveragePowerWatts = activity.AverageWatts
 	row.CaloriesBurned = activity.Calories
 	row.CarbsIngestedG = activity.CarbsIngested
 	row.CarbsUsedG = activity.CarbsUsed
