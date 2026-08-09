@@ -48,6 +48,16 @@ func decodeAnalyzerStrict[T any](raw json.RawMessage) (T, error) {
 	return DecodeStrict[T](raw)
 }
 
+// analyzerFetchUserError keeps unsupported-metric explanations visible instead
+// of collapsing them into the generic fetch-failure guess list.
+func analyzerFetchUserError(genericMessage string, err error) error {
+	var unsupported *unsupportedAnalyzerMetricError
+	if errors.As(err, &unsupported) {
+		return NewUserError(unsupported.Error(), err)
+	}
+	return NewUserError(genericMessage, err)
+}
+
 func loadAnalyzerSeries(ctx context.Context, clients analyzerClients, metric analysis.Metric, window analysis.ParsedWindow, grain analysis.SampleGrain, sport string, unitSystem response.UnitSystem, customFieldCodes []string, allowWeekly bool) (analyzerSampleSeries, error) {
 	selection, err := selectAnalyzerMetricSource(metric, grain, allowWeekly)
 	if err != nil {
