@@ -257,7 +257,7 @@ func TestAnalyzeTrendUnsupportedMetricNamesActionableAlternative(t *testing.T) {
 		metric string
 		want   string
 	}{
-		{"dfa_alpha1", "interval-only; use get_activity_intervals"},
+		{"dfa_alpha1", "interval-only; use get_extended_metrics"},
 		{"aerobic_decoupling_percent", "requires per-activity extended metrics; use get_extended_metrics"},
 		{"if", "requires per-activity extended metrics; use get_extended_metrics"},
 		{"vi", "requires per-activity extended metrics; use get_extended_metrics"},
@@ -274,6 +274,9 @@ func TestAnalyzeTrendUnsupportedMetricNamesActionableAlternative(t *testing.T) {
 			}
 			if strings.Contains(message, "check credentials") {
 				t.Fatalf("public error = %q, must not fall back to generic guess list", message)
+			}
+			if tc.metric == "dfa_alpha1" && strings.Contains(message, "get_activity_intervals") {
+				t.Fatalf("public error = %q, must not point an extended-only metric at get_activity_intervals", message)
 			}
 		})
 	}

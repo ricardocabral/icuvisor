@@ -219,7 +219,10 @@ func analyzerUnsupportedMetricError(metric analysis.Metric, sources []analysis.M
 		}
 	}
 	for _, source := range sources {
-		if source.Family == analysis.SourceActivityInterval || source.Family == analysis.SourceExtendedInterval {
+		if source.Family == analysis.SourceExtendedInterval {
+			return &unsupportedAnalyzerMetricError{message: fmt.Sprintf("metric %s is interval-only; use %s", metric, source.Tool)}
+		}
+		if source.Family == analysis.SourceActivityInterval {
 			return &unsupportedAnalyzerMetricError{message: fmt.Sprintf("metric %s is interval-only; use get_activity_intervals or compute_activity_segment_stats", metric)}
 		}
 	}
