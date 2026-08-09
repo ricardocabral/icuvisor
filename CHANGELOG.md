@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Analyzer and baseline tools now request the wellness `id` date column alongside the metric field, so wellness-sourced metrics (`hrv`, `rhr`, `sleep_secs`, and every other daily wellness metric) return real samples instead of silently reporting zero; HRV-family metrics fetch full rows so provider provenance staleness detection works as designed.
+
 ## [1.5.4] - 2026-08-03
 
 ### Added

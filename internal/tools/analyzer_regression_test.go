@@ -250,6 +250,71 @@ func TestAnalyzeTrendHRVStaleProvenanceVisible(t *testing.T) {
 	}
 }
 
+func TestAnalyzerWellnessFieldsAlwaysRequestDateColumn(t *testing.T) {
+	if got := analyzerWellnessFields(analysis.Metric("rhr"), "restingHR"); !slices.Equal(got, []string{"id", "restingHR"}) {
+		t.Fatalf("analyzerWellnessFields(rhr) = %#v, want id plus metric field", got)
+	}
+	for _, metric := range []string{"hrv", "hrv_sdnn"} {
+		if got := analyzerWellnessFields(analysis.Metric(metric), metric); got != nil {
+			t.Fatalf("analyzerWellnessFields(%s) = %#v, want nil for full rows with provenance", metric, got)
+		}
+	}
+}
+
+func TestAnalyzeTrendWellnessMetricSurvivesUpstreamFieldFilter(t *testing.T) {
+	client := newFakeComputeClient()
+	client.wellness = []intervals.Wellness{
+		decodeWellnessRow(t, `{"id":"2026-05-01","restingHR":50}`),
+		decodeWellnessRow(t, `{"id":"2026-05-02","restingHR":51}`),
+		decodeWellnessRow(t, `{"id":"2026-05-03","restingHR":52}`),
+		decodeWellnessRow(t, `{"id":"2026-05-04","restingHR":53}`),
+		decodeWellnessRow(t, `{"id":"2026-05-05","restingHR":54}`),
+		decodeWellnessRow(t, `{"id":"2026-05-06","restingHR":55}`),
+		decodeWellnessRow(t, `{"id":"2026-05-07","restingHR":56}`),
+	}
+	tool := newAnalyzeTrendTool(nil, client, nil, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"metric":"rhr","window":{"start_date":"2026-05-01","end_date":"2026-05-07"}}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["n"] != float64(7) || meta["missing_days"] != float64(0) {
+		t.Fatalf("meta n=%v missing_days=%v, want 7 samples and no missing days despite upstream field filter", meta["n"], meta["missing_days"])
+	}
+	if len(client.wellnessCalls) == 0 {
+		t.Fatal("no wellness calls recorded")
+	}
+	for _, call := range client.wellnessCalls {
+		if !slices.Contains(call.Fields, "id") {
+			t.Fatalf("wellness fields = %#v, want id requested so sample dates resolve", call.Fields)
+		}
+	}
+}
+
+func TestAnalyzeTrendHRVFetchesFullRowsForProvenance(t *testing.T) {
+	client := newFakeComputeClient()
+	client.wellness = []intervals.Wellness{
+		decodeWellnessRow(t, `{"id":"2026-05-01","hrv":76}`),
+		decodeWellnessRow(t, `{"id":"2026-05-02","hrv":77}`),
+	}
+	tool := newAnalyzeTrendTool(nil, client, nil, client, "test", "UTC", false)
+
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"metric":"hrv","window":{"start_date":"2026-05-01","end_date":"2026-05-02"},"rolling_window_days":2}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	meta := resultMap(t, result)["_meta"].(map[string]any)
+	if meta["n"] != float64(2) {
+		t.Fatalf("meta n=%v, want 2 HRV samples", meta["n"])
+	}
+	for _, call := range client.wellnessCalls {
+		if len(call.Fields) != 0 {
+			t.Fatalf("wellness fields = %#v, want full rows so provider provenance sidecars survive", call.Fields)
+		}
+	}
+}
+
 func TestAnalyzeTrendPropagatesBaselineCancellation(t *testing.T) {
 	client := &cancelSecondSummaryClient{rows: decodeSummaries(t, `[
 		{"date":"2026-05-01","fitness":70},{"date":"2026-05-02","fitness":71},{"date":"2026-05-03","fitness":72},{"date":"2026-05-04","fitness":73},{"date":"2026-05-05","fitness":74},{"date":"2026-05-06","fitness":75},{"date":"2026-05-07","fitness":76}
