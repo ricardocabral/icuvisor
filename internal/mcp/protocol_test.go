@@ -450,6 +450,12 @@ func TestProtocolTransportParity(t *testing.T) {
 		snapshots[kind] = snapshot
 	}
 
+	if got, want := protocolVersions[protocolTransportInMemory], "2026-07-28"; got != want {
+		t.Errorf("in-memory protocol version = %q, want %q", got, want)
+	}
+	if got, want := protocolVersions[protocolTransportStreamableHTTP], "2025-11-25"; got != want {
+		t.Errorf("stateful streamable HTTP protocol version = %q, want %q", got, want)
+	}
 	if string(snapshots[protocolTransportInMemory]) != string(snapshots[protocolTransportStreamableHTTP]) {
 		t.Fatalf("protocol responses differ across transports (in_memory protocol %s, streamable_http protocol %s)\nin_memory: %s\nstreamable_http: %s", protocolVersions[protocolTransportInMemory], protocolVersions[protocolTransportStreamableHTTP], snapshots[protocolTransportInMemory], snapshots[protocolTransportStreamableHTTP])
 	}
