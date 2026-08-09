@@ -87,6 +87,7 @@ type Activity struct {
 	AverageHeartRate   *int     `json:"average_heartrate"`
 	MaxHeartRate       *int     `json:"max_heartrate"`
 	AverageCadence     *float64 `json:"average_cadence"`
+	AverageWatts       *int     `json:"icu_average_watts"`
 	Calories           *int     `json:"calories"`
 	CarbsIngested      *int     `json:"carbs_ingested"`
 	CarbsUsed          *int     `json:"carbs_used"`

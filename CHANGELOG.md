@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Terse activity rows from `get_activities` and `get_activity_details` now include `average_power_watts` (upstream `icu_average_watts`) alongside average HR, cadence, and speed, and `analyze_trend`/`analyze_distribution` can analyze `average_power_watts` from activity rows (moving-time-weighted daily mean or per-activity samples).
+
 ### Fixed
 
 - Analyzer and baseline tools now request the wellness `id` date column alongside the metric field, so wellness-sourced metrics (`hrv`, `rhr`, `sleep_secs`, and every other daily wellness metric) return real samples instead of silently reporting zero; HRV-family metrics fetch full rows so provider provenance staleness detection works as designed.
