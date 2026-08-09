@@ -438,8 +438,10 @@ func TestProtocolTransportParity(t *testing.T) {
 	t.Parallel()
 
 	snapshots := make(map[protocolTransportKind][]byte, len(protocolTransportKinds))
+	protocolVersions := make(map[protocolTransportKind]string, len(protocolTransportKinds))
 	for _, kind := range protocolTransportKinds {
 		ctx, session, cleanup := connectProtocolClient(t, kind, Options{Registry: testEchoRegistry{}, ResourceRegistry: testResourceRegistry{}})
+		protocolVersions[kind] = session.InitializeResult().ProtocolVersion
 		snapshot, err := protocolParitySnapshot(ctx, session)
 		cleanup()
 		if err != nil {
@@ -448,8 +450,14 @@ func TestProtocolTransportParity(t *testing.T) {
 		snapshots[kind] = snapshot
 	}
 
+	if got, want := protocolVersions[protocolTransportInMemory], "2026-07-28"; got != want {
+		t.Errorf("in-memory protocol version = %q, want %q", got, want)
+	}
+	if got, want := protocolVersions[protocolTransportStreamableHTTP], "2025-11-25"; got != want {
+		t.Errorf("stateful streamable HTTP protocol version = %q, want %q", got, want)
+	}
 	if string(snapshots[protocolTransportInMemory]) != string(snapshots[protocolTransportStreamableHTTP]) {
-		t.Fatalf("protocol responses differ across transports\nin_memory: %s\nstreamable_http: %s", snapshots[protocolTransportInMemory], snapshots[protocolTransportStreamableHTTP])
+		t.Fatalf("protocol responses differ across transports (in_memory protocol %s, streamable_http protocol %s)\nin_memory: %s\nstreamable_http: %s", protocolVersions[protocolTransportInMemory], protocolVersions[protocolTransportStreamableHTTP], snapshots[protocolTransportInMemory], snapshots[protocolTransportStreamableHTTP])
 	}
 }
 
@@ -1999,20 +2007,35 @@ func protocolParitySnapshot(ctx context.Context, session *sdkmcp.ClientSession) 
 		return nil, err
 	}
 
+	initialize := session.InitializeResult()
 	return json.Marshal(struct {
-		Initialize *sdkmcp.InitializeResult    `json:"initialize"`
-		Tools      *sdkmcp.ListToolsResult     `json:"tools"`
-		Call       *sdkmcp.CallToolResult      `json:"call"`
-		Resources  *sdkmcp.ListResourcesResult `json:"resources"`
-		Read       *sdkmcp.ReadResourceResult  `json:"read"`
-		Prompts    *sdkmcp.ListPromptsResult   `json:"prompts"`
+		Capabilities        *sdkmcp.ServerCapabilities `json:"capabilities"`
+		Instructions        string                     `json:"instructions,omitempty"`
+		ServerInfo          *sdkmcp.Implementation     `json:"server_info"`
+		Tools               []*sdkmcp.Tool             `json:"tools"`
+		ToolsNextCursor     string                     `json:"tools_next_cursor,omitempty"`
+		CallContent         []sdkmcp.Content           `json:"call_content"`
+		StructuredContent   any                        `json:"structured_content,omitempty"`
+		CallIsError         bool                       `json:"call_is_error,omitempty"`
+		Resources           []*sdkmcp.Resource         `json:"resources"`
+		ResourcesNextCursor string                     `json:"resources_next_cursor,omitempty"`
+		ReadContents        []*sdkmcp.ResourceContents `json:"read_contents"`
+		Prompts             []*sdkmcp.Prompt           `json:"prompts"`
+		PromptsNextCursor   string                     `json:"prompts_next_cursor,omitempty"`
 	}{
-		Initialize: session.InitializeResult(),
-		Tools:      toolsResult,
-		Call:       callResult,
-		Resources:  resourcesResult,
-		Read:       readResult,
-		Prompts:    promptsResult,
+		Capabilities:        initialize.Capabilities,
+		Instructions:        initialize.Instructions,
+		ServerInfo:          initialize.ServerInfo,
+		Tools:               toolsResult.Tools,
+		ToolsNextCursor:     toolsResult.NextCursor,
+		CallContent:         callResult.Content,
+		StructuredContent:   callResult.StructuredContent,
+		CallIsError:         callResult.IsError,
+		Resources:           resourcesResult.Resources,
+		ResourcesNextCursor: resourcesResult.NextCursor,
+		ReadContents:        readResult.Contents,
+		Prompts:             promptsResult.Prompts,
+		PromptsNextCursor:   promptsResult.NextCursor,
 	})
 }
 

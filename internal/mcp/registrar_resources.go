@@ -86,7 +86,7 @@ func (r *safeResourceRegistrar) validateResource(resource resources.Resource) er
 
 func isResourceNotFound(err error) bool {
 	var rpcErr *jsonrpc.Error
-	return errors.As(err, &rpcErr) && rpcErr.Code == sdkmcp.CodeResourceNotFound
+	return errors.As(err, &rpcErr) && rpcErr.Code == jsonrpc.CodeInvalidParams
 }
 
 func stringOrDefault(value, fallback string) string {
