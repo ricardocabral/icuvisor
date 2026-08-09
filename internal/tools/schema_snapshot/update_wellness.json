@@ -3,7 +3,8 @@
   "examples": [
     {
       "date": "2026-06-15",
-      "fatigue": 2
+      "fatigue": 2,
+      "hydration": 3
     },
     {
       "date": "2026-06-16",
@@ -32,7 +33,8 @@
   "input_examples": [
     {
       "date": "2026-06-15",
-      "fatigue": 2
+      "fatigue": 2,
+      "hydration": 3
     },
     {
       "date": "2026-06-16",
@@ -104,6 +106,12 @@
       "description": "Manual HRV in milliseconds rMSSD.",
       "minimum": 0,
       "type": "number"
+    },
+    "hydration": {
+      "description": "1-4 (athlete-reported hydration); hydration scale.",
+      "maximum": 4,
+      "minimum": 1,
+      "type": "integer"
     },
     "include_full": {
       "default": false,
