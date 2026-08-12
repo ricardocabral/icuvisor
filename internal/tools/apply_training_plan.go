@@ -100,7 +100,11 @@ type applyTrainingPlanWorkout struct {
 
 func newApplyTrainingPlanTool(client ApplyTrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
-	return fullTool(Tool{Name: applyTrainingPlanName, Description: applyTrainingPlanDescription, InputSchema: applyTrainingPlanInputSchema(capabilityOrSafe(capability)), OutputSchema: applyTrainingPlanOutputSchema(), Requirement: RequirementWrite, Handler: applyTrainingPlanHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability), shapeCfg)})
+	catalogCapability := capabilityOrSafe(capability)
+	if len(shaping) > 0 {
+		catalogCapability = safety.NewCapability(shapeCfg.catalogDeleteMode)
+	}
+	return fullTool(Tool{Name: applyTrainingPlanName, Description: applyTrainingPlanDescription, InputSchema: applyTrainingPlanInputSchema(catalogCapability), OutputSchema: applyTrainingPlanOutputSchema(), Requirement: RequirementWrite, Handler: applyTrainingPlanHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability), shapeCfg)})
 }
 
 func applyTrainingPlanHandler(client ApplyTrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability, shapeCfg responseShaping) Handler {

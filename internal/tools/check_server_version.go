@@ -22,7 +22,7 @@ const (
 	checkServerVersionFingerprintPlaceholder        = "pending-description-catalog-fingerprint"
 	checkServerVersionDescriptionFingerprintScope   = "catalog-mode tool records after delete-mode/toolset gates; dynamic coach per-athlete ACL visibility is excluded"
 	checkServerVersionNoNetworkSource               = "runtime catalog metadata and registered tool descriptions"
-	checkServerVersionCompareVisibleDescriptionText = "Compare the visible tool description fields with this response. If description_server_version, description_catalog_fingerprint, description_toolset, or description_delete_mode differ, reconnect the MCP client or start a new conversation; if _meta.schema_changed is visible, start a new conversation."
+	checkServerVersionCompareVisibleDescriptionText = "Compare the visible tool description fields with this response. If description_server_version, description_catalog_fingerprint, description_catalog_toolset, or description_catalog_delete_mode differ, reconnect the MCP client or start a new conversation; if _meta.schema_changed is visible, start a new conversation."
 )
 
 type checkServerVersionResponse struct {
@@ -32,17 +32,25 @@ type checkServerVersionResponse struct {
 	DescriptionCatalogFingerprint string                 `json:"description_catalog_fingerprint"`
 	Toolset                       string                 `json:"toolset"`
 	DeleteMode                    string                 `json:"delete_mode"`
+	CatalogToolset                string                 `json:"catalog_toolset"`
+	CatalogDeleteMode             string                 `json:"catalog_delete_mode"`
+	ExecutionToolset              string                 `json:"execution_toolset"`
+	ExecutionDeleteMode           string                 `json:"execution_delete_mode"`
 	Status                        string                 `json:"status"`
 	Action                        string                 `json:"action"`
 	Meta                          checkServerVersionMeta `json:"_meta"`
 }
 
 type checkServerVersionMeta struct {
-	Source           string `json:"source"`
-	FingerprintScope string `json:"fingerprint_scope"`
-	NoNetwork        bool   `json:"no_network"`
-	Toolset          string `json:"toolset"`
-	DeleteMode       string `json:"delete_mode"`
+	Source              string `json:"source"`
+	FingerprintScope    string `json:"fingerprint_scope"`
+	NoNetwork           bool   `json:"no_network"`
+	Toolset             string `json:"toolset"`
+	DeleteMode          string `json:"delete_mode"`
+	CatalogToolset      string `json:"catalog_toolset"`
+	CatalogDeleteMode   string `json:"catalog_delete_mode"`
+	ExecutionToolset    string `json:"execution_toolset"`
+	ExecutionDeleteMode string `json:"execution_delete_mode"`
 }
 
 type catalogFingerprintTool struct {
@@ -74,7 +82,7 @@ func checkServerVersionTool(version string, descriptionFingerprint string, delet
 	toolset = safety.ParseToolset(toolset.String())
 	return coreTool(Tool{
 		Name:         checkServerVersionName,
-		Description:  checkServerVersionDescription(version, descriptionFingerprint, deleteMode, toolset),
+		Description:  checkServerVersionDescription(version, descriptionFingerprint, shapeCfg.catalogDeleteMode, shapeCfg.catalogToolset),
 		InputSchema:  noArgsSchema(),
 		OutputSchema: genericOutputSchema("Server version, live catalog hash, and visible description fingerprint for stale MCP catalog diagnosis."),
 		Requirement:  RequirementRead,
@@ -83,7 +91,7 @@ func checkServerVersionTool(version string, descriptionFingerprint string, delet
 }
 
 func checkServerVersionDescription(version string, descriptionFingerprint string, deleteMode safety.Mode, toolset safety.Toolset) string {
-	return fmt.Sprintf("Check whether the MCP client is using stale icuvisor tool descriptions after an upgrade. Visible baseline: description_server_version=%s; description_catalog_fingerprint=%s; description_toolset=%s; description_delete_mode=%s. Call with no arguments and compare these visible description fields with the response fields; if they differ, reconnect the MCP client or start a new conversation. This tool makes no intervals.icu API calls and returns no athlete data, API keys, filesystem paths, usernames, or raw environment values.", normalizeVersion(version), strings.TrimSpace(descriptionFingerprint), safety.ParseToolset(toolset.String()).String(), safety.ParseMode(deleteMode.String()).String())
+	return fmt.Sprintf("Check whether the MCP client is using stale icuvisor tool descriptions after an upgrade. Visible baseline: description_server_version=%s; description_catalog_fingerprint=%s; description_catalog_toolset=%s; description_catalog_delete_mode=%s; description_toolset=%s; description_delete_mode=%s. Call with no arguments and compare these visible catalog fields with the response fields; if they differ, reconnect the MCP client or start a new conversation. This tool makes no intervals.icu API calls and returns no athlete data, API keys, filesystem paths, usernames, or raw environment values.", normalizeVersion(version), strings.TrimSpace(descriptionFingerprint), safety.ParseToolset(toolset.String()).String(), safety.ParseMode(deleteMode.String()).String(), safety.ParseToolset(toolset.String()).String(), safety.ParseMode(deleteMode.String()).String())
 }
 
 func checkServerVersionHandler(descriptionVersion string, descriptionFingerprint string, deleteMode safety.Mode, toolset safety.Toolset, shapeCfg responseShaping) Handler {
@@ -91,6 +99,7 @@ func checkServerVersionHandler(descriptionVersion string, descriptionFingerprint
 	descriptionFingerprint = strings.TrimSpace(descriptionFingerprint)
 	deleteMode = safety.ParseMode(deleteMode.String())
 	toolset = safety.ParseToolset(toolset.String())
+	shapeCfg = responseShapingOrDefault([]responseShaping{shapeCfg})
 	return func(ctx context.Context, req Request) (Result, error) {
 		if err := ctx.Err(); err != nil {
 			return Result{}, err
@@ -109,14 +118,22 @@ func checkServerVersionHandler(descriptionVersion string, descriptionFingerprint
 			DescriptionCatalogFingerprint: descriptionFingerprint,
 			Toolset:                       toolset.String(),
 			DeleteMode:                    deleteMode.String(),
+			CatalogToolset:                shapeCfg.catalogToolset.String(),
+			CatalogDeleteMode:             shapeCfg.catalogDeleteMode.String(),
+			ExecutionToolset:              toolset.String(),
+			ExecutionDeleteMode:           deleteMode.String(),
 			Status:                        checkServerVersionStatus,
 			Action:                        checkServerVersionCompareVisibleDescriptionText,
 			Meta: checkServerVersionMeta{
-				Source:           checkServerVersionNoNetworkSource,
-				FingerprintScope: checkServerVersionDescriptionFingerprintScope,
-				NoNetwork:        true,
-				Toolset:          toolset.String(),
-				DeleteMode:       deleteMode.String(),
+				Source:              checkServerVersionNoNetworkSource,
+				FingerprintScope:    checkServerVersionDescriptionFingerprintScope,
+				NoNetwork:           true,
+				Toolset:             toolset.String(),
+				DeleteMode:          deleteMode.String(),
+				CatalogToolset:      shapeCfg.catalogToolset.String(),
+				CatalogDeleteMode:   shapeCfg.catalogDeleteMode.String(),
+				ExecutionToolset:    toolset.String(),
+				ExecutionDeleteMode: deleteMode.String(),
 			},
 		}
 		return encodeShaped(payload, false, nil, runtime.Version, false, checkServerVersionName, "", shapeCfg)

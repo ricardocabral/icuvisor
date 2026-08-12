@@ -28,6 +28,8 @@ type Options struct {
 	PromptRegistry             prompts.Registry
 	Capability                 safety.Capability
 	Toolset                    safety.Toolset
+	CatalogCapability          safety.Capability
+	CatalogToolset             safety.Toolset
 	Transport                  sdkmcp.Transport
 	SelectionStore             *coach.SelectionStore
 	RecentToolCallRecorder     diagnostics.RecentToolCallRecorder
@@ -76,7 +78,7 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 	}
 	if opts.Registry != nil {
 		coachEvaluator := coach.NewEvaluator(opts.Config.CoachModeEnabled(), opts.Config.Coach)
-		registrar := &safeRegistrar{server: sdkServer, logger: logger, config: opts.Config, coachFilter: coach.NewToolFilter(coachEvaluator), selectionStore: selectionStore, capability: capabilityOrSafe(opts.Capability), toolset: toolsetOrCore(opts), names: make(map[string]struct{}), recentToolCalls: opts.RecentToolCallRecorder}
+		registrar := &safeRegistrar{server: sdkServer, logger: logger, config: opts.Config, coachFilter: coach.NewToolFilter(coachEvaluator), selectionStore: selectionStore, capability: catalogCapabilityOrExecution(opts), toolset: catalogToolsetOrExecution(opts), names: make(map[string]struct{}), recentToolCalls: opts.RecentToolCallRecorder}
 		if err := opts.Registry.Register(ctx, registrar); err != nil {
 			return nil, fmt.Errorf("registering tools: %w", err)
 		}

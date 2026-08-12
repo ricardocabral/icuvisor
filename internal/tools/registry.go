@@ -20,17 +20,23 @@ type Registry interface {
 
 // RegistryOptions configures the default tool registry.
 type RegistryOptions struct {
-	Version          string
-	TimezoneFallback string
-	DebugMetadata    bool
-	Capability       safety.Capability
-	Toolset          safety.Toolset
-	CoachModeEnabled bool
-	CoachConfig      coach.Config
-	CatalogFilter    func(Tool) bool
-	CatalogHash      string
-	ExtraTools       []Tool
+	Version           string
+	TimezoneFallback  string
+	DebugMetadata     bool
+	Capability        safety.Capability
+	Toolset           safety.Toolset
+	CoachModeEnabled  bool
+	CoachConfig       coach.Config
+	CatalogFilter     func(Tool) bool
+	ToolMiddleware    ToolMiddleware
+	CatalogHash       string
+	ExtraTools        []Tool
+	CatalogCapability safety.Capability
+	CatalogToolset    safety.Toolset
 }
+
+// ToolMiddleware wraps a tool handler without permitting changes to its catalog metadata.
+type ToolMiddleware func(Tool, Handler) Handler
 
 // NewRegistry creates the default tool registry.
 func NewRegistry(client *intervals.Client, version string, timezoneFallback ...string) Registry {
@@ -44,52 +50,80 @@ func NewRegistry(client *intervals.Client, version string, timezoneFallback ...s
 func NewRegistryWithOptions(client *intervals.Client, opts RegistryOptions) Registry {
 	capability := capabilityOrSafe(opts.Capability)
 	toolset := safety.ParseToolset(opts.Toolset.String())
+	catalogCapability := opts.CatalogCapability
+	if catalogCapability == nil {
+		catalogCapability = capability
+	}
+	catalogToolset := opts.CatalogToolset
+	if catalogToolset == "" {
+		catalogToolset = toolset
+	}
+	catalogToolset = safety.ParseToolset(catalogToolset.String())
 	return &defaultRegistry{
-		client:           client,
-		version:          normalizeVersion(opts.Version),
-		timezoneFallback: normalizeTimezoneFallback(opts.TimezoneFallback),
-		debugMetadata:    opts.DebugMetadata,
-		capability:       capability,
-		deleteMode:       safety.ParseMode(capability.Mode()),
-		toolset:          toolset,
-		coachModeEnabled: opts.CoachModeEnabled,
-		coachConfig:      opts.CoachConfig,
-		catalogFilter:    opts.CatalogFilter,
-		catalogHash:      opts.CatalogHash,
-		extraTools:       append([]Tool(nil), opts.ExtraTools...),
-		gearCache:        newGearListCache(),
-		customFieldCache: newCustomFieldCache(),
+		client:            client,
+		version:           normalizeVersion(opts.Version),
+		timezoneFallback:  normalizeTimezoneFallback(opts.TimezoneFallback),
+		debugMetadata:     opts.DebugMetadata,
+		capability:        capability,
+		deleteMode:        safety.ParseMode(capability.Mode()),
+		toolset:           toolset,
+		coachModeEnabled:  opts.CoachModeEnabled,
+		coachConfig:       opts.CoachConfig,
+		catalogFilter:     opts.CatalogFilter,
+		toolMiddleware:    opts.ToolMiddleware,
+		catalogHash:       opts.CatalogHash,
+		catalogCapability: catalogCapability,
+		catalogToolset:    catalogToolset,
+		extraTools:        append([]Tool(nil), opts.ExtraTools...),
+		gearCache:         newGearListCache(),
+		customFieldCache:  newCustomFieldCache(),
 	}
 }
 
 type defaultRegistry struct {
-	client           *intervals.Client
-	version          string
-	timezoneFallback string
-	debugMetadata    bool
-	capability       safety.Capability
-	deleteMode       safety.Mode
-	toolset          safety.Toolset
-	coachModeEnabled bool
-	coachConfig      coach.Config
-	catalogFilter    func(Tool) bool
-	catalogHash      string
-	extraTools       []Tool
-	gearCache        *gearListCache
-	customFieldCache *customFieldCache
+	client            *intervals.Client
+	version           string
+	timezoneFallback  string
+	debugMetadata     bool
+	capability        safety.Capability
+	deleteMode        safety.Mode
+	toolset           safety.Toolset
+	coachModeEnabled  bool
+	coachConfig       coach.Config
+	catalogFilter     func(Tool) bool
+	toolMiddleware    ToolMiddleware
+	catalogHash       string
+	catalogCapability safety.Capability
+	catalogToolset    safety.Toolset
+	extraTools        []Tool
+	gearCache         *gearListCache
+	customFieldCache  *customFieldCache
 }
 
 type responseShaping struct {
-	deleteMode  safety.Mode
-	toolset     safety.Toolset
-	catalogHash string
+	deleteMode        safety.Mode
+	toolset           safety.Toolset
+	catalogDeleteMode safety.Mode
+	catalogToolset    safety.Toolset
+	catalogHash       string
 }
 
 func responseShapingOrDefault(shaping []responseShaping) responseShaping {
 	if len(shaping) > 0 {
-		return responseShaping{deleteMode: safety.ParseMode(shaping[0].deleteMode.String()), toolset: safety.ParseToolset(shaping[0].toolset.String()), catalogHash: shaping[0].catalogHash}
+		out := responseShaping{deleteMode: safety.ParseMode(shaping[0].deleteMode.String()), toolset: safety.ParseToolset(shaping[0].toolset.String()), catalogHash: shaping[0].catalogHash}
+		out.catalogDeleteMode = shaping[0].catalogDeleteMode
+		if out.catalogDeleteMode == "" {
+			out.catalogDeleteMode = out.deleteMode
+		}
+		out.catalogDeleteMode = safety.ParseMode(out.catalogDeleteMode.String())
+		out.catalogToolset = shaping[0].catalogToolset
+		if out.catalogToolset == "" {
+			out.catalogToolset = out.toolset
+		}
+		out.catalogToolset = safety.ParseToolset(out.catalogToolset.String())
+		return out
 	}
-	return responseShaping{deleteMode: safety.ModeSafe, toolset: safety.ToolsetCore}
+	return responseShaping{deleteMode: safety.ModeSafe, toolset: safety.ToolsetCore, catalogDeleteMode: safety.ModeSafe, catalogToolset: safety.ToolsetCore}
 }
 
 func (s responseShaping) options(includeFull bool, rowCollections []string, version string, debugMetadata bool, queryType string, unitSystem response.UnitSystem) response.Options {
@@ -115,13 +149,16 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 	}
 	collector := &catalogCollectingRegistrar{downstream: registrar}
 	registrar = collector
-	shaping := responseShaping{deleteMode: r.deleteMode, toolset: r.toolset, catalogHash: r.catalogHash}
+	shaping := responseShaping{deleteMode: r.deleteMode, toolset: r.toolset, catalogDeleteMode: safety.ParseMode(r.catalogCapability.Mode()), catalogToolset: r.catalogToolset, catalogHash: r.catalogHash}
 	add := func(tool Tool, requireKnown bool) error {
 		if r.catalogFilter != nil && !r.catalogFilter(tool) {
 			return nil
 		}
 		if requireKnown && !toolcatalog.IsKnownTool(tool.Name) {
 			return fmt.Errorf("registering %s: not present in shared tool catalog", tool.Name)
+		}
+		if r.toolMiddleware != nil {
+			tool.Handler = r.toolMiddleware(tool, tool.Handler)
 		}
 		if err := registrar.AddTool(tool); err != nil {
 			return fmt.Errorf("registering %s: %w", tool.Name, err)
@@ -148,11 +185,11 @@ func (r *defaultRegistry) Register(ctx context.Context, registrar Registrar) err
 			return err
 		}
 	}
-	advancedTool := newListAdvancedCapabilitiesTool(filteredCatalog(collector.tools, r.catalogFilter), r.toolset, shaping)
+	advancedTool := newListAdvancedCapabilitiesTool(filteredCatalog(collector.tools, r.catalogFilter), r.catalogToolset, shaping)
 	if err := add(advancedTool, true); err != nil {
 		return err
 	}
-	diagnosticCatalog := effectiveDiagnosticCatalog(filteredCatalog(collector.tools, r.catalogFilter), r.capability, r.toolset)
+	diagnosticCatalog := effectiveDiagnosticCatalog(filteredCatalog(collector.tools, r.catalogFilter), r.catalogCapability, r.catalogToolset)
 	diagnosticTool, err := newCheckServerVersionTool(r.version, diagnosticCatalog, r.deleteMode, r.toolset, shaping)
 	if err != nil {
 		return fmt.Errorf("building %s: %w", checkServerVersionName, err)

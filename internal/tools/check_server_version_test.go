@@ -74,6 +74,38 @@ func TestCheckServerVersionOutputShapeAndNoLeakage(t *testing.T) {
 	}
 }
 
+func TestCheckServerVersionDistinguishesCatalogAndExecutionPolicy(t *testing.T) {
+	t.Parallel()
+
+	tool, err := newCheckServerVersionTool(
+		"v0.6.1",
+		nil,
+		safety.ModeSafe,
+		safety.ToolsetCore,
+		responseShaping{deleteMode: safety.ModeSafe, toolset: safety.ToolsetCore, catalogDeleteMode: safety.ModeFull, catalogToolset: safety.ToolsetFull, catalogHash: "stable-catalog-hash"},
+	)
+	if err != nil {
+		t.Fatalf("newCheckServerVersionTool() error = %v", err)
+	}
+	if !strings.Contains(tool.Description, "description_catalog_toolset=full") || !strings.Contains(tool.Description, "description_catalog_delete_mode=full") {
+		t.Fatalf("description = %q, want explicit catalog policy", tool.Description)
+	}
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	payload := checkServerVersionResult(t, result)
+	if payload.Toolset != "core" || payload.DeleteMode != "safe" || payload.ExecutionToolset != "core" || payload.ExecutionDeleteMode != "safe" {
+		t.Fatalf("execution fields = %#v, want core/safe", payload)
+	}
+	if payload.CatalogToolset != "full" || payload.CatalogDeleteMode != "full" {
+		t.Fatalf("catalog fields = %#v, want full/full", payload)
+	}
+	if payload.Meta.ExecutionToolset != "core" || payload.Meta.ExecutionDeleteMode != "safe" || payload.Meta.CatalogToolset != "full" || payload.Meta.CatalogDeleteMode != "full" {
+		t.Fatalf("_meta policy fields = %#v", payload.Meta)
+	}
+}
+
 func TestRegistryExtraToolsParticipateInAdvancedCapabilities(t *testing.T) {
 	registrar := &collectingRegistrar{}
 	extraTool := Tool{Name: "hosted_full_status", Description: "Report hosted full-only setup status.", InputSchema: noArgsSchema(), OutputSchema: genericOutputSchema("hosted status"), Requirement: RequirementRead, Toolset: safety.ToolsetFull, Handler: func(context.Context, Request) (Result, error) { return TextResult(map[string]any{"status": "ok"}), nil }}

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added host-facing catalog policy overrides and tool-handler middleware to the public Go facade, allowing an MCP host to keep its advertised tool catalog stable while independently enforcing execution policy at call time.
+
+### Changed
+
+- Server-version diagnostics now distinguish catalog toolset/delete mode from execution toolset/delete mode while preserving the existing execution-policy response fields.
+
 ## [1.5.5] - 2026-08-09
 
 ### Added

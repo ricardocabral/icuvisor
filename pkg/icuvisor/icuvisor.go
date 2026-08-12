@@ -24,7 +24,7 @@ import (
 // StreamableHTTPPath is the default MCP Streamable HTTP endpoint path.
 const StreamableHTTPPath = internalmcp.StreamableHTTPPath
 
-// DeleteMode controls write/delete tool registration.
+// DeleteMode controls write/delete execution and, unless overridden, catalog registration.
 type DeleteMode string
 
 const (
@@ -36,7 +36,7 @@ const (
 	DeleteModeNone DeleteMode = "none"
 )
 
-// Toolset controls the registered tool catalog tier.
+// Toolset controls execution response shaping and, unless overridden, the registered catalog tier.
 type Toolset string
 
 const (
@@ -143,6 +143,7 @@ type RegistryOptions struct {
 	DeleteMode       DeleteMode
 	Toolset          Toolset
 	ToolFilter       func(ToolInfo) bool
+	ToolMiddleware   ToolMiddleware
 	ExtraTools       []Tool
 	CatalogHash      string
 }
@@ -209,6 +210,8 @@ type ServerOptions struct {
 	PromptRegistry             PromptRegistry
 	DeleteMode                 DeleteMode
 	Toolset                    Toolset
+	CatalogMode                DeleteMode
+	CatalogToolset             Toolset
 	Transport                  sdkmcp.Transport
 	RecentToolCallRecorder     RecentToolCallRecorder
 	SkipRuntimeCatalogMetadata bool
@@ -229,17 +232,21 @@ func NewServer(ctx context.Context, opts ServerOptions) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	registry := registryForConfig(opts.Registry, opts.Config)
+	catalogMode, catalogToolset, err := effectiveCatalogPolicy(opts.CatalogMode, opts.CatalogToolset, deleteMode, toolset)
+	if err != nil {
+		return nil, err
+	}
+	registry := registryForConfigWithPolicy(opts.Registry, opts.Config, catalogMode, catalogToolset, "")
 	resourceRegistry := resourceRegistryForConfig(opts.ResourceRegistry, opts.Config)
 	if opts.SkipRuntimeCatalogMetadata {
-		catalogHash, err := internalmcp.ComputeToolCatalogHash(ctx, internalmcp.CatalogHashOptions{Config: cfg, Registry: registry, Capability: safety.NewCapability(deleteMode.toInternal()), Toolset: toolset.toInternal(), Logger: opts.Logger})
+		catalogHash, err := internalmcp.ComputeToolCatalogHash(ctx, internalmcp.CatalogHashOptions{Config: cfg, Registry: registry, Capability: safety.NewCapability(catalogMode.toInternal()), Toolset: catalogToolset.toInternal(), Logger: opts.Logger})
 		if err != nil {
 			return nil, err
 		}
-		registry = registryForConfigWithCatalogHash(opts.Registry, opts.Config, catalogHash)
+		registry = registryForConfigWithPolicy(opts.Registry, opts.Config, catalogMode, catalogToolset, catalogHash)
 		resourceRegistry = resourceRegistryForConfigWithCatalogHash(opts.ResourceRegistry, opts.Config, catalogHash)
 	}
-	server, err := internalmcp.NewServer(ctx, internalmcp.Options{Config: cfg, Version: opts.Version, Logger: opts.Logger, Registry: registry, ResourceRegistry: resourceRegistry, PromptRegistry: opts.PromptRegistry.inner, Capability: safety.NewCapability(deleteMode.toInternal()), Toolset: toolset.toInternal(), Transport: opts.Transport, RecentToolCallRecorder: opts.RecentToolCallRecorder, SkipRuntimeCatalogMetadata: opts.SkipRuntimeCatalogMetadata})
+	server, err := internalmcp.NewServer(ctx, internalmcp.Options{Config: cfg, Version: opts.Version, Logger: opts.Logger, Registry: registry, ResourceRegistry: resourceRegistry, PromptRegistry: opts.PromptRegistry.inner, Capability: safety.NewCapability(deleteMode.toInternal()), Toolset: toolset.toInternal(), CatalogCapability: safety.NewCapability(catalogMode.toInternal()), CatalogToolset: catalogToolset.toInternal(), Transport: opts.Transport, RecentToolCallRecorder: opts.RecentToolCallRecorder, SkipRuntimeCatalogMetadata: opts.SkipRuntimeCatalogMetadata})
 	if err != nil {
 		return nil, err
 	}
@@ -336,6 +343,9 @@ type Tool struct {
 // Handler handles a public tool call using raw JSON arguments.
 type Handler func(context.Context, ToolRequest) (ToolResult, error)
 
+// ToolMiddleware wraps a tool handler while preserving its registered metadata.
+type ToolMiddleware func(ToolInfo, Handler) Handler
+
 // ToolRequest carries an MCP tool call to a Handler.
 type ToolRequest struct {
 	Name      string
@@ -421,6 +431,19 @@ func internalHandler(handler Handler) tools.Handler {
 	}
 }
 
+func publicHandler(handler tools.Handler) Handler {
+	if handler == nil {
+		return nil
+	}
+	return func(ctx context.Context, req ToolRequest) (ToolResult, error) {
+		result, err := handler(ctx, tools.Request{Name: req.Name, Arguments: req.Arguments})
+		if err != nil {
+			return ToolResult{}, err
+		}
+		return publicResult(result), nil
+	}
+}
+
 func internalResult(result ToolResult) tools.Result {
 	content := make([]tools.Content, 0, len(result.Content))
 	for _, item := range result.Content {
@@ -429,12 +452,29 @@ func internalResult(result ToolResult) tools.Result {
 	return tools.Result{Content: content, StructuredContent: result.StructuredContent, IsError: result.IsError}
 }
 
+func publicResult(result tools.Result) ToolResult {
+	content := make([]Content, 0, len(result.Content))
+	for _, item := range result.Content {
+		content = append(content, Content{Type: ContentType(item.Type), Text: item.Text})
+	}
+	return ToolResult{Content: content, StructuredContent: result.StructuredContent, IsError: result.IsError}
+}
+
 func internalToolFilter(filter func(ToolInfo) bool) func(tools.Tool) bool {
 	if filter == nil {
 		return nil
 	}
 	return func(tool tools.Tool) bool {
 		return filter(toolInfoFromInternal(tool))
+	}
+}
+
+func internalToolMiddleware(middleware ToolMiddleware) tools.ToolMiddleware {
+	if middleware == nil {
+		return nil
+	}
+	return func(tool tools.Tool, next tools.Handler) tools.Handler {
+		return internalHandler(middleware(toolInfoFromInternal(tool), publicHandler(next)))
 	}
 }
 
@@ -469,6 +509,10 @@ func (r errorResourceRegistry) Register(context.Context, resources.Registrar) er
 }
 
 func buildCoreRegistry(client *Client, opts RegistryOptions, boundary Config) tools.Registry {
+	return buildCoreRegistryWithCatalogPolicy(client, opts, boundary, "", "")
+}
+
+func buildCoreRegistryWithCatalogPolicy(client *Client, opts RegistryOptions, boundary Config, catalogMode DeleteMode, catalogToolset Toolset) tools.Registry {
 	var innerClient *intervals.Client
 	if client != nil {
 		innerClient = client.inner
@@ -478,7 +522,11 @@ func buildCoreRegistry(client *Client, opts RegistryOptions, boundary Config) to
 	if err != nil {
 		return errorToolRegistry{err: err}
 	}
-	return tools.NewRegistryWithOptions(innerClient, tools.RegistryOptions{Version: opts.Version, TimezoneFallback: opts.TimezoneFallback, DebugMetadata: opts.DebugMetadata, Capability: safety.NewCapability(deleteMode.toInternal()), Toolset: toolset.toInternal(), CatalogFilter: filter, CatalogHash: opts.CatalogHash, ExtraTools: internalTools(opts.ExtraTools)})
+	effectiveCatalogMode, effectiveCatalogToolset, err := effectiveCatalogPolicy(catalogMode, catalogToolset, deleteMode, toolset)
+	if err != nil {
+		return errorToolRegistry{err: err}
+	}
+	return tools.NewRegistryWithOptions(innerClient, tools.RegistryOptions{Version: opts.Version, TimezoneFallback: opts.TimezoneFallback, DebugMetadata: opts.DebugMetadata, Capability: safety.NewCapability(deleteMode.toInternal()), Toolset: toolset.toInternal(), CatalogCapability: safety.NewCapability(effectiveCatalogMode.toInternal()), CatalogToolset: effectiveCatalogToolset.toInternal(), CatalogFilter: filter, ToolMiddleware: internalToolMiddleware(opts.ToolMiddleware), CatalogHash: opts.CatalogHash, ExtraTools: internalTools(opts.ExtraTools)})
 }
 
 func registryForConfig(reg Registry, cfg Config) tools.Registry {
@@ -486,14 +534,34 @@ func registryForConfig(reg Registry, cfg Config) tools.Registry {
 }
 
 func registryForConfigWithCatalogHash(reg Registry, cfg Config, catalogHash string) tools.Registry {
+	return registryForConfigWithPolicy(reg, cfg, "", "", catalogHash)
+}
+
+func registryForConfigWithPolicy(reg Registry, cfg Config, catalogMode DeleteMode, catalogToolset Toolset, catalogHash string) tools.Registry {
 	if reg.core != nil {
 		opts := reg.core.opts
 		if opts.CatalogHash == "" {
 			opts.CatalogHash = catalogHash
 		}
-		return buildCoreRegistry(reg.core.client, opts, cfg)
+		return buildCoreRegistryWithCatalogPolicy(reg.core.client, opts, cfg, catalogMode, catalogToolset)
 	}
 	return reg.inner
+}
+
+func effectiveCatalogPolicy(optionMode DeleteMode, optionToolset Toolset, executionMode DeleteMode, executionToolset Toolset) (DeleteMode, Toolset, error) {
+	if err := validateDeleteMode(optionMode); err != nil {
+		return "", "", err
+	}
+	if err := validateToolset(optionToolset); err != nil {
+		return "", "", err
+	}
+	if optionMode == "" {
+		optionMode = executionMode
+	}
+	if optionToolset == "" {
+		optionToolset = executionToolset
+	}
+	return optionMode, optionToolset, nil
 }
 
 func buildResourceRegistry(client *Client, opts ResourceRegistryOptions, boundary Config) resources.Registry {

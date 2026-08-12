@@ -46,6 +46,20 @@ func toolsetOrCore(opts Options) safety.Toolset {
 	return safety.ParseToolset(string(toolset))
 }
 
+func catalogCapabilityOrExecution(opts Options) safety.Capability {
+	if opts.CatalogCapability != nil {
+		return opts.CatalogCapability
+	}
+	return capabilityOrSafe(opts.Capability)
+}
+
+func catalogToolsetOrExecution(opts Options) safety.Toolset {
+	if opts.CatalogToolset != "" {
+		return safety.ParseToolset(opts.CatalogToolset.String())
+	}
+	return toolsetOrCore(opts)
+}
+
 type safeRegistrar struct {
 	server                 *sdkmcp.Server
 	logger                 *slog.Logger

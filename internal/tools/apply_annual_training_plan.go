@@ -96,7 +96,11 @@ type applyAnnualTrainingPlanPreparedNote struct {
 
 func newApplyAnnualTrainingPlanTool(client ApplyAnnualTrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
-	return fullTool(Tool{Name: applyAnnualTrainingPlanName, Description: applyAnnualTrainingPlanDescription, InputSchema: applyAnnualTrainingPlanInputSchema(capabilityOrSafe(capability)), OutputSchema: applyAnnualTrainingPlanOutputSchema(), Requirement: RequirementWrite, Handler: applyAnnualTrainingPlanHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability), shapeCfg)})
+	catalogCapability := capabilityOrSafe(capability)
+	if len(shaping) > 0 {
+		catalogCapability = safety.NewCapability(shapeCfg.catalogDeleteMode)
+	}
+	return fullTool(Tool{Name: applyAnnualTrainingPlanName, Description: applyAnnualTrainingPlanDescription, InputSchema: applyAnnualTrainingPlanInputSchema(catalogCapability), OutputSchema: applyAnnualTrainingPlanOutputSchema(), Requirement: RequirementWrite, Handler: applyAnnualTrainingPlanHandler(client, profileClient, version, timezoneFallback, debugMetadata, capabilityOrSafe(capability), shapeCfg)})
 }
 
 func applyAnnualTrainingPlanHandler(client ApplyAnnualTrainingPlanClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, capability safety.Capability, shapeCfg responseShaping) Handler {
