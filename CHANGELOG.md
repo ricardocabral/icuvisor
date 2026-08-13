@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.9] - 2026-08-13
+
+### Added
+
+- Added a public canonical toolset-membership predicate so hosted MCP deployments enforce compact, core, and full execution policy with the same allowlist semantics as the advertised core catalog.
+
 ## [1.5.7] - 2026-08-13
 
 ### Added
