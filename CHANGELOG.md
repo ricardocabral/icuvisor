@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.7] - 2026-08-13
+
 ### Added
 
 - Added host-facing catalog policy overrides and tool-handler middleware to the public Go facade, allowing an MCP host to keep its advertised tool catalog stable while independently enforcing execution policy at call time.
