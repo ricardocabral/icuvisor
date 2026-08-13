@@ -285,15 +285,7 @@ func (r *safeRegistrar) selectedAthleteID(ctx context.Context) string {
 }
 
 func (r *safeRegistrar) toolsetAllows(tool tools.Tool) bool {
-	active := safety.ParseToolset(string(r.toolset))
-	switch active {
-	case safety.ToolsetFull:
-		return true
-	case safety.ToolsetCompact:
-		return toolcatalog.IsCompactTool(tool.Name)
-	default:
-		return tool.EffectiveToolset() == safety.ToolsetCore
-	}
+	return tools.ToolsetAllows(r.toolset, tool)
 }
 
 func (r *safeRegistrar) capabilityAllows(tool tools.Tool) bool {

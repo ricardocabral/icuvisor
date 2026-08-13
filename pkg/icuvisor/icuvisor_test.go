@@ -179,6 +179,32 @@ func TestPublicCoreCatalogMatchesInternalForPolicyMatrix(t *testing.T) {
 	}
 }
 
+func TestToolsetAllowsMatchesCoreRegistrationSemantics(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		toolset Toolset
+		tool    ToolInfo
+		want    bool
+	}{
+		{name: "compact allows shared allowlist regardless of declared full tier", toolset: ToolsetCompact, tool: ToolInfo{Name: "get_activity_streams", Toolset: ToolsetFull}, want: true},
+		{name: "compact denies core tool outside shared allowlist", toolset: ToolsetCompact, tool: ToolInfo{Name: "update_wellness", Toolset: ToolsetCore}, want: false},
+		{name: "core allows core tier", toolset: ToolsetCore, tool: ToolInfo{Name: "get_fitness", Toolset: ToolsetCore}, want: true},
+		{name: "core denies full tier", toolset: ToolsetCore, tool: ToolInfo{Name: "get_activity_streams", Toolset: ToolsetFull}, want: false},
+		{name: "core treats omitted tier as full", toolset: ToolsetCore, tool: ToolInfo{Name: "host_extra"}, want: false},
+		{name: "full allows omitted tier", toolset: ToolsetFull, tool: ToolInfo{Name: "host_extra"}, want: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := ToolsetAllows(tc.toolset, tc.tool); got != tc.want {
+				t.Fatalf("ToolsetAllows(%q, %#v) = %t, want %t", tc.toolset, tc.tool, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestPublicResourcesAndPromptsMatchInternalDefaults(t *testing.T) {
 	t.Parallel()
 

@@ -284,6 +284,19 @@ func (t Tool) EffectiveToolset() safety.Toolset {
 	}
 }
 
+// ToolsetAllows reports whether active exposes tool under the canonical catalog rules.
+func ToolsetAllows(active safety.Toolset, tool Tool) bool {
+	active = safety.ParseToolset(active.String())
+	switch active {
+	case safety.ToolsetFull:
+		return true
+	case safety.ToolsetCompact:
+		return toolcatalog.IsCompactTool(tool.Name)
+	default:
+		return tool.EffectiveToolset() == safety.ToolsetCore
+	}
+}
+
 // RequiresWrite reports whether the tool needs write capability to be registered.
 func (t Tool) RequiresWrite() bool {
 	requirement := t.Requirement.effective()

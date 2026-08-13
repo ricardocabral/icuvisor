@@ -329,6 +329,11 @@ type ToolInfo struct {
 	Toolset      Toolset
 }
 
+// ToolsetAllows reports whether tool is enabled by the canonical core toolset policy.
+func ToolsetAllows(toolset Toolset, tool ToolInfo) bool {
+	return tools.ToolsetAllows(toolset.toInternal(), tools.Tool{Name: tool.Name, Toolset: safety.Toolset(tool.Toolset)})
+}
+
 // Tool is a public custom tool definition for host diagnostics and policy extensions.
 type Tool struct {
 	Name         string
