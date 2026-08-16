@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.10] - 2026-08-16
+
 ### Added
 
 - Added validated, sparse `carbs_ingested_g` writes to `update_activity` for athlete-logged during-activity carbohydrate intake, preserving explicit zero while keeping upstream-estimated `carbs_used_g` read-only.
@@ -397,7 +399,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.5.5...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.5.10...HEAD
+[1.5.10]: https://github.com/ricardocabral/icuvisor/compare/v1.5.9...v1.5.10
+[1.5.9]: https://github.com/ricardocabral/icuvisor/compare/v1.5.8...v1.5.9
+[1.5.7]: https://github.com/ricardocabral/icuvisor/compare/v1.5.6...v1.5.7
 [1.5.5]: https://github.com/ricardocabral/icuvisor/compare/v1.5.4...v1.5.5
 [1.5.4]: https://github.com/ricardocabral/icuvisor/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/ricardocabral/icuvisor/compare/v1.5.2...v1.5.3
