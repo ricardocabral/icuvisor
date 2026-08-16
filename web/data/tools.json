@@ -100,7 +100,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "write",
-    "summary": "Rename and/or replace the free-text description of one completed activity by activity_id.",
+    "summary": "Update one completed non-Strava activity by activity_id: rename it, replace its free-text description, and/or set athlete-logged carbohydrate intake in whole grams.",
     "anchor": "update_activity"
   },
   {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added validated, sparse `carbs_ingested_g` writes to `update_activity` for athlete-logged during-activity carbohydrate intake, preserving explicit zero while keeping upstream-estimated `carbs_used_g` read-only.
+
 ## [1.5.9] - 2026-08-13
 
 ### Added

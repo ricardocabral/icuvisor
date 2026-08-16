@@ -2889,13 +2889,19 @@
   },
   "update_activity": {
     "name": "update_activity",
-    "description": "Rename and/or replace the free-text description of one completed activity by activity_id.",
+    "description": "Update one completed non-Strava activity by activity_id: rename it, replace its free-text description, and/or set athlete-logged carbohydrate intake in whole grams.",
     "arguments": [
       {
         "name": "activity_id",
         "required": true,
         "type": "string",
         "description": "Required intervals.icu activity ID. Surrounding whitespace is trimmed; the i-prefix is preserved verbatim."
+      },
+      {
+        "name": "carbs_ingested_g",
+        "required": false,
+        "type": "integer",
+        "description": "Optional athlete-logged carbohydrate consumed during this activity, in whole grams (0-2147483647). Zero is a logged zero; omit to leave unchanged. Clearing is not supported. Distinct from read-only carbs_used_g. Intervals.icu does not update Strava activities through this endpoint."
       },
       {
         "name": "description",

@@ -202,6 +202,7 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 
 - `get_activities` — date-range list; supports `include_unnamed` (issue #67), pagination, and inline `gear_id` / `gear_name` when upstream exposes gear IDs. Unresolved gear IDs carry an explicit `gear_resolution` status rather than a guessed name.
 - `get_activity_details` — single-activity metadata, zones, metrics, and the same inline gear fields/resolution status as activity list rows.
+- `update_activity` — sparse, non-destructive completed-activity metadata write for `name`, free-text `description`, and set-only `carbs_ingested_g`. Athlete-logged carbohydrate intake accepts whole grams from 0 through 2147483647; zero is a logged zero, omission leaves the value unchanged, and clearing is not supported. `carbs_used_g` remains a distinct read-only upstream estimate. intervals.icu does not update Strava activities through this endpoint.
 - `get_activity_intervals` — interval splits.
 - `get_activity_streams` — time-series (power, HR, altitude, cadence, etc.). **Stream keys are canonicalized** to a single naming convention (snake_case) across activities and devices; the upstream API exposes inconsistent casing (camelCase on some activity types, snake_case on others — forum #118) and the LLM must not have to guess.
 - `get_activity_splits` — virtual splits (per-km or per-mile) computed from streams when the activity has no manual laps, so continuous runs/rides are analyzable (forum #25 / #29). Honours `preferred_units`.
