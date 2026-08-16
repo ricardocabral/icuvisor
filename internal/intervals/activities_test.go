@@ -233,6 +233,56 @@ func TestUpdateActivityRequiresAtLeastOneField(t *testing.T) {
 	if _, err := client.UpdateActivity(context.Background(), UpdateActivityParams{Name: "x", NameSet: true}); err == nil {
 		t.Fatal("UpdateActivity() error = nil, want activity ID required")
 	}
+	for _, grams := range []int{-1, 2147483648} {
+		if _, err := client.UpdateActivity(context.Background(), UpdateActivityParams{ActivityID: "a1", CarbsIngested: grams, CarbsIngestedSet: true}); err == nil {
+			t.Fatalf("UpdateActivity(carbs_ingested=%d) error = nil, want range validation error", grams)
+		}
+	}
+}
+
+func TestUpdateActivitySendsSparseCarbsIngested(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name  string
+		grams int
+	}{
+		{name: "positive grams", grams: 90},
+		{name: "logged zero", grams: 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				body, err := io.ReadAll(r.Body)
+				if err != nil {
+					t.Fatalf("read body: %v", err)
+				}
+				var decoded map[string]any
+				if err := json.Unmarshal(body, &decoded); err != nil {
+					t.Fatalf("decode body: %v", err)
+				}
+				got, ok := decoded["carbs_ingested"]
+				if !ok || got != float64(tc.grams) {
+					t.Fatalf("carbs_ingested = %#v, present %v, want %d", got, ok, tc.grams)
+				}
+				if len(decoded) != 1 {
+					t.Fatalf("body = %#v, want carbs_ingested only", decoded)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"id":"a1"}`))
+			}))
+			defer server.Close()
+
+			client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+			_, err := client.UpdateActivity(context.Background(), UpdateActivityParams{
+				ActivityID:       "a1",
+				CarbsIngested:    tc.grams,
+				CarbsIngestedSet: true,
+			})
+			if err != nil {
+				t.Fatalf("UpdateActivity() error = %v", err)
+			}
+		})
+	}
 }
 
 func TestUpdateActivitySendsExplicitEmptyDescription(t *testing.T) {

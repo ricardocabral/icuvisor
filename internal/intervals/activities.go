@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+const maxActivityCarbsIngested = 1<<31 - 1
+
 // ListActivitiesParams contains query parameters for listing athlete activities.
 type ListActivitiesParams struct {
 	Oldest  string
@@ -39,16 +41,19 @@ type linkActivityToEventPayload struct {
 // Set the *Set fields to true to mark a field as explicitly provided so callers
 // can distinguish "leave unchanged" from "clear".
 type UpdateActivityParams struct {
-	ActivityID     string
-	Name           string
-	NameSet        bool
-	Description    string
-	DescriptionSet bool
+	ActivityID       string
+	Name             string
+	NameSet          bool
+	Description      string
+	DescriptionSet   bool
+	CarbsIngested    int
+	CarbsIngestedSet bool
 }
 
 type updateActivityPayload struct {
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
+	Name          *string `json:"name,omitempty"`
+	Description   *string `json:"description,omitempty"`
+	CarbsIngested *int    `json:"carbs_ingested,omitempty"`
 }
 
 // Activity contains stable activity fields used by read tools and preserves raw upstream fields.
@@ -199,8 +204,11 @@ func (c *Client) UpdateActivity(ctx context.Context, params UpdateActivityParams
 	if activityID == "" {
 		return Activity{}, fmt.Errorf("updating activity: activity ID is required")
 	}
-	if !params.NameSet && !params.DescriptionSet {
-		return Activity{}, fmt.Errorf("updating activity %s: at least one of name or description is required", activityID)
+	if !params.NameSet && !params.DescriptionSet && !params.CarbsIngestedSet {
+		return Activity{}, fmt.Errorf("updating activity %s: at least one of name, description, or carbs_ingested is required", activityID)
+	}
+	if params.CarbsIngestedSet && (params.CarbsIngested < 0 || params.CarbsIngested > maxActivityCarbsIngested) {
+		return Activity{}, fmt.Errorf("updating activity %s: carbs_ingested must be an integer from 0 through %d", activityID, maxActivityCarbsIngested)
 	}
 	payload := updateActivityPayload{}
 	if params.NameSet {
@@ -210,6 +218,10 @@ func (c *Client) UpdateActivity(ctx context.Context, params UpdateActivityParams
 	if params.DescriptionSet {
 		description := params.Description
 		payload.Description = &description
+	}
+	if params.CarbsIngestedSet {
+		carbsIngested := params.CarbsIngested
+		payload.CarbsIngested = &carbsIngested
 	}
 	if err := c.ensureActivityIDTarget(ctx, activityID); err != nil {
 		return Activity{}, fmt.Errorf("updating activity %s: %w", activityID, err)

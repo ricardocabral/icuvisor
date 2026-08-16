@@ -40,7 +40,7 @@ func TestUpdateActivitySuccessSparseFields(t *testing.T) {
 	}
 	tool := newUpdateActivityTool(client, client, "test", false)
 
-	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":" a1 ","name":" Threshold ride ","description":"Held target W","include_full":true}`)})
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":" a1 ","name":" Threshold ride ","description":"Held target W","carbs_ingested_g":90,"include_full":true}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
 	}
@@ -48,7 +48,7 @@ func TestUpdateActivitySuccessSparseFields(t *testing.T) {
 		t.Fatalf("calls = %#v, want 1", client.calls)
 	}
 	call := client.calls[0]
-	if call.ActivityID != "a1" || call.Name != "Threshold ride" || !call.NameSet || call.Description != "Held target W" || !call.DescriptionSet {
+	if call.ActivityID != "a1" || call.Name != "Threshold ride" || !call.NameSet || call.Description != "Held target W" || !call.DescriptionSet || call.CarbsIngested != 90 || !call.CarbsIngestedSet {
 		t.Fatalf("call = %#v, want trimmed sparse update", call)
 	}
 	out := resultMap(t, result)
@@ -56,8 +56,8 @@ func TestUpdateActivitySuccessSparseFields(t *testing.T) {
 		t.Fatalf("response = %#v, want updated confirmation", out)
 	}
 	fields, ok := out["fields_updated"].([]any)
-	if !ok || len(fields) != 2 || fields[0] != "description" || fields[1] != "name" {
-		t.Fatalf("fields_updated = %#v, want [description name]", out["fields_updated"])
+	if !ok || len(fields) != 3 || fields[0] != "carbs_ingested_g" || fields[1] != "description" || fields[2] != "name" {
+		t.Fatalf("fields_updated = %#v, want [carbs_ingested_g description name]", out["fields_updated"])
 	}
 	meta := out["_meta"].(map[string]any)
 	if meta["athleteId"] != "i12345" || meta["destructive"] != false || meta["append_only"] != false || meta["source_endpoint"] != "/activity/{activityId}" {
@@ -86,6 +86,37 @@ func TestUpdateActivityClearsDescriptionWhenExplicitEmpty(t *testing.T) {
 	}
 }
 
+func TestUpdateActivitySetsCarbsIngested(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name string
+		raw  string
+		want int
+	}{
+		{name: "positive grams", raw: `{"activity_id":"a1","carbs_ingested_g":90}`, want: 90},
+		{name: "logged zero", raw: `{"activity_id":"a1","carbs_ingested_g":0}`, want: 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeActivityUpdaterClient{activity: decodeActivity(t, `{"id":"a1"}`)}
+			tool := newUpdateActivityTool(client, client, "test", false)
+
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.raw)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			call := client.calls[0]
+			if !call.CarbsIngestedSet || call.CarbsIngested != tc.want {
+				t.Fatalf("call = %#v, want carbs_ingested=%d set", call, tc.want)
+			}
+			fields := resultMap(t, result)["fields_updated"].([]any)
+			if len(fields) != 1 || fields[0] != "carbs_ingested_g" {
+				t.Fatalf("fields_updated = %#v, want [carbs_ingested_g]", fields)
+			}
+		})
+	}
+}
+
 func TestUpdateActivityRejectsBadArguments(t *testing.T) {
 	t.Parallel()
 
@@ -96,6 +127,11 @@ func TestUpdateActivityRejectsBadArguments(t *testing.T) {
 		`{"activity_id":"a1"}`,
 		`{"activity_id":"a1","name":""}`,
 		`{"activity_id":"a1","name":"   "}`,
+		`{"activity_id":"a1","carbs_ingested_g":null}`,
+		`{"activity_id":"a1","carbs_ingested_g":-1}`,
+		`{"activity_id":"a1","carbs_ingested_g":2147483648}`,
+		`{"activity_id":"a1","carbs_ingested_g":1.5}`,
+		`{"activity_id":"a1","carbs_ingested_g":"90"}`,
 		`{"activity_id":"a1","name":"x","confirm":true}`,
 	} {
 		if _, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(raw)}); err == nil {
@@ -128,10 +164,23 @@ func TestUpdateActivityRegistrationMetadata(t *testing.T) {
 		t.Fatalf("description = %q, want non-destructive language without confirm", tool.Description)
 	}
 	props := tool.InputSchema.(map[string]any)["properties"].(map[string]any)
-	for _, name := range []string{"activity_id", "name", "description", "include_full"} {
+	for _, name := range []string{"activity_id", "name", "description", "carbs_ingested_g", "include_full"} {
 		if _, ok := props[name]; !ok {
 			t.Fatalf("schema missing %s", name)
 		}
+	}
+	carbs := props["carbs_ingested_g"].(map[string]any)
+	carbsDescription := strings.ToLower(carbs["description"].(string))
+	if carbs["type"] != "integer" || carbs["minimum"] != 0 || carbs["maximum"] != 2147483647 {
+		t.Fatalf("carbs_ingested_g schema = %#v, want bounded integer", carbs)
+	}
+	for _, phrase := range []string{"logged zero", "omit", "clearing is not supported", "carbs_used_g", "strava"} {
+		if !strings.Contains(carbsDescription, phrase) {
+			t.Fatalf("carbs_ingested_g description = %q, want %q", carbsDescription, phrase)
+		}
+	}
+	if _, ok := props["carbs_used_g"]; ok {
+		t.Fatalf("schema includes read-only carbs_used_g property")
 	}
 	if _, ok := props["confirm"]; ok {
 		t.Fatalf("schema includes forbidden confirm property")

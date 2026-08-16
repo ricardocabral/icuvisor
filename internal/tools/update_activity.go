@@ -13,24 +13,27 @@ import (
 
 const (
 	updateActivityName                    = "update_activity"
-	updateActivityDescription             = "Rename and/or replace the free-text description of one completed activity by activity_id. Sparse update: omit a field to leave it unchanged; pass an explicit empty string for description to clear it. Activity descriptions are prose metadata only, not planned-workout structure. This non-destructive metadata edit does not alter recorded streams, intervals, or analyzed metrics. Use set_activity_intervals (delete-mode tool) to write a structured workout_doc as the activity's interval set."
-	invalidUpdateActivityArgumentsMessage = "invalid update_activity arguments; provide activity_id plus at least one of name or description"
+	updateActivityDescription             = "Update one completed non-Strava activity by activity_id: rename it, replace its free-text description, and/or set athlete-logged carbohydrate intake in whole grams. Sparse update: omit a field to leave it unchanged; pass an explicit empty string for description to clear it. carbs_ingested_g accepts 0-2147483647, where zero is a logged zero; clearing is not supported, and read-only carbs_used_g is a distinct upstream estimate. Intervals.icu does not update Strava activities through this endpoint. Activity descriptions are prose metadata only, not planned-workout structure. This non-destructive metadata edit does not alter recorded streams, intervals, or analyzed metrics. Use set_activity_intervals (delete-mode tool) to write a structured workout_doc as the activity's interval set."
+	invalidUpdateActivityArgumentsMessage = "invalid update_activity arguments; provide activity_id plus at least one of name, description, or carbs_ingested_g"
 	updateActivityMessage                 = "could not update activity; check intervals.icu credentials, activity ID, and writable activity fields"
+	maxActivityCarbsIngestedG             = 1<<31 - 1
 )
 
-// ActivityUpdaterClient sparsely updates an activity's name/description.
+// ActivityUpdaterClient sparsely updates supported activity metadata.
 type ActivityUpdaterClient interface {
 	UpdateActivity(context.Context, intervals.UpdateActivityParams) (intervals.Activity, error)
 }
 
 type updateActivityRequest struct {
-	ActivityID  string  `json:"activity_id"`
-	Name        string  `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
-	IncludeFull bool    `json:"include_full,omitempty"`
+	ActivityID     string  `json:"activity_id"`
+	Name           string  `json:"name,omitempty"`
+	Description    *string `json:"description,omitempty"`
+	CarbsIngestedG *int    `json:"carbs_ingested_g,omitempty"`
+	IncludeFull    bool    `json:"include_full,omitempty"`
 
-	nameProvided        bool
-	descriptionProvided bool
+	nameProvided           bool
+	descriptionProvided    bool
+	carbsIngestedGProvided bool
 }
 
 type updateActivityResponse struct {
@@ -73,6 +76,10 @@ func updateActivityHandler(client ActivityUpdaterClient, profileClient ProfileCl
 				params.Description = *args.Description
 			}
 			params.DescriptionSet = true
+		}
+		if args.carbsIngestedGProvided {
+			params.CarbsIngested = *args.CarbsIngestedG
+			params.CarbsIngestedSet = true
 		}
 		activity, err := client.UpdateActivity(ctx, params)
 		if err != nil {
@@ -129,14 +136,23 @@ func decodeUpdateActivityRequest(raw json.RawMessage) (updateActivityRequest, er
 	}
 	decoded.nameProvided = fields["name"]
 	decoded.descriptionProvided = fields["description"]
+	decoded.carbsIngestedGProvided = fields["carbs_ingested_g"]
 	if decoded.nameProvided {
 		decoded.Name = strings.TrimSpace(decoded.Name)
 		if decoded.Name == "" {
 			return updateActivityRequest{}, errors.New("name cannot be empty when supplied; omit to leave unchanged")
 		}
 	}
-	if !decoded.nameProvided && !decoded.descriptionProvided {
-		return updateActivityRequest{}, errors.New("at least one of name or description must be supplied")
+	if decoded.carbsIngestedGProvided {
+		if decoded.CarbsIngestedG == nil {
+			return updateActivityRequest{}, errors.New("carbs_ingested_g cannot be null; omit to leave unchanged")
+		}
+		if *decoded.CarbsIngestedG < 0 || *decoded.CarbsIngestedG > maxActivityCarbsIngestedG {
+			return updateActivityRequest{}, errors.New("carbs_ingested_g must be an integer from 0 through 2147483647")
+		}
+	}
+	if !decoded.nameProvided && !decoded.descriptionProvided && !decoded.carbsIngestedGProvided {
+		return updateActivityRequest{}, errors.New("at least one of name, description, or carbs_ingested_g must be supplied")
 	}
 	return decoded, nil
 }
@@ -149,6 +165,9 @@ func updateActivityFieldsUpdated(args updateActivityRequest) []string {
 	if args.descriptionProvided {
 		fields = append(fields, "description")
 	}
+	if args.carbsIngestedGProvided {
+		fields = append(fields, "carbs_ingested_g")
+	}
 	sort.Strings(fields)
 	return fields
 }
@@ -159,14 +178,15 @@ func updateActivityInputSchema() map[string]any {
 		"additionalProperties": false,
 		"required":             []string{"activity_id"},
 		"properties": map[string]any{
-			"activity_id":  map[string]any{"type": "string", "description": "Required intervals.icu activity ID. Surrounding whitespace is trimmed; the i-prefix is preserved verbatim."},
-			"name":         map[string]any{"type": "string", "description": "Optional replacement activity title. Omit to leave unchanged. Empty strings are rejected to avoid accidentally blanking the title; intervals.icu's UI also rejects blank titles."},
-			"description":  map[string]any{"type": "string", "description": "Optional replacement free-text activity description; this is not append-only. Omit to leave unchanged; pass an explicit empty string to clear the description. Prose metadata only — to write structured intervals, use set_activity_intervals with a workout_doc."},
-			"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, include the raw upstream updated-activity payload under full; default returns a terse update confirmation."},
+			"activity_id":      map[string]any{"type": "string", "description": "Required intervals.icu activity ID. Surrounding whitespace is trimmed; the i-prefix is preserved verbatim."},
+			"name":             map[string]any{"type": "string", "description": "Optional replacement activity title. Omit to leave unchanged. Empty strings are rejected to avoid accidentally blanking the title; intervals.icu's UI also rejects blank titles."},
+			"description":      map[string]any{"type": "string", "description": "Optional replacement free-text activity description; this is not append-only. Omit to leave unchanged; pass an explicit empty string to clear the description. Prose metadata only — to write structured intervals, use set_activity_intervals with a workout_doc."},
+			"carbs_ingested_g": map[string]any{"type": "integer", "minimum": 0, "maximum": maxActivityCarbsIngestedG, "description": "Optional athlete-logged carbohydrate consumed during this activity, in whole grams (0-2147483647). Zero is a logged zero; omit to leave unchanged. Clearing is not supported. Distinct from read-only carbs_used_g. Intervals.icu does not update Strava activities through this endpoint."},
+			"include_full":     map[string]any{"type": "boolean", "default": false, "description": "When true, include the raw upstream updated-activity payload under full; default returns a terse update confirmation."},
 		},
 	}
 }
 
 func updateActivityOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Non-destructive activity metadata update confirmation with activity_id, status, fields_updated, normalized athlete_id, and source_endpoint metadata. Does not alter recorded streams or interval analysis; descriptions written here are free-text prose."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Non-destructive activity metadata update confirmation with activity_id, status, fields_updated, normalized athlete_id, and source_endpoint metadata. Supports sparse name, free-text description, and athlete-logged carbs_ingested_g updates; carbs_used_g remains read-only. Does not alter recorded streams or interval analysis."}
 }
