@@ -8,6 +8,12 @@ already returned by activity reads as `carbs_ingested_g`. The current
 intervals.icu `PUT /api/v1/activity/{id}` endpoint accepts an `Activity` body
 whose integer `carbs_ingested` field represents the same value.
 
+The pinned and live OpenAPI documents establish the endpoint and request shape:
+the request body references `Activity`, and `Activity.carbs_ingested` is an
+`int32`. They do not by themselves prove that the live service persists this
+specific property. Final upstream verification therefore requires a dated,
+authenticated PUT followed by a GET against a non-Strava test activity.
+
 The upstream endpoint does not update Strava activities. icuvisor will describe
 that limitation but will continue to rely on the existing short, sanitized write
 error path when upstream rejects a particular activity.
@@ -17,7 +23,8 @@ error path when upstream rejects a particular activity.
 Extend the existing `update_activity` tool with one optional field:
 
 - `carbs_ingested_g`: athlete-logged carbohydrate consumed during the activity,
-  as a whole number of grams greater than or equal to zero.
+  as a whole number of grams from 0 through 2147483647, matching the upstream
+  signed `int32` request field.
 
 This is set-only support. Omitting the field leaves the upstream value unchanged.
 An explicit JSON `null`, a negative number, a fractional number, or a non-number
@@ -34,7 +41,8 @@ tool:
 
 1. `updateActivityRequest` decodes `carbs_ingested_g` and separately records
    whether the key was supplied.
-2. Validation accepts only a non-null integer greater than or equal to zero.
+2. Validation accepts only a non-null integer from 0 through 2147483647. Both
+   the tool decoder and the intervals client enforce the bound.
 3. The handler maps the public unit-labelled field to
    `intervals.UpdateActivityParams.CarbsIngested` and sets a corresponding
    presence flag.
@@ -44,15 +52,16 @@ tool:
    `include_full` behavior continues to return the raw upstream response only
    when explicitly requested.
 
-The existing `RequirementWrite` registration remains appropriate. The update is
-not a delete operation and does not require delete-mode gating or a model-supplied
-confirmation flag.
+The existing `RequirementWrite` registration remains appropriate. The tool is
+available in safe/full modes and hidden when writes are disabled. It does not
+require full delete mode and has no model-supplied confirmation argument.
 
 ## Public contract
 
 The tool description and input schema will state all of the following:
 
 - the value is athlete-logged intake during this activity, in whole grams;
+- the accepted range is 0 through 2147483647;
 - zero is a logged zero, while omission means unchanged;
 - clearing an existing value is not supported;
 - `carbs_used_g` is distinct and read-only;
@@ -70,9 +79,20 @@ Development will use a red-green-refactor cycle. Tests will cover:
 - an exact HTTP request body containing `carbs_ingested` and no unrelated fields;
 - combination with existing `name` and `description` fields;
 - rejection of null, negative, fractional, string, and otherwise empty updates;
+- rejection of integers greater than 2147483647 at both validation layers;
 - `fields_updated` containing the public name `carbs_ingested_g`;
 - schema type, minimum, description, and registration metadata;
 - preservation of existing `include_full` behavior and public error sanitization.
+
+The existing tool-level and intervals-client validation messages that currently
+name only `name` and `description` will be updated to include
+`carbs_ingested_g` and `carbs_ingested`, respectively.
+
+An authenticated manual smoke test must use a disposable, non-Strava activity:
+send a sparse PUT with `carbs_ingested`, GET the activity, and confirm the value
+persisted. Restore the prior value when it is known and safely representable.
+Without an authorized test activity and credentialed environment, report this
+check as unverified rather than claiming live write persistence.
 
 After focused tests pass, run formatting, the complete test/check target, and
 review the diff for generated documentation and unrelated changes.
@@ -82,7 +102,10 @@ review the diff for generated documentation and unrelated changes.
 Update the PRD activity catalog to document `update_activity` and its supported
 sparse fields, update `CHANGELOG.md` under `[Unreleased]`, and regenerate the
 website tool reference and schema snapshots through the repository's existing
-documentation target.
+generation commands. Run `make docs-tools` for `web/data/tools.json`,
+`web/data/tool_schemas.json`, and the `cmd/gendocs/testdata` goldens. Run
+`go run ./scripts/snapshot_tool_schemas.go` separately for
+`internal/tools/schema_snapshot/update_activity.json`.
 
 ## Other activity fields audit
 
@@ -99,8 +122,10 @@ Public intervals.icu material supports future investigation of these groups:
 - athlete feedback: `icu_rpe` and `feel`, with their exact scale semantics made
   explicit at the MCP boundary;
 - activity-specific threshold: `icu_ftp`;
-- classifications and equipment: `race`, `trainer`, `commute`, and gear, after
-  black-box validation of their exact request shapes and synchronization effects.
+- schema candidates for classifications and equipment: `race`, `trainer`,
+  `commute`, and the upstream `gear` object, all requiring black-box validation
+  of exact request shapes and synchronization effects. The read-side
+  `gear_id` exposed by icuvisor must not be assumed to be the update shape.
 
 Potentially editable schema fields such as tags, strength/swim measurements,
 route assignment, time corrections, and recalculation flags need direct public
