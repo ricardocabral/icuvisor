@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added inclusive time- and distance-window selection to `get_activity_streams`. Windows are sliced locally from aligned streams, preserve `data2` and sampling provenance, and remain metadata-only unless `include_full:true`; the full-fetch upstream limitation is documented.
+
 ## [1.5.10] - 2026-08-16
 
 ### Added
