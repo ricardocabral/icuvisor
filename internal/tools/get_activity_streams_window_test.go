@@ -153,6 +153,13 @@ func TestGetActivityStreamsWindowEmptyAndMissingBoundaryDoNotLeakRaw(t *testing.
 			if got := window["status"]; got != tc.wantStatus {
 				t.Fatalf("window.status = %#v, want %q", got, tc.wantStatus)
 			}
+			wantMethod := "window"
+			if tc.wantStatus == "invalid" {
+				wantMethod = "unavailable"
+			}
+			if got := stream["sampling_method"]; got != wantMethod {
+				t.Fatalf("sampling_method = %#v, want %q", got, wantMethod)
+			}
 			if got := window["empty"]; got != true {
 				t.Fatalf("window.empty = %#v, want true", got)
 			}
@@ -252,6 +259,9 @@ func TestGetActivityStreamsWindowData2MismatchWithholdsChannel(t *testing.T) {
 	if _, ok := stream["full"]; ok {
 		t.Fatalf("stream = %#v, want no full payload for mismatched data2", stream)
 	}
+	if got := stream["sampling_method"]; got != "unavailable" {
+		t.Fatalf("sampling_method = %#v, want unavailable", got)
+	}
 	diagnostics := payload["_meta"].(map[string]any)["data_availability"].([]any)
 	if len(diagnostics) != 1 || diagnostics[0].(map[string]any)["reason"] != "window_channel_length_mismatch" {
 		t.Fatalf("data_availability = %#v, want data2 mismatch", diagnostics)
@@ -287,9 +297,50 @@ func TestGetActivityStreamsWindowWithholdsNullSamples(t *testing.T) {
 			if _, ok := stream["full"]; ok {
 				t.Fatalf("stream = %#v, want null-containing full payload withheld", stream)
 			}
+			if got := stream["sampling_method"]; got != "unavailable" {
+				t.Fatalf("sampling_method = %#v, want unavailable", got)
+			}
 			diagnostics := payload["_meta"].(map[string]any)["data_availability"].([]any)
 			if len(diagnostics) != 1 || diagnostics[0].(map[string]any)["reason"] != "window_channel_null" {
 				t.Fatalf("data_availability = %#v, want window_channel_null", diagnostics)
+			}
+		})
+	}
+}
+
+func TestGetActivityStreamsCombinedWindowKeepsBothProvenanceDimensionsOnFailure(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		streams []intervals.ActivityStream
+		args    string
+		missing string
+		other   string
+	}{
+		{name: "time fails first", streams: decodeStreamFixtures(t, `{"type":"distance","data":[0,100,200]}`, `{"type":"power","data":[1,2,3]}`), args: `{"activity_id":"a1","include_full":true,"time_window":{"start":0,"end":20},"distance_window":{"start":50,"end":150}}`, missing: "time", other: "distance"},
+		{name: "distance fails after time", streams: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3]}`), args: `{"activity_id":"a1","include_full":true,"time_window":{"start":0,"end":20},"distance_window":{"start":50,"end":150}}`, missing: "distance", other: "time"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeActivityReadClient{streams: tc.streams}
+			tool := newGetActivityStreamsTool(client, client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.args)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			payload := resultMap(t, result)
+			stream := payload["streams"].(map[string]any)["watts"].(map[string]any)
+			window := stream["window"].(map[string]any)
+			if _, ok := window[tc.missing]; !ok {
+				t.Fatalf("window = %#v, want missing %s provenance", window, tc.missing)
+			}
+			other, ok := window[tc.other].(map[string]any)
+			if !ok || other["effective"] == nil {
+				t.Fatalf("window = %#v, want effective %s provenance", window, tc.other)
+			}
+			if got := stream["sampling_method"]; got != "unavailable" {
+				t.Fatalf("sampling_method = %#v, want unavailable", got)
 			}
 		})
 	}

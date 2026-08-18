@@ -407,36 +407,47 @@ func buildActivityStreamWindowSelection(rows []intervals.ActivityStream, request
 		return nil
 	}
 	selection := &activityStreamWindowSelection{Provenance: &activityStreamWindowProvenance{Empty: true, Status: "invalid"}}
-	var timeValues, distanceValues []float64
 	if request.Time != nil {
 		selection.Provenance.Time = activityStreamWindowDimensionForRequest(request.Time, "time", "seconds")
-		row, ok := findActivityBoundaryStream(rows, "time")
-		if !ok {
-			selection.Diagnostic = windowDiagnostic("window_boundary_unavailable", "time", "The time boundary stream is unavailable; the requested window was not applied.")
-			return selection
-		}
-		var reason string
-		timeValues, reason = validActivityBoundaryValues(row)
-		if reason != "" {
-			selection.Diagnostic = windowDiagnostic("window_boundary_invalid", "time", "The time boundary stream is null, non-finite, empty, or non-monotonic; the requested window was not applied.")
-			return selection
-		}
-		selection.Provenance.Time.Effective = effectiveActivityWindowBounds(timeValues, request.Time)
 	}
 	if request.Distance != nil {
 		selection.Provenance.Distance = activityStreamWindowDimensionForRequest(request.Distance, "distance", "meters")
+	}
+	var timeValues, distanceValues []float64
+	if request.Time != nil {
+		row, ok := findActivityBoundaryStream(rows, "time")
+		if !ok {
+			selection.Diagnostic = windowDiagnostic("window_boundary_unavailable", "time", "The time boundary stream is unavailable; the requested window was not applied.")
+		} else {
+			var reason string
+			timeValues, reason = validActivityBoundaryValues(row)
+			if reason != "" {
+				selection.Diagnostic = windowDiagnostic("window_boundary_invalid", "time", "The time boundary stream is null, non-finite, empty, or non-monotonic; the requested window was not applied.")
+			} else {
+				selection.Provenance.Time.Effective = effectiveActivityWindowBounds(timeValues, request.Time)
+			}
+		}
+	}
+	if request.Distance != nil {
 		row, ok := findActivityBoundaryStream(rows, "distance")
 		if !ok {
-			selection.Diagnostic = windowDiagnostic("window_boundary_unavailable", "distance", "The distance boundary stream is unavailable; the requested window was not applied.")
-			return selection
+			if selection.Diagnostic == nil {
+				selection.Diagnostic = windowDiagnostic("window_boundary_unavailable", "distance", "The distance boundary stream is unavailable; the requested window was not applied.")
+			}
+		} else {
+			var reason string
+			distanceValues, reason = validActivityBoundaryValues(row)
+			if reason != "" {
+				if selection.Diagnostic == nil {
+					selection.Diagnostic = windowDiagnostic("window_boundary_invalid", "distance", "The distance boundary stream is null, non-finite, empty, or non-monotonic; the requested window was not applied.")
+				}
+			} else {
+				selection.Provenance.Distance.Effective = effectiveActivityWindowBounds(distanceValues, request.Distance)
+			}
 		}
-		var reason string
-		distanceValues, reason = validActivityBoundaryValues(row)
-		if reason != "" {
-			selection.Diagnostic = windowDiagnostic("window_boundary_invalid", "distance", "The distance boundary stream is null, non-finite, empty, or non-monotonic; the requested window was not applied.")
-			return selection
-		}
-		selection.Provenance.Distance.Effective = effectiveActivityWindowBounds(distanceValues, request.Distance)
+	}
+	if selection.Diagnostic != nil {
+		return selection
 	}
 	if len(timeValues) > 0 && len(distanceValues) > 0 && len(timeValues) != len(distanceValues) {
 		selection.Diagnostic = windowDiagnostic("window_boundary_length_mismatch", "time,distance", "The time and distance boundary streams have different lengths; no intersection window was applied.")
@@ -639,6 +650,7 @@ func shapeWindowedActivityStream(row *activityStreamRow, stream intervals.Activi
 	row.SourceSampleCount = streamCountPointer(len(stream.Data))
 	row.SelectedSampleCount = streamCountPointer(0)
 	row.ReturnedSampleCount = streamCountPointer(0)
+	row.SamplingMethod = "unavailable"
 	if selection.Diagnostic != nil {
 		return nil
 	}
