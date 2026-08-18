@@ -520,6 +520,11 @@ func validActivityBoundaryValues(row intervals.ActivityStream) ([]float64, strin
 	return values, ""
 }
 
+func rawArrayIsNull(raw map[string]any, key string) bool {
+	value, ok := raw[key]
+	return ok && value == nil
+}
+
 func rawArrayHasNull(raw map[string]any, key string) bool {
 	value, ok := raw[key]
 	if !ok {
@@ -656,6 +661,9 @@ func shapeWindowedActivityStream(row *activityStreamRow, stream intervals.Activi
 	}
 	if stream.AllNull {
 		return windowDiagnostic("window_channel_all_null", firstNonEmpty(stream.Type, stream.Name), "The requested stream channel is marked all-null and was withheld from the bounded response.")
+	}
+	if rawArrayIsNull(stream.Raw, "data") {
+		return windowDiagnostic("window_channel_null", firstNonEmpty(stream.Type, stream.Name), "The requested stream data is null and was withheld from the bounded response.")
 	}
 	if len(stream.Data) != selection.BoundaryLength {
 		return windowDiagnostic("window_channel_length_mismatch", firstNonEmpty(stream.Type, stream.Name), "The requested stream channel length does not match the boundary stream; it was withheld from the bounded response.")

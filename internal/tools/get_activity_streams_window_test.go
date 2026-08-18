@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"testing"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
@@ -341,6 +342,257 @@ func TestGetActivityStreamsCombinedWindowKeepsBothProvenanceDimensionsOnFailure(
 			}
 			if got := stream["sampling_method"]; got != "unavailable" {
 				t.Fatalf("sampling_method = %#v, want unavailable", got)
+			}
+		})
+	}
+}
+
+func TestGetActivityStreamsAdversarialBoundsAndMetadataOnlyWindow(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		args       string
+		want       []float64
+		wantStart  float64
+		wantEnd    float64
+		wantStatus string
+		full       bool
+	}{
+		{name: "clamps before source", args: `{"activity_id":"a1","include_full":true,"time_window":{"start":0,"end":25}}`, want: []float64{1, 2}, wantStart: 10, wantEnd: 25, wantStatus: "selected", full: true},
+		{name: "clamps after source", args: `{"activity_id":"a1","include_full":true,"time_window":{"start":25,"end":100}}`, want: []float64{3}, wantStart: 25, wantEnd: 30, wantStatus: "selected", full: true},
+		{name: "no overlap intersection", args: `{"activity_id":"a1","include_full":true,"time_window":{"start":0,"end":10},"distance_window":{"start":250,"end":350}}`, want: []float64{}, wantStart: 10, wantEnd: 10, wantStatus: "empty", full: true},
+		{name: "metadata only", args: `{"activity_id":"a1","time_window":{"start":10,"end":25}}`, want: []float64{1, 2}, wantStart: 10, wantEnd: 25, wantStatus: "selected", full: false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeActivityReadClient{streams: decodeStreamFixtures(t,
+				`{"type":"time","data":[10,20,30]}`,
+				`{"type":"distance","data":[0,100,200]}`,
+				`{"type":"power","data":[1,2,3]}`,
+			)}
+			tool := newGetActivityStreamsTool(client, client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.args)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			stream := resultMap(t, result)["streams"].(map[string]any)["watts"].(map[string]any)
+			if tc.full {
+				if len(tc.want) > 0 {
+					assertWindowSamples(t, resultMap(t, result)["streams"].(map[string]any), "watts", tc.want)
+				}
+				full := stream["full"].(map[string]any)
+				if got := full["data"].([]any); !equalFloatSlices(got, tc.want) {
+					t.Fatalf("full.data = %#v, want %#v", got, tc.want)
+				}
+			} else if _, ok := stream["samples"]; ok {
+				t.Fatalf("stream = %#v, want metadata-only row", stream)
+			}
+			if got := stream["sampling_method"]; got != "window" {
+				t.Fatalf("sampling_method = %#v, want window", got)
+			}
+			window := stream["window"].(map[string]any)
+			if got := window["status"]; got != tc.wantStatus {
+				t.Fatalf("window.status = %#v, want %q", got, tc.wantStatus)
+			}
+			if got := stream["source_sample_count"]; got != float64(3) {
+				t.Fatalf("source_sample_count = %#v, want 3", got)
+			}
+			selected := len(tc.want)
+			if got := stream["selected_sample_count"]; got != float64(selected) {
+				t.Fatalf("selected_sample_count = %#v, want %d", got, selected)
+			}
+			returned := selected
+			if !tc.full {
+				returned = 0
+			}
+			if got := stream["returned_sample_count"]; got != float64(returned) {
+				t.Fatalf("returned_sample_count = %#v, want %d", got, returned)
+			}
+			timeWindow := window["time"].(map[string]any)
+			effective := timeWindow["effective"].(map[string]any)
+			if effective["start"] != tc.wantStart || effective["end"] != tc.wantEnd {
+				t.Fatalf("effective bounds = %#v, want [%v %v]", effective, tc.wantStart, tc.wantEnd)
+			}
+		})
+	}
+}
+
+func TestGetActivityStreamsOmittedWindowRetainsLegacyMetadataShape(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityReadClient{streams: decodeStreamFixtures(t, `{"type":"power","data":[1,2,3]}`)}
+	tool := newGetActivityStreamsTool(client, client, "test", false)
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	stream := resultMap(t, result)["streams"].(map[string]any)["watts"].(map[string]any)
+	for _, key := range []string{"source_sample_count", "selected_sample_count", "returned_sample_count", "sampling_method", "window", "samples", "full"} {
+		if _, ok := stream[key]; ok {
+			t.Fatalf("legacy metadata stream = %#v, want no %s", stream, key)
+		}
+	}
+}
+
+func TestGetActivityStreamsUnusableBoundaryMatrix(t *testing.T) {
+	t.Parallel()
+
+	validDistance := `{"type":"distance","data":[0,100,200]}`
+	tests := []struct {
+		name   string
+		rows   []intervals.ActivityStream
+		reason string
+	}{
+		{name: "missing", rows: decodeStreamFixtures(t, validDistance, `{"type":"power","data":[1,2,3]}`), reason: "window_boundary_unavailable"},
+		{name: "null", rows: decodeStreamFixtures(t, `{"type":"time","data":null}`, validDistance, `{"type":"power","data":[1,2,3]}`), reason: "window_boundary_invalid"},
+		{name: "empty", rows: decodeStreamFixtures(t, `{"type":"time","data":[]}`, validDistance, `{"type":"power","data":[1,2,3]}`), reason: "window_boundary_invalid"},
+		{name: "all null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,0,0],"allNull":true}`, validDistance, `{"type":"power","data":[1,2,3]}`), reason: "window_boundary_invalid"},
+		{name: "null element", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,null,20]}`, validDistance, `{"type":"power","data":[1,2,3]}`), reason: "window_boundary_invalid"},
+		{name: "decreasing", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,20,10]}`, validDistance, `{"type":"power","data":[1,2,3]}`), reason: "window_boundary_invalid"},
+		{name: "non finite", rows: []intervals.ActivityStream{{Type: "time", Data: []float64{0, math.NaN(), 20}}, {Type: "distance", Data: []float64{0, 100, 200}}, {Type: "power", Data: []float64{1, 2, 3}}}, reason: "window_boundary_invalid"},
+		{name: "boundary length mismatch", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"distance","data":[0,100]}`, `{"type":"power","data":[1,2,3]}`), reason: "window_boundary_length_mismatch"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeActivityReadClient{streams: tc.rows}
+			tool := newGetActivityStreamsTool(client, client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","include_full":true,"time_window":{"start":0,"end":20},"distance_window":{"start":0,"end":200},"keys":["Power"]}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			payload := resultMap(t, result)
+			stream := payload["streams"].(map[string]any)["watts"].(map[string]any)
+			for _, key := range []string{"source_sample_count", "selected_sample_count", "returned_sample_count"} {
+				if got := stream[key]; got != float64(0) && key != "source_sample_count" {
+					t.Fatalf("%s = %#v, want zero", key, got)
+				}
+			}
+			if got := stream["sampling_method"]; got != "unavailable" {
+				t.Fatalf("sampling_method = %#v, want unavailable", got)
+			}
+			window := stream["window"].(map[string]any)
+			if window["status"] != "invalid" || window["empty"] != true {
+				t.Fatalf("window = %#v, want invalid empty provenance", window)
+			}
+			if _, ok := window["time"]; !ok {
+				t.Fatalf("window = %#v, want time provenance", window)
+			}
+			if _, ok := window["distance"]; !ok {
+				t.Fatalf("window = %#v, want distance provenance", window)
+			}
+			if _, ok := stream["full"]; ok {
+				t.Fatalf("stream = %#v, want full withheld", stream)
+			}
+			diagnostics := payload["_meta"].(map[string]any)["data_availability"].([]any)
+			if len(diagnostics) != 1 || diagnostics[0].(map[string]any)["reason"] != tc.reason {
+				t.Fatalf("data_availability = %#v, want %q", diagnostics, tc.reason)
+			}
+		})
+	}
+}
+
+func TestGetActivityStreamsRequestedChannelFailureMatrix(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		rows   []intervals.ActivityStream
+		reason string
+	}{
+		{name: "data null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":null}`), reason: "window_channel_null"},
+		{name: "selected null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,null,3]}`), reason: "window_channel_null"},
+		{name: "all null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"allNull":true}`), reason: "window_channel_all_null"},
+		{name: "data mismatch", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2]}`), reason: "window_channel_length_mismatch"},
+		{name: "data2 null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"data2":null}`), reason: "window_channel_null"},
+		{name: "data2 empty", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"data2":[]}`), reason: "window_channel_length_mismatch"},
+		{name: "data2 selected null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"data2":[4,null,6]}`), reason: "window_channel_null"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeActivityReadClient{streams: tc.rows}
+			tool := newGetActivityStreamsTool(client, client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","include_full":true,"keys":["Power"],"time_window":{"start":0,"end":20}}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			payload := resultMap(t, result)
+			stream := payload["streams"].(map[string]any)["watts"].(map[string]any)
+			if _, ok := stream["samples"]; ok {
+				t.Fatalf("stream = %#v, want samples withheld", stream)
+			}
+			if _, ok := stream["full"]; ok {
+				t.Fatalf("stream = %#v, want full withheld", stream)
+			}
+			if got := stream["sampling_method"]; got != "unavailable" {
+				t.Fatalf("sampling_method = %#v, want unavailable", got)
+			}
+			diagnostics := payload["_meta"].(map[string]any)["data_availability"].([]any)
+			if len(diagnostics) != 1 || diagnostics[0].(map[string]any)["reason"] != tc.reason {
+				t.Fatalf("data_availability = %#v, want %q", diagnostics, tc.reason)
+			}
+		})
+	}
+}
+
+func TestGetActivityStreamsMissingRequestedChannelAndAbsentData2(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityReadClient{streams: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3]}`)}
+	tool := newGetActivityStreamsTool(client, client, "test", false)
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","include_full":true,"keys":["heart_rate"],"time_window":{"start":0,"end":20}}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	payload := resultMap(t, result)
+	if len(payload["streams"].(map[string]any)) != 0 {
+		t.Fatalf("streams = %#v, want absent requested channel", payload["streams"])
+	}
+	diagnostics := payload["_meta"].(map[string]any)["data_availability"].([]any)
+	if len(diagnostics) != 1 || diagnostics[0].(map[string]any)["reason"] != "missing_stream" {
+		t.Fatalf("data_availability = %#v, want missing_stream", diagnostics)
+	}
+
+	client = &fakeActivityReadClient{streams: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3]}`)}
+	tool = newGetActivityStreamsTool(client, client, "test", false)
+	result, err = tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","include_full":true,"time_window":{"start":0,"end":20}}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	stream := resultMap(t, result)["streams"].(map[string]any)["watts"].(map[string]any)
+	if _, ok := stream["data2"]; ok {
+		t.Fatalf("stream = %#v, want absent data2 preserved as absent", stream)
+	}
+}
+
+func TestGetActivityStreamsStravaUnavailableWindowUsesUnavailableShape(t *testing.T) {
+	t.Parallel()
+
+	for _, includeFull := range []bool{false, true} {
+		t.Run(map[bool]string{false: "terse", true: "full"}[includeFull], func(t *testing.T) {
+			client := &fakeActivityReadClient{activity: decodeExtendedMetricsActivity(t, `{"id":"stub1","source":"Strava","_note":"sanitized"}`), streamErr: intervals.ErrNotFound}
+			tool := newGetActivityStreamsTool(client, client, "test", false)
+			args := `{"activity_id":"stub1","time_window":{"start":0,"end":20}}`
+			if includeFull {
+				args = `{"activity_id":"stub1","include_full":true,"time_window":{"start":0,"end":20}}`
+			}
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(args)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			payload := resultMap(t, result)
+			if payload["strava_imported"] != true || payload["unavailable"].(map[string]any)["reason"] != "strava_blocked" {
+				t.Fatalf("payload = %#v, want Strava unavailable shape", payload)
+			}
+			if _, ok := payload["streams"]; ok {
+				t.Fatalf("payload = %#v, want no fabricated streams", payload)
+			}
+			if includeFull {
+				if _, ok := payload["full"]; !ok {
+					t.Fatalf("payload = %#v, want gated full fallback", payload)
+				}
+			} else if _, ok := payload["full"]; ok {
+				t.Fatalf("payload = %#v, want no full fallback", payload)
 			}
 		})
 	}
