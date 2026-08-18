@@ -1906,10 +1906,30 @@
         "description": "Required intervals.icu activity ID whose stream channels should be listed."
       },
       {
+        "name": "distance_window",
+        "required": false,
+        "type": "object",
+        "description": "Optional inclusive distance window. Local slicing fetches the complete upstream stream first because no verified upstream window query exists.",
+        "children": [
+          {
+            "name": "end",
+            "required": true,
+            "type": "number",
+            "description": "Inclusive window end in meters."
+          },
+          {
+            "name": "start",
+            "required": true,
+            "type": "number",
+            "description": "Inclusive window start in meters."
+          }
+        ]
+      },
+      {
         "name": "include_full",
         "required": false,
         "type": "boolean",
-        "description": "When true, include raw upstream stream payloads and samples for available stream channels. Raw samples are otherwise omitted.",
+        "description": "When true, include bounded raw upstream stream payloads and samples for available stream channels. Raw samples are otherwise omitted.",
         "default": false
       },
       {
@@ -1926,7 +1946,27 @@
         "name": "max_points",
         "required": false,
         "type": "integer",
-        "description": "Optional per-channel cap for raw sample arrays. Requires include_full:true; uniformly samples indices while preserving first and last samples, and reports sampling provenance."
+        "description": "Optional per-channel cap for raw sample arrays. Requires include_full:true; uniformly samples selected indices while preserving first and last samples, and reports sampling provenance."
+      },
+      {
+        "name": "time_window",
+        "required": false,
+        "type": "object",
+        "description": "Optional inclusive elapsed-time window. Local slicing fetches the complete upstream stream first because no verified upstream window query exists.",
+        "children": [
+          {
+            "name": "end",
+            "required": true,
+            "type": "number",
+            "description": "Inclusive window end in elapsed seconds."
+          },
+          {
+            "name": "start",
+            "required": true,
+            "type": "number",
+            "description": "Inclusive window start in elapsed seconds."
+          }
+        ]
       }
     ]
   },

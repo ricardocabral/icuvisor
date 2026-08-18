@@ -9,9 +9,30 @@
       "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
       "type": "string"
     },
+    "distance_window": {
+      "additionalProperties": false,
+      "description": "Optional inclusive distance window. Local slicing fetches the complete upstream stream first because no verified upstream window query exists.",
+      "properties": {
+        "end": {
+          "description": "Inclusive window end in meters.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "start": {
+          "description": "Inclusive window start in meters.",
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "type": "object"
+    },
     "include_full": {
       "default": false,
-      "description": "When true, include raw upstream stream payloads and samples for available stream channels. Raw samples are otherwise omitted.",
+      "description": "When true, include bounded raw upstream stream payloads and samples for available stream channels. Raw samples are otherwise omitted.",
       "type": "boolean"
     },
     "keys": {
@@ -22,10 +43,31 @@
       "type": "array"
     },
     "max_points": {
-      "description": "Optional per-channel cap for raw sample arrays. Requires include_full:true; uniformly samples indices while preserving first and last samples, and reports sampling provenance.",
+      "description": "Optional per-channel cap for raw sample arrays. Requires include_full:true; uniformly samples selected indices while preserving first and last samples, and reports sampling provenance.",
       "maximum": 5000,
       "minimum": 2,
       "type": "integer"
+    },
+    "time_window": {
+      "additionalProperties": false,
+      "description": "Optional inclusive elapsed-time window. Local slicing fetches the complete upstream stream first because no verified upstream window query exists.",
+      "properties": {
+        "end": {
+          "description": "Inclusive window end in elapsed seconds.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "start": {
+          "description": "Inclusive window start in elapsed seconds.",
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "type": "object"
     }
   },
   "required": [

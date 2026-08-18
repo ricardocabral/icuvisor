@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"strings"
 
@@ -15,7 +16,7 @@ import (
 const (
 	getActivityStreamsName        = "get_activity_streams"
 	getActivitySplitsName         = "get_activity_splits"
-	getActivityStreamsDescription = "Get canonical activity stream channels by activity_id. For a described or date-based activity, resolve it with get_activities first and pass the returned activity_id. Streams are heavy: default returns only available stream metadata; raw samples require include_full:true and can be uniformly bounded per channel with max_points."
+	getActivityStreamsDescription = "Get canonical activity stream channels by activity_id. For a described or date-based activity, resolve it with get_activities first and pass the returned activity_id. Streams are heavy: default returns only available stream metadata; raw samples require include_full:true. Optional time_window (elapsed seconds) or distance_window (meters) selects an inclusive local window; max_points uniformly bounds the selected samples."
 	getActivitySplitsDescription  = "Get manual or virtual per-km/per-mile activity splits by activity_id. For split/lap requests on a described or date-based activity, resolve it with get_activities over the athlete-local date window first. Uses manual intervals when present, otherwise derives virtual splits from distance/time streams and honors preferred_units."
 )
 
@@ -24,11 +25,107 @@ type ActivityStreamsClient interface {
 	GetActivityStreams(context.Context, intervals.ActivityStreamsParams) ([]intervals.ActivityStream, error)
 }
 
+type activityStreamWindowBounds struct {
+	Start float64 `json:"start"`
+	End   float64 `json:"end"`
+}
+
+type activityStreamWindowRequest struct {
+	Start float64
+	End   float64
+}
+
+func (w *activityStreamWindowRequest) UnmarshalJSON(data []byte) error {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fields); err != nil || fields == nil {
+		return errors.New("window must be an object")
+	}
+	for key := range fields {
+		if key != "start" && key != "end" {
+			return fmt.Errorf("window contains unsupported property %q", key)
+		}
+	}
+	start, ok := fields["start"]
+	if !ok || string(start) == "null" {
+		return errors.New("window.start is required and must be a number")
+	}
+	end, ok := fields["end"]
+	if !ok || string(end) == "null" {
+		return errors.New("window.end is required and must be a number")
+	}
+	if err := json.Unmarshal(start, &w.Start); err != nil || math.IsNaN(w.Start) || math.IsInf(w.Start, 0) {
+		return errors.New("window.start must be a finite number")
+	}
+	if err := json.Unmarshal(end, &w.End); err != nil || math.IsNaN(w.End) || math.IsInf(w.End, 0) {
+		return errors.New("window.end must be a finite number")
+	}
+	return nil
+}
+
 type getActivityStreamsRequest struct {
-	ActivityID  string   `json:"activity_id"`
-	Keys        []string `json:"keys,omitempty"`
-	IncludeFull bool     `json:"include_full,omitempty"`
-	MaxPoints   *int     `json:"max_points,omitempty"`
+	ActivityID     string                       `json:"activity_id"`
+	Keys           []string                     `json:"keys,omitempty"`
+	IncludeFull    bool                         `json:"include_full,omitempty"`
+	MaxPoints      *int                         `json:"max_points,omitempty"`
+	TimeWindow     *activityStreamWindowRequest `json:"time_window,omitempty"`
+	DistanceWindow *activityStreamWindowRequest `json:"distance_window,omitempty"`
+}
+
+func (r *getActivityStreamsRequest) UnmarshalJSON(data []byte) error {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fields); err != nil || fields == nil {
+		return errors.New("arguments must be a JSON object")
+	}
+	for key := range fields {
+		switch key {
+		case "activity_id", "keys", "include_full", "max_points", "time_window", "distance_window":
+		default:
+			return fmt.Errorf("unsupported property %q", key)
+		}
+	}
+	activityID, ok := fields["activity_id"]
+	if !ok {
+		return errors.New("activity_id is required")
+	}
+	if err := json.Unmarshal(activityID, &r.ActivityID); err != nil {
+		return errors.New("activity_id must be a string")
+	}
+	if value, ok := fields["keys"]; ok {
+		if string(value) == "null" || json.Unmarshal(value, &r.Keys) != nil {
+			return errors.New("keys must be an array of strings")
+		}
+	}
+	if value, ok := fields["include_full"]; ok {
+		if string(value) == "null" || json.Unmarshal(value, &r.IncludeFull) != nil {
+			return errors.New("include_full must be a boolean")
+		}
+	}
+	if value, ok := fields["max_points"]; ok {
+		if string(value) == "null" || json.Unmarshal(value, &r.MaxPoints) != nil || r.MaxPoints == nil {
+			return errors.New("max_points must be an integer")
+		}
+	}
+	if value, ok := fields["time_window"]; ok {
+		if string(value) == "null" {
+			return errors.New("time_window must be an object")
+		}
+		var window activityStreamWindowRequest
+		if err := json.Unmarshal(value, &window); err != nil {
+			return fmt.Errorf("invalid time_window: %w", err)
+		}
+		r.TimeWindow = &window
+	}
+	if value, ok := fields["distance_window"]; ok {
+		if string(value) == "null" {
+			return errors.New("distance_window must be an object")
+		}
+		var window activityStreamWindowRequest
+		if err := json.Unmarshal(value, &window); err != nil {
+			return fmt.Errorf("invalid distance_window: %w", err)
+		}
+		r.DistanceWindow = &window
+	}
+	return nil
 }
 
 type getActivitySplitsRequest struct {
@@ -52,16 +149,33 @@ type getActivityStreamsUnavailableResponse struct {
 }
 
 type activityStreamRow struct {
-	Type                string         `json:"type,omitempty"`
-	Name                string         `json:"name,omitempty"`
-	Samples             []float64      `json:"samples,omitempty"`
-	Data2               []float64      `json:"data2,omitempty"`
-	SampleCount         int            `json:"sample_count,omitempty"`
-	ReturnedSampleCount int            `json:"returned_sample_count,omitempty"`
-	SamplingMethod      string         `json:"sampling_method,omitempty"`
-	AllNull             bool           `json:"all_null,omitempty"`
-	Custom              bool           `json:"custom,omitempty"`
-	Full                map[string]any `json:"full,omitempty"`
+	Type                string                          `json:"type,omitempty"`
+	Name                string                          `json:"name,omitempty"`
+	Samples             []float64                       `json:"samples,omitempty"`
+	Data2               []float64                       `json:"data2,omitempty"`
+	SampleCount         int                             `json:"sample_count,omitempty"`
+	SourceSampleCount   *int                            `json:"source_sample_count,omitempty"`
+	SelectedSampleCount *int                            `json:"selected_sample_count,omitempty"`
+	ReturnedSampleCount *int                            `json:"returned_sample_count,omitempty"`
+	SamplingMethod      string                          `json:"sampling_method,omitempty"`
+	Window              *activityStreamWindowProvenance `json:"window,omitempty"`
+	AllNull             bool                            `json:"all_null,omitempty"`
+	Custom              bool                            `json:"custom,omitempty"`
+	Full                map[string]any                  `json:"full,omitempty"`
+}
+
+type activityStreamWindowProvenance struct {
+	Time     *activityStreamWindowDimension `json:"time,omitempty"`
+	Distance *activityStreamWindowDimension `json:"distance,omitempty"`
+	Empty    bool                           `json:"empty"`
+	Status   string                         `json:"status"`
+}
+
+type activityStreamWindowDimension struct {
+	Requested    activityStreamWindowBounds  `json:"requested"`
+	Effective    *activityStreamWindowBounds `json:"effective,omitempty"`
+	BoundaryKey  string                      `json:"boundary_key"`
+	BoundaryUnit string                      `json:"boundary_unit"`
 }
 
 type activityStreamsMeta struct {
@@ -126,12 +240,18 @@ func getActivityStreamsHandler(client ActivityStreamsClient, detailsClient Activ
 		if args.MaxPoints != nil && (*args.MaxPoints < 2 || *args.MaxPoints > 5000) {
 			return Result{}, NewUserError("max_points must be between 2 and 5000", errors.New("max_points is outside the supported range"))
 		}
+		if err := validateActivityStreamWindow(args.TimeWindow, "time", 86400); err != nil {
+			return Result{}, NewUserError(err.Error(), err)
+		}
+		if err := validateActivityStreamWindow(args.DistanceWindow, "distance", 1000000); err != nil {
+			return Result{}, NewUserError(err.Error(), err)
+		}
 		maxPoints := 0
 		if args.MaxPoints != nil {
 			maxPoints = *args.MaxPoints
 		}
 		canonicalKeys, unknown := canonicalStreamKeys(args.Keys)
-		upstreamTypes := append([]string(nil), args.Keys...)
+		upstreamTypes := activityStreamUpstreamTypes(args.Keys, canonicalKeys, args.TimeWindow != nil, args.DistanceWindow != nil)
 		streamsRows, err := client.GetActivityStreams(ctx, intervals.ActivityStreamsParams{ActivityID: args.ActivityID, Types: upstreamTypes, IncludeDefaults: true})
 		if err != nil {
 			if isContextError(err) {
@@ -144,7 +264,7 @@ func getActivityStreamsHandler(client ActivityStreamsClient, detailsClient Activ
 			payload := unavailableActivityStreamsResponse(unavailable, args.IncludeFull, version)
 			return encodeActivityStreamsPayload(payload, args.IncludeFull, version, debugMetadata, shapeCfg)
 		}
-		payload := shapeActivityStreams(args.ActivityID, streamsRows, canonicalKeys, args.IncludeFull, args.IncludeFull, maxPoints, version, unknown)
+		payload := shapeActivityStreams(args.ActivityID, streamsRows, canonicalKeys, args.IncludeFull, args.IncludeFull, maxPoints, version, unknown, &activityStreamWindowRequestSet{Time: args.TimeWindow, Distance: args.DistanceWindow})
 		return encodeActivityStreamsPayload(payload, args.IncludeFull, version, debugMetadata, shapeCfg)
 	}
 }
@@ -236,11 +356,241 @@ func sampledActivityStreamRaw(raw map[string]any, samples []float64, data2 []flo
 	return rawCopy
 }
 
-func shapeActivityStreams(activityID string, rows []intervals.ActivityStream, requested []string, samples bool, includeFull bool, maxPoints int, version string, unknown []string) getActivityStreamsResponse {
+type activityStreamWindowRequestSet struct {
+	Time     *activityStreamWindowRequest
+	Distance *activityStreamWindowRequest
+}
+
+type activityStreamWindowSelection struct {
+	Indexes        []int
+	BoundaryLength int
+	Provenance     *activityStreamWindowProvenance
+	Diagnostic     *dataAvailabilityDiagnostic
+}
+
+func validateActivityStreamWindow(window *activityStreamWindowRequest, name string, maxWidth float64) error {
+	if window == nil {
+		return nil
+	}
+	if window.Start < 0 || window.End < 0 {
+		return fmt.Errorf("%s_window bounds must be non-negative", name)
+	}
+	if window.Start > window.End {
+		return fmt.Errorf("%s_window start must be less than or equal to end", name)
+	}
+	if window.End-window.Start > maxWidth {
+		return fmt.Errorf("%s_window width must be no more than %v", name, maxWidth)
+	}
+	return nil
+}
+
+func activityStreamUpstreamTypes(keys, canonical []string, timeWindow, distanceWindow bool) []string {
+	upstream := append([]string(nil), keys...)
+	if len(keys) == 0 {
+		return upstream
+	}
+	requested := make(map[string]bool, len(canonical))
+	for _, key := range canonical {
+		requested[key] = true
+	}
+	if timeWindow && !requested["time"] {
+		upstream = append(upstream, "time")
+	}
+	if distanceWindow && !requested["distance"] {
+		upstream = append(upstream, "distance")
+	}
+	return upstream
+}
+
+func buildActivityStreamWindowSelection(rows []intervals.ActivityStream, request *activityStreamWindowRequestSet) *activityStreamWindowSelection {
+	if request == nil || (request.Time == nil && request.Distance == nil) {
+		return nil
+	}
+	selection := &activityStreamWindowSelection{Provenance: &activityStreamWindowProvenance{Empty: true, Status: "invalid"}}
+	var timeValues, distanceValues []float64
+	if request.Time != nil {
+		selection.Provenance.Time = activityStreamWindowDimensionForRequest(request.Time, "time", "seconds")
+		row, ok := findActivityBoundaryStream(rows, "time")
+		if !ok {
+			selection.Diagnostic = windowDiagnostic("window_boundary_unavailable", "time", "The time boundary stream is unavailable; the requested window was not applied.")
+			return selection
+		}
+		var reason string
+		timeValues, reason = validActivityBoundaryValues(row)
+		if reason != "" {
+			selection.Diagnostic = windowDiagnostic("window_boundary_invalid", "time", "The time boundary stream is null, non-finite, empty, or non-monotonic; the requested window was not applied.")
+			return selection
+		}
+		selection.Provenance.Time.Effective = effectiveActivityWindowBounds(timeValues, request.Time)
+	}
+	if request.Distance != nil {
+		selection.Provenance.Distance = activityStreamWindowDimensionForRequest(request.Distance, "distance", "meters")
+		row, ok := findActivityBoundaryStream(rows, "distance")
+		if !ok {
+			selection.Diagnostic = windowDiagnostic("window_boundary_unavailable", "distance", "The distance boundary stream is unavailable; the requested window was not applied.")
+			return selection
+		}
+		var reason string
+		distanceValues, reason = validActivityBoundaryValues(row)
+		if reason != "" {
+			selection.Diagnostic = windowDiagnostic("window_boundary_invalid", "distance", "The distance boundary stream is null, non-finite, empty, or non-monotonic; the requested window was not applied.")
+			return selection
+		}
+		selection.Provenance.Distance.Effective = effectiveActivityWindowBounds(distanceValues, request.Distance)
+	}
+	if len(timeValues) > 0 && len(distanceValues) > 0 && len(timeValues) != len(distanceValues) {
+		selection.Diagnostic = windowDiagnostic("window_boundary_length_mismatch", "time,distance", "The time and distance boundary streams have different lengths; no intersection window was applied.")
+		return selection
+	}
+	if len(timeValues) > 0 {
+		selection.BoundaryLength = len(timeValues)
+	} else {
+		selection.BoundaryLength = len(distanceValues)
+	}
+	for index := 0; index < selection.BoundaryLength; index++ {
+		selected := true
+		if request.Time != nil {
+			selected = selected && timeValues[index] >= request.Time.Start && timeValues[index] <= request.Time.End
+		}
+		if request.Distance != nil {
+			selected = selected && distanceValues[index] >= request.Distance.Start && distanceValues[index] <= request.Distance.End
+		}
+		if selected {
+			selection.Indexes = append(selection.Indexes, index)
+		}
+	}
+	selection.Provenance.Empty = len(selection.Indexes) == 0
+	if selection.Provenance.Empty {
+		selection.Provenance.Status = "empty"
+	} else {
+		selection.Provenance.Status = "selected"
+	}
+	return selection
+}
+
+func activityStreamWindowDimensionForRequest(request *activityStreamWindowRequest, key, unit string) *activityStreamWindowDimension {
+	return &activityStreamWindowDimension{Requested: activityStreamWindowBounds{Start: request.Start, End: request.End}, BoundaryKey: key, BoundaryUnit: unit}
+}
+
+func effectiveActivityWindowBounds(values []float64, request *activityStreamWindowRequest) *activityStreamWindowBounds {
+	if len(values) == 0 || request.End < values[0] || request.Start > values[len(values)-1] {
+		return nil
+	}
+	start, end := request.Start, request.End
+	if start < values[0] {
+		start = values[0]
+	}
+	if end > values[len(values)-1] {
+		end = values[len(values)-1]
+	}
+	return &activityStreamWindowBounds{Start: start, End: end}
+}
+
+func findActivityBoundaryStream(rows []intervals.ActivityStream, key string) (intervals.ActivityStream, bool) {
+	for _, row := range rows {
+		canonical, _ := streams.CanonicalKey(firstNonEmpty(row.Type, row.Name))
+		if canonical == key {
+			return row, true
+		}
+	}
+	return intervals.ActivityStream{}, false
+}
+
+func validActivityBoundaryValues(row intervals.ActivityStream) ([]float64, string) {
+	if row.AllNull || len(row.Data) == 0 || rawArrayHasNull(row.Raw, "data") {
+		return nil, "invalid"
+	}
+	values := append([]float64(nil), row.Data...)
+	for index, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) || (index > 0 && value < values[index-1]) {
+			return nil, "invalid"
+		}
+	}
+	return values, ""
+}
+
+func rawArrayHasNull(raw map[string]any, key string) bool {
+	value, ok := raw[key]
+	if !ok {
+		return false
+	}
+	if value == nil {
+		return true
+	}
+	values, ok := value.([]any)
+	if !ok {
+		return false
+	}
+	for _, value := range values {
+		if value == nil {
+			return true
+		}
+	}
+	return false
+}
+
+func rawArrayHasNullAt(raw map[string]any, key string, indexes []int) bool {
+	value, ok := raw[key]
+	if !ok {
+		return false
+	}
+	if value == nil {
+		return true
+	}
+	values, ok := value.([]any)
+	if !ok {
+		return false
+	}
+	for _, index := range indexes {
+		if index >= 0 && index < len(values) && values[index] == nil {
+			return true
+		}
+	}
+	return false
+}
+
+func streamHasData2(row intervals.ActivityStream) bool {
+	if row.Raw != nil {
+		_, ok := row.Raw["data2"]
+		return ok
+	}
+	return row.Data2 != nil
+}
+
+func windowDiagnostic(reason, requested, message string) *dataAvailabilityDiagnostic {
+	return &dataAvailabilityDiagnostic{Reason: reason, Requested: []string{requested}, Message: message}
+}
+
+func streamCountPointer(value int) *int {
+	return &value
+}
+
+func selectActivityStreamValues(values []float64, indexes []int) []float64 {
+	selected := make([]float64, 0, len(indexes))
+	for _, index := range indexes {
+		selected = append(selected, values[index])
+	}
+	return selected
+}
+
+func boundedActivityStreamRaw(raw map[string]any, samples, data2 []float64, data2Present bool) map[string]any {
+	out := make(map[string]any, len(raw)+2)
+	for key, value := range raw {
+		out[key] = value
+	}
+	out["data"] = samples
+	if data2Present {
+		out["data2"] = data2
+	}
+	return out
+}
+
+func shapeActivityStreams(activityID string, rows []intervals.ActivityStream, requested []string, samples bool, includeFull bool, maxPoints int, version string, unknown []string, windowRequest *activityStreamWindowRequestSet) getActivityStreamsResponse {
 	requestedSet := make(map[string]bool, len(requested))
 	for _, key := range requested {
 		requestedSet[key] = true
 	}
+	selection := buildActivityStreamWindowSelection(rows, windowRequest)
 	out := getActivityStreamsResponse{ActivityID: activityID, Streams: map[string]activityStreamRow{}, Meta: activityStreamsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, SamplesIncluded: samples, UnknownStreamKeys: unknown}}
 	for _, streamRow := range rows {
 		key, known := streams.CanonicalKey(firstNonEmpty(streamRow.Type, streamRow.Name))
@@ -251,27 +601,91 @@ func shapeActivityStreams(activityID string, rows []intervals.ActivityStream, re
 			continue
 		}
 		row := activityStreamRow{Type: streamRow.Type, Name: streamRow.Name, AllNull: streamRow.AllNull, Custom: streamRow.Custom}
-		var samplesReduced, data2Reduced bool
-		if samples {
-			row.Samples, samplesReduced = uniformlySampleStreamSeries(streamRow.Data, maxPoints)
-			row.Data2, data2Reduced = uniformlySampleStreamSeries(streamRow.Data2, maxPoints)
-			if maxPoints != 0 && (samplesReduced || data2Reduced) {
-				row.SampleCount = len(streamRow.Data)
-				row.ReturnedSampleCount = len(row.Samples)
-				if len(streamRow.Data2) > len(streamRow.Data) {
-					row.SampleCount = len(streamRow.Data2)
-					row.ReturnedSampleCount = len(row.Data2)
+		if selection == nil {
+			var samplesReduced, data2Reduced bool
+			if samples {
+				row.Samples, samplesReduced = uniformlySampleStreamSeries(streamRow.Data, maxPoints)
+				row.Data2, data2Reduced = uniformlySampleStreamSeries(streamRow.Data2, maxPoints)
+				if maxPoints != 0 && (samplesReduced || data2Reduced) {
+					row.SampleCount = len(streamRow.Data)
+					row.ReturnedSampleCount = streamCountPointer(len(row.Samples))
+					if len(streamRow.Data2) > len(streamRow.Data) {
+						row.SampleCount = len(streamRow.Data2)
+						row.ReturnedSampleCount = streamCountPointer(len(row.Data2))
+					}
+					row.SamplingMethod = "uniform_index"
 				}
-				row.SamplingMethod = "uniform_index"
 			}
-		}
-		if includeFull {
-			row.Full = sampledActivityStreamRaw(streamRow.Raw, row.Samples, row.Data2, samplesReduced, data2Reduced)
+			if includeFull {
+				row.Full = sampledActivityStreamRaw(streamRow.Raw, row.Samples, row.Data2, samplesReduced, data2Reduced)
+			}
+		} else {
+			diagnostic := shapeWindowedActivityStream(&row, streamRow, selection, samples, includeFull, maxPoints)
+			if diagnostic != nil {
+				out.Meta.DataAvailability = append(out.Meta.DataAvailability, *diagnostic)
+			}
 		}
 		out.Streams[key] = row
 	}
-	out.Meta.DataAvailability = activityStreamMissingDiagnostics(activityID, requested, out.Streams)
+	out.Meta.DataAvailability = append(out.Meta.DataAvailability, activityStreamMissingDiagnostics(activityID, requested, out.Streams)...)
+	if selection != nil && selection.Diagnostic != nil {
+		out.Meta.DataAvailability = append(out.Meta.DataAvailability, *selection.Diagnostic)
+	}
 	return out
+}
+
+func shapeWindowedActivityStream(row *activityStreamRow, stream intervals.ActivityStream, selection *activityStreamWindowSelection, samples, includeFull bool, maxPoints int) *dataAvailabilityDiagnostic {
+	row.Window = selection.Provenance
+	row.SourceSampleCount = streamCountPointer(len(stream.Data))
+	row.SelectedSampleCount = streamCountPointer(0)
+	row.ReturnedSampleCount = streamCountPointer(0)
+	if selection.Diagnostic != nil {
+		return nil
+	}
+	if stream.AllNull {
+		return windowDiagnostic("window_channel_all_null", firstNonEmpty(stream.Type, stream.Name), "The requested stream channel is marked all-null and was withheld from the bounded response.")
+	}
+	if len(stream.Data) != selection.BoundaryLength {
+		return windowDiagnostic("window_channel_length_mismatch", firstNonEmpty(stream.Type, stream.Name), "The requested stream channel length does not match the boundary stream; it was withheld from the bounded response.")
+	}
+	data2Present := streamHasData2(stream)
+	if data2Present && stream.Raw != nil && rawArrayHasNull(stream.Raw, "data2") {
+		return windowDiagnostic("window_channel_null", firstNonEmpty(stream.Type, stream.Name), "The requested data2 channel contains null values and was withheld to preserve alignment.")
+	}
+	if data2Present && len(stream.Data2) != selection.BoundaryLength {
+		return windowDiagnostic("window_channel_length_mismatch", firstNonEmpty(stream.Type, stream.Name), "The requested data2 channel length does not match the boundary stream; the channel was withheld to preserve alignment.")
+	}
+	if rawArrayHasNullAt(stream.Raw, "data", selection.Indexes) || rawArrayHasNullAt(stream.Raw, "data2", selection.Indexes) {
+		return windowDiagnostic("window_channel_null", firstNonEmpty(stream.Type, stream.Name), "The requested stream contains null samples and was withheld to avoid converting nulls into zeros.")
+	}
+	selected := selectActivityStreamValues(stream.Data, selection.Indexes)
+	var selectedData2 []float64
+	if data2Present {
+		selectedData2 = selectActivityStreamValues(stream.Data2, selection.Indexes)
+	}
+	row.SelectedSampleCount = streamCountPointer(len(selected))
+	returned := selected
+	returnedData2 := selectedData2
+	if maxPoints > 0 {
+		returned, _ = uniformlySampleStreamSeries(selected, maxPoints)
+		returnedData2, _ = uniformlySampleStreamSeries(selectedData2, maxPoints)
+	}
+	if len(selected) > maxPoints && maxPoints > 0 {
+		row.SamplingMethod = "uniform_index"
+	} else {
+		row.SamplingMethod = "window"
+	}
+	if samples {
+		row.Samples = returned
+		if data2Present {
+			row.Data2 = returnedData2
+		}
+		row.ReturnedSampleCount = streamCountPointer(len(returned))
+	}
+	if includeFull {
+		row.Full = boundedActivityStreamRaw(stream.Raw, returned, returnedData2, data2Present)
+	}
+	return nil
 }
 
 func unavailableActivityStreamsResponse(unavailable activityUnavailable, includeFull bool, version string) getActivityStreamsUnavailableResponse {
@@ -403,12 +817,21 @@ func newSplitRow(index int, meters float64, duration float64, splitUnit string) 
 	return row
 }
 
+func activityStreamWindowSchema(unit, description string) map[string]any {
+	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"start", "end"}, "description": description, "properties": map[string]any{
+		"start": map[string]any{"type": "number", "minimum": 0, "description": "Inclusive window start in " + unit + "."},
+		"end":   map[string]any{"type": "number", "minimum": 0, "description": "Inclusive window end in " + unit + "."},
+	}}
+}
+
 func activityStreamsInputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"activity_id"}, "properties": map[string]any{
-		"activity_id":  map[string]any{"type": "string", "description": "Required intervals.icu activity ID whose stream channels should be listed."},
-		"keys":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional stream channels to return. Values are canonicalized to snake_case when known; unknown keys are reported in _meta. Keys filter channels only and never opt in to raw samples."},
-		"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, include raw upstream stream payloads and samples for available stream channels. Raw samples are otherwise omitted."},
-		"max_points":   map[string]any{"type": "integer", "minimum": 2, "maximum": 5000, "description": "Optional per-channel cap for raw sample arrays. Requires include_full:true; uniformly samples indices while preserving first and last samples, and reports sampling provenance."},
+		"activity_id":     map[string]any{"type": "string", "description": "Required intervals.icu activity ID whose stream channels should be listed."},
+		"keys":            map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Optional stream channels to return. Values are canonicalized to snake_case when known; unknown keys are reported in _meta. Keys filter channels only and never opt in to raw samples."},
+		"include_full":    map[string]any{"type": "boolean", "default": false, "description": "When true, include bounded raw upstream stream payloads and samples for available stream channels. Raw samples are otherwise omitted."},
+		"max_points":      map[string]any{"type": "integer", "minimum": 2, "maximum": 5000, "description": "Optional per-channel cap for raw sample arrays. Requires include_full:true; uniformly samples selected indices while preserving first and last samples, and reports sampling provenance."},
+		"time_window":     activityStreamWindowSchema("elapsed seconds", "Optional inclusive elapsed-time window. Local slicing fetches the complete upstream stream first because no verified upstream window query exists."),
+		"distance_window": activityStreamWindowSchema("meters", "Optional inclusive distance window. Local slicing fetches the complete upstream stream first because no verified upstream window query exists."),
 	}}
 }
 func activitySplitsInputSchema() map[string]any {
