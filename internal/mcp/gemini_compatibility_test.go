@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ricardocabral/icuvisor/internal/safety"
 	"github.com/ricardocabral/icuvisor/internal/tools"
@@ -66,7 +67,8 @@ type geminiCompatibilityResponse struct {
 }
 
 func TestGeminiSparkCompatibilityThroughCoreHTTPHandler(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	server, err := NewServer(ctx, Options{Version: "test", Registry: geminiCompatibilityRegistry{}})
 	if err != nil {
 		t.Fatalf("NewServer() error = %v", err)
@@ -79,7 +81,7 @@ func TestGeminiSparkCompatibilityThroughCoreHTTPHandler(t *testing.T) {
 
 	client := httpServer.Client()
 	endpoint := httpServer.URL + StreamableHTTPPath
-	initialize := geminiCompatibilityPost(t, client, endpoint, `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"gemini-spark-compatibility-test","version":"test"}}}`, "", "")
+	initialize := geminiCompatibilityPost(t, ctx, client, endpoint, `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"gemini-spark-compatibility-test","version":"test"}}}`, "", "")
 	if initialize.status != http.StatusOK {
 		t.Fatalf("initialize status = %d body = %q, want 200", initialize.status, initialize.body)
 	}
@@ -102,7 +104,7 @@ func TestGeminiSparkCompatibilityThroughCoreHTTPHandler(t *testing.T) {
 		t.Fatalf("initialize result = %s, want protocol version and icuvisor server info", initializeResult)
 	}
 
-	initialized := geminiCompatibilityPost(t, client, endpoint, `{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}`, sessionID, initializeFields.ProtocolVersion)
+	initialized := geminiCompatibilityPost(t, ctx, client, endpoint, `{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}`, sessionID, initializeFields.ProtocolVersion)
 	if initialized.status != http.StatusAccepted || len(initialized.body) != 0 {
 		t.Fatalf("notifications/initialized response = status %d body %q, want 202 with no body", initialized.status, initialized.body)
 	}
@@ -110,14 +112,14 @@ func TestGeminiSparkCompatibilityThroughCoreHTTPHandler(t *testing.T) {
 		t.Fatalf("notifications/initialized content type = %q, want empty", initialized.headers.Get("Content-Type"))
 	}
 
-	ping := geminiCompatibilityPost(t, client, endpoint, `{"jsonrpc":"2.0","id":2,"method":"ping","params":{}}`, sessionID, initializeFields.ProtocolVersion)
+	ping := geminiCompatibilityPost(t, ctx, client, endpoint, `{"jsonrpc":"2.0","id":2,"method":"ping","params":{}}`, sessionID, initializeFields.ProtocolVersion)
 	if ping.status != http.StatusOK {
 		t.Fatalf("ping status = %d body = %q, want 200", ping.status, ping.body)
 	}
 	assertGeminiJSONContentType(t, "ping", ping)
 	assertGeminiJSONRPCResult(t, "ping", ping, 2)
 
-	toolsList := geminiCompatibilityPost(t, client, endpoint, `{"jsonrpc":"2.0","id":3,"method":"tools/list","params":{}}`, sessionID, initializeFields.ProtocolVersion)
+	toolsList := geminiCompatibilityPost(t, ctx, client, endpoint, `{"jsonrpc":"2.0","id":3,"method":"tools/list","params":{}}`, sessionID, initializeFields.ProtocolVersion)
 	if toolsList.status != http.StatusOK {
 		t.Fatalf("tools/list status = %d body = %q, want 200", toolsList.status, toolsList.body)
 	}
@@ -145,7 +147,7 @@ func TestGeminiSparkCompatibilityThroughCoreHTTPHandler(t *testing.T) {
 		t.Fatalf("tools/list = %s, missing get_athlete_profile", toolsResult)
 	}
 
-	call := geminiCompatibilityPost(t, client, endpoint, `{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"get_athlete_profile","arguments":{}}}`, sessionID, initializeFields.ProtocolVersion)
+	call := geminiCompatibilityPost(t, ctx, client, endpoint, `{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"get_athlete_profile","arguments":{}}}`, sessionID, initializeFields.ProtocolVersion)
 	if call.status != http.StatusOK {
 		t.Fatalf("tools/call status = %d body = %q, want 200", call.status, call.body)
 	}
@@ -165,7 +167,7 @@ func TestGeminiSparkCompatibilityThroughCoreHTTPHandler(t *testing.T) {
 		t.Fatalf("tools/call result = %s, want successful read-only profile content", callResult)
 	}
 
-	safeError := geminiCompatibilityPost(t, client, endpoint, `{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"compatibility_error","arguments":{"payload":"synthetic-credential"}}}`, sessionID, initializeFields.ProtocolVersion)
+	safeError := geminiCompatibilityPost(t, ctx, client, endpoint, `{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"compatibility_error","arguments":{"payload":"synthetic-credential"}}}`, sessionID, initializeFields.ProtocolVersion)
 	if safeError.status != http.StatusOK {
 		t.Fatalf("sanitized tools/call status = %d body = %q, want 200", safeError.status, safeError.body)
 	}
@@ -176,9 +178,9 @@ func TestGeminiSparkCompatibilityThroughCoreHTTPHandler(t *testing.T) {
 	}
 }
 
-func geminiCompatibilityPost(t *testing.T, client *http.Client, endpoint, payload, sessionID, protocolVersion string) geminiCompatibilityResponse {
+func geminiCompatibilityPost(t *testing.T, ctx context.Context, client *http.Client, endpoint, payload, sessionID, protocolVersion string) geminiCompatibilityResponse {
 	t.Helper()
-	request, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(payload))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(payload))
 	if err != nil {
 		t.Fatalf("NewRequest() error = %v", err)
 	}
