@@ -387,6 +387,8 @@ func TestGetActivityStreamsAdversarialBoundsAndMetadataOnlyWindow(t *testing.T) 
 				}
 			} else if _, ok := stream["samples"]; ok {
 				t.Fatalf("stream = %#v, want metadata-only row", stream)
+			} else if _, ok := stream["full"]; ok {
+				t.Fatalf("stream = %#v, want full omitted when include_full is false", stream)
 			}
 			if got := stream["sampling_method"]; got != "window" {
 				t.Fatalf("sampling_method = %#v, want window", got)
@@ -411,6 +413,62 @@ func TestGetActivityStreamsAdversarialBoundsAndMetadataOnlyWindow(t *testing.T) 
 			}
 			timeWindow := window["time"].(map[string]any)
 			effective := timeWindow["effective"].(map[string]any)
+			if effective["start"] != tc.wantStart || effective["end"] != tc.wantEnd {
+				t.Fatalf("effective bounds = %#v, want [%v %v]", effective, tc.wantStart, tc.wantEnd)
+			}
+		})
+	}
+}
+
+func TestGetActivityStreamsDistanceClampAndNonReducingCap(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		args       string
+		want       []float64
+		wantStart  float64
+		wantEnd    float64
+		wantMethod string
+	}{
+		{name: "distance clamps before source", args: `{"activity_id":"a1","include_full":true,"distance_window":{"start":0,"end":250}}`, want: []float64{1, 2}, wantStart: 100, wantEnd: 250, wantMethod: "window"},
+		{name: "cap larger than short selection", args: `{"activity_id":"a1","include_full":true,"max_points":4,"time_window":{"start":10,"end":20}}`, want: []float64{2, 3}, wantStart: 10, wantEnd: 20, wantMethod: "window"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeActivityReadClient{streams: decodeStreamFixtures(t,
+				`{"type":"time","data":[0,10,20]}`,
+				`{"type":"distance","data":[100,200,300]}`,
+				`{"type":"power","data":[1,2,3]}`,
+			)}
+			tool := newGetActivityStreamsTool(client, client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.args)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			payload := resultMap(t, result)
+			stream := payload["streams"].(map[string]any)["watts"].(map[string]any)
+			assertWindowSamples(t, payload["streams"].(map[string]any), "watts", tc.want)
+			if got := stream["source_sample_count"]; got != float64(3) {
+				t.Fatalf("source_sample_count = %#v, want 3", got)
+			}
+			if got := stream["selected_sample_count"]; got != float64(len(tc.want)) {
+				t.Fatalf("selected_sample_count = %#v, want %d", got, len(tc.want))
+			}
+			if got := stream["returned_sample_count"]; got != float64(len(tc.want)) {
+				t.Fatalf("returned_sample_count = %#v, want %d", got, len(tc.want))
+			}
+			if got := stream["sampling_method"]; got != tc.wantMethod {
+				t.Fatalf("sampling_method = %#v, want %q", got, tc.wantMethod)
+			}
+			window := stream["window"].(map[string]any)
+			var dimension map[string]any
+			if _, ok := window["distance"]; ok {
+				dimension = window["distance"].(map[string]any)
+			} else {
+				dimension = window["time"].(map[string]any)
+			}
+			effective := dimension["effective"].(map[string]any)
 			if effective["start"] != tc.wantStart || effective["end"] != tc.wantEnd {
 				t.Fatalf("effective bounds = %#v, want [%v %v]", effective, tc.wantStart, tc.wantEnd)
 			}
@@ -463,8 +521,11 @@ func TestGetActivityStreamsUnusableBoundaryMatrix(t *testing.T) {
 			}
 			payload := resultMap(t, result)
 			stream := payload["streams"].(map[string]any)["watts"].(map[string]any)
-			for _, key := range []string{"source_sample_count", "selected_sample_count", "returned_sample_count"} {
-				if got := stream[key]; got != float64(0) && key != "source_sample_count" {
+			if got := stream["source_sample_count"]; got != float64(3) {
+				t.Fatalf("source_sample_count = %#v, want 3", got)
+			}
+			for _, key := range []string{"selected_sample_count", "returned_sample_count"} {
+				if got := stream[key]; got != float64(0) {
 					t.Fatalf("%s = %#v, want zero", key, got)
 				}
 			}
@@ -499,14 +560,15 @@ func TestGetActivityStreamsRequestedChannelFailureMatrix(t *testing.T) {
 		name   string
 		rows   []intervals.ActivityStream
 		reason string
+		source int
 	}{
-		{name: "data null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":null}`), reason: "window_channel_null"},
-		{name: "selected null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,null,3]}`), reason: "window_channel_null"},
-		{name: "all null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"allNull":true}`), reason: "window_channel_all_null"},
-		{name: "data mismatch", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2]}`), reason: "window_channel_length_mismatch"},
-		{name: "data2 null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"data2":null}`), reason: "window_channel_null"},
-		{name: "data2 empty", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"data2":[]}`), reason: "window_channel_length_mismatch"},
-		{name: "data2 selected null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"data2":[4,null,6]}`), reason: "window_channel_null"},
+		{name: "data null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":null}`), reason: "window_channel_null", source: 0},
+		{name: "selected null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,null,3]}`), reason: "window_channel_null", source: 3},
+		{name: "all null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"allNull":true}`), reason: "window_channel_all_null", source: 3},
+		{name: "data mismatch", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2]}`), reason: "window_channel_length_mismatch", source: 2},
+		{name: "data2 null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"data2":null}`), reason: "window_channel_null", source: 3},
+		{name: "data2 empty", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"data2":[]}`), reason: "window_channel_length_mismatch", source: 3},
+		{name: "data2 selected null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"data2":[4,null,6]}`), reason: "window_channel_null", source: 3},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -523,6 +585,12 @@ func TestGetActivityStreamsRequestedChannelFailureMatrix(t *testing.T) {
 			}
 			if _, ok := stream["full"]; ok {
 				t.Fatalf("stream = %#v, want full withheld", stream)
+			}
+			if got := stream["source_sample_count"]; got != float64(tc.source) {
+				t.Fatalf("source_sample_count = %#v, want %d", got, tc.source)
+			}
+			if got := stream["selected_sample_count"]; got != float64(0) || stream["returned_sample_count"] != float64(0) {
+				t.Fatalf("zero channel provenance = %#v", stream)
 			}
 			if got := stream["sampling_method"]; got != "unavailable" {
 				t.Fatalf("sampling_method = %#v, want unavailable", got)
@@ -586,6 +654,10 @@ func TestGetActivityStreamsStravaUnavailableWindowUsesUnavailableShape(t *testin
 			}
 			if _, ok := payload["streams"]; ok {
 				t.Fatalf("payload = %#v, want no fabricated streams", payload)
+			}
+			availability := payload["_meta"].(map[string]any)["data_availability"].([]any)
+			if len(availability) != 1 || availability[0].(map[string]any)["reason"] != "restricted_source" {
+				t.Fatalf("data_availability = %#v, want restricted_source", availability)
 			}
 			if includeFull {
 				if _, ok := payload["full"]; !ok {
