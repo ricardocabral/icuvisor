@@ -176,6 +176,14 @@
     "anchor": "compute_training_monotony"
   },
   {
+    "name": "compute_workout_progression",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the user supplies an explicit ordered sequence of repeated workout activity IDs and asks for factual progression evidence.",
+    "anchor": "compute_workout_progression"
+  },
+  {
     "name": "compute_zone_energy",
     "group": "analyzers",
     "tier": "full",

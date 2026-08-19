@@ -20,6 +20,7 @@ const (
 	GetClimbSegments                 = "get_climb_segments"
 	ComputeBaseline                  = "compute_baseline"
 	ComputeComplianceRate            = "compute_compliance_rate"
+	ComputeWorkoutProgression        = "compute_workout_progression"
 	ComputeTrainingMonotony          = "compute_training_monotony"
 	ComputeLoadBalance               = "compute_load_balance"
 	ComputeZoneEnergy                = "compute_zone_energy"
@@ -95,6 +96,7 @@ var athleteScopedToolNames = []string{
 	GetClimbSegments,
 	ComputeBaseline,
 	ComputeComplianceRate,
+	ComputeWorkoutProgression,
 	ComputeTrainingMonotony,
 	ComputeLoadBalance,
 	ComputeZoneEnergy,

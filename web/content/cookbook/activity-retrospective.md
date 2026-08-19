@@ -16,7 +16,24 @@ For logged carbohydrate evidence, missing-log coverage, and source-labelled gram
 
 ## The recipe
 
-You can name an activity by ID or just describe it — the assistant will look it up. For relative dates like "last Sunday," it should resolve the athlete-local date window with `get_activities`, choose the matching activity, then pass that `activity_id` to detail, interval, and split tools.
+You can name an activity by ID or just describe it — the assistant will look it up.
+
+## Compare repeated workouts
+
+When you already know the ordered activity IDs for the same workout, use the read-only `compute_workout_progression` analyzer instead of asking the assistant to match sessions by title or date. Supply at least two IDs in the order you want compared, and pass an exact planned `event_id` only when the activity's prescription is not already linked. The analyzer reports prescribed/completed structure, target-family adherence, stability, duration/recovery deltas, source-labelled feel/RPE, and optional wellness fields. It keeps mixed sports, missing intervals/prescriptions, unsafe lap sources, and missing readiness explicit; it does not assign a progression score, recommend extra intensity/repetitions/recovery changes, or write the calendar.
+
+```json
+{
+  "activities": [
+    {"activity_id": "ride-2026-05-01", "label": "first session"},
+    {"activity_id": "ride-2026-05-15", "label": "repeat session"}
+  ],
+  "include_readiness": true
+}
+```
+
+Treat `comparison.comparable_pair_count`, row/pair `status`, `reasons`, `_meta.source_tools`, and `_meta.insufficient_sample` as part of the evidence. A `not_comparable` or `insufficient_evidence` result is a data boundary, not a coaching verdict.
+ For relative dates like "last Sunday," it should resolve the athlete-local date window with `get_activities`, choose the matching activity, then pass that `activity_id` to detail, interval, and split tools.
 
 ```text
 Give me a detailed retrospective of my most recent hard ride. Use icuvisor
