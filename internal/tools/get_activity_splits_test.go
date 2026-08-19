@@ -62,6 +62,88 @@ func TestGetActivitySplitsVirtualRowsIncludeAlignedMetricsAndProvenance(t *testi
 	if meta["units"].(map[string]any)["heart_rate"] != "bpm" || meta["units"].(map[string]any)["elevation"] != "m" {
 		t.Fatalf("units = %#v, want enriched metric units", meta["units"])
 	}
+	units := meta["units"].(map[string]any)
+	if units["system"] != "metric" || units["distance"] != "km" || units["pace"] != "min/km" {
+		t.Fatalf("normal units = %#v, want unchanged metric distance/pace metadata", units)
+	}
+}
+
+func TestGetActivitySplitsManualBoundaryFallbackAndPrecedence(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		interval   string
+		streams    []string
+		wantDur    float64
+		wantMetric float64
+	}{
+		{
+			name:     "distance bounds take precedence",
+			interval: `{"id":"distance-1","start_distance":0,"end_distance":1000,"start_time":50,"end_time":60,"distance":1000,"duration":100}`,
+			streams:  []string{`{"type":"distance","data":[0,500,1000]}`, `{"type":"time","data":[0,50,100]}`, `{"type":"cadence","data":[80,90,100]}`},
+			wantDur:  100, wantMetric: 90,
+		},
+		{
+			name:     "time bounds when distance is unavailable",
+			interval: `{"id":"time-1","start_distance":0,"end_distance":1000,"start_time":10,"end_time":20,"distance":1000,"duration":10}`,
+			streams:  []string{`{"type":"time","data":[0,10,20,30]}`, `{"type":"cadence","data":[80,90,100,110]}`},
+			wantDur:  10, wantMetric: 95,
+		},
+		{
+			name:     "inclusive index bounds when distance is unavailable",
+			interval: `{"id":"index-1","start_index":1,"end_index":2,"distance":1000,"duration":10}`,
+			streams:  []string{`{"type":"time","data":[0,10,20,30]}`, `{"type":"cadence","data":[80,90,100,110]}`},
+			wantDur:  10, wantMetric: 95,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			intervalsRaw := `{"id":"run-1","icu_intervals":[` + tc.interval + `]}`
+			client := &fakeActivityReadClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric"}},
+				activity:          decodeActivityFixture(t, `{"id":"run-1","type":"Run"}`),
+				intervals:         decodeIntervalsFixture(t, intervalsRaw),
+				streams:           decodeStreamFixtures(t, tc.streams...),
+			}
+			tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"run-1"}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			row := resultMap(t, result)["splits"].([]any)[0].(map[string]any)
+			if row["duration_seconds"] != tc.wantDur || row["average_cadence_rpm"] != tc.wantMetric {
+				t.Fatalf("row = %#v, want duration %v and cadence %v", row, tc.wantDur, tc.wantMetric)
+			}
+		})
+	}
+}
+
+func TestGetActivitySplitsFetchesBaseAndOptionalChannelsSeparately(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityReadClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric"}},
+		activity:          decodeActivityFixture(t, `{"id":"run-1","type":"Run"}`),
+		streams: decodeStreamFixtures(t,
+			`{"type":"Distance","data":[0,1000]}`,
+			`{"type":"Time","data":[0,100]}`,
+			`{"type":"HR","data":[120,130]}`,
+		),
+	}
+	tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+	if _, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"run-1"}`)}); err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	if len(client.streamParamHistory) != 2 {
+		t.Fatalf("stream requests = %#v, want base and optional requests", client.streamParamHistory)
+	}
+	if got := strings.Join(client.streamParamHistory[0].Types, ","); got != "distance,time" || !client.streamParamHistory[0].IncludeDefaults {
+		t.Fatalf("base request = %+v, want distance,time with defaults", client.streamParamHistory[0])
+	}
+	if got := strings.Join(client.streamParamHistory[1].Types, ","); got != "heart_rate,watts,cadence,altitude" || !client.streamParamHistory[1].IncludeDefaults {
+		t.Fatalf("optional request = %+v, want metric channels with defaults", client.streamParamHistory[1])
+	}
 }
 
 func TestGetActivitySplitsPoolSwimDefaultsToValidated100mAndPreservesUnits(t *testing.T) {
@@ -114,6 +196,265 @@ func TestGetActivitySplitsRejectsUnprovenExplicit100m(t *testing.T) {
 	if client.streamCalls != 0 {
 		t.Fatalf("stream calls = %d, want no stream fetch for non-swim explicit 100m", client.streamCalls)
 	}
+}
+
+func TestGetActivitySplitsRejects100mForYardOrUnlabelledDistance(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityReadClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{
+			PreferredUnits: "metric",
+			SportSettings:  []intervals.SportSettings{{Types: []string{"Swim"}, PaceLoadType: "SWIM", PaceUnits: "SECS_100M"}},
+		}},
+		activity: decodeActivityFixture(t, `{"id":"swim-1","type":"Swim"}`),
+		streams:  decodeStreamFixtures(t, `{"type":"distance","unit":"yd","data":[0,100]}`, `{"type":"time","data":[0,60]}`),
+	}
+	tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"swim-1","split_unit":"100m"}`)})
+	message, ok := PublicErrorMessage(err)
+	if !ok || !strings.Contains(message, "100m") {
+		t.Fatalf("PublicErrorMessage(%v) = %q, %v; want explicit 100m rejection", err, message, ok)
+	}
+	if client.streamCalls != 1 {
+		t.Fatalf("stream calls = %d, want one base fetch before distance-unit proof", client.streamCalls)
+	}
+}
+
+func TestGetActivitySplitsSwimSemanticsFallbackIsExplicit(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		profile  intervals.AthleteWithSportSettings
+		distance string
+	}{
+		{
+			name: "yards pace setting",
+			profile: intervals.AthleteWithSportSettings{
+				PreferredUnits: "metric",
+				SportSettings:  []intervals.SportSettings{{Types: []string{"Swim"}, PaceLoadType: "SWIM", PaceUnits: "SECS_100Y"}},
+			},
+			distance: `{"type":"distance","unit":"m","data":[0,1000]}`,
+		},
+		{
+			name:     "ambiguous sport settings",
+			profile:  intervals.AthleteWithSportSettings{PreferredUnits: "metric"},
+			distance: `{"type":"distance","units":"m","data":[0,1000]}`,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeActivityReadClient{
+				fakeProfileClient: fakeProfileClient{profile: tc.profile},
+				activity:          decodeActivityFixture(t, `{"id":"swim-1","type":"Swim"}`),
+				streams: decodeStreamFixtures(t,
+					tc.distance,
+					`{"type":"time","data":[0,600]}`,
+				),
+			}
+			tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"swim-1"}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			payload := resultMap(t, result)
+			if payload["split_unit"] != "km" {
+				t.Fatalf("split_unit = %#v, want safe km fallback", payload["split_unit"])
+			}
+			if !hasSplitDiagnostic(payload["_meta"].(map[string]any)["data_availability"].([]any), "swim_semantics_unavailable") {
+				t.Fatalf("meta = %#v, want swim_semantics_unavailable", payload["_meta"])
+			}
+		})
+	}
+}
+
+func TestGetActivitySplitsPreservesEveryIntervalSourceProvenance(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		interval   string
+		wantSource string
+		wantRow    string
+		wantDiag   string
+	}{
+		{name: "structured workout", interval: `{"id":"structured-1","name":"Tempo","distance":1000,"duration":100}`, wantSource: "structured_workout", wantRow: "structured_workout_interval"},
+		{name: "manual added", interval: `{"id":"manual-1","name":"Block","start_index":1,"end_index":2,"distance":1000,"duration":100}`, wantSource: "manual_added", wantRow: "manual_interval"},
+		{name: "unknown", interval: `{"id":"unknown-1","name":"Segment","distance":1000,"duration":100}`, wantSource: "unknown", wantRow: "unknown_interval"},
+		{name: "device lap", interval: `{"id":"device-1","name":"Lap 1","distance":1000,"duration":100,"lap_type":"auto"}`, wantSource: "device_laps", wantRow: "device_lap", wantDiag: "device_lap_not_fixed_distance"},
+		{name: "mixed", interval: `{"id":"mixed-1","name":"Mixed","group_id":"group-1","distance":1000,"duration":100}`, wantSource: "mixed", wantRow: "mixed_interval", wantDiag: "mixed_interval_source"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			intervalJSON := tc.interval
+			if tc.wantSource == "mixed" {
+				intervalJSON = `{"id":"mixed-1","name":"Mixed","group_id":"group-1","distance":1000,"duration":100},` + `{"id":"mixed-2","name":"Added","start_index":1,"end_index":2,"distance":1000,"duration":100}`
+			}
+			client := &fakeActivityReadClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric"}},
+				activity:          decodeActivityFixture(t, `{"id":"run-1","type":"Run"}`),
+				intervals:         decodeIntervalsFixture(t, `{"id":"run-1","icu_intervals":[`+intervalJSON+`]}`),
+				streams:           decodeStreamFixtures(t, `{"type":"distance","data":[0,1000]}`, `{"type":"time","data":[0,100]}`),
+			}
+			tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"run-1"}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			payload := resultMap(t, result)
+			meta := payload["_meta"].(map[string]any)
+			if meta["interval_source"] != tc.wantSource {
+				t.Fatalf("interval_source = %#v, want %q", meta["interval_source"], tc.wantSource)
+			}
+			rows := payload["splits"].([]any)
+			if len(rows) == 0 || rows[0].(map[string]any)["provenance"] != tc.wantRow || rows[0].(map[string]any)["distance_basis"] != "upstream_interval_distance" {
+				t.Fatalf("rows = %#v, want source-honest upstream row %q", rows, tc.wantRow)
+			}
+			if tc.wantDiag != "" && !hasSplitDiagnostic(meta["data_availability"].([]any), tc.wantDiag) {
+				t.Fatalf("diagnostics = %#v, want %s", meta["data_availability"], tc.wantDiag)
+			}
+		})
+	}
+}
+
+func TestGetActivitySplitsFailureMappingKeepsSourceHonest(t *testing.T) {
+	t.Parallel()
+
+	t.Run("interval failure uses virtual rows", func(t *testing.T) {
+		client := &fakeActivityReadClient{
+			fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric"}},
+			activity:          decodeActivityFixture(t, `{"id":"run-1","type":"Run"}`),
+			intervalErr:       errors.New("interval endpoint unavailable"),
+			streams:           decodeStreamFixtures(t, `{"type":"distance","data":[0,1000]}`, `{"type":"time","data":[0,100]}`),
+		}
+		tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+		result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"run-1"}`)})
+		if err != nil {
+			t.Fatalf("Handler() error = %v", err)
+		}
+		payload := resultMap(t, result)
+		if payload["source"] != "virtual_streams" || len(payload["splits"].([]any)) != 1 {
+			t.Fatalf("payload = %#v, want one virtual row", payload)
+		}
+		if !hasSplitDiagnostic(payload["_meta"].(map[string]any)["data_availability"].([]any), "interval_source_unavailable") {
+			t.Fatalf("meta = %#v, want interval_source_unavailable", payload["_meta"])
+		}
+	})
+
+	t.Run("base failure retains scalar upstream metrics", func(t *testing.T) {
+		client := &fakeActivityReadClient{
+			fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric"}},
+			activity:          decodeActivityFixture(t, `{"id":"run-1","type":"Run"}`),
+			intervals:         decodeIntervalsFixture(t, `{"id":"run-1","icu_intervals":[{"id":"manual-1","distance":1000,"duration":100,"average_hr":141.25,"average_power":250.55}]}`),
+			streamErr:         errors.New("base stream unavailable"),
+		}
+		tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+		result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"run-1"}`)})
+		if err != nil {
+			t.Fatalf("Handler() error = %v", err)
+		}
+		row := resultMap(t, result)["splits"].([]any)[0].(map[string]any)
+		if row["average_heart_rate_bpm"] != float64(141.3) || row["average_power_watts"] != float64(250.6) {
+			t.Fatalf("row = %#v, want rounded interval scalar metrics", row)
+		}
+		if _, ok := row["average_cadence_rpm"]; ok {
+			t.Fatalf("row = %#v, want no stream-derived cadence", row)
+		}
+	})
+}
+
+func TestGetActivitySplitsReportsMetricCoveragePerManualRow(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityReadClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric"}},
+		activity:          decodeActivityFixture(t, `{"id":"run-1","type":"Run"}`),
+		intervals:         decodeIntervalsFixture(t, `{"id":"run-1","icu_intervals":[{"id":"outside","start_time":100,"end_time":200,"distance":1000,"duration":100}]}`),
+		streams: decodeStreamFixtures(t,
+			`{"type":"distance","data":[0,1000]}`,
+			`{"type":"time","data":[0,100]}`,
+			`{"type":"cadence","data":[80,90]}`,
+		),
+	}
+	tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"run-1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	diagnostics := resultMap(t, result)["_meta"].(map[string]any)["data_availability"].([]any)
+	for _, value := range diagnostics {
+		if diagnostic := value.(map[string]any); diagnostic["reason"] == "metric_insufficient_coverage" {
+			missing := diagnostic["missing_fields"].([]any)
+			if len(missing) != 1 || missing[0] != "splits[0].average_cadence_rpm" {
+				t.Fatalf("diagnostic = %#v, want row-specific missing field", diagnostic)
+			}
+			return
+		}
+	}
+	t.Fatalf("diagnostics = %#v, want metric_insufficient_coverage", diagnostics)
+}
+
+func TestGetActivitySplitsRejectsInvalidAndPartialBaseCoverage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		distance  string
+		time      string
+		want      string
+		wantCount int
+	}{
+		{name: "decreasing distance", distance: `{"type":"distance","data":[0,1200,1000]}`, time: `{"type":"time","data":[0,60,120]}`, want: "non_monotonic_distance"},
+		{name: "decreasing time", distance: `{"type":"distance","data":[0,1000,2000]}`, time: `{"type":"time","data":[0,60,50]}`, want: "non_monotonic_time"},
+		{name: "non-zero origin", distance: `{"type":"distance","data":[100,1100]}`, time: `{"type":"time","data":[0,100]}`, want: "insufficient_split_coverage"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeActivityReadClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric"}},
+				activity:          decodeActivityFixture(t, `{"id":"run-1","type":"Run"}`),
+				streams:           decodeStreamFixtures(t, tc.distance, tc.time),
+			}
+			tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"run-1"}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			payload := resultMap(t, result)
+			if got := len(payload["splits"].([]any)); got != tc.wantCount {
+				t.Fatalf("split count = %d, want %d; payload = %#v", got, tc.wantCount, payload)
+			}
+			if !hasSplitDiagnostic(payload["_meta"].(map[string]any)["data_availability"].([]any), tc.want) {
+				t.Fatalf("meta = %#v, want %s", payload["_meta"], tc.want)
+			}
+		})
+	}
+}
+
+func TestGetActivitySplitsReportsManualBoundaryID(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeActivityReadClient{
+		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{PreferredUnits: "metric"}},
+		activity:          decodeActivityFixture(t, `{"id":"run-1","type":"Run"}`),
+		intervals:         decodeIntervalsFixture(t, `{"id":"run-1","icu_intervals":[{"id":"no-boundary","distance":1000,"duration":100}]}`),
+		streams:           decodeStreamFixtures(t, `{"type":"distance","data":[0,1000]}`, `{"type":"time","data":[0,100]}`),
+	}
+	tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"run-1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	diagnostics := resultMap(t, result)["_meta"].(map[string]any)["data_availability"].([]any)
+	for _, value := range diagnostics {
+		if diagnostic := value.(map[string]any); diagnostic["reason"] == "manual_boundary_unavailable" {
+			if diagnostic["interval_id"] != "no-boundary" {
+				t.Fatalf("diagnostic = %#v, want interval_id no-boundary", diagnostic)
+			}
+			return
+		}
+	}
+	t.Fatalf("diagnostics = %#v, want manual_boundary_unavailable", diagnostics)
 }
 
 func TestGetActivitySplitsKeepsDeviceLapAsUpstreamInterval(t *testing.T) {
@@ -182,6 +523,29 @@ func TestGetActivitySplitsPauseAndMissingMetricsRemainSourceHonest(t *testing.T)
 		if !hasSplitDiagnostic(diagnostics, reason) {
 			t.Fatalf("diagnostics = %#v, want %s", diagnostics, reason)
 		}
+	}
+}
+
+func TestValidateMetricStreamsUsesStableValidityDiagnostics(t *testing.T) {
+	t.Parallel()
+
+	metrics := splitMetricStreams{Rows: map[string]intervals.ActivityStream{
+		"heart_rate": {Data: []float64{120, 0}, Raw: map[string]any{"data": []any{120.0, nil}}},
+		"watts":      {Data: []float64{200}},
+		"altitude":   {Data: []float64{10, 11}},
+	}}
+	diagnostics := validateMetricStreams("run-1", metrics, 2)
+	if len(diagnostics) != 3 {
+		t.Fatalf("diagnostics = %#v, want one per affected optional channel", diagnostics)
+	}
+	wantReasons := []string{"metric_channel_invalid", "metric_channel_length_mismatch", "missing_metric_stream"}
+	for index, want := range wantReasons {
+		if diagnostics[index].Reason != want {
+			t.Fatalf("diagnostic[%d] = %#v, want reason %q", index, diagnostics[index], want)
+		}
+	}
+	if diagnostics[0].Available == nil || strings.Join(diagnostics[0].Available, ",") != "heart_rate,watts,altitude" {
+		t.Fatalf("available = %#v, want stable metric order", diagnostics[0].Available)
 	}
 }
 

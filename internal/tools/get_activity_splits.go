@@ -107,7 +107,7 @@ func buildActivitySplits(ctx context.Context, args getActivitySplitsRequest, pro
 			}
 			return activitySplitsBuild{IntervalSource: classification, Diagnostics: diagnostics, SplitUnit: requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), Units: splitUnits(requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), unitSystem), Unavailable: &unavailable}, nil
 		}
-		return activitySplitsBuild{IntervalSource: classification, Diagnostics: diagnostics, SplitUnit: requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), Units: splitUnits(requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), unitSystem)}, nil
+		return activitySplitsBuild{Splits: []activitySplitRow{}, Source: "virtual_streams", IntervalSource: classification, Diagnostics: diagnostics, SplitUnit: requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), Units: splitUnits(requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), unitSystem)}, nil
 	}
 
 	base, baseDiagnostics, baseOK := parseSplitBase(baseRows, args.ActivityID)
@@ -120,15 +120,16 @@ func buildActivitySplits(ctx context.Context, args getActivitySplitsRequest, pro
 		splitUnit = "100m"
 	} else if requestedUnit == "" && detailsErr != nil {
 		diagnostics = append(diagnostics, splitDiagnostic("swim_semantics_unavailable", args.ActivityID, "Activity sport details were unavailable, so normal km/mi split semantics were retained.", []string{"activity.type"}, nil, []string{"activity.type"}))
-	} else if candidateSwim && !distanceStreamHasMeterEvidence(base.DistanceRow) {
-		diagnostics = append(diagnostics, splitDiagnostic("swim_semantics_unavailable", args.ActivityID, "Swim distance semantics were not proven because the distance stream has no explicit meter unit metadata; normal km/mi splits are retained.", []string{"distance"}, nil, []string{"distance_unit"}))
+	} else if requestedUnit == "" && isSwimActivity(activity) {
+		missing := []string{"sport_settings"}
+		if candidateSwim {
+			missing = []string{"distance_unit"}
+		}
+		diagnostics = append(diagnostics, splitDiagnostic("swim_semantics_unavailable", args.ActivityID, "Swim 100 m semantics were not proven by the activity settings and distance metadata; normal km/mi splits are retained.", []string{"activity.type", "sport_settings", "distance"}, nil, missing))
 	}
 
 	manualRows := manualSplitsFromIntervals(intervalsDTO, splitUnit, classification)
 	if len(manualRows) > 0 {
-		if !baseOK {
-			diagnostics = append(diagnostics, splitDiagnostic("base_stream_unavailable", args.ActivityID, "Distance/time streams were returned but are missing or not aligned; upstream interval rows remain source-labelled.", []string{"distance", "time"}, nil, nil))
-		}
 		rows := manualRowsOnly(manualRows)
 		diagnostics = append(diagnostics, manualSourceDiagnostics(args.ActivityID, classification, rows)...)
 		metricRows, metricErr := fetchSplitMetricStreams(ctx, streamsClient, args.ActivityID)
@@ -137,8 +138,8 @@ func buildActivitySplits(ctx context.Context, args getActivitySplitsRequest, pro
 				return activitySplitsBuild{}, metricErr
 			}
 			diagnostics = append(diagnostics, splitDiagnostic("metric_stream_unavailable", args.ActivityID, "Optional metric streams were unavailable; source interval rows remain without stream-derived enrichment.", splitMetricKeys, nil, nil))
-		} else if baseOK {
-			diagnostics = append(diagnostics, validateMetricStreams(args.ActivityID, metricRows, len(base.Distance))...)
+		} else if len(base.Time) >= 2 {
+			diagnostics = append(diagnostics, validateMetricStreams(args.ActivityID, metricRows, len(base.Time))...)
 			diagnostics = append(diagnostics, enrichManualSplitRows(manualRows, base, metricRows, args.ActivityID)...)
 		}
 		return activitySplitsBuild{Splits: manualRowsOnly(manualRows), Source: "manual_intervals", IntervalSource: classification, Diagnostics: diagnostics, SplitUnit: splitUnit, Units: splitUnits(splitUnit, unitSystem)}, nil
@@ -148,7 +149,7 @@ func buildActivitySplits(ctx context.Context, args getActivitySplitsRequest, pro
 		if explicit100m {
 			return activitySplitsBuild{}, NewUserError(split100mUserMessage, errors.New("distance/time streams are missing or not aligned"))
 		}
-		return activitySplitsBuild{IntervalSource: classification, Diagnostics: diagnostics, SplitUnit: splitUnit, Units: splitUnits(splitUnit, unitSystem)}, nil
+		return activitySplitsBuild{Splits: []activitySplitRow{}, Source: "virtual_streams", IntervalSource: classification, Diagnostics: diagnostics, SplitUnit: splitUnit, Units: splitUnits(splitUnit, unitSystem)}, nil
 	}
 
 	metricRows, metricErr := fetchSplitMetricStreams(ctx, streamsClient, args.ActivityID)
@@ -173,8 +174,12 @@ func requestedOrDefaultSplitUnit(requested string, unitSystem response.UnitSyste
 	return normalizeSplitUnit(requested, unitSystem)
 }
 
+func isSwimActivity(activity intervals.Activity) bool {
+	return activity.Type != nil && strings.EqualFold(strings.TrimSpace(*activity.Type), "swim")
+}
+
 func swimActivity(profile intervals.AthleteWithSportSettings, activity intervals.Activity) bool {
-	if activity.Type == nil || !strings.EqualFold(strings.TrimSpace(*activity.Type), "swim") {
+	if !isSwimActivity(activity) {
 		return false
 	}
 	for _, setting := range profile.SportSettings {
@@ -267,48 +272,70 @@ func parseSplitBase(rows []intervals.ActivityStream, activityID string) (splitBa
 	base := splitBaseStreams{}
 	distanceRow, distanceOK := findSplitStream(rows, "distance")
 	timeRow, timeOK := findSplitStream(rows, "time")
-	if !distanceOK || !timeOK {
-		missing := []string{}
-		if !distanceOK {
+	distanceShapeOK := distanceOK && validSplitBaseChannel(distanceRow.Data, distanceRow.Raw, distanceRow.AllNull)
+	timeShapeOK := timeOK && validSplitBaseChannel(timeRow.Data, timeRow.Raw, timeRow.AllNull)
+	if distanceShapeOK {
+		base.Distance = append([]float64(nil), distanceRow.Data...)
+		base.DistanceRow = distanceRow
+	}
+	if timeShapeOK {
+		base.Time = append([]float64(nil), timeRow.Data...)
+	}
+
+	if !distanceOK || !timeOK || !distanceShapeOK || !timeShapeOK {
+		missing := make([]string, 0, 2)
+		if !distanceOK || !distanceShapeOK {
 			missing = append(missing, "distance")
 		}
-		if !timeOK {
+		if !timeOK || !timeShapeOK {
 			missing = append(missing, "time")
 		}
-		return base, []dataAvailabilityDiagnostic{splitDiagnostic("base_stream_unavailable", activityID, "Distance/time streams are missing, so fixed-distance boundaries cannot be established.", missing, nil, missing)}, false
+		return base, []dataAvailabilityDiagnostic{splitDiagnostic("base_stream_unavailable", activityID, "Distance/time streams are missing, invalid, or unavailable for fixed-distance boundaries.", []string{"distance", "time"}, nil, missing)}, false
 	}
-	if len(distanceRow.Data) < 2 || len(timeRow.Data) < 2 || len(distanceRow.Data) != len(timeRow.Data) {
+
+	diagnostics := splitBaseMonotonicDiagnostics(base, activityID)
+	if len(diagnostics) > 0 {
+		return base, diagnostics, false
+	}
+	if len(base.Distance) < 2 || len(base.Time) < 2 || len(base.Distance) != len(base.Time) {
 		return base, []dataAvailabilityDiagnostic{splitDiagnostic("base_stream_unavailable", activityID, "Distance/time streams are not aligned or do not contain enough samples for fixed-distance boundaries.", []string{"distance", "time"}, nil, []string{"distance", "time"})}, false
 	}
-	if rawArrayHasNull(distanceRow.Raw, "data") || rawArrayHasNull(timeRow.Raw, "data") || distanceRow.AllNull || timeRow.AllNull {
-		return base, []dataAvailabilityDiagnostic{splitDiagnostic("base_stream_unavailable", activityID, "Distance/time streams contain null or all-null data and cannot establish fixed-distance boundaries.", []string{"distance", "time"}, nil, []string{"distance", "time"})}, false
-	}
-	for i := range distanceRow.Data {
-		if !finiteNumber(distanceRow.Data[i]) || !finiteNumber(timeRow.Data[i]) {
-			reason := "non_monotonic_distance"
-			field := "distance"
-			if !finiteNumber(timeRow.Data[i]) {
-				reason = "non_monotonic_time"
-				field = "time"
-			}
-			return base, []dataAvailabilityDiagnostic{splitDiagnostic(reason, activityID, "Base stream values are non-finite and cannot establish fixed-distance boundaries.", []string{field}, nil, []string{field})}, false
-		}
-		if i > 0 && distanceRow.Data[i] < distanceRow.Data[i-1] {
-			return base, []dataAvailabilityDiagnostic{splitDiagnostic("non_monotonic_distance", activityID, "Distance samples decrease; no fixed-distance split is fabricated.", []string{"distance"}, nil, []string{"distance"})}, false
-		}
-		if i > 0 && timeRow.Data[i] < timeRow.Data[i-1] {
-			return base, []dataAvailabilityDiagnostic{splitDiagnostic("non_monotonic_time", activityID, "Elapsed-time samples decrease; no fixed-distance split is fabricated.", []string{"time"}, nil, []string{"time"})}, false
-		}
-	}
-	base.Distance = append([]float64(nil), distanceRow.Data...)
-	base.Time = append([]float64(nil), timeRow.Data...)
-	base.DistanceRow = distanceRow
+
 	for i := 1; i < len(base.Distance); i++ {
 		if base.Distance[i] == base.Distance[i-1] && base.Time[i] > base.Time[i-1] {
 			return base, []dataAvailabilityDiagnostic{splitDiagnostic("paused_samples_present", activityID, "Duplicate distance samples include elapsed pause time; split durations remain elapsed rather than moving time.", []string{"distance", "time"}, nil, nil)}, true
 		}
 	}
 	return base, nil, true
+}
+
+func validSplitBaseChannel(values []float64, raw map[string]any, allNull bool) bool {
+	return len(values) >= 2 && !allNull && !rawArrayHasNull(raw, "data")
+}
+
+func splitBaseMonotonicDiagnostics(base splitBaseStreams, activityID string) []dataAvailabilityDiagnostic {
+	diagnostics := make([]dataAvailabilityDiagnostic, 0, 2)
+	distanceInvalid := false
+	for i, value := range base.Distance {
+		if !finiteNumber(value) || value < 0 || (i > 0 && value < base.Distance[i-1]) {
+			distanceInvalid = true
+			break
+		}
+	}
+	timeInvalid := false
+	for i, value := range base.Time {
+		if !finiteNumber(value) || (i > 0 && value < base.Time[i-1]) {
+			timeInvalid = true
+			break
+		}
+	}
+	if distanceInvalid {
+		diagnostics = append(diagnostics, splitDiagnostic("non_monotonic_distance", activityID, "Distance samples are non-finite, negative, or decreasing; no fixed-distance split is fabricated.", []string{"distance"}, nil, []string{"distance"}))
+	}
+	if timeInvalid {
+		diagnostics = append(diagnostics, splitDiagnostic("non_monotonic_time", activityID, "Elapsed-time samples are non-finite or decreasing; no fixed-distance split is fabricated.", []string{"time"}, nil, []string{"time"}))
+	}
+	return diagnostics
 }
 
 func findSplitStream(rows []intervals.ActivityStream, wanted string) (intervals.ActivityStream, bool) {
@@ -343,9 +370,11 @@ func splitMetricSet() map[string]bool {
 }
 
 func validateMetricStreams(activityID string, metrics splitMetricStreams, baseLength int) []dataAvailabilityDiagnostic {
-	available := make([]string, 0, len(metrics.Rows))
-	for key := range metrics.Rows {
-		available = append(available, key)
+	available := make([]string, 0, len(splitMetricKeys))
+	for _, key := range splitMetricKeys {
+		if _, ok := metrics.Rows[key]; ok {
+			available = append(available, key)
+		}
 	}
 	diagnostics := make([]dataAvailabilityDiagnostic, 0, len(splitMetricKeys))
 	for _, key := range splitMetricKeys {
@@ -354,12 +383,12 @@ func validateMetricStreams(activityID string, metrics splitMetricStreams, baseLe
 			diagnostics = append(diagnostics, splitDiagnostic("missing_metric_stream", activityID, "Optional split metric stream is absent; the metric is omitted rather than zero-filled.", []string{key}, available, []string{key}))
 			continue
 		}
-		if len(row.Data) != baseLength || len(row.Data) < 2 {
-			diagnostics = append(diagnostics, splitDiagnostic("metric_channel_length_mismatch", activityID, "Optional split metric stream is not index-aligned with distance/time and is omitted.", []string{key}, available, []string{key}))
-			continue
-		}
 		if row.AllNull || rawArrayHasNull(row.Raw, "data") {
 			diagnostics = append(diagnostics, splitDiagnostic("metric_channel_invalid", activityID, "Optional split metric stream contains null/all-null samples and is omitted rather than interpolated.", []string{key}, available, []string{key}))
+			continue
+		}
+		if len(row.Data) != baseLength || len(row.Data) < 2 {
+			diagnostics = append(diagnostics, splitDiagnostic("metric_channel_length_mismatch", activityID, "Optional split metric stream is not index-aligned with distance/time and is omitted.", []string{key}, available, []string{key}))
 			continue
 		}
 		invalid := false
@@ -383,7 +412,8 @@ func virtualSplitRows(base splitBaseStreams, metrics splitMetricStreams, splitUn
 	}
 	rows := make([]activitySplitRow, 0)
 	diagnostics := []dataAvailabilityDiagnostic{}
-	for index, start := 0, 0.0; ; index, start = index+1, start+step {
+	for index := 0; ; index++ {
+		start := float64(index) * step
 		end := start + step
 		if end > base.Distance[len(base.Distance)-1]+0.001 {
 			break
@@ -434,7 +464,9 @@ func enrichManualSplitRows(rows []manualSplit, base splitBaseStreams, metrics sp
 	for index := range rows {
 		segment, ok := manualSegment(rows[index].Interval, base)
 		if !ok {
-			diagnostics = append(diagnostics, splitDiagnostic("manual_boundary_unavailable", activityID, "Manual interval has no usable distance, elapsed-time, or aligned sample-index boundary for stream enrichment.", nil, nil, []string{"splits[" + strconv.Itoa(index) + "]"}))
+			diagnostic := splitDiagnostic("manual_boundary_unavailable", activityID, "Manual interval has no usable distance, elapsed-time, or aligned sample-index boundary for stream enrichment.", nil, nil, []string{"splits[" + strconv.Itoa(index) + "]"})
+			diagnostic.IntervalID = anyString(rows[index].Interval.ID)
+			diagnostics = append(diagnostics, diagnostic)
 			continue
 		}
 		for _, key := range []string{"cadence", "altitude"} {
@@ -454,28 +486,56 @@ func enrichManualSplitRows(rows []manualSplit, base splitBaseStreams, metrics sp
 }
 
 func manualSegment(interval intervals.ActivityInterval, base splitBaseStreams) (splitSegment, bool) {
-	if interval.StartDistance != nil && interval.EndDistance != nil && finiteNumber(*interval.StartDistance) && finiteNumber(*interval.EndDistance) && *interval.EndDistance > *interval.StartDistance {
+	if interval.StartDistance != nil && interval.EndDistance != nil && finiteNumber(*interval.StartDistance) && finiteNumber(*interval.EndDistance) && *interval.EndDistance > *interval.StartDistance && validSplitDistanceTimeline(base) {
 		startTime, okStart := interpolateMonotonic(base.Distance, base.Time, *interval.StartDistance)
 		endTime, okEnd := interpolateMonotonic(base.Distance, base.Time, *interval.EndDistance)
 		if okStart && okEnd && endTime > startTime {
 			return splitSegment{StartTime: startTime, EndTime: endTime, StartDist: *interval.StartDistance, EndDist: *interval.EndDistance}, true
 		}
 	}
-	if interval.StartTime != nil && interval.EndTime != nil {
+	if interval.StartTime != nil && interval.EndTime != nil && validSplitTimeTimeline(base.Time) {
 		start, errStart := strconv.ParseFloat(strings.TrimSpace(*interval.StartTime), 64)
 		end, errEnd := strconv.ParseFloat(strings.TrimSpace(*interval.EndTime), 64)
 		if errStart == nil && errEnd == nil && finiteNumber(start) && finiteNumber(end) && end > start {
 			return splitSegment{StartTime: start, EndTime: end}, true
 		}
 	}
-	if interval.StartIndex != nil && interval.EndIndex != nil && *interval.StartIndex >= 0 && *interval.EndIndex >= *interval.StartIndex && *interval.EndIndex < len(base.Time) {
+	if interval.StartIndex != nil && interval.EndIndex != nil && *interval.StartIndex >= 0 && *interval.EndIndex >= *interval.StartIndex && *interval.EndIndex < len(base.Time) && validSplitTimeTimeline(base.Time) {
 		startIndex, endIndex := *interval.StartIndex, *interval.EndIndex
 		if base.Time[endIndex] > base.Time[startIndex] {
-			segment := splitSegment{StartTime: base.Time[startIndex], EndTime: base.Time[endIndex], StartDist: base.Distance[startIndex], EndDist: base.Distance[endIndex]}
+			segment := splitSegment{StartTime: base.Time[startIndex], EndTime: base.Time[endIndex]}
+			if len(base.Distance) == len(base.Time) {
+				segment.StartDist = base.Distance[startIndex]
+				segment.EndDist = base.Distance[endIndex]
+			}
 			return segment, true
 		}
 	}
 	return splitSegment{}, false
+}
+
+func validSplitTimeTimeline(values []float64) bool {
+	if len(values) < 2 {
+		return false
+	}
+	for i, value := range values {
+		if !finiteNumber(value) || (i > 0 && value < values[i-1]) {
+			return false
+		}
+	}
+	return true
+}
+
+func validSplitDistanceTimeline(base splitBaseStreams) bool {
+	if len(base.Distance) < 2 || len(base.Distance) != len(base.Time) || !validSplitTimeTimeline(base.Time) {
+		return false
+	}
+	for i, value := range base.Distance {
+		if !finiteNumber(value) || value < 0 || (i > 0 && value < base.Distance[i-1]) {
+			return false
+		}
+	}
+	return true
 }
 
 func metricStreamUsable(stream intervals.ActivityStream, length int) bool {
@@ -609,17 +669,15 @@ func distanceStreamHasMeterEvidence(row intervals.ActivityStream) bool {
 	if row.Raw == nil {
 		return false
 	}
-	for _, key := range []string{"unit", "units", "distance_unit"} {
-		value, ok := row.Raw[key]
-		if !ok {
+	for rawKey, value := range row.Raw {
+		key := strings.ToLower(strings.TrimSpace(rawKey))
+		if key != "unit" && key != "units" && key != "distance_unit" {
 			continue
 		}
 		text := strings.ToLower(strings.TrimSpace(fmt.Sprint(value)))
 		switch text {
 		case "m", "meter", "meters", "metre", "metres":
 			return true
-		default:
-			return false
 		}
 	}
 	return false
