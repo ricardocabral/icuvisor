@@ -237,6 +237,11 @@ func TestUpdateActivitySendsSparsePutPayload(t *testing.T) {
 		if decoded["name"] != "Threshold ride" || decoded["description"] != "Felt strong; held target W" || len(decoded) != 2 {
 			t.Fatalf("body = %#v, want name+description only", decoded)
 		}
+		for _, unsupported := range []string{"rpe", "perceived_exertion", "icu_rpe", "feel", "commute"} {
+			if _, ok := decoded[unsupported]; ok {
+				t.Fatalf("body = %#v, must not send read-only/unsupported field %q", decoded, unsupported)
+			}
+		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"id":"i147866949","name":"Threshold ride","description":"Felt strong; held target W"}`))
 	}))
