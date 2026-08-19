@@ -129,7 +129,8 @@ func TestAnalyzeClimbSegmentsLocalizesNullWindowsAndReportsQuality(t *testing.T)
 }
 
 func TestAnalyzeClimbSegmentsBoundsExtremeResampleSpan(t *testing.T) {
-	cases := [][]float64{{0, 1e300}, {1e20, 1e20 + 100000}}
+	boundary := math.Ldexp(1, 63)
+	cases := [][]float64{{0, 1e300}, {1e20, 1e20 + 100000}, {boundary - 1024, boundary}}
 	for _, distance := range cases {
 		input := climbTestInput(distance, []float64{0, 1e300})
 		input.MinElevationGainM = 0

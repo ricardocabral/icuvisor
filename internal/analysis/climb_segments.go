@@ -458,10 +458,13 @@ func climbGridCoordinatesRepresentable(window []selectedClimbPoint) bool {
 		return true
 	}
 	maxInt := float64(int(^uint(0) >> 1))
-	minInt := -maxInt - 1
+	// float64 rounds the largest int on 64-bit systems to 2^63. Keep a margin
+	// larger than that representational step before converting grid coordinates.
+	maxSafeGrid := maxInt - 4096
+	minSafeGrid := -maxSafeGrid
 	startGrid := math.Ceil(window[0].distance)
 	endGrid := math.Floor(window[len(window)-1].distance)
-	return startGrid >= minInt && startGrid <= maxInt && endGrid >= minInt && endGrid <= maxInt
+	return startGrid >= minSafeGrid && startGrid <= maxSafeGrid && endGrid >= minSafeGrid && endGrid <= maxSafeGrid
 }
 
 func resampleClimbWindow(window []selectedClimbPoint, timeStream ClimbStream) []climbPoint {
