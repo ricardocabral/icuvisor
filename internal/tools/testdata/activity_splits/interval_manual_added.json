@@ -1,0 +1,1 @@
+{"activity":{"id":"fixture-manual","type":"Run"},"profile":{"preferred_units":"metric"},"intervals":{"id":"fixture-manual","icu_intervals":[{"id":"manual-1","name":"Block","start_index":1,"end_index":2,"distance":1000,"duration":100}]},"streams":[{"type":"distance","data":[0,500,1000]},{"type":"time","data":[0,50,100]}]}

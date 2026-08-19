@@ -719,6 +719,7 @@ func distanceStreamHasMeterEvidence(row intervals.ActivityStream) bool {
 	if row.Raw == nil {
 		return false
 	}
+	found := false
 	for rawKey, value := range row.Raw {
 		key := strings.ToLower(strings.TrimSpace(rawKey))
 		if key != "unit" && key != "units" && key != "distance_unit" {
@@ -727,10 +728,12 @@ func distanceStreamHasMeterEvidence(row intervals.ActivityStream) bool {
 		text := strings.ToLower(strings.TrimSpace(fmt.Sprint(value)))
 		switch text {
 		case "m", "meter", "meters", "metre", "metres":
-			return true
+			found = true
+		default:
+			return false
 		}
 	}
-	return false
+	return found
 }
 
 func splitAlgorithm(source string) string {

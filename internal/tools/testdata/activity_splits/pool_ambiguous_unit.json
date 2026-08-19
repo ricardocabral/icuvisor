@@ -3,7 +3,7 @@
   "profile": {"preferred_units":"metric","sportSettings":[{"types":["Swim"],"pace_load_type":"SWIM","pace_units":"SECS_100M"}]},
   "intervals": {"id":"fixture-pool-ambiguous","icu_intervals":[]},
   "streams": [
-    {"type":"distance","data":[0,1000]},
+    {"type":"distance","unit":"m","distance_unit":"yd","data":[0,1000]},
     {"type":"time","data":[0,600]}
   ]
 }

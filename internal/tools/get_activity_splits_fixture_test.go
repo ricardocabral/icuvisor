@@ -156,6 +156,35 @@ func TestGetActivitySplitsFixtureRunRowsAndBothResponseModes(t *testing.T) {
 	}
 }
 
+func TestGetActivitySplitsFixtureRideAllMetrics(t *testing.T) {
+	t.Parallel()
+
+	client := loadSplitFixture(t, "ride_all_metrics")
+	tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"fixture-ride-all"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	payload := resultMap(t, result)
+	rows := payload["splits"].([]any)
+	if len(rows) != 2 || payload["source"] != "virtual_streams" {
+		t.Fatalf("payload = %#v, want two virtual Ride rows", payload)
+	}
+	first := rows[0].(map[string]any)
+	want := map[string]float64{"average_heart_rate_bpm": 110, "average_power_watts": 220, "average_cadence_rpm": 82, "elevation_gain_m": 5}
+	for field, value := range want {
+		if first[field] != value {
+			t.Fatalf("first[%s] = %#v, want boundary-crossing value %v", field, first[field], value)
+		}
+	}
+	for index, rowValue := range rows {
+		row := rowValue.(map[string]any)
+		if row["distance_km"] != float64(1) || row["duration_seconds"].(float64) <= 0 || row["pace_seconds"].(float64) <= 0 || row["provenance"] != "virtual_fixed_distance" || row["distance_basis"] != "fixed_distance_boundary" {
+			t.Fatalf("row[%d] = %#v, want legacy and source-honest fields", index, row)
+		}
+	}
+}
+
 func TestGetActivitySplitsFixtureMatrixOmitsInvalidMetricsWithStableDiagnostics(t *testing.T) {
 	t.Parallel()
 
@@ -183,6 +212,47 @@ func TestGetActivitySplitsFixtureMatrixOmitsInvalidMetricsWithStableDiagnostics(
 		if got := splitDiagnosticCount(diagnostics, reason); got != count {
 			t.Fatalf("%s count = %d, want %d; diagnostics = %#v", reason, got, count, diagnostics)
 		}
+	}
+}
+
+func TestGetActivitySplitsFixtureIntervalProvenanceMatrix(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		fixture    string
+		wantSource string
+		wantRow    string
+		wantDiag   string
+	}{
+		{fixture: "interval_structured", wantSource: "structured_workout", wantRow: "structured_workout_interval"},
+		{fixture: "interval_manual_added", wantSource: "manual_added", wantRow: "manual_interval"},
+		{fixture: "interval_unknown", wantSource: "unknown", wantRow: "unknown_interval"},
+		{fixture: "interval_device", wantSource: "device_laps", wantRow: "device_lap", wantDiag: "device_lap_not_fixed_distance"},
+		{fixture: "interval_mixed", wantSource: "mixed", wantRow: "mixed_interval", wantDiag: "mixed_interval_source"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.fixture, func(t *testing.T) {
+			client := loadSplitFixture(t, tc.fixture)
+			tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"` + client.activity.ID + `"}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			payload := resultMap(t, result)
+			meta := payload["_meta"].(map[string]any)
+			if meta["interval_source"] != tc.wantSource {
+				t.Fatalf("interval_source = %#v, want %s", meta["interval_source"], tc.wantSource)
+			}
+			for _, rowValue := range payload["splits"].([]any) {
+				row := rowValue.(map[string]any)
+				if row["provenance"] != tc.wantRow || row["distance_basis"] != "upstream_interval_distance" || row["pace_seconds"].(float64) <= 0 {
+					t.Fatalf("row = %#v, want %s upstream provenance and legacy pace", row, tc.wantRow)
+				}
+			}
+			if tc.wantDiag != "" && !hasSplitDiagnostic(meta["data_availability"].([]any), tc.wantDiag) {
+				t.Fatalf("diagnostics = %#v, want %s", meta["data_availability"], tc.wantDiag)
+			}
+		})
 	}
 }
 
@@ -255,18 +325,32 @@ func TestGetActivitySplitsFixtureBaseFailuresPausesAndIntervalRows(t *testing.T)
 		t.Fatalf("base failure payload = %#v, want structured unavailable and diagnostic", basePayload)
 	}
 
-	optionalFailure := loadSplitFixture(t, "run_all_metrics_aliases")
-	optionalFailure.streamErrors = map[string]error{"heart_rate,watts,cadence,altitude": errors.New("optional streams unavailable")}
-	optionalTool := newGetActivitySplitsTool(optionalFailure, optionalFailure, optionalFailure, optionalFailure, "test", false)
-	optionalResult, err := optionalTool.Handler(context.Background(), Request{Name: optionalTool.Name, Arguments: json.RawMessage(`{"activity_id":"fixture-run-all"}`)})
-	if err != nil {
-		t.Fatalf("optional failure Handler() error = %v", err)
+	for _, includeFull := range []bool{false, true} {
+		optionalFailure := loadSplitFixture(t, "run_all_metrics_aliases")
+		optionalFailure.streamErrors = map[string]error{"heart_rate,watts,cadence,altitude": errors.New("optional streams unavailable")}
+		optionalTool := newGetActivitySplitsTool(optionalFailure, optionalFailure, optionalFailure, optionalFailure, "test", false)
+		args := `{"activity_id":"fixture-run-all"}`
+		if includeFull {
+			args = `{"activity_id":"fixture-run-all","include_full":true}`
+		}
+		optionalResult, err := optionalTool.Handler(context.Background(), Request{Name: optionalTool.Name, Arguments: json.RawMessage(args)})
+		if err != nil {
+			t.Fatalf("optional failure Handler() error = %v", err)
+		}
+		optionalPayload := resultMap(t, optionalResult)
+		if !hasSplitDiagnostic(optionalPayload["_meta"].(map[string]any)["data_availability"].([]any), "metric_stream_unavailable") {
+			t.Fatalf("optional failure payload = %#v, want metric_stream_unavailable", optionalPayload)
+		}
+		for _, rowValue := range optionalPayload["splits"].([]any) {
+			row := rowValue.(map[string]any)
+			for _, field := range []string{"average_heart_rate_bpm", "average_power_watts", "average_cadence_rpm", "elevation_gain_m"} {
+				if _, ok := row[field]; ok {
+					t.Fatalf("optional failure row = %#v, want %s omitted in full=%t", row, field, includeFull)
+				}
+			}
+		}
+		assertSplitPayloadHasNoRaw(t, optionalPayload)
 	}
-	optionalPayload := resultMap(t, optionalResult)
-	if !hasSplitDiagnostic(optionalPayload["_meta"].(map[string]any)["data_availability"].([]any), "metric_stream_unavailable") {
-		t.Fatalf("optional failure payload = %#v, want metric_stream_unavailable", optionalPayload)
-	}
-	assertSplitPayloadHasNoRaw(t, optionalPayload)
 }
 
 func TestGetActivitySplitsFixtureUnitsAndPoolPrecedence(t *testing.T) {
@@ -294,9 +378,14 @@ func TestGetActivitySplitsFixtureUnitsAndPoolPrecedence(t *testing.T) {
 		t.Fatalf("pool Handler() error = %v", err)
 	}
 	poolPayload := resultMap(t, poolResult)
-	poolRow := poolPayload["splits"].([]any)[0].(map[string]any)
-	if poolPayload["source"] != "virtual_streams" || poolRow["distance_100m"] != float64(1) || poolRow["pace_seconds_per_100m"] != float64(60) || poolRow["provenance"] != "virtual_fixed_distance" || poolRow["distance_basis"] != "fixed_distance_boundary" {
-		t.Fatalf("pool payload = %#v, want validated virtual 100m row", poolPayload)
+	if poolPayload["source"] != "virtual_streams" {
+		t.Fatalf("pool payload = %#v, want virtual source", poolPayload)
+	}
+	for index, rowValue := range poolPayload["splits"].([]any) {
+		poolRow := rowValue.(map[string]any)
+		if poolRow["distance_100m"].(float64) <= 0 || poolRow["pace_seconds_per_100m"].(float64) <= 0 || poolRow["provenance"] != "virtual_fixed_distance" || poolRow["distance_basis"] != "fixed_distance_boundary" {
+			t.Fatalf("pool row[%d] = %#v, want positive validated virtual 100m fields", index, poolRow)
+		}
 	}
 	units := poolPayload["_meta"].(map[string]any)["units"].(map[string]any)
 	if units["system"] != "metric" || units["distance"] != "100m" || units["pace"] != "sec/100m" {
@@ -310,9 +399,14 @@ func TestGetActivitySplitsFixtureUnitsAndPoolPrecedence(t *testing.T) {
 		t.Fatalf("laps Handler() error = %v", err)
 	}
 	lapsPayload := resultMap(t, lapsResult)
-	lap := lapsPayload["splits"].([]any)[0].(map[string]any)
-	if lapsPayload["source"] != "manual_intervals" || lap["pace_seconds"] != float64(60) || lap["pace_seconds_per_100m"] != float64(60) || lap["distance_basis"] != "upstream_interval_distance" || lap["provenance"] != "device_lap" {
-		t.Fatalf("laps payload = %#v, want manual-over-virtual upstream row", lapsPayload)
+	if lapsPayload["source"] != "manual_intervals" {
+		t.Fatalf("laps payload = %#v, want manual source", lapsPayload)
+	}
+	for index, rowValue := range lapsPayload["splits"].([]any) {
+		lap := rowValue.(map[string]any)
+		if lap["distance_100m"].(float64) <= 0 || lap["pace_seconds"].(float64) <= 0 || lap["pace_seconds_per_100m"].(float64) <= 0 || lap["distance_basis"] != "upstream_interval_distance" || lap["provenance"] != "device_lap" {
+			t.Fatalf("lap[%d] = %#v, want positive manual-over-virtual upstream row", index, lap)
+		}
 	}
 }
 

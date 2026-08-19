@@ -1,0 +1,1 @@
+{"activity":{"id":"fixture-device","type":"Run"},"profile":{"preferred_units":"metric"},"intervals":{"id":"fixture-device","icu_intervals":[{"id":"device-1","name":"Lap 1","distance":1000,"duration":100,"lap_type":"auto"}]},"streams":[{"type":"distance","data":[0,1000]},{"type":"time","data":[0,100]}]}
