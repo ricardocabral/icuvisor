@@ -140,6 +140,41 @@ func TestUpdateActivityRejectsBadArguments(t *testing.T) {
 	}
 }
 
+func TestUpdateActivityRejectsUnsupportedRPEBeforeUpdater(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		raw  string
+	}{
+		{name: "rpe zero", raw: `{"activity_id":"a1","rpe":0}`},
+		{name: "rpe in range", raw: `{"activity_id":"a1","rpe":7}`},
+		{name: "rpe upper bound", raw: `{"activity_id":"a1","rpe":10}`},
+		{name: "rpe above range", raw: `{"activity_id":"a1","rpe":11}`},
+		{name: "rpe fractional", raw: `{"activity_id":"a1","rpe":1.5}`},
+		{name: "rpe string", raw: `{"activity_id":"a1","rpe":"7"}`},
+		{name: "rpe null", raw: `{"activity_id":"a1","rpe":null}`},
+		{name: "perceived exertion alias", raw: `{"activity_id":"a1","perceived_exertion":7}`},
+		{name: "native upstream key", raw: `{"activity_id":"a1","icu_rpe":7}`},
+		{name: "unsupported field is atomic with name", raw: `{"activity_id":"a1","name":"renamed","rpe":7}`},
+		{name: "unsupported field is atomic with description", raw: `{"activity_id":"a1","description":"note","icu_rpe":7}`},
+		{name: "unsupported field is atomic with carbs", raw: `{"activity_id":"a1","carbs_ingested_g":90,"perceived_exertion":7}`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeActivityUpdaterClient{}
+			tool := newUpdateActivityTool(client, client, "test", false)
+			_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(tc.raw)})
+			if err == nil {
+				t.Fatalf("Handler(%s) error = nil, want unsupported RPE rejection", tc.raw)
+			}
+			if len(client.calls) != 0 {
+				t.Fatalf("updater calls = %#v, want zero for rejected request", client.calls)
+			}
+		})
+	}
+}
+
 func TestUpdateActivityPublicError(t *testing.T) {
 	t.Parallel()
 
@@ -179,10 +214,9 @@ func TestUpdateActivityRegistrationMetadata(t *testing.T) {
 			t.Fatalf("carbs_ingested_g description = %q, want %q", carbsDescription, phrase)
 		}
 	}
-	if _, ok := props["carbs_used_g"]; ok {
-		t.Fatalf("schema includes read-only carbs_used_g property")
-	}
-	if _, ok := props["confirm"]; ok {
-		t.Fatalf("schema includes forbidden confirm property")
+	for _, name := range []string{"carbs_used_g", "confirm", "rpe", "perceived_exertion", "icu_rpe", "feel"} {
+		if _, ok := props[name]; ok {
+			t.Fatalf("schema includes unsupported or read-only property %q", name)
+		}
 	}
 }

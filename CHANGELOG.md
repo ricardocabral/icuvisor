@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added source-labelled AlphaHRV/DFA custom-field audit behavior: interval `dfa_alpha1` is retained only from upstream `average_dfa_a1` with interval/unitless provenance, while explicitly selected activity custom fields preserve exact codes and expose honest absent/null/malformed diagnostics without inventing units, devices, readiness, or physiology.
+- Added source-labelled activity read fields for upstream `commute`, athlete-reported `feel` (1–5), and native `rpe` from `icu_rpe` (1–10), preserving explicit false/null/absent semantics without scale conversion. The unverified upstream RPE write contract remains unsupported and documented.
+- Added inclusive time- and distance-window selection to `get_activity_streams`. Windows are sliced locally from aligned streams, preserve `data2` and sampling provenance, and remain metadata-only unless `include_full:true`; the full-fetch upstream limitation is documented.
+
 ## [1.5.10] - 2026-08-16
 
 ### Added

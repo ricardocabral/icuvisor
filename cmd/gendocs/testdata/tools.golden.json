@@ -36,7 +36,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "Get one activity's terse metadata and metrics by activity_id, including upstream activity tags when returned, calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, and explicitly requested athlete-defined custom_fields when upstream provides them.",
+    "summary": "Get one activity's terse metadata and metrics by activity_id, including upstream commute status, feel as the athlete-reported 1-5 feeling scale, and rpe as native icu_rpe on the separate 1-10 exertion scale.",
     "anchor": "get_activity_details"
   },
   {

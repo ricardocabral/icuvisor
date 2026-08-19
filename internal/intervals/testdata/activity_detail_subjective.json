@@ -1,0 +1,15 @@
+{
+  "id": "activity-detail-subjective",
+  "name": "Evening ride",
+  "type": "Ride",
+  "source": "Garmin",
+  "start_date_local": "2026-08-18T18:30:00",
+  "start_date": "2026-08-18T17:30:00Z",
+  "timezone": "Europe/Lisbon",
+  "commute": false,
+  "feel": 2,
+  "icu_rpe": 8,
+  "tags": ["training"],
+  "distance": 32000,
+  "custom_note": "synthetic fixture"
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "activity-commute",
+    "name": "Morning commute",
+    "type": "Ride",
+    "source": "Garmin",
+    "start_date_local": "2026-08-18T07:30:00",
+    "start_date": "2026-08-18T06:30:00Z",
+    "timezone": "Europe/Lisbon",
+    "commute": true,
+    "feel": 4,
+    "icu_rpe": 5,
+    "tags": ["commute"],
+    "custom_score": 3
+  },
+  {
+    "id": "activity-training",
+    "name": "Structured session",
+    "type": "Ride",
+    "source": "Wahoo",
+    "start_date_local": "2026-08-17T18:00:00",
+    "start_date": "2026-08-17T17:00:00Z",
+    "timezone": "Europe/Lisbon",
+    "commute": false,
+    "feel": null,
+    "icu_rpe": null,
+    "tags": ["training"],
+    "custom_score": null
+  }
+]

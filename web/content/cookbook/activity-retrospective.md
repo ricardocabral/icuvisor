@@ -35,7 +35,14 @@ with my intervals.icu data.
    `_meta.interval_source_caveat`, and get the per-km or per-mile splits.
 4. Get the time-in-zone for the session.
 5. Get the extended metrics, and report only the ones actually present
-   (decoupling, IF, VI, normalized power, RPE, feel).
+   (decoupling, IF, VI, normalized power, interval `dfa_alpha1`, RPE, feel).
+   If I ask for AlphaHRV, route only verified interval `dfa_alpha1` from
+   upstream `average_dfa_a1`; do not join daily wellness `hrv`/`hrvSDNN`,
+   infer readiness, or treat `device_name` as DFA provenance. If I mean an
+   athlete-defined field, pass its exact code in `custom_fields`; preserve
+   that code and read `_meta.custom_field_provenance` and
+   `_meta.data_availability` without inventing a unit, device, algorithm, or
+   physiological interpretation.
 6. If `get_activities`/`get_activity_details` returns `hypoxic_training_caveat`,
    or `get_extended_metrics` returns `_meta.hypoxic_training_caveat`, quote its
    provenance and wording. If I explicitly said the session used an altitude
@@ -106,7 +113,8 @@ context only.
 ## Variations
 
 - **Lactate test:** "Analyze this interval session and include the lactate values I entered on each rep. Use `custom_fields.lactate` from `get_activity_intervals` when present."
-- **Activity custom field:** "For this ride, include my activity custom field `vo2max_est`. Pass `custom_fields: ["vo2max_est"]` to `get_activity_details`, and if I ask whether it is improving over time, switch to `analyze_correlation` with `metric_x: "custom:vo2max_est"` plus the same `custom_fields` selection over a date range."
+- **Activity custom field:** "For this ride, include my activity custom field `vo2max_est`. Pass `custom_fields: ["vo2max_est"]` to `get_activity_details`, preserve the exact code and source metadata, and state when the value is absent, null, or malformed. If I ask whether it is improving over time, switch to `analyze_correlation` with `metric_x: "custom:vo2max_est"` plus the same `custom_fields` selection over a date range; do not assign a unit or physiology from the name alone."
+- **AlphaHRV/DFA request:** "Use `get_extended_metrics` and report interval `dfa_alpha1` only when sourced from `average_dfa_a1`. If it is absent, null, malformed, or the interval source is restricted, report the `_meta.data_availability` reason. Do not rename an activity custom field `alpha_hrv`, join wellness HRV, or infer readiness, threshold, medical, or training conclusions."
 - **Race debrief:** "...this was a race — focus on pacing discipline and where I lost time."
 - **First-vs-last distance comparison:** "Compare the first 10 km with the last 10 km of this run. Use `get_activity_details` for total distance, then call `compute_activity_segment_stats` with explicit distance bounds (`0..10000 m` and `total_distance_m-10000..total_distance_m`) for average `velocity_smooth`, `watts` if available, and `heart_rate`. Convert velocity to pace in the final answer; do not reduce raw streams in chat."
 - **Compare two sessions:** "Compare activity A and activity B — same workout, two weeks apart. Did the hard parts improve?"

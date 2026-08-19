@@ -74,6 +74,41 @@ func TestListActivitiesSendsQueryAndPreservesRawNulls(t *testing.T) {
 	}
 }
 
+func TestActivitySubjectiveFieldsPreserveSourceTypesAndRawPayload(t *testing.T) {
+	t.Parallel()
+
+	var activity Activity
+	if err := json.Unmarshal([]byte(`{"id":"subjective","commute":true,"feel":4,"icu_rpe":8,"name":null}`), &activity); err != nil {
+		t.Fatalf("UnmarshalJSON() error = %v", err)
+	}
+	if activity.Commute == nil || !*activity.Commute || activity.Feel == nil || *activity.Feel != 4 || activity.RPE == nil || *activity.RPE != 8 {
+		t.Fatalf("normalized fields = %+v, want commute=true feel=4 rpe=8", activity)
+	}
+	if activity.Raw["commute"] != true || activity.Raw["feel"] != float64(4) || activity.Raw["icu_rpe"] != float64(8) {
+		t.Fatalf("raw subjective fields = %#v, want upstream keys preserved", activity.Raw)
+	}
+	if value, ok := activity.Raw["name"]; !ok || value != nil {
+		t.Fatalf("raw name = %#v present %v, want preserved null", value, ok)
+	}
+}
+
+func TestActivitySubjectiveFieldsIgnoreMalformedOptionalValues(t *testing.T) {
+	t.Parallel()
+
+	var activity Activity
+	if err := json.Unmarshal([]byte(`{"id":"malformed","commute":"yes","feel":"4","icu_rpe":7.5,"name":"still readable"}`), &activity); err != nil {
+		t.Fatalf("UnmarshalJSON() error = %v, want malformed optional values tolerated", err)
+	}
+	if activity.Commute != nil || activity.Feel != nil || activity.RPE != nil {
+		t.Fatalf("normalized malformed fields = %+v, want omitted", activity)
+	}
+	for key, want := range map[string]any{"commute": "yes", "feel": "4", "icu_rpe": 7.5} {
+		if got, ok := activity.Raw[key]; !ok || got != want {
+			t.Fatalf("raw[%q] = %#v present %v, want %#v preserved", key, got, ok, want)
+		}
+	}
+}
+
 func TestListActivitiesRequiresOldest(t *testing.T) {
 	t.Parallel()
 
@@ -201,6 +236,11 @@ func TestUpdateActivitySendsSparsePutPayload(t *testing.T) {
 		}
 		if decoded["name"] != "Threshold ride" || decoded["description"] != "Felt strong; held target W" || len(decoded) != 2 {
 			t.Fatalf("body = %#v, want name+description only", decoded)
+		}
+		for _, unsupported := range []string{"rpe", "perceived_exertion", "icu_rpe", "feel", "commute"} {
+			if _, ok := decoded[unsupported]; ok {
+				t.Fatalf("body = %#v, must not send read-only/unsupported field %q", decoded, unsupported)
+			}
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"id":"i147866949","name":"Threshold ride","description":"Felt strong; held target W"}`))

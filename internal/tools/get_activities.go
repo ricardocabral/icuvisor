@@ -12,7 +12,7 @@ import (
 
 const (
 	getActivitiesName                    = "get_activities"
-	getActivitiesDescription             = "Scan an athlete-local date window and return a paginated activity index: terse unit-disambiguated summary rows with IDs, source/device hints, tags, explicitly requested custom_fields, and Strava-unavailable markers. Rows include calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, selected athlete-defined activity custom fields, historical activity weather when Intervals.icu provides it, and opaque pagination. Weather values are completed-activity historical context with provenance, not forecast conditions. Use this before details, intervals, streams, splits, or messages when a prompt describes an activity by date, relative date, or recent training."
+	getActivitiesDescription             = "Scan an athlete-local date window and return a paginated activity index: terse unit-disambiguated summary rows with IDs, source/device hints, tags, explicitly requested custom_fields, and Strava-unavailable markers. Rows include commute from the upstream activity flag, feel as the athlete-reported 1-5 feeling scale, and rpe as native icu_rpe on the separate 1-10 exertion scale; these values are never inferred or converted. Rows also include calories_burned as active/exercise calories (distinct from wellness kcal_consumed), carbs_ingested_g for athlete-logged carb intake, carbs_used_g for upstream carbs-burned estimate, selected athlete-defined activity custom fields, historical activity weather when Intervals.icu provides it, and opaque pagination. Weather values are completed-activity historical context with provenance, not forecast conditions. Use this before details, intervals, streams, splits, or messages when a prompt describes an activity by date, relative date, or recent training."
 	invalidGetActivitiesArgumentsMessage = "invalid get_activities arguments; provide oldest/newest dates or a valid next_page_token"
 	fetchActivitiesMessage               = "could not fetch activities; check intervals.icu credentials, athlete ID, and date range"
 	activitiesPaginationBoundaryMessage  = "activity pagination hit too many same-timestamp filtered rows; narrow the date range or set include_unnamed true"
@@ -30,7 +30,7 @@ var terseActivityFields = []string{
 	"has_weather", "average_weather_temp", "min_weather_temp", "max_weather_temp", "average_wind_speed", "average_wind_gust", "prevailing_wind_deg", "headwind_percent", "tailwind_percent",
 	"total_elevation_gain", "total_elevation_loss", "icu_training_load", "average_heartrate",
 	"max_heartrate", "average_cadence", "icu_average_watts", "calories", "carbs_ingested", "carbs_used",
-	"device_name", "gear_id", "tags",
+	"commute", "feel", "icu_rpe", "device_name", "gear_id", "tags",
 }
 
 // terseActivityFieldsWithCustom returns the terse upstream field set extended
@@ -105,6 +105,9 @@ type getActivitiesRow struct {
 	CaloriesBurned       *int                   `json:"calories_burned,omitempty"`
 	CarbsIngestedG       *int                   `json:"carbs_ingested_g,omitempty"`
 	CarbsUsedG           *int                   `json:"carbs_used_g,omitempty"`
+	Commute              *bool                  `json:"commute,omitempty"`
+	Feel                 *int                   `json:"feel,omitempty"`
+	RPE                  *int                   `json:"rpe,omitempty"`
 	Weather              *activityWeather       `json:"weather,omitempty"`
 	DeviceName           string                 `json:"device_name,omitempty"`
 	GearID               string                 `json:"gear_id,omitempty"`
@@ -120,6 +123,7 @@ type getActivitiesRow struct {
 	CustomFields         map[string]any         `json:"custom_fields,omitempty"`
 	HypoxicLoadCaveat    *hypoxicTrainingCaveat `json:"hypoxic_training_caveat,omitempty"`
 	Full                 map[string]any         `json:"full,omitempty"`
+	Raw                  map[string]any         `json:"-"`
 }
 
 type activityWeather struct {
@@ -141,16 +145,17 @@ type unavailableReason struct {
 }
 
 type getActivitiesMeta struct {
-	PageSize         int                          `json:"page_size"`
-	NextPageToken    string                       `json:"next_page_token,omitempty"`
-	MoreAvailable    bool                         `json:"more_available"`
-	IncludeFull      bool                         `json:"include_full"`
-	Timezone         string                       `json:"timezone,omitempty"`
-	FieldSemantics   map[string]string            `json:"field_semantics,omitempty"`
-	DataAvailability []dataAvailabilityDiagnostic `json:"data_availability,omitempty"`
-	AsOf             string                       `json:"as_of,omitempty"`
-	AsOfDate         string                       `json:"as_of_date,omitempty"`
-	AsOfWeekday      string                       `json:"as_of_weekday,omitempty"`
+	PageSize              int                              `json:"page_size"`
+	NextPageToken         string                           `json:"next_page_token,omitempty"`
+	MoreAvailable         bool                             `json:"more_available"`
+	IncludeFull           bool                             `json:"include_full"`
+	Timezone              string                           `json:"timezone,omitempty"`
+	FieldSemantics        map[string]string                `json:"field_semantics,omitempty"`
+	DataAvailability      []dataAvailabilityDiagnostic     `json:"data_availability,omitempty"`
+	CustomFieldProvenance map[string]customFieldProvenance `json:"custom_field_provenance,omitempty"`
+	AsOf                  string                           `json:"as_of,omitempty"`
+	AsOfDate              string                           `json:"as_of_date,omitempty"`
+	AsOfWeekday           string                           `json:"as_of_weekday,omitempty"`
 }
 
 var errActivitiesPaginationBoundary = errors.New("activity pagination boundary exceeded")
@@ -248,5 +253,5 @@ func getActivitiesInputSchema() map[string]any {
 }
 
 func getActivitiesOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, upstream tags when intervals.icu returns a string-array tags field, calories_burned for active/exercise calories (distinct from wellness kcal_consumed intake), carbs_ingested_g for athlete-logged carb intake during activity, carbs_used_g for upstream carbs-burned estimate, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds explicitly requested athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. activities[].weather is emitted only when Intervals.icu returns has_weather=true for a completed activity; it contains historical activity weather with provenance, temperatures in degrees C, wind speed/gust in m/s, wind direction in degrees, and headwind/tailwind percentages. Do not treat activities[].weather as a forecast for planned events or future workouts. Each row's timezone is the IANA zone its start_date_local is in, and _meta.timezone is the athlete's configured timezone; start_date_utc is UTC. When the requested range includes the athlete-local current day, _meta also includes as_of, as_of_date, and as_of_weekday. Derive calendar dates from these timezones so activities are not reported on the wrong day."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, commute from the upstream activity commute flag (never inferred from names/tags), feel as the upstream athlete-reported 1-5 scale, and rpe as the native icu_rpe 1-10 rating of perceived exertion. feel and rpe are distinct fields and are not converted. Upstream tags when intervals.icu returns a string-array tags field, calories_burned for active/exercise calories (distinct from wellness kcal_consumed intake), carbs_ingested_g for athlete-logged carb intake during activity, carbs_used_g for upstream carbs-burned estimate, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds explicitly requested athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. `_meta.custom_field_provenance` labels each selected code as an activity-scope intervals.icu custom field with unit, scale, algorithm, physiology, and source-device marked not_provided; `_meta.data_availability` records absent, null, and malformed selected values per activity. activities[].weather is emitted only when Intervals.icu returns has_weather=true for a completed activity; it contains historical activity weather with provenance, temperatures in degrees C, wind speed/gust in m/s, wind direction in degrees, and headwind/tailwind percentages. Do not treat activities[].weather as a forecast for planned events or future workouts. Each row's timezone is the IANA zone its start_date_local is in, and _meta.timezone is the athlete's configured timezone; start_date_utc is UTC. When the requested range includes the athlete-local current day, _meta also includes as_of, as_of_date, and as_of_weekday. Derive calendar dates from these timezones so activities are not reported on the wrong day."}
 }
