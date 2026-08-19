@@ -123,6 +123,7 @@ type getActivitiesRow struct {
 	CustomFields         map[string]any         `json:"custom_fields,omitempty"`
 	HypoxicLoadCaveat    *hypoxicTrainingCaveat `json:"hypoxic_training_caveat,omitempty"`
 	Full                 map[string]any         `json:"full,omitempty"`
+	Raw                  map[string]any         `json:"-"`
 }
 
 type activityWeather struct {
@@ -144,16 +145,17 @@ type unavailableReason struct {
 }
 
 type getActivitiesMeta struct {
-	PageSize         int                          `json:"page_size"`
-	NextPageToken    string                       `json:"next_page_token,omitempty"`
-	MoreAvailable    bool                         `json:"more_available"`
-	IncludeFull      bool                         `json:"include_full"`
-	Timezone         string                       `json:"timezone,omitempty"`
-	FieldSemantics   map[string]string            `json:"field_semantics,omitempty"`
-	DataAvailability []dataAvailabilityDiagnostic `json:"data_availability,omitempty"`
-	AsOf             string                       `json:"as_of,omitempty"`
-	AsOfDate         string                       `json:"as_of_date,omitempty"`
-	AsOfWeekday      string                       `json:"as_of_weekday,omitempty"`
+	PageSize              int                              `json:"page_size"`
+	NextPageToken         string                           `json:"next_page_token,omitempty"`
+	MoreAvailable         bool                             `json:"more_available"`
+	IncludeFull           bool                             `json:"include_full"`
+	Timezone              string                           `json:"timezone,omitempty"`
+	FieldSemantics        map[string]string                `json:"field_semantics,omitempty"`
+	DataAvailability      []dataAvailabilityDiagnostic     `json:"data_availability,omitempty"`
+	CustomFieldProvenance map[string]customFieldProvenance `json:"custom_field_provenance,omitempty"`
+	AsOf                  string                           `json:"as_of,omitempty"`
+	AsOfDate              string                           `json:"as_of_date,omitempty"`
+	AsOfWeekday           string                           `json:"as_of_weekday,omitempty"`
 }
 
 var errActivitiesPaginationBoundary = errors.New("activity pagination boundary exceeded")
@@ -251,5 +253,5 @@ func getActivitiesInputSchema() map[string]any {
 }
 
 func getActivitiesOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, commute from the upstream activity commute flag (never inferred from names/tags), feel as the upstream athlete-reported 1-5 scale, and rpe as the native icu_rpe 1-10 rating of perceived exertion. feel and rpe are distinct fields and are not converted. Upstream tags when intervals.icu returns a string-array tags field, calories_burned for active/exercise calories (distinct from wellness kcal_consumed intake), carbs_ingested_g for athlete-logged carb intake during activity, carbs_used_g for upstream carbs-burned estimate, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds explicitly requested athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. activities[].weather is emitted only when Intervals.icu returns has_weather=true for a completed activity; it contains historical activity weather with provenance, temperatures in degrees C, wind speed/gust in m/s, wind direction in degrees, and headwind/tailwind percentages. Do not treat activities[].weather as a forecast for planned events or future workouts. Each row's timezone is the IANA zone its start_date_local is in, and _meta.timezone is the athlete's configured timezone; start_date_utc is UTC. When the requested range includes the athlete-local current day, _meta also includes as_of, as_of_date, and as_of_weekday. Derive calendar dates from these timezones so activities are not reported on the wrong day."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Paginated activities with unit-disambiguated terse rows, commute from the upstream activity commute flag (never inferred from names/tags), feel as the upstream athlete-reported 1-5 scale, and rpe as the native icu_rpe 1-10 rating of perceived exertion. feel and rpe are distinct fields and are not converted. Upstream tags when intervals.icu returns a string-array tags field, calories_burned for active/exercise calories (distinct from wellness kcal_consumed intake), carbs_ingested_g for athlete-logged carb intake during activity, carbs_used_g for upstream carbs-burned estimate, Strava unavailable markers, gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds explicitly requested athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. `_meta.custom_field_provenance` labels each selected code as an activity-scope intervals.icu custom field with unit, scale, algorithm, physiology, and source-device marked not_provided; `_meta.data_availability` records absent, null, and malformed selected values per activity. activities[].weather is emitted only when Intervals.icu returns has_weather=true for a completed activity; it contains historical activity weather with provenance, temperatures in degrees C, wind speed/gust in m/s, wind direction in degrees, and headwind/tailwind percentages. Do not treat activities[].weather as a forecast for planned events or future workouts. Each row's timezone is the IANA zone its start_date_local is in, and _meta.timezone is the athlete's configured timezone; start_date_utc is UTC. When the requested range includes the athlete-local current day, _meta also includes as_of, as_of_date, and as_of_weekday. Derive calendar dates from these timezones so activities are not reported on the wrong day."}
 }

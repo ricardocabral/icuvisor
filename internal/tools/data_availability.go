@@ -16,6 +16,7 @@ type dataAvailabilityDiagnostic struct {
 	Message       string   `json:"message"`
 	Workaround    string   `json:"workaround,omitempty"`
 	ActivityID    string   `json:"activity_id,omitempty"`
+	IntervalID    string   `json:"interval_id,omitempty"`
 	Requested     []string `json:"requested,omitempty"`
 	Available     []string `json:"available,omitempty"`
 	SourceFields  []string `json:"source_fields,omitempty"`
@@ -35,14 +36,103 @@ func restrictedSourceDiagnostic(activityID string, unavailable *unavailableReaso
 	}
 }
 
-func activityAvailabilityDiagnostics(rows []getActivitiesRow) []dataAvailabilityDiagnostic {
+type customFieldProvenance struct {
+	SourceField   string `json:"source_field"`
+	ResponseField string `json:"response_field"`
+	Scope         string `json:"scope"`
+	Source        string `json:"source"`
+	Selection     string `json:"selection"`
+	Unit          string `json:"unit"`
+	Scale         string `json:"scale"`
+	Algorithm     string `json:"algorithm"`
+	Physiology    string `json:"physiology"`
+	SourceDevice  string `json:"source_device"`
+}
+
+func activityCustomFieldProvenance(codes []string) map[string]customFieldProvenance {
+	if len(codes) == 0 {
+		return nil
+	}
+	provenance := make(map[string]customFieldProvenance, len(codes))
+	for _, code := range codes {
+		if strings.TrimSpace(code) == "" {
+			continue
+		}
+		provenance[code] = customFieldProvenance{
+			SourceField:   code,
+			ResponseField: "custom_fields." + code,
+			Scope:         "activity",
+			Source:        "intervals.icu activity custom field",
+			Selection:     "explicit",
+			Unit:          "not_provided",
+			Scale:         "not_provided",
+			Algorithm:     "not_provided",
+			Physiology:    "not_provided",
+			SourceDevice:  "not_provided",
+		}
+	}
+	if len(provenance) == 0 {
+		return nil
+	}
+	return provenance
+}
+
+func activityAvailabilityDiagnostics(rows []getActivitiesRow, customFieldCodes []string) []dataAvailabilityDiagnostic {
 	diagnostics := make([]dataAvailabilityDiagnostic, 0)
 	for _, row := range rows {
 		if diagnostic := restrictedSourceDiagnostic(row.ActivityID, row.Unavailable); diagnostic != nil {
 			diagnostics = append(diagnostics, *diagnostic)
+			continue
 		}
+		diagnostics = append(diagnostics, customFieldAvailabilityDiagnostics(row.ActivityID, row.Raw, customFieldCodes)...)
 	}
 	return diagnostics
+}
+
+func customFieldAvailabilityDiagnostics(activityID string, raw map[string]any, codes []string) []dataAvailabilityDiagnostic {
+	if len(codes) == 0 || len(raw) == 0 {
+		if len(codes) == 0 {
+			return nil
+		}
+	}
+	diagnostics := make([]dataAvailabilityDiagnostic, 0, len(codes))
+	for _, code := range codes {
+		status := customFieldValueStatus(raw, code)
+		if status == "present" {
+			continue
+		}
+		reason := "custom_field_" + status
+		message := "Selected activity custom field value is absent from the upstream activity payload."
+		switch status {
+		case "null":
+			message = "Selected activity custom field is explicitly null in the upstream activity payload."
+		case "malformed":
+			message = "Selected activity custom field is present with a non-scalar value; it was omitted from the terse response."
+		}
+		diagnostics = append(diagnostics, dataAvailabilityDiagnostic{
+			Reason:        reason,
+			Message:       message,
+			ActivityID:    activityID,
+			Requested:     []string{code},
+			SourceFields:  []string{code},
+			MissingFields: []string{"custom_fields." + code},
+		})
+	}
+	return diagnostics
+}
+
+func customFieldValueStatus(raw map[string]any, code string) string {
+	value, ok := raw[code]
+	if !ok {
+		return "absent"
+	}
+	if value == nil {
+		return "null"
+	}
+	if !isCustomIntervalFieldValue(value) {
+		return "malformed"
+	}
+	return "present"
 }
 
 func activityStreamMissingDiagnostics(activityID string, requested []string, streams map[string]activityStreamRow) []dataAvailabilityDiagnostic {

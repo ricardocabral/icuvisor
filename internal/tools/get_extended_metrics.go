@@ -12,7 +12,7 @@ import (
 
 const (
 	getExtendedMetricsName                 = "get_extended_metrics"
-	getExtendedMetricsDescription          = "Get one activity's upstream-exposed extended metrics by activity_id. Terse mode drops unavailable fields and never computes or zero-fills missing metrics; include_full returns raw upstream payloads."
+	getExtendedMetricsDescription          = "Get one activity's upstream-exposed extended metrics by activity_id. Terse mode drops unavailable fields and never computes or zero-fills missing metrics; interval DFA alpha1 is surfaced only from the upstream average_dfa_a1 key as unitless, conditional interval evidence and is never relabeled as activity-level AlphaHRV; _meta.metric_provenance and _meta.data_availability preserve source and insufficient-data status. include_full returns raw upstream payloads."
 	invalidExtendedMetricsArgumentsMessage = "invalid get_extended_metrics arguments; provide activity_id and optional include_full"
 	fetchExtendedMetricsMessage            = "could not fetch extended metrics; check activity_id and intervals.icu credentials"
 )
@@ -83,19 +83,30 @@ type extendedIntervalMetrics struct {
 	TrainingLoad             *float64 `json:"training_load,omitempty"`
 }
 
+type extendedMetricProvenance struct {
+	SourceField    string `json:"source_field"`
+	ResponseField  string `json:"response_field"`
+	Scope          string `json:"scope"`
+	Unit           string `json:"unit"`
+	SourceEndpoint string `json:"source_endpoint"`
+	Availability   string `json:"availability"`
+}
+
 type extendedMetricsMeta struct {
-	ServerVersion       string                 `json:"server_version"`
-	IncludeFull         bool                   `json:"include_full"`
-	ExtendedMetricUnits map[string]string      `json:"extended_metric_units"`
-	DroppedFields       []string               `json:"dropped_fields"`
-	HypoxicLoadCaveat   *hypoxicTrainingCaveat `json:"hypoxic_training_caveat,omitempty"`
-	Partial             bool                   `json:"partial,omitempty"`
-	UnavailableSources  []string               `json:"unavailable_sources,omitempty"`
+	ServerVersion       string                              `json:"server_version"`
+	IncludeFull         bool                                `json:"include_full"`
+	ExtendedMetricUnits map[string]string                   `json:"extended_metric_units"`
+	MetricProvenance    map[string]extendedMetricProvenance `json:"metric_provenance"`
+	DroppedFields       []string                            `json:"dropped_fields"`
+	DataAvailability    []dataAvailabilityDiagnostic        `json:"data_availability,omitempty"`
+	HypoxicLoadCaveat   *hypoxicTrainingCaveat              `json:"hypoxic_training_caveat,omitempty"`
+	Partial             bool                                `json:"partial,omitempty"`
+	UnavailableSources  []string                            `json:"unavailable_sources,omitempty"`
 }
 
 func newGetExtendedMetricsTool(client ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
-	return fullTool(Tool{Name: getExtendedMetricsName, Description: getExtendedMetricsDescription, InputSchema: extendedMetricsInputSchema(), OutputSchema: genericOutputSchema("Upstream-exposed extended metrics for one activity."), Handler: getExtendedMetricsHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
+	return fullTool(Tool{Name: getExtendedMetricsName, Description: getExtendedMetricsDescription, InputSchema: extendedMetricsInputSchema(), OutputSchema: genericOutputSchema("Upstream-exposed extended metrics for one activity. Interval dfa_alpha1 is source-labelled from average_dfa_a1 with unitless, conditional, interval-only provenance; missing, null, or malformed values remain omitted and are recorded in _meta.data_availability."), Handler: getExtendedMetricsHandler(client, profileClient, version, timezoneFallback, debugMetadata, shapeCfg)})
 }
 
 func getExtendedMetricsHandler(client ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
@@ -186,7 +197,12 @@ func optionalPowerVsHR(ctx context.Context, client ExtendedMetricsClient, activi
 }
 
 func stravaUnavailableExtendedMetricsResponse(activityID string, activity intervals.Activity, includeFull bool, version string) extendedMetricsResponse {
-	out := extendedMetricsResponse{ActivityID: firstNonEmpty(activity.ID, activityID), StravaImported: true, Unavailable: &unavailableReason{Reason: "strava_blocked", Workaround: stravaBlockedWorkaround(activity.Raw)}, Meta: extendedMetricsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, ExtendedMetricUnits: extendedMetricUnits(), DroppedFields: droppedExtendedMetricFields}}
+	availability := restrictedSourceDiagnostic(firstNonEmpty(activity.ID, activityID), &unavailableReason{Reason: "strava_blocked", Workaround: stravaBlockedWorkaround(activity.Raw)})
+	dataAvailability := make([]dataAvailabilityDiagnostic, 0, 1)
+	if availability != nil {
+		dataAvailability = append(dataAvailability, *availability)
+	}
+	out := extendedMetricsResponse{ActivityID: firstNonEmpty(activity.ID, activityID), StravaImported: true, Unavailable: &unavailableReason{Reason: "strava_blocked", Workaround: stravaBlockedWorkaround(activity.Raw)}, Meta: extendedMetricsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, ExtendedMetricUnits: extendedMetricUnits(), MetricProvenance: extendedMetricProvenanceMap(), DroppedFields: droppedExtendedMetricFields, DataAvailability: dataAvailability}}
 	if includeFull {
 		out.Full = map[string]any{"activity": activity.Raw}
 	}
@@ -194,14 +210,19 @@ func stravaUnavailableExtendedMetricsResponse(activityID string, activity interv
 }
 
 func unavailableExtendedMetricsResponse(activityID string, includeFull bool, version string, err error) extendedMetricsResponse {
-	return extendedMetricsResponse{ActivityID: activityID, Unavailable: classifyActivityReadUnavailable(err), Meta: extendedMetricsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, ExtendedMetricUnits: extendedMetricUnits(), DroppedFields: droppedExtendedMetricFields}}
+	return extendedMetricsResponse{ActivityID: activityID, Unavailable: classifyActivityReadUnavailable(err), Meta: extendedMetricsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, ExtendedMetricUnits: extendedMetricUnits(), MetricProvenance: extendedMetricProvenanceMap(), DroppedFields: droppedExtendedMetricFields}}
 }
 
 func shapeExtendedMetrics(activityID string, activity intervals.Activity, dto intervals.IntervalsDTO, intervalsOK bool, powerVsHR intervals.PowerVsHR, powerVsHROK bool, includeFull bool, version string, unavailable []string) extendedMetricsResponse {
 	metrics := extendedMetricsFromActivity(activity.Raw, powerVsHR, powerVsHROK)
-	out := extendedMetricsResponse{ActivityID: firstNonEmpty(activity.ID, activityID), Metrics: &metrics, Meta: extendedMetricsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, ExtendedMetricUnits: extendedMetricUnits(), DroppedFields: droppedExtendedMetricFields, HypoxicLoadCaveat: hypoxicTrainingCaveatForActivity(activity.Raw, nil), Partial: len(unavailable) > 0, UnavailableSources: unavailable}}
+	meta := extendedMetricsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, ExtendedMetricUnits: extendedMetricUnits(), MetricProvenance: extendedMetricProvenanceMap(), DroppedFields: droppedExtendedMetricFields, HypoxicLoadCaveat: hypoxicTrainingCaveatForActivity(activity.Raw, nil), Partial: len(unavailable) > 0, UnavailableSources: unavailable}
+	out := extendedMetricsResponse{ActivityID: firstNonEmpty(activity.ID, activityID), Metrics: &metrics, Meta: meta}
 	if intervalsOK {
-		out.Intervals = extendedIntervals(dto.ICUIntervals)
+		var diagnostics []dataAvailabilityDiagnostic
+		out.Intervals, diagnostics = extendedIntervals(dto.ICUIntervals, firstNonEmpty(activity.ID, activityID))
+		out.Meta.DataAvailability = append(out.Meta.DataAvailability, diagnostics...)
+	} else if hasExtendedMetricSource(unavailable, "intervals") {
+		out.Meta.DataAvailability = append(out.Meta.DataAvailability, dfaUnavailableWithoutIntervalsDiagnostic(firstNonEmpty(activity.ID, activityID)))
 	}
 	if includeFull {
 		out.Full = map[string]any{"activity": activity.Raw}
@@ -252,8 +273,75 @@ func extendedMetricsFromActivity(raw map[string]any, powerVsHR intervals.PowerVs
 	return out
 }
 
-func extendedIntervals(rows []intervals.ActivityInterval) []extendedIntervalMetrics {
+func extendedMetricProvenanceMap() map[string]extendedMetricProvenance {
+	return map[string]extendedMetricProvenance{
+		"dfa_alpha1": {
+			SourceField:    "average_dfa_a1",
+			ResponseField:  "dfa_alpha1",
+			Scope:          "interval",
+			Unit:           "unitless",
+			SourceEndpoint: "GET /api/v1/activity/{id}/intervals",
+			Availability:   "conditional",
+		},
+	}
+}
+
+func dfaUnavailableWithoutIntervalsDiagnostic(activityID string) dataAvailabilityDiagnostic {
+	return dataAvailabilityDiagnostic{
+		Reason:        "dfa_alpha1_unverified_missing",
+		Message:       "The optional activity intervals source was unavailable, so interval DFA alpha1 cannot be established; no device or physiological value is inferred.",
+		ActivityID:    activityID,
+		SourceFields:  []string{"average_dfa_a1"},
+		MissingFields: []string{"intervals[].dfa_alpha1"},
+	}
+}
+
+func dfaIntervalAvailabilityDiagnostic(activityID, intervalID string, raw map[string]any) *dataAvailabilityDiagnostic {
+	value, ok := raw["average_dfa_a1"]
+	reason := ""
+	message := ""
+	switch {
+	case !ok:
+		reason = "dfa_alpha1_unverified_missing"
+		message = "The interval omits upstream average_dfa_a1; no device or physiological value is inferred."
+	case value == nil:
+		reason = "dfa_alpha1_null"
+		message = "The interval reports upstream average_dfa_a1 as null; no DFA alpha1 value is inferred."
+	case !isRawNumber(value):
+		reason = "dfa_alpha1_malformed"
+		message = "The interval reports a non-numeric upstream average_dfa_a1; it was omitted from the terse response."
+	default:
+		return nil
+	}
+	return &dataAvailabilityDiagnostic{Reason: reason, Message: message, ActivityID: activityID, IntervalID: intervalID, SourceFields: []string{"average_dfa_a1"}, MissingFields: []string{"intervals[].dfa_alpha1"}}
+}
+
+func isRawNumber(value any) bool {
+	switch typed := value.(type) {
+	case float64:
+		return true
+	case int:
+		return true
+	case json.Number:
+		_, err := typed.Float64()
+		return err == nil
+	default:
+		return false
+	}
+}
+
+func hasExtendedMetricSource(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
+}
+
+func extendedIntervals(rows []intervals.ActivityInterval, activityID string) ([]extendedIntervalMetrics, []dataAvailabilityDiagnostic) {
 	out := []extendedIntervalMetrics{}
+	diagnostics := make([]dataAvailabilityDiagnostic, 0)
 	for _, row := range rows {
 		metric := extendedIntervalMetrics{IntervalID: anyString(row.Raw["id"])}
 		metric.Label = rawString(row.Raw, "label")
@@ -261,6 +349,9 @@ func extendedIntervals(rows []intervals.ActivityInterval) []extendedIntervalMetr
 			metric.Label = rawString(row.Raw, "name")
 		}
 		metric.DFAAlpha1 = rawNumberPtr(row.Raw, "average_dfa_a1")
+		if diagnostic := dfaIntervalAvailabilityDiagnostic(activityID, metric.IntervalID, row.Raw); diagnostic != nil {
+			diagnostics = append(diagnostics, *diagnostic)
+		}
 		metric.WPrimeBalanceStartKJ = rawJoulesKJPtr(row.Raw, "wbal_start")
 		metric.WPrimeBalanceEndKJ = rawJoulesKJPtr(row.Raw, "wbal_end")
 		metric.JoulesAboveFTPKJ = rawJoulesKJPtr(row.Raw, "joules_above_ftp")
@@ -273,7 +364,7 @@ func extendedIntervals(rows []intervals.ActivityInterval) []extendedIntervalMetr
 			out = append(out, metric)
 		}
 	}
-	return out
+	return out, diagnostics
 }
 
 func hasExtendedIntervalMetric(row extendedIntervalMetrics) bool {
@@ -381,6 +472,7 @@ func firstNumberPtr(values ...*float64) *float64 {
 
 func extendedMetricUnits() map[string]string {
 	return map[string]string{
+		"dfa_alpha1":                      "unitless",
 		"stride_length_m":                 string(units.UnitM),
 		"cardiac_decoupling_percent":      string(units.UnitPercent),
 		"aerobic_decoupling_percent":      string(units.UnitPercent),

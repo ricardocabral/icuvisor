@@ -15,7 +15,7 @@ func shapeGetActivitiesResponse(activities []intervals.Activity, gearResolutions
 	for _, activity := range activities {
 		rows = append(rows, activityRow(activity, args.IncludeFull, timezoneFallback, unitSystem, gearResolutions[activity.ID], customFieldCodes))
 	}
-	meta := getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull, Timezone: timezoneFallback, FieldSemantics: activityFieldSemantics(rows), DataAvailability: activityAvailabilityDiagnostics(rows)}
+	meta := getActivitiesMeta{PageSize: args.PageSize, NextPageToken: nextToken, MoreAvailable: nextToken != "", IncludeFull: args.IncludeFull, Timezone: timezoneFallback, FieldSemantics: activityFieldSemantics(rows), DataAvailability: activityAvailabilityDiagnostics(rows, customFieldCodes), CustomFieldProvenance: activityCustomFieldProvenance(customFieldCodes)}
 	if asOfMeta != nil {
 		meta.AsOf = asOfMeta.AsOf
 		meta.AsOfDate = asOfMeta.AsOfDate
@@ -28,7 +28,7 @@ func shapeGetActivitiesResponse(activities []intervals.Activity, gearResolutions
 }
 
 func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback string, unitSystem response.UnitSystem, gearResolution activityGearResolution, customFieldCodes []string) getActivitiesRow {
-	row := getActivitiesRow{ActivityID: activity.ID, Name: strings.TrimSpace(stringValue(activity.Name)), Sport: stringValue(activity.Type), SubType: stringValue(activity.SubType), StartDateLocal: stringValue(activity.StartDateLocal), StartDateUTC: stringValue(activity.StartDate), Timezone: firstNonEmpty(stringValue(activity.Timezone), timezoneFallback), Commute: activity.Commute, Feel: activity.Feel, RPE: activity.RPE, Tags: rawStringArray(activity.Raw, "tags")}
+	row := getActivitiesRow{ActivityID: activity.ID, Name: strings.TrimSpace(stringValue(activity.Name)), Sport: stringValue(activity.Type), SubType: stringValue(activity.SubType), StartDateLocal: stringValue(activity.StartDateLocal), StartDateUTC: stringValue(activity.StartDate), Timezone: firstNonEmpty(stringValue(activity.Timezone), timezoneFallback), Commute: activity.Commute, Feel: activity.Feel, RPE: activity.RPE, Tags: rawStringArray(activity.Raw, "tags"), Raw: activity.Raw}
 	applyActivityGearResolution(&row, gearResolution)
 	if isStravaBlocked(activity) {
 		row.StravaImported = true

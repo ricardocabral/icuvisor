@@ -68,17 +68,18 @@ type getActivityIntervalsUnavailableResponse struct {
 }
 
 type activityReadMeta struct {
-	ServerVersion        string                       `json:"server_version"`
-	IncludeFull          bool                         `json:"include_full"`
-	Timezone             string                       `json:"timezone,omitempty"`
-	Limit                int                          `json:"limit,omitempty"`
-	SinceID              int64                        `json:"since_id,omitempty"`
-	FieldSemantics       map[string]string            `json:"field_semantics,omitempty"`
-	DataAvailability     []dataAvailabilityDiagnostic `json:"data_availability,omitempty"`
-	IntervalSource       analysis.IntervalSource      `json:"interval_source,omitempty"`
-	AutoLapSuspected     *bool                        `json:"auto_lap_suspected,omitempty"`
-	IntervalSourceCaveat string                       `json:"interval_source_caveat,omitempty"`
-	RecommendedNextTool  string                       `json:"recommended_next_tool,omitempty"`
+	ServerVersion         string                           `json:"server_version"`
+	IncludeFull           bool                             `json:"include_full"`
+	Timezone              string                           `json:"timezone,omitempty"`
+	Limit                 int                              `json:"limit,omitempty"`
+	SinceID               int64                            `json:"since_id,omitempty"`
+	FieldSemantics        map[string]string                `json:"field_semantics,omitempty"`
+	DataAvailability      []dataAvailabilityDiagnostic     `json:"data_availability,omitempty"`
+	CustomFieldProvenance map[string]customFieldProvenance `json:"custom_field_provenance,omitempty"`
+	IntervalSource        analysis.IntervalSource          `json:"interval_source,omitempty"`
+	AutoLapSuspected      *bool                            `json:"auto_lap_suspected,omitempty"`
+	IntervalSourceCaveat  string                           `json:"interval_source_caveat,omitempty"`
+	RecommendedNextTool   string                           `json:"recommended_next_tool,omitempty"`
 }
 
 type activityIntervalRow struct {
@@ -158,7 +159,7 @@ func getActivityDetailsHandler(client ActivityDetailsClient, profileClient Profi
 		}
 		activityTimezone := profileTimezone(profile.Timezone, timezoneFallback)
 		row := activityRow(activity, args.IncludeFull, activityTimezone, unitSystem, gearResolutions[activity.ID], customFieldCodes)
-		payload := getActivityDetailsResponse{Activity: row, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull, Timezone: activityTimezone, FieldSemantics: activityFieldSemantics([]getActivitiesRow{row}), DataAvailability: activityAvailabilityDiagnostics([]getActivitiesRow{row})}}
+		payload := getActivityDetailsResponse{Activity: row, Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull, Timezone: activityTimezone, FieldSemantics: activityFieldSemantics([]getActivitiesRow{row}), DataAvailability: activityAvailabilityDiagnostics([]getActivitiesRow{row}, customFieldCodes), CustomFieldProvenance: activityCustomFieldProvenance(customFieldCodes)}}
 		shaped, err := response.Shape(payload, shapeCfg.options(args.IncludeFull, nil, version, debugMetadata, getActivityDetailsName, unitSystem))
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping get_activity_details response: %w", err)
@@ -409,5 +410,5 @@ func activityReadInputSchema() map[string]any {
 }
 
 func activityReadOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Activity detail or interval response. Activity detail rows include commute from the upstream activity commute flag (false is preserved and absence is not inferred), feel as the upstream athlete-reported 1-5 scale, and rpe as native icu_rpe on the separate 1-10 rating of perceived exertion scale; feel and rpe are distinct and never converted. Rows also include upstream tags when intervals.icu returns a string-array tags field, calories_burned (active/exercise calories, distinct from wellness kcal_consumed intake), carbs_ingested_g (athlete-logged carb intake in grams), carbs_used_g (upstream carbs-burned estimate in grams), gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds explicitly requested athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. On activity detail responses the activity's timezone field and _meta.timezone give the IANA zone start_date_local is in; start_date_utc is UTC. Derive the calendar date from that timezone so the activity is not reported on the wrong day. For lap/rep or interval-execution analysis, use get_activity_intervals and inspect _meta.interval_source, _meta.auto_lap_suspected, and _meta.interval_source_caveat; get_activity_details alone does not identify whether intervals are structured_workout, device_laps/auto-laps, manual_added, mixed, unknown rows, or a single averaged/collapsed lap that should be followed up with compute_activity_segment_stats."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Activity detail or interval response. Activity detail rows include commute from the upstream activity commute flag (false is preserved and absence is not inferred), feel as the upstream athlete-reported 1-5 scale, and rpe as native icu_rpe on the separate 1-10 rating of perceived exertion scale; feel and rpe are distinct and never converted. Rows also include upstream tags when intervals.icu returns a string-array tags field, calories_burned (active/exercise calories, distinct from wellness kcal_consumed intake), carbs_ingested_g (athlete-logged carb intake in grams), carbs_used_g (upstream carbs-burned estimate in grams), gear_id/gear_name when upstream permits, and gear_resolution values resolved/name_missing/unresolved/lookup_unavailable so unresolved IDs are never guessed. custom_fields holds explicitly requested athlete-defined activity custom field values keyed by the upstream field code when intervals.icu returns them. `_meta.custom_field_provenance` describes each selected code as an activity-scope intervals.icu custom field with unit, scale, algorithm, physiology, and source-device marked not_provided; `_meta.data_availability` associates absent, null, and malformed selected values with the activity ID. On activity detail responses the activity's timezone field and _meta.timezone give the IANA zone start_date_local is in; start_date_utc is UTC. Derive the calendar date from that timezone so the activity is not reported on the wrong day. For lap/rep or interval-execution analysis, use get_activity_intervals and inspect _meta.interval_source, _meta.auto_lap_suspected, and _meta.interval_source_caveat; get_activity_details alone does not identify whether intervals are structured_workout, device_laps/auto-laps, manual_added, mixed, unknown rows, or a single averaged/collapsed lap that should be followed up with compute_activity_segment_stats."}
 }
