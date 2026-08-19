@@ -54,6 +54,7 @@ var v03ToolCatalog = []catalogToolSpec{
 	{name: "get_activity_messages", requirement: tools.RequirementRead},
 	{name: "get_activity_splits", requirement: tools.RequirementRead},
 	{name: "get_activity_streams", requirement: tools.RequirementRead},
+	{name: "get_climb_segments", requirement: tools.RequirementRead},
 	{name: "get_annual_training_plan", requirement: tools.RequirementRead},
 	{name: "get_athlete_profile", requirement: tools.RequirementRead},
 	{name: "get_best_efforts", requirement: tools.RequirementRead},
@@ -207,11 +208,11 @@ func wantToolRegistered(mode safety.Mode, requirement tools.Requirement) bool {
 func expectedRegisteredCount(mode safety.Mode) int {
 	switch mode {
 	case safety.ModeSafe:
-		return 61
+		return 62
 	case safety.ModeFull:
-		return 69
+		return 70
 	default:
-		return 47
+		return 48
 	}
 }
 
