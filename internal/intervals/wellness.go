@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -106,14 +107,61 @@ func (w *Wellness) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
+	normalized := tolerantWellnessObject(raw)
+	normalizedData, err := json.Marshal(normalized)
+	if err != nil {
+		return err
+	}
 	var decoded wellnessAlias
-	if err := json.Unmarshal(data, &decoded); err != nil {
+	if err := json.Unmarshal(normalizedData, &decoded); err != nil {
 		return err
 	}
 	*w = Wellness(decoded)
 	w.Raw = raw
 	w.Native, w.NativeClaimedKeys = extractWellnessNative(raw)
 	return nil
+}
+
+func tolerantWellnessObject(raw map[string]any) map[string]any {
+	out := make(map[string]any, len(raw))
+	for key, value := range raw {
+		out[key] = value
+	}
+	intFields := map[string]bool{"restingHR": true, "sleepQuality": true, "feel": true, "soreness": true, "fatigue": true, "stress": true, "mood": true, "motivation": true, "kcalConsumed": true, "sleepSecs": true, "hydration": true, "steps": true, "systolic": true, "diastolic": true}
+	floatFields := map[string]bool{"ctl": true, "atl": true, "rampRate": true, "ctlLoad": true, "atlLoad": true, "weight": true, "hrv": true, "hrvSDNN": true, "sleepScore": true, "avgSleepingHR": true, "spO2": true, "hydrationVolume": true, "readiness": true, "baevskySI": true, "bloodGlucose": true, "lactate": true, "bodyFat": true, "abdomen": true, "vo2max": true, "respiration": true, "carbohydrates": true, "protein": true, "fatTotal": true}
+	stringFields := map[string]bool{"id": true, "updated": true, "menstrualPhase": true, "menstrualPhasePredicted": true, "comments": true}
+	boolFields := map[string]bool{"locked": true, "tempWeight": true, "tempRestingHR": true}
+	for key, value := range raw {
+		if value == nil {
+			continue
+		}
+		if intFields[key] {
+			number, ok := value.(float64)
+			if !ok || math.IsNaN(number) || math.IsInf(number, 0) || number != math.Trunc(number) {
+				delete(out, key)
+			}
+			continue
+		}
+		if floatFields[key] {
+			number, ok := value.(float64)
+			if !ok || math.IsNaN(number) || math.IsInf(number, 0) {
+				delete(out, key)
+			}
+			continue
+		}
+		if stringFields[key] {
+			if _, ok := value.(string); !ok {
+				delete(out, key)
+			}
+			continue
+		}
+		if boolFields[key] {
+			if _, ok := value.(bool); !ok {
+				delete(out, key)
+			}
+		}
+	}
+	return out
 }
 
 // ListWellness retrieves wellness rows in ascending local-date range for the configured athlete.

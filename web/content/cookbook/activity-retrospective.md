@@ -4,7 +4,7 @@ description: "Break down a single ride, run, or race in detail — intervals, sp
 weight: 40
 ---
 
-After a key session you want more than "nice ride". This recipe makes the assistant pull one activity apart — intervals, splits, time-in-zone, decoupling — and turn it into two takeaways, while being honest about Strava-imported activities that come back nearly empty.
+After a key session you want more than "nice ride". This recipe makes the assistant pull one activity apart — intervals, splits, time-in-zone, decoupling — and turn it into two takeaways, while being honest about Strava-imported activities that come back nearly empty. Split rows are source-labelled and may include aligned average heart rate, power, cadence, and positive elevation gain when coverage is sufficient; missing channels stay omitted.
 
 For logged carbohydrate evidence, missing-log coverage, and source-labelled grams-per-hour calculations without nutrition targets, use the dedicated [Fueling review]({{< relref "fueling-review" >}}) recipe.
 
@@ -16,7 +16,25 @@ For logged carbohydrate evidence, missing-log coverage, and source-labelled gram
 
 ## The recipe
 
-You can name an activity by ID or just describe it — the assistant will look it up. For relative dates like "last Sunday," it should resolve the athlete-local date window with `get_activities`, choose the matching activity, then pass that `activity_id` to detail, interval, and split tools.
+You can name an activity by ID or just describe it — the assistant will look it up.
+
+## Compare repeated workouts
+
+When you already know the ordered activity IDs for the same workout, use the read-only `compute_workout_progression` analyzer instead of asking the assistant to match sessions by title or date. Supply at least two IDs in the order you want compared, and pass an exact planned `event_id` only when the activity's prescription is not already linked. The analyzer reports prescribed/completed structure, target-family adherence, stability, duration/recovery deltas, source-labelled feel/RPE, and optional wellness fields. It keeps mixed sports, missing intervals/prescriptions, unsafe lap sources, and missing readiness explicit; it does not assign a progression score, recommend extra intensity/repetitions/recovery changes, or write the calendar.
+
+```json
+{
+  "activities": [
+    {"activity_id": "ride-2026-05-01", "label": "first session"},
+    {"activity_id": "ride-2026-05-15", "label": "repeat session"}
+  ],
+  "include_readiness": true
+}
+```
+
+Treat `comparison.comparable_pair_count`, row/pair `status`, `reasons`, `_meta.source_tools`, and `_meta.insufficient_sample` as part of the evidence. A `not_comparable` or `insufficient_evidence` result is a data boundary, not a coaching verdict. For example, a mixed-sport pair or a missing prescription should be reported as unavailable evidence rather than silently paired.
+
+This analyzer is read-only: it does not choose the next workout, increase intensity, shorten recovery, add repetitions, assign a progression/readiness score, or write calendar events. Do not use workout names to discover the sequence. For relative dates like "last Sunday," first resolve the athlete-local date window with `get_activities`, choose the matching activity IDs, and then pass those explicit IDs to the analyzer.
 
 ```text
 Give me a detailed retrospective of my most recent hard ride. Use icuvisor
@@ -33,6 +51,10 @@ with my intervals.icu data.
 3. Get the intervals or laps with get_activity_intervals, check
    `_meta.interval_source`, `_meta.auto_lap_suspected`, and
    `_meta.interval_source_caveat`, and get the per-km or per-mile splits.
+   Treat split `provenance` and `distance_basis` as part of the evidence: a
+   device lap or workout interval is not automatically an exact fixed-distance
+   row. Use split `_meta.data_availability` for pauses, missing channels, and
+   insufficient coverage; do not fetch or average raw streams in chat.
 4. Get the time-in-zone for the session.
 5. Get the extended metrics, and report only the ones actually present
    (decoupling, IF, VI, normalized power, interval `dfa_alpha1`, RPE, feel).
@@ -71,6 +93,18 @@ SpO2 alone as proof. Keep the answer under about 400 words, leading with the
 interval table.
 ```
 
+## Split routing and caveats
+
+`get_activity_splits` keeps the existing `manual_intervals` and
+`virtual_streams` sources while adding `provenance`, `distance_basis`, and
+optional metric fields. Virtual rows require cumulative distance/time coverage
+from zero and include pause time; structured, manual-added, unknown, and device
+rows retain their upstream distance basis. A pool Swim request may omit
+`split_unit` to use `100m` only when the matching Swim sport setting says
+`SECS_100M` and the distance stream explicitly proves meters. Yards, unknown
+pace units, missing settings, or ambiguous distance metadata safely fall back
+to km/mi (or return a user error for explicit `100m`).
+
 ## What icuvisor does
 
 | Step | Tool                                                                                                                                                                    | Why                                                                                                                                                    |
@@ -82,6 +116,8 @@ interval table.
 | 5    | [`get_extended_metrics`]({{< relref "/reference/tools#get_extended_metrics" >}})                                                                                        | Decoupling, IF, VI — only those upstream actually fitted.                                                                                              |
 
 For a specific surge, climb, distance-bounded split, or sprint/anaerobic workout that appears as one averaged interval row, [`compute_activity_segment_stats`]({{< relref "/reference/tools#compute_activity_segment_stats" >}}) computes mean/median/p90, NP/IF, drift, or decoupling over an explicit time or distance range. For relative requests like "last 10 km", first use `get_activity_details` to get the activity distance, convert it to meters, and pass explicit bounds such as `start_distance_m = total_distance_m - 10000` and `end_distance_m = total_distance_m`. Do not fetch raw streams and average them in chat.
+
+For "which sustained climbs were in this activity?" or a comparison of its climb segments, route to [`get_climb_segments`]({{< relref "/reference/tools#get_climb_segments" >}}) rather than reducing raw streams in chat. Use bounded parameters, for example `{"activity_id":"a123","min_grade_percent":3,"min_elevation_gain_m":30,"max_gap_distance_m":100,"max_bridged_elevation_loss_m":5}`. The read-only analyzer returns concise distance, gain, grade, and available time/HR/power metrics; it reports missing or noisy altitude evidence instead of inventing climbs and does not make coaching or physiology claims.
 
 ### Hypoxic-training caveat
 

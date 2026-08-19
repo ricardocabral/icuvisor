@@ -13,8 +13,8 @@ import (
 
 const (
 	updateActivityName                    = "update_activity"
-	updateActivityDescription             = "Update one completed non-Strava activity by activity_id: rename it, replace its free-text description, and/or set athlete-logged carbohydrate intake in whole grams. Sparse update: omit a field to leave it unchanged; pass an explicit empty string for description to clear it. carbs_ingested_g accepts 0-2147483647, where zero is a logged zero; clearing is not supported, and read-only carbs_used_g is a distinct upstream estimate. Intervals.icu does not update Strava activities through this endpoint. Activity descriptions are prose metadata only, not planned-workout structure. This non-destructive metadata edit does not alter recorded streams, intervals, or analyzed metrics. Use set_activity_intervals (delete-mode tool) to write a structured workout_doc as the activity's interval set."
-	invalidUpdateActivityArgumentsMessage = "invalid update_activity arguments; provide activity_id plus at least one of name, description, or carbs_ingested_g"
+	updateActivityDescription             = "Update one completed non-Strava activity by activity_id: rename it, replace its free-text description, and/or set athlete-logged carbohydrate intake in whole grams. Sparse update: omit a field to leave it unchanged; pass an explicit empty string for description to clear it. carbs_ingested_g accepts 0-2147483647, where zero is a logged zero; clearing is not supported, and read-only carbs_used_g is a distinct upstream estimate. Intervals.icu does not update Strava activities through this endpoint. Gear assignment is not supported by the verified activity-write contract; use get_gear_list only to resolve existing activity gear IDs. Activity descriptions are prose metadata only, not planned-workout structure. This non-destructive metadata edit does not alter recorded streams, intervals, or analyzed metrics. Use set_activity_intervals (delete-mode tool) to write a structured workout_doc as the activity's interval set."
+	invalidUpdateActivityArgumentsMessage = "invalid update_activity arguments; provide activity_id plus at least one of name, description, or carbs_ingested_g; gear assignment is not supported"
 	updateActivityMessage                 = "could not update activity; check intervals.icu credentials, activity ID, and writable activity fields"
 	maxActivityCarbsIngestedG             = 1<<31 - 1
 )
@@ -188,5 +188,5 @@ func updateActivityInputSchema() map[string]any {
 }
 
 func updateActivityOutputSchema() map[string]any {
-	return map[string]any{"type": "object", "additionalProperties": true, "description": "Non-destructive activity metadata update confirmation with activity_id, status, fields_updated, normalized athlete_id, and source_endpoint metadata. Supports sparse name, free-text description, and athlete-logged carbs_ingested_g updates; carbs_used_g remains read-only. Does not alter recorded streams or interval analysis."}
+	return map[string]any{"type": "object", "additionalProperties": true, "description": "Non-destructive activity metadata update confirmation with activity_id, status, fields_updated, normalized athlete_id, and source_endpoint metadata. Supports sparse name, free-text description, and athlete-logged carbs_ingested_g updates; carbs_used_g and gear assignment remain unsupported/read-only. Does not alter recorded streams or interval analysis."}
 }

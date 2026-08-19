@@ -1,0 +1,50 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "activity_id": {
+      "description": "Required intervals.icu activity ID whose distance, altitude, time, heart-rate, and power streams are analyzed.",
+      "type": "string"
+    },
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "Accepted for analyzer compatibility; climb analysis never returns source arrays or a series field.",
+      "type": "boolean"
+    },
+    "max_bridged_elevation_loss_m": {
+      "default": 5,
+      "description": "Maximum downhill loss allowed across a bridged shelf, in meters; bounded 0..1000.",
+      "maximum": 1000,
+      "minimum": 0,
+      "type": "number"
+    },
+    "max_gap_distance_m": {
+      "default": 100,
+      "description": "Maximum distance gap allowed when bridging adjacent candidate runs, in meters; bounded 0..10000.",
+      "maximum": 10000,
+      "minimum": 0,
+      "type": "number"
+    },
+    "min_elevation_gain_m": {
+      "default": 30,
+      "description": "Minimum net elevation gain for a final segment, in meters; bounded 0..100000.",
+      "maximum": 100000,
+      "minimum": 0,
+      "type": "number"
+    },
+    "min_grade_percent": {
+      "default": 3,
+      "description": "Minimum inclusive average grade for a candidate climb, in percent; bounded 0.1..100.",
+      "maximum": 100,
+      "minimum": 0.1,
+      "type": "number"
+    }
+  },
+  "required": [
+    "activity_id"
+  ],
+  "type": "object"
+}

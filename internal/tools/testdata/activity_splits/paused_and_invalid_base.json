@@ -1,0 +1,9 @@
+{
+  "activity": {"id":"fixture-paused","type":"Run"},
+  "profile": {"preferred_units":"metric"},
+  "intervals": {"id":"fixture-paused","icu_intervals":[]},
+  "streams": [
+    {"type":"distance","data":[0,1000,1000,2000]},
+    {"type":"time","data":[0,100,160,260]}
+  ]
+}

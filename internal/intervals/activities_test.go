@@ -237,7 +237,7 @@ func TestUpdateActivitySendsSparsePutPayload(t *testing.T) {
 		if decoded["name"] != "Threshold ride" || decoded["description"] != "Felt strong; held target W" || len(decoded) != 2 {
 			t.Fatalf("body = %#v, want name+description only", decoded)
 		}
-		for _, unsupported := range []string{"rpe", "perceived_exertion", "icu_rpe", "feel", "commute"} {
+		for _, unsupported := range []string{"rpe", "perceived_exertion", "icu_rpe", "feel", "commute", "gear_id"} {
 			if _, ok := decoded[unsupported]; ok {
 				t.Fatalf("body = %#v, must not send read-only/unsupported field %q", decoded, unsupported)
 			}

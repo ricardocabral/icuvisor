@@ -1,0 +1,9 @@
+{
+  "activity": {"id":"fixture-pool-virtual","type":"Swim"},
+  "profile": {"preferred_units":"imperial","sportSettings":[{"types":["Swim"],"pace_load_type":"SWIM","pace_units":"SECS_100M"}]},
+  "intervals": {"id":"fixture-pool-virtual","icu_intervals":[]},
+  "streams": [
+    {"type":"Distance","unit":"meters","data":[0,50,150,250]},
+    {"type":"Time","data":[0,30,90,150]}
+  ]
+}

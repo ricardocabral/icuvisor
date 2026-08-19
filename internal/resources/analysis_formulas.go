@@ -18,6 +18,7 @@ const (
 	AnalysisFormulaRefPerformancePotential    = AnalysisFormulasURI + "#performance_potential"
 	AnalysisFormulaRefPowerZoneMechanicalWork = AnalysisFormulasURI + "#power_zone_mechanical_work"
 	AnalysisFormulaRefTrainingLoadMonotony    = AnalysisFormulasURI + "#training_load_monotony"
+	AnalysisFormulaRefWorkoutProgression      = AnalysisFormulasURI + "#workout_progression_evidence"
 )
 
 type analysisFormulaEntry struct {
@@ -67,6 +68,11 @@ var analysisFormulaEntries = []analysisFormulaEntry{
 		ref:       AnalysisFormulaRefPowerZoneMechanicalWork,
 		label:     "Power-zone mechanical work",
 		paragraph: "Power-zone mechanical work integrates canonical recorded power over elapsed sample timestamps using the left endpoint: for each eligible interval calculate `delta_t_i = t_(i+1) - t_i`, assign `delta_t_i` and `work_i = power_i * delta_t_i` to the lower-inclusive, upper-exclusive configured power zone containing `power_i`, with the final zone open-ended and an explicit below-zone bucket `[0, first_boundary)` when the first configured boundary is greater than zero, then sum zone seconds and joules and convert with `zone_kJ = zone_joules / 1000`. Require finite timestamps, `0 < delta_t_i <= 60 seconds`, and finite nonnegative left-endpoint power; skip invalid or longer intervals, do not interpolate missing power, and give the final sample zero duration because it has no following timestamp. Reported kJ is external mechanical work only, not metabolic energy, calorie expenditure, or food calories. Source: BIPM, The International System of Units (SI Brochure), 9th edition, definitions of the joule and watt (`W = J/s`).",
+	},
+	{
+		ref:       AnalysisFormulaRefWorkoutProgression,
+		label:     "Workout progression evidence",
+		paragraph: "Ordered progression evidence is descriptive and read-only. Filter non-finite observations before every mean or range calculation; split stability values into the first `floor(n/2)` and remaining second half and require two finite values per half. `Target.Value` uses `abs(observed-value)`; finite ordered `Min/Max` uses zero error in range or distance to the nearest bound. Relative target error is `100 * absolute_error / abs(target_or_nearest_bound)` only for a nonzero denominator; zero denominators omit the relative value and expose `zero_denominator` while retaining independently available absolute values. Target adherence aggregates only within matching power/heart-rate/pace unit families, and family means/counts never combine upstream compliance. Duration/recovery percent deltas are signed `100 * (current-previous) / previous` with a positive finite previous denominator; absolute deltas remain available when the denominator is zero. Round finite output half away from zero to six decimal places. Missing or unsafe interval sources, unsupported targets, incomplete structures, and readiness gaps remain explicit insufficient evidence; no score, recommendation, physiology inference, or write is derived.",
 	},
 	{
 		ref:       AnalysisFormulaRefTrainingLoadMonotony,

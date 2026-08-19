@@ -9,9 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added the full-toolset, read-only `compute_workout_progression` analyzer for an explicitly ordered sequence of repeated activity IDs. It reports deterministic prescribed/completed structure, target-family adherence, stability, duration/recovery deltas, source-labelled feel/RPE, optional wellness context, and evidence gaps without assigning a progression score, recommending changes, or writing the calendar.
 - Added source-labelled AlphaHRV/DFA custom-field audit behavior: interval `dfa_alpha1` is retained only from upstream `average_dfa_a1` with interval/unitless provenance, while explicitly selected activity custom fields preserve exact codes and expose honest absent/null/malformed diagnostics without inventing units, devices, readiness, or physiology.
 - Added source-labelled activity read fields for upstream `commute`, athlete-reported `feel` (1–5), and native `rpe` from `icu_rpe` (1–10), preserving explicit false/null/absent semantics without scale conversion. The unverified upstream RPE write contract remains unsupported and documented.
 - Added inclusive time- and distance-window selection to `get_activity_streams`. Windows are sliced locally from aligned streams, preserve `data2` and sampling provenance, and remain metadata-only unless `include_full:true`; the full-fetch upstream limitation is documented.
+- Added full-toolset, read-only `get_climb_segments` for deterministic sustained-climb summaries from canonical distance/altitude streams, with bounded grade/gain/gap/bridged-loss parameters, optional duration/VAM/HR/power metrics, and explicit missing/null/noisy-data diagnostics. It never returns raw arrays or coaching/physiology claims.
+- Enriched `get_activity_splits` with source-labelled `provenance`, `distance_basis`, optional aligned HR/power/cadence/elevation metrics, explicit coverage diagnostics, and validated no-GPS pool-swim `100m` rows. Upstream intervals and device laps remain duration/distance evidence rather than being relabelled exact fixed-distance splits; missing channels are omitted.
+
+### Changed
+
+- Clarified that activity `gear_id` assignment is not advertised: the documented activity PUT exposes only a generic full-Activity schema, without verified writable gear-key, response round-trip, or clear/omit semantics. Existing gear IDs remain read-only and resolvable through `get_gear_list`.
 
 ## [1.5.10] - 2026-08-16
 

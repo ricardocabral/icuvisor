@@ -1,0 +1,6 @@
+{
+  "activity": {"id":"fixture-decreasing-time","type":"Run"},
+  "profile": {"preferred_units":"metric"},
+  "intervals": {"id":"fixture-decreasing-time","icu_intervals":[]},
+  "streams": [{"type":"distance","data":[0,1000,2000]},{"type":"time","data":[0,60,50]}]
+}

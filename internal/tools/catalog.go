@@ -126,11 +126,13 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 		newGetActivityIntervalsTool(client, client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetActivityStreamsTool(client, client, opts.version, opts.debugMetadata, opts.shaping),
 		newComputeActivitySegmentStatsTool(client, opts.version, opts.debugMetadata, opts.shaping),
+		newGetClimbSegmentsTool(client, opts.version, opts.debugMetadata, opts.shaping),
 		newComputeZoneEnergyTool(client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newComputeZoneTimeTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newComputeLoadBalanceTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newComputeBaselineTool(client, client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newComputeComplianceRateTool(client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newComputeWorkoutProgressionTool(client, client, client, client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newComputeTrainingMonotonyTool(client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetActivitySplitsTool(client, client, client, client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetActivityHistogramTool(client, client, client, opts.version, opts.debugMetadata, opts.shaping),
@@ -166,7 +168,7 @@ func toolCatalogGroup(name string) string {
 		return "wellness"
 	case getActivitiesName, getActivitiesAroundName, getActivityDetailsName, getActivityIntervalsName, getActivityStreamsName, getActivitySplitsName, getActivityHistogramName, getActivityMessagesName, addActivityMessageName, getExtendedMetricsName, deleteActivityName, updateActivityName, setActivityIntervalsName:
 		return "activities"
-	case computeActivitySegmentStatsName, analyzeTrendName, analyzeDistributionName, analyzeCorrelationName, analyzeEffortsDeltaName, computeZoneEnergyName, computeZoneTimeName, computeLoadBalanceName, computeBaselineName, computeComplianceRateName, computeTrainingMonotonyName, getDataQualityReportName:
+	case computeActivitySegmentStatsName, getClimbSegmentsName, analyzeTrendName, analyzeDistributionName, analyzeCorrelationName, analyzeEffortsDeltaName, computeZoneEnergyName, computeZoneTimeName, computeLoadBalanceName, computeBaselineName, computeComplianceRateName, computeWorkoutProgressionName, computeTrainingMonotonyName, getDataQualityReportName:
 		return "analyzers"
 	case resolveCalendarDatesName, getEventsName, getEventByIDName, addOrUpdateEventName, addUnavailableDateRangeName, deleteEventName, deleteEventsByDateRangeName, linkActivityToEventName:
 		return "events"

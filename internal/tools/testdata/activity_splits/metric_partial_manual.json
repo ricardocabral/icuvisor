@@ -1,0 +1,6 @@
+{
+  "activity": {"id":"fixture-partial-manual","type":"Run"},
+  "profile": {"preferred_units":"metric"},
+  "intervals": {"id":"fixture-partial-manual","icu_intervals":[{"id":"outside","start_time":100,"end_time":200,"distance":1000,"duration":100}]},
+  "streams": [{"type":"distance","data":[0,1000]},{"type":"time","data":[0,100]},{"type":"Cadence","data":[80,90]}]
+}

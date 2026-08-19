@@ -34,16 +34,24 @@ func TestResolveActivityGearUsesFullGearListForNumericID(t *testing.T) {
 
 	activity := loadSingleActivityFixtureFile(t, activityDetailWithGearFixture)
 	client := &fixtureGearListClient{gear: loadGearFixtureFile(t, gearListFixture)}
-	resolutions, err := resolveActivityGear(context.Background(), client, newGearListCache(), []intervals.Activity{activity})
+	cache := newGearListCache()
+	resolutions, err := resolveActivityGear(context.Background(), client, cache, []intervals.Activity{activity})
 	if err != nil {
 		t.Fatalf("resolveActivityGear() error = %v", err)
 	}
 	resolution := resolutions["a-bike"]
-	if resolution.GearID != "123" || resolution.Name != "Synthetic Active Bike" || resolution.Status != gearResolutionResolved {
-		t.Fatalf("resolution = %#v, want numeric gear ID resolved from full gear list", resolution)
+	if resolution.GearID != activity.GearID || resolution.GearID != "123" || resolution.Name != "Synthetic Active Bike" || resolution.Status != gearResolutionResolved {
+		t.Fatalf("resolution = %#v, want retained numeric gear ID resolved from full gear list", resolution)
+	}
+	cached, err := resolveActivityGear(context.Background(), client, cache, []intervals.Activity{activity})
+	if err != nil {
+		t.Fatalf("resolveActivityGear() cached error = %v", err)
+	}
+	if cached[activity.ID].Name != "Synthetic Active Bike" || cached[activity.ID].GearID != activity.GearID || cached[activity.ID].Status != gearResolutionResolved {
+		t.Fatalf("cached resolution = %#v, want retained ID and resolved name", cached[activity.ID])
 	}
 	if client.calls != 1 {
-		t.Fatalf("gear list calls = %d, want one full gear list fetch", client.calls)
+		t.Fatalf("gear list calls = %d, want one fetch followed by cache reuse", client.calls)
 	}
 }
 

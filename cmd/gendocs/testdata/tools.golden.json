@@ -68,7 +68,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "Get manual or virtual per-km/per-mile activity splits by activity_id.",
+    "summary": "Get source-labelled manual or virtual fixed-distance activity splits by activity_id, with optional aligned heart-rate, power, cadence, and elevation metrics.",
     "anchor": "get_activity_splits"
   },
   {
@@ -176,6 +176,14 @@
     "anchor": "compute_training_monotony"
   },
   {
+    "name": "compute_workout_progression",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the user supplies an explicit ordered sequence of repeated workout activity IDs and asks for factual progression evidence.",
+    "anchor": "compute_workout_progression"
+  },
+  {
     "name": "compute_zone_energy",
     "group": "analyzers",
     "tier": "full",
@@ -190,6 +198,14 @@
     "safety": "read",
     "summary": "Use when the prompt asks for zone-time totals or intensity distribution (seconds/share in Z1-Zn) across activities in a date window; do not fetch get_* rows or streams and reduce them in chat.",
     "anchor": "compute_zone_time"
+  },
+  {
+    "name": "get_climb_segments",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks which sustained climbs occurred in one activity or asks to compare climb segments; do not fetch raw streams and reduce them in chat.",
+    "anchor": "get_climb_segments"
   },
   {
     "name": "get_data_quality_report",

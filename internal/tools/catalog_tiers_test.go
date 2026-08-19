@@ -2,6 +2,7 @@ package tools
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/ricardocabral/icuvisor/internal/safety"
@@ -66,11 +67,13 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 		getActivityStreamsName:          safety.ToolsetFull,
 		getActivityHistogramName:        safety.ToolsetFull,
 		computeActivitySegmentStatsName: safety.ToolsetFull,
+		getClimbSegmentsName:            safety.ToolsetFull,
 		computeZoneEnergyName:           safety.ToolsetFull,
 		computeZoneTimeName:             safety.ToolsetCore,
 		computeLoadBalanceName:          safety.ToolsetFull,
 		computeBaselineName:             safety.ToolsetCore,
 		computeComplianceRateName:       safety.ToolsetFull,
+		computeWorkoutProgressionName:   safety.ToolsetFull,
 		computeTrainingMonotonyName:     safety.ToolsetFull,
 		getPlanningContextName:          safety.ToolsetFull,
 		getAnnualTrainingPlanName:       safety.ToolsetFull,
@@ -116,6 +119,49 @@ func TestRegisteredToolTierMembership(t *testing.T) {
 		if got != want {
 			t.Fatalf("tool %q tier = %q, want %q", name, got, want)
 		}
+	}
+}
+
+func TestComputeWorkoutProgressionCatalogDescriptor(t *testing.T) {
+	t.Parallel()
+
+	var descriptor ToolDescriptor
+	for _, candidate := range Catalog() {
+		if candidate.Name == computeWorkoutProgressionName {
+			descriptor = candidate
+			break
+		}
+	}
+	if descriptor.Name == "" || descriptor.Group != "analyzers" || descriptor.Tier != safety.ToolsetFull.String() || descriptor.Safety != string(RequirementRead) {
+		t.Fatalf("descriptor = %#v, want full read-only analyzer", descriptor)
+	}
+	for _, phrase := range []string{"explicit ordered", "repeated workout activity IDs"} {
+		if !strings.Contains(descriptor.Summary, phrase) {
+			t.Fatalf("summary = %q, want routing boundary %q", descriptor.Summary, phrase)
+		}
+	}
+}
+
+func TestGetClimbSegmentsCatalogDescriptor(t *testing.T) {
+	t.Parallel()
+
+	var descriptor ToolDescriptor
+	found := false
+	for _, candidate := range Catalog() {
+		if candidate.Name == getClimbSegmentsName {
+			descriptor = candidate
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("Catalog() missing get_climb_segments")
+	}
+	if descriptor.Group != "analyzers" || descriptor.Tier != safety.ToolsetFull.String() || descriptor.Safety != string(RequirementRead) {
+		t.Fatalf("descriptor = %#v, want full read-only analyzer catalog entry", descriptor)
+	}
+	if !strings.Contains(descriptor.Summary, "sustained climbs") || !strings.Contains(descriptor.Summary, "do not fetch raw streams") {
+		t.Fatalf("descriptor summary = %q, want bounded routing guidance", descriptor.Summary)
 	}
 }
 

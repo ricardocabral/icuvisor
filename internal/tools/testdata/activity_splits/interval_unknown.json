@@ -1,0 +1,1 @@
+{"activity":{"id":"fixture-unknown","type":"Run"},"profile":{"preferred_units":"metric"},"intervals":{"id":"fixture-unknown","icu_intervals":[{"id":"unknown-1","name":"Segment","distance":1000,"duration":100}]},"streams":[{"type":"distance","data":[0,1000]},{"type":"time","data":[0,100]}]}

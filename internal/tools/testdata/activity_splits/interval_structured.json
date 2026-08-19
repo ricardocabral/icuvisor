@@ -1,0 +1,1 @@
+{"activity":{"id":"fixture-structured","type":"Run"},"profile":{"preferred_units":"metric"},"intervals":{"id":"fixture-structured","icu_intervals":[{"id":"structured-1","name":"Tempo","distance":1000,"duration":100}]},"streams":[{"type":"distance","data":[0,1000]},{"type":"time","data":[0,100]}]}

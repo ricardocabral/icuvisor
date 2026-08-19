@@ -1,0 +1,9 @@
+{
+  "activity": {"id":"fixture-ride-only","type":"Ride"},
+  "profile": {"preferred_units":"miles"},
+  "intervals": {"id":"fixture-ride-only","icu_intervals":[]},
+  "streams": [
+    {"type":"distance","data":[0,1609.344]},
+    {"type":"time","data":[0,480]}
+  ]
+}
