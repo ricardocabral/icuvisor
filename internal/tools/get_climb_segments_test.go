@@ -35,7 +35,7 @@ func TestGetClimbSegmentsRequestsExactCanonicalSourceStreams(t *testing.T) {
 		rawClimbRow("heartrate", []any{140.0, 145.0, 150.0}, false),
 		rawClimbRow("watts", []any{200.0, 210.0, 220.0}, false),
 	}}
-	tool := newGetClimbSegmentsTool(client, "test", false)
+	tool := newGetClimbSegmentsTool(client, t.Name(), t.Name() == "debug", responseShaping{})
 	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1","min_elevation_gain_m":1,"include_full":true}`)})
 	if err != nil {
 		t.Fatalf("Handler() error = %v", err)
@@ -75,7 +75,7 @@ func TestGetClimbSegmentsValidatesBeforeFetching(t *testing.T) {
 	for _, raw := range cases {
 		t.Run(raw, func(t *testing.T) {
 			client := &climbSegmentsClient{}
-			tool := newGetClimbSegmentsTool(client, "test", false)
+			tool := newGetClimbSegmentsTool(client, t.Name(), t.Name() == "debug")
 			_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(raw)})
 			if err == nil {
 				t.Fatal("Handler() error = nil, want validation error")
@@ -103,7 +103,7 @@ func TestGetClimbSegmentsPreservesNullEvidenceInQuality(t *testing.T) {
 				rawClimbRow("distance", []any{0.0, 10.0}, false),
 				tc.altitude,
 			}}
-			tool := newGetClimbSegmentsTool(client, "test", false)
+			tool := newGetClimbSegmentsTool(client, t.Name(), t.Name() == "debug")
 			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
 			if err != nil {
 				t.Fatalf("Handler() error = %v", err)
@@ -122,7 +122,7 @@ func TestGetClimbSegmentsPreservesNullEvidenceInQuality(t *testing.T) {
 
 func TestGetClimbSegmentsUnavailableIsShortUserError(t *testing.T) {
 	client := &climbSegmentsClient{err: errors.New("authorization detail")}
-	tool := newGetClimbSegmentsTool(client, "test", false)
+	tool := newGetClimbSegmentsTool(client, t.Name(), t.Name() == "debug")
 	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
 	if err == nil || !strings.Contains(err.Error(), getClimbSegmentsFetchMsg) || strings.Contains(err.Error(), "authorization detail") {
 		t.Fatalf("error = %v, want short user error without transport detail", err)
