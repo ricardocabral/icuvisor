@@ -83,6 +83,8 @@ interval table.
 
 For a specific surge, climb, distance-bounded split, or sprint/anaerobic workout that appears as one averaged interval row, [`compute_activity_segment_stats`]({{< relref "/reference/tools#compute_activity_segment_stats" >}}) computes mean/median/p90, NP/IF, drift, or decoupling over an explicit time or distance range. For relative requests like "last 10 km", first use `get_activity_details` to get the activity distance, convert it to meters, and pass explicit bounds such as `start_distance_m = total_distance_m - 10000` and `end_distance_m = total_distance_m`. Do not fetch raw streams and average them in chat.
 
+For "which sustained climbs were in this activity?" or a comparison of its climb segments, route to [`get_climb_segments`]({{< relref "/reference/tools#get_climb_segments" >}}) rather than reducing raw streams in chat. Use bounded parameters, for example `{"activity_id":"a123","min_grade_percent":3,"min_elevation_gain_m":30,"max_gap_distance_m":100,"max_bridged_elevation_loss_m":5}`. The read-only analyzer returns concise distance, gain, grade, and available time/HR/power metrics; it reports missing or noisy altitude evidence instead of inventing climbs and does not make coaching or physiology claims.
+
 ### Hypoxic-training caveat
 
 Some athletes do workouts in reduced-oxygen environments such as altitude tents,

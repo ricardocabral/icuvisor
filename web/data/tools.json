@@ -192,6 +192,14 @@
     "anchor": "compute_zone_time"
   },
   {
+    "name": "get_climb_segments",
+    "group": "analyzers",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Use when the prompt asks which sustained climbs occurred in one activity or asks to compare climb segments; do not fetch raw streams and reduce them in chat.",
+    "anchor": "get_climb_segments"
+  },
+  {
     "name": "get_data_quality_report",
     "group": "analyzers",
     "tier": "core",

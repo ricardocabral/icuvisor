@@ -150,6 +150,149 @@ func TestAnalyzeClimbSegmentsAppliesRawGainThreshold(t *testing.T) {
 	}
 }
 
+func TestAnalyzeClimbSegmentsAdversarialFixtures(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        ClimbSegmentsInput
+		wantStatus   string
+		wantSegments int
+	}{
+		{
+			name: "separate climbs with zero gap allowance",
+			input: func() ClimbSegmentsInput {
+				input := climbTestInput([]float64{0, 10, 20, 30, 40, 50}, []float64{0, 10, 10, 20, 20, 30})
+				input.MinElevationGainM = 5
+				input.MaxGapDistanceM = 0
+				return input
+			}(),
+			wantStatus: ClimbStatusOK, wantSegments: 3,
+		},
+		{
+			name: "shelf merges when endpoint guards pass",
+			input: func() ClimbSegmentsInput {
+				input := climbTestInput([]float64{0, 10, 20, 30}, []float64{0, 10, 9, 19})
+				input.MinElevationGainM = 15
+				return input
+			}(),
+			wantStatus: ClimbStatusOK, wantSegments: 1,
+		},
+		{
+			name: "descent separates candidate windows",
+			input: func() ClimbSegmentsInput {
+				input := climbTestInput([]float64{0, 10, 20, 30}, []float64{0, 10, 0, 10})
+				input.MinElevationGainM = 5
+				input.MaxGapDistanceM = 0
+				return input
+			}(),
+			wantStatus: ClimbStatusOK, wantSegments: 2,
+		},
+		{
+			name: "gap guard rejects distance beyond limit",
+			input: func() ClimbSegmentsInput {
+				input := climbTestInput([]float64{0, 10, 25, 35}, []float64{0, 10, 9, 19})
+				input.MinElevationGainM = 15
+				input.MaxGapDistanceM = 14
+				return input
+			}(),
+			wantStatus: ClimbStatusNoClimb, wantSegments: 0,
+		},
+		{
+			name: "post bridge grade guard rejects shallow merge",
+			input: func() ClimbSegmentsInput {
+				input := climbTestInput([]float64{0, 10, 110, 120}, []float64{0, 10, 9, 19})
+				input.MinGradePercent = 20
+				return input
+			}(),
+			wantStatus: ClimbStatusOK, wantSegments: 2,
+		},
+		{
+			name: "minimum gain filters otherwise qualifying climb",
+			input: func() ClimbSegmentsInput {
+				input := climbTestInput([]float64{0, 10}, []float64{0, 0.9})
+				input.MinElevationGainM = 1
+				return input
+			}(),
+			wantStatus: ClimbStatusNoClimb, wantSegments: 0,
+		},
+		{
+			name: "null altitude preserves local valid climb",
+			input: func() ClimbSegmentsInput {
+				input := climbTestInput([]float64{0, 10, 20, 30, 40}, []float64{0, 10, 0, 20, 30})
+				input.Altitude.Valid = []bool{true, true, false, true, true}
+				input.Altitude.NullCount = 1
+				input.MinElevationGainM = 5
+				input.MaxGapDistanceM = 0
+				return input
+			}(),
+			wantStatus: ClimbStatusNull, wantSegments: 2,
+		},
+		{
+			name: "flat altitude reports flat",
+			input: func() ClimbSegmentsInput {
+				return climbTestInput([]float64{0, 10, 20}, []float64{42, 42, 42})
+			}(),
+			wantStatus: ClimbStatusFlat, wantSegments: 0,
+		},
+		{
+			name: "noisy altitude reports noisy",
+			input: func() ClimbSegmentsInput {
+				input := climbTestInput([]float64{0, 10, 20}, []float64{0, 20, 21})
+				input.MinElevationGainM = 5
+				return input
+			}(),
+			wantStatus: ClimbStatusNoisy, wantSegments: 0,
+		},
+		{
+			name: "missing required streams reports missing",
+			input: func() ClimbSegmentsInput {
+				input := climbTestInput(nil, nil)
+				input.Distance = ClimbStream{Present: true, DataState: "empty"}
+				input.Altitude = ClimbStream{Present: true, DataState: "empty"}
+				return input
+			}(),
+			wantStatus: ClimbStatusMissing, wantSegments: 0,
+		},
+		{
+			name: "optional absence omits metrics",
+			input: func() ClimbSegmentsInput {
+				input := climbTestInput([]float64{0, 10}, []float64{0, 1})
+				input.MinElevationGainM = 0.5
+				return input
+			}(),
+			wantStatus: ClimbStatusOK, wantSegments: 1,
+		},
+		{
+			name: "metrics round deterministically",
+			input: func() ClimbSegmentsInput {
+				input := climbTestInput([]float64{0.1234567, 1.1234567}, []float64{0, 0.3333333})
+				input.MinElevationGainM = 0.3
+				return input
+			}(),
+			wantStatus: ClimbStatusOK, wantSegments: 1,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := AnalyzeClimbSegments(tc.input)
+			if err != nil {
+				t.Fatalf("AnalyzeClimbSegments() error = %v", err)
+			}
+			if got.DataQuality.Status != tc.wantStatus || len(got.Segments) != tc.wantSegments {
+				t.Fatalf("result = %#v, want status %q and %d segments", got, tc.wantStatus, tc.wantSegments)
+			}
+			if tc.name == "optional absence omits metrics" && (got.Segments[0].AverageHeartRateBPM != nil || got.Segments[0].AveragePowerWatts != nil) {
+				t.Fatalf("segment = %#v, want absent optional metrics", got.Segments[0])
+			}
+			if tc.name == "metrics round deterministically" {
+				segment := got.Segments[0]
+				if segment.StartDistanceM != 0.123457 || segment.EndDistanceM != 1.123457 || segment.ElevationGainM != 0.333333 || segment.AverageGradePercent != 33.33333 {
+					t.Fatalf("segment = %#v, want six-decimal rounded metrics", segment)
+				}
+			}
+		})
+	}
+}
+
 func TestAnalyzeClimbSegmentsUsesUnroundedCoverageBounds(t *testing.T) {
 	input := climbTestInput([]float64{0.0000004, 1.0000004}, []float64{0, 1})
 	input.MinElevationGainM = 0.5

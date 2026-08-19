@@ -17,6 +17,7 @@ const (
 	ApplyAnnualTrainingPlan          = "apply_annual_training_plan"
 	ApplyTrainingPlan                = "apply_training_plan"
 	ComputeActivitySegmentStats      = "compute_activity_segment_stats"
+	GetClimbSegments                 = "get_climb_segments"
 	ComputeBaseline                  = "compute_baseline"
 	ComputeComplianceRate            = "compute_compliance_rate"
 	ComputeTrainingMonotony          = "compute_training_monotony"
@@ -91,6 +92,7 @@ var athleteScopedToolNames = []string{
 	ApplyAnnualTrainingPlan,
 	ApplyTrainingPlan,
 	ComputeActivitySegmentStats,
+	GetClimbSegments,
 	ComputeBaseline,
 	ComputeComplianceRate,
 	ComputeTrainingMonotony,

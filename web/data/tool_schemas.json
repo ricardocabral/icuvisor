@@ -2076,6 +2076,53 @@
       }
     ]
   },
+  "get_climb_segments": {
+    "name": "get_climb_segments",
+    "description": "Use when the prompt asks which sustained climbs occurred in one activity or asks to compare climb segments; do not fetch raw streams and reduce them in chat.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Required intervals.icu activity ID whose distance, altitude, time, heart-rate, and power streams are analyzed."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "Accepted for analyzer compatibility; climb analysis never returns source arrays or a series field.",
+        "default": false
+      },
+      {
+        "name": "max_bridged_elevation_loss_m",
+        "required": false,
+        "type": "number",
+        "description": "Maximum downhill loss allowed across a bridged shelf, in meters; bounded 0..1000.",
+        "default": 5
+      },
+      {
+        "name": "max_gap_distance_m",
+        "required": false,
+        "type": "number",
+        "description": "Maximum distance gap allowed when bridging adjacent candidate runs, in meters; bounded 0..10000.",
+        "default": 100
+      },
+      {
+        "name": "min_elevation_gain_m",
+        "required": false,
+        "type": "number",
+        "description": "Minimum net elevation gain for a final segment, in meters; bounded 0..100000.",
+        "default": 30
+      },
+      {
+        "name": "min_grade_percent",
+        "required": false,
+        "type": "number",
+        "description": "Minimum inclusive average grade for a candidate climb, in percent; bounded 0.1..100.",
+        "default": 3
+      }
+    ]
+  },
   "get_custom_item_by_id": {
     "name": "get_custom_item_by_id",
     "description": "Fetch one custom item by item_id and preserve its full content payload.",

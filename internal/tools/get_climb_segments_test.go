@@ -27,6 +27,34 @@ func rawClimbRow(kind string, data any, allNull bool) intervals.ActivityStream {
 	return intervals.ActivityStream{Type: kind, Raw: map[string]any{"type": kind, "data": data}, AllNull: allNull}
 }
 
+func TestGetClimbSegmentsRegistrationAndSchema(t *testing.T) {
+	t.Parallel()
+
+	tool := newGetClimbSegmentsTool(nil, "test", false)
+	if tool.Name != getClimbSegmentsName || tool.Requirement.effective() != RequirementRead || tool.EffectiveToolset().String() != "full" {
+		t.Fatalf("tool registration = %#v, want full/read get_climb_segments", tool)
+	}
+	if !strings.Contains(tool.Description, "do not fetch raw streams") || !strings.Contains(tool.Description, "full-toolset") {
+		t.Fatalf("description = %q, want routing guidance", tool.Description)
+	}
+	schema := tool.InputSchema.(map[string]any)
+	if schema["additionalProperties"] != false {
+		t.Fatalf("schema additionalProperties = %#v, want false", schema["additionalProperties"])
+	}
+	properties := schema["properties"].(map[string]any)
+	for _, name := range []string{"activity_id", "min_grade_percent", "min_elevation_gain_m", "max_gap_distance_m", "max_bridged_elevation_loss_m", "include_full"} {
+		if _, ok := properties[name]; !ok {
+			t.Fatalf("input schema missing %s: %#v", name, schema)
+		}
+	}
+	for _, name := range []string{"min_grade_percent", "min_elevation_gain_m", "max_gap_distance_m", "max_bridged_elevation_loss_m"} {
+		property := properties[name].(map[string]any)
+		if property["type"] != "number" || !strings.Contains(property["description"].(string), "bounded") {
+			t.Fatalf("parameter schema %s = %#v, want bounded number", name, property)
+		}
+	}
+}
+
 func TestGetClimbSegmentsRequestsExactCanonicalSourceStreams(t *testing.T) {
 	client := &climbSegmentsClient{rows: []intervals.ActivityStream{
 		rawClimbRow("distance", []any{0.0, 10.0, 20.0}, false),
