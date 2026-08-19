@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added source-labelled activity read fields for upstream `commute`, athlete-reported `feel` (1–5), and native `rpe` from `icu_rpe` (1–10), preserving explicit false/null/absent semantics without scale conversion. The unverified upstream RPE write contract remains unsupported and documented.
 - Added inclusive time- and distance-window selection to `get_activity_streams`. Windows are sliced locally from aligned streams, preserve `data2` and sampling provenance, and remain metadata-only unless `include_full:true`; the full-fetch upstream limitation is documented.
 - Added full-toolset, read-only `get_climb_segments` for deterministic sustained-climb summaries from canonical distance/altitude streams, with bounded grade/gain/gap/bridged-loss parameters, optional duration/VAM/HR/power metrics, and explicit missing/null/noisy-data diagnostics. It never returns raw arrays or coaching/physiology claims.
+- Enriched `get_activity_splits` with source-labelled provenance, fixed-distance basis, optional aligned HR/power/cadence/elevation metrics, explicit coverage diagnostics, and validated no-GPS pool-swim `100m` rows. Upstream intervals and device laps remain duration/distance evidence rather than being relabelled exact fixed-distance splits; missing channels are omitted.
 
 ### Changed
 

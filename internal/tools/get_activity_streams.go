@@ -17,7 +17,7 @@ const (
 	getActivityStreamsName        = "get_activity_streams"
 	getActivitySplitsName         = "get_activity_splits"
 	getActivityStreamsDescription = "Get canonical activity stream channels by activity_id. For a described or date-based activity, resolve it with get_activities first and pass the returned activity_id. Streams are heavy: default returns only available stream metadata; raw samples require include_full:true. Optional time_window (elapsed seconds) or distance_window (meters) selects an inclusive local window; max_points uniformly bounds the selected samples."
-	getActivitySplitsDescription  = "Get manual or virtual per-km/per-mile activity splits by activity_id. For split/lap requests on a described or date-based activity, resolve it with get_activities over the athlete-local date window first. Uses manual intervals when present, otherwise derives virtual splits from distance/time streams and honors preferred_units."
+	getActivitySplitsDescription  = "Get source-labelled manual or virtual fixed-distance activity splits by activity_id, with optional aligned heart-rate, power, cadence, and elevation metrics. For split/lap requests on a described or date-based activity, resolve it with get_activities over the athlete-local date window first. Uses manual intervals when present, otherwise derives source-honest rows from cumulative distance/time streams and honors preferred_units; validated pool Swim activities may use 100m semantics only when sport settings and explicit meter distance metadata prove them."
 )
 
 // ActivityStreamsClient retrieves activity streams.
@@ -742,7 +742,7 @@ func encodeActivityStreamsPayload(payload any, includeFull bool, version string,
 }
 
 func unavailableActivitySplitsResponse(unavailable activityUnavailable, includeFull bool, version string, unitSystem response.UnitSystem) getActivitySplitsUnavailableResponse {
-	meta := activitySplitsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, Algorithm: "manual intervals when available; otherwise interpolate distance/time stream samples, ignoring paused-segment semantics when moving samples are absent", Units: unitSystem.Metadata()}
+	meta := activitySplitsMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, Algorithm: "fixed-distance boundaries from cumulative distance/time with elapsed-time interpolation; optional trapezoidal stream metrics and positive altitude deltas; upstream interval rows remain source-labelled", Units: unitSystem.Metadata()}
 	if diagnostic := restrictedSourceDiagnostic(unavailable.ActivityID, unavailable.Unavailable); diagnostic != nil {
 		meta.DataAvailability = []dataAvailabilityDiagnostic{*diagnostic}
 	}

@@ -68,7 +68,7 @@
     "group": "activities",
     "tier": "core",
     "safety": "read",
-    "summary": "Get manual or virtual per-km/per-mile activity splits by activity_id.",
+    "summary": "Get source-labelled manual or virtual fixed-distance activity splits by activity_id, with optional aligned heart-rate, power, cadence, and elevation metrics.",
     "anchor": "get_activity_splits"
   },
   {

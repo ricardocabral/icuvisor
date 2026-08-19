@@ -4,7 +4,7 @@ description: "Break down a single ride, run, or race in detail — intervals, sp
 weight: 40
 ---
 
-After a key session you want more than "nice ride". This recipe makes the assistant pull one activity apart — intervals, splits, time-in-zone, decoupling — and turn it into two takeaways, while being honest about Strava-imported activities that come back nearly empty.
+After a key session you want more than "nice ride". This recipe makes the assistant pull one activity apart — intervals, splits, time-in-zone, decoupling — and turn it into two takeaways, while being honest about Strava-imported activities that come back nearly empty. Split rows are source-labelled and may include aligned average heart rate, power, cadence, and positive elevation gain when coverage is sufficient; missing channels stay omitted.
 
 For logged carbohydrate evidence, missing-log coverage, and source-labelled grams-per-hour calculations without nutrition targets, use the dedicated [Fueling review]({{< relref "fueling-review" >}}) recipe.
 
@@ -33,6 +33,10 @@ with my intervals.icu data.
 3. Get the intervals or laps with get_activity_intervals, check
    `_meta.interval_source`, `_meta.auto_lap_suspected`, and
    `_meta.interval_source_caveat`, and get the per-km or per-mile splits.
+   Treat split `provenance` and `distance_basis` as part of the evidence: a
+   device lap or workout interval is not automatically an exact fixed-distance
+   row. Use split `_meta.data_availability` for pauses, missing channels, and
+   insufficient coverage; do not fetch or average raw streams in chat.
 4. Get the time-in-zone for the session.
 5. Get the extended metrics, and report only the ones actually present
    (decoupling, IF, VI, normalized power, interval `dfa_alpha1`, RPE, feel).
@@ -70,6 +74,18 @@ activity name/notes/tags/custom fields; do not treat altitude, elevation gain, o
 SpO2 alone as proof. Keep the answer under about 400 words, leading with the
 interval table.
 ```
+
+## Split routing and caveats
+
+`get_activity_splits` keeps the existing `manual_intervals` and
+`virtual_streams` sources while adding `provenance`, `distance_basis`, and
+optional metric fields. Virtual rows require cumulative distance/time coverage
+from zero and include pause time; structured, manual-added, unknown, and device
+rows retain their upstream distance basis. A pool Swim request may omit
+`split_unit` to use `100m` only when the matching Swim sport setting says
+`SECS_100M` and the distance stream explicitly proves meters. Yards, unknown
+pace units, missing settings, or ambiguous distance metadata safely fall back
+to km/mi (or return a user error for explicit `100m`).
 
 ## What icuvisor does
 

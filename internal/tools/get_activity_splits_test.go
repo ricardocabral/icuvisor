@@ -386,8 +386,33 @@ func TestGetActivitySplitsFailureMappingKeepsSourceHonest(t *testing.T) {
 		if payload["unavailable"] == nil {
 			t.Fatalf("payload = %#v, want structured unavailable response", payload)
 		}
-		if !hasSplitDiagnostic(payload["_meta"].(map[string]any)["data_availability"].([]any), "base_stream_unavailable") {
-			t.Fatalf("meta = %#v, want base_stream_unavailable", payload["_meta"])
+		meta := payload["_meta"].(map[string]any)
+		if !hasSplitDiagnostic(meta["data_availability"].([]any), "base_stream_unavailable") {
+			t.Fatalf("meta = %#v, want base_stream_unavailable", meta)
+		}
+		if !strings.Contains(meta["algorithm"].(string), "elapsed-time interpolation") || strings.Contains(meta["algorithm"].(string), "ignoring paused") {
+			t.Fatalf("algorithm = %#v, want current deterministic split contract", meta["algorithm"])
+		}
+	})
+
+	t.Run("omitted swim base failure reports semantics", func(t *testing.T) {
+		client := &fakeActivityReadClient{
+			fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{
+				PreferredUnits: "metric",
+				SportSettings:  []intervals.SportSettings{{Types: []string{"Swim"}, PaceLoadType: "SWIM", PaceUnits: "SECS_100M"}},
+			}},
+			activity:  decodeActivityFixture(t, `{"id":"swim-1","type":"Swim"}`),
+			intervals: decodeIntervalsFixture(t, `{"id":"swim-1","icu_intervals":[{"id":"manual-1","distance":1000,"duration":100}]}`),
+			streamErr: errors.New("base stream unavailable"),
+		}
+		tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+		result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"swim-1"}`)})
+		if err != nil {
+			t.Fatalf("Handler() error = %v", err)
+		}
+		meta := resultMap(t, result)["_meta"].(map[string]any)
+		if !hasSplitDiagnostic(meta["data_availability"].([]any), "swim_semantics_unavailable") {
+			t.Fatalf("meta = %#v, want swim_semantics_unavailable", meta)
 		}
 	})
 

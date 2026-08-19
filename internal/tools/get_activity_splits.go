@@ -93,6 +93,11 @@ func buildActivitySplits(ctx context.Context, args getActivitySplitsRequest, pro
 			return activitySplitsBuild{}, NewUserError(split100mUserMessage, baseErr)
 		}
 		diagnostics = append(diagnostics, splitDiagnostic("base_stream_unavailable", args.ActivityID, "Distance/time streams could not be fetched; upstream interval rows remain available but virtual splits and stream enrichment are unavailable.", []string{"distance", "time"}, nil, nil))
+		if requestedUnit == "" {
+			if diagnostic, ok := omittedSwimSemanticsDiagnostic(args.ActivityID, detailsErr, activity, candidateSwim, unsupportedSwimPace); ok {
+				diagnostics = append(diagnostics, diagnostic)
+			}
+		}
 		manualRows := manualSplitsFromIntervals(intervalsDTO, requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), classification)
 		if len(manualRows) > 0 {
 			rows := manualRowsOnly(manualRows)
@@ -116,17 +121,9 @@ func buildActivitySplits(ctx context.Context, args getActivitySplitsRequest, pro
 	splitUnit := requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem)
 	if requestedUnit == "" && candidateSwim && distanceStreamHasMeterEvidence(base.DistanceRow) {
 		splitUnit = "100m"
-	} else if requestedUnit == "" && detailsErr != nil {
-		diagnostics = append(diagnostics, splitDiagnostic("swim_semantics_unavailable", args.ActivityID, "Activity sport details were unavailable, so normal km/mi split semantics were retained.", []string{"activity.type"}, nil, []string{"activity.type"}))
-	} else if requestedUnit == "" && isSwimActivity(activity) {
-		if unsupportedSwimPace {
-			diagnostics = append(diagnostics, splitDiagnostic("unsupported_swim_pace_units", args.ActivityID, "The Swim sport setting uses unsupported or unknown pace units; normal km/mi splits are retained instead of assuming 100 m semantics.", []string{"sport_settings.pace_units"}, []string{"pace_units"}, nil))
-		} else {
-			missing := []string{"sport_settings"}
-			if candidateSwim {
-				missing = []string{"distance_unit"}
-			}
-			diagnostics = append(diagnostics, splitDiagnostic("swim_semantics_unavailable", args.ActivityID, "Swim 100 m semantics were not proven by the activity settings and distance metadata; normal km/mi splits are retained.", []string{"activity.type", "sport_settings", "distance"}, nil, missing))
+	} else if requestedUnit == "" {
+		if diagnostic, ok := omittedSwimSemanticsDiagnostic(args.ActivityID, detailsErr, activity, candidateSwim, unsupportedSwimPace); ok {
+			diagnostics = append(diagnostics, diagnostic)
 		}
 	}
 
@@ -224,6 +221,23 @@ func unsupportedSwimPaceUnits(profile intervals.AthleteWithSportSettings, activi
 		}
 	}
 	return false
+}
+
+func omittedSwimSemanticsDiagnostic(activityID string, detailsErr error, activity intervals.Activity, candidateSwim, unsupported bool) (dataAvailabilityDiagnostic, bool) {
+	if detailsErr != nil {
+		return splitDiagnostic("swim_semantics_unavailable", activityID, "Activity sport details were unavailable, so normal km/mi split semantics were retained.", []string{"activity.type"}, nil, []string{"activity.type"}), true
+	}
+	if !isSwimActivity(activity) {
+		return dataAvailabilityDiagnostic{}, false
+	}
+	if unsupported {
+		return splitDiagnostic("unsupported_swim_pace_units", activityID, "The Swim sport setting uses unsupported or unknown pace units; normal km/mi splits are retained instead of assuming 100 m semantics.", []string{"sport_settings.pace_units"}, []string{"pace_units"}, nil), true
+	}
+	missing := []string{"sport_settings"}
+	if candidateSwim {
+		missing = []string{"distance_unit"}
+	}
+	return splitDiagnostic("swim_semantics_unavailable", activityID, "Swim 100 m semantics were not proven by the activity settings and distance metadata; normal km/mi splits are retained.", []string{"activity.type", "sport_settings", "distance"}, nil, missing), true
 }
 
 func hasPositiveSplitIntervals(dto intervals.IntervalsDTO) bool {

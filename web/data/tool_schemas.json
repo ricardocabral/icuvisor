@@ -1868,7 +1868,7 @@
   },
   "get_activity_splits": {
     "name": "get_activity_splits",
-    "description": "Get manual or virtual per-km/per-mile activity splits by activity_id.",
+    "description": "Get source-labelled manual or virtual fixed-distance activity splits by activity_id, with optional aligned heart-rate, power, cadence, and elevation metrics.",
     "arguments": [
       {
         "name": "activity_id",
