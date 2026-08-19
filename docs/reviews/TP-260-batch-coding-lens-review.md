@@ -91,12 +91,18 @@ This is an evidence-based review, not a style ranking. TP-253, TP-255, TP-256, a
 
 TP-253, TP-255, TP-256, and TP-258 were not executed in batch `20260818T192348`; they have no shipped implementation to review here. This report also excludes live intervals.icu/Gemini/client smoke tests, credentials and private athlete data, competitor source, and subjective style preferences without behavioral evidence.
 
+## Step 2 validation evidence
+
+- **F-254-01 reproduction:** the focused temporary test `TestReviewRawActivityScaleIntAcceptsIntegralValuesOutsidePublishedScales` passed with `0`, `6`, and `11`; this confirms the current shared helper accepts integral values outside the published feel/RPE scales. The temporary test file was removed after execution. The existing focused suite still passes: `go test ./internal/intervals ./internal/tools -run 'Test(Activity|Raw|GetActivities|UpdateActivity|Commute|RPE)' -count=1`.
+- **Generated catalog/schema:** `make docs-tools` completed successfully, and `git diff --exit-code -- web/data/tools.json web/data/tool_schemas.json cmd/gendocs/testdata/tools.golden.json cmd/gendocs/testdata/tool_schemas.golden.json` returned clean. `go test ./cmd/gendocs ./internal/toolchecks -count=1` passed, including deterministic/golden and schema snapshot checks.
+- **Public claims:** `python3 scripts/tests/test_gemini_spark_guidance.py` passed (`Gemini Spark guidance contract passed`), and `python3 scripts/eval/run_eval.py --validate` passed for 36 scenarios against the 71-tool catalog. No public claim exceeded the reviewed implementation boundary.
+
 ## Verification status
 
 Commands and results are recorded in the packet `STATUS.md`. The final delivery checkpoint records the full Go test suite, race tests, lint, build, generated catalog/schema checks, relevant documentation contracts, and the invariant that this review modified no production implementation files.
 
 ## Remediation summary
 
-1. **TP-254 / medium / should fix:** range-check normalized `feel` and `icu_rpe` independently; preserve out-of-range raw values only in full payloads; add boundary/out-of-range tests.
-2. **TP-252 / observation / deferred:** retain local full-fetch windows until verified upstream window query evidence exists; if it arrives, add a focused client-query implementation and benchmark.
+1. **TP-254 / medium / should fix:** range-check normalized `feel` and `icu_rpe` independently; preserve out-of-range raw values only in full payloads; add boundary/out-of-range tests. See `docs/reviews/TP-260-follow-up-checklist.md`.
+2. **TP-252 / observation / deferred:** retain local full-fetch windows until verified upstream window query evidence exists; if it arrives, add a focused client-query implementation and benchmark. See the deferred item in the follow-up checklist.
 3. **No remediation task:** TP-257 and TP-259 have no release findings from this review.
