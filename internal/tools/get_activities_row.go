@@ -28,7 +28,7 @@ func shapeGetActivitiesResponse(activities []intervals.Activity, gearResolutions
 }
 
 func activityRow(activity intervals.Activity, includeFull bool, timezoneFallback string, unitSystem response.UnitSystem, gearResolution activityGearResolution, customFieldCodes []string) getActivitiesRow {
-	row := getActivitiesRow{ActivityID: activity.ID, Name: strings.TrimSpace(stringValue(activity.Name)), Sport: stringValue(activity.Type), SubType: stringValue(activity.SubType), StartDateLocal: stringValue(activity.StartDateLocal), StartDateUTC: stringValue(activity.StartDate), Timezone: firstNonEmpty(stringValue(activity.Timezone), timezoneFallback), Tags: rawStringArray(activity.Raw, "tags")}
+	row := getActivitiesRow{ActivityID: activity.ID, Name: strings.TrimSpace(stringValue(activity.Name)), Sport: stringValue(activity.Type), SubType: stringValue(activity.SubType), StartDateLocal: stringValue(activity.StartDateLocal), StartDateUTC: stringValue(activity.StartDate), Timezone: firstNonEmpty(stringValue(activity.Timezone), timezoneFallback), Commute: activity.Commute, Feel: activity.Feel, RPE: activity.RPE, Tags: rawStringArray(activity.Raw, "tags")}
 	applyActivityGearResolution(&row, gearResolution)
 	if isStravaBlocked(activity) {
 		row.StravaImported = true
@@ -193,6 +193,15 @@ func activityFieldSemantics(rows []getActivitiesRow) map[string]string {
 		}
 		if row.CarbsUsedG != nil {
 			semantics["carbs_used_g"] = "Upstream estimate of carbohydrates used/burned during the activity in grams from upstream carbs_used."
+		}
+		if row.Commute != nil {
+			semantics["commute"] = "Upstream activity commute flag from intervals.icu; false is an explicit non-commute and absent means the upstream field was not provided."
+		}
+		if row.Feel != nil {
+			semantics["feel"] = "Upstream activity feel, an athlete-reported 1-5 scale; distinct from rpe and never converted."
+		}
+		if row.RPE != nil {
+			semantics["rpe"] = "Upstream activity icu_rpe, an athlete-reported 1-10 rating of perceived exertion; distinct from feel and never converted."
 		}
 	}
 	if len(semantics) == 0 {

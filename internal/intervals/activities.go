@@ -97,6 +97,9 @@ type Activity struct {
 	CarbsIngested      *int     `json:"carbs_ingested"`
 	CarbsUsed          *int     `json:"carbs_used"`
 	DeviceName         *string  `json:"device_name"`
+	Commute            *bool    `json:"commute"`
+	Feel               *int     `json:"feel"`
+	RPE                *int     `json:"icu_rpe"`
 	GearID             string   `json:"-"`
 	StreamTypes        []string `json:"stream_types"`
 }
@@ -108,14 +111,53 @@ func (a *Activity) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
+	// Keep the raw payload lossless, but do not let a malformed optional
+	// subjective field make the whole activity unreadable. The normalized
+	// fields are populated below only when their upstream JSON types are exact.
+	normalizedData := make(map[string]any, len(raw))
+	for key, value := range raw {
+		switch key {
+		case "commute", "feel", "icu_rpe":
+			continue
+		default:
+			normalizedData[key] = value
+		}
+	}
+	dataWithoutNormalizedFields, err := json.Marshal(normalizedData)
+	if err != nil {
+		return err
+	}
 	var decoded activityAlias
-	if err := json.Unmarshal(data, &decoded); err != nil {
+	if err := json.Unmarshal(dataWithoutNormalizedFields, &decoded); err != nil {
 		return err
 	}
 	*a = Activity(decoded)
 	a.Raw = raw
+	a.Commute = rawActivityBool(raw["commute"])
+	a.Feel = rawActivityScaleInt(raw["feel"])
+	a.RPE = rawActivityScaleInt(raw["icu_rpe"])
 	a.GearID = rawIDString(raw["gear_id"])
 	return nil
+}
+
+func rawActivityBool(value any) *bool {
+	parsed, ok := value.(bool)
+	if !ok {
+		return nil
+	}
+	return &parsed
+}
+
+func rawActivityScaleInt(value any) *int {
+	parsed, ok := value.(float64)
+	if !ok || parsed != float64(int(parsed)) {
+		return nil
+	}
+	out := int(parsed)
+	if float64(out) != parsed {
+		return nil
+	}
+	return &out
 }
 
 // ListActivities lists activities in descending date order for the configured athlete.
