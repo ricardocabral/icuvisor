@@ -14,6 +14,7 @@ const (
 	DefaultClimbMaxBridgedLossM   = 5.0
 	ClimbResampleM                = 1.0
 	ClimbSegmentLimit             = 100
+	MaxClimbResampleSpanM         = 2_000_000
 )
 
 const (
@@ -36,7 +37,10 @@ const (
 	ClimbOptionalOK             = "ok"
 )
 
-var ErrInvalidClimbSegmentsInput = errors.New("invalid climb segments input")
+var (
+	ErrInvalidClimbSegmentsInput = errors.New("invalid climb segments input")
+	ErrClimbResampleLimit        = errors.New("climb resample span exceeds bounded limit")
+)
 
 // ClimbStream is the typed stream boundary used by the climb analyzer.
 // Valid preserves null and non-finite evidence instead of treating it as zero.
@@ -180,7 +184,7 @@ func AnalyzeClimbSegments(input ClimbSegmentsInput) (ClimbSegmentsResult, error)
 		result.DataQuality.NullAltitudeSamples = input.Altitude.NullCount
 		return result, nil
 	}
-	selected := collapseClimbSamples(input.Distance, input.Altitude, optional, distanceLen)
+	selected := collapseClimbSamples(input.Distance, input.Altitude, distanceLen)
 	altitudeInvalid, nullAltitude, invalidAltitude := climbAltitudeEvidence(input.Altitude, altitudeLen)
 	result.DataQuality.NullAltitudeSamples = nullAltitude
 	result.DataQuality.InvalidAltitudeSamples = invalidAltitude
@@ -214,6 +218,9 @@ func AnalyzeClimbSegments(input ClimbSegmentsInput) (ClimbSegmentsResult, error)
 	noisyTransitions := 0
 	finiteTransitions := 0
 	for _, window := range windows {
+		if len(window) > 1 && window[len(window)-1].distance-window[0].distance > MaxClimbResampleSpanM {
+			return result, fmt.Errorf("%w: distance span %.6f m", ErrClimbResampleLimit, window[len(window)-1].distance-window[0].distance)
+		}
 		points := resampleClimbWindow(window, input.Time)
 		runs, noisy, transitions := climbRuns(points, params.MinGradePercent)
 		allRuns = append(allRuns, bridgeClimbRuns(runs, params)...)
@@ -327,7 +334,7 @@ type selectedClimbPoint struct {
 	source        int
 }
 
-func collapseClimbSamples(distance, altitude ClimbStream, optional map[string]ClimbStream, length int) []selectedClimbPoint {
+func collapseClimbSamples(distance, altitude ClimbStream, length int) []selectedClimbPoint {
 	out := make([]selectedClimbPoint, 0, length)
 	for i := 0; i < length; {
 		j := i + 1
@@ -357,15 +364,7 @@ func climbAltitudeEvidence(altitude ClimbStream, length int) (invalid bool, null
 		if valid {
 			continue
 		}
-		if len(altitude.Valid) == length && altitude.Valid[i] && !finite(altitude.Values[i]) {
-			invalidCount++
-			continue
-		}
-		if altitude.InvalidCount > 0 && altitude.NullCount == 0 {
-			invalidCount++
-		} else if altitude.NullCount > 0 && nullCount < altitude.NullCount {
-			nullCount++
-		} else if !finiteValueAt(altitude, i) {
+		if !finiteValueAt(altitude, i) {
 			invalidCount++
 		} else {
 			nullCount++
@@ -510,6 +509,7 @@ func climbRuns(points []climbPoint, minGrade float64) ([]climbRun, int, int) {
 	}
 	runs := make([]climbRun, 0)
 	var current *climbRun
+	bridgeBlocked := false
 	noisy, transitions := 0, 0
 	for i := 1; i < len(points); i++ {
 		distance := points[i].distance - points[i-1].distance
@@ -520,6 +520,7 @@ func climbRuns(points []climbPoint, minGrade float64) ([]climbRun, int, int) {
 		grade := 100 * (points[i].altitude - points[i-1].altitude) / distance
 		if math.Abs(grade) > 100 {
 			noisy++
+			bridgeBlocked = true
 			if current != nil {
 				current.bridgeBlocked = true
 				runs = append(runs, *current)
@@ -529,7 +530,8 @@ func climbRuns(points []climbPoint, minGrade float64) ([]climbRun, int, int) {
 		}
 		if grade >= minGrade {
 			if current == nil {
-				current = &climbRun{start: points[i-1], end: points[i]}
+				current = &climbRun{start: points[i-1], end: points[i], bridgeBlocked: bridgeBlocked}
+				bridgeBlocked = false
 			} else {
 				current.end = points[i]
 			}
@@ -561,7 +563,7 @@ func bridgeClimbRuns(runs []climbRun, params ClimbParameters) []climbRun {
 		if mergedDistance > 0 {
 			mergedGrade = 100 * mergedGain / mergedDistance
 		}
-		if !current.bridgeBlocked && gap <= params.MaxGapDistanceM && loss <= params.MaxBridgedElevationLossM && mergedGrade >= params.MinGradePercent && mergedGain >= params.MinElevationGainM {
+		if !current.bridgeBlocked && !next.bridgeBlocked && gap <= params.MaxGapDistanceM && loss <= params.MaxBridgedElevationLossM && mergedGrade >= params.MinGradePercent && mergedGain >= params.MinElevationGainM {
 			current.end = next.end
 			continue
 		}

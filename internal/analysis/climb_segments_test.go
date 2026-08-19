@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"errors"
 	"math"
 	"testing"
 )
@@ -127,6 +128,15 @@ func TestAnalyzeClimbSegmentsLocalizesNullWindowsAndReportsQuality(t *testing.T)
 	}
 }
 
+func TestAnalyzeClimbSegmentsBoundsExtremeResampleSpan(t *testing.T) {
+	input := climbTestInput([]float64{0, 1e300}, []float64{0, 1e300})
+	input.MinElevationGainM = 0
+	got, err := AnalyzeClimbSegments(input)
+	if !errors.Is(err, ErrClimbResampleLimit) {
+		t.Fatalf("result = %#v, err %v, want bounded resample error", got, err)
+	}
+}
+
 func TestAnalyzeClimbSegmentsQualityPrecedenceAndOptionalCoverage(t *testing.T) {
 	missing := climbTestInput(nil, nil)
 	missing.Distance = ClimbStream{Present: true, DataState: "empty"}
@@ -153,6 +163,13 @@ func TestAnalyzeClimbSegmentsQualityPrecedenceAndOptionalCoverage(t *testing.T) 
 	if err != nil || got.DataQuality.Status != ClimbStatusInvalidDistance {
 		t.Fatalf("non-monotone null altitude = %#v, err %v", got, err)
 	}
+	mixed := climbTestInput([]float64{0, 10, 20}, []float64{0, math.NaN(), 2})
+	mixed.Altitude.Valid = []bool{true, false, false}
+	mixed.Altitude.NullCount = 1
+	got, err = AnalyzeClimbSegments(mixed)
+	if err != nil || got.DataQuality.NullAltitudeSamples != 1 || got.DataQuality.InvalidAltitudeSamples != 1 {
+		t.Fatalf("mixed altitude quality = %#v, err %v, want one null and one invalid", got.DataQuality, err)
+	}
 
 	noisy := climbTestInput([]float64{0, 10, 20}, []float64{0, 20, 21})
 	noisy.MinElevationGainM = 5
@@ -165,6 +182,12 @@ func TestAnalyzeClimbSegmentsQualityPrecedenceAndOptionalCoverage(t *testing.T) 
 	got, err = AnalyzeClimbSegments(noisyBridge)
 	if err != nil || len(got.Segments) != 2 || got.Segments[0].EndDistanceM != 10 || got.Segments[1].StartDistanceM != 20 {
 		t.Fatalf("noisy bridge result = %#v, err %v, want hard evidence boundary", got, err)
+	}
+	noisyAfterShelf := climbTestInput([]float64{0, 10, 20, 30, 40}, []float64{0, 9, 9.2, 20.2, 29.2})
+	noisyAfterShelf.MinElevationGainM = 0
+	got, err = AnalyzeClimbSegments(noisyAfterShelf)
+	if err != nil || len(got.Segments) != 2 || got.Segments[0].EndDistanceM != 10 || got.Segments[1].StartDistanceM != 30 {
+		t.Fatalf("noisy-after-shelf result = %#v, err %v, want barrier after non-candidate edge", got, err)
 	}
 
 	input := climbTestInput([]float64{0, 10, 20}, []float64{0, 1, 2})
