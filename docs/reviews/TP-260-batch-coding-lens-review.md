@@ -99,7 +99,7 @@ TP-253, TP-255, TP-256, and TP-258 were not executed in batch `20260818T192348`;
 
 ## Verification status
 
-Commands and results are recorded in the packet `STATUS.md`. The final delivery checkpoint records the full Go test suite, race tests, lint, build, generated catalog/schema checks, relevant documentation contracts, and the invariant that this review modified no production implementation files.
+The delivery gate passed in the review worktree: `go test ./...` passed; `go test -race ./...` passed with no race reports; `make lint` ran `golangci-lint run ./...` and reported `0 issues`; and `make build` produced `bin/icuvisor`. Generated catalog/schema and relevant documentation checks are recorded above. The packet `STATUS.md` records the exact command results and the invariant that this review modified no production implementation files.
 
 ## Remediation summary
 
