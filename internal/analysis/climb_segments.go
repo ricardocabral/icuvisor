@@ -128,9 +128,10 @@ type climbPoint struct {
 }
 
 type climbRun struct {
-	start         climbPoint
-	end           climbPoint
-	bridgeBlocked bool
+	start               climbPoint
+	end                 climbPoint
+	bridgeBlockedBefore bool
+	bridgeBlockedAfter  bool
 }
 
 // AnalyzeClimbSegments computes deterministic climb segments from aligned streams.
@@ -540,7 +541,7 @@ func climbRuns(points []climbPoint, minGrade float64) ([]climbRun, int, int) {
 			noisy++
 			bridgeBlocked = true
 			if current != nil {
-				current.bridgeBlocked = true
+				current.bridgeBlockedAfter = true
 				runs = append(runs, *current)
 				current = nil
 			}
@@ -548,7 +549,7 @@ func climbRuns(points []climbPoint, minGrade float64) ([]climbRun, int, int) {
 		}
 		if grade >= minGrade {
 			if current == nil {
-				current = &climbRun{start: points[i-1], end: points[i], bridgeBlocked: bridgeBlocked}
+				current = &climbRun{start: points[i-1], end: points[i], bridgeBlockedBefore: bridgeBlocked}
 				bridgeBlocked = false
 			} else {
 				current.end = points[i]
@@ -581,7 +582,7 @@ func bridgeClimbRuns(runs []climbRun, params ClimbParameters) []climbRun {
 		if mergedDistance > 0 {
 			mergedGrade = 100 * mergedGain / mergedDistance
 		}
-		if !current.bridgeBlocked && !next.bridgeBlocked && gap <= params.MaxGapDistanceM && loss <= params.MaxBridgedElevationLossM && mergedGrade >= params.MinGradePercent && mergedGain >= params.MinElevationGainM {
+		if !current.bridgeBlockedAfter && !next.bridgeBlockedBefore && gap <= params.MaxGapDistanceM && loss <= params.MaxBridgedElevationLossM && mergedGrade >= params.MinGradePercent && mergedGain >= params.MinElevationGainM {
 			current.end = next.end
 			continue
 		}

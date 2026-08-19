@@ -215,6 +215,12 @@ func TestAnalyzeClimbSegmentsQualityPrecedenceAndOptionalCoverage(t *testing.T) 
 	if err != nil || len(got.Segments) != 2 || got.Segments[0].EndDistanceM != 10 || got.Segments[1].StartDistanceM != 30 {
 		t.Fatalf("noisy-after-shelf result = %#v, err %v, want barrier after non-candidate edge", got, err)
 	}
+	farSideNoise := climbTestInput([]float64{0, 10, 20, 30, 40}, []float64{0, 10, 10.2, 20.2, 40.2})
+	farSideNoise.MinElevationGainM = 15
+	got, err = AnalyzeClimbSegments(farSideNoise)
+	if err != nil || len(got.Segments) != 1 || got.Segments[0].StartDistanceM != 0 || got.Segments[0].EndDistanceM != 30 {
+		t.Fatalf("far-side noise result = %#v, err %v, want bridge before noisy edge", got, err)
+	}
 
 	input := climbTestInput([]float64{0, 10, 20}, []float64{0, 1, 2})
 	input.MinElevationGainM = 1
