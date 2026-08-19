@@ -149,6 +149,19 @@ func TestAnalyzeClimbSegmentsAppliesRawGainThreshold(t *testing.T) {
 	}
 }
 
+func TestAnalyzeClimbSegmentsUsesUnroundedCoverageBounds(t *testing.T) {
+	input := climbTestInput([]float64{0.0000004, 1.0000004}, []float64{0, 1})
+	input.MinElevationGainM = 0.5
+	input.HeartRate = climbTestStream([]float64{100, 200})
+	got, err := AnalyzeClimbSegments(input)
+	if err != nil || len(got.Segments) != 1 {
+		t.Fatalf("result = %#v, err %v", got, err)
+	}
+	if got.Segments[0].StartDistanceM != 0 || got.Segments[0].EndDistanceM != 1 || got.DataQuality.OptionalStreams["heart_rate"].UsedSamples != 2 {
+		t.Fatalf("result = %#v, want rounded output with both raw samples used", got)
+	}
+}
+
 func TestAnalyzeClimbSegmentsQualityPrecedenceAndOptionalCoverage(t *testing.T) {
 	missing := climbTestInput(nil, nil)
 	missing.Distance = ClimbStream{Present: true, DataState: "empty"}

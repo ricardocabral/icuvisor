@@ -120,6 +120,22 @@ func TestGetClimbSegmentsPreservesNullEvidenceInQuality(t *testing.T) {
 	}
 }
 
+func TestGetClimbSegmentsCountsMixedRawNullAndInvalidAltitude(t *testing.T) {
+	client := &climbSegmentsClient{rows: []intervals.ActivityStream{
+		rawClimbRow("distance", []any{0.0, 10.0, 20.0}, false),
+		rawClimbRow("altitude", []any{nil, "bad", 2.0}, false),
+	}}
+	tool := newGetClimbSegmentsTool(client, t.Name(), t.Name() == "debug")
+	result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	quality := result.StructuredContent.(map[string]any)["result"].(map[string]any)["data_quality"].(map[string]any)
+	if quality["status"] != "null" || quality["null_altitude_samples"] != float64(1) || quality["invalid_altitude_samples"] != float64(1) {
+		t.Fatalf("quality = %#v, want mixed null/non-finite counts", quality)
+	}
+}
+
 func TestGetClimbSegmentsUnavailableIsShortUserError(t *testing.T) {
 	client := &climbSegmentsClient{err: errors.New("authorization detail")}
 	tool := newGetClimbSegmentsTool(client, t.Name(), t.Name() == "debug")

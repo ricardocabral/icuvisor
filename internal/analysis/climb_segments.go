@@ -108,6 +108,8 @@ type ClimbSegment struct {
 	VAMMPerHour         *float64 `json:"vam_m_per_hour,omitempty"`
 	AverageHeartRateBPM *float64 `json:"average_heart_rate_bpm,omitempty"`
 	AveragePowerWatts   *float64 `json:"average_power_watts,omitempty"`
+	startDistanceRaw    float64
+	endDistanceRaw      float64
 }
 
 // ClimbSegmentsResult is the concise climb analyzer result.
@@ -589,7 +591,7 @@ func bridgeClimbRuns(runs []climbRun, params ClimbParameters) []climbRun {
 func buildClimbSegment(run climbRun, selected []selectedClimbPoint, optional map[string]ClimbStream, qualities map[string]ClimbOptionalQuality) ClimbSegment {
 	gain := run.end.altitude - run.start.altitude
 	distance := run.end.distance - run.start.distance
-	segment := ClimbSegment{StartDistanceM: round6(run.start.distance), EndDistanceM: round6(run.end.distance), DistanceM: round6(distance), ElevationGainM: round6(gain), AverageGradePercent: round6(100 * gain / distance)}
+	segment := ClimbSegment{StartDistanceM: round6(run.start.distance), EndDistanceM: round6(run.end.distance), DistanceM: round6(distance), ElevationGainM: round6(gain), AverageGradePercent: round6(100 * gain / distance), startDistanceRaw: run.start.distance, endDistanceRaw: run.end.distance}
 	if q := qualities["time"]; q.Status == ClimbOptionalOK {
 		if run.start.timeValid && run.end.timeValid {
 			rawDuration := run.end.time - run.start.time
@@ -654,7 +656,7 @@ func usedClimbSamples(stream ClimbStream, selected []selectedClimbPoint, segment
 	seen := map[int]struct{}{}
 	for _, segment := range segments {
 		for _, point := range selected {
-			if point.distance >= segment.StartDistanceM && point.distance <= segment.EndDistanceM && streamValid(stream, point.source) {
+			if point.distance >= segment.startDistanceRaw && point.distance <= segment.endDistanceRaw && streamValid(stream, point.source) {
 				seen[point.source] = struct{}{}
 			}
 		}

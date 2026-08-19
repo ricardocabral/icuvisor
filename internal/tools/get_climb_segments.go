@@ -208,6 +208,7 @@ func climbStreamFromRow(row intervals.ActivityStream) analysis.ClimbStream {
 					}
 					number, ok := rawFiniteNumber(value)
 					if !ok {
+						stream.Values[i] = math.NaN()
 						stream.InvalidCount++
 						continue
 					}
