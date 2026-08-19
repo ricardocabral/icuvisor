@@ -338,12 +338,21 @@ func AnalyzeWorkoutProgression(input []WorkoutProgressionActivity, includeFull b
 		Comparison: WorkoutComparison{RequestedActivityCount: len(input)},
 		Tolerances: WorkoutTolerances{TargetRelativePercent: 10, TargetAbsoluteFloor: 1, DurationDeltaUnit: "seconds", RecoveryDeltaUnit: "seconds"},
 	}
-	for i := 1; i < len(input); i++ {
-		delta, comparable := analyzeWorkoutDelta(input[i-1], input[i], rows[i-1], rows[i])
-		if comparable {
-			result.Comparison.ComparablePairCount++
+	if len(rows) > 0 {
+		previousInput := input[0]
+		previousRow := rows[0]
+		for i := 1; i < len(input) && i < len(rows); i++ {
+			// rows is produced from input in the loop above, so both slices have the same bounded length.
+			currentInput := input[i] //nolint:gosec // the paired slices share the checked index invariant.
+			currentRow := rows[i]
+			delta, comparable := analyzeWorkoutDelta(previousInput, currentInput, previousRow, currentRow)
+			if comparable {
+				result.Comparison.ComparablePairCount++
+			}
+			result.Deltas = append(result.Deltas, delta)
+			previousInput = currentInput
+			previousRow = currentRow
 		}
-		result.Deltas = append(result.Deltas, delta)
 	}
 	result.Status = "ok"
 	for _, row := range result.Rows {

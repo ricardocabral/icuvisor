@@ -53,6 +53,8 @@ type computeWorkoutProgressionActivity struct {
 }
 
 // newComputeWorkoutProgressionTool creates the read-only progression evidence tool.
+//
+//nolint:unparam // version is supplied by registry wiring when the full toolset is registered.
 func newComputeWorkoutProgressionTool(details ActivityDetailsClient, intervalClient ActivityIntervalsClient, extended WorkoutProgressionExtendedClient, eventClient WorkoutProgressionEventClient, wellness WellnessClient, profile ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
 	shapeCfg := responseShapingOrDefault(shaping)
 	return fullTool(Tool{
@@ -124,7 +126,7 @@ func computeWorkoutProgressionHandler(details ActivityDetailsClient, intervalCli
 			}
 			if args.IncludeReadiness {
 				applyReadinessDateDiagnostics(&input, activity, profileTimezone)
-				if input.Date != "" && !progressionContainsString(input.InitialReasons, "invalid_activity_date") {
+				if input.Date != "" && !progressionHasInvalidDate(input.InitialReasons) {
 					validDates = append(validDates, input.Date)
 				}
 			}
@@ -202,7 +204,7 @@ func computeWorkoutProgressionHandler(details ActivityDetailsClient, intervalCli
 					return Result{}, readinessErr
 				}
 				for i := range inputs {
-					if inputs[i].Date != "" && !progressionContainsString(inputs[i].InitialReasons, "invalid_activity_date") {
+					if inputs[i].Date != "" && !progressionHasInvalidDate(inputs[i].InitialReasons) {
 						inputs[i].InitialReasons = append(inputs[i].InitialReasons, "missing_readiness")
 					}
 				}
@@ -347,7 +349,7 @@ func applyReadinessDateDiagnostics(input *analysis.WorkoutProgressionActivity, a
 func loadProgressionReadiness(ctx context.Context, inputs []analysis.WorkoutProgressionActivity, validDates []string, client WellnessClient, _ string, sourceTools *[]string) (int, error) {
 	validRowCount := 0
 	for _, input := range inputs {
-		if input.Date != "" && !progressionContainsString(input.InitialReasons, "invalid_activity_date") {
+		if input.Date != "" && !progressionHasInvalidDate(input.InitialReasons) {
 			validRowCount++
 		}
 	}
@@ -361,7 +363,7 @@ func loadProgressionReadiness(ctx context.Context, inputs []analysis.WorkoutProg
 	endTime, _ := time.Parse(time.DateOnly, end)
 	if int(endTime.Sub(startTime)/(24*time.Hour))+1 > 366 {
 		for i := range inputs {
-			if inputs[i].Date != "" && !progressionContainsString(inputs[i].InitialReasons, "invalid_activity_date") {
+			if inputs[i].Date != "" && !progressionHasInvalidDate(inputs[i].InitialReasons) {
 				inputs[i].InitialReasons = append(inputs[i].InitialReasons, "readiness_window_too_large", "missing_readiness")
 				if inputs[i].Readiness != nil {
 					inputs[i].Readiness.Reasons = append(inputs[i].Readiness.Reasons, "readiness_window_too_large", "missing_readiness")
@@ -387,7 +389,7 @@ func loadProgressionReadiness(ctx context.Context, inputs []analysis.WorkoutProg
 		}
 	}
 	for i := range inputs {
-		if inputs[i].Date == "" || progressionContainsString(inputs[i].InitialReasons, "invalid_activity_date") {
+		if inputs[i].Date == "" || progressionHasInvalidDate(inputs[i].InitialReasons) {
 			continue
 		}
 		row, ok := byDate[inputs[i].Date]
@@ -812,9 +814,9 @@ func isJSONString(value json.RawMessage) bool {
 	return len(value) > 0 && strings.TrimSpace(string(value))[0] == '"'
 }
 
-func progressionContainsString(values []string, target string) bool {
+func progressionHasInvalidDate(values []string) bool {
 	for _, value := range values {
-		if value == target {
+		if value == "invalid_activity_date" {
 			return true
 		}
 	}
