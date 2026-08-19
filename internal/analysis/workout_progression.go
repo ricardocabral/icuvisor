@@ -100,11 +100,11 @@ type ReadinessEvidence struct {
 
 // ReadinessField is one upstream wellness value and its provenance.
 type ReadinessField struct {
-	Value       any
-	Source      string
-	NativeScale string
-	FetchedAt   string
-	Stale       bool
+	Value       any    `json:"value"`
+	Source      string `json:"source"`
+	NativeScale string `json:"native_scale"`
+	FetchedAt   string `json:"fetched_at,omitempty"`
+	Stale       bool   `json:"stale"`
 }
 
 // WorkoutProgressionResult is the deterministic progression evidence result.
@@ -404,6 +404,11 @@ func analyzeWorkoutRow(in WorkoutProgressionActivity, includeFull bool) WorkoutP
 	if row.Extended.Status != "ok" {
 		addReason(&row.Reasons, "missing_metric")
 	}
+	if row.Stability != nil && row.Stability.Status != "ok" {
+		for _, reason := range row.Stability.Reasons {
+			addReason(&row.Reasons, reason)
+		}
+	}
 	if row.Subjective.Status != "ok" {
 		addReason(&row.Reasons, "missing_subjective")
 	}
@@ -412,7 +417,7 @@ func analyzeWorkoutRow(in WorkoutProgressionActivity, includeFull bool) WorkoutP
 	}
 	if row.Adherence.Status != "ok" {
 		for _, reason := range row.Adherence.Reasons {
-			if reason == "missing_metric" || reason == "target_unsupported" || reason == "unit_incompatible" || reason == "structure_mismatch" || reason == "execution_source_unverified" {
+			if reason == "missing_metric" || reason == "target_unsupported" || reason == "unit_incompatible" || reason == "structure_mismatch" || reason == "execution_source_unverified" || reason == "zero_denominator" {
 				addReason(&row.Reasons, reason)
 			}
 		}
@@ -438,7 +443,7 @@ func prescriptionEvidence(p *WorkoutPrescription) *PrescriptionEvidence {
 		status = "insufficient_evidence"
 		addReason(&reasons, "missing_prescription")
 	}
-	return &PrescriptionEvidence{Status: status, SampleCount: len(p.Intervals), Reasons: sortedReasons(append(reasons, warningReasons(p.Warnings)...)), Source: p.Source, IntervalCount: len(p.Intervals), TotalIntervalCount: totalIntervalCount(p), PrescriptionWarnings: p.Warnings}
+	return &PrescriptionEvidence{Status: status, SampleCount: len(p.Intervals), Reasons: sortedReasons(reasons), Source: p.Source, IntervalCount: len(p.Intervals), TotalIntervalCount: totalIntervalCount(p), PrescriptionWarnings: p.Warnings}
 }
 
 func completedEvidence(c *WorkoutCompleted) *CompletedEvidence {
@@ -619,6 +624,8 @@ func stabilityEvidence(c *WorkoutCompleted) *StabilityEvidence {
 		if len(values) < 4 {
 			metric.Status = "insufficient_evidence"
 			metric.Reasons = []string{"insufficient_evidence"}
+			out.Status = "insufficient_evidence"
+			addReason(&out.Reasons, "insufficient_evidence")
 		} else {
 			first := wpMean(values[:len(values)/2])
 			second := wpMean(values[len(values)/2:])
@@ -685,6 +692,9 @@ func adherenceEvidence(p *WorkoutPrescription, c *WorkoutCompleted, upstream *fl
 		if relativeOK {
 			acc.relative = append(acc.relative, relative)
 		}
+		if targetHasZeroDenominator(target, completed) {
+			acc.zeroDenominator = true
+		}
 		if within {
 			acc.within++
 		}
@@ -700,8 +710,17 @@ func adherenceEvidence(p *WorkoutPrescription, c *WorkoutCompleted, upstream *fl
 		out.Reasons = sortedReasons(out.Reasons)
 		return out
 	}
-	out.Status = "ok"
-	out.Reasons = sortedReasons(out.Reasons)
+	partialTarget := false
+	for _, reason := range out.Reasons {
+		if reason == "target_unsupported" || reason == "unit_incompatible" {
+			partialTarget = true
+		}
+	}
+	if partialTarget {
+		out.Status = "insufficient_evidence"
+	} else {
+		out.Status = "ok"
+	}
 	out.Families = map[string]AdherenceFamily{}
 	for family, acc := range families {
 		out.SampleCount += acc.eligible
@@ -709,21 +728,26 @@ func adherenceEvidence(p *WorkoutPrescription, c *WorkoutCompleted, upstream *fl
 		if len(acc.relative) > 0 {
 			value := round(wpMean(acc.relative))
 			familyOut.MeanRelativeErrorPercent = &value
-		} else {
-			familyOut.Reasons = []string{"zero_denominator"}
+		}
+		if acc.zeroDenominator {
+			familyOut.Reasons = append(familyOut.Reasons, "zero_denominator")
+			out.Status = "insufficient_evidence"
 			addReason(&out.Reasons, "zero_denominator")
 		}
+		familyOut.Reasons = sortedReasons(familyOut.Reasons)
 		out.Families[family] = familyOut
 	}
+	out.Reasons = sortedReasons(out.Reasons)
 	return out
 }
 
 type adherenceAccumulator struct {
-	unit     string
-	eligible int
-	within   int
-	absolute float64
-	relative []float64
+	unit            string
+	eligible        int
+	within          int
+	absolute        float64
+	relative        []float64
+	zeroDenominator bool
 }
 
 type eligibleTargetValue struct {
@@ -768,6 +792,31 @@ func eligibleTarget(target WorkoutTarget, completed CompletedInterval) (string, 
 		return "", eligibleTargetValue{}, false, "unit_incompatible"
 	}
 	return "pace_" + paceUnit, eligibleTargetValue{unit: paceUnit, value: target.Value, min: target.Min, max: target.Max}, true, ""
+}
+
+func targetHasZeroDenominator(target eligibleTargetValue, completed CompletedInterval) bool {
+	if target.value != nil {
+		return *target.value == 0
+	}
+	if target.min == nil || target.max == nil {
+		return false
+	}
+	var observed float64
+	switch target.unit {
+	case "W":
+		observed = *completed.ObservedPowerWatts
+	case "BPM":
+		observed = *completed.ObservedHeartRateBPM
+	default:
+		observed = *completed.ObservedPace
+	}
+	if observed >= *target.min && observed <= *target.max {
+		return false
+	}
+	if observed < *target.min {
+		return *target.min == 0
+	}
+	return *target.max == 0
 }
 
 func targetError(target eligibleTargetValue, completed CompletedInterval) (float64, float64, bool, bool) {
@@ -845,7 +894,7 @@ func analyzeWorkoutDelta(previous, current WorkoutProgressionActivity, previousR
 	} else {
 		delta.FieldStatus["duration_seconds"] = "missing"
 	}
-	if previous.DurationSeconds != nil && wpFinite(*previous.DurationSeconds) && *previous.DurationSeconds == 0 {
+	if previous.DurationSeconds != nil && current.DurationSeconds != nil && wpFinite(*previous.DurationSeconds) && wpFinite(*current.DurationSeconds) && *previous.DurationSeconds == 0 {
 		delta.FieldStatus["duration_percent"] = "zero_denominator"
 		addReason(&delta.Reasons, "zero_denominator")
 	} else if percent, ok := percentDelta(previous.DurationSeconds, current.DurationSeconds); ok {
@@ -858,7 +907,7 @@ func analyzeWorkoutDelta(previous, current WorkoutProgressionActivity, previousR
 		delta.FieldStatus["recovery_seconds"] = "ok"
 		delta.SampleCount = 1
 	}
-	if previous.RecoverySeconds != nil && wpFinite(*previous.RecoverySeconds) && *previous.RecoverySeconds == 0 {
+	if previous.RecoverySeconds != nil && current.RecoverySeconds != nil && wpFinite(*previous.RecoverySeconds) && wpFinite(*current.RecoverySeconds) && *previous.RecoverySeconds == 0 {
 		delta.FieldStatus["recovery_percent"] = "zero_denominator"
 		addReason(&delta.Reasons, "zero_denominator")
 	} else if percent, ok := percentDelta(previous.RecoverySeconds, current.RecoverySeconds); ok {
@@ -923,7 +972,7 @@ func prescriptionSignature(p *WorkoutPrescription) (string, bool) {
 }
 
 func canonicalIntervalSignature(interval PrescriptionInterval) string {
-	return jsonString([]any{wpRoundOptional(interval.DurationSeconds), wpRoundOptional(interval.DistanceMeters), interval.Recovery, interval.Ramp, interval.Freeride, interval.Target.Kind, interval.Target.Unit, wpRoundOptional(interval.Target.Value), wpRoundOptional(interval.Target.Min), wpRoundOptional(interval.Target.Max), wpRoundOptional(interval.Target.Start), wpRoundOptional(interval.Target.End), strings.TrimSpace(interval.Target.Text)})
+	return jsonString([]any{wpCanonicalOptional(interval.DurationSeconds), wpCanonicalOptional(interval.DistanceMeters), interval.Recovery, interval.Ramp, interval.Freeride, interval.Target.Kind, interval.Target.Unit, wpCanonicalOptional(interval.Target.Value), wpCanonicalOptional(interval.Target.Min), wpCanonicalOptional(interval.Target.Max), wpCanonicalOptional(interval.Target.Start), wpCanonicalOptional(interval.Target.End), strings.TrimSpace(interval.Target.Text)})
 }
 
 func jsonString(value any) string {
@@ -949,13 +998,6 @@ func lenCompleted(c *WorkoutCompleted) int {
 		return 0
 	}
 	return len(c.Intervals)
-}
-
-func warningReasons(warnings []PrescriptionWarning) []string {
-	if len(warnings) == 0 {
-		return nil
-	}
-	return []string{"prescription_warnings"}
 }
 
 func prescriptionKind(interval PrescriptionInterval) string {
@@ -1068,6 +1110,13 @@ func wpRoundOptional(value *float64) any {
 		return nil
 	}
 	return round(*value)
+}
+
+func wpCanonicalOptional(value *float64) any {
+	if value == nil || !wpFinite(*value) {
+		return nil
+	}
+	return *value
 }
 
 func wpFinite(value float64) bool {

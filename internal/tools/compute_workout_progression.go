@@ -97,6 +97,9 @@ func computeWorkoutProgressionHandler(details ActivityDetailsClient, intervalCli
 		missingDays := 0
 		for i, requested := range args.Activities {
 			input := analysis.WorkoutProgressionActivity{ID: requested.ActivityID, Label: requested.Label}
+			if args.IncludeReadiness {
+				input.Readiness = emptyProgressionReadiness("")
+			}
 			if details == nil {
 				input.InitialReasons = append(input.InitialReasons, "missing_source")
 				inputs[i] = input
@@ -383,7 +386,7 @@ func loadProgressionReadiness(ctx context.Context, inputs []analysis.WorkoutProg
 			continue
 		}
 		fields := map[string]analysis.ReadinessField{}
-		for _, field := range progressionWellnessFields() {
+		for _, field := range progressionWellnessMetricFields() {
 			value, present := progressionWellnessValue(row, field)
 			if !present {
 				continue
@@ -395,13 +398,21 @@ func loadProgressionReadiness(ctx context.Context, inputs []analysis.WorkoutProg
 			}
 			fields[field] = readiness
 		}
-		inputs[i].Readiness = &analysis.ReadinessEvidence{Date: inputs[i].Date, Fields: fields, ExpectedFields: progressionWellnessFields()}
+		inputs[i].Readiness = &analysis.ReadinessEvidence{Date: inputs[i].Date, Fields: fields, ExpectedFields: progressionWellnessMetricFields()}
 	}
 	return missingDays, nil
 }
 
 func progressionWellnessFields() []string {
+	return []string{"id", "date", "updated", "feel", "fatigue", "soreness", "stress", "mood", "motivation", "sleepQuality", "sleepScore", "hrv", "hrvSDNN", "readiness", "source", "provider", "device", "wellnessSource", "wellness_source", "integration", "bridge_fetched_at", "bridgeFetchedAt", "fetched_at", "fetchedAt", "polar", "garmin", "oura", "whoop"}
+}
+
+func progressionWellnessMetricFields() []string {
 	return []string{"feel", "fatigue", "soreness", "stress", "mood", "motivation", "sleepQuality", "sleepScore", "hrv", "hrvSDNN", "readiness"}
+}
+
+func emptyProgressionReadiness(date string) *analysis.ReadinessEvidence {
+	return &analysis.ReadinessEvidence{Date: date, Fields: map[string]analysis.ReadinessField{}, ExpectedFields: progressionWellnessMetricFields()}
 }
 
 func progressionWellnessDate(row intervals.Wellness) string {
@@ -433,10 +444,6 @@ func progressionWellnessValue(row intervals.Wellness, field string) (any, bool) 
 		if math.IsNaN(typed) || math.IsInf(typed, 0) {
 			return nil, false
 		}
-		return typed, true
-	case string:
-		return typed, true
-	case bool:
 		return typed, true
 	default:
 		return nil, false
@@ -615,7 +622,7 @@ func progressionCompletedFromDTO(dto intervals.IntervalsDTO) *analysis.WorkoutCo
 		completed.IntervalSourceCaveat = "interval rows are not verified structured workout execution"
 	}
 	for _, interval := range dto.ICUIntervals {
-		completed.Intervals = append(completed.Intervals, analysis.CompletedInterval{DurationSeconds: finiteFloatPointer(interval.Duration), DistanceMeters: finiteFloatPointer(interval.Distance), Kind: strings.ToLower(strings.TrimSpace(progressionStringValue(interval.Type))), ObservedPowerWatts: finiteFloatPointer(interval.AveragePower), ObservedHeartRateBPM: finiteFloatPointer(interval.AverageHR), ObservedPace: finiteFloatPointer(interval.Pace), ObservedPaceUnit: progressionStringValue(interval.Unit)})
+		completed.Intervals = append(completed.Intervals, analysis.CompletedInterval{DurationSeconds: progressionIntervalValue(interval.Duration, interval.Raw, "moving_time", "duration", "elapsed_time"), DistanceMeters: progressionIntervalValue(interval.Distance, interval.Raw, "distance"), Kind: strings.ToLower(strings.TrimSpace(progressionIntervalString(interval.Type, interval.Raw, "type", "kind"))), ObservedPowerWatts: progressionIntervalValue(interval.AveragePower, interval.Raw, "average_power", "average_watts", "icu_average_watts"), ObservedHeartRateBPM: progressionIntervalValue(interval.AverageHR, interval.Raw, "average_hr", "average_heartrate"), ObservedPace: progressionIntervalValue(interval.Pace, interval.Raw, "pace"), ObservedPaceUnit: progressionIntervalString(interval.Unit, interval.Raw, "pace_unit", "pace_units", "unit")})
 	}
 	return completed
 }
@@ -623,7 +630,8 @@ func progressionCompletedFromDTO(dto intervals.IntervalsDTO) *analysis.WorkoutCo
 func progressionSourceIntervals(rows []intervals.ActivityInterval) []analysis.IntervalSourceInterval {
 	out := make([]analysis.IntervalSourceInterval, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, analysis.IntervalSourceInterval{Name: progressionStringValue(row.Name), Type: progressionStringValue(row.Type), Raw: row.Raw, StartIndex: row.StartIndex, EndIndex: row.EndIndex, StartDistance: row.StartDistance, EndDistance: row.EndDistance, Distance: row.Distance, Duration: row.Duration})
+		label := progressionIntervalString(nil, row.Raw, "label")
+		out = append(out, analysis.IntervalSourceInterval{Name: progressionStringValue(row.Name), Type: progressionStringValue(row.Type), Label: label, Raw: row.Raw, StartIndex: row.StartIndex, EndIndex: row.EndIndex, StartDistance: row.StartDistance, EndDistance: row.EndDistance, Distance: row.Distance, Duration: row.Duration})
 	}
 	return out
 }
@@ -634,6 +642,30 @@ func progressionSourceGroups(rows []intervals.IntervalGroup) []analysis.Interval
 		out = append(out, analysis.IntervalSourceGroup{Name: progressionStringValue(row.Name), Type: progressionStringValue(row.Type), Raw: row.Raw, StartIndex: row.StartIndex, EndIndex: row.EndIndex})
 	}
 	return out
+}
+
+func progressionIntervalValue(primary *float64, raw map[string]any, aliases ...string) *float64 {
+	if value := finiteFloatPointer(primary); value != nil {
+		return value
+	}
+	for _, alias := range aliases {
+		if value, ok := raw[alias].(float64); ok && finiteValue(value) {
+			return &value
+		}
+	}
+	return nil
+}
+
+func progressionIntervalString(primary *string, raw map[string]any, aliases ...string) string {
+	if value := strings.TrimSpace(progressionStringValue(primary)); value != "" {
+		return value
+	}
+	for _, alias := range aliases {
+		if value, ok := raw[alias].(string); ok && strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
 }
 
 func progressionDuration(activity intervals.Activity) (*float64, string) {
@@ -699,13 +731,7 @@ func activityType(activity intervals.Activity) string {
 }
 
 func isRestrictedProgressionActivity(activity intervals.Activity) bool {
-	for _, key := range []string{"_note", "note", "unavailable", "availability"} {
-		value := strings.ToLower(strings.TrimSpace(progressionRawString(activity.Raw, key)))
-		if strings.Contains(value, "strava") && (strings.Contains(value, "block") || strings.Contains(value, "restrict") || strings.Contains(value, "unavailable") || strings.Contains(value, "hidden")) {
-			return true
-		}
-	}
-	return false
+	return isStravaBlocked(activity)
 }
 
 func progressionRawString(raw map[string]any, key string) string {

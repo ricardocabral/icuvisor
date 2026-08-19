@@ -85,8 +85,8 @@ func (f *progressionEventFake) GetEvent(_ context.Context, id string) (intervals
 
 func TestComputeWorkoutProgressionHandlerSuccessAndNoStreamCall(t *testing.T) {
 	details := &progressionDetailsFake{activities: map[string]intervals.Activity{
-		"a1": progressionActivity("a1", "2026-05-01T06:00:00", map[string]any{"steps": []any{map[string]any{"duration": 300, "power": map[string]any{"value": 200, "units": "W"}}, map[string]any{"description": "Recovery", "duration": 60}}}),
-		"a2": progressionActivity("a2", "2026-05-02T06:00:00", map[string]any{"steps": []any{map[string]any{"duration": 300, "power": map[string]any{"value": 200, "units": "W"}}, map[string]any{"description": "Recovery", "duration": 60}}}),
+		"a1": progressionActivity("a1", "2026-05-01T06:00:00", map[string]any{"steps": []any{map[string]any{"duration": 300, "power": map[string]any{"value": 200, "units": "W"}}, map[string]any{"description": "Recovery", "duration": 60}, map[string]any{"duration": 300, "power": map[string]any{"value": 200, "units": "W"}}, map[string]any{"description": "Recovery", "duration": 60}}}),
+		"a2": progressionActivity("a2", "2026-05-02T06:00:00", map[string]any{"steps": []any{map[string]any{"duration": 300, "power": map[string]any{"value": 200, "units": "W"}}, map[string]any{"description": "Recovery", "duration": 60}, map[string]any{"duration": 300, "power": map[string]any{"value": 200, "units": "W"}}, map[string]any{"description": "Recovery", "duration": 60}}}),
 	}}
 	intervalsClient := &progressionIntervalsFake{rows: map[string]intervals.IntervalsDTO{
 		"a1": structuredProgressionIntervals(), "a2": structuredProgressionIntervals(),
@@ -159,6 +159,15 @@ func TestComputeWorkoutProgressionReadinessProfileAndBoundedWellness(t *testing.
 	if !progressionAnyStringSliceContains(t, meta["source_tools"], "get_athlete_profile") || meta["missing_days"] != float64(1) {
 		t.Fatalf("meta = %#v, want profile source and one missing wellness day", meta)
 	}
+	rows := result.StructuredContent.(map[string]any)["result"].(map[string]any)["rows"].([]any)
+	readiness := rows[0].(map[string]any)["readiness"].(map[string]any)
+	field := readiness["fields"].(map[string]any)["feel"].(map[string]any)
+	if field["value"] != float64(4) || field["source"] == nil || field["native_scale"] == nil {
+		t.Fatalf("readiness field = %#v, want lowercase source-labelled shape", field)
+	}
+	if _, present := field["Value"]; present {
+		t.Fatalf("readiness field leaked Go field name: %#v", field)
+	}
 }
 
 func TestComputeWorkoutProgressionEventFailureDoesNotFallback(t *testing.T) {
@@ -187,7 +196,7 @@ func progressionActivityWithRaw(id, date string, raw map[string]any) intervals.A
 func structuredProgressionIntervals() intervals.IntervalsDTO {
 	work := "work"
 	recovery := "recovery"
-	return intervals.IntervalsDTO{Raw: map[string]any{"source": "structured_workout"}, ICUIntervals: []intervals.ActivityInterval{{Type: &work, Duration: float64Pointer(300), AveragePower: float64Pointer(200), AverageHR: float64Pointer(140)}, {Type: &recovery, Duration: float64Pointer(60), AveragePower: float64Pointer(100), AverageHR: float64Pointer(120)}}}
+	return intervals.IntervalsDTO{Raw: map[string]any{"source": "structured_workout"}, ICUIntervals: []intervals.ActivityInterval{{Type: &work, Duration: float64Pointer(300), AveragePower: float64Pointer(200), AverageHR: float64Pointer(140)}, {Type: &recovery, Duration: float64Pointer(60), AveragePower: float64Pointer(100), AverageHR: float64Pointer(120)}, {Type: &work, Duration: float64Pointer(300), AveragePower: float64Pointer(200), AverageHR: float64Pointer(140)}, {Type: &recovery, Duration: float64Pointer(60), AveragePower: float64Pointer(100), AverageHR: float64Pointer(120)}}}
 }
 
 func float64Pointer(value float64) *float64 { return &value }
