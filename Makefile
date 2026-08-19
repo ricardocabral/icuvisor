@@ -33,6 +33,7 @@ test: ## Run unit tests
 	$(GO) test ./...
 
 docs-guidance-test: ## Verify published documentation guidance contracts
+	python3 scripts/tests/test_gemini_spark_guidance.py
 	python3 scripts/tests/test_docs_guidance.py
 	python3 scripts/tests/test_http_service_docs.py
 	python3 scripts/tests/test_build_workouts_guidance.py

@@ -21,5 +21,6 @@ Pick the path that matches your client. After the connection works, start with [
   {{< card link="claude-code" title="Claude Code" subtitle="Start icuvisor over MCP stdio from Claude Code." >}}
   {{< card link="codex-cli" title="Codex CLI" subtitle="Register icuvisor with Codex MCP config or the codex mcp command." >}}
   {{< card link="chatgpt" title="ChatGPT" subtitle="Minimal ChatGPT MCP connection notes." >}}
+  {{< card link="gemini-spark" title="Gemini Spark" subtitle="Core Streamable HTTP setup and reachability limits." >}}
   {{< card link="other-clients" title="Other MCP clients" subtitle="The standard MCP JSON shape for Cursor, Continue, Zed, Pi, and more." >}}
 {{< /cards >}}
