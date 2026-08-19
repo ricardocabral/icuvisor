@@ -147,7 +147,7 @@ func AnalyzeClimbSegments(input ClimbSegmentsInput) (ClimbSegmentsResult, error)
 	altitudeLen := climbStreamLength(input.Altitude)
 	quality.InputSamples = altitudeLen
 	for key, stream := range optional {
-		quality.OptionalStreams[key] = climbOptionalQuality(stream, distanceLen, false)
+		quality.OptionalStreams[key] = climbOptionalQuality(stream, distanceLen, key == "time")
 	}
 	result.DataQuality = quality
 
@@ -221,6 +221,9 @@ func AnalyzeClimbSegments(input ClimbSegmentsInput) (ClimbSegmentsResult, error)
 		if len(window) > 1 && window[len(window)-1].distance-window[0].distance > MaxClimbResampleSpanM {
 			return result, fmt.Errorf("%w: distance span %.6f m", ErrClimbResampleLimit, window[len(window)-1].distance-window[0].distance)
 		}
+		if !climbGridCoordinatesRepresentable(window) {
+			return result, fmt.Errorf("%w: distance grid coordinate is outside integer range", ErrClimbResampleLimit)
+		}
 		points := resampleClimbWindow(window, input.Time)
 		runs, noisy, transitions := climbRuns(points, params.MinGradePercent)
 		allRuns = append(allRuns, bridgeClimbRuns(runs, params)...)
@@ -230,11 +233,10 @@ func AnalyzeClimbSegments(input ClimbSegmentsInput) (ClimbSegmentsResult, error)
 	result.DataQuality.NoisyTransitions = noisyTransitions
 	segments := make([]ClimbSegment, 0, len(allRuns))
 	for _, run := range allRuns {
-		segment := buildClimbSegment(run, selected, optional, quality.OptionalStreams)
-		if segment.ElevationGainM+0 < params.MinElevationGainM {
+		if run.end.altitude-run.start.altitude < params.MinElevationGainM {
 			continue
 		}
-		segments = append(segments, segment)
+		segments = append(segments, buildClimbSegment(run, selected, optional, quality.OptionalStreams))
 	}
 	sort.SliceStable(segments, func(i, j int) bool {
 		if segments[i].StartDistanceM != segments[j].StartDistanceM {
@@ -257,7 +259,7 @@ func AnalyzeClimbSegments(input ClimbSegmentsInput) (ClimbSegmentsResult, error)
 	}
 	for key, stream := range optional {
 		q := result.DataQuality.OptionalStreams[key]
-		q.UsedSamples = usedClimbSamples(stream, selected, segments)
+		q.UsedSamples = usedClimbSamples(stream, selected, segments, q.Status)
 		result.DataQuality.OptionalStreams[key] = q
 	}
 	return result, nil
@@ -449,6 +451,17 @@ func countBrokenClimbWindows(points []selectedClimbPoint) int {
 	return broken
 }
 
+func climbGridCoordinatesRepresentable(window []selectedClimbPoint) bool {
+	if len(window) == 0 {
+		return true
+	}
+	maxInt := float64(int(^uint(0) >> 1))
+	minInt := -maxInt - 1
+	startGrid := math.Ceil(window[0].distance)
+	endGrid := math.Floor(window[len(window)-1].distance)
+	return startGrid >= minInt && startGrid <= maxInt && endGrid >= minInt && endGrid <= maxInt
+}
+
 func resampleClimbWindow(window []selectedClimbPoint, timeStream ClimbStream) []climbPoint {
 	if len(window) == 0 {
 		return nil
@@ -630,8 +643,12 @@ func optionalMean(stream ClimbStream, selected []selectedClimbPoint, start, end 
 	return mean(values), true
 }
 
-func usedClimbSamples(stream ClimbStream, selected []selectedClimbPoint, segments []ClimbSegment) int {
-	if climbOptionalStatus(stream, len(selected)) == ClimbOptionalAbsent || len(stream.Values) == 0 {
+func usedClimbSamples(stream ClimbStream, selected []selectedClimbPoint, segments []ClimbSegment, status string) int {
+	switch status {
+	case ClimbOptionalAbsent, ClimbOptionalNull, ClimbOptionalEmpty, ClimbOptionalAllNull, ClimbOptionalLengthMismatch:
+		return 0
+	}
+	if len(stream.Values) == 0 {
 		return 0
 	}
 	seen := map[int]struct{}{}
@@ -645,9 +662,9 @@ func usedClimbSamples(stream ClimbStream, selected []selectedClimbPoint, segment
 	return len(seen)
 }
 
-func climbOptionalQuality(stream ClimbStream, expectedLength int, _ bool) ClimbOptionalQuality {
+func climbOptionalQuality(stream ClimbStream, expectedLength int, checkMonotone bool) ClimbOptionalQuality {
 	length := climbStreamLength(stream)
-	q := ClimbOptionalQuality{Status: climbOptionalStatus(stream, expectedLength), InputSamples: length}
+	q := ClimbOptionalQuality{Status: climbOptionalStatus(stream, expectedLength, checkMonotone), InputSamples: length}
 	for i := 0; i < len(stream.Values); i++ {
 		if streamValid(stream, i) {
 			q.FiniteSamples++
@@ -659,7 +676,7 @@ func climbOptionalQuality(stream ClimbStream, expectedLength int, _ bool) ClimbO
 	return q
 }
 
-func climbOptionalStatus(stream ClimbStream, expectedLength int) string {
+func climbOptionalStatus(stream ClimbStream, expectedLength int, checkMonotone bool) string {
 	if !climbStreamPresent(stream) {
 		return ClimbOptionalAbsent
 	}
@@ -687,7 +704,7 @@ func climbOptionalStatus(stream ClimbStream, expectedLength int) string {
 			return ClimbOptionalPartial
 		}
 	}
-	if expectedLength > 0 {
+	if checkMonotone && expectedLength > 0 {
 		var previous float64
 		have := false
 		for i := 0; i < len(stream.Values); i++ {

@@ -129,11 +129,23 @@ func TestAnalyzeClimbSegmentsLocalizesNullWindowsAndReportsQuality(t *testing.T)
 }
 
 func TestAnalyzeClimbSegmentsBoundsExtremeResampleSpan(t *testing.T) {
-	input := climbTestInput([]float64{0, 1e300}, []float64{0, 1e300})
-	input.MinElevationGainM = 0
+	cases := [][]float64{{0, 1e300}, {1e20, 1e20 + 100000}}
+	for _, distance := range cases {
+		input := climbTestInput(distance, []float64{0, 1e300})
+		input.MinElevationGainM = 0
+		got, err := AnalyzeClimbSegments(input)
+		if !errors.Is(err, ErrClimbResampleLimit) {
+			t.Fatalf("distance = %#v, result = %#v, err %v, want bounded resample error", distance, got, err)
+		}
+	}
+}
+
+func TestAnalyzeClimbSegmentsAppliesRawGainThreshold(t *testing.T) {
+	input := climbTestInput([]float64{0, 1}, []float64{0, 0.9999996})
+	input.MinElevationGainM = 1
 	got, err := AnalyzeClimbSegments(input)
-	if !errors.Is(err, ErrClimbResampleLimit) {
-		t.Fatalf("result = %#v, err %v, want bounded resample error", got, err)
+	if err != nil || len(got.Segments) != 0 || got.DataQuality.Status != ClimbStatusNoClimb {
+		t.Fatalf("threshold result = %#v, err %v, want raw gain below threshold filtered", got, err)
 	}
 }
 
@@ -218,6 +230,16 @@ func TestAnalyzeClimbSegmentsQualityPrecedenceAndOptionalCoverage(t *testing.T) 
 	}
 	if got.Segments[0].AverageHeartRateBPM != nil || got.Segments[0].AveragePowerWatts != nil {
 		t.Fatalf("mismatched optional metrics = %#v, want omitted", got.Segments[0])
+	}
+	if got.DataQuality.OptionalStreams["heart_rate"].UsedSamples != 0 || got.DataQuality.OptionalStreams["watts"].UsedSamples != 0 {
+		t.Fatalf("mismatched optional used samples = %#v, want zero", got.DataQuality.OptionalStreams)
+	}
+	nonMonotoneMetric := climbTestInput([]float64{0, 10, 20}, []float64{0, 1, 2})
+	nonMonotoneMetric.MinElevationGainM = 1
+	nonMonotoneMetric.HeartRate = climbTestStream([]float64{160, 140, 150})
+	got, err = AnalyzeClimbSegments(nonMonotoneMetric)
+	if err != nil || got.DataQuality.OptionalStreams["heart_rate"].Status != ClimbOptionalOK || got.Segments[0].AverageHeartRateBPM == nil || *got.Segments[0].AverageHeartRateBPM != 150 {
+		t.Fatalf("non-monotone HR = %#v, err %v, want valid average", got, err)
 	}
 
 	vamInput := climbTestInput([]float64{0.3, 2.3}, []float64{0, 1})
