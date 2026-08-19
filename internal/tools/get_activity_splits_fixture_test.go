@@ -198,20 +198,29 @@ func TestGetActivitySplitsFixtureMatrixOmitsInvalidMetricsWithStableDiagnostics(
 	for _, rowValue := range payload["splits"].([]any) {
 		row := rowValue.(map[string]any)
 		for _, field := range []string{"average_heart_rate_bpm", "average_power_watts", "average_cadence_rpm"} {
-			if _, ok := row[field]; ok {
-				t.Fatalf("row = %#v, want unavailable %s omitted", row, field)
-			}
+			assertSplitRowFieldAbsent(t, row, field)
 		}
 		if _, ok := row["elevation_gain_m"]; !ok {
 			t.Fatalf("row = %#v, want valid altitude enrichment", row)
 		}
 	}
 	diagnostics := payload["_meta"].(map[string]any)["data_availability"].([]any)
-	want := map[string]int{"metric_channel_invalid": 2, "metric_channel_length_mismatch": 1}
-	for reason, count := range want {
-		if got := splitDiagnosticCount(diagnostics, reason); got != count {
-			t.Fatalf("%s count = %d, want %d; diagnostics = %#v", reason, got, count, diagnostics)
+	want := map[string]string{
+		"heart_rate": "metric_channel_invalid",
+		"watts":      "metric_channel_length_mismatch",
+		"cadence":    "metric_channel_invalid",
+	}
+	for channel, reason := range want {
+		if reason == "metric_channel_invalid" && splitDiagnosticCount(diagnostics, reason) != 2 {
+			t.Fatalf("%s reason %s count = %d, want exactly two invalid channels; diagnostics = %#v", channel, reason, splitDiagnosticCount(diagnostics, reason), diagnostics)
 		}
+		if reason == "metric_channel_length_mismatch" && splitDiagnosticCount(diagnostics, reason) != 1 {
+			t.Fatalf("%s reason %s count = %d, want exactly one mismatched channel; diagnostics = %#v", channel, reason, splitDiagnosticCount(diagnostics, reason), diagnostics)
+		}
+		assertSplitDiagnosticMapping(t, diagnostics, reason, channel, channel)
+	}
+	if splitDiagnosticCount(diagnostics, "missing_metric_stream") != 0 {
+		t.Fatalf("diagnostics = %#v, want no missing diagnostics for present invalid channels", diagnostics)
 	}
 }
 
@@ -297,9 +306,13 @@ func TestGetActivitySplitsFixtureBaseFailuresPausesAndIntervalRows(t *testing.T)
 		t.Fatalf("partial Handler() error = %v", err)
 	}
 	partialPayload := resultMap(t, partialResult)
-	if !hasSplitDiagnostic(partialPayload["_meta"].(map[string]any)["data_availability"].([]any), "metric_insufficient_coverage") {
-		t.Fatalf("partial payload = %#v, want metric coverage diagnostic", partialPayload)
+	partialRow := partialPayload["splits"].([]any)[0].(map[string]any)
+	assertSplitRowFieldAbsent(t, partialRow, "average_cadence_rpm")
+	partialDiagnostics := partialPayload["_meta"].(map[string]any)["data_availability"].([]any)
+	if splitDiagnosticCount(partialDiagnostics, "metric_insufficient_coverage") != 1 {
+		t.Fatalf("partial diagnostics = %#v, want one coverage diagnostic", partialDiagnostics)
 	}
+	assertSplitDiagnosticMapping(t, partialDiagnostics, "metric_insufficient_coverage", "cadence", "splits[0].average_cadence_rpm")
 
 	intervalsClient := loadSplitFixture(t, "interval_sources")
 	intervalsTool := newGetActivitySplitsTool(intervalsClient, intervalsClient, intervalsClient, intervalsClient, "test", false)
@@ -369,6 +382,17 @@ func TestGetActivitySplitsFixtureUnitsAndPoolPrecedence(t *testing.T) {
 	rideUnits := ridePayload["_meta"].(map[string]any)["units"].(map[string]any)
 	if rideUnits["system"] != "imperial" || rideUnits["distance"] != "mi" || rideUnits["pace"] != "min/mi" {
 		t.Fatalf("ride units = %#v, want imperial mile metadata", rideUnits)
+	}
+	sparseRow := ridePayload["splits"].([]any)[0].(map[string]any)
+	for _, field := range []string{"average_heart_rate_bpm", "average_power_watts", "average_cadence_rpm", "elevation_gain_m"} {
+		assertSplitRowFieldAbsent(t, sparseRow, field)
+	}
+	sparseDiagnostics := ridePayload["_meta"].(map[string]any)["data_availability"].([]any)
+	if splitDiagnosticCount(sparseDiagnostics, "missing_metric_stream") != 4 {
+		t.Fatalf("sparse diagnostics = %#v, want exactly one missing diagnostic per metric channel", sparseDiagnostics)
+	}
+	for _, channel := range []string{"heart_rate", "watts", "cadence", "altitude"} {
+		assertSplitDiagnosticMapping(t, sparseDiagnostics, "missing_metric_stream", channel, channel)
 	}
 
 	pool := loadSplitFixture(t, "pool_virtual_100m")
@@ -447,6 +471,22 @@ func TestGetActivitySplitsFixturePoolValidationModes(t *testing.T) {
 			if !hasSplitDiagnostic(payload["_meta"].(map[string]any)["data_availability"].([]any), tc.wantDiag) {
 				t.Fatalf("payload = %#v, want %s", payload, tc.wantDiag)
 			}
+			if payload["split_unit"] != "km" {
+				t.Fatalf("payload = %#v, want km fallback for omitted split_unit", payload)
+			}
+			units := payload["_meta"].(map[string]any)["units"].(map[string]any)
+			if units["distance"] != "km" || units["pace"] != "min/km" {
+				t.Fatalf("units = %#v, want normal km metadata", units)
+			}
+			for _, rowValue := range payload["splits"].([]any) {
+				row := rowValue.(map[string]any)
+				if _, ok := row["distance_100m"]; ok {
+					t.Fatalf("fallback row = %#v, want no distance_100m", row)
+				}
+				if _, ok := row["pace_seconds_per_100m"]; ok {
+					t.Fatalf("fallback row = %#v, want no pace_seconds_per_100m", row)
+				}
+			}
 			assertSplitPayloadHasNoRaw(t, payload)
 		})
 	}
@@ -487,6 +527,27 @@ func TestGetActivitySplitsDocumentationMentionsSourceAndPoolCaveats(t *testing.T
 			}
 		}
 	}
+}
+
+func assertSplitRowFieldAbsent(t *testing.T, row map[string]any, field string) {
+	t.Helper()
+	if value, ok := row[field]; ok {
+		t.Fatalf("row = %#v, want %s absent (not null or zero), got %#v", row, field, value)
+	}
+}
+
+func assertSplitDiagnosticMapping(t *testing.T, diagnostics []any, reason, requested, missing string) {
+	t.Helper()
+	for _, value := range diagnostics {
+		diagnostic := value.(map[string]any)
+		if diagnostic["reason"] != reason {
+			continue
+		}
+		if strings.Join(stringSlice(diagnostic["requested"]), ",") == requested && strings.Join(stringSlice(diagnostic["missing_fields"]), ",") == missing {
+			return
+		}
+	}
+	t.Fatalf("diagnostics = %#v, want reason %q requested=%q missing_fields=%q", diagnostics, reason, requested, missing)
 }
 
 func splitDiagnosticCount(diagnostics []any, reason string) int {
