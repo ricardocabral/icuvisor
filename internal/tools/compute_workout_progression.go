@@ -118,6 +118,9 @@ func computeWorkoutProgressionHandler(details ActivityDetailsClient, intervalCli
 			input.Sport = activityType(activity)
 			if date, dateOK := progressionActivityDate(activity); dateOK {
 				input.Date = date
+				if args.IncludeReadiness {
+					input.Readiness = emptyProgressionReadiness(date)
+				}
 			}
 			if args.IncludeReadiness {
 				applyReadinessDateDiagnostics(&input, activity, profileTimezone)
@@ -323,6 +326,11 @@ func applyReadinessDateDiagnostics(input *analysis.WorkoutProgressionActivity, a
 	}
 	if date, ok := progressionActivityDate(activity); ok {
 		input.Date = date
+		if input.Readiness == nil {
+			input.Readiness = emptyProgressionReadiness(date)
+		} else {
+			input.Readiness.Date = date
+		}
 	} else {
 		input.InitialReasons = append(input.InitialReasons, "invalid_activity_date", "missing_readiness")
 		return
@@ -355,6 +363,9 @@ func loadProgressionReadiness(ctx context.Context, inputs []analysis.WorkoutProg
 		for i := range inputs {
 			if inputs[i].Date != "" && !progressionContainsString(inputs[i].InitialReasons, "invalid_activity_date") {
 				inputs[i].InitialReasons = append(inputs[i].InitialReasons, "readiness_window_too_large", "missing_readiness")
+				if inputs[i].Readiness != nil {
+					inputs[i].Readiness.Reasons = append(inputs[i].Readiness.Reasons, "readiness_window_too_large", "missing_readiness")
+				}
 			}
 		}
 		return validRowCount, nil
@@ -412,7 +423,7 @@ func progressionWellnessMetricFields() []string {
 }
 
 func emptyProgressionReadiness(date string) *analysis.ReadinessEvidence {
-	return &analysis.ReadinessEvidence{Date: date, Fields: map[string]analysis.ReadinessField{}, ExpectedFields: progressionWellnessMetricFields()}
+	return &analysis.ReadinessEvidence{Date: date, Fields: map[string]analysis.ReadinessField{}, ExpectedFields: progressionWellnessMetricFields(), Reasons: []string{"missing_readiness"}}
 }
 
 func progressionWellnessDate(row intervals.Wellness) string {
@@ -732,13 +743,6 @@ func activityType(activity intervals.Activity) string {
 
 func isRestrictedProgressionActivity(activity intervals.Activity) bool {
 	return isStravaBlocked(activity)
-}
-
-func progressionRawString(raw map[string]any, key string) string {
-	if value, ok := raw[key].(string); ok {
-		return value
-	}
-	return ""
 }
 
 func progressionDistanceFactor(unit string) float64 {

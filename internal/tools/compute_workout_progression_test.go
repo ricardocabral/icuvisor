@@ -168,6 +168,50 @@ func TestComputeWorkoutProgressionReadinessProfileAndBoundedWellness(t *testing.
 	if _, present := field["Value"]; present {
 		t.Fatalf("readiness field leaked Go field name: %#v", field)
 	}
+	secondReadiness := rows[1].(map[string]any)["readiness"].(map[string]any)
+	if secondReadiness["date"] != "2026-05-02" || secondReadiness["status"] != "insufficient_evidence" {
+		t.Fatalf("missing-day readiness = %#v, want dated typed gap", secondReadiness)
+	}
+}
+
+func TestComputeWorkoutProgressionReadinessFailureKeepsDatedGap(t *testing.T) {
+	details := &progressionDetailsFake{activities: map[string]intervals.Activity{
+		"a1": progressionActivity("a1", "2026-05-01T06:00:00", nil),
+		"a2": progressionActivity("a2", "2026-05-02T06:00:00", nil),
+	}}
+	wellness := &progressionWellnessFake{err: errors.New("wellness unavailable")}
+	profile := &progressionProfileFake{value: intervals.AthleteWithSportSettings{Timezone: "UTC"}}
+	tool := newComputeWorkoutProgressionTool(details, &progressionIntervalsFake{rows: map[string]intervals.IntervalsDTO{"a1": structuredProgressionIntervals(), "a2": structuredProgressionIntervals()}}, nil, nil, wellness, profile, "test", "UTC", false)
+	result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"activities":[{"activity_id":"a1"},{"activity_id":"a2"}],"include_readiness":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	rows := result.StructuredContent.(map[string]any)["result"].(map[string]any)["rows"].([]any)
+	for i, wantDate := range []string{"2026-05-01", "2026-05-02"} {
+		readiness := rows[i].(map[string]any)["readiness"].(map[string]any)
+		if readiness["date"] != wantDate || readiness["status"] != "insufficient_evidence" {
+			t.Fatalf("failure readiness[%d] = %#v, want dated typed gap", i, readiness)
+		}
+	}
+}
+
+func TestComputeWorkoutProgressionReadinessOversizedWindowKeepsDatedGapWithoutCall(t *testing.T) {
+	details := &progressionDetailsFake{activities: map[string]intervals.Activity{
+		"a1": progressionActivity("a1", "2025-01-01T06:00:00", nil),
+		"a2": progressionActivity("a2", "2026-02-02T06:00:00", nil),
+	}}
+	wellness := &progressionWellnessFake{}
+	profile := &progressionProfileFake{value: intervals.AthleteWithSportSettings{Timezone: "UTC"}}
+	tool := newComputeWorkoutProgressionTool(details, &progressionIntervalsFake{rows: map[string]intervals.IntervalsDTO{"a1": structuredProgressionIntervals(), "a2": structuredProgressionIntervals()}}, nil, nil, wellness, profile, "test", "UTC", false)
+	result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"activities":[{"activity_id":"a1"},{"activity_id":"a2"}],"include_readiness":true}`)})
+	if err != nil {
+		t.Fatalf("Handler() error = %v", err)
+	}
+	rows := result.StructuredContent.(map[string]any)["result"].(map[string]any)["rows"].([]any)
+	readiness := rows[0].(map[string]any)["readiness"].(map[string]any)
+	if readiness["date"] != "2025-01-01" || !progressionContainsAnyString(readiness["reasons"], "readiness_window_too_large") || wellness.calls != 0 {
+		t.Fatalf("oversized readiness = %#v calls=%d, want dated no-call gap", readiness, wellness.calls)
+	}
 }
 
 func TestComputeWorkoutProgressionEventFailureDoesNotFallback(t *testing.T) {

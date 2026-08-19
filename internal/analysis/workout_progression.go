@@ -96,6 +96,7 @@ type ReadinessEvidence struct {
 	Date           string
 	Fields         map[string]ReadinessField
 	ExpectedFields []string
+	Reasons        []string
 }
 
 // ReadinessField is one upstream wellness value and its provenance.
@@ -577,16 +578,20 @@ func readinessOutput(in *ReadinessEvidence) *ReadinessOutput {
 		fields[key] = field
 	}
 	status := "insufficient_evidence"
-	reasons := []string{"missing_readiness"}
+	reasons := sortedReasons(in.Reasons)
+	if len(reasons) == 0 {
+		reasons = []string{"missing_readiness"}
+	}
 	if len(fields) > 0 {
 		if len(in.ExpectedFields) == 0 || len(fields) == len(in.ExpectedFields) {
 			status = "ok"
 			reasons = nil
 		} else {
 			status = "insufficient_evidence"
+			addReason(&reasons, "missing_readiness")
 		}
 	}
-	return &ReadinessOutput{Status: status, SampleCount: len(fields), Reasons: reasons, Date: in.Date, Fields: fields}
+	return &ReadinessOutput{Status: status, SampleCount: len(fields), Reasons: sortedReasons(reasons), Date: in.Date, Fields: fields}
 }
 
 func stabilityEvidence(c *WorkoutCompleted) *StabilityEvidence {
@@ -1103,13 +1108,6 @@ func roundedOptional(value *float64) *float64 {
 		return nil
 	}
 	return roundedPtr(*value)
-}
-
-func wpRoundOptional(value *float64) any {
-	if value == nil || !wpFinite(*value) {
-		return nil
-	}
-	return round(*value)
 }
 
 func wpCanonicalOptional(value *float64) any {
