@@ -57,11 +57,8 @@ func TestGetClimbSegmentsRequestsExactCanonicalSourceStreams(t *testing.T) {
 		t.Fatalf("include_full payload exposes series: %#v", payload)
 	}
 	meta := payload["_meta"].(map[string]any)
-	if meta["n"] != float64(3) || meta["min_samples"] != nil {
-		// min_samples is intentionally represented in assumptions for this analyzer, not a raw series field.
-		if meta["n"] != float64(3) {
-			t.Fatalf("meta = %#v, want normalized n=3", meta)
-		}
+	if meta["n"] != float64(3) || meta["min_samples"] != float64(2) {
+		t.Fatalf("meta = %#v, want normalized n=3 and min_samples=2", meta)
 	}
 }
 
@@ -69,6 +66,7 @@ func TestGetClimbSegmentsValidatesBeforeFetching(t *testing.T) {
 	cases := []string{
 		`{"activity_id":"a1","min_grade_percent":null}`,
 		`{"activity_id":"a1","min_grade_percent":101}`,
+		`{"activity_id":"a1","min_grade_percent":0}`,
 		`{"activity_id":"a1","max_gap_distance_m":-1}`,
 		`{"activity_id":"a1","unknown":true}`,
 		`{"activity_id":"a1","include_full":null}`,
@@ -113,6 +111,10 @@ func TestGetClimbSegmentsPreservesNullEvidenceInQuality(t *testing.T) {
 			body := result.StructuredContent.(map[string]any)["result"].(map[string]any)
 			if body["data_quality"].(map[string]any)["status"] != tc.wantStatus {
 				t.Fatalf("body = %#v, want status %q", body, tc.wantStatus)
+			}
+			segments, ok := body["segments"].([]any)
+			if !ok || len(segments) != 0 {
+				t.Fatalf("segments = %#v, want stable empty array", body["segments"])
 			}
 		})
 	}

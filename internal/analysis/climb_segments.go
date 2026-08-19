@@ -122,8 +122,9 @@ type climbPoint struct {
 }
 
 type climbRun struct {
-	start climbPoint
-	end   climbPoint
+	start         climbPoint
+	end           climbPoint
+	bridgeBlocked bool
 }
 
 // AnalyzeClimbSegments computes deterministic climb segments from aligned streams.
@@ -132,7 +133,7 @@ func AnalyzeClimbSegments(input ClimbSegmentsInput) (ClimbSegmentsResult, error)
 	if err != nil {
 		return ClimbSegmentsResult{}, err
 	}
-	result := ClimbSegmentsResult{Parameters: params}
+	result := ClimbSegmentsResult{Segments: make([]ClimbSegment, 0), Parameters: params}
 	quality := ClimbDataQuality{OptionalStreams: make(map[string]ClimbOptionalQuality)}
 	optional := map[string]ClimbStream{"time": input.Time, "heart_rate": input.HeartRate, "watts": input.Watts}
 
@@ -150,12 +151,24 @@ func AnalyzeClimbSegments(input ClimbSegmentsInput) (ClimbSegmentsResult, error)
 		result.DataQuality.Status = ClimbStatusInvalidDistance
 		return result, nil
 	}
+	if !distancePresent || distanceLen == 0 {
+		result.DataQuality.Status = ClimbStatusMissing
+		return result, nil
+	}
+	if !climbStreamValuesUsable(input.Distance, distanceLen) {
+		result.DataQuality.Status = ClimbStatusInvalidDistance
+		return result, nil
+	}
 	if input.Altitude.DataState == "data_null" || input.Altitude.DataState == ClimbOptionalAllNull || input.Altitude.AllNull {
 		result.DataQuality.Status = ClimbStatusNull
 		result.DataQuality.NullAltitudeSamples = input.Altitude.NullCount
 		if input.Altitude.AllNull && result.DataQuality.NullAltitudeSamples == 0 {
 			result.DataQuality.NullAltitudeSamples = altitudeLen
 		}
+		return result, nil
+	}
+	if !altitudePresent || altitudeLen == 0 {
+		result.DataQuality.Status = ClimbStatusMissing
 		return result, nil
 	}
 	if distanceLen != altitudeLen {
@@ -167,15 +180,6 @@ func AnalyzeClimbSegments(input ClimbSegmentsInput) (ClimbSegmentsResult, error)
 		result.DataQuality.NullAltitudeSamples = input.Altitude.NullCount
 		return result, nil
 	}
-	if !distancePresent || !altitudePresent || distanceLen == 0 || altitudeLen == 0 {
-		result.DataQuality.Status = ClimbStatusMissing
-		return result, nil
-	}
-	if !climbStreamValuesUsable(input.Distance, distanceLen) {
-		result.DataQuality.Status = ClimbStatusInvalidDistance
-		return result, nil
-	}
-
 	selected := collapseClimbSamples(input.Distance, input.Altitude, optional, distanceLen)
 	altitudeInvalid, nullAltitude, invalidAltitude := climbAltitudeEvidence(input.Altitude, altitudeLen)
 	result.DataQuality.NullAltitudeSamples = nullAltitude
@@ -258,11 +262,7 @@ func ComputeClimbSegments(input ClimbSegmentsInput) (ClimbSegmentsResult, error)
 }
 
 func normalizeClimbParameters(input ClimbSegmentsInput) (ClimbParameters, error) {
-	grade := input.MinGradePercent
-	if grade == 0 {
-		grade = DefaultClimbMinGradePercent
-	}
-	params := ClimbParameters{MinGradePercent: grade, MinElevationGainM: input.MinElevationGainM, MaxGapDistanceM: input.MaxGapDistanceM, MaxBridgedElevationLossM: input.MaxBridgedElevationLossM}
+	params := ClimbParameters{MinGradePercent: input.MinGradePercent, MinElevationGainM: input.MinElevationGainM, MaxGapDistanceM: input.MaxGapDistanceM, MaxBridgedElevationLossM: input.MaxBridgedElevationLossM}
 	values := []struct {
 		name  string
 		value float64
@@ -307,10 +307,15 @@ func climbStreamValuesUsable(stream ClimbStream, length int) bool {
 	if len(stream.Values) != length {
 		return false
 	}
+	var previous float64
 	for i := 0; i < length; i++ {
 		if !climbStreamValidAt(stream, i, length) {
 			return false
 		}
+		if i > 0 && stream.Values[i] < previous {
+			return false
+		}
+		previous = stream.Values[i]
 	}
 	return true
 }
@@ -516,6 +521,7 @@ func climbRuns(points []climbPoint, minGrade float64) ([]climbRun, int, int) {
 		if math.Abs(grade) > 100 {
 			noisy++
 			if current != nil {
+				current.bridgeBlocked = true
 				runs = append(runs, *current)
 				current = nil
 			}
@@ -555,7 +561,7 @@ func bridgeClimbRuns(runs []climbRun, params ClimbParameters) []climbRun {
 		if mergedDistance > 0 {
 			mergedGrade = 100 * mergedGain / mergedDistance
 		}
-		if gap <= params.MaxGapDistanceM && loss <= params.MaxBridgedElevationLossM && mergedGrade >= params.MinGradePercent && mergedGain >= params.MinElevationGainM {
+		if !current.bridgeBlocked && gap <= params.MaxGapDistanceM && loss <= params.MaxBridgedElevationLossM && mergedGrade >= params.MinGradePercent && mergedGain >= params.MinElevationGainM {
 			current.end = next.end
 			continue
 		}
@@ -571,24 +577,37 @@ func buildClimbSegment(run climbRun, selected []selectedClimbPoint, optional map
 	segment := ClimbSegment{StartDistanceM: round6(run.start.distance), EndDistanceM: round6(run.end.distance), DistanceM: round6(distance), ElevationGainM: round6(gain), AverageGradePercent: round6(100 * gain / distance)}
 	if q := qualities["time"]; q.Status == ClimbOptionalOK {
 		if run.start.timeValid && run.end.timeValid {
-			duration := run.end.time - run.start.time
-			if finite(duration) && duration > 0 {
-				duration = round6(duration)
+			rawDuration := run.end.time - run.start.time
+			if finite(rawDuration) && rawDuration > 0 {
+				duration := round6(rawDuration)
 				segment.DurationSeconds = &duration
-				vam := round6(gain / duration * 3600)
+				vam := round6(gain / rawDuration * 3600)
 				segment.VAMMPerHour = &vam
 			}
 		}
 	}
-	if value, ok := optionalMean(optional["heart_rate"], selected, run.start.distance, run.end.distance); ok {
-		value = round6(value)
-		segment.AverageHeartRateBPM = &value
+	if metricStreamAvailable(qualities["heart_rate"]) {
+		if value, ok := optionalMean(optional["heart_rate"], selected, run.start.distance, run.end.distance); ok {
+			value = round6(value)
+			segment.AverageHeartRateBPM = &value
+		}
 	}
-	if value, ok := optionalMean(optional["watts"], selected, run.start.distance, run.end.distance); ok {
-		value = round6(value)
-		segment.AveragePowerWatts = &value
+	if metricStreamAvailable(qualities["watts"]) {
+		if value, ok := optionalMean(optional["watts"], selected, run.start.distance, run.end.distance); ok {
+			value = round6(value)
+			segment.AveragePowerWatts = &value
+		}
 	}
 	return segment
+}
+
+func metricStreamAvailable(quality ClimbOptionalQuality) bool {
+	switch quality.Status {
+	case ClimbOptionalAbsent, ClimbOptionalNull, ClimbOptionalEmpty, ClimbOptionalAllNull, ClimbOptionalLengthMismatch:
+		return false
+	default:
+		return true
+	}
 }
 
 func optionalMean(stream ClimbStream, selected []selectedClimbPoint, start, end float64) (float64, bool) {

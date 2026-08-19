@@ -26,6 +26,7 @@ type AnalyzerMeta struct {
 	MissingDays        int            `json:"missing_days"`
 	MissingAction      string         `json:"missing_action"`
 	InsufficientSample bool           `json:"insufficient_sample"`
+	MinSamples         int            `json:"min_samples,omitempty"`
 	FormulaRef         string         `json:"formula_ref,omitempty"`
 	Assumptions        map[string]any `json:"assumptions,omitempty"`
 	Boundaries         []string       `json:"boundaries,omitempty"`
@@ -47,6 +48,7 @@ type AnalyzerMetaInput struct {
 	IntervalSource     IntervalSource
 	AutoLapSuspected   *bool
 	InsufficientSample *bool
+	IncludeMinSamples  bool
 }
 
 // IntervalExecutionClaimDecision tells analyzers whether interval-execution claims are safe.
@@ -96,12 +98,20 @@ func NewAnalyzerMeta(input AnalyzerMetaInput) AnalyzerMeta {
 		MissingDays:        missingDays,
 		MissingAction:      missingAction,
 		InsufficientSample: insufficientSample,
+		MinSamples:         normalizedMinSamples(input.MinSamples, input.IncludeMinSamples),
 		FormulaRef:         strings.TrimSpace(input.FormulaRef),
 		Assumptions:        copyStringAnyMap(input.Assumptions),
 		Boundaries:         trimStringSlice(input.Boundaries),
 		IntervalSource:     input.IntervalSource,
 		AutoLapSuspected:   input.AutoLapSuspected,
 	}
+}
+
+func normalizedMinSamples(value int, include bool) int {
+	if !include || value < 0 {
+		return 0
+	}
+	return value
 }
 
 // NormalizeSourceTools trims, deduplicates, and sorts source tool names.

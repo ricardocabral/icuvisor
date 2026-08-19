@@ -143,12 +143,28 @@ func TestAnalyzeClimbSegmentsQualityPrecedenceAndOptionalCoverage(t *testing.T) 
 	if err != nil || got.DataQuality.Status != ClimbStatusInvalidDistance || len(got.Segments) != 0 {
 		t.Fatalf("invalid distance = %#v, err %v", got, err)
 	}
+	invalid = climbTestInput([]float64{0, 10, 5, 20}, []float64{0, 1, 2, 3})
+	got, err = AnalyzeClimbSegments(invalid)
+	if err != nil || got.DataQuality.Status != ClimbStatusInvalidDistance {
+		t.Fatalf("non-monotone distance = %#v, err %v", got, err)
+	}
+	invalid.Altitude = ClimbStream{Present: true, DataState: "data_null"}
+	got, err = AnalyzeClimbSegments(invalid)
+	if err != nil || got.DataQuality.Status != ClimbStatusInvalidDistance {
+		t.Fatalf("non-monotone null altitude = %#v, err %v", got, err)
+	}
 
 	noisy := climbTestInput([]float64{0, 10, 20}, []float64{0, 20, 21})
 	noisy.MinElevationGainM = 5
 	got, err = AnalyzeClimbSegments(noisy)
 	if err != nil || got.DataQuality.Status != ClimbStatusNoisy || got.DataQuality.NoisyTransitions != 10 {
 		t.Fatalf("noisy = %#v, err %v", got, err)
+	}
+	noisyBridge := climbTestInput([]float64{0, 10, 20, 30}, []float64{0, 10, 21, 31})
+	noisyBridge.MinElevationGainM = 0
+	got, err = AnalyzeClimbSegments(noisyBridge)
+	if err != nil || len(got.Segments) != 2 || got.Segments[0].EndDistanceM != 10 || got.Segments[1].StartDistanceM != 20 {
+		t.Fatalf("noisy bridge result = %#v, err %v, want hard evidence boundary", got, err)
 	}
 
 	input := climbTestInput([]float64{0, 10, 20}, []float64{0, 1, 2})
@@ -168,5 +184,28 @@ func TestAnalyzeClimbSegmentsQualityPrecedenceAndOptionalCoverage(t *testing.T) 
 	}
 	if got.Segments[0].AverageHeartRateBPM == nil || *got.Segments[0].AverageHeartRateBPM != 110 {
 		t.Fatalf("partial heart rate metric = %#v, want finite mean", got.Segments[0])
+	}
+	mismatch := climbTestInput([]float64{0, 10, 20}, []float64{0, 1, 2})
+	mismatch.MinElevationGainM = 1
+	mismatch.HeartRate = climbTestStream([]float64{100, 110})
+	mismatch.Watts = climbTestStream([]float64{200, 210})
+	got, err = AnalyzeClimbSegments(mismatch)
+	if err != nil || got.DataQuality.OptionalStreams["heart_rate"].Status != ClimbOptionalLengthMismatch || got.DataQuality.OptionalStreams["watts"].Status != ClimbOptionalLengthMismatch {
+		t.Fatalf("mismatched optional quality = %#v, err %v", got.DataQuality.OptionalStreams, err)
+	}
+	if got.Segments[0].AverageHeartRateBPM != nil || got.Segments[0].AveragePowerWatts != nil {
+		t.Fatalf("mismatched optional metrics = %#v, want omitted", got.Segments[0])
+	}
+
+	vamInput := climbTestInput([]float64{0.3, 2.3}, []float64{0, 1})
+	vamInput.MinElevationGainM = 0.5
+	vamInput.Time = climbTestStream([]float64{0, 1.23456789})
+	got, err = AnalyzeClimbSegments(vamInput)
+	if err != nil || got.Segments[0].VAMMPerHour == nil {
+		t.Fatalf("VAM result = %#v, err %v", got, err)
+	}
+	wantVAM := round6(3600 / 1.23456789)
+	if *got.Segments[0].VAMMPerHour != wantVAM {
+		t.Fatalf("VAM = %v, want unrounded-duration result %v", *got.Segments[0].VAMMPerHour, wantVAM)
 	}
 }

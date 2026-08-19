@@ -169,6 +169,7 @@ func getClimbSegmentsHandler(client ActivityStreamsClient, version string, debug
 				SourceTools:        []string{getActivityStreamsName},
 				N:                  n,
 				MinSamples:         2,
+				IncludeMinSamples:  true,
 				MissingAction:      analysis.MissingActionSkip,
 				InsufficientSample: &insufficient,
 				Assumptions:        assumptions,
