@@ -13,6 +13,21 @@ import (
 	"testing"
 )
 
+func TestWellnessUnmarshalMalformedTypedFieldsRemainRawAndDoNotAbort(t *testing.T) {
+	t.Parallel()
+
+	var got Wellness
+	if err := json.Unmarshal([]byte(`{"id":"2026-05-01","feel":"unknown","hrv":"bad","sleepQuality":3,"source":"manual"}`), &got); err != nil {
+		t.Fatalf("Unmarshal() error = %v, want tolerant optional-field decoding", err)
+	}
+	if got.ID == nil || *got.ID != "2026-05-01" || got.SleepQuality == nil || *got.SleepQuality != 3 {
+		t.Fatalf("decoded valid fields = %#v, want id and sleepQuality", got)
+	}
+	if got.Feel != nil || got.HRV != nil || got.Raw["feel"] != "unknown" || got.Raw["hrv"] != "bad" {
+		t.Fatalf("malformed fields = feel:%v hrv:%v raw:%#v, want omitted typed values with raw preservation", got.Feel, got.HRV, got.Raw)
+	}
+}
+
 func TestWellnessUnmarshalExtractsNativeProviders(t *testing.T) {
 	t.Parallel()
 

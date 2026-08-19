@@ -12,7 +12,7 @@ import (
 func TestAnalysisFormulasMarkdownGolden(t *testing.T) {
 	t.Parallel()
 
-	const wantSHA256 = "91b696af708deb80af013180acfd3cdab82d8e262a601da44f6340d9638ffd35"
+	const wantSHA256 = "851827c82fb79d1ea967483507462881cf6a79283b2101f438b4263930347467"
 
 	got := AnalysisFormulasMarkdown()
 	want, err := os.ReadFile("testdata/analysis_formulas.md")
@@ -90,6 +90,12 @@ func TestAnalysisFormulasMarkdownPinsRequiredFormulaRefs(t *testing.T) {
 			formula:  "mean(load_i) / SD_population(load_i)",
 			boundary: "missing, duplicate, invalid, out-of-window, non-object, malformed, or negative coverage",
 			citation: "Foster C",
+		},
+		{
+			ref:      AnalysisFormulaRefWorkoutProgression,
+			formula:  "abs(observed-value)",
+			boundary: "no score, recommendation, physiology inference, or write",
+			citation: "zero_denominator",
 		},
 	}
 	for _, check := range checks {
