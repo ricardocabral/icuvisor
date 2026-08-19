@@ -228,13 +228,141 @@ func TestComputeWorkoutProgressionEventFailureDoesNotFallback(t *testing.T) {
 	}
 }
 
+func TestComputeWorkoutProgressionHandlerEvidenceGaps(t *testing.T) {
+	baseDoc := progressionWorkoutDoc(300, 60, 300, 60)
+	mismatchedDoc := progressionWorkoutDoc(300, 45, 300, 60)
+	cases := []struct {
+		name            string
+		details         *progressionDetailsFake
+		intervals       *progressionIntervalsFake
+		wantStatus      string
+		wantRowReason   string
+		wantDeltaReason string
+		wantComparable  float64
+	}{
+		{
+			name: "mismatched structures are not comparable",
+			details: &progressionDetailsFake{activities: map[string]intervals.Activity{
+				"a1": progressionActivity("a1", "2026-05-01T06:00:00", baseDoc),
+				"a2": progressionActivity("a2", "2026-05-02T06:00:00", mismatchedDoc),
+			}},
+			intervals:       &progressionIntervalsFake{rows: map[string]intervals.IntervalsDTO{"a1": structuredProgressionIntervals(), "a2": structuredProgressionIntervals()}},
+			wantStatus:      "not_comparable",
+			wantDeltaReason: "structure_mismatch",
+		},
+		{
+			name: "mixed sports are not comparable",
+			details: &progressionDetailsFake{activities: map[string]intervals.Activity{
+				"a1": progressionActivity("a1", "2026-05-01T06:00:00", baseDoc),
+				"a2": progressionActivityWithSport("a2", "2026-05-02T06:00:00", "Run", baseDoc),
+			}},
+			intervals:       &progressionIntervalsFake{rows: map[string]intervals.IntervalsDTO{"a1": structuredProgressionIntervals(), "a2": structuredProgressionIntervals()}},
+			wantStatus:      "not_comparable",
+			wantDeltaReason: "unknown_sport",
+		},
+		{
+			name: "missing prescription stays explicit",
+			details: &progressionDetailsFake{activities: map[string]intervals.Activity{
+				"a1": progressionActivity("a1", "2026-05-01T06:00:00", baseDoc),
+				"a2": progressionActivityWithRaw("a2", "2026-05-02T06:00:00", map[string]any{}),
+			}},
+			intervals:       &progressionIntervalsFake{rows: map[string]intervals.IntervalsDTO{"a1": structuredProgressionIntervals(), "a2": structuredProgressionIntervals()}},
+			wantStatus:      "insufficient_evidence",
+			wantRowReason:   "missing_prescription",
+			wantDeltaReason: "missing_prescription",
+		},
+		{
+			name: "missing intervals do not become work",
+			details: &progressionDetailsFake{activities: map[string]intervals.Activity{
+				"a1": progressionActivity("a1", "2026-05-01T06:00:00", baseDoc),
+				"a2": progressionActivity("a2", "2026-05-02T06:00:00", baseDoc),
+			}},
+			intervals:       &progressionIntervalsFake{rows: map[string]intervals.IntervalsDTO{"a1": structuredProgressionIntervals()}},
+			wantStatus:      "insufficient_evidence",
+			wantRowReason:   "missing_intervals",
+			wantDeltaReason: "missing_intervals",
+			wantComparable:  1,
+		},
+		{
+			name: "missing subjective fields are reported",
+			details: &progressionDetailsFake{activities: map[string]intervals.Activity{
+				"a1": progressionActivity("a1", "2026-05-01T06:00:00", baseDoc),
+				"a2": func() intervals.Activity {
+					activity := progressionActivity("a2", "2026-05-02T06:00:00", baseDoc)
+					activity.Feel = nil
+					activity.RPE = nil
+					return activity
+				}(),
+			}},
+			intervals:      &progressionIntervalsFake{rows: map[string]intervals.IntervalsDTO{"a1": structuredProgressionIntervals(), "a2": structuredProgressionIntervals()}},
+			wantStatus:     "insufficient_evidence",
+			wantRowReason:  "missing_subjective",
+			wantComparable: 1,
+		},
+		{
+			name:            "missing activity source is not silently paired",
+			details:         &progressionDetailsFake{err: errors.New("activity unavailable")},
+			intervals:       &progressionIntervalsFake{rows: map[string]intervals.IntervalsDTO{}},
+			wantStatus:      "not_comparable",
+			wantRowReason:   "missing_source",
+			wantDeltaReason: "unknown_sport",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			extended := &progressionExtendedFake{value: intervals.PowerVsHR{PowerHR: float64Pointer(1.5), Decoupling: float64Pointer(2)}}
+			tool := newComputeWorkoutProgressionTool(tc.details, tc.intervals, extended, nil, nil, nil, "test", "UTC", false)
+			result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"activities":[{"activity_id":"a1"},{"activity_id":"a2"}]}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			payload := result.StructuredContent.(map[string]any)
+			body := payload["result"].(map[string]any)
+			if body["status"] != tc.wantStatus {
+				t.Fatalf("result status = %v, want %s: %#v", body["status"], tc.wantStatus, body)
+			}
+			rows := body["rows"].([]any)
+			if tc.wantRowReason != "" && !progressionContainsAnyString(rows[0].(map[string]any)["reasons"], tc.wantRowReason) && !progressionContainsAnyString(rows[1].(map[string]any)["reasons"], tc.wantRowReason) {
+				t.Fatalf("rows = %#v, want reason %q", rows, tc.wantRowReason)
+			}
+			deltas := body["deltas"].([]any)
+			if tc.wantDeltaReason != "" && !progressionContainsAnyString(deltas[0].(map[string]any)["reasons"], tc.wantDeltaReason) {
+				t.Fatalf("delta = %#v, want reason %q", deltas[0], tc.wantDeltaReason)
+			}
+			comparison := body["comparison"].(map[string]any)
+			if comparison["comparable_pair_count"] != tc.wantComparable {
+				t.Fatalf("comparable_pair_count = %v, want %v", comparison["comparable_pair_count"], tc.wantComparable)
+			}
+		})
+	}
+}
+
 func progressionActivity(id, date string, doc map[string]any) intervals.Activity {
 	return progressionActivityWithRaw(id, date, map[string]any{"workout_doc": doc})
+}
+
+func progressionActivityWithSport(id, date, sport string, doc map[string]any) intervals.Activity {
+	activity := progressionActivity(id, date, doc)
+	activity.Type = stringPointer(sport)
+	return activity
 }
 
 func progressionActivityWithRaw(id, date string, raw map[string]any) intervals.Activity {
 	typ := "Ride"
 	return intervals.Activity{ID: id, Type: &typ, StartDateLocal: stringPointer(date), MovingTime: progressionIntPointer(360), Feel: progressionIntPointer(3), RPE: progressionIntPointer(6), Raw: raw}
+}
+
+func progressionWorkoutDoc(durations ...float64) map[string]any {
+	steps := make([]any, 0, len(durations))
+	for i, duration := range durations {
+		step := map[string]any{"duration": duration}
+		if i%2 == 1 {
+			step["description"] = "Recovery"
+		}
+		steps = append(steps, step)
+	}
+	return map[string]any{"steps": steps}
 }
 
 func structuredProgressionIntervals() intervals.IntervalsDTO {

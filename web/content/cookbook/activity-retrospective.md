@@ -32,8 +32,9 @@ When you already know the ordered activity IDs for the same workout, use the rea
 }
 ```
 
-Treat `comparison.comparable_pair_count`, row/pair `status`, `reasons`, `_meta.source_tools`, and `_meta.insufficient_sample` as part of the evidence. A `not_comparable` or `insufficient_evidence` result is a data boundary, not a coaching verdict.
- For relative dates like "last Sunday," it should resolve the athlete-local date window with `get_activities`, choose the matching activity, then pass that `activity_id` to detail, interval, and split tools.
+Treat `comparison.comparable_pair_count`, row/pair `status`, `reasons`, `_meta.source_tools`, and `_meta.insufficient_sample` as part of the evidence. A `not_comparable` or `insufficient_evidence` result is a data boundary, not a coaching verdict. For example, a mixed-sport pair or a missing prescription should be reported as unavailable evidence rather than silently paired.
+
+This analyzer is read-only: it does not choose the next workout, increase intensity, shorten recovery, add repetitions, assign a progression/readiness score, or write calendar events. Do not use workout names to discover the sequence. For relative dates like "last Sunday," first resolve the athlete-local date window with `get_activities`, choose the matching activity IDs, and then pass those explicit IDs to the analyzer.
 
 ```text
 Give me a detailed retrospective of my most recent hard ride. Use icuvisor
