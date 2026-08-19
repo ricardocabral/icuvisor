@@ -1,0 +1,13 @@
+{
+  "activity": {"id":"fixture-matrix","type":"Ride"},
+  "profile": {"preferred_units":"metric"},
+  "intervals": {"id":"fixture-matrix","icu_intervals":[]},
+  "streams": [
+    {"type":"distance","data":[0,1000,2000]},
+    {"type":"time","data":[0,100,200]},
+    {"type":"heart_rate","data":[120,null,140]},
+    {"type":"watts","data":[200,220]},
+    {"type":"cadence","data":["NaN",80,90]},
+    {"type":"altitude","data":[10,11,12]}
+  ]
+}

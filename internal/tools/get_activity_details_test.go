@@ -23,6 +23,8 @@ type fakeActivityReadClient struct {
 	streamCalls        int
 	streamParams       intervals.ActivityStreamsParams
 	streamParamHistory []intervals.ActivityStreamsParams
+	streamResponses    map[string][]intervals.ActivityStream
+	streamErrors       map[string]error
 	messages           []intervals.ActivityMessage
 	messageErr         error
 	customItems        []intervals.CustomItem

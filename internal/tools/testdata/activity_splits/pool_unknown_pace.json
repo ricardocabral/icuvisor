@@ -1,0 +1,9 @@
+{
+  "activity": {"id":"fixture-pool-unknown","type":"Swim"},
+  "profile": {"preferred_units":"metric","sportSettings":[{"types":["Swim"],"pace_load_type":"SWIM","pace_units":"UNKNOWN"}]},
+  "intervals": {"id":"fixture-pool-unknown","icu_intervals":[]},
+  "streams": [
+    {"type":"distance","unit":"m","data":[0,1000]},
+    {"type":"time","data":[0,600]}
+  ]
+}

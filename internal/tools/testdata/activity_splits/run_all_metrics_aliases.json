@@ -1,0 +1,13 @@
+{
+  "activity": {"id":"fixture-run-all","type":"Run"},
+  "profile": {"preferred_units":"metric"},
+  "intervals": {"id":"fixture-run-all","icu_intervals":[]},
+  "streams": [
+    {"type":"Distance","data":[0,500,1500,2000]},
+    {"type":"Time","data":[0,60,180,240]},
+    {"type":"HeartRate","data":[100,110,130,140]},
+    {"type":"Power","data":[200,220,260,280]},
+    {"type":"Cadence","data":[80,82,86,88]},
+    {"type":"Altitude","data":[10,15,12,20]}
+  ]
+}

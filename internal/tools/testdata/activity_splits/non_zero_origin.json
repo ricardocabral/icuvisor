@@ -1,0 +1,9 @@
+{
+  "activity": {"id":"fixture-nonzero","type":"Run"},
+  "profile": {"preferred_units":"metric"},
+  "intervals": {"id":"fixture-nonzero","icu_intervals":[]},
+  "streams": [
+    {"type":"distance","data":[100,1100]},
+    {"type":"time","data":[0,100]}
+  ]
+}

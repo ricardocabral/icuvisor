@@ -13,6 +13,17 @@ func (f *fakeActivityReadClient) GetActivityStreams(ctx context.Context, params 
 	f.streamCalls++
 	f.streamParams = params
 	f.streamParamHistory = append(f.streamParamHistory, params)
+	key := strings.Join(params.Types, ",")
+	if f.streamErrors != nil {
+		if err, ok := f.streamErrors[key]; ok {
+			return nil, err
+		}
+	}
+	if f.streamResponses != nil {
+		if rows, ok := f.streamResponses[key]; ok {
+			return rows, nil
+		}
+	}
 	return f.streams, f.streamErr
 }
 

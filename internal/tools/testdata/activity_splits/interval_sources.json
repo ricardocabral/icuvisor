@@ -1,0 +1,13 @@
+{
+  "activity": {"id":"fixture-intervals","type":"Run"},
+  "profile": {"preferred_units":"metric"},
+  "intervals": {"id":"fixture-intervals","icu_intervals":[
+    {"id":"structured-1","name":"Tempo","distance":1000,"duration":100},
+    {"id":"manual-1","name":"Block","start_index":1,"end_index":2,"distance":1000,"duration":100},
+    {"id":"device-1","name":"Lap 1","distance":1000,"duration":100,"lap_type":"auto"}
+  ]},
+  "streams": [
+    {"type":"distance","data":[0,1000]},
+    {"type":"time","data":[0,100]}
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "activity": {"id":"fixture-pool-laps","type":"Swim"},
+  "profile": {"preferred_units":"imperial","sportSettings":[{"types":["Swim"],"pace_load_type":"SWIM","pace_units":"SECS_100M"}]},
+  "intervals": {"id":"fixture-pool-laps","icu_intervals":[
+    {"id":"lap-1","name":"Lap 1","distance":100,"duration":60,"lap_type":"auto"},
+    {"id":"lap-2","name":"Lap 2","distance":100,"duration":61,"lap_type":"auto"}
+  ]},
+  "streams": [
+    {"type":"distance","unit":"m","data":[0,100,200]},
+    {"type":"time","data":[0,60,121]}
+  ]
+}
