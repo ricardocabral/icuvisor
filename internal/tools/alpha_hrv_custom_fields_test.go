@@ -52,6 +52,9 @@ func TestAlphaHRVCanonicalContractIsIntervalOnlyAndSourceLabelled(t *testing.T) 
 			t.Fatalf("metric_provenance.dfa_alpha1[%s] = %#v, want %#v", key, provenance[key], want)
 		}
 	}
+	if _, present := meta["data_availability"]; present {
+		t.Fatalf("device_name alone produced availability diagnostic: %#v", meta["data_availability"])
+	}
 	units := meta["extended_metric_units"].(map[string]any)
 	if units["dfa_alpha1"] != "unitless" {
 		t.Fatalf("extended_metric_units.dfa_alpha1 = %#v, want unitless", units["dfa_alpha1"])
@@ -247,9 +250,51 @@ func TestAlphaHRVCustomActivityFieldsAreExplicitAndSourceLabelled(t *testing.T) 
 			t.Fatalf("data_availability missing %s: %#v", want, meta["data_availability"])
 		}
 	}
-	if strings.Contains(strings.ToLower(string(mustJSON(t, payload))), "alpha_hrv_readiness") {
-		t.Fatal("custom field was relabeled as an AlphaHRV/readiness result")
+	serialized := strings.ToLower(string(mustJSON(t, payload)))
+	if strings.Contains(serialized, "alpha_hrv_readiness") || strings.Contains(serialized, "readiness") || strings.Contains(serialized, "threshold") || strings.Contains(serialized, "medical") {
+		t.Fatal("custom field produced an AlphaHRV/readiness/threshold/medical conclusion")
 	}
+}
+
+func TestAlphaHRVRestrictedActivityKeepsCustomProvenanceWithoutValueDiagnostic(t *testing.T) {
+	t.Parallel()
+
+	t.Run("activity list", func(t *testing.T) {
+		client := newFakeActivitiesClient(t, []string{`{"id":"activity-strava-custom","name":"Imported","type":"Run","source":"Strava","_note":"restricted","alpha_hrv":0}`}, "metric")
+		client.customItems = decodeCustomItems(t, `{"id":"c1","type":"ACTIVITY_FIELD","content":{"field":"alpha_hrv"}}`)
+		tool := newGetActivitiesToolWithGear(client, client, nil, nil, client, newCustomFieldCache(), "test", "UTC", false)
+		result, err := tool.Handler(context.Background(), Request{Name: getActivitiesName, Arguments: json.RawMessage(`{"oldest":"2026-01-01","custom_fields":["alpha_hrv"]}`)})
+		if err != nil {
+			t.Fatalf("get_activities error = %v", err)
+		}
+		meta := resultMap(t, result)["_meta"].(map[string]any)
+		if _, ok := meta["custom_field_provenance"].(map[string]any)["alpha_hrv"]; !ok {
+			t.Fatalf("custom provenance missing on restricted list response: %#v", meta)
+		}
+		diagnostics := meta["data_availability"].([]any)
+		if len(diagnostics) != 1 || diagnostics[0].(map[string]any)["reason"] != "restricted_source" {
+			t.Fatalf("list data_availability = %#v, want only restricted_source", diagnostics)
+		}
+	})
+
+	t.Run("activity detail", func(t *testing.T) {
+		activity := decodeActivityFixture(t, `{"id":"activity-strava-detail","icu_athlete_id":"i12345","name":"Imported","type":"Run","source":"Strava","_note":"restricted","alpha_hrv":0}`)
+		client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}}, activity: activity}
+		client.customItems = decodeCustomItems(t, `{"id":"c1","type":"ACTIVITY_FIELD","content":{"field":"alpha_hrv"}}`)
+		tool := newGetActivityDetailsToolWithGear(client, client, nil, nil, client, newCustomFieldCache(), "test", "UTC", false)
+		result, err := tool.Handler(context.Background(), Request{Name: getActivityDetailsName, Arguments: json.RawMessage(`{"activity_id":"activity-strava-detail","custom_fields":["alpha_hrv"]}`)})
+		if err != nil {
+			t.Fatalf("get_activity_details error = %v", err)
+		}
+		meta := resultMap(t, result)["_meta"].(map[string]any)
+		if _, ok := meta["custom_field_provenance"].(map[string]any)["alpha_hrv"]; !ok {
+			t.Fatalf("custom provenance missing on restricted detail response: %#v", meta)
+		}
+		diagnostics := meta["data_availability"].([]any)
+		if len(diagnostics) != 1 || diagnostics[0].(map[string]any)["reason"] != "restricted_source" {
+			t.Fatalf("detail data_availability = %#v, want only restricted_source", diagnostics)
+		}
+	})
 }
 
 func TestAlphaHRVCustomFieldDetailProvenanceAndRawEscapeHatch(t *testing.T) {
