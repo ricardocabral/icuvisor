@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-08-19
+
 ### Added
 
 - Added the full-toolset, read-only `compute_workout_progression` analyzer for an explicitly ordered sequence of repeated activity IDs. It reports deterministic prescribed/completed structure, target-family adherence, stability, duration/recovery deltas, source-labelled feel/RPE, optional wellness context, and evidence gaps without assigning a progression score, recommending changes, or writing the calendar.
@@ -412,7 +414,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.5.10...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/ricardocabral/icuvisor/compare/v1.5.10...v1.6.0
 [1.5.10]: https://github.com/ricardocabral/icuvisor/compare/v1.5.9...v1.5.10
 [1.5.9]: https://github.com/ricardocabral/icuvisor/compare/v1.5.8...v1.5.9
 [1.5.7]: https://github.com/ricardocabral/icuvisor/compare/v1.5.6...v1.5.7
