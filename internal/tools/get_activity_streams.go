@@ -203,17 +203,26 @@ type getActivitySplitsUnavailableResponse struct {
 }
 
 type activitySplitRow struct {
-	Index           int      `json:"index"`
-	DistanceKM      *float64 `json:"distance_km,omitempty"`
-	DistanceMI      *float64 `json:"distance_mi,omitempty"`
-	DurationSeconds float64  `json:"duration_seconds"`
-	PaceSeconds     float64  `json:"pace_seconds"`
+	Index               int      `json:"index"`
+	DistanceKM          *float64 `json:"distance_km,omitempty"`
+	DistanceMI          *float64 `json:"distance_mi,omitempty"`
+	Distance100M        *float64 `json:"distance_100m,omitempty"`
+	DurationSeconds     float64  `json:"duration_seconds"`
+	PaceSeconds         float64  `json:"pace_seconds"`
+	PaceSecondsPer100M  *float64 `json:"pace_seconds_per_100m,omitempty"`
+	AverageHeartRateBPM *float64 `json:"average_heart_rate_bpm,omitempty"`
+	AveragePowerWatts   *float64 `json:"average_power_watts,omitempty"`
+	AverageCadenceRPM   *float64 `json:"average_cadence_rpm,omitempty"`
+	ElevationGainM      *float64 `json:"elevation_gain_m,omitempty"`
+	Provenance          string   `json:"provenance"`
+	DistanceBasis       string   `json:"distance_basis"`
 }
 
 type activitySplitsMeta struct {
 	ServerVersion    string                       `json:"server_version"`
 	IncludeFull      bool                         `json:"include_full"`
 	Algorithm        string                       `json:"algorithm"`
+	IntervalSource   string                       `json:"interval_source,omitempty"`
 	Units            map[string]string            `json:"units,omitempty"`
 	DataAvailability []dataAvailabilityDiagnostic `json:"data_availability,omitempty"`
 }
@@ -280,27 +289,31 @@ func getActivitySplitsHandler(streamsClient ActivityStreamsClient, intervalsClie
 			return Result{}, NewUserError(fetchAthleteProfileMessage, err)
 		}
 		unitSystem := profileUnitSystem(profile)
-		splitUnit := normalizeSplitUnit(args.SplitUnit, unitSystem)
-		dto, _ := intervalsClient.GetActivityIntervals(ctx, args.ActivityID)
-		splits, source := splitsFromIntervals(dto, splitUnit)
-		if len(splits) == 0 {
-			streamRows, err := streamsClient.GetActivityStreams(ctx, intervals.ActivityStreamsParams{ActivityID: args.ActivityID, Types: []string{"distance", "time"}, IncludeDefaults: true})
-			if err != nil {
-				if isContextError(err) {
-					return Result{}, err
-				}
-				unavailable, unavailableErr := detectActivityUnavailable(ctx, detailsClient, args.ActivityID, err)
-				if unavailableErr != nil {
-					return Result{}, unavailableErr
-				}
-				payload := unavailableActivitySplitsResponse(unavailable, args.IncludeFull, version, unitSystem)
-				return encodeActivitySplitsPayload(payload, args.IncludeFull, version, debugMetadata, shapeCfg, unitSystem)
-			}
-			splits = virtualSplits(streamRows, splitUnit)
-			source = "virtual_streams"
+		build, err := buildActivitySplits(ctx, args, profile, streamsClient, intervalsClient, detailsClient, version, unitSystem)
+		if err != nil {
+			return Result{}, err
 		}
-		payload := getActivitySplitsResponse{ActivityID: args.ActivityID, SplitUnit: splitUnit, Source: source, Splits: splits, Meta: activitySplitsMeta{ServerVersion: normalizeVersion(version), IncludeFull: args.IncludeFull, Algorithm: "manual intervals when available; otherwise interpolate distance/time stream samples, ignoring paused-segment semantics when moving samples are absent", Units: unitSystem.Metadata()}}
-		return encodeActivitySplitsPayload(payload, args.IncludeFull, version, debugMetadata, shapeCfg, unitSystem)
+		if build.Unavailable != nil {
+			payload := unavailableActivitySplitsResponse(*build.Unavailable, args.IncludeFull, version, unitSystem)
+			payload.Meta.IntervalSource = string(build.IntervalSource)
+			payload.Meta.DataAvailability = append(payload.Meta.DataAvailability, build.Diagnostics...)
+			return encodeActivitySplitsPayload(payload, args.IncludeFull, version, debugMetadata, shapeCfg, unitSystem, build.Units)
+		}
+		payload := getActivitySplitsResponse{
+			ActivityID: args.ActivityID,
+			SplitUnit:  build.SplitUnit,
+			Source:     build.Source,
+			Splits:     build.Splits,
+			Meta: activitySplitsMeta{
+				ServerVersion:    normalizeVersion(version),
+				IncludeFull:      args.IncludeFull,
+				Algorithm:        splitAlgorithm(build.Source),
+				IntervalSource:   string(build.IntervalSource),
+				Units:            build.Units,
+				DataAvailability: build.Diagnostics,
+			},
+		}
+		return encodeActivitySplitsPayload(payload, args.IncludeFull, version, debugMetadata, shapeCfg, unitSystem, build.Units)
 	}
 }
 
@@ -740,16 +753,26 @@ func unavailableActivitySplitsResponse(unavailable activityUnavailable, includeF
 	return out
 }
 
-func encodeActivitySplitsPayload(payload any, includeFull bool, version string, debugMetadata bool, shapeCfg responseShaping, unitSystem response.UnitSystem) (Result, error) {
+func encodeActivitySplitsPayload(payload any, includeFull bool, version string, debugMetadata bool, shapeCfg responseShaping, unitSystem response.UnitSystem, customUnits ...map[string]string) (Result, error) {
 	shaped, err := response.Shape(payload, shapeCfg.options(includeFull, []string{"splits"}, version, debugMetadata, getActivitySplitsName, unitSystem))
 	if err != nil {
 		return Result{}, err
+	}
+	if len(customUnits) > 0 && customUnits[0] != nil {
+		if root, ok := shaped.(map[string]any); ok {
+			if meta, ok := root["_meta"].(map[string]any); ok {
+				meta["units"] = customUnits[0]
+			}
+		}
 	}
 	return TextResult(shaped), nil
 }
 
 func normalizeSplitUnit(requested string, unitSystem response.UnitSystem) string {
 	requested = strings.ToLower(strings.TrimSpace(requested))
+	if requested == "100m" {
+		return "100m"
+	}
 	if requested == "mi" || requested == "mile" || requested == "miles" {
 		return "mi"
 	}
@@ -763,10 +786,14 @@ func normalizeSplitUnit(requested string, unitSystem response.UnitSystem) string
 }
 
 func splitDistanceMeters(splitUnit string) float64 {
-	if splitUnit == "mi" {
+	switch splitUnit {
+	case "mi":
 		return 1609.344
+	case "100m":
+		return 100
+	default:
+		return 1000
 	}
-	return 1000
 }
 
 func splitsFromIntervals(dto intervals.IntervalsDTO, splitUnit string) ([]activitySplitRow, string) {
@@ -827,10 +854,14 @@ func interpolateTime(distance []float64, times []float64, target float64) float6
 func newSplitRow(index int, meters float64, duration float64, splitUnit string) activitySplitRow {
 	pace := duration
 	row := activitySplitRow{Index: index, DurationSeconds: math.Round(duration*10) / 10, PaceSeconds: math.Round(pace*10) / 10}
-	if splitUnit == "mi" {
+	switch splitUnit {
+	case "mi":
 		value := math.Round((meters/1609.344)*1000) / 1000
 		row.DistanceMI = &value
-	} else {
+	case "100m":
+		value := math.Round((meters/100)*1000) / 1000
+		row.Distance100M = &value
+	default:
 		value := math.Round((meters/1000)*1000) / 1000
 		row.DistanceKM = &value
 	}
@@ -857,7 +888,7 @@ func activityStreamsInputSchema() map[string]any {
 func activitySplitsInputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"activity_id"}, "properties": map[string]any{
 		"activity_id":  map[string]any{"type": "string", "description": "Required intervals.icu activity ID whose manual or virtual splits should be returned."},
-		"split_unit":   map[string]any{"type": "string", "enum": []string{"km", "mi"}, "description": "Optional split distance unit. Defaults to the athlete's preferred_units when omitted, falling back to km."},
+		"split_unit":   map[string]any{"type": "string", "enum": []string{"km", "mi", "100m"}, "description": "Optional split distance unit: km or mi for normal activities; 100m is accepted only for a validated Swim activity with a SECS_100M setting and an explicitly meter-labelled distance stream. Defaults to validated Swim 100m semantics, otherwise the athlete's preferred_units and km fallback."},
 		"include_full": map[string]any{"type": "boolean", "default": false, "description": "When true, preserve full response metadata during shaping; split rows remain terse and unit-disambiguated by default."},
 	}}
 }

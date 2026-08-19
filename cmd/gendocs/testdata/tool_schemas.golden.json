@@ -1887,10 +1887,11 @@
         "name": "split_unit",
         "required": false,
         "type": "string",
-        "description": "Optional split distance unit. Defaults to the athlete's preferred_units when omitted, falling back to km.",
+        "description": "Optional split distance unit: km or mi for normal activities; 100m is accepted only for a validated Swim activity with a SECS_100M setting and an explicitly meter-labelled distance stream. Defaults to validated Swim 100m semantics, otherwise the athlete's preferred_units and km fallback.",
         "enum": [
           "km",
-          "mi"
+          "mi",
+          "100m"
         ]
       }
     ]
