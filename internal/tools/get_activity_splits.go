@@ -55,7 +55,7 @@ type splitSegment struct {
 	EndDist   float64
 }
 
-func buildActivitySplits(ctx context.Context, args getActivitySplitsRequest, profile intervals.AthleteWithSportSettings, streamsClient ActivityStreamsClient, intervalsClient ActivityIntervalsClient, detailsClient ActivityDetailsClient, version string, unitSystem response.UnitSystem) (activitySplitsBuild, error) {
+func buildActivitySplits(ctx context.Context, args getActivitySplitsRequest, profile intervals.AthleteWithSportSettings, streamsClient ActivityStreamsClient, intervalsClient ActivityIntervalsClient, detailsClient ActivityDetailsClient, unitSystem response.UnitSystem) (activitySplitsBuild, error) {
 	requestedUnit := strings.ToLower(strings.TrimSpace(args.SplitUnit))
 	explicit100m := requestedUnit == "100m"
 	activity, detailsErr := detailsClient.GetActivity(ctx, args.ActivityID)
@@ -64,6 +64,7 @@ func buildActivitySplits(ctx context.Context, args getActivitySplitsRequest, pro
 	}
 
 	candidateSwim := detailsErr == nil && swimActivity(profile, activity)
+	unsupportedSwimPace := detailsErr == nil && unsupportedSwimPaceUnits(profile, activity)
 	if explicit100m && !candidateSwim {
 		return activitySplitsBuild{}, NewUserError(split100mUserMessage, errors.New("activity or Swim sport settings do not prove 100 m semantics"))
 	}
@@ -100,14 +101,11 @@ func buildActivitySplits(ctx context.Context, args getActivitySplitsRequest, pro
 		if explicit100m {
 			return activitySplitsBuild{}, NewUserError(split100mUserMessage, baseErr)
 		}
-		if intervalErr != nil {
-			unavailable, unavailableErr := detectActivityUnavailable(ctx, detailsClient, args.ActivityID, baseErr)
-			if unavailableErr != nil {
-				return activitySplitsBuild{}, unavailableErr
-			}
-			return activitySplitsBuild{IntervalSource: classification, Diagnostics: diagnostics, SplitUnit: requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), Units: splitUnits(requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), unitSystem), Unavailable: &unavailable}, nil
+		unavailable, unavailableErr := detectActivityUnavailable(ctx, detailsClient, args.ActivityID, baseErr)
+		if unavailableErr != nil {
+			return activitySplitsBuild{}, unavailableErr
 		}
-		return activitySplitsBuild{Splits: []activitySplitRow{}, Source: "virtual_streams", IntervalSource: classification, Diagnostics: diagnostics, SplitUnit: requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), Units: splitUnits(requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), unitSystem)}, nil
+		return activitySplitsBuild{IntervalSource: classification, Diagnostics: diagnostics, SplitUnit: requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), Units: splitUnits(requestedOrDefaultSplitUnit(args.SplitUnit, unitSystem), unitSystem), Unavailable: &unavailable}, nil
 	}
 
 	base, baseDiagnostics, baseOK := parseSplitBase(baseRows, args.ActivityID)
@@ -121,11 +119,15 @@ func buildActivitySplits(ctx context.Context, args getActivitySplitsRequest, pro
 	} else if requestedUnit == "" && detailsErr != nil {
 		diagnostics = append(diagnostics, splitDiagnostic("swim_semantics_unavailable", args.ActivityID, "Activity sport details were unavailable, so normal km/mi split semantics were retained.", []string{"activity.type"}, nil, []string{"activity.type"}))
 	} else if requestedUnit == "" && isSwimActivity(activity) {
-		missing := []string{"sport_settings"}
-		if candidateSwim {
-			missing = []string{"distance_unit"}
+		if unsupportedSwimPace {
+			diagnostics = append(diagnostics, splitDiagnostic("unsupported_swim_pace_units", args.ActivityID, "The Swim sport setting uses unsupported or unknown pace units; normal km/mi splits are retained instead of assuming 100 m semantics.", []string{"sport_settings.pace_units"}, []string{"pace_units"}, nil))
+		} else {
+			missing := []string{"sport_settings"}
+			if candidateSwim {
+				missing = []string{"distance_unit"}
+			}
+			diagnostics = append(diagnostics, splitDiagnostic("swim_semantics_unavailable", args.ActivityID, "Swim 100 m semantics were not proven by the activity settings and distance metadata; normal km/mi splits are retained.", []string{"activity.type", "sport_settings", "distance"}, nil, missing))
 		}
-		diagnostics = append(diagnostics, splitDiagnostic("swim_semantics_unavailable", args.ActivityID, "Swim 100 m semantics were not proven by the activity settings and distance metadata; normal km/mi splits are retained.", []string{"activity.type", "sport_settings", "distance"}, nil, missing))
 	}
 
 	manualRows := manualSplitsFromIntervals(intervalsDTO, splitUnit, classification)
@@ -201,6 +203,29 @@ func swimActivity(profile intervals.AthleteWithSportSettings, activity intervals
 	return false
 }
 
+func unsupportedSwimPaceUnits(profile intervals.AthleteWithSportSettings, activity intervals.Activity) bool {
+	if !isSwimActivity(activity) {
+		return false
+	}
+	for _, setting := range profile.SportSettings {
+		matched := false
+		if len(setting.Types) > 0 {
+			for _, sport := range setting.Types {
+				if strings.EqualFold(strings.TrimSpace(sport), "swim") {
+					matched = true
+					break
+				}
+			}
+		} else {
+			matched = strings.EqualFold(strings.TrimSpace(setting.Type), "swim")
+		}
+		if matched && !strings.EqualFold(strings.TrimSpace(setting.PaceUnits), "secs_100m") {
+			return true
+		}
+	}
+	return false
+}
+
 func hasPositiveSplitIntervals(dto intervals.IntervalsDTO) bool {
 	for _, interval := range dto.ICUIntervals {
 		if interval.Distance != nil && interval.Duration != nil && finitePositive(*interval.Distance) && finitePositive(*interval.Duration) {
@@ -217,6 +242,10 @@ func manualSplitsFromIntervals(dto intervals.IntervalsDTO, splitUnit string, sou
 			continue
 		}
 		row := newSplitRow(len(rows)+1, *interval.Distance, *interval.Duration, splitUnit)
+		if splitUnit == "100m" {
+			pacePer100M := roundSplitMetric(*interval.Duration * 100 / *interval.Distance)
+			row.PaceSecondsPer100M = &pacePer100M
+		}
 		row.DistanceBasis = "upstream_interval_distance"
 		row.Provenance = splitRowProvenance(source)
 		if interval.AverageHR != nil && finiteNumber(*interval.AverageHR) {
@@ -560,7 +589,7 @@ func aggregateMetric(values, times []float64, start, end float64, elevation bool
 		return 0, false
 	}
 	for i := 0; i < len(times); i++ {
-		if times[i] > start && times[i] < end && (i == 0 || times[i] != times[i-1]) {
+		if times[i] > start && times[i] < end && (i+1 == len(times) || times[i+1] != times[i]) {
 			pointsX = append(pointsX, times[i])
 			pointsY = append(pointsY, values[i])
 		}
@@ -653,15 +682,22 @@ func setSplitMetric(row *activitySplitRow, key string, value float64) {
 }
 
 func splitUnits(splitUnit string, unitSystem response.UnitSystem) map[string]string {
+	if splitUnit == "100m" {
+		return map[string]string{
+			"system":     "metric",
+			"distance":   "100m",
+			"pace":       "sec/100m",
+			"elevation":  "m",
+			"heart_rate": "bpm",
+			"power":      "W",
+			"cadence":    "rpm",
+		}
+	}
 	units := unitSystem.Metadata()
 	units["elevation"] = "m"
 	units["heart_rate"] = "bpm"
 	units["power"] = "W"
 	units["cadence"] = "rpm"
-	if splitUnit == "100m" {
-		units["distance"] = "100m"
-		units["pace"] = "sec/100m"
-	}
 	return units
 }
 

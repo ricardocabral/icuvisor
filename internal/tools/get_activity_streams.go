@@ -289,7 +289,7 @@ func getActivitySplitsHandler(streamsClient ActivityStreamsClient, intervalsClie
 			return Result{}, NewUserError(fetchAthleteProfileMessage, err)
 		}
 		unitSystem := profileUnitSystem(profile)
-		build, err := buildActivitySplits(ctx, args, profile, streamsClient, intervalsClient, detailsClient, version, unitSystem)
+		build, err := buildActivitySplits(ctx, args, profile, streamsClient, intervalsClient, detailsClient, unitSystem)
 		if err != nil {
 			return Result{}, err
 		}
@@ -794,61 +794,6 @@ func splitDistanceMeters(splitUnit string) float64 {
 	default:
 		return 1000
 	}
-}
-
-func splitsFromIntervals(dto intervals.IntervalsDTO, splitUnit string) ([]activitySplitRow, string) {
-	rows := []activitySplitRow{}
-	for _, interval := range dto.ICUIntervals {
-		if interval.Distance != nil && interval.Duration != nil && *interval.Distance > 0 && *interval.Duration > 0 {
-			rows = append(rows, newSplitRow(len(rows)+1, *interval.Distance, *interval.Duration, splitUnit))
-		}
-	}
-	if len(rows) > 0 {
-		return rows, "manual_intervals"
-	}
-	return nil, ""
-}
-
-func virtualSplits(rows []intervals.ActivityStream, splitUnit string) []activitySplitRow {
-	var distance, times []float64
-	for _, row := range rows {
-		key, _ := streams.CanonicalKey(firstNonEmpty(row.Type, row.Name))
-		if key == "distance" {
-			distance = row.Data
-		}
-		if key == "time" {
-			times = row.Data
-		}
-	}
-	if len(distance) == 0 || len(times) == 0 || len(distance) != len(times) {
-		return nil
-	}
-	step := splitDistanceMeters(splitUnit)
-	out := []activitySplitRow{}
-	previousTime := 0.0
-	for target := step; target <= distance[len(distance)-1]+0.001; target += step {
-		t := interpolateTime(distance, times, target)
-		duration := t - previousTime
-		if duration > 0 {
-			out = append(out, newSplitRow(len(out)+1, step, duration, splitUnit))
-			previousTime = t
-		}
-	}
-	return out
-}
-
-func interpolateTime(distance []float64, times []float64, target float64) float64 {
-	for i := 1; i < len(distance); i++ {
-		if distance[i] >= target {
-			span := distance[i] - distance[i-1]
-			if span <= 0 {
-				return times[i]
-			}
-			ratio := (target - distance[i-1]) / span
-			return times[i-1] + ratio*(times[i]-times[i-1])
-		}
-	}
-	return times[len(times)-1]
 }
 
 func newSplitRow(index int, meters float64, duration float64, splitUnit string) activitySplitRow {
