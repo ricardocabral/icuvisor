@@ -184,6 +184,24 @@ func TestGetEventRequiresID(t *testing.T) {
 	}
 }
 
+func TestWriteEventBodyAppendsMidnightForAllCategories(t *testing.T) {
+	t.Parallel()
+
+	for _, category := range []string{"WORKOUT", "NOTE", "RACE_A", "RACE_B", "RACE_C", "PLAN", "HOLIDAY", "SICK"} {
+		t.Run(category, func(t *testing.T) {
+			t.Parallel()
+
+			body, err := writeEventBody(WriteEventParams{Date: "2027-01-01", Category: category})
+			if err != nil {
+				t.Fatalf("writeEventBody() error = %v", err)
+			}
+			if body.StartDateLocal != "2027-01-01T00:00:00" {
+				t.Fatalf("start_date_local = %q, want date-only value with appended midnight time", body.StartDateLocal)
+			}
+		})
+	}
+}
+
 func TestAddOrUpdateEventSendsNoteCreateBody(t *testing.T) {
 	t.Parallel()
 

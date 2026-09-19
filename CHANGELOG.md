@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `add_or_update_event` no longer sends a bare date for `start_date_local` on non-`WORKOUT`/`NOTE` categories (e.g. `RACE_A`, `PLAN`, `HOLIDAY`); intervals.icu rejected these with a 422 `DateTimeParseException`. All categories now get the `T00:00:00` local time suffix.
+
 ## [1.6.4] - 2026-08-30
 
 ### Added
