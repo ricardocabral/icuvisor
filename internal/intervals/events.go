@@ -192,7 +192,7 @@ func writeEventBody(params WriteEventParams) (writeEventPayload, error) {
 		color = &trimmed
 	}
 	body := writeEventPayload{
-		StartDateLocal:    writeEventStartDateLocal(date, category),
+		StartDateLocal:    writeEventStartDateLocal(date),
 		ExternalID:        strings.TrimSpace(params.ExternalID),
 		Category:          category,
 		Type:              strings.TrimSpace(params.Type),
@@ -213,9 +213,8 @@ func writeEventBody(params WriteEventParams) (writeEventPayload, error) {
 	return body, nil
 }
 
-func writeEventStartDateLocal(date string, category string) string {
-	category = strings.TrimSpace(category)
-	if len(date) == len("2006-01-02") && (strings.EqualFold(category, "WORKOUT") || strings.EqualFold(category, "NOTE")) {
+func writeEventStartDateLocal(date string) string {
+	if len(date) == len("2006-01-02") {
 		return date + "T00:00:00"
 	}
 	return date
