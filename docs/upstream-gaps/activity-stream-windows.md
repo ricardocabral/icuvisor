@@ -22,3 +22,13 @@ Explicit stream-key requests and split requests omit `includeDefaults` (whose up
 Because the upstream request is still a full fetch, a windowed call has the same upstream bandwidth, server work, and memory cost as an unwindowed call. Local slicing only bounds the response sent to the MCP client. Very large activities can still be expensive, and an upstream future window API must not be adopted until its public parameters, units, inclusivity, and alignment semantics are verified.
 
 This limitation is intentionally documented instead of advertising unsupported upstream parameters.
+
+## Authenticated regression evidence: issue 64
+
+On 2026-09-30, a synthetic TCX run uploaded to the test account reproduced the remaining v1.7.1 failures against the real upstream API. The recording contains 2,858 one-second samples, distance from 5 to 7,400 m, heart rate, power, cadence, altitude, and 24 paused seconds. Every returned scalar stream includes `data2:null` with `valueTypeIsArray:false`; this is an absent secondary channel, not corrupt primary samples. The captured response is `internal/tools/testdata/activity_streams/issue64_nonzero_paused.json`.
+
+Before the fix, direct unfiltered/filtered streams returned `channel_null` for every scalar channel, windowed reads returned `window_channel_null`, and splits returned no rows with `paused_samples_present` and `insufficient_split_coverage`. The controls succeeded on the same upstream data: heart-rate histogram n=2857, pace histogram n=2833, and segment mean over 0–120 seconds n=121. These counts match the reported issue; the sensor values are invented and the recording is not the reporter's private activity.
+
+Scalar null secondary channels are now treated as absent throughout unbounded, bounded, and sampled responses. Explicitly paired channels (`latlng` or `valueTypeIsArray:true`) still reject a null secondary channel, and non-null malformed, mismatched, or null-containing secondary arrays remain invalid. Full responses preserve the upstream null instead of inventing a secondary sample array.
+
+Virtual splits use absolute cumulative distance boundaries. A recording starting at 5 m and ending at 7,400 m supports kilometres 2–7; the first kilometre is omitted with `initial_split_unavailable`. Indices retain cumulative kilometre positions, durations include recorded elapsed pause time, and missing origin/tail data is not extrapolated or renumbered as a complete first split.

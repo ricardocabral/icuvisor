@@ -277,7 +277,7 @@ func TestGetActivityStreamsWindowWithholdsNullSamples(t *testing.T) {
 		power string
 	}{
 		{name: "data element", power: `{"type":"power","data":[1,null,3],"data2":[4,5,6]}`},
-		{name: "data2 null", power: `{"type":"power","data":[1,2,3],"data2":null}`},
+		{name: "data2 null element", power: `{"type":"power","data":[1,2,3],"data2":[4,null,6]}`},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -566,7 +566,7 @@ func TestGetActivityStreamsRequestedChannelFailureMatrix(t *testing.T) {
 		{name: "selected null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,null,3]}`), reason: "window_channel_null", source: 3},
 		{name: "all null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"allNull":true}`), reason: "window_channel_all_null", source: 3},
 		{name: "data mismatch", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2]}`), reason: "window_channel_length_mismatch", source: 2},
-		{name: "data2 null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"data2":null}`), reason: "window_channel_null", source: 3},
+		{name: "paired data2 null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","valueTypeIsArray":true,"data":[1,2,3],"data2":null}`), reason: "window_channel_null", source: 3},
 		{name: "data2 empty", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"data2":[]}`), reason: "window_channel_length_mismatch", source: 3},
 		{name: "data2 selected null", rows: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","data":[1,2,3],"data2":[4,null,6]}`), reason: "window_channel_null", source: 3},
 	}

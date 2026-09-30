@@ -453,11 +453,14 @@ func validateMetricStreams(activityID string, metrics splitMetricStreams, baseLe
 
 func virtualSplitRows(base splitBaseStreams, metrics splitMetricStreams, splitUnit, activityID string) ([]activitySplitRow, []dataAvailabilityDiagnostic) {
 	step := splitDistanceMeters(splitUnit)
-	if len(base.Distance) < 2 || base.Distance[0] > 0.001 || base.Distance[len(base.Distance)-1] < step {
-		return []activitySplitRow{}, []dataAvailabilityDiagnostic{splitDiagnostic("insufficient_split_coverage", activityID, "Distance/time streams do not cover a complete zero-origin fixed-distance split; no partial row was fabricated.", []string{"distance", "time"}, nil, nil)}
+	if len(base.Distance) < 2 || base.Distance[len(base.Distance)-1] < step {
+		return []activitySplitRow{}, []dataAvailabilityDiagnostic{splitDiagnostic("insufficient_split_coverage", activityID, "Distance/time streams do not cover a complete fixed-distance split; no partial row was fabricated.", []string{"distance", "time"}, nil, nil)}
 	}
 	rows := make([]activitySplitRow, 0)
 	diagnostics := []dataAvailabilityDiagnostic{}
+	if base.Distance[0] > 0.001 {
+		diagnostics = append(diagnostics, splitDiagnostic("initial_split_unavailable", activityID, "Initial fixed-distance splits lack start-boundary coverage and were omitted; later complete splits retain their cumulative distance indices.", []string{"distance", "time"}, nil, nil))
+	}
 	for index := 0; ; index++ {
 		start := float64(index) * step
 		end := start + step
@@ -469,7 +472,7 @@ func virtualSplitRows(base splitBaseStreams, metrics splitMetricStreams, splitUn
 		if !okStart || !okEnd || endTime <= startTime {
 			continue
 		}
-		row := newSplitRow(len(rows)+1, step, endTime-startTime, splitUnit)
+		row := newSplitRow(index+1, step, endTime-startTime, splitUnit)
 		row.Provenance = "virtual_fixed_distance"
 		row.DistanceBasis = "fixed_distance_boundary"
 		row.PaceSecondsPer100M = nil

@@ -655,3 +655,44 @@ func hasSplitDiagnostic(diagnostics []any, reason string) bool {
 	}
 	return false
 }
+
+func TestGetActivitySplitsRetainsCoveredAbsoluteBoundaries(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name      string
+		distance  string
+		times     string
+		indexes   []float64
+		durations []float64
+	}{
+		{name: "missing first split with pause", distance: `[5,1000,2000,2000,3000,7400]`, times: `[0,100,200,220,320,760]`, indexes: []float64{2, 3, 4, 5, 6, 7}, durations: []float64{120, 100, 100, 100, 100, 100}},
+		{name: "multiple initial splits missing", distance: `[1500,2000,3000,3500]`, times: `[0,50,150,200]`, indexes: []float64{3}, durations: []float64{100}},
+		{name: "covered exact origin", distance: `[1000,2000,3000]`, times: `[10,110,210]`, indexes: []float64{2, 3}, durations: []float64{100, 100}},
+		{name: "no complete absolute split", distance: `[100,1100]`, times: `[0,100]`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeActivityReadClient{activity: decodeActivityFixture(t, `{"id":"run-1","type":"Run"}`), streams: decodeStreamFixtures(t, `{"type":"distance","data":`+tc.distance+`}`, `{"type":"time","data":`+tc.times+`}`)}
+			tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"run-1","split_unit":"km"}`)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			p := resultMap(t, result)
+			rows := p["splits"].([]any)
+			if len(rows) != len(tc.indexes) {
+				t.Fatalf("split count=%d, want %d", len(rows), len(tc.indexes))
+			}
+			diagnostics := p["_meta"].(map[string]any)["data_availability"].([]any)
+			if !hasSplitDiagnostic(diagnostics, "initial_split_unavailable") || hasSplitDiagnostic(diagnostics, "insufficient_split_coverage") != (len(tc.indexes) == 0) {
+				t.Fatalf("incorrect coverage diagnostics: %#v", diagnostics)
+			}
+			for i, v := range rows {
+				row := v.(map[string]any)
+				if row["index"] != tc.indexes[i] || row["duration_seconds"] != tc.durations[i] || row["distance_km"] != float64(1) {
+					t.Fatalf("row=%#v, want index %g duration %g distance 1km", row, tc.indexes[i], tc.durations[i])
+				}
+			}
+		})
+	}
+}

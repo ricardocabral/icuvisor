@@ -278,64 +278,7 @@ func equalFloatSlices(got []any, want []float64) bool {
 
 func TestActivityStreamToolsWithUpstreamAnomaliesAndHeartRateNames(t *testing.T) {
 	t.Parallel()
-	fixture, err := os.ReadFile("testdata/activity_streams_anomalies.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var rows []json.RawMessage
-	if err := json.Unmarshal(fixture, &rows); err != nil {
-		t.Fatal(err)
-	}
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		switch r.URL.Path {
-		case "/athlete/i12345":
-			_, _ = w.Write([]byte(`{"id":"i12345","preferred_units":"metric"}`))
-		case "/activity/run-1":
-			_, _ = w.Write([]byte(`{"id":"run-1","type":"Run"}`))
-		case "/activity/run-1/intervals":
-			_, _ = w.Write([]byte(`{"icu_intervals":[]}`))
-		case "/activity/run-1/streams":
-			types := r.URL.Query().Get("types")
-			if types != "" && r.URL.Query().Get("includeDefaults") == "true" {
-				t.Errorf("filtered request unexpectedly included defaults: %s", types)
-			}
-			selected := strings.Split(types, ",")
-			for _, key := range selected {
-				if key == "heart_rate" {
-					http.Error(w, "unknown stream type", http.StatusBadRequest)
-					return
-				}
-			}
-			var out []json.RawMessage
-			for _, row := range rows {
-				var channel struct {
-					Type string `json:"type"`
-				}
-				if err := json.Unmarshal(row, &channel); err != nil {
-					t.Error(err)
-					return
-				}
-				include := types == "" || r.URL.Query().Get("includeDefaults") == "true"
-				for _, key := range selected {
-					if key == channel.Type {
-						include = true
-					}
-				}
-				if include {
-					out = append(out, row)
-				}
-			}
-			_ = json.NewEncoder(w).Encode(out)
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer server.Close()
-	client, err := intervals.NewClient(intervals.Options{Config: config.Config{APIKey: "test-key", AthleteID: "i12345", APIBaseURL: server.URL}, HTTPClient: server.Client()})
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := newActivityStreamsFixtureClient(t, "testdata/activity_streams_anomalies.json")
 	tests := []struct {
 		name string
 		tool Tool
@@ -443,6 +386,197 @@ func TestGetActivityStreamsFetchDiagnosticsAreSafe(t *testing.T) {
 			}
 			if strings.Contains(resultText(t, result), "PRIVATE_SAMPLE") || strings.Contains(logs.String(), "PRIVATE_SAMPLE") {
 				t.Fatal("raw error leaked into response or logs")
+			}
+		})
+	}
+}
+
+func newActivityStreamsFixtureClient(t *testing.T, fixturePath string) *intervals.Client {
+	t.Helper()
+	fixture, err := os.ReadFile(fixturePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rows []json.RawMessage
+	if err := json.Unmarshal(fixture, &rows); err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/athlete/i12345":
+			_, _ = w.Write([]byte(`{"id":"i12345","preferred_units":"metric"}`))
+		case "/activity/run-1":
+			_, _ = w.Write([]byte(`{"id":"run-1","type":"Run"}`))
+		case "/activity/run-1/intervals":
+			_, _ = w.Write([]byte(`{"icu_intervals":[]}`))
+		case "/activity/run-1/streams":
+			types := r.URL.Query().Get("types")
+			if types != "" && r.URL.Query().Get("includeDefaults") == "true" {
+				t.Errorf("filtered request unexpectedly included defaults: %s", types)
+			}
+			selected := strings.Split(types, ",")
+			for _, key := range selected {
+				if key == "heart_rate" {
+					http.Error(w, "unknown stream type", http.StatusBadRequest)
+					return
+				}
+			}
+			var out []json.RawMessage
+			for _, row := range rows {
+				var channel struct {
+					Type string `json:"type"`
+				}
+				if err := json.Unmarshal(row, &channel); err != nil {
+					t.Error(err)
+					return
+				}
+				include := types == "" || r.URL.Query().Get("includeDefaults") == "true"
+				for _, key := range selected {
+					if key == channel.Type {
+						include = true
+					}
+				}
+				if include {
+					out = append(out, row)
+				}
+			}
+			_ = json.NewEncoder(w).Encode(out)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(server.Close)
+	client, err := intervals.NewClient(intervals.Options{Config: config.Config{APIKey: "test-key", AthleteID: "i12345", APIBaseURL: server.URL}, HTTPClient: server.Client()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return client
+}
+
+func TestActivityStreamToolsIssue64UpstreamScalarNulls(t *testing.T) {
+	t.Parallel()
+	client := newActivityStreamsFixtureClient(t, "testdata/activity_streams/issue64_nonzero_paused.json")
+	cases := []struct {
+		name  string
+		tool  Tool
+		args  string
+		count int
+		n     int
+	}{
+		{name: "unfiltered", tool: newGetActivityStreamsTool(client, client, "test", false), args: `{"activity_id":"run-1"}`},
+		{name: "filtered HR", tool: newGetActivityStreamsTool(client, client, "test", false), args: `{"activity_id":"run-1","keys":["heart_rate","time"]}`},
+		{name: "filtered distance", tool: newGetActivityStreamsTool(client, client, "test", false), args: `{"activity_id":"run-1","keys":["distance","time"]}`},
+		{name: "full", tool: newGetActivityStreamsTool(client, client, "test", false), args: `{"activity_id":"run-1","include_full":true}`, count: 2858},
+		{name: "sampled", tool: newGetActivityStreamsTool(client, client, "test", false), args: `{"activity_id":"run-1","include_full":true,"max_points":5}`, count: 5},
+		{name: "window", tool: newGetActivityStreamsTool(client, client, "test", false), args: `{"activity_id":"run-1","include_full":true,"time_window":{"start":0,"end":120}}`, count: 121},
+		{name: "sampled window", tool: newGetActivityStreamsTool(client, client, "test", false), args: `{"activity_id":"run-1","include_full":true,"max_points":5,"time_window":{"start":0,"end":120}}`, count: 5},
+		{name: "HR histogram control", tool: newGetActivityHistogramTool(client, client, client, "test", false), args: `{"activity_id":"run-1","metric":"heart_rate_bpm"}`, n: 2857},
+		{name: "pace histogram control", tool: newGetActivityHistogramTool(client, client, client, "test", false), args: `{"activity_id":"run-1","metric":"pace_seconds_per_km"}`, n: 2833},
+		{name: "segment control", tool: newComputeActivitySegmentStatsTool(client, "test", false), args: `{"activity_id":"run-1","metric":"heart_rate","stat":"mean","start_seconds":0,"end_seconds":120}`, n: 121},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := tc.tool.Handler(context.Background(), Request{Arguments: json.RawMessage(tc.args)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			p := resultMap(t, result)
+			meta := p["_meta"].(map[string]any)
+			if p["unavailable"] != nil || meta["data_availability"] != nil {
+				t.Fatalf("valid scalar samples withheld: %s", resultText(t, result))
+			}
+			if tc.n > 0 {
+				if meta["n"] != float64(tc.n) {
+					t.Fatalf("n=%v, want %d", meta["n"], tc.n)
+				}
+				if tc.name == "segment control" && p["result"].(map[string]any)["value"] != float64(114) {
+					t.Fatalf("wrong control mean: %#v", p)
+				}
+				return
+			}
+			rows := p["streams"].(map[string]any)
+			for key, value := range rows {
+				row := value.(map[string]any)
+				if row["sampling_method"] == "unavailable" {
+					t.Fatalf("%s unavailable", key)
+				}
+				if row["data2"] != nil {
+					t.Fatalf("scalar %s has invented paired channel", key)
+				}
+				if tc.count == 0 {
+					if row["samples"] != nil || row["full"] != nil {
+						t.Fatalf("terse %s leaked samples", key)
+					}
+					continue
+				}
+				samples, ok := row["samples"].([]any)
+				if !ok || len(samples) != tc.count {
+					t.Fatalf("%s sample count=%d, want %d", key, len(samples), tc.count)
+				}
+				full := row["full"].(map[string]any)
+				if len(full["data"].([]any)) != tc.count || full["data2"] != nil {
+					t.Fatalf("invalid scalar full payload for %s", key)
+				}
+				if key == "time" {
+					if samples[0] != float64(0) {
+						t.Fatalf("first timestamp=%v", samples[0])
+					}
+					if tc.count == 5 && tc.name == "sampled" && samples[4] != float64(2857) {
+						t.Fatalf("last timestamp=%v", samples[4])
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestGetActivitySplitsIssue64UpstreamNonzeroOrigin(t *testing.T) {
+	t.Parallel()
+	client := newActivityStreamsFixtureClient(t, "testdata/activity_streams/issue64_nonzero_paused.json")
+	tool := newGetActivitySplitsTool(client, client, client, client, "test", false)
+	result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"run-1","split_unit":"km"}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := resultMap(t, result)
+	rows := p["splits"].([]any)
+	if len(rows) != 6 {
+		t.Fatalf("split count=%d, want six covered km splits; %s", len(rows), resultText(t, result))
+	}
+	for i, v := range rows {
+		row := v.(map[string]any)
+		if row["index"] != float64(i+2) || row["distance_km"] != float64(1) || row["duration_seconds"].(float64) <= 0 {
+			t.Fatalf("invalid covered split: %#v", row)
+		}
+	}
+	diagnostics := p["_meta"].(map[string]any)["data_availability"].([]any)
+	if !hasSplitDiagnostic(diagnostics, "paused_samples_present") || !hasSplitDiagnostic(diagnostics, "initial_split_unavailable") || hasSplitDiagnostic(diagnostics, "insufficient_split_coverage") {
+		t.Fatalf("wrong coverage diagnostics: %#v", diagnostics)
+	}
+}
+
+func TestGetActivityStreamsDeclaredPairNullIsUnavailable(t *testing.T) {
+	t.Parallel()
+	for _, windowed := range []bool{false, true} {
+		name, args, want := "unwindowed", `{"activity_id":"run-1","include_full":true}`, "channel_null"
+		if windowed {
+			name, args, want = "windowed", `{"activity_id":"run-1","include_full":true,"time_window":{"start":0,"end":20}}`, "window_channel_null"
+		}
+		t.Run(name, func(t *testing.T) {
+			client := &fakeActivityReadClient{streams: decodeStreamFixtures(t, `{"type":"time","data":[0,10,20]}`, `{"type":"power","valueTypeIsArray":true,"data":[1,2,3],"data2":null}`)}
+			tool := newGetActivityStreamsTool(client, client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(args)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			p := resultMap(t, result)
+			row := p["streams"].(map[string]any)["watts"].(map[string]any)
+			if row["samples"] != nil || row["full"] != nil || row["sampling_method"] != "unavailable" {
+				t.Fatalf("invalid declared pair exposed: %#v", row)
+			}
+			if !hasSplitDiagnostic(p["_meta"].(map[string]any)["data_availability"].([]any), want) {
+				t.Fatalf("missing %s diagnostic", want)
 			}
 		})
 	}

@@ -590,8 +590,9 @@ func rawArrayHasNullAt(raw map[string]any, key string, indexes []int) bool {
 
 func streamHasData2(row intervals.ActivityStream) bool {
 	if row.Raw != nil {
-		_, ok := row.Raw["data2"]
-		return ok
+		value, ok := row.Raw["data2"]
+		key, _ := streams.CanonicalKey(firstNonEmpty(row.Type, row.Name))
+		return ok && (value != nil || key == "latlng" || row.ValueTypeIsArray)
 	}
 	return row.Data2 != nil
 }
@@ -758,7 +759,7 @@ func shapeWindowedActivityStream(row *activityStreamRow, stream intervals.Activi
 			}
 		}
 	}
-	if rawArrayHasNullAt(stream.Raw, "data", selection.Indexes) || rawArrayHasNullAt(stream.Raw, "data2", selection.Indexes) {
+	if rawArrayHasNullAt(stream.Raw, "data", selection.Indexes) || (data2Present && rawArrayHasNullAt(stream.Raw, "data2", selection.Indexes)) {
 		return windowDiagnostic("window_channel_null", firstNonEmpty(stream.Type, stream.Name), "The requested stream contains null samples and was withheld to avoid converting nulls into zeros.")
 	}
 	selected := selectActivityStreamValues(stream.Data, selection.Indexes)

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Activity streams now accept upstream `data2:null` on scalar channels without withholding valid samples, including filtered, windowed, and downsampled reads. Paired GPS channel validation remains enforced (#64).
+- Virtual activity splits now retain later complete fixed-distance splits when the recording starts beyond zero, preserve cumulative split numbers, and report omitted initial splits without extrapolating missing samples (#64).
+
 ## [1.7.1] - 2026-09-30
 
 ### Fixed
