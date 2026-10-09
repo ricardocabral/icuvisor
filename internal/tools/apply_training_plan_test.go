@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -131,7 +132,7 @@ func TestApplyTrainingPlanRepeatedApplyPayloadsUseStableExternalIDs(t *testing.T
 	makeCall := func(t *testing.T, dryRun bool) (map[string]any, []intervals.WriteEventParams) {
 		t.Helper()
 		client := newApplyTrainingPlanTestClient(t)
-		client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1,"icu_training_load":45,"moving_time":3600}`)
+		client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":0,"icu_training_load":45,"moving_time":3600}`)
 		tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
 		rawArgs := `{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":` + strconv.FormatBool(dryRun) + `,"conflict_policy":"skip_existing"}`
 		result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(rawArgs)})
@@ -233,7 +234,7 @@ func TestApplyTrainingPlanReplaceExistingProtectsMatchingExternalIDRetry(t *test
 	t.Parallel()
 
 	client := newApplyTrainingPlanTestClient(t)
-	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1,"icu_training_load":45}`)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":0,"icu_training_load":45}`)
 	client.events = decodeToolEvents(t, `{"id":"evt-retry","external_id":"icuvisor-plan-v1-59e810cb4de57b9c080b6094","category":"WORKOUT","type":"Ride","name":"Drifted retry body","start_date_local":"2026-06-01T00:00:00","load_target":99}`)
 	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeFull), responseShaping{deleteMode: safety.ModeFull, toolset: safety.ToolsetCore})
 
@@ -260,7 +261,7 @@ func TestApplyTrainingPlanReplaceExistingProtectsMixedNonWorkoutConflicts(t *tes
 	t.Parallel()
 
 	client := newApplyTrainingPlanTestClient(t)
-	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1}`)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":0}`)
 	client.events = decodeToolEvents(t,
 		`{"id":"evt-workout","category":"WORKOUT","type":"Ride","name":"Old workout","start_date_local":"2026-06-01T00:00:00"}`,
 		`{"id":"evt-note","category":"NOTE","type":"Note","name":"Travel note","start_date_local":"2026-06-01T00:00:00"}`,
@@ -345,7 +346,7 @@ func TestApplyTrainingPlanReplaceExistingProtectsUnavailableBlockCategories(t *t
 	t.Parallel()
 
 	client := newApplyTrainingPlanTestClient(t)
-	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1}`)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":0}`)
 	client.events = decodeToolEvents(t,
 		`{"id":"evt-workout","category":"WORKOUT","type":"Ride","name":"Old workout","start_date_local":"2026-06-01"}`,
 		`{"id":"evt-sick","category":"SICK","type":"Unavailable","name":"Sick","start_date_local":"2026-06-01"}`,
@@ -393,7 +394,7 @@ func TestApplyTrainingPlanRepeatedApplyReportsExactDuplicateAndProtectedRows(t *
 	t.Parallel()
 
 	client := newApplyTrainingPlanTestClient(t)
-	client.workouts = decodeToolWorkouts(t, `{"id":"w-repeat","name":"Tempo","type":"Ride","folder_id":"plan-1","day":1,"description":"Tempo prescription","tags":["tempo"],"indoor":true,"icu_training_load":75,"moving_time":3600}`)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-repeat","name":"Tempo","type":"Ride","folder_id":"plan-1","day":0,"description":"Tempo prescription","tags":["tempo"],"indoor":true,"icu_training_load":75,"moving_time":3600}`)
 	client.events = decodeToolEvents(t,
 		`{"id":"evt-repeat","category":"WORKOUT","type":"Ride","name":"Tempo","start_date_local":"2026-06-01T00:00:00","description":"Tempo prescription","tags":["tempo"],"indoor":true,"load_target":75,"time_target":3600}`,
 		`{"id":"evt-note","category":"NOTE","type":"Note","name":"Do not delete","start_date_local":"2026-06-01T00:00:00"}`,
@@ -426,7 +427,7 @@ func TestApplyTrainingPlanReplaceExistingProtectsRepreflightOnlyConflicts(t *tes
 	t.Parallel()
 
 	client := newApplyTrainingPlanTestClient(t)
-	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1}`)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":0}`)
 	client.eventPages = [][]intervals.Event{
 		{},
 		decodeToolEvents(t, `{"id":"evt-sick","category":"SICK","type":"Unavailable","name":"Sick","start_date_local":"2026-06-01"}`),
@@ -453,7 +454,7 @@ func TestApplyTrainingPlanConflictsProtectRawAndMissingCategories(t *testing.T) 
 	t.Parallel()
 
 	client := newApplyTrainingPlanTestClient(t)
-	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1}`)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":0}`)
 	client.events = []intervals.Event{
 		{ID: "evt-raw-note", Raw: map[string]any{"category": "NOTE", "type": "Note", "name": "Raw note", "start_date_local": "2026-06-01T00:00:00"}},
 		{ID: "evt-missing-category", Name: ptrString("Mystery"), Type: ptrString("Other"), StartDateLocal: ptrString("2026-06-01T00:00:00"), Raw: map[string]any{}},
@@ -484,7 +485,7 @@ func TestApplyTrainingPlanRepeatedApplySkipsExactExistingPlanEvents(t *testing.T
 	t.Parallel()
 
 	client := newApplyTrainingPlanTestClient(t)
-	client.workouts = decodeToolWorkouts(t, `{"id":"w-repeat","name":"Tempo","type":"Ride","folder_id":"plan-1","day":1,"description":"Tempo prescription","tags":["tempo"],"indoor":true,"icu_training_load":75,"moving_time":3600}`)
+	client.workouts = decodeToolWorkouts(t, `{"id":"w-repeat","name":"Tempo","type":"Ride","folder_id":"plan-1","day":0,"description":"Tempo prescription","tags":["tempo"],"indoor":true,"icu_training_load":75,"moving_time":3600}`)
 	client.events = decodeToolEvents(t, `{"id":"evt-repeat","category":"WORKOUT","type":"Ride","name":"Tempo","start_date_local":"2026-06-01T00:00:00","description":"Tempo prescription","tags":["tempo"],"indoor":true,"load_target":75,"time_target":3600}`)
 	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
 
@@ -515,8 +516,8 @@ func TestApplyTrainingPlanSkipsDuplicateSameDayPlannedEvents(t *testing.T) {
 
 	client := newApplyTrainingPlanTestClient(t)
 	client.workouts = decodeToolWorkouts(t,
-		`{"id":"w-am","name":"AM Ride","type":"Ride","folder_id":"plan-1","day":1,"description":"Endurance"}`,
-		`{"id":"w-pm","name":"PM Ride","type":"Ride","folder_id":"plan-1","day":1,"description":"More endurance"}`,
+		`{"id":"w-am","name":"AM Ride","type":"Ride","folder_id":"plan-1","day":0,"description":"Endurance"}`,
+		`{"id":"w-pm","name":"PM Ride","type":"Ride","folder_id":"plan-1","day":0,"description":"More endurance"}`,
 	)
 	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
 
@@ -552,6 +553,117 @@ func TestApplyTrainingPlanRejectsPlanWithoutRelativeDayMetadata(t *testing.T) {
 	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01"}`)})
 	if !errors.Is(err, ErrInvalidInput) {
 		t.Fatalf("Handler() error = %v, want ErrInvalidInput", err)
+	}
+	if err == nil || !strings.Contains(err.Error(), "scheduling day metadata") || !strings.Contains(err.Error(), "scheduled training plan") {
+		t.Fatalf("Handler() error = %v, want actionable missing-schedule guidance", err)
+	}
+	if len(client.listCalls) != 0 || len(client.writeCalls) != 0 || len(client.deleteCalls) != 0 {
+		t.Fatalf("calendar calls = %#v, %#v, %#v; want none for an unscheduled folder", client.listCalls, client.writeCalls, client.deleteCalls)
+	}
+}
+
+func TestApplyTrainingPlanRejectsUnscheduledLibraryFolder(t *testing.T) {
+	t.Parallel()
+
+	raw, err := os.ReadFile("testdata/issue66_unscheduled_library.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture struct {
+		Folders  []intervals.WorkoutFolder `json:"folders"`
+		Workouts []intervals.Workout       `json:"workouts"`
+	}
+	if err := json.Unmarshal(raw, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	client := newApplyTrainingPlanTestClient(t)
+	client.profile.Timezone = "Europe/Berlin"
+	client.folders, client.workouts = fixture.Folders, fixture.Workouts
+	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeFull))
+	_, err = tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"988683","start_date":"2026-10-12","dry_run":true}`)})
+	if !errors.Is(err, ErrInvalidInput) || !strings.Contains(err.Error(), "scheduled training plan") {
+		t.Fatalf("Handler() error = %v, want actionable missing-schedule guidance", err)
+	}
+	if len(client.listCalls) != 0 || len(client.writeCalls) != 0 || len(client.deleteCalls) != 0 {
+		t.Fatalf("calendar calls = %#v, %#v, %#v; want none for an unscheduled folder", client.listCalls, client.writeCalls, client.deleteCalls)
+	}
+}
+
+func TestApplyTrainingPlanPreservesLibraryDescriptionWithNativeWorkoutDoc(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name   string
+		dryRun bool
+	}{
+		{name: "preview", dryRun: true},
+		{name: "apply", dryRun: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			client := newApplyTrainingPlanTestClient(t)
+			client.profile.Timezone = "Europe/Berlin"
+			description := "Coach notes: keep the original prescription.\n\n" + readTextFixture(t, "06-full-surface-upstream-candidate-dsl.txt") + "\nRecovery notes: easy tomorrow.\n"
+			args := mustMarshalArgs(t, map[string]any{
+				"id": 7063, "folder_id": 988683, "day": 3, "type": "Run", "name": "Native workout",
+				"description": description, "workout_doc": json.RawMessage(readTextFixture(t, "06-full-surface-upstream-response-workout-doc.json")),
+			})
+			client.workouts = decodeToolWorkouts(t, args)
+			tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeFull))
+			request := mustMarshalArgs(t, map[string]any{"plan_id": "988683", "start_date": "2026-10-12", "dry_run": tc.dryRun})
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(request)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			rows := resultMap(t, result)["proposed_events"].([]any)
+			if len(rows) != 1 || rows[0].(map[string]any)["date"] != "2026-10-15" {
+				t.Fatalf("proposed events = %#v, want workout on 2026-10-15", rows)
+			}
+			if tc.dryRun {
+				if len(client.writeCalls) != 0 || len(client.deleteCalls) != 0 {
+					t.Fatalf("dry run writes = %#v, deletes = %#v; want none", client.writeCalls, client.deleteCalls)
+				}
+				return
+			}
+			if len(client.writeCalls) != 1 || client.writeCalls[0].Description == nil || *client.writeCalls[0].Description != description || client.writeCalls[0].Date != "2026-10-15" {
+				t.Fatalf("write calls = %#v, want original description verbatim on 2026-10-15", client.writeCalls)
+			}
+		})
+	}
+}
+
+func TestApplyTrainingPlanUsesZeroBasedUpstreamDays(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name     string
+		fields   string
+		wantDate string
+	}{
+		{name: "first day", fields: `"day":0`, wantDate: "2026-10-12"},
+		{name: "later day without first day", fields: `"day":3`, wantDate: "2026-10-15"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			client := newApplyTrainingPlanTestClient(t)
+			client.workouts = decodeToolWorkouts(t, `{"id":7063,"name":"Easy Run","type":"Run","folder_id":988683,`+tc.fields+`}`)
+			tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeFull))
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"988683","start_date":"2026-10-12","dry_run":true}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			out := resultMap(t, result)
+			rows := out["proposed_events"].([]any)
+			if len(rows) != 1 || rows[0].(map[string]any)["date"] != tc.wantDate {
+				t.Fatalf("proposed events = %#v, want one on %s", rows, tc.wantDate)
+			}
+			if len(client.listCalls) != 1 || client.listCalls[0].Oldest != tc.wantDate || client.listCalls[0].Newest != tc.wantDate {
+				t.Fatalf("calendar reads = %#v, want conflict check on %s", client.listCalls, tc.wantDate)
+			}
+			if len(client.writeCalls) != 0 || len(client.deleteCalls) != 0 || out["_meta"].(map[string]any)["created_count"] != float64(0) {
+				t.Fatalf("dry run created or deleted events: %#v", out)
+			}
+		})
 	}
 }
 
@@ -592,22 +704,35 @@ func conflictsByEventID(conflicts []any) map[string]map[string]any {
 func TestApplyTrainingPlanUsesWorkoutSportOrderForWorkoutDocSerialization(t *testing.T) {
 	t.Parallel()
 
-	client := &fakeApplyTrainingPlanClient{
-		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Type: "Run", Types: []string{"Run"}, WorkoutOrder: "POWER_HR_PACE"}}}},
-		folders:           decodeToolWorkoutFolders(t, `{"id":"plan-1","type":"PLAN","name":"Run plan"}`),
-		workouts:          decodeToolWorkouts(t, `{"id":"w-run","name":"Run Power","type":"Run","folder_id":"plan-1","day":1,"workout_doc":{"steps":[{"description":"Endurance","duration":900,"power":{"value":2,"units":"POWER_ZONE"}}]}}`),
-	}
-	tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
+	for _, tc := range []struct {
+		name        string
+		description *string
+	}{
+		{name: "absent description"},
+		{name: "empty description", description: ptrString("")},
+		{name: "blank description", description: ptrString(" \t\n")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			client := &fakeApplyTrainingPlanClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC", SportSettings: []intervals.SportSettings{{Type: "Run", Types: []string{"Run"}, WorkoutOrder: "POWER_HR_PACE"}}}},
+				folders:           decodeToolWorkoutFolders(t, `{"id":"plan-1","type":"PLAN","name":"Run plan"}`),
+				workouts:          decodeToolWorkouts(t, `{"id":"w-run","name":"Run Power","type":"Run","folder_id":"plan-1","day":0,"workout_doc":{"steps":[{"description":"Endurance","duration":900,"power":{"value":2,"units":"POWER_ZONE"}}]}}`),
+			}
+			client.workouts[0].Description = tc.description
+			tool := newApplyTrainingPlanTool(client, client, "test", "UTC", false, safety.NewCapability(safety.ModeSafe))
 
-	_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":false}`)})
-	if err != nil {
-		t.Fatalf("Handler() error = %v", err)
-	}
-	if len(client.writeCalls) != 1 || client.writeCalls[0].Description == nil {
-		t.Fatalf("write calls = %#v, want one planned workout write with description", client.writeCalls)
-	}
-	if got, want := *client.writeCalls[0].Description, "- Endurance 15m Z2 Power"; got != want {
-		t.Fatalf("description DSL = %q, want %q", got, want)
+			_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"plan_id":"plan-1","start_date":"2026-06-01","dry_run":false}`)})
+			if err != nil {
+				t.Fatalf("Handler() error = %v", err)
+			}
+			if len(client.writeCalls) != 1 || client.writeCalls[0].Description == nil {
+				t.Fatalf("write calls = %#v, want one planned workout write with description", client.writeCalls)
+			}
+			if got, want := *client.writeCalls[0].Description, "- Endurance 15m Z2 Power"; got != want {
+				t.Fatalf("description DSL = %q, want %q", got, want)
+			}
+		})
 	}
 }
 
@@ -617,8 +742,8 @@ func newApplyTrainingPlanTestClient(t *testing.T) *fakeApplyTrainingPlanClient {
 		fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "UTC"}},
 		folders:           decodeToolWorkoutFolders(t, `{"id":"plan-1","type":"PLAN","name":"Base plan"}`),
 		workouts: decodeToolWorkouts(t,
-			`{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":1,"indoor":true,"icu_training_load":45,"moving_time":3600,"workout_doc":{"steps":[{"duration":600}]}}`,
-			`{"id":"w-2","name":"Run","type":"Run","folder_id":"plan-1","day":2,"description":"Easy run"}`,
+			`{"id":"w-1","name":"Endurance","type":"Ride","folder_id":"plan-1","day":0,"indoor":true,"icu_training_load":45,"moving_time":3600,"workout_doc":{"steps":[{"duration":600}]}}`,
+			`{"id":"w-2","name":"Run","type":"Run","folder_id":"plan-1","day":1,"description":"Easy run"}`,
 		),
 	}
 }

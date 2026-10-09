@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `apply_training_plan` now reuses the original library workout description verbatim when available, avoiding failures on native `workout_doc` numeric distances and preserving repeats, targets, and prose that reconstruction could lose (#66).
+- `apply_training_plan` now places upstream workout day `0` on the requested start date and later days at their correct offsets, instead of dropping the first day and scheduling later workouts one day early. Unscheduled folders return actionable missing-schedule guidance instead of a generic credentials/configuration error (#66).
+
 ### Changed
 
 - WeightTraining authoring guidance now uses one Markdown `- ` line per exercise in planned-event and completed-activity descriptions, with example sets, loads, units, and effort. The strength-training gap document distinguishes this readable format from native structured strength support.

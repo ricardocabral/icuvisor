@@ -20,7 +20,7 @@ import (
 
 const (
 	applyTrainingPlanName                    = "apply_training_plan"
-	applyTrainingPlanDescription             = "Apply a workout-library training plan to the athlete calendar from an anchor start date. Defaults to dry_run:true, fetches plan workouts server-side by plan_id, marks conflicts with category/type/name/date details, and only replaces existing workout events when ICUVISOR_DELETE_MODE=full while protecting races, notes, and unavailable-like calendar items."
+	applyTrainingPlanDescription             = "Apply an existing workout-library schedule to the athlete calendar from an anchor start date. Workouts must carry relative-day scheduling metadata; unscheduled template folders are rejected, and an active athlete training-plan assignment is not required. Reuses each workout's original description DSL when available. Defaults to dry_run:true, fetches plan workouts server-side by plan_id, marks conflicts with category/type/name/date details, and only replaces existing workout events when ICUVISOR_DELETE_MODE=full while protecting races, notes, and unavailable-like calendar items."
 	invalidApplyTrainingPlanArgumentsMessage = "invalid apply_training_plan arguments; provide plan_id, start_date YYYY-MM-DD, optional dry_run, and conflict_policy skip_existing or replace_existing"
 	applyTrainingPlanMessage                 = "could not apply training plan; check intervals.icu credentials, athlete ID, plan ID, date range, and delete-mode configuration"
 	applyTrainingPlanConflictSkip            = "skip_existing"
@@ -172,7 +172,7 @@ func applyTrainingPlan(ctx context.Context, client ApplyTrainingPlanClient, args
 		return applyTrainingPlanResponse{}, err
 	}
 	if len(planned) == 0 {
-		return applyTrainingPlanResponse{}, fmt.Errorf("%w: plan %s has no workouts with relative day metadata", ErrInvalidInput, args.PlanID)
+		return applyTrainingPlanResponse{}, NewUserError("could not apply training plan; selected folder has no workouts with scheduling day metadata; use a scheduled training plan in intervals.icu", fmt.Errorf("%w: plan %s has no workouts with relative day metadata", ErrInvalidInput, args.PlanID))
 	}
 	dryRun := true
 	if args.DryRun != nil {
@@ -288,7 +288,11 @@ func planWorkoutsForApply(ctx context.Context, client ApplyTrainingPlanClient, p
 
 func planWorkoutRelativeDay(workout intervals.Workout) int {
 	if workout.Day != nil {
-		return *workout.Day
+		if *workout.Day < 0 {
+			return 0
+		}
+		// Upstream day offsets are zero-based; keep internal days one-based.
+		return *workout.Day + 1
 	}
 	if workout.Days != nil {
 		return *workout.Days
@@ -435,7 +439,10 @@ func eventDateOnly(event intervals.Event) string {
 func eventParamsFromPlanWorkout(planID string, startDate string, date string, relativeDay int, workout intervals.Workout, profile intervals.AthleteWithSportSettings) (intervals.WriteEventParams, error) {
 	trainingLoad := workoutTrainingLoad(workout)
 	args := addOrUpdateEventRequest{Date: date, ExternalID: applyTrainingPlanExternalID(planID, startDate, workout.ID, relativeDay, date), Category: "WORKOUT", Type: stringValue(workout.Type), Name: stringValue(workout.Name), Tags: append([]string(nil), workout.Tags...), Indoor: workout.Indoor, TargetLoad: trainingLoad, DistanceMeters: workout.Distance, MovingTimeSeconds: workout.MovingTime}
-	if workout.WorkoutDoc != nil {
+	if workout.Description != nil && strings.TrimSpace(*workout.Description) != "" {
+		// Native workout_doc contains computed fields and can lose authored structure.
+		args.Description = workout.Description
+	} else if workout.WorkoutDoc != nil {
 		doc, err := workoutDocFromAny(workout.WorkoutDoc)
 		if err != nil {
 			return intervals.WriteEventParams{}, fmt.Errorf("decoding workout_doc for workout %s: %w", workout.ID, err)
@@ -490,8 +497,8 @@ func applyTrainingPlanInputSchema(capability safety.Capability) map[string]any {
 	}
 	examples := applyTrainingPlanInputExamples()
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"plan_id", "start_date"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
-		"plan_id":         map[string]any{"type": "string", "description": "Required workout-library folder/plan ID to fetch server-side. Do not pass plan contents in tool arguments."},
-		"start_date":      map[string]any{"type": "string", "description": "Required athlete-local YYYY-MM-DD anchor date; workout day 1 is applied to this date and later plan days are relative to it."},
+		"plan_id":         map[string]any{"type": "string", "description": "Required workout-library plan/folder ID with existing workout day metadata. Use get_workout_library to distinguish saved plans from template folders. Unscheduled folders have no placement dates; this tool does not choose dates for them. An active athlete training-plan assignment is not required. Do not pass plan contents in tool arguments."},
+		"start_date":      map[string]any{"type": "string", "description": "Required athlete-local YYYY-MM-DD anchor date; upstream workout day 0 is applied to this date and later plan days are zero-based offsets from it."},
 		"dry_run":         map[string]any{"type": "boolean", "default": true, "description": "Safety default is true, even in safe mode. Set dry_run:false explicitly to create or replace calendar events."},
 		"conflict_policy": map[string]any{"type": "string", "default": applyTrainingPlanConflictSkip, "enum": conflictEnum, "description": "skip_existing leaves days with calendar conflicts untouched. replace_existing deletes only pure same-day WORKOUT conflicts before creating plan workouts and is accepted only when ICUVISOR_DELETE_MODE=full; days with protected conflicts such as duplicate workouts, races, notes, holidays, sick/injured blocks, or unknown non-workout categories are skipped and reported."},
 	}}
