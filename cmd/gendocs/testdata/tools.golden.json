@@ -500,7 +500,7 @@
     "group": "workout-library",
     "tier": "full",
     "safety": "write",
-    "summary": "Apply a workout-library training plan to the athlete calendar from an anchor start date.",
+    "summary": "Apply an existing workout-library schedule to the athlete calendar from an anchor start date.",
     "anchor": "apply_training_plan"
   },
   {

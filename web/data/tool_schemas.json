@@ -867,7 +867,7 @@
   },
   "apply_training_plan": {
     "name": "apply_training_plan",
-    "description": "Apply a workout-library training plan to the athlete calendar from an anchor start date.",
+    "description": "Apply an existing workout-library schedule to the athlete calendar from an anchor start date.",
     "arguments": [
       {
         "name": "conflict_policy",
@@ -891,13 +891,13 @@
         "name": "plan_id",
         "required": true,
         "type": "string",
-        "description": "Required workout-library folder/plan ID to fetch server-side. Do not pass plan contents in tool arguments."
+        "description": "Required workout-library plan/folder ID with existing workout day metadata. Use get_workout_library to distinguish saved plans from template folders. Unscheduled folders have no placement dates; this tool does not choose dates for them. An active athlete training-plan assignment is not required. Do not pass plan contents in tool arguments."
       },
       {
         "name": "start_date",
         "required": true,
         "type": "string",
-        "description": "Required athlete-local YYYY-MM-DD anchor date; workout day 1 is applied to this date and later plan days are relative to it."
+        "description": "Required athlete-local YYYY-MM-DD anchor date; upstream workout day 0 is applied to this date and later plan days are zero-based offsets from it."
       }
     ],
     "examples": [

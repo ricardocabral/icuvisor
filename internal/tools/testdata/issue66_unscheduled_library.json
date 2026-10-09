@@ -1,0 +1,10 @@
+{
+  "folders": [{"id": 988683, "type": "FOLDER", "name": "Run templates", "num_workouts": 5}],
+  "workouts": [
+    {"id": 7063, "folder_id": 988683, "name": "Short repetitions", "type": "Run", "moving_time": 2400},
+    {"id": 7070, "folder_id": 988683, "name": "Medium repetitions", "type": "Run", "moving_time": 2400},
+    {"id": 7077, "folder_id": 988683, "name": "Easy Run", "type": "Run", "moving_time": 2400},
+    {"id": 7221, "folder_id": 988683, "name": "Easy Run", "type": "Run", "moving_time": 1800},
+    {"id": 7222, "folder_id": 988683, "name": "Easy Run", "type": "Run", "moving_time": 1800}
+  ]
+}
