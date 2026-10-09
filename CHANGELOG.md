@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.3] - 2026-10-09
+
 ### Fixed
 
 - `apply_training_plan` now reuses the original library workout description verbatim when available, avoiding failures on native `workout_doc` numeric distances and preserving repeats, targets, and prose that reconstruction could lose (#66).
@@ -503,7 +505,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.7.2...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.7.3...HEAD
+[1.7.3]: https://github.com/ricardocabral/icuvisor/compare/v1.7.2...v1.7.3
 [1.7.2]: https://github.com/ricardocabral/icuvisor/compare/v1.7.1...v1.7.2
 [1.7.1]: https://github.com/ricardocabral/icuvisor/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/ricardocabral/icuvisor/compare/v1.6.5...v1.7.0
