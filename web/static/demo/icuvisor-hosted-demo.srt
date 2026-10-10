@@ -1,0 +1,100 @@
+1
+00:00:00,000 --> 00:00:06,544
+ICU Visor Hosted brings your Intervals dot I C U training data into a
+connected A I client.
+
+2
+00:00:06,544 --> 00:00:11,269
+This demonstration uses the actual local hosted backend, with entirely
+synthetic sample data.
+
+3
+00:00:12,292 --> 00:00:18,034
+Add the hosted M C P endpoint to your client, choose your preferences,
+and sign in through Intervals
+
+4
+00:00:18,034 --> 00:00:23,777
+dot I C U OAuth. Live sign in is omitted here. The following
+operations use a local sample
+
+5
+00:00:23,777 --> 00:00:24,096
+account.
+
+6
+00:00:25,125 --> 00:00:32,391
+First, retrieve the athlete profile. The sample account returns its
+sport settings, timezone, and units. These are actual
+
+7
+00:00:32,391 --> 00:00:37,236
+tool results from the local backend, not a fabricated A I reply.
+
+8
+00:00:38,250 --> 00:00:45,316
+Next, list activities for a specific date range. The sample returns an
+endurance ride, an easy run, and
+
+9
+00:00:45,316 --> 00:00:49,635
+a tempo ride, with their available duration, distance, and training
+load.
+
+10
+00:00:50,667 --> 00:00:57,500
+The weekly training summary returns three activities, eighty
+kilometers, three hours and twenty minutes, and a training load
+
+11
+00:00:57,500 --> 00:01:03,194
+of two hundred ten. These are weekly bucket totals, with the partial
+week limitation retained.
+
+12
+00:01:04,208 --> 00:01:12,374
+Wellness history returns recorded observations for the requested
+dates. The sample shows sleep, resting heart rate, and subjective
+
+13
+00:01:12,374 --> 00:01:17,817
+wellness values where available. This information is training context,
+not medical diagnosis.
+
+14
+00:01:18,833 --> 00:01:25,585
+The calendar tool returns the sample recovery ride and threshold
+session for the coming week. It preserves workout
+
+15
+00:01:25,585 --> 00:01:28,586
+dates and descriptions, without making any calendar changes.
+
+16
+00:01:29,625 --> 00:01:36,484
+Two negative scenarios are executed locally. Selecting another athlete
+is rejected in this single account session. An unapproved
+
+17
+00:01:36,484 --> 00:01:40,294
+calendar write is also unavailable under the read only settings.
+
+18
+00:01:41,333 --> 00:01:48,562
+The third negative review scenario asks for diagnosis and medication
+changes. The expected assistant behavior is to decline
+
+19
+00:01:48,562 --> 00:01:54,987
+that request, explain the training context limits, and direct the user
+to a qualified medical professional.
+
+20
+00:01:56,000 --> 00:02:02,579
+Manage hosted preferences and client grants from the settings page.
+You can review write access, reconnect for additional
+
+21
+00:02:02,579 --> 00:02:09,158
+permissions, revoke a client, or delete your hosted account data. No
+live account was connected in this video.
