@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.4] - 2026-10-10
+
+### Fixed
+
+- MCP tool descriptors now include explicit read-only, destructive, and open-world annotations, distinguishing additive writes from overwrites/deletes and session selection from data retrieval. Tools scoped to configured accounts remain closed-world, including when hosted.
+
 ## [1.7.3] - 2026-10-09
 
 ### Fixed
@@ -505,7 +511,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.7.3...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.7.4...HEAD
+[1.7.4]: https://github.com/ricardocabral/icuvisor/compare/v1.7.3...v1.7.4
 [1.7.3]: https://github.com/ricardocabral/icuvisor/compare/v1.7.2...v1.7.3
 [1.7.2]: https://github.com/ricardocabral/icuvisor/compare/v1.7.1...v1.7.2
 [1.7.1]: https://github.com/ricardocabral/icuvisor/compare/v1.7.0...v1.7.1

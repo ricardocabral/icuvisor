@@ -79,10 +79,22 @@ type safeRegistrar struct {
 }
 
 func sdkToolAnnotations(tool tools.Tool) *sdkmcp.ToolAnnotations {
-	if tool.RequiresWrite() {
-		return nil
+	readOnly := !tool.RequiresWrite()
+	destructive := tool.RequiresWrite()
+	switch tool.Name {
+	case toolcatalog.SelectAthlete:
+		// Session selection remains available when upstream writes are disabled.
+		readOnly = false
+	case toolcatalog.CreateWorkout, toolcatalog.CreateCustomItem, toolcatalog.CreateSportSettings, toolcatalog.AddUnavailableDateRange:
+		destructive = false
 	}
-	return &sdkmcp.ToolAnnotations{ReadOnlyHint: true}
+	// Hosted services are still closed-world when limited to configured accounts.
+	openWorld := false
+	return &sdkmcp.ToolAnnotations{
+		ReadOnlyHint:    readOnly,
+		DestructiveHint: &destructive,
+		OpenWorldHint:   &openWorld,
+	}
 }
 
 func (r *safeRegistrar) AddTool(tool tools.Tool) error {

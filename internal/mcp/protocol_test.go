@@ -79,7 +79,7 @@ func TestStreamableHTTPJSONRPCInitializeAndPingWireEnvelopes(t *testing.T) {
 		t.Fatalf("net.Listen() error = %v", err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	server, err := NewServer(ctx, Options{Version: "test", Registry: testEchoRegistry{}})
+	server, err := NewServer(ctx, Options{Version: "test", Registry: capabilityRegistry{}, Capability: safety.NewCapability(safety.ModeFull)})
 	if err != nil {
 		cancel()
 		listener.Close()
@@ -121,6 +121,73 @@ func TestStreamableHTTPJSONRPCInitializeAndPingWireEnvelopes(t *testing.T) {
 		t.Fatalf("ping status = %d body = %q, want 200", ping.status, ping.body)
 	}
 	assertStreamableHTTPJSONRPCEnvelope(t, "ping", ping, 2)
+
+	listed := codexStreamableHTTPPost(t, ctx, client, endpoint, `{"jsonrpc":"2.0","id":3,"method":"tools/list","params":{}}`, sessionID, protocolVersion)
+	result := assertStreamableHTTPJSONRPCEnvelope(t, "tools/list", listed, 3)
+	var catalog []struct {
+		Name        string         `json:"name"`
+		Annotations map[string]any `json:"annotations"`
+	}
+	if err := json.Unmarshal(result["tools"], &catalog); err != nil {
+		t.Fatalf("decode tools/list: %v", err)
+	}
+	if len(catalog) != 3 {
+		t.Fatalf("tools/list count = %d, want 3", len(catalog))
+	}
+	for _, tool := range catalog {
+		for key, want := range map[string]bool{
+			"readOnlyHint":    tool.Name == "test_read",
+			"destructiveHint": tool.Name != "test_read",
+			"openWorldHint":   false,
+		} {
+			if got, ok := tool.Annotations[key].(bool); !ok || got != want {
+				t.Errorf("%s annotation %s = %#v, want explicit %t", tool.Name, key, tool.Annotations[key], want)
+			}
+		}
+	}
+}
+
+func TestToolAnnotationsMatchEffects(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name        string
+		requirement tools.Requirement
+		readOnly    bool
+		destructive bool
+	}{
+		{name: "get_activities", requirement: tools.RequirementRead, readOnly: true},
+		{name: "compute_baseline", requirement: tools.RequirementRead, readOnly: true},
+		{name: "icuvisor_check_server_version", readOnly: true},
+		{name: "select_athlete"},
+		{name: "create_workout", requirement: tools.RequirementWrite},
+		{name: "create_custom_item", requirement: tools.RequirementWrite},
+		{name: "create_sport_settings", requirement: tools.RequirementWrite},
+		{name: "add_unavailable_date_range", requirement: tools.RequirementWrite},
+		{name: "add_or_update_event", requirement: tools.RequirementWrite, destructive: true},
+		{name: "update_wellness", requirement: tools.RequirementWrite, destructive: true},
+		{name: "set_activity_intervals", requirement: tools.RequirementWrite, destructive: true},
+		{name: "apply_training_plan", requirement: tools.RequirementWrite, destructive: true},
+		{name: "add_activity_message", requirement: tools.RequirementWrite, destructive: true},
+		{name: "debug_trace", requirement: tools.RequirementWrite, destructive: true},
+		{name: "delete_event", requirement: tools.RequirementDelete, destructive: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			encoded, err := json.Marshal(sdkToolAnnotations(tools.Tool{Name: tc.name, Requirement: tc.requirement}))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var annotations map[string]any
+			if err := json.Unmarshal(encoded, &annotations); err != nil {
+				t.Fatal(err)
+			}
+			for key, want := range map[string]bool{"readOnlyHint": tc.readOnly, "destructiveHint": tc.destructive, "openWorldHint": false} {
+				if got, ok := annotations[key].(bool); !ok || got != want {
+					t.Errorf("annotation %s = %#v, want explicit %t", key, annotations[key], want)
+				}
+			}
+		})
+	}
 }
 
 type streamableHTTPWireResponse struct {
