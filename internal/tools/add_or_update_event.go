@@ -23,7 +23,7 @@ const (
 	writeReturnedByUpstreamStatus           = "write_returned_by_upstream"
 	skippedExistingEventStatus              = "skipped_existing_event"
 	verifiedAfterInterruptedWriteStatus     = "verified_after_interrupted_write"
-	invalidAddOrUpdateEventArgumentsMessage = "invalid add_or_update_event arguments; provide date as athlete-local YYYY-MM-DD, category, type for WORKOUT events, name for NOTE creates, and optional event_id for updates"
+	invalidAddOrUpdateEventArgumentsMessage = "invalid add_or_update_event arguments; provide athlete-local date as YYYY-MM-DD, optional start_time as HH:MM, category, type for WORKOUT events, name for NOTE creates, and optional event_id for updates"
 	writeEventMessage                       = "could not write event; check intervals.icu credentials, athlete ID, event ID, and writable event fields"
 )
 
@@ -34,6 +34,7 @@ type EventWriterClient interface {
 
 type addOrUpdateEventRequest struct {
 	Date               string                 `json:"date"`
+	StartTime          *string                `json:"start_time,omitempty"`
 	EndDateLocal       *string                `json:"end_date_local,omitempty"`
 	EventID            string                 `json:"event_id,omitempty"`
 	ExternalID         string                 `json:"external_id,omitempty"`
@@ -137,6 +138,12 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return Result{}, err
 			}
+			if errors.Is(err, intervals.ErrEventTimingUnavailable) {
+				return Result{}, NewUserError("could not read existing event timing; retry or provide start_time and end_date_local explicitly", err)
+			}
+			if errors.Is(err, intervals.ErrEventEndBeforeStart) {
+				return Result{}, NewUserError("event end would precede its start; provide end_date_local on or after the new start", err)
+			}
 			if args.EventID == "" {
 				recovered, recoveryPreflight, recoveryErr := recoverInterruptedEventCreate(ctx, client, params)
 				if recoveryErr != nil && (errors.Is(recoveryErr, context.Canceled) || errors.Is(recoveryErr, context.DeadlineExceeded)) {
@@ -193,7 +200,11 @@ func decodeAddOrUpdateEventRequest(raw json.RawMessage) (addOrUpdateEventRequest
 	if !validDate(args.Date) {
 		return args, errors.New("date must be athlete-local YYYY-MM-DD")
 	}
-	if err := intervals.ValidateEventEndDateLocal(args.Date, args.EndDateLocal); err != nil {
+	start, err := intervals.EventStartDateLocal(args.Date, args.StartTime)
+	if err != nil {
+		return args, err
+	}
+	if err := intervals.ValidateEventEndDateLocal(start, args.EndDateLocal); err != nil {
 		return args, err
 	}
 	if args.Category == "" {
@@ -225,6 +236,7 @@ func eventWriteParams(args addOrUpdateEventRequest, options workoutdoc.Serialize
 		EventID:            args.EventID,
 		ExternalID:         args.ExternalID,
 		Date:               args.Date,
+		StartTime:          args.StartTime,
 		EndDateLocal:       args.EndDateLocal,
 		Category:           args.Category,
 		Type:               args.Type,
@@ -383,6 +395,14 @@ func eventMatchesWriteParams(event intervals.Event, params intervals.WriteEventP
 	if eventDateOnly(event) != strings.TrimSpace(params.Date) {
 		return false
 	}
+	wantStart, err := intervals.EventStartDateLocal(params.Date, params.StartTime)
+	if err != nil {
+		return false
+	}
+	start, err := intervals.EventStartDateLocal(stringValue(event.StartDateLocal), nil)
+	if err != nil || start != wantStart {
+		return false
+	}
 	if !sameText(firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"])), params.Category) {
 		return false
 	}
@@ -536,7 +556,8 @@ func addOrUpdateEventInputSchema() map[string]any {
 	examples := addOrUpdateEventInputExamples()
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"date", "category"}, "examples": examples, "input_examples": examples, "properties": map[string]any{
 		"date":                 map[string]any{"type": "string", "description": "Required athlete-local event date as YYYY-MM-DD; interpreted in the configured athlete timezone."},
-		"end_date_local":       map[string]any{"type": "string", "description": "Optional athlete-local end as YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS. Must be on or after date. Omit on updates to preserve the existing end; do not send for ordinary single-day events."},
+		"start_time":           map[string]any{"type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$", "description": "Optional athlete-local start time as HH:MM in 24-hour format, interpreted in the configured athlete timezone. Omit on creates for a date-only event. Omit on updates or reschedules to preserve the existing clock time; this requires reading the event. Set 00:00 explicitly to reset to the upstream date-only convention."},
+		"end_date_local":       map[string]any{"type": "string", "description": "Optional athlete-local end as YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS. Must be on or after the full event start, including start_time or the preserved clock time. Omit on updates to preserve the existing end; do not send for ordinary single-day events."},
 		"event_id":             map[string]any{"type": "string", "description": "Optional upstream event ID to update. Omit to create a new event; this tool never deletes events."},
 		"external_id":          map[string]any{"type": "string", "description": "Optional non-empty upstream idempotency key. Surrounding whitespace is trimmed; omit or pass blank to leave external_id unchanged/unset. Clearing an existing upstream external_id is not supported."},
 		"category":             map[string]any{"type": "string", "description": intervals.EventCategoryReferenceDescription("Required upstream event category.")},
@@ -562,6 +583,7 @@ func addOrUpdateEventInputExamples() []map[string]any {
 	return []map[string]any{
 		{
 			"date":        "2026-06-12",
+			"start_time":  "07:30",
 			"category":    "NOTE",
 			"name":        "Race-week nutrition plan",
 			"description": "Breakfast: oatmeal and banana. Lunch: rice bowl. Carry 90 g carbs/hour for the long ride.",

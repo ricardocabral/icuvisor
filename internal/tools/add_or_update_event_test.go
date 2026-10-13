@@ -3,6 +3,8 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -706,7 +708,7 @@ func TestAddOrUpdateEventRegistrationMetadata(t *testing.T) {
 		t.Fatalf("description = %q, want non-destructive language without confirm", tool.Description)
 	}
 	props := tool.InputSchema.(map[string]any)["properties"].(map[string]any)
-	for _, name := range []string{"date", "end_date_local", "event_id", "external_id", "category", "type", "name", "description", "workout_doc", "tags", "color", "not_on_fitness_chart", "indoor", "hide_from_athlete", "athlete_cannot_edit", "target_load", "distance_meters", "moving_time_seconds", "elapsed_time_seconds"} {
+	for _, name := range []string{"date", "start_time", "end_date_local", "event_id", "external_id", "category", "type", "name", "description", "workout_doc", "tags", "color", "not_on_fitness_chart", "indoor", "hide_from_athlete", "athlete_cannot_edit", "target_load", "distance_meters", "moving_time_seconds", "elapsed_time_seconds"} {
 		if _, ok := props[name]; !ok {
 			t.Fatalf("schema missing %s", name)
 		}
@@ -823,6 +825,167 @@ func TestAddOrUpdateEventWritesAbsolutePowerAsWatts(t *testing.T) {
 
 func calendarStringPtr(value string) *string { return &value }
 func calendarBoolPtr(value bool) *bool       { return &value }
+
+func TestAddOrUpdateEventStartTimeAndDuplicateDetection(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name          string
+		startTime     *string
+		existingStart string
+		wantWrites    int
+	}{
+		{name: "timed create", startTime: calendarStringPtr("07:30"), wantWrites: 1},
+		{name: "same time retry", startTime: calendarStringPtr("07:30"), existingStart: "2026-07-10T07:30:00"},
+		{name: "equivalent fractional timestamp retry", startTime: calendarStringPtr("07:30"), existingStart: "2026-07-10T07:30:00.000"},
+		{name: "different time is separate", startTime: calendarStringPtr("17:30"), existingStart: "2026-07-10T07:30:00", wantWrites: 1},
+		{name: "date only is separate from timed", existingStart: "2026-07-10T07:30:00", wantWrites: 1},
+		{name: "date only retry", existingStart: "2026-07-10"},
+		{name: "explicit midnight retry", startTime: calendarStringPtr("00:00"), existingStart: "2026-07-10T00:00:00"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			wantStart := "2026-07-10T00:00:00"
+			if tc.startTime != nil {
+				wantStart = "2026-07-10T" + *tc.startTime + ":00"
+			}
+			client := &fakeEventWriterClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", PreferredUnits: "metric", Timezone: "America/Sao_Paulo"}},
+				event:             decodeToolEvents(t, `{"id":"new","category":"WORKOUT","type":"Ride","name":"Tempo","start_date_local":"`+wantStart+`"}`)[0],
+			}
+			if tc.existingStart != "" {
+				client.events = decodeToolEvents(t, `{"id":"existing","category":"WORKOUT","type":"Ride","name":"Tempo","start_date_local":"`+tc.existingStart+`"}`)
+			}
+			args := map[string]any{"date": "2026-07-10", "category": "WORKOUT", "type": "Ride", "name": "Tempo"}
+			if tc.startTime != nil {
+				args["start_time"] = *tc.startTime
+			}
+			raw, _ := json.Marshal(args)
+			tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: raw})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(client.calls) != tc.wantWrites {
+				t.Fatalf("writes = %d, want %d", len(client.calls), tc.wantWrites)
+			}
+			if tc.wantWrites == 1 && !reflect.DeepEqual(client.calls[0].StartTime, tc.startTime) {
+				t.Fatalf("start_time = %#v, want %#v", client.calls[0].StartTime, tc.startTime)
+			}
+			if len(client.listCalls) != 1 || client.listCalls[0].Oldest != "2026-07-10" || client.listCalls[0].Newest != "2026-07-10" {
+				t.Fatalf("preflight = %#v, want date-only bounds", client.listCalls)
+			}
+			out := resultMap(t, result)
+			if tc.wantWrites == 1 && out["event"].(map[string]any)["start_date_local"] != wantStart {
+				t.Fatalf("event = %#v, want start %s", out["event"], wantStart)
+			}
+			if out["_meta"].(map[string]any)["timezone"] != "America/Sao_Paulo" {
+				t.Fatalf("meta = %#v, want athlete timezone", out["_meta"])
+			}
+		})
+	}
+}
+
+func TestAddOrUpdateEventStartTimeValidation(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name string
+		time any
+		end  string
+		ok   bool
+	}{
+		{name: "start before end", time: "07:30", end: "2026-07-10T08:30:00", ok: true},
+		{name: "end before start", time: "07:30", end: "2026-07-10T07:29:59"},
+		{name: "empty", time: ""},
+		{name: "unpadded hour", time: "7:30"},
+		{name: "hour out of range", time: "24:00"},
+		{name: "minute out of range", time: "07:60"},
+		{name: "seconds", time: "07:30:00"},
+		{name: "offset", time: "07:30-03:00"},
+		{name: "UTC suffix", time: "07:30Z"},
+		{name: "numeric", time: 730},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			client := &fakeEventWriterClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", Timezone: "UTC"}},
+				event:             decodeToolEvents(t, `{"id":"1","category":"NOTE","start_date_local":"2026-07-10T07:30:00"}`)[0],
+			}
+			args := map[string]any{"date": "2026-07-10", "start_time": tc.time, "category": "NOTE", "name": "Reminder"}
+			if tc.end != "" {
+				args["end_date_local"] = tc.end
+			}
+			raw, _ := json.Marshal(args)
+			tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+			_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: raw})
+			if (err == nil) != tc.ok {
+				t.Fatalf("error = %v, want valid = %t", err, tc.ok)
+			}
+			if !tc.ok && (len(client.calls) != 0 || len(client.listCalls) != 0) {
+				t.Fatalf("invalid timing caused I/O: writes %#v, reads %#v", client.calls, client.listCalls)
+			}
+		})
+	}
+}
+
+func TestAddOrUpdateEventTimingErrorsAreActionable(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name    string
+		cause   error
+		message string
+	}{
+		{name: "unavailable timing", cause: intervals.ErrEventTimingUnavailable, message: "could not read existing event timing; retry or provide start_time and end_date_local explicitly"},
+		{name: "end before start", cause: intervals.ErrEventEndBeforeStart, message: "event end would precede its start; provide end_date_local on or after the new start"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			client := &fakeEventWriterClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", Timezone: "UTC"}},
+				err:               fmt.Errorf("internal upstream detail: %w", tc.cause),
+			}
+			tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+			_, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"event_id":"123","date":"2026-07-10","category":"NOTE"}`)})
+			if err == nil || err.Error() != tc.message || !errors.Is(err, tc.cause) {
+				t.Fatalf("error = %v, want public message %q with retained cause", err, tc.message)
+			}
+		})
+	}
+}
+
+func TestAddOrUpdateEventTimedCreateRecoveryRequiresMatchingTime(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name  string
+		start string
+		ok    bool
+	}{
+		{name: "same time", start: "2026-07-10T07:30:00", ok: true},
+		{name: "different time", start: "2026-07-10T17:30:00"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			client := &interruptedEventWriter{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", Timezone: "UTC"}},
+				listResults:       [][]intervals.Event{nil, decodeToolEvents(t, `{"id":"committed","category":"WORKOUT","type":"Ride","name":"Tempo","start_date_local":"`+tc.start+`"}`)},
+			}
+			tool := newAddOrUpdateEventTool(client, client, "test", "UTC", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"date":"2026-07-10","start_time":"07:30","category":"WORKOUT","type":"Ride","name":"Tempo"}`)})
+			if (err == nil) != tc.ok {
+				t.Fatalf("error = %v, want recovery = %t", err, tc.ok)
+			}
+			if len(client.writeCalls) != 1 || len(client.listCalls) != 2 {
+				t.Fatalf("writes/reads = %d/%d, want 1/2", len(client.writeCalls), len(client.listCalls))
+			}
+			if tc.ok && resultMap(t, result)["_meta"].(map[string]any)["confirmation_status"] != verifiedAfterInterruptedWriteStatus {
+				t.Fatal("matching time must return verified recovery status")
+			}
+		})
+	}
+}
 
 func readWorkoutDocFixture(t *testing.T, name string) workoutdoc.WorkoutDoc {
 	t.Helper()

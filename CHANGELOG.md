@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `add_or_update_event` accepts optional athlete-local `start_time` in `HH:MM` format for timed workouts, races, and notes, including intervals.icu calendar exports (#69).
+
+### Fixed
+
+- Event updates and reschedules preserve the existing clock time when `start_time` is omitted and reject supplied or preserved ends before the new start; duplicate detection distinguishes otherwise identical events scheduled at different times.
+
 ## [1.7.4] - 2026-10-10
 
 ### Fixed

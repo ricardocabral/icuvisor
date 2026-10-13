@@ -74,7 +74,7 @@
         "name": "end_date_local",
         "required": false,
         "type": "string",
-        "description": "Optional athlete-local end as YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS. Must be on or after date. Omit on updates to preserve the existing end; do not send for ordinary single-day events."
+        "description": "Optional athlete-local end as YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS. Must be on or after the full event start, including start_time or the preserved clock time. Omit on updates to preserve the existing end; do not send for ordinary single-day events."
       },
       {
         "name": "event_id",
@@ -126,6 +126,12 @@
         "description": "Optional intervals.icu flag that hides this event from the Fitness chart. Omit on updates to leave unchanged; set false explicitly to show it."
       },
       {
+        "name": "start_time",
+        "required": false,
+        "type": "string",
+        "description": "Optional athlete-local start time as HH:MM in 24-hour format, interpreted in the configured athlete timezone. Omit on creates for a date-only event. Omit on updates or reschedules to preserve the existing clock time; this requires reading the event. Set 00:00 explicitly to reset to the upstream date-only convention."
+      },
+      {
         "name": "tags",
         "required": false,
         "type": "array",
@@ -160,7 +166,8 @@
         "category": "NOTE",
         "date": "2026-06-12",
         "description": "Breakfast: oatmeal and banana. Lunch: rice bowl. Carry 90 g carbs/hour for the long ride.",
-        "name": "Race-week nutrition plan"
+        "name": "Race-week nutrition plan",
+        "start_time": "07:30"
       },
       {
         "category": "WORKOUT",

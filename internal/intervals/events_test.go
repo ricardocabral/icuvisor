@@ -210,6 +210,174 @@ func TestWriteEventBodyNormalizesDateOnlyAndPreservesTimestamp(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateEventPreservesOmittedStartTime(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name  string
+		start string
+		date  string
+		want  string
+		end   string
+	}{
+		{name: "same day", start: "2026-07-10T07:30:45", date: "2026-07-10", want: "2026-07-10T07:30:45"},
+		{name: "reschedule", start: "2026-07-10T07:30:45", date: "2026-07-11", want: "2026-07-11T07:30:45"},
+		{name: "fractional seconds", start: "2026-07-10T07:30:45.123", date: "2026-07-11", want: "2026-07-11T07:30:45.123"},
+		{name: "date only", start: "2026-07-10", date: "2026-07-11", want: "2026-07-11T00:00:00"},
+		{name: "preserved end after new start", start: "2026-07-10T07:30:00", date: "2026-07-11", want: "2026-07-11T07:30:00", end: "2026-07-11T08:30:00"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			var reads, writes atomic.Int32
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/athlete/i12345/events/123" {
+					t.Errorf("unexpected path %s", r.URL.Path)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == http.MethodGet {
+					reads.Add(1)
+					event := map[string]any{"id": 123, "start_date_local": tc.start}
+					if tc.end != "" {
+						event["end_date_local"] = tc.end
+					}
+					_ = json.NewEncoder(w).Encode(event)
+					return
+				}
+				writes.Add(1)
+				var body map[string]any
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					t.Error(err)
+				}
+				if r.Method != http.MethodPut || body["start_date_local"] != tc.want {
+					t.Errorf("request = %s %#v, want PUT with start %s", r.Method, body, tc.want)
+				}
+				if _, ok := body["end_date_local"]; ok {
+					t.Error("omitted end_date_local must stay absent from the write")
+				}
+				_, _ = w.Write([]byte(`{"id":123,"start_date_local":"` + tc.want + `"}`))
+			}))
+			defer server.Close()
+			client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+			_, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: "123", Date: tc.date, Category: "NOTE"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if reads.Load() != 1 || writes.Load() != 1 {
+				t.Fatalf("reads/writes = %d/%d, want 1/1", reads.Load(), writes.Load())
+			}
+		})
+	}
+}
+
+func TestAddOrUpdateEventWritesExplicitStartTime(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name    string
+		eventID string
+		time    string
+		method  string
+		path    string
+		end     *string
+	}{
+		{name: "create", time: "07:30", method: http.MethodPost, path: "/athlete/i12345/events/bulk"},
+		{name: "update", eventID: "123", time: "17:45", method: http.MethodPut, path: "/athlete/i12345/events/123"},
+		{name: "clear time", eventID: "123", time: "00:00", method: http.MethodPut, path: "/athlete/i12345/events/123"},
+		{name: "explicit timing without read", eventID: "123", time: "17:45", method: http.MethodPut, path: "/athlete/i12345/events/123", end: stringPtr("2026-07-10T18:45:00")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			want := "2026-07-10T" + tc.time + ":00"
+			var requests atomic.Int32
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requests.Add(1)
+				if r.Method == http.MethodGet {
+					w.Header().Set("Content-Type", "application/json")
+					_, _ = w.Write([]byte(`{"id":123,"start_date_local":"2026-07-10T07:30:00","end_date_local":null}`))
+					return
+				}
+				if r.Method != tc.method || r.URL.Path != tc.path {
+					t.Errorf("request = %s %s, want %s %s", r.Method, r.URL.Path, tc.method, tc.path)
+				}
+				var decoded any
+				if err := json.NewDecoder(r.Body).Decode(&decoded); err != nil {
+					t.Error(err)
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+				if batch, ok := decoded.([]any); ok {
+					decoded = batch[0]
+				}
+				body := decoded.(map[string]any)
+				if body["start_date_local"] != want {
+					t.Errorf("start_date_local = %v, want %s", body["start_date_local"], want)
+				}
+				if _, ok := body["start_time"]; ok {
+					t.Error("start_time must be encoded into start_date_local")
+				}
+				w.Header().Set("Content-Type", "application/json")
+				event := `{"id":123,"start_date_local":"` + want + `"}`
+				if tc.method == http.MethodPost {
+					event = "[" + event + "]"
+				}
+				_, _ = w.Write([]byte(event))
+			}))
+			defer server.Close()
+			client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+			event, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: tc.eventID, Date: "2026-07-10", StartTime: &tc.time, EndDateLocal: tc.end, Category: "NOTE", Name: "Reminder"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantRequests := int32(1)
+			if tc.eventID != "" && tc.end == nil {
+				wantRequests = 2
+			}
+			if requests.Load() != wantRequests || event.StartDateLocal == nil || *event.StartDateLocal != want {
+				t.Fatalf("requests = %d, event = %#v, want %d requests with start %s", requests.Load(), event, wantRequests, want)
+			}
+		})
+	}
+}
+
+func TestAddOrUpdateEventCannotPreserveStartTimeWithoutEvidence(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name      string
+		status    int
+		body      string
+		startTime *string
+		end       *string
+	}{
+		{name: "read failure", status: http.StatusNotFound, body: `{}`},
+		{name: "missing timestamp", status: http.StatusOK, body: `{"id":123}`},
+		{name: "invalid timestamp", status: http.StatusOK, body: `{"id":123,"start_date_local":"invalid"}`},
+		{name: "end precedes preserved time", status: http.StatusOK, body: `{"id":123,"start_date_local":"2026-07-10T07:30:00"}`, end: stringPtr("2026-07-11T07:00:00")},
+		{name: "preserved end precedes rescheduled start", status: http.StatusOK, body: `{"id":123,"start_date_local":"2026-07-10T07:30:00","end_date_local":"2026-07-10T08:30:00"}`},
+		{name: "preserved end precedes explicit start", status: http.StatusOK, body: `{"id":123,"start_date_local":"2026-07-10T07:30:00","end_date_local":"2026-07-11T08:30:00"}`, startTime: stringPtr("09:00")},
+		{name: "read failure with explicit start", status: http.StatusNotFound, body: `{}`, startTime: stringPtr("09:00")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			var writes atomic.Int32
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodGet {
+					writes.Add(1)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer server.Close()
+			client := newTestClient(t, server.URL, server.Client(), RetryConfig{MaxAttempts: 1})
+			_, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: "123", Date: "2026-07-11", StartTime: tc.startTime, EndDateLocal: tc.end, Category: "NOTE"})
+			if err == nil || writes.Load() != 0 {
+				t.Fatalf("error = %v, writes = %d, want failure before writing", err, writes.Load())
+			}
+		})
+	}
+}
+
 func TestAddOrUpdateEventSendsRaceCreateAtLocalMidnight(t *testing.T) {
 	t.Parallel()
 
@@ -351,6 +519,9 @@ func TestAddOrUpdateEventClosesRetryResponseBodyBeforeNextAttempt(t *testing.T) 
 	var attempts atomic.Int32
 	var closed atomic.Int32
 	httpClient := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		if req.Method == http.MethodGet {
+			return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"id":"evt-9","start_date_local":"2026-06-02T00:00:00"}`))}, nil
+		}
 		attempt := attempts.Add(1)
 		if got, want := req.Method, http.MethodPut; got != want {
 			t.Fatalf("method = %q, want %q", got, want)
@@ -399,6 +570,9 @@ func TestAddOrUpdateEventClosesResponseBodyOnDecodeError(t *testing.T) {
 
 	var closed atomic.Int32
 	httpClient := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		if req.Method == http.MethodGet {
+			return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"id":"evt-9","start_date_local":"2026-06-02T00:00:00"}`))}, nil
+		}
 		if got, want := req.Method, http.MethodPut; got != want {
 			t.Fatalf("method = %q, want %q", got, want)
 		}
@@ -428,6 +602,11 @@ func TestAddOrUpdateEventSendsCreateAndUpdateBodies(t *testing.T) {
 		body   any
 	}, 0, 2)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"id":"evt-9","start_date_local":"2026-06-02T00:00:00"}`))
+			return
+		}
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Fatalf("read body: %v", err)
@@ -515,6 +694,11 @@ func TestAddOrUpdateEventOmitsBlankExternalID(t *testing.T) {
 
 	var body map[string]any
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"id":"evt-blank","start_date_local":"2026-06-02T00:00:00"}`))
+			return
+		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			t.Fatalf("decode body: %v", err)
 		}
@@ -538,6 +722,11 @@ func TestAddOrUpdateEventCanSendEmptyTags(t *testing.T) {
 
 	var body map[string]any
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"id":"evt-4","start_date_local":"2026-06-02T00:00:00"}`))
+			return
+		}
 		if r.Method != http.MethodPut || r.URL.Path != "/athlete/i12345/events/evt-4" {
 			t.Fatalf("request = %s %s, want PUT event", r.Method, r.URL.Path)
 		}
@@ -577,6 +766,11 @@ func TestAddOrUpdateEventCalendarFieldsRoundTripAndSparseUpdate(t *testing.T) {
 
 	var requests []map[string]any
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"id":123,"start_date_local":"2026-07-10T00:00:00","end_date_local":"2026-07-12T16:00:00"}`))
+			return
+		}
 		if r.URL.Path != "/athlete/i12345/events/bulk" && r.URL.Path != "/athlete/i12345/events/123" {
 			t.Errorf("path = %q, want single-event create or numeric-ID update", r.URL.Path)
 		}

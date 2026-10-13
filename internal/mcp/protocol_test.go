@@ -71,6 +71,88 @@ const (
 
 var protocolTransportKinds = []protocolTransportKind{protocolTransportInMemory, protocolTransportStreamableHTTP}
 
+func TestProtocolEventStartTimeRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	for _, transport := range protocolTransportKinds {
+		t.Run(string(transport), func(t *testing.T) {
+			t.Parallel()
+			var writes atomic.Int32
+			client, closeUpstream := newProtocolIntervalsClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				switch r.URL.Path {
+				case "/athlete/i12345":
+					_, _ = w.Write([]byte(`{"id":"i12345","timezone":"America/Sao_Paulo","preferred_units":"metric"}`))
+				case "/athlete/i12345/events":
+					_, _ = w.Write([]byte(`[]`))
+				case "/athlete/i12345/events/123":
+					if r.Method == http.MethodGet {
+						_, _ = w.Write([]byte(`{"id":123,"category":"NOTE","start_date_local":"2026-07-10T07:30:00"}`))
+						return
+					}
+					fallthrough
+				case "/athlete/i12345/events/bulk":
+					var decoded any
+					if err := json.NewDecoder(r.Body).Decode(&decoded); err != nil {
+						t.Error(err)
+						w.WriteHeader(http.StatusBadRequest)
+						return
+					}
+					if batch, ok := decoded.([]any); ok {
+						decoded = batch[0]
+					}
+					body := decoded.(map[string]any)
+					date := "2026-07-10"
+					if r.Method == http.MethodPut {
+						date = "2026-07-11"
+					}
+					if body["start_date_local"] != date+"T07:30:00" {
+						t.Errorf("upstream start = %v, want %sT07:30:00", body["start_date_local"], date)
+					}
+					body["id"] = 123
+					writes.Add(1)
+					if r.Method == http.MethodPost {
+						_ = json.NewEncoder(w).Encode([]any{body})
+					} else {
+						_ = json.NewEncoder(w).Encode(body)
+					}
+				default:
+					t.Errorf("unexpected upstream request: %s %s", r.Method, r.URL.Path)
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}))
+			defer closeUpstream()
+			capability := safety.NewCapability(safety.ModeSafe)
+			registry := tools.NewRegistryWithOptions(client, tools.RegistryOptions{Version: "test", Capability: capability})
+			ctx, session, cleanup := connectProtocolClient(t, transport, Options{Registry: registry, Capability: capability})
+			defer cleanup()
+			for _, args := range []map[string]any{
+				{"date": "2026-07-10", "start_time": "07:30", "category": "NOTE", "name": "Reminder"},
+				{"event_id": "123", "date": "2026-07-11", "category": "NOTE"},
+			} {
+				result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{Name: toolcatalog.AddOrUpdateEvent, Arguments: args})
+				if err != nil || result.IsError {
+					t.Fatalf("CallTool() = %#v, error = %v", result, err)
+				}
+				var out struct {
+					Event struct {
+						Start string `json:"start_date_local"`
+					} `json:"event"`
+				}
+				if err := json.Unmarshal([]byte(result.Content[0].(*sdkmcp.TextContent).Text), &out); err != nil {
+					t.Fatal(err)
+				}
+				if out.Event.Start != args["date"].(string)+"T07:30:00" {
+					t.Fatalf("returned event start = %s, want local time preserved", out.Event.Start)
+				}
+			}
+			if writes.Load() != 2 {
+				t.Fatalf("writes = %d, want create and reschedule", writes.Load())
+			}
+		})
+	}
+}
+
 func TestStreamableHTTPJSONRPCInitializeAndPingWireEnvelopes(t *testing.T) {
 	t.Parallel()
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -13,6 +14,12 @@ import (
 	"strings"
 	"time"
 )
+
+// ErrEventTimingUnavailable means an update cannot safely preserve existing timing.
+var ErrEventTimingUnavailable = errors.New("existing event timing unavailable")
+
+// ErrEventEndBeforeStart means the effective event end precedes its start.
+var ErrEventEndBeforeStart = errors.New("event end precedes start")
 
 // ListEventsParams contains query parameters for listing athlete calendar events.
 type ListEventsParams struct {
@@ -29,6 +36,7 @@ type WriteEventParams struct {
 	EventID            string
 	ExternalID         string
 	Date               string
+	StartTime          *string
 	EndDateLocal       *string
 	Category           string
 	Type               string
@@ -149,6 +157,33 @@ func (c *Client) AddOrUpdateEvent(ctx context.Context, params WriteEventParams) 
 		return Event{}, err
 	}
 	if eventID := strings.TrimSpace(params.EventID); eventID != "" {
+		preserveStart := params.StartTime == nil && len(strings.TrimSpace(params.Date)) == len(time.DateOnly)
+		if preserveStart || params.EndDateLocal == nil {
+			existing, err := c.GetEvent(ctx, eventID)
+			if err != nil {
+				return Event{}, fmt.Errorf("%w: reading event %s: %w", ErrEventTimingUnavailable, eventID, err)
+			}
+			if preserveStart {
+				if existing.StartDateLocal == nil {
+					return Event{}, fmt.Errorf("%w: event %s has no start_date_local", ErrEventTimingUnavailable, eventID)
+				}
+				start, err := EventStartDateLocal(*existing.StartDateLocal, nil)
+				if err != nil {
+					return Event{}, fmt.Errorf("%w: preserving event %s start time: %w", ErrEventTimingUnavailable, eventID, err)
+				}
+				body.StartDateLocal = strings.TrimSpace(params.Date) + start[len(time.DateOnly):]
+			}
+			end := params.EndDateLocal
+			if end == nil {
+				end = existing.EndDateLocal
+			}
+			if err := ValidateEventEndDateLocal(body.StartDateLocal, end); err != nil {
+				if errors.Is(err, ErrEventEndBeforeStart) {
+					return Event{}, fmt.Errorf("writing event: %w", err)
+				}
+				return Event{}, fmt.Errorf("%w: validating event end: %w", ErrEventTimingUnavailable, err)
+			}
+		}
 		var event Event
 		if err := c.doJSONBody(ctx, http.MethodPut, body, &event, "athlete", c.athleteID, "events", eventID); err != nil {
 			return Event{}, fmt.Errorf("updating event %s: %w", params.EventID, err)
@@ -194,7 +229,11 @@ func writeEventBody(params WriteEventParams) (writeEventPayload, error) {
 	if category == "" {
 		return writeEventPayload{}, fmt.Errorf("writing event: category is required")
 	}
-	if err := ValidateEventEndDateLocal(date, params.EndDateLocal); err != nil {
+	start, err := EventStartDateLocal(date, params.StartTime)
+	if err != nil {
+		return writeEventPayload{}, fmt.Errorf("writing event: %w", err)
+	}
+	if err := ValidateEventEndDateLocal(start, params.EndDateLocal); err != nil {
 		return writeEventPayload{}, fmt.Errorf("writing event: %w", err)
 	}
 	color := params.Color
@@ -203,7 +242,7 @@ func writeEventBody(params WriteEventParams) (writeEventPayload, error) {
 		color = &trimmed
 	}
 	body := writeEventPayload{
-		StartDateLocal:    writeEventStartDateLocal(date),
+		StartDateLocal:    start,
 		EndDateLocal:      params.EndDateLocal,
 		ExternalID:        strings.TrimSpace(params.ExternalID),
 		Category:          category,
@@ -234,7 +273,10 @@ func ValidateEventEndDateLocal(start string, end *string) error {
 	}
 	startTime, err := time.Parse(time.DateOnly, start)
 	if err != nil {
-		return fmt.Errorf("date must be athlete-local YYYY-MM-DD: %w", err)
+		startTime, err = time.Parse("2006-01-02T15:04:05", start)
+		if err != nil {
+			return fmt.Errorf("start must be an athlete-local date or timestamp: %w", err)
+		}
 	}
 	endTime, err := time.Parse(time.DateOnly, *end)
 	if err != nil {
@@ -244,16 +286,36 @@ func ValidateEventEndDateLocal(start string, end *string) error {
 		}
 	}
 	if endTime.Before(startTime) {
-		return fmt.Errorf("end_date_local must be on or after date")
+		return ErrEventEndBeforeStart
 	}
 	return nil
 }
 
-func writeEventStartDateLocal(date string) string {
-	if len(date) == len("2006-01-02") {
-		return date + "T00:00:00"
+// EventStartDateLocal combines an athlete-local date and optional HH:MM clock time.
+// Without a clock time, a date becomes midnight and an existing local timestamp is preserved.
+func EventStartDateLocal(date string, startTime *string) (string, error) {
+	date = strings.TrimSpace(date)
+	if startTime != nil {
+		if _, err := time.Parse(time.DateOnly, date); err != nil {
+			return "", fmt.Errorf("date must be athlete-local YYYY-MM-DD when start_time is provided: %w", err)
+		}
+		clock, err := time.Parse("15:04", *startTime)
+		if err != nil {
+			return "", fmt.Errorf("start_time must be athlete-local HH:MM in 24-hour format: %w", err)
+		}
+		if clock.Format("15:04") != *startTime {
+			return "", fmt.Errorf("start_time must be athlete-local HH:MM in 24-hour format")
+		}
+		return date + "T" + *startTime + ":00", nil
 	}
-	return date
+	if _, err := time.Parse(time.DateOnly, date); err == nil {
+		return date + "T00:00:00", nil
+	}
+	timestamp, err := time.Parse("2006-01-02T15:04:05", date)
+	if err != nil {
+		return "", fmt.Errorf("start must be an athlete-local date or timestamp: %w", err)
+	}
+	return timestamp.Format("2006-01-02T15:04:05.999999999"), nil
 }
 
 func (c *Client) doJSONBody(ctx context.Context, method string, body any, out any, pathParts ...string) error {
