@@ -138,6 +138,16 @@ func parseSimpleLine(body string) (Step, error) {
 	if len(remaining) == 0 {
 		return Step{}, fmt.Errorf("target missing after ramp")
 	}
+	// Numeric prescriptions must not become trailing label text or a text pace target.
+	primaryTargets := 0
+	for _, token := range remaining {
+		if wattsTokenRE.MatchString(token) || bpmTokenRE.MatchString(token) || percentTokenRE.MatchString(token) || zoneTokenRE.MatchString(token) || paceTokenRE.MatchString(token) {
+			primaryTargets++
+		}
+	}
+	if primaryTargets > 1 {
+		return Step{}, fmt.Errorf("conflicting workout targets; choose one primary target or split the prescriptions into separate steps")
+	}
 	if err := parsePrimaryTarget(&step, remaining); err != nil {
 		if !parseTrailingDescriptionTarget(&step, remaining) {
 			return Step{}, err

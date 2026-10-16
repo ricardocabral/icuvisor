@@ -487,3 +487,44 @@ func decodeToolWorkouts(t *testing.T, raws ...string) []intervals.Workout {
 	}
 	return workouts
 }
+
+func TestGetWorkoutsInFolderUsesIndoorFTPConsistently(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name           string
+		indoor         bool
+		wantPreview    string
+		wantDiagnostic bool
+	}{
+		{name: "indoor threshold available", indoor: true, wantPreview: "198-212 W"},
+		{name: "outdoor threshold missing", wantDiagnostic: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			raw := mustMarshalArgs(t, map[string]any{"id": 5, "type": "Ride", "folder_id": "20", "indoor": tc.indoor,
+				"workout_doc": map[string]any{"steps": []any{map[string]any{"duration": 600, "power": map[string]any{"min": 88, "max": 94, "units": "PERCENT_FTP"}}}}})
+			client := &fakeWorkoutLibraryClient{
+				fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{Timezone: "UTC", SportSettings: []intervals.SportSettings{{Types: []string{"Ride"}, IndoorFTP: 225}}}},
+				workouts:          decodeToolWorkouts(t, raw),
+			}
+			tool := newGetWorkoutsInFolderTool(client, client, "test", "UTC", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: json.RawMessage(`{"folder_id":"20"}`)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			summary := resultMap(t, result)["workouts"].([]any)[0].(map[string]any)["workout_doc_summary"].(map[string]any)
+			if tc.wantDiagnostic {
+				assertKeyAbsent(t, summary, "target_previews")
+				diagnostics := summary["target_preview_diagnostics"].([]any)
+				if len(diagnostics) != 1 || diagnostics[0].(map[string]any)["code"] != "missing_power_ftp" {
+					t.Fatalf("diagnostics = %#v", diagnostics)
+				}
+			} else {
+				assertKeyAbsent(t, summary, "target_preview_diagnostics")
+				previews := summary["target_previews"].([]any)
+				if len(previews) != 1 || previews[0].(map[string]any)["preview"] != tc.wantPreview || previews[0].(map[string]any)["basis"] != "ftp 225 W" {
+					t.Fatalf("previews = %#v", previews)
+				}
+			}
+		})
+	}
+}

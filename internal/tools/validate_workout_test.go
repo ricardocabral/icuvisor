@@ -351,3 +351,21 @@ func diagContains(codes []string, needle string) bool {
 	}
 	return false
 }
+
+func TestValidateWorkoutRejectsConflictingDSLTargets(t *testing.T) {
+	t.Parallel()
+	for _, targets := range []string{
+		"150bpm 95% Pace", "95% Pace 150bpm", "200w 150bpm", "150bpm 200w",
+		"88-94% 4:05-4:15/km Pace", "1:30/100m Pace 90% LTHR", "Z2 HR Z3 Pace",
+	} {
+		t.Run(targets, func(t *testing.T) {
+			resp := runValidateWorkout(t, mustMarshalArgs(t, map[string]any{"description": "Coach notes\n- Cruise 10m " + targets}))
+			if resp.Valid || resp.CanonicalDSL != "" {
+				t.Fatalf("conflicting DSL accepted: %+v", resp)
+			}
+			if len(resp.Errors) == 0 || !strings.Contains(resp.Errors[0].Message, "choose one primary target") {
+				t.Fatalf("errors = %+v, want actionable conflict diagnostic", resp.Errors)
+			}
+		})
+	}
+}

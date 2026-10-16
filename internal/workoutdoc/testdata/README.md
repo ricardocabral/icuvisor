@@ -20,8 +20,8 @@ set is followed by a top-level cooldown. The de-indented cooldown line is a
 sibling after the repeat block, not a child that repeats with the main set.
 
 `09-cross-sport-target-boundaries-*` locks absolute run and swim pace ranges,
-metric and yard pool distances, an explicit percent-FTP range, and a recovery
-pace-zone boundary without deriving any athlete threshold.
+metric and yard pool distances, duration-based mile pace, explicit percent-FTP
+and HR ranges, and recovery/upper power-zone boundaries without deriving any athlete threshold.
 
 `10-mixed-prose-description.txt` is the prose/header/comment envelope used by
 the local validation, submit, re-fetch, and re-parse fixture flow. Its sentinel
@@ -31,3 +31,11 @@ The remaining UI smoke for issue #25 is to create the equivalent workout in the
 Intervals.icu web editor, fetch its `description` and `workout_doc` with
 `include_full:true`, and replace or add a fixture if the UI emits a different
 DSL that preserves repeats/RPE.
+
+`09-cross-sport-upstream-response.json` is a hand-authored local contract fixture,
+not a live API capture. It uses the upstream read shape (numeric meter distances
+and `text` labels), independently of the local serializer/parser. The tool flow
+compares submitted DSL against the golden text, reads this fixture through
+`get_workouts_in_folder`, and re-validates its unchanged description. Its mixed
+sport targets exercise syntax only; this is not a prescribed training session.
+No fixture in this flow calls upstream or proves current upstream acceptance.
