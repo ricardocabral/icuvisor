@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Calendar writes reject missing, ambiguous, or mismatched event IDs in upstream success responses; uncertain creates require the existing bounded calendar verification before reporting success.
+
 ## [1.8.0] - 2026-10-13
 
 ### Added

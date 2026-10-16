@@ -4,11 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 )
 
@@ -346,4 +350,123 @@ func readCalendarFixture[T any](t *testing.T, name string) T {
 		t.Fatalf("decode %s: %v", path, err)
 	}
 	return fixture
+}
+
+func TestCalendarReconciliationUnconfirmedCreateResponseRequiresVerification(t *testing.T) {
+	t.Parallel()
+	fixture := readCalendarFixture[interruptedCreateFixture](t, "interrupted_create.json")
+	for _, committed := range []bool{false, true} {
+		t.Run(map[bool]string{false: "not verified", true: "verified and retry skipped"}[committed], func(t *testing.T) {
+			t.Parallel()
+			writes, reads := 0, 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				switch {
+				case r.Method == http.MethodGet && r.URL.Path == "/athlete/i12345/events":
+					reads++
+					if r.URL.Query().Get("oldest") != "2026-06-13" || r.URL.Query().Get("newest") != "2026-06-13" {
+						t.Errorf("verification must stay bounded to the written date: %s", r.URL)
+					}
+					if committed && writes > 0 {
+						_ = json.NewEncoder(w).Encode([]map[string]any{fixture.CommittedEvent.Raw})
+					} else {
+						_, _ = w.Write([]byte("[]"))
+					}
+				case r.Method == http.MethodPost && r.URL.Path == "/athlete/i12345/events/bulk":
+					writes++
+					_, _ = w.Write([]byte("[null]"))
+				default:
+					t.Errorf("unexpected request: %s %s", r.Method, r.URL)
+					w.WriteHeader(http.StatusBadRequest)
+				}
+			}))
+			defer server.Close()
+			client, err := intervals.NewClient(intervals.Options{Config: config.Config{APIKey: "test-key", AthleteID: "i12345", APIBaseURL: server.URL, HTTPTimeout: time.Second}, HTTPClient: server.Client(), Version: "test"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			profile := &fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", Timezone: "UTC"}}
+			tool := newAddOrUpdateEventTool(client, profile, "test", "UTC", false)
+			request := Request{Name: tool.Name, Arguments: fixture.Request}
+			result, err := tool.Handler(context.Background(), request)
+			if reads != 2 || writes != 1 {
+				t.Fatalf("reads=%d writes=%d, want preflight + one verification and no repeated write", reads, writes)
+			}
+			if !committed {
+				if message, ok := PublicErrorMessage(err); !ok || message != writeEventMessage {
+					t.Fatalf("error = %v, want actionable unconfirmed-write guidance", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if meta := resultMap(t, result)["_meta"].(map[string]any); meta["confirmation_status"] != verifiedAfterInterruptedWriteStatus {
+				t.Fatalf("meta = %#v, want verified recovery", meta)
+			}
+			result, err = tool.Handler(context.Background(), request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if meta := resultMap(t, result)["_meta"].(map[string]any); meta["confirmation_status"] != skippedExistingEventStatus || writes != 1 || reads != 3 {
+				t.Fatalf("retry meta = %#v, writes=%d reads=%d; want verified duplicate skip", meta, writes, reads)
+			}
+		})
+	}
+}
+
+func TestCalendarReconciliationLoadUsesUpstreamAggregatesWithoutAddingCalendarTargets(t *testing.T) {
+	t.Parallel()
+	cases := readCalendarFixture[[]struct {
+		Name      string                    `json:"name"`
+		Summary   intervals.SummaryWithCats `json:"summary"`
+		WantCount float64                   `json:"want_count"`
+		WantLoad  float64                   `json:"want_load"`
+		WantCTL   float64                   `json:"want_ctl"`
+	}](t, "aggregates.json")
+	compliance := readCalendarFixture[calendarComplianceFixture](t, "compliance.json")
+	calendar := readCalendarFixture[calendarEventsFixture](t, "events.json")
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			client := newFakeComputeClient()
+			client.summaries = []intervals.SummaryWithCats{tc.Summary}
+			client.activities = compliance.Activities
+			client.events = append(append([]intervals.Event(nil), compliance.Events...), calendar.MultiDayRace...)
+			args, err := json.Marshal(map[string]any{"start_date": tc.Summary.Date, "end_date": tc.Summary.Date, "include_full": true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			summaryTool := newGetTrainingSummaryTool(client, client, "test", "UTC", false)
+			result, err := summaryTool.Handler(context.Background(), Request{Name: summaryTool.Name, Arguments: args})
+			if err != nil {
+				t.Fatal(err)
+			}
+			summary := resultMap(t, result)["summary"].(map[string]any)
+			if summary["count"] != tc.WantCount || summary["training_load"] != tc.WantLoad {
+				t.Fatalf("summary = %#v, want count %v and load %v", summary, tc.WantCount, tc.WantLoad)
+			}
+			balanceTool := newComputeLoadBalanceTool(client, client, client, client, "test", "UTC", false)
+			result, err = balanceTool.Handler(context.Background(), Request{Name: balanceTool.Name, Arguments: args})
+			if err != nil {
+				t.Fatal(err)
+			}
+			balance := resultMap(t, result)["result"].(map[string]any)
+			if balance["training_load_total"] != tc.WantLoad {
+				t.Fatalf("load balance = %#v, want load %v", balance, tc.WantLoad)
+			}
+			fitnessTool := newGetFitnessTool(client, client, "test", "UTC", false)
+			result, err = fitnessTool.Handler(context.Background(), Request{Name: fitnessTool.Name, Arguments: args})
+			if err != nil {
+				t.Fatal(err)
+			}
+			rows := resultMap(t, result)["fitness"].([]any)
+			if len(rows) != 1 || rows[0].(map[string]any)["ctl"] != tc.WantCTL {
+				t.Fatalf("fitness = %#v, want one upstream CTL %v", rows, tc.WantCTL)
+			}
+			if client.activityCalls != 0 || client.summaryCalls != 3 {
+				t.Fatalf("activity reads=%d summary reads=%d, want only upstream aggregates", client.activityCalls, client.summaryCalls)
+			}
+		})
+	}
 }

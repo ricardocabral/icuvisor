@@ -822,3 +822,49 @@ func TestAddOrUpdateEventCalendarFieldsRoundTripAndSparseUpdate(t *testing.T) {
 		}
 	}
 }
+
+func TestEventWriteRequiresUnambiguousIdentityConfirmation(t *testing.T) {
+	t.Parallel()
+	data, err := os.ReadFile("testdata/events/write_confirmations.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cases []struct {
+		Name     string          `json:"name"`
+		EventID  string          `json:"event_id"`
+		Response json.RawMessage `json:"response"`
+		WantID   string          `json:"want_id"`
+	}
+	if err := json.Unmarshal(data, &cases); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			writes := 0
+			client := newTestClient(t, "https://example.invalid", &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				wantMethod, wantPath := http.MethodPost, "/athlete/i12345/events/bulk"
+				if tc.EventID != "" {
+					wantMethod, wantPath = http.MethodPut, "/athlete/i12345/events/"+tc.EventID
+				}
+				if req.Method != wantMethod || req.URL.Path != wantPath {
+					t.Fatalf("request = %s %s, want %s %s", req.Method, req.URL.Path, wantMethod, wantPath)
+				}
+				writes++
+				return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(string(tc.Response)))}, nil
+			})}, RetryConfig{})
+			startTime, end := "08:00", "2026-08-10T09:00:00"
+			event, err := client.AddOrUpdateEvent(context.Background(), WriteEventParams{EventID: tc.EventID, Date: "2026-08-10", Category: "NOTE", StartTime: &startTime, EndDateLocal: &end})
+			if tc.WantID == "" {
+				if err == nil || event.ID != "" {
+					t.Fatalf("AddOrUpdateEvent() = %#v, %v; want unconfirmed write error", event, err)
+				}
+			} else if err != nil || event.ID != tc.WantID {
+				t.Fatalf("AddOrUpdateEvent() = %#v, %v; want ID %s", event, err, tc.WantID)
+			}
+			if writes != 1 {
+				t.Fatalf("writes = %d, want exactly one attempt", writes)
+			}
+		})
+	}
+}

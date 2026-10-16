@@ -1,0 +1,16 @@
+[
+  {
+    "name": "linked sessions with a provider duplicate",
+    "summary": {"date":"2026-05-18","count":2,"training_load":80,"fitness":42,"fatigue":45,"form":-3,"timeInZones":[2700,2400,1200],"timeInZonesTot":6300},
+    "want_count": 2,
+    "want_load": 80,
+    "want_ctl": 42
+  },
+  {
+    "name": "one multi-day race",
+    "summary": {"date":"2026-07-06","count":3,"training_load":420,"fitness":60,"fatigue":75,"form":-15,"timeInZones":[10800,3600,1800],"timeInZonesTot":16200},
+    "want_count": 3,
+    "want_load": 420,
+    "want_ctl": 60
+  }
+]
