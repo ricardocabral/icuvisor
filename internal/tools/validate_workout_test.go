@@ -357,6 +357,9 @@ func TestValidateWorkoutRejectsConflictingDSLTargets(t *testing.T) {
 	for _, targets := range []string{
 		"150bpm 95% Pace", "95% Pace 150bpm", "200w 150bpm", "150bpm 200w",
 		"88-94% 4:05-4:15/km Pace", "1:30/100m Pace 90% LTHR", "Z2 HR Z3 Pace",
+		"150bpm 5 Pace", "5 Pace 150bpm", "200w 4.5-5 Pace", "4.5-5 Pace 200w",
+		"150bpm Marathon Pace", "Marathon Pace 150bpm", "200w Marathon Pace",
+		"RPE 5 150bpm", "150bpm RPE 5", "RPE 5-6 200w", "200w RPE 5-6",
 	} {
 		t.Run(targets, func(t *testing.T) {
 			resp := runValidateWorkout(t, mustMarshalArgs(t, map[string]any{"description": "Coach notes\n- Cruise 10m " + targets}))
@@ -365,6 +368,32 @@ func TestValidateWorkoutRejectsConflictingDSLTargets(t *testing.T) {
 			}
 			if len(resp.Errors) == 0 || !strings.Contains(resp.Errors[0].Message, "choose one primary target") {
 				t.Fatalf("errors = %+v, want actionable conflict diagnostic", resp.Errors)
+			}
+		})
+	}
+}
+
+func TestValidateWorkoutPreservesSingleTargetsAndLabels(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name string
+		step string
+	}{
+		{name: "text pace", step: "- Cruise 10m Marathon Pace"},
+		{name: "numeric pace", step: "- Cruise 10m 5 Pace"},
+		{name: "numeric pace range", step: "- Cruise 10m 4.5-5 Pace"},
+		{name: "numeric pace case insensitive", step: "- Cruise 10m 4.5-5 pAcE"},
+		{name: "RPE", step: "- Cruise 10m RPE 5"},
+		{name: "trailing label", step: "- 10m Tempo at 150bpm"},
+		{name: "pace in trailing label", step: "- 10m Race Pace practice at 150bpm"},
+		{name: "number in label", step: "- 10m Count 5 strokes at 150bpm"},
+		{name: "cadence secondary", step: "- Cruise 10m 4.5-5 Pace 90rpm"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			description := "# Header\nKeep pace notes exactly.\n" + tc.step + "\n<!-- coach comment -->\n"
+			resp := runValidateWorkout(t, mustMarshalArgs(t, map[string]any{"description": description}))
+			if !resp.Valid || len(resp.Errors) != 0 || resp.Stats.StructuredSteps != 1 || resp.CanonicalDSL != description {
+				t.Fatalf("single target or prose changed: %+v", resp)
 			}
 		})
 	}

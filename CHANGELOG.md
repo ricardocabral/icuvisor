@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Workout validation rejects conflicting numeric HR, pace, and power prescriptions in raw DSL instead of treating one as label text. Library write fidelity checks recognize yard-to-metre conversion, and indoor FTP previews no longer report a missing outdoor FTP when the configured indoor threshold is available.
+- Workout validation rejects conflicting HR, power, numeric/text pace, and RPE prescriptions in raw DSL instead of treating one as label text. Library write fidelity checks recognize yard-to-metre conversion, and indoor FTP previews no longer report a missing outdoor FTP when the configured indoor threshold is available.
 
 ## [1.8.0] - 2026-10-13
 
