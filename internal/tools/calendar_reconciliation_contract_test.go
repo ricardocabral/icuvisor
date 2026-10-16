@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -468,5 +469,136 @@ func TestCalendarReconciliationLoadUsesUpstreamAggregatesWithoutAddingCalendarTa
 				t.Fatalf("activity reads=%d summary reads=%d, want only upstream aggregates", client.activityCalls, client.summaryCalls)
 			}
 		})
+	}
+}
+
+type calendarIdentityTransport func(*http.Request) (*http.Response, error)
+
+func (transport calendarIdentityTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return transport(req)
+}
+
+func TestCalendarReconciliationDuplicateIdentityMustBeUnambiguous(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name        string
+		ids         []string
+		nullRow     bool
+		distinctRow bool
+		wantError   bool
+	}{
+		{name: "missing identity", ids: []string{""}, wantError: true},
+		{name: "whitespace identity", ids: []string{"  "}, wantError: true},
+		{name: "two identities", ids: []string{"existing-1", "existing-2"}, wantError: true},
+		{name: "valid then missing identity", ids: []string{"existing-1", ""}, wantError: true},
+		{name: "missing then valid identity", ids: []string{"", "existing-1"}, wantError: true},
+		{name: "null row", nullRow: true, wantError: true},
+		{name: "valid then null row", ids: []string{"existing-1"}, nullRow: true, wantError: true},
+		{name: "one identity", ids: []string{"existing-1"}},
+		{name: "repeated same identity", ids: []string{"existing-1", "existing-1"}},
+		{name: "distinct same-day session", ids: []string{"existing-1"}, distinctRow: true},
+	}
+	for _, tc := range cases {
+		for _, match := range []string{"exact shape", "external ID"} {
+			for _, phase := range []string{"preflight", "recovery"} {
+				t.Run(tc.name+"/"+match+"/"+phase, func(t *testing.T) {
+					t.Parallel()
+					fixture := readCalendarFixture[interruptedCreateFixture](t, "interrupted_create.json")
+					var args map[string]any
+					if err := json.Unmarshal(fixture.Request, &args); err != nil {
+						t.Fatal(err)
+					}
+					if match == "exact shape" {
+						delete(args, "external_id")
+					}
+					requestBody, err := json.Marshal(args)
+					if err != nil {
+						t.Fatal(err)
+					}
+					rows := make([]map[string]any, 0, len(tc.ids)+1)
+					for _, id := range tc.ids {
+						row := make(map[string]any, len(fixture.CommittedEvent.Raw))
+						for key, value := range fixture.CommittedEvent.Raw {
+							row[key] = value
+						}
+						delete(row, "id")
+						if id != "" {
+							row["id"] = id
+						}
+						if match == "external ID" {
+							row["name"] = "Edited upstream title"
+						}
+						rows = append(rows, row)
+					}
+					if tc.nullRow {
+						rows = append(rows, nil)
+					}
+					if tc.distinctRow {
+						rows = append(rows, map[string]any{"id": "another-session", "category": "WORKOUT", "type": "Ride", "name": "Evening ride", "start_date_local": "2026-06-13T18:00:00"})
+					}
+					readBody, err := json.Marshal(rows)
+					if err != nil {
+						t.Fatal(err)
+					}
+					writes, reads := 0, 0
+					transport := calendarIdentityTransport(func(req *http.Request) (*http.Response, error) {
+						body := string(readBody)
+						switch req.Method {
+						case http.MethodGet:
+							reads++
+							if req.URL.Path != "/athlete/i12345/events" || req.URL.Query().Get("oldest") != args["date"] || req.URL.Query().Get("newest") != args["date"] {
+								t.Fatalf("unexpected calendar read: %s", req.URL)
+							}
+							if phase == "recovery" && reads == 1 {
+								body = "[]"
+							}
+						case http.MethodPost:
+							writes++
+							if req.URL.Path != "/athlete/i12345/events/bulk" {
+								t.Fatalf("unexpected write: %s", req.URL)
+							}
+							body = "[null]"
+						default:
+							t.Fatalf("unexpected method: %s", req.Method)
+						}
+						return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
+					})
+					client, err := intervals.NewClient(intervals.Options{Config: config.Config{APIKey: "test-key", AthleteID: "i12345", APIBaseURL: "https://example.invalid", HTTPTimeout: time.Second}, HTTPClient: &http.Client{Transport: transport}, Version: "test"})
+					if err != nil {
+						t.Fatal(err)
+					}
+					profile := &fakeProfileClient{profile: intervals.AthleteWithSportSettings{ID: "i12345", Timezone: "UTC"}}
+					tool := newAddOrUpdateEventTool(client, profile, "test", "UTC", false)
+					wantReads, wantWrites := 1, 0
+					if phase == "recovery" {
+						wantReads, wantWrites = 2, 1
+					}
+					for attempt := 0; attempt < 2; attempt++ {
+						result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: requestBody})
+						if tc.wantError {
+							message, public := PublicErrorMessage(err)
+							if !public || !strings.Contains(message, "inspect") || !strings.Contains(message, "event_id") {
+								t.Fatalf("result=%#v error=%v; want actionable ambiguous-identity error", result.StructuredContent, err)
+							}
+						} else {
+							if err != nil {
+								t.Fatal(err)
+							}
+							meta := resultMap(t, result)["_meta"].(map[string]any)
+							wantStatus := skippedExistingEventStatus
+							if phase == "recovery" && attempt == 0 {
+								wantStatus = verifiedAfterInterruptedWriteStatus
+							}
+							if meta["confirmation_status"] != wantStatus || meta["duplicate_event_id"] != "existing-1" {
+								t.Fatalf("meta=%#v, want %s for existing-1", meta, wantStatus)
+							}
+						}
+						if reads != wantReads+attempt || writes != wantWrites {
+							t.Fatalf("reads=%d writes=%d; want %d/%d with no second write", reads, writes, wantReads+attempt, wantWrites)
+						}
+					}
+				})
+			}
+		}
 	}
 }

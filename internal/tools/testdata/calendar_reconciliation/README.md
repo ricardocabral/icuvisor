@@ -27,3 +27,9 @@ The client-level `internal/intervals/testdata/events/write_confirmations.json`
 checks malformed HTTP-success payloads. The tool/client integration test then
 checks that an unconfirmed create can succeed only after one bounded calendar
 read confirms it, and that a repeat skips the second write.
+
+The duplicate-identity matrix varies those create fixtures through preflight and
+interrupted recovery, using both exact writable shapes and external IDs. Missing,
+blank, null, or conflicting identities reject the result and a repeat never
+issues another write. Repeated rows for one identity and distinct same-day
+sessions remain valid. The HTTP transport is stubbed in memory.
