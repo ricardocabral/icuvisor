@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Calendar writes reject missing, ambiguous, or mismatched event IDs in upstream success responses; uncertain creates require bounded calendar verification before reporting success. Duplicate preflight and recovery also reject unidentified rows or matches with different event IDs, with guidance to inspect the calendar before an intentional edit.
+
 ## [1.8.0] - 2026-10-13
 
 ### Added

@@ -188,14 +188,17 @@ func (c *Client) AddOrUpdateEvent(ctx context.Context, params WriteEventParams) 
 		if err := c.doJSONBody(ctx, http.MethodPut, body, &event, "athlete", c.athleteID, "events", eventID); err != nil {
 			return Event{}, fmt.Errorf("updating event %s: %w", params.EventID, err)
 		}
+		if event.ID != eventID {
+			return Event{}, fmt.Errorf("updating event %s: upstream response did not confirm the requested event ID", eventID)
+		}
 		return event, nil
 	}
 	var events []Event
 	if err := c.doJSONBody(ctx, http.MethodPost, []writeEventPayload{body}, &events, "athlete", c.athleteID, "events", "bulk"); err != nil {
 		return Event{}, fmt.Errorf("creating event: %w", err)
 	}
-	if len(events) == 0 {
-		return Event{}, fmt.Errorf("creating event: empty upstream response")
+	if len(events) != 1 || strings.TrimSpace(events[0].ID) == "" {
+		return Event{}, fmt.Errorf("creating event: upstream response did not confirm one event ID")
 	}
 	return events[0], nil
 }

@@ -24,8 +24,11 @@ const (
 	skippedExistingEventStatus              = "skipped_existing_event"
 	verifiedAfterInterruptedWriteStatus     = "verified_after_interrupted_write"
 	invalidAddOrUpdateEventArgumentsMessage = "invalid add_or_update_event arguments; provide athlete-local date as YYYY-MM-DD, optional start_time as HH:MM, category, type for WORKOUT events, name for NOTE creates, and optional event_id for updates"
+	uncertainEventCreateMessage             = "calendar event identity is missing or ambiguous; inspect the target date in intervals.icu and use event_id for an intentional edit"
 	writeEventMessage                       = "could not write event; check intervals.icu credentials, athlete ID, event ID, and writable event fields"
 )
+
+var errEventCreateIdentityUncertain = errors.New("calendar event identity is missing or ambiguous")
 
 // EventWriterClient creates or updates intervals.icu calendar events for tools.
 type EventWriterClient interface {
@@ -115,6 +118,9 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 					return Result{}, err
 				}
+				if errors.Is(err, errEventCreateIdentityUncertain) {
+					return Result{}, NewUserError(uncertainEventCreateMessage, err)
+				}
 				return Result{}, NewUserError(writeEventMessage, err)
 			}
 			if preflight.Duplicate != nil {
@@ -148,6 +154,9 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 				recovered, recoveryPreflight, recoveryErr := recoverInterruptedEventCreate(ctx, client, params)
 				if recoveryErr != nil && (errors.Is(recoveryErr, context.Canceled) || errors.Is(recoveryErr, context.DeadlineExceeded)) {
 					return Result{}, recoveryErr
+				}
+				if errors.Is(recoveryErr, errEventCreateIdentityUncertain) {
+					return Result{}, NewUserError(uncertainEventCreateMessage, recoveryErr)
 				}
 				if recovered != nil {
 					payload, shapeErr := shapeAddOrUpdateEventResponse(*recovered, args, timezoneName, workoutDocUploaded, profile, unitSystem, recoveryPreflight)
@@ -314,7 +323,7 @@ func preflightEventCreateDuplicate(ctx context.Context, client EventWriterClient
 	if err != nil {
 		return eventCreatePreflightResult{}, fmt.Errorf("preflighting same-day events: %w", err)
 	}
-	return eventCreatePreflightFromEvents(params, events, nil), nil
+	return eventCreatePreflightFromEvents(params, events)
 }
 
 func preflightEventUpdate(ctx context.Context, client EventWriterClient, params intervals.WriteEventParams) (eventCreatePreflightResult, error) {
@@ -345,31 +354,43 @@ func recoverInterruptedEventCreate(ctx context.Context, client EventWriterClient
 	if err != nil {
 		return nil, eventCreatePreflightResult{}, fmt.Errorf("verifying interrupted event create: %w", err)
 	}
-	preflight := eventCreatePreflightFromEvents(params, events, nil)
-	return preflight.Duplicate, preflight, nil
+	preflight, err := eventCreatePreflightFromEvents(params, events)
+	return preflight.Duplicate, preflight, err
 }
 
-func eventCreatePreflightFromEvents(params intervals.WriteEventParams, events []intervals.Event, extraConflicts []applyTrainingPlanConflict) eventCreatePreflightResult {
-	result := eventCreatePreflightResult{Conflicts: append([]applyTrainingPlanConflict(nil), extraConflicts...)}
+func eventCreatePreflightFromEvents(params intervals.WriteEventParams, events []intervals.Event) (eventCreatePreflightResult, error) {
+	result := eventCreatePreflightResult{}
+	duplicateReason := ""
 	for _, event := range events {
+		if strings.TrimSpace(event.ID) == "" {
+			return eventCreatePreflightResult{}, errEventCreateIdentityUncertain
+		}
 		if eventDateOnly(event) != params.Date {
 			continue
 		}
+		reason := ""
 		if eventMatchesExternalID(event, params.ExternalID) {
+			reason = "matching_external_id"
+		} else if eventMatchesWriteParams(event, params) {
+			reason = "duplicate_existing_event"
+		}
+		if reason == "" {
+			result.Conflicts = append(result.Conflicts, eventWriteConflict(event, "existing_event_on_date"))
+			continue
+		}
+		if result.Duplicate != nil && result.Duplicate.ID != event.ID {
+			return eventCreatePreflightResult{}, errEventCreateIdentityUncertain
+		}
+		if result.Duplicate == nil {
 			duplicate := event
 			result.Duplicate = &duplicate
-			result.Conflicts = []applyTrainingPlanConflict{{EventID: event.ID, Date: eventDateOnly(event), Reason: "matching_external_id"}}
-			return result
+			duplicateReason = reason
 		}
-		if eventMatchesWriteParams(event, params) {
-			duplicate := event
-			result.Duplicate = &duplicate
-			result.Conflicts = []applyTrainingPlanConflict{{EventID: event.ID, Date: eventDateOnly(event), Reason: "duplicate_existing_event"}}
-			return result
-		}
-		result.Conflicts = append(result.Conflicts, eventWriteConflict(event, "existing_event_on_date"))
 	}
-	return result
+	if result.Duplicate != nil {
+		result.Conflicts = []applyTrainingPlanConflict{{EventID: result.Duplicate.ID, Date: eventDateOnly(*result.Duplicate), Reason: duplicateReason}}
+	}
+	return result, nil
 }
 
 func eventWriteConflict(event intervals.Event, reason string) applyTrainingPlanConflict {

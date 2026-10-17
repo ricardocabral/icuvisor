@@ -1,0 +1,12 @@
+[
+  {"name":"create null batch","response":null},
+  {"name":"create empty batch","response":[]},
+  {"name":"create null row","response":[null]},
+  {"name":"create missing identity","response":[{"category":"NOTE"}]},
+  {"name":"create ambiguous batch","response":[{"id":"created-1"},{"id":"created-2"}]},
+  {"name":"update null row","event_id":"existing-1","response":null},
+  {"name":"update missing identity","event_id":"existing-1","response":{"category":"NOTE"}},
+  {"name":"update wrong identity","event_id":"existing-1","response":{"id":"other-event"}},
+  {"name":"create confirmed","response":[{"id":"created-1"}],"want_id":"created-1"},
+  {"name":"update confirmed","event_id":"existing-1","response":{"id":"existing-1"},"want_id":"existing-1"}
+]
