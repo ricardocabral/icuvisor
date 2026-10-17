@@ -123,7 +123,7 @@ func waitForSessionClose(ctx context.Context, closed <-chan error, closeSession 
 	select {
 	case <-ctx.Done():
 		closeSession()
-		<-closed
+		_ = <-closed // Cancellation takes precedence over the shutdown result.
 		return ctx.Err(), true
 	case err := <-closed:
 		return err, false
