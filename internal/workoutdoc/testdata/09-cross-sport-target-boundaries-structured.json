@@ -28,6 +28,21 @@
     {
       "description": "Rest",
       "duration": 30
+    },
+    {
+      "description": "Mile pace",
+      "duration": 900,
+      "pace": {"min": 450, "max": 480, "units": "MINS_MILE"}
+    },
+    {
+      "description": "HR recovery",
+      "duration": 120,
+      "hr": {"min": 60, "max": 70, "units": "PERCENT_HR"}
+    },
+    {
+      "description": "Power boundary",
+      "duration": 30,
+      "power": {"value": 7, "units": "ZONE"}
     }
   ]
 }
