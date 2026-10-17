@@ -1,0 +1,84 @@
+{
+  "id": "fixture-round-trip",
+  "folder_id": "fixture-folder",
+  "name": "Round trip fixture",
+  "type": "Swim",
+  "description": "# Pool threshold session\nCoach header: preserve this exactly.\n- Metric swim 400mtr 1:28-1:32/100m Pace\n- Yard recovery 100yrd 1:45/100y Pace\n- Run threshold 1km 4:05-4:15/km Pace\n- FTP range 10m 88-94%\n- Recovery 2m Z1 Pace\n- Rest 30s\n- Mile pace 15m 7:30-8:00/mi Pace\n- HR recovery 2m 60-70% HR\n- Power boundary 30s Z7\n<!-- coach-comment: keep stroke count notes -->\nPost-session: record pool length and perceived effort.\n",
+  "workout_doc": {
+    "steps": [
+      {
+        "text": "Metric swim",
+        "distance": 400,
+        "pace": {
+          "min": 88,
+          "max": 92,
+          "units": "SECS_100M"
+        }
+      },
+      {
+        "text": "Yard recovery",
+        "distance": 91.44,
+        "pace": {
+          "value": 105,
+          "units": "SECS_100Y"
+        }
+      },
+      {
+        "text": "Run threshold",
+        "distance": 1000,
+        "pace": {
+          "min": 245,
+          "max": 255,
+          "units": "MINS_KM"
+        }
+      },
+      {
+        "text": "FTP range",
+        "duration": 600,
+        "power": {
+          "min": 88,
+          "max": 94,
+          "units": "PERCENT_FTP"
+        }
+      },
+      {
+        "text": "Recovery",
+        "duration": 120,
+        "pace": {
+          "value": 1,
+          "units": "PACE_ZONE"
+        }
+      },
+      {
+        "text": "Rest",
+        "duration": 30
+      },
+      {
+        "text": "Mile pace",
+        "duration": 900,
+        "pace": {
+          "min": 450,
+          "max": 480,
+          "units": "MINS_MILE"
+        }
+      },
+      {
+        "text": "HR recovery",
+        "duration": 120,
+        "hr": {
+          "min": 60,
+          "max": 70,
+          "units": "PERCENT_HR"
+        }
+      },
+      {
+        "text": "Power boundary",
+        "duration": 30,
+        "power": {
+          "value": 7,
+          "units": "POWER_ZONE"
+        }
+      }
+    ]
+  }
+}
