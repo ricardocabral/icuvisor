@@ -3,7 +3,7 @@ module github.com/ricardocabral/icuvisor
 go 1.26.9
 
 require (
-	github.com/godbus/dbus/v5 v5.2.2
+	github.com/godbus/dbus/v5 v5.2.4
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/zalando/go-keyring v0.2.8
 	golang.org/x/term v0.46.0
