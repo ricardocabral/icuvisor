@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.1] - 2026-10-23
+
 ### Fixed
 
 - Correct sleep-quality labels to match intervals.icu: 1 = great, 2 = good, 3 = average, 4 = poor. Wellness response metadata, write schemas, analyzer scale labels, and guidance now use this mapping; `compute_baseline` treats higher sleep-quality values as adverse and lower values as beneficial (#74).
@@ -527,7 +529,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.8.1...HEAD
+[1.8.1]: https://github.com/ricardocabral/icuvisor/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/ricardocabral/icuvisor/compare/v1.7.4...v1.8.0
 [1.7.4]: https://github.com/ricardocabral/icuvisor/compare/v1.7.3...v1.7.4
 [1.7.3]: https://github.com/ricardocabral/icuvisor/compare/v1.7.2...v1.7.3
