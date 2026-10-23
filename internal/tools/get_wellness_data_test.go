@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,6 +15,28 @@ type fakeWellnessClient struct {
 	fakeProfileClient
 	rows   []intervals.Wellness
 	params intervals.WellnessParams
+}
+
+func TestGetWellnessDataSleepQualityScale(t *testing.T) {
+	t.Parallel()
+
+	for quality := 1; quality <= 4; quality++ {
+		for _, full := range []bool{false, true} {
+			t.Run(fmt.Sprintf("quality_%d/full_%t", quality, full), func(t *testing.T) {
+				row := shapedInlineWellnessRow(t, fmt.Sprintf(`{"id":"2026-05-15","sleepQuality":%d,"sleepScore":87,"sleepSecs":28800}`, quality), full)
+				if row["sleepQuality"] != float64(quality) || row["sleepScore"] != float64(87) || row["sleepSecs"] != float64(28800) {
+					t.Fatalf("sleep values changed: %+v", row)
+				}
+				scales := nestedMap(t, row, "_meta", "scales")
+				if scales["sleepQuality"] != "1-4 (athlete-entered, 1=great 2=good 3=average 4=poor)" {
+					t.Fatalf("sleepQuality scale = %v", scales["sleepQuality"])
+				}
+				if full && nestedMap(t, row, "full")["sleepQuality"] != float64(quality) {
+					t.Fatalf("raw sleepQuality changed: %+v", row["full"])
+				}
+			})
+		}
+	}
 }
 
 func (f *fakeWellnessClient) ListWellness(ctx context.Context, params intervals.WellnessParams) ([]intervals.Wellness, error) {

@@ -8,7 +8,7 @@ icuvisor is an open-source MCP server that connects [intervals.icu](https://inte
 
 ## Authoritative documents
 
-- **What & why:** [`docs/prd/PRD-icuvisor.md`](docs/prd/PRD-icuvisor.md)
+- **What & why:** [`docs/prd/PRD-icuvisor.md`](docs/prd/PRD-icuvisor.md), including wellness scale semantics in §6.2.C.
 - **When / phasing:** [`ROADMAP.md`](ROADMAP.md)
 - **Contributor rules:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - **Security policy:** [`SECURITY.md`](SECURITY.md)

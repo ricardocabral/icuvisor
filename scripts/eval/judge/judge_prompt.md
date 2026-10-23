@@ -46,11 +46,11 @@ Does every quantitative claim trace to a tool result, with missing data named?
 
 ### 3. scale_correctness
 Are intervals.icu scales and data-source limits handled correctly?
-- Sleep quality is **1-4**, athlete-reported feel is **1-5**, RPE is **1-10**.
+- Sleep quality is **1=great, 2=good, 3=average, 4=poor** (lower is better), athlete-reported feel is **1-5**, RPE is **1-10**.
 - Strava-imported activities return mostly blank fields by policy.
 - **5** — All scales used with correct ranges/labels; Strava limits honored.
 - **3** — One scale ambiguous or unlabeled, but not misread.
-- **1** — A scale is misread (a 3/4 sleep called "poor", feel rescaled to /10),
+- **1** — A scale is misread (a 1/4 sleep called "poor" or a 4/4 called "great", feel rescaled to /10),
   or a Strava-import limitation is ignored.
 - If no scale or data-source nuance applies to this scenario, score **5**.
 

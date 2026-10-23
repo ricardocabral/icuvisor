@@ -215,14 +215,14 @@ Union of upstream tool sets, deduplicated, with names harmonized. Each tool ship
 **Wellness**
 
 - `get_wellness_data` — daily rows. **Includes custom fields** (issue #64, forum #92) and correct scale metadata embedded in the tool description **and the response itself** (`feel` is 1-5, `sleepQuality` and subjective `hydration` are 1-4 — addresses issues #45/#48 and forum #54/#57). `hydrationVolume` is a distinct read-only litres value, never an alias for the subjective rating. In-response labels are required because some MCP clients do not pass tool descriptions back to the LLM at inference time. **Sleep dual-scale handling**: the intervals.icu wellness payload exposes two separate sleep fields with different scales and provenance:
-  - `sleepQuality` — integer 1–4 (1 = poor, 4 = great), athlete-entered, subjective.
+  - `sleepQuality` — integer 1–4 (1 = great, 2 = good, 3 = average, 4 = poor), subjective. Preserve upstream values unchanged; lower is better, including baseline interpretation. See [intervals.icu's sleep-quality mapping](https://forum.intervals.icu/t/polar-sync-now-supported/5149).
   - `sleepScore` — integer 0–100, populated by device sync (Garmin Connect, Oura, Whoop, Apple Health) when the device computes a nightly sleep score; absent otherwise.
   - `sleepSecs` — integer seconds slept (separate from both quality fields; do not derive from `sleepScore`).
 
   Both quality fields are surfaced under distinct keys (no aliasing, no `sleep_rating: 3` collapse) with `_meta.scales` entries:
 
   ```json
-  "_meta": { "scales": { "sleepQuality": "1-4 (athlete-entered, 1=poor 4=great)",
+  "_meta": { "scales": { "sleepQuality": "1-4 (athlete-entered, 1=great 2=good 3=average 4=poor)",
                           "hydration":    "1-4 (athlete-reported hydration)",
                           "sleepScore":   "0-100 (device-imported nightly score)" } }
   ```

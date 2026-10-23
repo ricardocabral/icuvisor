@@ -46,7 +46,7 @@ func TestUpdateWellnessSchemaDocumentsRangesUnitsAndReadOnlyFields(t *testing.T)
 		}
 	}
 	sleep := props["sleepQuality"].(map[string]any)
-	if sleep["minimum"] != 1 || sleep["maximum"] != 4 || !strings.Contains(sleep["description"].(string), "1-4") {
+	if sleep["minimum"] != 1 || sleep["maximum"] != 4 || !strings.Contains(sleep["description"].(string), "1=great 2=good 3=average 4=poor") {
 		t.Fatalf("sleepQuality schema = %#v, want 1-4 scale", sleep)
 	}
 	weight := props["weight"].(map[string]any)

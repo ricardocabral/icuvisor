@@ -34,7 +34,8 @@ Then:
 - Name the one or two signals driving that call.
 - Recommend whether to keep, modify, move, or execute indoors/outdoors today, naming the planned-event `workout_status`, any relevant tags, `indoor` flag, weather availability, or activity tags returned by icuvisor.
 
-Rules: sleep quality is a 1-4 scale, sleep score is 0-100 when device-imported,
+Rules: sleep quality is 1=great, 2=good, 3=average, 4=poor (lower is better),
+sleep score is 0-100 when device-imported,
 and feel is a 1-5 scale — use the labels icuvisor returns, do not rescale them
 to 0-10. If readiness is missing, do not invent or backfill a readiness score
 from Garmin Body Battery or any other native/supporting field; treat HRV,
@@ -66,7 +67,7 @@ create a second active workout for the same session.
 >
 > Intervals readiness is missing for today (`_meta.missing_fields` includes `readiness`), so I am not treating Garmin/native fields as a replacement score. This call uses supporting wellness signals plus current form.
 >
-> **Driving signals:** HRV is 48 ms, down from a 14-day average of 58 ms and the lowest in that window. Sleep last night was 6h 10m at quality 2/4 (sleepScore 72/100). Resting HR is +4 bpm, and `_native.garmin` includes Body Battery min/max on its own 0-100 provider scale.
+> **Driving signals:** HRV is 48 ms, down from a 14-day average of 58 ms and the lowest in that window. Sleep last night was 6h 10m at quality 4/4 (poor; sleepScore 72/100 is a separate device score). Resting HR is +4 bpm, and `_native.garmin` includes Body Battery min/max on its own 0-100 provider scale.
 >
 > **Form:** TSB is -14 (`get_fitness`) — you are carrying real fatigue.
 >
@@ -81,7 +82,7 @@ create a second active workout for the same session.
 
 ## Why this prompt works
 
-- **Explicit scale reminder.** Assistants routinely treat sleep quality as out of 10 and call a 3/4 "poor". Stating the scale stops a good night being read as a bad one.
+- **Explicit scale reminder.** Sleep quality is 1=great, 2=good, 3=average, 4=poor. Stating all four labels prevents the assistant from reversing the scale or treating it as out of 10.
 - **Missing-readiness fallback.** Garmin and other providers can expose useful HRV, resting HR, sleep, subjective, and `_native` wellness fields even when Intervals readiness itself is null. The prompt tells the assistant to explain that absence first and use fallback fields cautiously instead of creating a synthetic score.
 - **Staleness instruction.** intervals.icu wellness often lags by a day because of timezone offsets. Telling the assistant to flag stale data prevents it from inventing today's HRV.
 - **One-word verdict first.** Forcing green/amber/red keeps the answer decision-shaped instead of a hedge.

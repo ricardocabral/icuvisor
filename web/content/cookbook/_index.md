@@ -46,7 +46,7 @@ icuvisor only helps if the assistant actually calls it instead of answering from
 6. **Let it look things up.** If a recipe needs an activity or event, let the assistant find the ID with `get_activities` or `get_events` — you should not have to paste raw data.
 
 {{< callout type="warning" >}}
-**Subjective scales are not 0-10.** intervals.icu sleep quality is **1-4**, athlete-reported feel is **1-5**, and RPE is **1-10**. icuvisor labels every scale in its responses. If the assistant restates one wrong ("a 3 is a terrible sleep"), correct it — a 3/4 is good sleep.
+**Subjective scales are not 0-10.** intervals.icu sleep quality is **1=great, 2=good, 3=average, 4=poor** (lower is better), athlete-reported feel is **1-5**, and RPE is **1-10**. icuvisor labels every scale in its responses. If the assistant reverses sleep quality, correct it — a 1/4 is great sleep and a 4/4 is poor sleep.
 {{< /callout >}}
 
 ## What icuvisor will not do

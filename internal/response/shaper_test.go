@@ -209,7 +209,7 @@ func TestShapeRequiresObjectWrapper(t *testing.T) {
 
 func TestRegisteredScaleLabelsReturnsRegistryCopy(t *testing.T) {
 	labels := RegisteredScaleLabels()
-	if labels["feel"] != "1-5 (athlete-reported feel)" || labels["sleepQuality"] != "1-4 (athlete-entered, 1=poor 4=great)" || labels["hydration"] != "1-4 (athlete-reported hydration)" {
+	if labels["feel"] != "1-5 (athlete-reported feel)" || labels["sleepQuality"] != "1-4 (athlete-entered, 1=great 2=good 3=average 4=poor)" || labels["hydration"] != "1-4 (athlete-reported hydration)" {
 		t.Fatalf("registered scale labels = %+v", labels)
 	}
 	if _, ok := labels["injury"]; ok {
@@ -256,7 +256,7 @@ func TestShapeAddsScalesForRegisteredFields(t *testing.T) {
 				"hydration":    "1-4 (athlete-reported hydration)",
 				"mood":         "1-5 (athlete-reported mood)",
 				"motivation":   "1-5 (athlete-reported motivation)",
-				"sleepQuality": "1-4 (athlete-entered, 1=poor 4=great)",
+				"sleepQuality": "1-4 (athlete-entered, 1=great 2=good 3=average 4=poor)",
 				"sleepScore":   "0-100 (device-imported nightly score)",
 				"soreness":     "1-5 (athlete-reported soreness)",
 				"stress":       "1-5 (athlete-reported stress)",

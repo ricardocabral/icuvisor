@@ -113,7 +113,7 @@
       ],
       "anti_patterns": [
         "treats sleep quality as a 0-10 scale",
-        "calls a 3/4 sleep quality 'poor'",
+        "reverses sleep quality: 1=great, 2=good, 3=average, 4=poor",
         "invents an HRV number"
       ]
     },

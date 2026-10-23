@@ -186,6 +186,9 @@ func TestMetricMetadataHelpers(t *testing.T) {
 			t.Fatalf("%q missing subjective scale metadata", metric)
 		}
 	}
+	if got := MetricSources("sleep_quality")[0].ScaleLabel; got != "1-4 subjective sleep quality (1=great 2=good 3=average 4=poor)" {
+		t.Fatalf("sleep_quality scale label = %q", got)
+	}
 
 	sources := MetricSources("ctl")
 	if len(sources) == 0 {

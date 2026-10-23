@@ -3377,7 +3377,7 @@
         "name": "sleepQuality",
         "required": false,
         "type": "integer",
-        "description": "1-4 (athlete-entered, 1=poor 4=great); sleepQuality scale."
+        "description": "1-4 (athlete-entered, 1=great 2=good 3=average 4=poor); sleepQuality scale."
       },
       {
         "name": "soreness",

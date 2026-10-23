@@ -114,7 +114,7 @@ func InterpretBaselineZScore(metric Metric, z *float64) string {
 		return "not_interpreted"
 	}
 	switch metric {
-	case "hrv", "hrv_sdnn", "sleep_secs", "sleep_score", "sleep_quality", "readiness", "feel", "mood", "motivation", "steps":
+	case "hrv", "hrv_sdnn", "sleep_secs", "sleep_score", "readiness", "feel", "mood", "motivation", "steps":
 		if *z <= -1 {
 			return "suppressed"
 		}
@@ -122,7 +122,7 @@ func InterpretBaselineZScore(metric Metric, z *float64) string {
 			return "elevated_beneficial"
 		}
 		return "typical"
-	case "rhr", "avg_sleeping_hr", "soreness", "fatigue", "stress", "baevsky_si", "blood_glucose", "lactate":
+	case "rhr", "avg_sleeping_hr", "sleep_quality", "soreness", "fatigue", "stress", "baevsky_si", "blood_glucose", "lactate":
 		if *z >= 1 {
 			return "elevated"
 		}

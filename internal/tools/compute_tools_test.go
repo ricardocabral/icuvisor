@@ -279,6 +279,44 @@ func TestComputeLoadBalanceUsesLoadPriorityIndependentOfMetric(t *testing.T) {
 	}
 }
 
+func TestComputeBaselineSleepQualityDirection(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name    string
+		current float64
+		want    string
+	}{
+		{name: "worse sleep is adverse", current: 4, want: "elevated"},
+		{name: "better sleep is beneficial", current: 1, want: "suppressed_beneficial"},
+		{name: "near baseline sleep is typical", current: 2, want: "typical"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := newFakeComputeClient()
+			client.wellness = []intervals.Wellness{
+				wellnessFixture("2026-05-01", map[string]any{"sleepQuality": 2.0}),
+				wellnessFixture("2026-05-02", map[string]any{"sleepQuality": 3.0}),
+				wellnessFixture("2026-05-04", map[string]any{"sleepQuality": tc.current}),
+			}
+			tool := newComputeBaselineTool(nil, client, nil, nil, client, "test", "UTC", false)
+			result, err := tool.Handler(context.Background(), Request{Name: tool.Name, Arguments: []byte(`{"metric":"sleepQuality","baseline_start_date":"2026-05-01","baseline_end_date":"2026-05-02","current_start_date":"2026-05-04","current_end_date":"2026-05-04","min_samples":2}`)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := resultMap(t, result)
+			stats := got["result"].(map[string]any)
+			if stats["status"] != "ok" || stats["interpretation"] != tc.want {
+				t.Fatalf("result = %+v, want ok/%s", stats, tc.want)
+			}
+			assertFloatEqual(t, stats["baseline_mean"], 2.5)
+			assertFloatEqual(t, stats["current_value"], tc.current)
+			if direction := nestedMap(t, got, "_meta", "assumptions")["interpretation_direction"]; direction != "adverse_high" {
+				t.Fatalf("interpretation_direction = %v, want adverse_high", direction)
+			}
+		})
+	}
+}
+
 func TestComputeBaselineWellnessZScoreIncludesFormulaAndInterpretation(t *testing.T) {
 	client := newFakeComputeClient()
 	client.wellness = []intervals.Wellness{

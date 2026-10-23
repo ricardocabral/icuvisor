@@ -7,7 +7,7 @@ var defaultScaleLabels = map[string]string{
 	"motivation":   "1-5 (athlete-reported motivation)",
 	"rpe":          "1-10 (rating of perceived exertion)",
 	"session_rpe":  "1-10 (session rating of perceived exertion)",
-	"sleepQuality": "1-4 (athlete-entered, 1=poor 4=great)",
+	"sleepQuality": "1-4 (athlete-entered, 1=great 2=good 3=average 4=poor)",
 	"hydration":    "1-4 (athlete-reported hydration)",
 	"sleepScore":   "0-100 (device-imported nightly score)",
 	"soreness":     "1-5 (athlete-reported soreness)",

@@ -164,7 +164,7 @@ var metricCatalog = []metricEntry{
 	metric("kcal_consumed", src(SourceWellnessDaily, "get_wellness_data", "kcalConsumed", GrainDaily, "kcal")),
 	metric("sleep_secs", src(SourceWellnessDaily, "get_wellness_data", "sleepSecs", GrainDaily, "seconds")),
 	metric("sleep_score", src(SourceWellnessDaily, "get_wellness_data", "sleepScore", GrainDaily, "device score")),
-	metric("sleep_quality", scaleSrc("sleepQuality", "1-4 subjective sleep quality")),
+	metric("sleep_quality", scaleSrc("sleepQuality", "1-4 subjective sleep quality (1=great 2=good 3=average 4=poor)")),
 	metric("avg_sleeping_hr", src(SourceWellnessDaily, "get_wellness_data", "avgSleepingHR", GrainDaily, "bpm")),
 	metric("feel", scaleSrc("feel", "1-5 subjective feel"), MetricSource{Family: SourceExtendedActivity, Tool: "get_extended_metrics", Field: "feel", Grain: GrainActivity, Kind: KindSubjectiveScale, UnitLabel: "1-5", ScaleLabel: "1-5 subjective feel"}),
 	metric("soreness", scaleSrc("soreness", "1-5 subjective soreness")),
