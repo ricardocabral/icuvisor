@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.2] - 2026-10-23
+
+### Security
+
+- Raise the minimum Go toolchain to 1.26.10 to include the crypto/x509 certificate-verification security fix for CVE-2026-111943 (GO-2026-6809).
+
 ## [1.8.1] - 2026-10-23
 
 ### Fixed
@@ -529,7 +535,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.8.1...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.8.2...HEAD
+[1.8.2]: https://github.com/ricardocabral/icuvisor/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/ricardocabral/icuvisor/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/ricardocabral/icuvisor/compare/v1.7.4...v1.8.0
 [1.7.4]: https://github.com/ricardocabral/icuvisor/compare/v1.7.3...v1.7.4
