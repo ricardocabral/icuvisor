@@ -393,6 +393,8 @@ func uploadedDistanceMeters(distance *workoutdoc.Length) float64 {
 		return distance.Value * 1000
 	case "mi", "mile", "miles":
 		return distance.Value * 1609.34
+	case "yrd", "yd", "yard", "yards":
+		return distance.Value * 0.9144
 	default:
 		return distance.Value
 	}

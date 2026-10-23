@@ -16,6 +16,7 @@ var (
 	bpmTokenRE      = regexp.MustCompile(`^([0-9]+(?:\.[0-9]+)?)(?:-([0-9]+(?:\.[0-9]+)?))?bpm$`)
 	rpmTokenRE      = regexp.MustCompile(`^([0-9]+(?:\.[0-9]+)?)(?:-([0-9]+(?:\.[0-9]+)?))?rpm$`)
 	zoneTokenRE     = regexp.MustCompile(`^Z([0-9]+)(?:-Z([0-9]+))?$`)
+	numberTokenRE   = regexp.MustCompile(`^[0-9]+(?:\.[0-9]+)?(?:-[0-9]+(?:\.[0-9]+)?)?$`)
 	paceTokenRE     = regexp.MustCompile(`^([0-9]+):([0-9]{2})(?:-([0-9]+):([0-9]{2}))?/(km|mi|100m|100y)$`)
 )
 
@@ -138,12 +139,45 @@ func parseSimpleLine(body string) (Step, error) {
 	if len(remaining) == 0 {
 		return Step{}, fmt.Errorf("target missing after ramp")
 	}
+	// Numeric prescriptions must not become trailing label text or a text pace target.
+	primaryTargets := 0
+	for index, token := range remaining {
+		if explicitPrimaryTargetAt(remaining, index) {
+			primaryTargets++
+		}
+		if index == 0 || !strings.EqualFold(token, "Pace") {
+			continue
+		}
+		previous := remaining[index-1]
+		if numberTokenRE.MatchString(previous) || percentTokenRE.MatchString(previous) || zoneTokenRE.MatchString(previous) || paceTokenRE.MatchString(previous) {
+			continue
+		}
+		// A complete text pace prescription ends here; "Race Pace practice" is label text.
+		if index == len(remaining)-1 || explicitPrimaryTargetAt(remaining, index+1) {
+			primaryTargets++
+		}
+	}
+	if primaryTargets > 1 {
+		return Step{}, fmt.Errorf("conflicting workout targets; choose one primary target or split the prescriptions into separate steps")
+	}
 	if err := parsePrimaryTarget(&step, remaining); err != nil {
 		if !parseTrailingDescriptionTarget(&step, remaining) {
 			return Step{}, err
 		}
 	}
 	return step, nil
+}
+
+func explicitPrimaryTargetAt(tokens []string, index int) bool {
+	token := tokens[index]
+	if wattsTokenRE.MatchString(token) || bpmTokenRE.MatchString(token) || percentTokenRE.MatchString(token) || zoneTokenRE.MatchString(token) || paceTokenRE.MatchString(token) {
+		return true
+	}
+	if index+1 == len(tokens) {
+		return false
+	}
+	return (numberTokenRE.MatchString(token) && strings.EqualFold(tokens[index+1], "Pace")) ||
+		(strings.EqualFold(token, "RPE") && numberTokenRE.MatchString(tokens[index+1]))
 }
 
 func extractPressLap(tokens []string) (bool, []string) {

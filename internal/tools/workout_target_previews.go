@@ -68,7 +68,9 @@ func workoutTargetPreviewsWithDiagnostics(value any, ctx workoutTargetPreviewCon
 		walkWorkoutPreviewSteps(steps, setting, ctx, nil, 0, &previews)
 	}
 	diagnostics := make([]workoutTargetPreviewDiagnostic, 0)
-	walkWorkoutPreviewDiagnostics(steps, setting, settingAvailable, ctx.Sport, nil, &diagnostics)
+	diagnosticSetting := setting
+	diagnosticSetting.FTP = workoutPreviewFTP(setting, ctx.Indoor)
+	walkWorkoutPreviewDiagnostics(steps, diagnosticSetting, settingAvailable, ctx.Sport, nil, &diagnostics)
 	return previews, diagnostics
 }
 
@@ -235,10 +237,7 @@ func workoutTargetPreviewForFamily(family string, target map[string]any, setting
 		if units != "" && units != "PERCENT_FTP" && units != "%FTP" {
 			return workoutTargetPreviewRow{}, false
 		}
-		ftp := setting.FTP
-		if ctx.Indoor != nil && *ctx.Indoor && setting.IndoorFTP > 0 {
-			ftp = setting.IndoorFTP
-		}
+		ftp := workoutPreviewFTP(setting, ctx.Indoor)
 		if ftp <= 0 {
 			return workoutTargetPreviewRow{}, false
 		}
@@ -275,6 +274,13 @@ func workoutTargetPreviewForFamily(family string, target map[string]any, setting
 	default:
 		return workoutTargetPreviewRow{}, false
 	}
+}
+
+func workoutPreviewFTP(setting intervals.SportSettings, indoor *bool) int {
+	if indoor != nil && *indoor && setting.IndoorFTP > 0 {
+		return setting.IndoorFTP
+	}
+	return setting.FTP
 }
 
 func workoutTargetNumericBounds(target map[string]any) (workoutTargetBounds, bool) {

@@ -123,7 +123,9 @@ func waitForSessionClose(ctx context.Context, closed <-chan error, closeSession 
 	select {
 	case <-ctx.Done():
 		closeSession()
-		<-closed
+		// Drain the worker until it exits; cancellation remains the returned error.
+		for range closed {
+		}
 		return ctx.Err(), true
 	case err := <-closed:
 		return err, false
