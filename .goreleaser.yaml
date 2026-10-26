@@ -139,4 +139,7 @@ release:
     owner: ricardocabral
     name: icuvisor
   draft: true
+  use_existing_draft: true
+  replace_existing_artifacts: true
+  mode: replace
   prerelease: auto
