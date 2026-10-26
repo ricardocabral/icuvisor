@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- Release recovery reuses the existing draft instead of creating duplicates, preserving original archive hashes when skipping package-manager updates. Release runs for the same tag are queued, and preflight rejects non-version refs, already-published versions, incomplete package-manager recovery drafts, or an unverifiable GitHub release state.
-
 ## [1.8.2] - 2026-10-23
 
 ### Security
