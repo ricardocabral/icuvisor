@@ -99,7 +99,7 @@ Project my fitness to [DATE] if I keep roughly my current weekly load and take e
 
 ## Race splits and repeated sessions
 
-These workflows need the `full` toolset. If the tools are unavailable, use the advanced-capability list to confirm that before changing your local configuration or hosted preferences, then start a fresh chat.
+Race splits are available in the default `core` toolset. Repeated-session progression comparisons need `full`. If that capability is unavailable, use the advanced-capability list to confirm the toolset before changing local configuration or hosted preferences, then start a fresh chat.
 
 ```text
 Use icuvisor to review kilometre or mile splits for activity [ACTIVITY_ID].
