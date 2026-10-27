@@ -14,14 +14,20 @@ import (
 type WorkoutFolder struct {
 	Raw rawJSONObject `json:"-"`
 
-	ID          string    `json:"-"`
-	AthleteID   *string   `json:"athlete_id"`
-	Type        *string   `json:"type"`
-	Name        *string   `json:"name"`
-	Description *string   `json:"description"`
-	Children    []Workout `json:"children"`
-	Visibility  *string   `json:"visibility"`
-	NumWorkouts *int      `json:"num_workouts"`
+	ID              string    `json:"-"`
+	AthleteID       *string   `json:"athlete_id"`
+	Type            *string   `json:"type"`
+	Name            *string   `json:"name"`
+	Description     *string   `json:"description"`
+	Children        []Workout `json:"children"`
+	Visibility      *string   `json:"visibility"`
+	NumWorkouts     *int      `json:"num_workouts"`
+	ActivityTypes   []string  `json:"activity_types"`
+	DurationWeeks   *int      `json:"duration_weeks"`
+	HoursPerWeekMin *int      `json:"hours_per_week_min"`
+	HoursPerWeekMax *int      `json:"hours_per_week_max"`
+	WorkoutTargets  []string  `json:"workout_targets"`
+	Blurb           *string   `json:"blurb"`
 }
 
 // UnmarshalJSON decodes WorkoutFolder while retaining the original object for full responses.
