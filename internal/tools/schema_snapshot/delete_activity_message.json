@@ -1,5 +1,27 @@
 {
   "additionalProperties": false,
+  "examples": [
+    {
+      "activity_id": "example-activity-1",
+      "message_id": 11
+    },
+    {
+      "activity_id": "example-activity-1",
+      "include_full": true,
+      "message_id": 11
+    }
+  ],
+  "input_examples": [
+    {
+      "activity_id": "example-activity-1",
+      "message_id": 11
+    },
+    {
+      "activity_id": "example-activity-1",
+      "include_full": true,
+      "message_id": 11
+    }
+  ],
   "properties": {
     "activity_id": {
       "description": "Required activity ID; membership and selected athlete ownership are checked before changing a comment.",

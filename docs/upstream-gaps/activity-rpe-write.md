@@ -10,7 +10,7 @@ The [public Activity update schema](https://intervals.icu/api/v1/docs) documents
 
 ## Runtime evidence
 
-The client compares each new requested native field with the PUT response. If a value is missing or differs, it performs one bounded activity readback. Only matching fields appear in `fields_updated`; submitted values remain separately labelled `requested`. `_meta.verification` reports confirmed, missing and mismatched fields, evidence source, and an actionable caveat. An unverified or mismatched request is not returned as an unqualified successful update and is not automatically written again.
+The client compares each new requested native field with the PUT response. If a value is missing or differs, it performs one bounded activity readback. Evidence must name the exact requested activity ID. Only matching fields appear in `fields_updated`; submitted values remain separately labelled `requested`. `_meta.verification` reports confirmed, missing and mismatched fields, evidence source, and an actionable caveat. An unverified or mismatched request is not returned as an unqualified successful update and is not automatically written again.
 
 Fixture tests prove request mapping and these verification/refusal paths. They are not a live upstream round-trip claim. No live athlete probe was performed for the October 27 implementation.
 

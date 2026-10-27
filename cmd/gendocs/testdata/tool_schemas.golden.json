@@ -1738,6 +1738,17 @@
         "type": "integer",
         "description": "Existing comment ID from get_activity_messages. The credential owner must be the comment author; chat IDs are resolved by the server."
       }
+    ],
+    "examples": [
+      {
+        "activity_id": "example-activity-1",
+        "message_id": 11
+      },
+      {
+        "activity_id": "example-activity-1",
+        "include_full": true,
+        "message_id": 11
+      }
     ]
   },
   "delete_custom_item": {
@@ -3410,6 +3421,19 @@
         "required": true,
         "type": "integer",
         "description": "Existing comment ID from get_activity_messages. The credential owner must be the comment author; chat IDs are resolved by the server."
+      }
+    ],
+    "examples": [
+      {
+        "activity_id": "example-activity-1",
+        "message": "Completed the last interval at RPE 8, not 6.",
+        "message_id": 11
+      },
+      {
+        "activity_id": "example-activity-1",
+        "include_full": true,
+        "message": "Correction: three completed sets at 80 kg; preserve the original exercise notes.",
+        "message_id": 11
       }
     ]
   },

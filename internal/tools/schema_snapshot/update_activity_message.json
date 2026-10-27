@@ -1,5 +1,31 @@
 {
   "additionalProperties": false,
+  "examples": [
+    {
+      "activity_id": "example-activity-1",
+      "message": "Completed the last interval at RPE 8, not 6.",
+      "message_id": 11
+    },
+    {
+      "activity_id": "example-activity-1",
+      "include_full": true,
+      "message": "Correction: three completed sets at 80 kg; preserve the original exercise notes.",
+      "message_id": 11
+    }
+  ],
+  "input_examples": [
+    {
+      "activity_id": "example-activity-1",
+      "message": "Completed the last interval at RPE 8, not 6.",
+      "message_id": 11
+    },
+    {
+      "activity_id": "example-activity-1",
+      "include_full": true,
+      "message": "Correction: three completed sets at 80 kg; preserve the original exercise notes.",
+      "message_id": 11
+    }
+  ],
   "properties": {
     "activity_id": {
       "description": "Required activity ID; membership and selected athlete ownership are checked before changing a comment.",
