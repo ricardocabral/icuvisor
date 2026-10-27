@@ -60,6 +60,7 @@ type updateActivityPayload struct {
 type Activity struct {
 	Raw map[string]any `json:"-"`
 
+	ChatID             *int     `json:"icu_chat_id"`
 	ID                 string   `json:"id"`
 	Name               *string  `json:"name"`
 	Type               *string  `json:"type"`
