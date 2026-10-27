@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // ActivityMessagesParams contains activity message query parameters.
@@ -61,7 +62,8 @@ type ActivityMessage struct {
 	Type       string `json:"type"`
 	Content    string `json:"content"`
 	ActivityID string `json:"activity_id"`
-	Deleted    *bool  `json:"deleted"`
+	Deleted    *bool  `json:"-"`
+	DeletedAt  string `json:"deleted_at,omitempty"`
 	Seen       *bool  `json:"seen"`
 }
 
@@ -76,12 +78,26 @@ func (m *ActivityMessage) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		return err
 	}
+	if value := raw["deleted"]; value != nil {
+		switch value := value.(type) {
+		case bool:
+			decoded.Deleted = &value
+		case string:
+			if _, err := time.Parse(time.RFC3339, value); err != nil {
+				return fmt.Errorf("decoding message deletion timestamp: %w", err)
+			}
+			deleted := true
+			decoded.Deleted = &deleted
+			decoded.DeletedAt = value
+		default:
+			return fmt.Errorf("decoding message deletion: expected timestamp or boolean")
+		}
+	}
 	*m = ActivityMessage(decoded)
 	m.Raw = raw
 	return nil
 }
 
-// GetActivityMessages retrieves messages for one activity.
 // AddActivityMessage appends a message/comment to one activity.
 func (c *Client) AddActivityMessage(ctx context.Context, params AddActivityMessageParams) (NewActivityMessage, error) {
 	activityID := strings.TrimSpace(params.ActivityID)
@@ -102,6 +118,7 @@ func (c *Client) AddActivityMessage(ctx context.Context, params AddActivityMessa
 	return message, nil
 }
 
+// GetActivityMessages retrieves messages for one activity.
 func (c *Client) GetActivityMessages(ctx context.Context, params ActivityMessagesParams) ([]ActivityMessage, error) {
 	activityID := strings.TrimSpace(params.ActivityID)
 	if activityID == "" {

@@ -96,3 +96,30 @@ func TestGetActivityMessagesSendsQueryAndPreservesRawNulls(t *testing.T) {
 		t.Fatalf("raw extra = %#v present %v raw=%s, want nil", value, ok, rawJSON)
 	}
 }
+
+func TestActivityMessageDeletedTimestamp(t *testing.T) {
+	for _, tc := range []struct {
+		name, raw string
+		deleted   *bool
+		timestamp string
+	}{
+		{name: "absent", raw: `{}`}, {name: "null", raw: `{"deleted":null}`},
+		{name: "timestamp", raw: `{"deleted":"2026-10-21T10:00:00Z"}`, deleted: boolPointer(true), timestamp: "2026-10-21T10:00:00Z"},
+		{name: "legacy false", raw: `{"deleted":false}`, deleted: boolPointer(false)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var m ActivityMessage
+			if err := json.Unmarshal([]byte(tc.raw), &m); err != nil {
+				t.Fatal(err)
+			}
+			if m.DeletedAt != tc.timestamp {
+				t.Fatalf("timestamp=%q want %q", m.DeletedAt, tc.timestamp)
+			}
+			if (m.Deleted == nil) != (tc.deleted == nil) || (m.Deleted != nil && *m.Deleted != *tc.deleted) {
+				t.Fatalf("deleted=%v want %v", m.Deleted, tc.deleted)
+			}
+
+		})
+	}
+}
+func boolPointer(v bool) *bool { return &v }
