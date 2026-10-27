@@ -86,6 +86,9 @@ func (p UpdateActivityParams) Validate() error {
 		return fmt.Errorf("distance_m must be non-negative finite metres representable upstream")
 	}
 	if p.Tags != nil {
+		if *p.Tags == nil {
+			return fmt.Errorf("tags cannot be null; use an empty slice to clear tags")
+		}
 		if len(*p.Tags) > 100 {
 			return fmt.Errorf("tags must contain at most 100 entries")
 		}

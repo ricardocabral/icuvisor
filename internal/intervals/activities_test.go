@@ -544,3 +544,19 @@ func TestUpdateActivityVerificationRequiresRequestedIdentity(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateActivityRejectsPointerToNilTagsBeforeHTTP(t *testing.T) {
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"a1","tags":null}`))
+	}))
+	defer server.Close()
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	var tags []string
+	_, err := client.UpdateActivity(context.Background(), UpdateActivityParams{ActivityID: "a1", Tags: &tags})
+	if err == nil || requests != 0 {
+		t.Fatalf("nil tags must be rejected before HTTP: err=%v requests=%d", err, requests)
+	}
+}
