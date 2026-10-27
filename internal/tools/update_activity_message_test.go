@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"testing"
+
+	"github.com/ricardocabral/icuvisor/internal/intervals"
 )
 
 type fakeActivityMessageEditor struct {
@@ -79,5 +80,16 @@ func TestActivityMessageCorrectionHidesUpstreamErrors(t *testing.T) {
 	_, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"a1","message_id":11,"message":"x"}`)})
 	if public, ok := PublicErrorMessage(err); !ok || public != changeActivityMessageError {
 		t.Fatalf("public=%q err=%v", public, err)
+	}
+}
+
+func TestDeleteActivityMessageRejectsEditFieldsEvenNull(t *testing.T) {
+	for _, value := range []string{`"text"`, `null`} {
+		client := &fakeActivityMessageEditor{}
+		tool := newDeleteActivityMessageTool(client, "test", false)
+		_, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"a1","message_id":11,"message":` + value + `}`)})
+		if err == nil || client.calls != 0 {
+			t.Fatalf("err=%v calls=%d", err, client.calls)
+		}
 	}
 }

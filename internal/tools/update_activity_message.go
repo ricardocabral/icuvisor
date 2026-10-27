@@ -3,8 +3,9 @@ package tools
 import (
 	"context"
 	"errors"
-	"github.com/ricardocabral/icuvisor/internal/intervals"
 	"strings"
+
+	"github.com/ricardocabral/icuvisor/internal/intervals"
 )
 
 const (
@@ -41,6 +42,13 @@ func changeActivityMessageHandler(client ActivityMessageEditorClient, remove boo
 		args, err := DecodeStrict[changeActivityMessageRequest](req.Arguments)
 		if err != nil {
 			return Result{}, NewUserError("invalid activity comment arguments; provide activity_id, positive message_id, and non-empty message for edits", err)
+		}
+		fields, err := rawObjectFields(req.Arguments)
+		if err != nil {
+			return Result{}, NewUserError("invalid activity comment arguments", err)
+		}
+		if remove && fields["message"] {
+			return Result{}, NewUserError("invalid delete_activity_message arguments; message is not accepted", nil)
 		}
 		args.ActivityID = strings.TrimSpace(args.ActivityID)
 		if args.ActivityID == "" || args.MessageID <= 0 || (!remove && (args.Message == nil || strings.TrimSpace(*args.Message) == "")) || (remove && args.Message != nil) {

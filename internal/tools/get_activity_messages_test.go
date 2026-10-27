@@ -108,3 +108,19 @@ func decodeMessageFixtures(t *testing.T, raws ...string) []intervals.ActivityMes
 	}
 	return out
 }
+
+func TestGetActivityMessagesDeletedTimestampTimezone(t *testing.T) {
+	client := &fakeActivityReadClient{fakeProfileClient: fakeProfileClient{profile: intervals.AthleteWithSportSettings{Timezone: "America/Sao_Paulo"}}, messages: decodeMessageFixtures(t, `{"id":1,"content":"(deleted)","deleted":"2026-10-21T10:00:00Z"}`)}
+	tool := newGetActivityMessagesTool(client, client, client, "test", "UTC", false)
+	result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"a1"}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	row := resultMap(t, result)["messages"].([]any)[0].(map[string]any)
+	if row["deleted"] != true || row["deleted_at"] != "2026-10-21T07:00:00-03:00" {
+		t.Fatalf("row=%v", row)
+	}
+	if _, ok := row["full"]; ok {
+		t.Fatalf("raw fields leaked in terse result: %v", row)
+	}
+}

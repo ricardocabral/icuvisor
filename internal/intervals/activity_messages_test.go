@@ -118,7 +118,6 @@ func TestActivityMessageDeletedTimestamp(t *testing.T) {
 			if (m.Deleted == nil) != (tc.deleted == nil) || (m.Deleted != nil && *m.Deleted != *tc.deleted) {
 				t.Fatalf("deleted=%v want %v", m.Deleted, tc.deleted)
 			}
-
 		})
 	}
 }
@@ -257,5 +256,15 @@ func TestCoachCommentUsesPrincipalNotSelectedAthlete(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestMixedActivityMessageDeletionStates(t *testing.T) {
+	var messages []ActivityMessage
+	if err := json.Unmarshal([]byte(`[{"id":1,"content":"live","deleted":null},{"id":2,"content":"(deleted)","deleted":"2026-10-21T10:00:00Z"},{"id":3,"content":"absent"}]`), &messages); err != nil {
+		t.Fatal(err)
+	}
+	if len(messages) != 3 || messages[0].Deleted != nil || messages[1].Deleted == nil || !*messages[1].Deleted || messages[1].DeletedAt != "2026-10-21T10:00:00Z" || messages[2].Deleted != nil {
+		t.Fatalf("messages=%+v", messages)
 	}
 }
