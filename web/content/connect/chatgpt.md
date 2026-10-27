@@ -13,20 +13,18 @@ ChatGPT has two different setup paths:
 
 Use hosted mode for ChatGPT's custom connector/app flow. ChatGPT connects from OpenAI's infrastructure, so it cannot reach `http://127.0.0.1:8765/mcp` on your laptop.
 
-1. In ChatGPT, open your profile menu and go to **Settings > Apps & Connectors**.
-2. Open **Advanced settings** at the bottom of the page and enable **Developer mode** if your account or workspace allows it.
-3. Go to **Settings > Connectors > Create**.
-4. Fill in the connector metadata:
+1. Open [ChatGPT Plugins](https://chatgpt.com/plugins).
+2. Select **+**, then **Add custom MCP server**.
+3. Enter a name such as `icuvisor` and a short description: `Read my Intervals.icu training data and preview approved workout changes.`
+4. Under **Connection**, choose a public endpoint and enter:
 
-   | Field | Value |
-   | --- | --- |
-   | Connector name | `icuvisor` |
-   | Description | `Connects ChatGPT to my intervals.icu training data through hosted icuvisor. Use for athlete profile, fitness, wellness, activities, events, training plans, workouts, and safe write workflows. Do not invent unavailable data.` |
-   | Connector URL | `https://connect.icuvisor.app/mcp` |
+   ```text
+   https://connect.icuvisor.app/mcp
+   ```
 
-5. Click **Create**.
-6. Complete the hosted icuvisor authorization flow, choose hosted preferences, continue to Intervals.icu, and approve the requested OAuth scopes. Choose `core` for normal ChatGPT use; use `compact` only if a smaller/local-compatible ChatGPT surface struggles with the tool catalog, or `full` for expert workflows that need every tool.
-7. Start a new ChatGPT conversation, click **+**, choose **More**, and add the icuvisor connector to the chat.
+5. Configure OAuth authentication, review ChatGPT's connection notice, and select **I understand and want to continue**, then **Create as a plugin**.
+6. Complete the hosted icuvisor authorization flow: choose preferences, continue to Intervals.icu, and approve the requested scopes. Choose `core` for normal use or `full` for advanced workflows. Keep read-only access unless you need writes.
+7. Review the discovered tools, install the resulting plugin, and start a fresh conversation. Type `@` and select icuvisor.
 
 Verify with:
 
@@ -37,6 +35,15 @@ Use icuvisor to tell me my current FTP and timezone. Do not estimate.
 Hosted mode uses Intervals.icu OAuth. Do not paste an Intervals API key into ChatGPT, the connector metadata, or chat.
 
 Provider reference: [OpenAI: Connect from ChatGPT](https://developers.openai.com/apps-sdk/deploy/connect-chatgpt).
+
+## If the connection option is missing or fails
+
+- **No Add custom MCP server option:** confirm you are in the intended ChatGPT account and workspace. Custom MCP access depends on account and workspace policy; ask your workspace administrator about permissions. The absence of this option does not establish a problem with the icuvisor endpoint. Older screenshots may mention Developer mode or Apps & Connectors; follow the current [official connection guide](https://developers.openai.com/apps-sdk/deploy/connect-chatgpt).
+- **Authorization fails:** finish the Intervals.icu OAuth flow and return to ChatGPT. If you need broader write scopes later, use [hosted settings]({{< relref "hosted" >}}#manage-hosted-access) to re-consent.
+- **Connection succeeds but tools look old:** open the connection in ChatGPT Plugins, select **Refresh**, verify the tools, and start a new conversation.
+- **Tools are missing:** check hosted toolset and write preferences before assuming a feature is unsupported. Advanced analysis may require `full`.
+
+When reporting a connection failure, include the stage that failed and the exact non-secret error text. Keep authorization codes, tokens, and API keys out of the report.
 
 ## Local MCP surfaces
 

@@ -42,7 +42,7 @@
 
       <section class="card hero col-12" aria-labelledby="hero-title">
         <h1 id="hero-title">Talk to your <span style="background:linear-gradient(120deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;color:transparent;">intervals.icu</span> training data from Claude, ChatGPT, or any MCP client.</h1>
-        <p class="lead">Run icuvisor locally when your client supports it, or use the hosted HTTPS connector when your client needs a public MCP endpoint.</p>
+        <p class="lead">Use the AI assistant you already choose. Run icuvisor locally for control over your connector and credentials, or connect through hosted HTTPS when your client needs a public endpoint.</p>
         <div class="actions">
           <a class="btn" href="#install">Set up local mode</a>
           <a class="btn btn-ghost" href="{{ "/connect/hosted/" | relURL }}">Use hosted mode</a>
@@ -53,7 +53,7 @@
       <section class="card proof-card col-4" id="features" aria-labelledby="install-like-app-title">
         <span class="tag">Install</span>
         <h2 id="install-like-app-title">Installs like an app.</h2>
-        <p>Local mode uses one signed binary for macOS, Windows, and Linux. No Python, Docker, or hosted account required.</p>
+        <p>Local mode uses one self-contained binary for macOS, Windows, and Linux. No Python, Docker, or hosted account required.</p>
       </section>
 
       <section class="card proof-card col-4" aria-labelledby="privacy-title">
@@ -72,8 +72,8 @@
         <span class="tag">What to ask</span>
         <h2 id="use-cases-title">Useful training questions, grounded in your own data.</h2>
         <div class="prompt-grid">
-          <blockquote>How am I absorbing this training block?</blockquote>
-          <blockquote>Compare my last four threshold workouts.</blockquote>
+          <blockquote>Review the kilometre or mile splits from my last race.</blockquote>
+          <blockquote>Compare my last four threshold workouts and identify the sessions behind each comparison.</blockquote>
           <blockquote>Show a deterministic race-day fitness scenario from my planned load, not a forecast.</blockquote>
           <blockquote>Review this athlete's readiness before I write workouts.</blockquote>
         </div>
@@ -139,10 +139,11 @@
         <h2 id="tools-title">What can it access?</h2>
         <p>icuvisor gives your assistant access to the parts of intervals.icu athletes ask about most.</p>
         <ul class="capability-list">
-          <li>Activities and intervals</li>
+          <li>Activities, intervals, and kilometre or mile splits</li>
           <li>Fitness, power, HR, and pace curves</li>
           <li>Wellness and daily readiness</li>
           <li>Calendar events and structured workouts, with warnings when returned intervals.icu steps are missing or changed</li>
+          <li>Repeated-session comparisons with source IDs and dates in the full toolset</li>
           <li>Coach rosters and custom items</li>
         </ul>
         <p><a href="{{ "/reference/tools/" | relURL }}">Open the full tool reference →</a></p>

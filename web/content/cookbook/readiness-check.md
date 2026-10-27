@@ -31,7 +31,13 @@ with my intervals.icu data.
 Then:
 - Give today's training-readiness guidance in one word — green, amber, or red — and why.
 - If the Intervals readiness field is missing or null, say that before using fallback signals.
-- Name the one or two signals driving that call.
+- Name the one or two signals driving that call. Keep subjective fatigue,
+  soreness and stated restrictions visible even when wearable values look good.
+- If subjective reports and wearable metrics disagree, show both with dates and
+  provenance; do not silently resolve the disagreement into an invented score.
+- Keep the explanation consistent with the proposed session change and its
+  actual calendar status. A proposal, failed write, or declined change is not
+  an applied edit.
 - Recommend whether to keep, modify, move, or execute indoors/outdoors today, naming the planned-event `workout_status`, any relevant tags, `indoor` flag, weather availability, or activity tags returned by icuvisor.
 
 Rules: sleep quality is 1=great, 2=good, 3=average, 4=poor (lower is better),

@@ -19,7 +19,7 @@ https://connect.icuvisor.app/mcp
 Use the provider-specific pages when you want exact UI labels:
 
 - [Claude.ai]({{< relref "claude-ai" >}}): **Customize > Connectors > + > Add custom connector**.
-- [ChatGPT]({{< relref "chatgpt" >}}): enable developer mode, then use **Settings > Connectors > Create**.
+- [ChatGPT]({{< relref "chatgpt" >}}): open **Plugins > + > Add custom MCP server**, then create and install the plugin. Account and workspace policies apply.
 
 ## Connect in hosted mode
 
