@@ -507,3 +507,17 @@ func requiredArgsForPrompt(name string) map[string]string {
 	}
 	return nil
 }
+
+func TestPlanningPromptsKeepExplicitRestrictionsAndStateEvidence(t *testing.T) {
+	t.Parallel()
+	for _, prompt := range []Prompt{WeeklyPlanningPrompt(), PlanHealthReviewPrompt()} {
+		t.Run(prompt.Name, func(t *testing.T) {
+			text := renderPromptText(t, prompt, nil)
+			for _, want := range []string{"training_availability", "can_train_sports", "max_training_time", "explicit user restrictions", "requested session count", "independent slots", "illness", "planned workout is not completed", "duration_verification"} {
+				if !strings.Contains(text, want) {
+					t.Errorf("prompt missing %q", want)
+				}
+			}
+		})
+	}
+}
