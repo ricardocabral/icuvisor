@@ -172,10 +172,11 @@ func computeBaselineHandler(fitnessClient FitnessClient, wellnessClient Wellness
 		result.SourceContinuity = collected.SourceContinuity
 		if continuity := collected.SourceContinuity; continuity != nil {
 			assumptions["hrv_source_continuity"] = continuity.Status
-			if continuity.Status == "changed" {
+			switch continuity.Status {
+			case "changed":
 				result.Caveats = append(result.Caveats, "Explicit HRV provider or device provenance changed within the requested windows. Choose baseline and current windows from one measurement source; no pooled z-score or interpretation is returned.")
-			} else if continuity.Status == "unknown" {
-				result.Caveats = append(result.Caveats, "Some HRV samples have no recognized source provenance; measurement-source continuity cannot be verified.")
+			case "unknown":
+				result.Caveats = append(result.Caveats, "Some HRV samples have no explicit source provenance; measurement-source continuity cannot be verified.")
 			}
 		}
 		meta := analysis.AnalyzerMetaInput{Method: "baseline_z_score", SourceTools: collected.SourceTools, N: len(collected.Baseline), MissingDays: collected.MissingBaselineDays + collected.MissingCurrentDays, MissingAction: analysis.MissingActionSkip, MinSamples: minSamples, FormulaRef: resources.AnalysisFormulaRefZScore, Assumptions: assumptions, Boundaries: baselineBoundaries(collected.Truncated)}
@@ -328,7 +329,7 @@ func collectWellnessBaseline(ctx context.Context, args computeBaselineRequest, m
 }
 
 func baselineHRVContinuity(rows []intervals.Wellness, args computeBaselineRequest, metric analysis.Metric) *baselineSourceContinuity {
-	field, _, ok := wellnessFreshnessField(metric)
+	_, _, ok := wellnessFreshnessField(metric)
 	if !ok {
 		return nil
 	}
@@ -341,23 +342,37 @@ func baselineHRVContinuity(rows []intervals.Wellness, args computeBaselineReques
 		if _, ok := wellnessMetricValue(row, metric); !ok {
 			continue
 		}
-		if source := wellnessFieldSource(row, field); source != "" {
+		// Native sleep/readiness fields do not identify the HRV measurement source.
+		source := ""
+		for _, key := range []string{"source", "provider", "wellnessSource", "wellness_source", "integration"} {
+			value, _ := row.Raw[key].(string)
+			if value = strings.ToLower(strings.TrimSpace(value)); value != "" && value != "unknown" {
+				source = value
+				break
+			}
+		}
+		if source != "" {
 			sources[source] = true
 		} else {
 			out.UnknownSourceSamples++
 		}
-		// Only explicit device provenance can establish a device transition.
-		if device, ok := row.Raw["device"].(string); ok && strings.TrimSpace(device) != "" {
-			devices[strings.ToLower(strings.TrimSpace(device))] = true
+		device, _ := row.Raw["device"].(string)
+		device = strings.ToLower(strings.TrimSpace(device))
+		if device == "unknown" {
+			device = ""
+		}
+		if device != "" {
+			devices[device] = true
 		}
 	}
 	for source := range sources {
 		out.Sources = append(out.Sources, source)
 	}
 	sort.Strings(out.Sources)
-	if len(sources) > 1 || len(devices) > 1 {
+	switch {
+	case len(sources) > 1 || len(devices) > 1:
 		out.Status = "changed"
-	} else if len(sources) == 1 && out.UnknownSourceSamples == 0 {
+	case len(sources) == 1 && out.UnknownSourceSamples == 0:
 		out.Status = "consistent"
 	}
 	return out
