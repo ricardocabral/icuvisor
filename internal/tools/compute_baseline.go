@@ -15,7 +15,7 @@ import (
 
 const (
 	computeBaselineName                    = "compute_baseline"
-	computeBaselineDescription             = "Use when the prompt asks whether current metric values are unusual relative to a historical baseline via z-score/status bands; do not fetch get_* rows or streams and reduce them in chat. Computes z-scores from existing read outputs with wellness interpretation and explicit insufficient-data signals."
+	computeBaselineDescription             = "Use when the prompt asks whether current metric values are unusual relative to a historical baseline via z-score/status bands; do not fetch get_* rows or streams and reduce them in chat. Computes z-scores from existing read outputs with wellness interpretation and explicit insufficient-data signals. HRV comparisons with explicit provider or device changes return insufficient_comparable_data; choose windows from one measurement source rather than mixing baselines."
 	invalidComputeBaselineArgumentsMessage = "invalid compute_baseline arguments; provide metric, baseline/current date windows, optional sport, and min_samples >= 2"
 	fetchComputeBaselineMessage            = "could not compute baseline; check intervals.icu credentials, athlete ID, and date range"
 )
@@ -41,29 +41,36 @@ type baselineSample struct {
 }
 
 type computeBaselineResult struct {
-	Status                      string               `json:"status"`
-	Metric                      string               `json:"metric"`
-	MetricSource                baselineMetricSource `json:"metric_source"`
-	BaselineWindow              dateWindow           `json:"baseline_window"`
-	CurrentWindow               dateWindow           `json:"current_window"`
-	CurrentValue                *float64             `json:"current_value,omitempty"`
-	BaselineMean                *float64             `json:"baseline_mean,omitempty"`
-	BaselineStdDev              *float64             `json:"baseline_stddev,omitempty"`
-	ZScore                      *float64             `json:"z_score,omitempty"`
-	Interpretation              string               `json:"interpretation"`
-	NBaseline                   int                  `json:"n_baseline"`
-	NCurrent                    int                  `json:"n_current"`
-	MinSamples                  int                  `json:"min_samples"`
-	MissingBaselineDays         *int                 `json:"missing_baseline_days,omitempty"`
-	MissingCurrentDays          *int                 `json:"missing_current_days,omitempty"`
-	MissingBaselineAnchors      *int                 `json:"missing_baseline_anchors,omitempty"`
-	MissingCurrentAnchors       *int                 `json:"missing_current_anchors,omitempty"`
-	FreshnessStatus             string               `json:"freshness_status,omitempty"`
-	CurrentLatestSampleDate     string               `json:"current_latest_sample_date,omitempty"`
-	CurrentWindowEndDate        string               `json:"current_window_end_date,omitempty"`
-	Caveats                     []string             `json:"caveats,omitempty"`
-	TruncatedActivityCandidates bool                 `json:"truncated_activity_candidates,omitempty"`
-	InsufficientReason          string               `json:"insufficient_reason,omitempty"`
+	Status                      string                    `json:"status"`
+	Metric                      string                    `json:"metric"`
+	MetricSource                baselineMetricSource      `json:"metric_source"`
+	BaselineWindow              dateWindow                `json:"baseline_window"`
+	CurrentWindow               dateWindow                `json:"current_window"`
+	CurrentValue                *float64                  `json:"current_value,omitempty"`
+	BaselineMean                *float64                  `json:"baseline_mean,omitempty"`
+	BaselineStdDev              *float64                  `json:"baseline_stddev,omitempty"`
+	ZScore                      *float64                  `json:"z_score,omitempty"`
+	Interpretation              string                    `json:"interpretation"`
+	NBaseline                   int                       `json:"n_baseline"`
+	NCurrent                    int                       `json:"n_current"`
+	MinSamples                  int                       `json:"min_samples"`
+	MissingBaselineDays         *int                      `json:"missing_baseline_days,omitempty"`
+	MissingCurrentDays          *int                      `json:"missing_current_days,omitempty"`
+	MissingBaselineAnchors      *int                      `json:"missing_baseline_anchors,omitempty"`
+	MissingCurrentAnchors       *int                      `json:"missing_current_anchors,omitempty"`
+	FreshnessStatus             string                    `json:"freshness_status,omitempty"`
+	CurrentLatestSampleDate     string                    `json:"current_latest_sample_date,omitempty"`
+	CurrentWindowEndDate        string                    `json:"current_window_end_date,omitempty"`
+	Caveats                     []string                  `json:"caveats,omitempty"`
+	SourceContinuity            *baselineSourceContinuity `json:"source_continuity,omitempty"`
+	TruncatedActivityCandidates bool                      `json:"truncated_activity_candidates,omitempty"`
+	InsufficientReason          string                    `json:"insufficient_reason,omitempty"`
+}
+
+type baselineSourceContinuity struct {
+	Status               string   `json:"status"`
+	Sources              []string `json:"sources,omitempty"`
+	UnknownSourceSamples int      `json:"unknown_source_samples"`
 }
 
 type baselineMetricSource struct {
@@ -90,6 +97,7 @@ type baselineCollected struct {
 	Truncated              bool
 	UnsupportedReason      string
 	WellnessFreshness      *wellnessFreshnessSummary
+	SourceContinuity       *baselineSourceContinuity
 }
 
 func newComputeBaselineTool(fitnessClient FitnessClient, wellnessClient WellnessClient, activitiesClient ActivitiesClient, extendedClient ExtendedMetricsClient, profileClient ProfileClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
@@ -122,6 +130,9 @@ func computeBaselineHandler(fitnessClient FitnessClient, wellnessClient Wellness
 		if collected.UnsupportedReason != "" {
 			stats.Status = "unsupported_metric_source"
 			stats.Reason = collected.UnsupportedReason
+		}
+		if continuity := collected.SourceContinuity; continuity != nil && continuity.Status == "changed" {
+			stats = analysis.BaselineStats{Status: "insufficient_comparable_data", Reason: "hrv_source_changed"}
 		}
 		if collected.Truncated {
 			if stats.Reason == "" && stats.Status != "ok" {
@@ -156,6 +167,15 @@ func computeBaselineHandler(fitnessClient FitnessClient, wellnessClient Wellness
 				if result.InsufficientReason == "" {
 					result.InsufficientReason = freshness.Status
 				}
+			}
+		}
+		result.SourceContinuity = collected.SourceContinuity
+		if continuity := collected.SourceContinuity; continuity != nil {
+			assumptions["hrv_source_continuity"] = continuity.Status
+			if continuity.Status == "changed" {
+				result.Caveats = append(result.Caveats, "Explicit HRV provider or device provenance changed within the requested windows. Choose baseline and current windows from one measurement source; no pooled z-score or interpretation is returned.")
+			} else if continuity.Status == "unknown" {
+				result.Caveats = append(result.Caveats, "Some HRV samples have no recognized source provenance; measurement-source continuity cannot be verified.")
 			}
 		}
 		meta := analysis.AnalyzerMetaInput{Method: "baseline_z_score", SourceTools: collected.SourceTools, N: len(collected.Baseline), MissingDays: collected.MissingBaselineDays + collected.MissingCurrentDays, MissingAction: analysis.MissingActionSkip, MinSamples: minSamples, FormulaRef: resources.AnalysisFormulaRefZScore, Assumptions: assumptions, Boundaries: baselineBoundaries(collected.Truncated)}
@@ -303,7 +323,44 @@ func collectWellnessBaseline(ctx context.Context, args computeBaselineRequest, m
 	out.MissingBaselineDays = dateCount(args.BaselineStartDate, args.BaselineEndDate) - len(seenB)
 	out.MissingCurrentDays = dateCount(args.CurrentStartDate, args.CurrentEndDate) - len(seenC)
 	out.WellnessFreshness = freshness.baselineSummary(out.MissingCurrentDays)
+	out.SourceContinuity = baselineHRVContinuity(rows, args, metric)
 	return out, nil
+}
+
+func baselineHRVContinuity(rows []intervals.Wellness, args computeBaselineRequest, metric analysis.Metric) *baselineSourceContinuity {
+	field, _, ok := wellnessFreshnessField(metric)
+	if !ok {
+		return nil
+	}
+	out := &baselineSourceContinuity{Status: "unknown"}
+	sources, devices := map[string]bool{}, map[string]bool{}
+	for _, row := range rows {
+		if sampleWindow(wellnessDate(row), args) == "" {
+			continue
+		}
+		if _, ok := wellnessMetricValue(row, metric); !ok {
+			continue
+		}
+		if source := wellnessFieldSource(row, field); source != "" {
+			sources[source] = true
+		} else {
+			out.UnknownSourceSamples++
+		}
+		// Only explicit device provenance can establish a device transition.
+		if device, ok := row.Raw["device"].(string); ok && strings.TrimSpace(device) != "" {
+			devices[strings.ToLower(strings.TrimSpace(device))] = true
+		}
+	}
+	for source := range sources {
+		out.Sources = append(out.Sources, source)
+	}
+	sort.Strings(out.Sources)
+	if len(sources) > 1 || len(devices) > 1 {
+		out.Status = "changed"
+	} else if len(sources) == 1 && out.UnknownSourceSamples == 0 {
+		out.Status = "consistent"
+	}
+	return out
 }
 
 func collectActivityBaseline(ctx context.Context, args computeBaselineRequest, metric analysis.Metric, unitSystem response.UnitSystem, source analysis.MetricSource, activitiesClient ActivitiesClient, extendedClient ExtendedMetricsClient) (baselineCollected, error) {
