@@ -104,7 +104,7 @@ func TestSearchWorkoutLibraryEmptyAndErrors(t *testing.T) {
 				if len(resultMap(t, result)["folders"].([]any)) != 0 {
 					t.Fatal("expected empty results")
 				}
-				if client.params.Limit != 30 {
+				if client.params.Limit != 3 {
 					t.Fatalf("default limit = %d", client.params.Limit)
 				}
 				return
@@ -137,5 +137,50 @@ func TestSharedLibraryToolDeclarations(t *testing.T) {
 				t.Fatalf("missing description for %s", name)
 			}
 		}
+	}
+}
+
+func TestSearchWorkoutLibraryDefaultPopulatedPayloadBudget(t *testing.T) {
+	t.Parallel()
+	client := &fakeSharedLibraryClient{}
+	for i := 0; i < 30; i++ {
+		client.folders = append(client.folders, decodeToolWorkoutFolders(t, fmt.Sprintf(`{"id":%d,"name":"Aerobic base plan %d","type":"PLAN","activity_types":["Run","Ride"],"duration_weeks":8,"hours_per_week_min":4,"hours_per_week_max":7,"workout_targets":["POWER","PACE"],"num_workouts":32,"description":"Extended program notes omitted from terse results"}`, 100+i, i+1))[0])
+	}
+	tool := newSearchWorkoutLibraryTool(client, "test", false)
+	result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"q":"base","weeks_min":0,"weeks_max":12,"hours_per_week_min":0,"hours_per_week_max":8}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	responseBytes := len(result.Content[0].Text)
+	estimatedTokens := (responseBytes + 3) / 4
+	t.Logf("populated default response = %d bytes, about %d tokens at 4 bytes/token", responseBytes, estimatedTokens)
+	if estimatedTokens > 500 {
+		t.Errorf("populated default response estimate = %d tokens, want at most about 500", estimatedTokens)
+	}
+	if got := len(resultMap(t, result)["folders"].([]any)); got != 3 {
+		t.Errorf("default returned %d folders, want 3", got)
+	}
+	if client.params.Limit != 3 {
+		t.Errorf("upstream limit = %d, want 3", client.params.Limit)
+	}
+}
+
+func TestSearchWorkoutLibraryExplicitLimitRange(t *testing.T) {
+	t.Parallel()
+	for _, limit := range []int{1, 100} {
+		t.Run(fmt.Sprint(limit), func(t *testing.T) {
+			client := &fakeSharedLibraryClient{}
+			for i := 0; i < 100; i++ {
+				client.folders = append(client.folders, intervals.WorkoutFolder{ID: fmt.Sprint(i + 1)})
+			}
+			tool := newSearchWorkoutLibraryTool(client, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(fmt.Sprintf(`{"q":"base","weeks_min":0,"weeks_max":12,"hours_per_week_min":0,"hours_per_week_max":8,"limit":%d}`, limit))})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := len(resultMap(t, result)["folders"].([]any)); got != limit || client.params.Limit != limit {
+				t.Fatalf("returned %d, upstream limit %d; want explicit %d", got, client.params.Limit, limit)
+			}
+		})
 	}
 }

@@ -12,6 +12,9 @@ import (
 	"unicode/utf8"
 )
 
+// DefaultWorkoutLibrarySearchLimit bounds default public searches to terse folder summaries.
+const DefaultWorkoutLibrarySearchLimit = 3
+
 // ErrSharedWorkoutFolderUnverified means sharing did not confirm the requested folder in the target library.
 var ErrSharedWorkoutFolderUnverified = errors.New("shared workout folder not verified in target library")
 
@@ -76,7 +79,7 @@ func (c *Client) SearchWorkoutLibrary(ctx context.Context, params WorkoutLibrary
 	}
 	limit := params.Limit
 	if limit == 0 {
-		limit = 30
+		limit = DefaultWorkoutLibrarySearchLimit
 	}
 	query := url.Values{"q": {strings.TrimSpace(params.Query)}, "weeks_min": {strconv.Itoa(params.WeeksMin)}, "weeks_max": {strconv.Itoa(params.WeeksMax)}, "hours_per_week_min": {strconv.Itoa(params.HoursPerWeekMin)}, "hours_per_week_max": {strconv.Itoa(params.HoursPerWeekMax)}, "limit": {strconv.Itoa(limit)}}
 	if params.Type != "" {

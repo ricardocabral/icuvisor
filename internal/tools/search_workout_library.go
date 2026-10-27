@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/intervals"
@@ -102,7 +103,7 @@ func decodeSearchWorkoutLibraryRequest(raw json.RawMessage) (searchWorkoutLibrar
 	if args.WeeksMin == nil || args.WeeksMax == nil || args.HoursPerWeekMin == nil || args.HoursPerWeekMax == nil {
 		return args, intervals.WorkoutLibrarySearchParams{}, errors.New("weeks_min, weeks_max, hours_per_week_min and hours_per_week_max are required")
 	}
-	limit := 30
+	limit := intervals.DefaultWorkoutLibrarySearchLimit
 	if args.Limit != nil {
 		limit = *args.Limit
 		if limit < 1 {
@@ -132,7 +133,7 @@ func searchWorkoutLibraryInputSchema() map[string]any {
 		"hours_per_week_min": map[string]any{"type": "integer", "minimum": 0, "maximum": 168, "description": "Required inclusive minimum workload filter, in whole hours per week (0-168)."},
 		"hours_per_week_max": map[string]any{"type": "integer", "minimum": 0, "maximum": 168, "description": "Required inclusive maximum workload filter, in whole hours per week; must be at least hours_per_week_min and at most 168."},
 		"workout_targets":    map[string]any{"type": "array", "maxItems": 4, "uniqueItems": true, "items": map[string]any{"type": "string", "enum": []string{"AUTO", "POWER", "HR", "PACE"}}, "description": "Optional workout target filters: AUTO, POWER, HR (heart rate) or PACE."},
-		"limit":              map[string]any{"type": "integer", "minimum": 1, "maximum": 100, "default": 30, "description": "Maximum number of public folders returned (1-100, default 30). The API has no cursor; narrow filters when this limit is reached."},
+		"limit":              map[string]any{"type": "integer", "minimum": 1, "maximum": 100, "default": intervals.DefaultWorkoutLibrarySearchLimit, "description": fmt.Sprintf("Maximum number of public folders returned (1-100, default %d). The API has no cursor; narrow filters when this limit is reached.", intervals.DefaultWorkoutLibrarySearchLimit)},
 		"include_full":       map[string]any{"type": "boolean", "default": false, "description": "Include folder description and blurb. Child workouts, owner details and share tokens are always omitted; use existing library reads after explicitly adding a folder."},
 	}, "examples": []map[string]any{{"q": "base", "type": "PLAN", "activity_types": []string{"Run"}, "weeks_min": 4, "weeks_max": 12, "hours_per_week_min": 3, "hours_per_week_max": 8, "limit": 5}}}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -40,7 +41,7 @@ func TestAddSharedWorkoutFolderTargetAndRedaction(t *testing.T) {
 }
 func TestAddSharedWorkoutFolderRejectsInvalidAndUnverified(t *testing.T) {
 	t.Parallel()
-	for _, raw := range []string{`{}`, `{"folder_id":"../10"}`, `{"folder_id":"0"}`, `{"folder_id":"10","athlete_id":"i333"}`, `{"folder_id":"10","include_full":true}`} {
+	for _, raw := range []string{`{}`, `{"folder_id":"../10"}`, `{"folder_id":"0"}`, `{"folder_id":"10","athlete_id":"i333"}`, `{"folder_id":"10","include_full":"yes"}`} {
 		t.Run(raw, func(t *testing.T) {
 			client := &fakeSharedLibraryClient{}
 			tool := newAddSharedWorkoutFolderTool(client, "test", false)
@@ -128,5 +129,45 @@ func TestAddSharedWorkoutFolderInputExamples(t *testing.T) {
 	examples := schemaInputExamples(t, addSharedWorkoutFolderInputSchema())
 	if len(examples) == 0 {
 		t.Fatal("missing shared-folder write input example")
+	}
+}
+
+func TestAddSharedWorkoutFolderSafeTerseFull(t *testing.T) {
+	t.Parallel()
+	for _, full := range []bool{false, true} {
+		t.Run(fmt.Sprint(full), func(t *testing.T) {
+			client := &fakeSharedLibraryClient{folder: decodeToolWorkoutFolders(t, `{"id":10,"name":"Base","description":"Detailed training plan notes","blurb":"Eight-week aerobic block","shareToken":"secret-token","owner":{"name":"Private Owner","email":"private@example.test"},"children":[{"id":2,"description":"heavy child workout","workout_doc":{"steps":[{"duration":600}]}}]}`)[0]}
+			tool := newAddSharedWorkoutFolderTool(client, "test", false)
+			arguments := json.RawMessage(`{"folder_id":"10"}`)
+			if full {
+				arguments = json.RawMessage(`{"folder_id":"10","include_full":true}`)
+			}
+			result, err := tool.Handler(context.Background(), Request{Arguments: arguments})
+			if err != nil {
+				t.Fatal(err)
+			}
+			out := resultMap(t, result)
+			row := out["folder"].(map[string]any)
+			for _, key := range []string{"description", "blurb"} {
+				if _, ok := row[key]; ok != full {
+					t.Errorf("%s present = %t, want include_full %t", key, ok, full)
+				}
+			}
+			if full && (row["description"] != "Detailed training plan notes" || row["blurb"] != "Eight-week aerobic block") {
+				t.Fatalf("full folder = %#v", row)
+			}
+			for _, excluded := range []string{"shareToken", "secret-token", "owner", "Private Owner", "private@example.test", "children", "heavy child workout", "workout_doc"} {
+				if strings.Contains(result.Content[0].Text, excluded) {
+					t.Errorf("%s leaked in full=%t", excluded, full)
+				}
+			}
+			meta := out["_meta"].(map[string]any)
+			if meta["verified_in_library"] != true || meta["include_full"] != full {
+				t.Errorf("meta = %#v, want verified and full=%t", meta, full)
+			}
+			if client.calls != 1 {
+				t.Errorf("sharing calls = %d, want 1 regardless of output detail", client.calls)
+			}
+		})
 	}
 }

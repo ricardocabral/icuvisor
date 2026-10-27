@@ -28,7 +28,7 @@ func TestSearchWorkoutLibraryPublicQuery(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := url.Values{"q": {"base & build"}, "type": {"PLAN"}, "activity_types": {"Run", "Ride"}, "weeks_min": {"0"}, "weeks_max": {"12"}, "hours_per_week_min": {"0"}, "hours_per_week_max": {"8"}, "workout_targets": {"PACE", "HR"}, "limit": {"30"}}
+	want := url.Values{"q": {"base & build"}, "type": {"PLAN"}, "activity_types": {"Run", "Ride"}, "weeks_min": {"0"}, "weeks_max": {"12"}, "hours_per_week_min": {"0"}, "hours_per_week_max": {"8"}, "workout_targets": {"PACE", "HR"}, "limit": {"3"}}
 	if !reflect.DeepEqual(query, want) {
 		t.Fatalf("query = %#v, want %#v", query, want)
 	}
