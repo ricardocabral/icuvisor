@@ -484,3 +484,63 @@ func TestUpdateActivityReadbackVerification(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateActivityVerificationRequiresRequestedIdentity(t *testing.T) {
+	for _, tc := range []struct {
+		name, receipt, readback, wantStatus string
+		coach                               bool
+	}{
+		{name: "wrong receipt recovers from requested readback", receipt: `{"id":"other","commute":false,"icu_athlete_id":"i67890"}`, readback: `{"id":"a1","commute":false,"icu_athlete_id":"i67890"}`, wantStatus: "verified"},
+		{name: "missing receipt identity recovers from requested readback", receipt: `{"commute":false,"icu_athlete_id":"i67890"}`, readback: `{"id":"a1","commute":false,"icu_athlete_id":"i67890"}`, wantStatus: "verified"},
+		{name: "wrong receipt and readback", receipt: `{"id":"other","commute":false,"icu_athlete_id":"i67890"}`, readback: `{"id":"other","commute":false,"icu_athlete_id":"i67890"}`, wantStatus: "verification_mismatch"},
+		{name: "missing receipt and readback identity", receipt: `{"commute":false,"icu_athlete_id":"i67890"}`, readback: `{"commute":false,"icu_athlete_id":"i67890"}`, wantStatus: "verification_unavailable"},
+		{name: "sparse receipt wrong readback", receipt: `{"id":"a1","icu_athlete_id":"i67890"}`, readback: `{"id":"other","commute":false,"icu_athlete_id":"i67890"}`, wantStatus: "verification_mismatch"},
+		{name: "coach same owner wrong activity", coach: true, receipt: `{"id":"other","commute":false,"icu_athlete_id":"i67890"}`, readback: `{"id":"other","commute":false,"icu_athlete_id":"i67890"}`, wantStatus: "verification_mismatch"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			writes, reads := 0, 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/activity/a1" {
+					t.Errorf("path=%s", r.URL.Path)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == http.MethodPut {
+					writes++
+					_, _ = w.Write([]byte(tc.receipt))
+					return
+				}
+				reads++
+				if tc.coach && reads == 1 {
+					_, _ = w.Write([]byte(`{"id":"a1","icu_athlete_id":"i67890"}`))
+					return
+				}
+				_, _ = w.Write([]byte(tc.readback))
+			}))
+			defer server.Close()
+			client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+			commute := false
+			ctx := context.Background()
+			if tc.coach {
+				ctx = WithTargetAthleteID(ctx, "i67890")
+			}
+			activity, err := client.UpdateActivity(ctx, UpdateActivityParams{ActivityID: " a1 ", Commute: &commute})
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantReads := 1
+			if tc.coach {
+				wantReads++
+			}
+			if writes != 1 || reads != wantReads {
+				t.Errorf("writes=%d reads=%d; want one write and %d reads", writes, reads, wantReads)
+			}
+			v := activity.MetadataVerification
+			if v == nil || v.Status != tc.wantStatus || v.Source != "readback" {
+				t.Fatalf("verification=%+v", v)
+			}
+			if tc.wantStatus != "verified" && len(v.Confirmed) > 0 {
+				t.Fatalf("wrong activity was confirmed: %+v", v)
+			}
+		})
+	}
+}

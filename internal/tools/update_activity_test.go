@@ -319,3 +319,57 @@ func TestUpdateActivityDoesNotClaimUnverifiedMetadata(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateActivityHandlerRejectsWrongVerificationIdentity(t *testing.T) {
+	for _, tc := range []struct {
+		name, raw, wantStatus string
+		legacyName            bool
+		attached              bool
+	}{
+		{name: "wrong activity", raw: `{"id":"other","commute":false}`, wantStatus: "verification_mismatch"},
+		{name: "missing activity", raw: `{"commute":false}`, wantStatus: "verification_unavailable"},
+		{name: "wrong activity in mixed sparse update", raw: `{"id":"other","commute":false}`, wantStatus: "verification_mismatch", legacyName: true},
+		{name: "wrong activity with attached verification", raw: `{"id":"other","commute":false}`, wantStatus: "verification_mismatch", attached: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			activity := decodeActivity(t, tc.raw)
+			if tc.attached {
+				activity.MetadataVerification = &intervals.ActivityMetadataVerification{Status: "verified", Source: "write_response", Confirmed: []string{"commute"}}
+			}
+			client := &fakeActivityUpdaterClient{activity: activity}
+			tool := newUpdateActivityTool(client, nil, "test", false)
+			raw := `{"activity_id":"a1","commute":false,"include_full":true}`
+			if tc.legacyName {
+				raw = `{"activity_id":"a1","name":"renamed","commute":false,"include_full":true}`
+			}
+			result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(raw)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			out := resultMap(t, result)
+			if out["activity_id"] != "a1" || out["status"] != tc.wantStatus {
+				t.Fatalf("output=%v", out)
+			}
+			if _, ok := out["full"]; ok {
+				t.Fatalf("unmatched activity raw data surfaced as requested activity: %v", out)
+			}
+			if fields, ok := out["fields_updated"].([]any); ok && len(fields) > 0 {
+				t.Fatalf("wrong identity confirmed fields: %v", out)
+			}
+		})
+	}
+}
+
+func TestUpdateActivityLegacySparseWriteRetainsReceiptCompatibility(t *testing.T) {
+	client := &fakeActivityUpdaterClient{activity: decodeActivity(t, `{"id":"other"}`)}
+	tool := newUpdateActivityTool(client, nil, "test", false)
+	result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"a1","name":"renamed"}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := resultMap(t, result)
+	fields := out["fields_updated"].([]any)
+	if out["status"] != "updated" || len(fields) != 1 || fields[0] != "name" {
+		t.Fatalf("legacy sparse output=%v", out)
+	}
+}

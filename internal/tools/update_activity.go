@@ -115,8 +115,9 @@ func updateActivityHandler(client ActivityUpdaterClient, profileClient ProfileCl
 				IncludeFull:    args.IncludeFull,
 			},
 		}
+		activityIdentityMatches := activity.ID != "" && activity.ID == args.ActivityID
 		verification := activity.MetadataVerification
-		if verification == nil {
+		if verification == nil || !activityIdentityMatches {
 			verification = intervals.VerifyActivityMetadataUpdate(activity, params)
 		}
 		if verification != nil {
@@ -138,12 +139,15 @@ func updateActivityHandler(client ActivityUpdaterClient, profileClient ProfileCl
 					confirmed = append(confirmed, field)
 				}
 			}
+			if !activityIdentityMatches {
+				confirmed = []string{}
+			}
 			payload.FieldsUpdated = confirmed
 		}
 		if args.Tags != nil || args.Commute != nil || args.Feel != nil || args.RPE != nil || args.SubType != nil || args.DistanceM != nil {
 			payload.Requested = &updateActivityRequestedValues{Tags: args.Tags, Commute: args.Commute, Feel: args.Feel, RPE: args.RPE, SubType: args.SubType, DistanceM: args.DistanceM}
 		}
-		if args.IncludeFull {
+		if args.IncludeFull && (verification == nil || activityIdentityMatches) {
 			payload.Full = activity.Raw
 		}
 		return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, updateActivityName, "", shapeCfg)

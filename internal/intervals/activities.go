@@ -364,10 +364,22 @@ type ActivityMetadataVerification struct {
 	Caveat     string   `json:"caveat,omitempty"`
 }
 
-// VerifyActivityMetadataUpdate checks native upstream fields, preserving false/zero/empty-list semantics.
+// VerifyActivityMetadataUpdate requires the requested activity identity before checking native fields.
+// False, zero, and empty-list values remain explicit.
 func VerifyActivityMetadataUpdate(activity Activity, p UpdateActivityParams) *ActivityMetadataVerification {
 	v := &ActivityMetadataVerification{Status: "verified", Source: "write_response"}
+	requestedID := strings.TrimSpace(p.ActivityID)
+	identityMissing := requestedID == "" || activity.ID == ""
+	identityMismatch := activity.ID != requestedID
 	check := func(name, key string, want any) {
+		if identityMissing {
+			v.Missing = append(v.Missing, name)
+			return
+		}
+		if identityMismatch {
+			v.Mismatched = append(v.Mismatched, name)
+			return
+		}
 		actual, present := activity.Raw[key]
 		if !present || actual == nil {
 			v.Missing = append(v.Missing, name)
@@ -411,6 +423,11 @@ func VerifyActivityMetadataUpdate(activity Activity, p UpdateActivityParams) *Ac
 	}
 	if v.Status != "verified" {
 		v.Caveat = "write may have succeeded; inspect the activity before retrying; requested values are not confirmed"
+		if identityMissing {
+			v.Caveat = "write may have succeeded; response activity ID is missing; no requested metadata values are confirmed"
+		} else if identityMismatch {
+			v.Caveat = "write may have succeeded; response activity ID does not match the requested activity; no requested metadata values are confirmed"
+		}
 	}
 	return v
 }
