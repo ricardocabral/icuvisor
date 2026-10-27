@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"math"
 	"sort"
 	"strings"
 
@@ -36,6 +37,7 @@ type powerCurvesRequest struct {
 type powerCurvesResponse struct {
 	Sport            string                 `json:"sport"`
 	Points           []powerCurvePoint      `json:"points"`
+	PowerModels      []powerModelSummary    `json:"power_models,omitempty"`
 	DurabilityCurves []powerDurabilityCurve `json:"durability_curves,omitempty"`
 	Full             map[string]any         `json:"full,omitempty"`
 	Meta             powerCurvesMeta        `json:"_meta"`
@@ -45,6 +47,19 @@ type powerCurvePoint struct {
 	DurationSeconds int      `json:"duration_seconds"`
 	Watts           *float64 `json:"watts,omitempty"`
 	ActivityID      string   `json:"activity_id,omitempty"`
+	EffortDate      string   `json:"effort_date,omitempty"`
+	WattsPerKG      *float64 `json:"watts_per_kg,omitempty"`
+	WKGActivityID   string   `json:"wkg_activity_id,omitempty"`
+	WKGEffortDate   string   `json:"wkg_effort_date,omitempty"`
+}
+
+type powerModelSummary struct {
+	Type               string   `json:"type"`
+	Source             string   `json:"source"`
+	CriticalPowerWatts *float64 `json:"critical_power_watts,omitempty"`
+	WPrimeJoules       *float64 `json:"w_prime_joules,omitempty"`
+	PMaxWatts          *float64 `json:"p_max_watts,omitempty"`
+	FTPWatts           *float64 `json:"ftp_watts,omitempty"`
 }
 
 type powerDurabilityCurve struct {
@@ -92,9 +107,11 @@ func getPowerCurvesHandler(client PowerCurvesClient, version string, debugMetada
 			}
 			return Result{}, NewUserError(fetchPowerCurvesMessage, err)
 		}
-		points, missing := bucketPowerCurve(standardPowerCurve(set), args.DurationSeconds)
+		curve := standardPowerCurve(set)
+		points, missing := bucketPowerCurve(curve, args.DurationSeconds)
+		addPowerCurveDates(points, set.Activities)
 		durabilityCurves := bucketDurabilityPowerCurves(set, args.DurationSeconds)
-		payload := powerCurvesResponse{Sport: args.Sport, Points: points, DurabilityCurves: durabilityCurves, Meta: powerCurvesMeta{ServerVersion: normalizeVersion(version), Sport: args.Sport, Oldest: args.Oldest, Newest: args.Newest, CurveSpec: curveSpec, DurationSeconds: args.DurationSeconds, MissingBuckets: missing, DurabilityCurveCount: len(durabilityCurves), WorkThresholdUnit: workThresholdUnit(durabilityCurves), IncludeFull: args.IncludeFull}}
+		payload := powerCurvesResponse{Sport: args.Sport, Points: points, PowerModels: summarizePowerModels(curve.PowerModels), DurabilityCurves: durabilityCurves, Meta: powerCurvesMeta{ServerVersion: normalizeVersion(version), Sport: args.Sport, Oldest: args.Oldest, Newest: args.Newest, CurveSpec: curveSpec, DurationSeconds: args.DurationSeconds, MissingBuckets: missing, DurabilityCurveCount: len(durabilityCurves), WorkThresholdUnit: workThresholdUnit(durabilityCurves), IncludeFull: args.IncludeFull}}
 		if args.IncludeFull {
 			payload.Full = set.Raw
 		}
@@ -126,12 +143,78 @@ func decodePowerCurvesRequest(raw json.RawMessage) (powerCurvesRequest, error) {
 }
 
 func bucketPowerCurve(curve intervals.DataCurve, buckets []int) ([]powerCurvePoint, []int) {
-	values, missing := durationCurveBucketValues(curve, buckets)
-	points := make([]powerCurvePoint, 0, len(values))
-	for _, value := range values {
-		points = append(points, powerCurvePoint{DurationSeconds: value.Bucket, Watts: value.Value, ActivityID: value.ActivityID})
+	points := []powerCurvePoint{}
+	missing := []int{}
+	for _, bucket := range buckets {
+		_, idx, found := valueAtBucket(curve.Secs, curve.Secs, bucket)
+		if !found {
+			missing = append(missing, bucket)
+			continue
+		}
+		point := powerCurvePoint{DurationSeconds: bucket}
+		if idx < len(curve.Values) {
+			point.Watts = roundPtr(curve.Values[idx])
+			point.ActivityID = activityIDAt(curve, idx)
+		}
+		if idx < len(curve.WattsPerKG) && curve.WattsPerKG[idx] != nil && *curve.WattsPerKG[idx] > 0 {
+			point.WattsPerKG = roundPtr(*curve.WattsPerKG[idx])
+			if idx < len(curve.WKGActivityID) {
+				point.WKGActivityID = curve.WKGActivityID[idx]
+			}
+		}
+		if point.Watts == nil && point.WattsPerKG == nil {
+			missing = append(missing, bucket)
+			continue
+		}
+		points = append(points, point)
 	}
 	return points, missing
+}
+
+func addPowerCurveDates(points []powerCurvePoint, activities map[string]any) {
+	for i := range points {
+		points[i].EffortDate = curveActivityDate(activities, points[i].ActivityID)
+		points[i].WKGEffortDate = curveActivityDate(activities, points[i].WKGActivityID)
+	}
+}
+
+func curveActivityDate(activities map[string]any, id string) string {
+	activity, ok := activities[id].(map[string]any)
+	if !ok {
+		return ""
+	}
+	date, ok := activity["start_date_local"].(string)
+	if !ok || len(date) < 10 || !validDate(date[:10]) {
+		return ""
+	}
+	return date[:10]
+}
+
+func summarizePowerModels(models []intervals.PowerModel) []powerModelSummary {
+	out := []powerModelSummary{}
+	for _, model := range models {
+		switch model.Type {
+		case "MS_2P", "MORTON_3P", "FFT_CURVES", "ECP":
+		default:
+			continue
+		}
+		summary := powerModelSummary{Type: model.Type, Source: "upstream_fitted", CriticalPowerWatts: availableModelValue(model.CriticalPower), WPrimeJoules: availableModelValue(model.WPrime), PMaxWatts: availableModelValue(model.PMax), FTPWatts: availableModelValue(model.FTP)}
+		if summary.CriticalPowerWatts == nil && summary.WPrimeJoules == nil && summary.PMaxWatts == nil && summary.FTPWatts == nil {
+			continue
+		}
+		out = append(out, summary)
+		if len(out) == 4 {
+			break
+		}
+	}
+	return out
+}
+
+func availableModelValue(value *float64) *float64 {
+	if value == nil || *value <= 0 || math.IsNaN(*value) || math.IsInf(*value, 0) {
+		return nil
+	}
+	return value
 }
 
 func powerCurveRequestSpec(base string) string {
@@ -159,6 +242,7 @@ func bucketDurabilityPowerCurves(set intervals.DataCurveSet, buckets []int) []po
 			continue
 		}
 		points, missing := bucketPowerCurve(curve, buckets)
+		addPowerCurveDates(points, set.Activities)
 		points, nonPositiveMissing := dropNonPositivePowerCurvePoints(points)
 		missing = append(missing, nonPositiveMissing...)
 		sort.Ints(missing)

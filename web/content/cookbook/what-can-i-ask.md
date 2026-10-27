@@ -97,6 +97,26 @@ Use icuvisor to review my best efforts and power, pace, or heart-rate signals ov
 Project my fitness to [DATE] if I keep roughly my current weekly load and take every fourth week easier. Explain the assumptions and do not call it a prediction.
 ```
 
+## Race splits and repeated sessions
+
+Race splits are available in the default `core` toolset. Repeated-session progression comparisons need `full`. If that capability is unavailable, use the advanced-capability list to confirm the toolset before changing local configuration or hosted preferences, then start a fresh chat.
+
+```text
+Use icuvisor to review kilometre or mile splits for activity [ACTIVITY_ID].
+Distinguish exact stream-derived splits from device laps or upstream intervals.
+Report coverage and missing channels instead of filling gaps or assuming every
+lap is a prescribed workout step. Keep raw stream samples out of the answer.
+```
+
+```text
+Use icuvisor to find the completed sessions I name: [SESSIONS AND DATES]. Show
+their activity IDs, dates, and sports before comparing them. After I confirm
+the ordered activity IDs, use compute_workout_progression and keep each delta
+attached to its source sessions. Say when sessions are not comparable; do not
+infer equivalent workouts from matching names or diagnose fatigue from a
+cross-sport heart-rate difference.
+```
+
 ## Coach prompts
 
 Coach mode lets the server route requests to configured athletes. The `athlete_id` is a selector, not a credential, and the API key stays in server configuration.

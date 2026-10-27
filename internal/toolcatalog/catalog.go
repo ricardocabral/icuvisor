@@ -8,6 +8,11 @@ import (
 
 const (
 	AddActivityMessage               = "add_activity_message"
+	UpdateActivityMessage            = "update_activity_message"
+	DeleteActivityMessage            = "delete_activity_message"
+	ComparePowerCurves               = "compare_power_curves"
+	SearchWorkoutLibrary             = "search_workout_library"
+	AddSharedWorkoutFolder           = "add_shared_workout_folder"
 	AddOrUpdateEvent                 = "add_or_update_event"
 	AddUnavailableDateRange          = "add_unavailable_date_range"
 	AnalyzeCorrelation               = "analyze_correlation"
@@ -83,7 +88,11 @@ const (
 )
 
 var athleteScopedToolNames = []string{
+	AddSharedWorkoutFolder,
 	AddActivityMessage,
+	UpdateActivityMessage,
+	DeleteActivityMessage,
+	ComparePowerCurves,
 	AddOrUpdateEvent,
 	AddUnavailableDateRange,
 	AnalyzeCorrelation,
@@ -153,7 +162,7 @@ var athleteScopedToolNames = []string{
 	UpdateWorkout,
 }
 
-var allToolNames = append(append([]string{}, athleteScopedToolNames...), ICUvisorCheckServerVersion, ICUvisorListAdvancedCapabilities, ListAthletes, SelectAthlete, ValidateWorkout)
+var allToolNames = append(append([]string{}, athleteScopedToolNames...), ICUvisorCheckServerVersion, ICUvisorListAdvancedCapabilities, ListAthletes, SelectAthlete, ValidateWorkout, SearchWorkoutLibrary)
 
 var compactToolNames = []string{
 	GetActivities,

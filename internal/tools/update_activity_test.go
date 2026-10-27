@@ -141,7 +141,7 @@ func TestUpdateActivityRejectsBadArguments(t *testing.T) {
 	}
 }
 
-func TestUpdateActivityRejectsUnsupportedRPEBeforeUpdater(t *testing.T) {
+func TestUpdateActivityRejectsInvalidRPEAndUnverifiedAliasesBeforeUpdater(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -149,15 +149,12 @@ func TestUpdateActivityRejectsUnsupportedRPEBeforeUpdater(t *testing.T) {
 		raw  string
 	}{
 		{name: "rpe zero", raw: `{"activity_id":"a1","rpe":0}`},
-		{name: "rpe in range", raw: `{"activity_id":"a1","rpe":7}`},
-		{name: "rpe upper bound", raw: `{"activity_id":"a1","rpe":10}`},
 		{name: "rpe above range", raw: `{"activity_id":"a1","rpe":11}`},
 		{name: "rpe fractional", raw: `{"activity_id":"a1","rpe":1.5}`},
 		{name: "rpe string", raw: `{"activity_id":"a1","rpe":"7"}`},
 		{name: "rpe null", raw: `{"activity_id":"a1","rpe":null}`},
 		{name: "perceived exertion alias", raw: `{"activity_id":"a1","perceived_exertion":7}`},
 		{name: "native upstream key", raw: `{"activity_id":"a1","icu_rpe":7}`},
-		{name: "unsupported field is atomic with name", raw: `{"activity_id":"a1","name":"renamed","rpe":7}`},
 		{name: "unsupported field is atomic with description", raw: `{"activity_id":"a1","description":"note","icu_rpe":7}`},
 		{name: "unsupported field is atomic with carbs", raw: `{"activity_id":"a1","carbs_ingested_g":90,"perceived_exertion":7}`},
 	}
@@ -200,7 +197,7 @@ func TestUpdateActivityRegistrationMetadata(t *testing.T) {
 		t.Fatalf("description = %q, want non-destructive language without confirm", tool.Description)
 	}
 	props := tool.InputSchema.(map[string]any)["properties"].(map[string]any)
-	for _, name := range []string{"activity_id", "name", "description", "carbs_ingested_g", "include_full"} {
+	for _, name := range []string{"activity_id", "name", "description", "carbs_ingested_g", "include_full", "tags", "commute", "feel", "rpe", "sub_type", "distance_m"} {
 		if _, ok := props[name]; !ok {
 			t.Fatalf("schema missing %s", name)
 		}
@@ -215,9 +212,164 @@ func TestUpdateActivityRegistrationMetadata(t *testing.T) {
 			t.Fatalf("carbs_ingested_g description = %q, want %q", carbsDescription, phrase)
 		}
 	}
-	for _, name := range []string{"carbs_used_g", "confirm", "rpe", "perceived_exertion", "icu_rpe", "feel"} {
+	for _, name := range []string{"carbs_used_g", "confirm", "perceived_exertion", "icu_rpe", "moving_time", "elapsed_time", "start_date"} {
 		if _, ok := props[name]; ok {
 			t.Fatalf("schema includes unsupported or read-only property %q", name)
 		}
+	}
+}
+
+func TestUpdateActivityWritableMetadataSparseValues(t *testing.T) {
+	for _, tc := range []struct {
+		name, raw string
+		field     string
+	}{
+		{name: "clear tags", raw: `{"activity_id":"a1","tags":[]}`, field: "tags"},
+		{name: "false commute", raw: `{"activity_id":"a1","commute":false}`, field: "commute"},
+		{name: "feel", raw: `{"activity_id":"a1","feel":1}`, field: "feel"},
+		{name: "rpe", raw: `{"activity_id":"a1","rpe":10}`, field: "rpe"},
+		{name: "subtype", raw: `{"activity_id":"a1","sub_type":"NONE"}`, field: "sub_type"},
+		{name: "distance metres", raw: `{"activity_id":"a1","distance_m":0}`, field: "distance_m"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeActivityUpdaterClient{activity: decodeActivity(t, strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(tc.raw, "activity_id", "id"), "\"rpe\"", "\"icu_rpe\""), "distance_m", "distance"))}
+			tool := newUpdateActivityTool(client, nil, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(tc.raw)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(client.calls) != 1 {
+				t.Fatalf("calls=%v", client.calls)
+			}
+			call := client.calls[0]
+			switch tc.field {
+			case "tags":
+				if call.Tags == nil || len(*call.Tags) != 0 {
+					t.Fatalf("tags=%v", call.Tags)
+				}
+			case "commute":
+				if call.Commute == nil || *call.Commute {
+					t.Fatalf("commute=%v", call.Commute)
+				}
+			case "feel":
+				if call.Feel == nil || *call.Feel != 1 {
+					t.Fatalf("feel=%v", call.Feel)
+				}
+			case "rpe":
+				if call.RPE == nil || *call.RPE != 10 {
+					t.Fatalf("rpe=%v", call.RPE)
+				}
+			case "sub_type":
+				if call.SubType == nil || *call.SubType != "NONE" {
+					t.Fatalf("subtype=%v", call.SubType)
+				}
+			case "distance_m":
+				if call.DistanceM == nil || *call.DistanceM != 0 {
+					t.Fatalf("distance=%v", call.DistanceM)
+				}
+			}
+			if tc.field == "feel" || tc.field == "rpe" {
+				meta := resultMap(t, result)["_meta"].(map[string]any)
+				scales, ok := meta["scales"].(map[string]any)
+				if !ok || scales[tc.field] == nil {
+					t.Fatalf("scale metadata=%v", meta)
+				}
+			}
+			fields := resultMap(t, result)["fields_updated"].([]any)
+			if len(fields) != 1 || fields[0] != tc.field {
+				t.Fatalf("fields=%v", fields)
+			}
+		})
+	}
+}
+
+func TestUpdateActivityWritableMetadataRejectsInvalidValues(t *testing.T) {
+	for _, field := range []string{`"tags":null`, `"commute":null`, `"feel":null`, `"rpe":null`, `"sub_type":null`, `"distance_m":null`, `"feel":0`, `"feel":6`, `"rpe":0`, `"rpe":11`, `"distance_m":-1`, `"sub_type":"race"`, `"tags":[""]`, `"distance_m":1e100`, `"moving_time":20`, `"elapsed_time":20`, `"start_date":"2026-01-01"`} {
+		client := &fakeActivityUpdaterClient{}
+		tool := newUpdateActivityTool(client, nil, "test", false)
+		_, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"a1",` + field + `}`)})
+		if err == nil || len(client.calls) != 0 {
+			t.Fatalf("field=%s err=%v calls=%v", field, err, client.calls)
+		}
+	}
+}
+
+func TestUpdateActivityDoesNotClaimUnverifiedMetadata(t *testing.T) {
+	for _, tc := range []struct{ name, raw, wantStatus string }{
+		{name: "missing", raw: `{"id":"a1"}`, wantStatus: "verification_unavailable"},
+		{name: "different", raw: `{"id":"a1","commute":true}`, wantStatus: "verification_mismatch"},
+		{name: "confirmed", raw: `{"id":"a1","commute":false}`, wantStatus: "updated"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeActivityUpdaterClient{activity: decodeActivity(t, tc.raw)}
+			tool := newUpdateActivityTool(client, nil, "test", false)
+			result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"a1","commute":false}`)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			out := resultMap(t, result)
+			if out["status"] != tc.wantStatus {
+				t.Fatalf("result=%v", out)
+			}
+			if tc.wantStatus != "updated" {
+				if fields, ok := out["fields_updated"].([]any); ok && len(fields) > 0 {
+					t.Fatalf("unverified update claimed: %v", out)
+				}
+			}
+		})
+	}
+}
+
+func TestUpdateActivityHandlerRejectsWrongVerificationIdentity(t *testing.T) {
+	for _, tc := range []struct {
+		name, raw, wantStatus string
+		legacyName            bool
+		attached              bool
+	}{
+		{name: "wrong activity", raw: `{"id":"other","commute":false}`, wantStatus: "verification_mismatch"},
+		{name: "missing activity", raw: `{"commute":false}`, wantStatus: "verification_unavailable"},
+		{name: "wrong activity in mixed sparse update", raw: `{"id":"other","commute":false}`, wantStatus: "verification_mismatch", legacyName: true},
+		{name: "wrong activity with attached verification", raw: `{"id":"other","commute":false}`, wantStatus: "verification_mismatch", attached: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			activity := decodeActivity(t, tc.raw)
+			if tc.attached {
+				activity.MetadataVerification = &intervals.ActivityMetadataVerification{Status: "verified", Source: "write_response", Confirmed: []string{"commute"}}
+			}
+			client := &fakeActivityUpdaterClient{activity: activity}
+			tool := newUpdateActivityTool(client, nil, "test", false)
+			raw := `{"activity_id":"a1","commute":false,"include_full":true}`
+			if tc.legacyName {
+				raw = `{"activity_id":"a1","name":"renamed","commute":false,"include_full":true}`
+			}
+			result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(raw)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			out := resultMap(t, result)
+			if out["activity_id"] != "a1" || out["status"] != tc.wantStatus {
+				t.Fatalf("output=%v", out)
+			}
+			if _, ok := out["full"]; ok {
+				t.Fatalf("unmatched activity raw data surfaced as requested activity: %v", out)
+			}
+			if fields, ok := out["fields_updated"].([]any); ok && len(fields) > 0 {
+				t.Fatalf("wrong identity confirmed fields: %v", out)
+			}
+		})
+	}
+}
+
+func TestUpdateActivityLegacySparseWriteRetainsReceiptCompatibility(t *testing.T) {
+	client := &fakeActivityUpdaterClient{activity: decodeActivity(t, `{"id":"other"}`)}
+	tool := newUpdateActivityTool(client, nil, "test", false)
+	result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"activity_id":"a1","name":"renamed"}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := resultMap(t, result)
+	fields := out["fields_updated"].([]any)
+	if out["status"] != "updated" || len(fields) != 1 || fields[0] != "name" {
+		t.Fatalf("legacy sparse output=%v", out)
 	}
 }

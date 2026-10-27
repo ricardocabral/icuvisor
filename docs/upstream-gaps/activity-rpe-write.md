@@ -1,23 +1,21 @@
-# Activity RPE write contract gap
+# Activity metadata write contract and evidence
 
-Status: read-only support only (2026-08-19)
+Status: typed corrections with per-call verification (2026-10-27).
 
-The verified activity read contract exposes these upstream keys and types:
+`update_activity` accepts `commute`, `feel` (1–5), and `rpe` (1–10, sent as `icu_rpe`) alongside tags, subtype and manual-only distance corrections. The two subjective scales remain distinct; no conversion is performed. Null is rejected for these new fields, and each supplied value must be observed before it is listed in `fields_updated`.
 
-- `commute`: boolean
-- `feel`: integer, athlete-reported 1–5 feeling scale
-- `icu_rpe`: integer, athlete-reported 1–10 rating of perceived exertion
+## Public sources
 
-The sanitized activity fixtures and OpenAPI evidence verify GET/list decoding and
-preserve the native keys in full payloads. They do not verify a field-specific PUT
-request or a successful write/read round trip for `icu_rpe`. The generic PUT
-operation references the full Activity schema and identifies Strava restrictions,
-but that is not evidence that an `icu_rpe` property is accepted for writes.
+The [public Activity update schema](https://intervals.icu/api/v1/docs) documents native keys and types. [David's manual-activity API clarification](https://forum.intervals.icu/t/api-access-to-intervals-icu/609/306) names `icu_rpe`, `feel`, and `distance` explicitly. A generic full-Activity PUT schema alone still does not prove that every field is writable, or that a particular source accepts an edit.
 
-Accordingly, `update_activity` does not advertise `rpe`, `perceived_exertion`, or
-native `icu_rpe`; these fields are rejected by strict request decoding before an
-updater or HTTP client is called. `feel` and `commute` remain read-only as well.
-No conversion between the 1–5 feel scale and the 1–10 RPE scale is performed.
+## Runtime evidence
 
-Revisit this gap only with non-live, source-honest evidence of the exact writable
-request key and a successful native-field round trip.
+The client compares each new requested native field with the PUT response. If a value is missing or differs, it performs one bounded activity readback. Evidence must name the exact requested activity ID. Only matching fields appear in `fields_updated`; submitted values remain separately labelled `requested`. `_meta.verification` reports confirmed, missing and mismatched fields, evidence source, and an actionable caveat. An unverified or mismatched request is not returned as an unqualified successful update and is not automatically written again.
+
+Fixture tests prove request mapping and these verification/refusal paths. They are not a live upstream round-trip claim. No live athlete probe was performed for the October 27 implementation.
+
+## Remaining limits
+
+- Distance corrections require explicit manual-source evidence and no recorded file.
+- Recorded-file/unknown-source distance, moving/elapsed-time changes, gear assignment, native input aliases, and arbitrary field passthrough are not exposed.
+- Fields computed or reset upstream may be rejected or fail runtime verification; inspect the activity before an intentional retry.

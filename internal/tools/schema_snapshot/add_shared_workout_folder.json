@@ -1,0 +1,41 @@
+{
+  "additionalProperties": false,
+  "examples": [
+    {
+      "folder_id": "12345"
+    },
+    {
+      "folder_id": "12345",
+      "include_full": true
+    }
+  ],
+  "input_examples": [
+    {
+      "folder_id": "12345"
+    },
+    {
+      "folder_id": "12345",
+      "include_full": true
+    }
+  ],
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "folder_id": {
+      "description": "Public folder or plan ID from search_workout_library, supplied as a positive 32-bit integer string. The selected athlete receives the shared folder; the public owner's athlete ID is not a target selector.",
+      "pattern": "^[0-9]+$",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "Include the verified folder description and blurb. Owner details, share tokens and child workout payloads are always omitted; this affects output detail only.",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "folder_id"
+  ],
+  "type": "object"
+}

@@ -14,7 +14,7 @@ import (
 
 const (
 	addOrUpdateEventName                    = "add_or_update_event"
-	addOrUpdateEventDescription             = "Create or update a non-destructive calendar event such as a planned workout, race, or note. Omitting event_id creates a new event; providing event_id updates only that event and reports other events on the destination date so reschedules do not silently hide overlaps; use delete_event to remove. Optional external_id is a non-empty upstream idempotency key for retry-safe creates/updates; omit it to leave the upstream key unchanged, and use event_id for intentional edits to an existing event. Creates preflight same-day calendar events, skip matching external_id retries, and skip exact duplicates when upstream fields already match; an interrupted create is reported recovered only after a bounded same-day read verifies the intended event. Before workout creates or updates, present a human-readable preview for user approval that covers total duration, key steps, target intensities, load/distance/time changes, and what existing title/prose/tags/structured steps are preserved. `description` is a replacement for the upstream event description/DSL, not append-only notes; omit it on updates to leave the current description unchanged. For WORKOUT updates, supplying `description` without `workout_doc` can replace existing structured steps; include the desired `workout_doc` to preserve or merge structure. When both are supplied, icuvisor merges them into the upstream description DSL and the `<!-- icuvisor:steps -->` sentinel controls serialized-step placement. For WeightTraining, keep exercise prescriptions in free-text description as one Markdown '- ' line per exercise, with no workout_doc; this is not native structured strength data. WORKOUT `type` supplies sport context for structured zone targets, allowing icuvisor to emit metric suffixes when needed, such as `Z2 Power`, `Z2 HR`, or `Z2 Pace`. Prefer `workout_doc` for supported endurance structure, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
+	addOrUpdateEventDescription             = "Create or update a non-destructive calendar event such as a planned workout, race, or note. Omitting event_id creates a new event; providing event_id updates only that event and reports other events on the destination date so reschedules do not silently hide overlaps; use delete_event to remove. Optional external_id is a non-empty upstream idempotency key for retry-safe creates/updates; omit it to leave the upstream key unchanged, and use event_id for intentional edits to an existing event. Creates preflight same-day calendar events, skip matching external_id retries, and skip exact duplicates when upstream fields already match; an interrupted create is reported recovered only after a bounded same-day read verifies the intended event. Requested planned seconds or fully timed workout_doc steps receive _meta.duration_verification from a bounded event readback; mismatch/unavailable warnings preserve the known event_id and must be inspected before further writes. Before workout creates or updates, present a human-readable preview for user approval that covers total duration, key steps, target intensities, load/distance/time changes, and what existing title/prose/tags/structured steps are preserved. `description` is a replacement for the upstream event description/DSL, not append-only notes; omit it on updates to leave the current description unchanged. For WORKOUT updates, supplying `description` without `workout_doc` can replace existing structured steps; include the desired `workout_doc` to preserve or merge structure. When both are supplied, icuvisor merges them into the upstream description DSL and the `<!-- icuvisor:steps -->` sentinel controls serialized-step placement. For WeightTraining, keep exercise prescriptions in free-text description as one Markdown '- ' line per exercise, with no workout_doc; this is not native structured strength data. WORKOUT `type` supplies sport context for structured zone targets, allowing icuvisor to emit metric suffixes when needed, such as `Z2 Power`, `Z2 HR`, or `Z2 Pace`. Prefer `workout_doc` for supported endurance structure, and call `validate_workout` first if uncertain about the DSL syntax (see icuvisor://workout-syntax)."
 	descriptionOnlyWorkoutWarning           = "Description was written without workout_doc; if this item previously had structured steps, they may have been replaced. Include workout_doc when preserving or merging workout structure."
 	sameDayConflictWarning                  = "Same-day calendar events already exist; verify this create is not an unintended duplicate."
 	duplicateCreateSkippedWarning           = "Skipped create because an existing same-day event already matches the requested writable fields."
@@ -76,6 +76,7 @@ type addOrUpdateEventMeta struct {
 	DuplicateWarning              string                      `json:"duplicate_warning,omitempty"`
 	DuplicateEventID              string                      `json:"duplicate_event_id,omitempty"`
 	SameDayConflicts              []applyTrainingPlanConflict `json:"same_day_conflicts,omitempty"`
+	DurationVerification          *eventDurationVerification  `json:"duration_verification,omitempty"`
 	ConfirmationStatus            string                      `json:"confirmation_status"`
 	IncludeFull                   bool                        `json:"include_full"`
 }
@@ -128,6 +129,7 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 				if err != nil {
 					return Result{}, fmt.Errorf("shaping add_or_update_event duplicate response: %w", err)
 				}
+				payload.Meta.DurationVerification = verifyEventDuration(ctx, client, *preflight.Duplicate, args, false)
 				return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, addOrUpdateEventName, unitSystem, shapeCfg)
 			}
 		} else {
@@ -165,6 +167,7 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 					}
 					payload.Meta.Operation = "create_recovered"
 					payload.Meta.ConfirmationStatus = verifiedAfterInterruptedWriteStatus
+					payload.Meta.DurationVerification = verifyEventDuration(ctx, client, *recovered, args, false)
 					return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, addOrUpdateEventName, unitSystem, shapeCfg)
 				}
 			}
@@ -174,8 +177,103 @@ func addOrUpdateEventHandler(client EventWriterClient, profileClient ProfileClie
 		if err != nil {
 			return Result{}, fmt.Errorf("shaping add_or_update_event response: %w", err)
 		}
+		payload.Meta.DurationVerification = verifyEventDuration(ctx, client, event, args, true)
 		return encodeShaped(payload, args.IncludeFull, nil, version, debugMetadata, addOrUpdateEventName, unitSystem, shapeCfg)
 	}
+}
+
+type eventDurationVerification struct {
+	Status  string               `json:"status"`
+	Source  string               `json:"source"`
+	Fields  []eventDurationField `json:"fields"`
+	Warning string               `json:"warning,omitempty"`
+}
+
+type eventDurationField struct {
+	Field            string `json:"field"`
+	RequestedSeconds int    `json:"requested_seconds"`
+	StoredSeconds    *int   `json:"stored_seconds,omitempty"`
+	TargetSeconds    *int   `json:"target_seconds,omitempty"`
+	Status           string `json:"status"`
+}
+
+func verifyEventDuration(ctx context.Context, client EventWriterClient, event intervals.Event, args addOrUpdateEventRequest, readBack bool) *eventDurationVerification {
+	moving, elapsed := args.MovingTimeSeconds, args.ElapsedTimeSeconds
+	if moving == nil && args.WorkoutDoc != nil && fullyTimedEventSteps(args.WorkoutDoc.Steps) {
+		seconds := workoutdoc.EstimateDurationSeconds(*args.WorkoutDoc)
+		moving = &seconds
+	}
+	if moving == nil && elapsed == nil {
+		return nil
+	}
+	evidence := &eventDurationVerification{Status: "verified", Source: "same_day_event_list", Fields: []eventDurationField{}}
+	if readBack {
+		evidence.Source = "event_detail"
+		reader, ok := client.(interface {
+			GetEvent(context.Context, string) (intervals.Event, error)
+		})
+		if !ok || strings.TrimSpace(event.ID) == "" {
+			evidence.Source = "unavailable"
+			event = intervals.Event{}
+		} else {
+			stored, err := reader.GetEvent(ctx, event.ID)
+			if err != nil || stored.ID != event.ID {
+				evidence.Source = "unavailable"
+				event = intervals.Event{}
+			} else {
+				event = stored
+			}
+		}
+	}
+	for _, value := range []struct {
+		name                      string
+		requested, stored, target *int
+	}{
+		{"moving_time_seconds", moving, event.MovingTime, event.TimeTarget},
+		{"elapsed_time_seconds", elapsed, event.ElapsedTime, event.ElapsedTimeTarget},
+	} {
+		if value.requested == nil {
+			continue
+		}
+		field := eventDurationField{Field: value.name, RequestedSeconds: *value.requested, StoredSeconds: value.stored, TargetSeconds: value.target, Status: "verified"}
+		switch {
+		case value.target != nil && *value.target != *value.requested:
+			field.Status = "mismatch"
+			evidence.Status = "mismatch"
+		case value.stored == nil:
+			field.Status = "unavailable"
+			if evidence.Status != "mismatch" {
+				evidence.Status = "unavailable"
+			}
+		case *value.stored != *value.requested:
+			field.Status = "mismatch"
+			evidence.Status = "mismatch"
+		}
+		evidence.Fields = append(evidence.Fields, field)
+	}
+	switch evidence.Status {
+	case "mismatch":
+		evidence.Warning = "Stored event duration differs from the requested duration; inspect the event and its description/steps before further writes. The event identity is confirmed; use event_id for an intentional correction instead of creating it again."
+	case "unavailable":
+		evidence.Warning = "Stored event duration could not be verified; inspect the event before further writes. A target alone does not confirm parsed workout duration. Preserve the confirmed event_id when correcting or retrying."
+	}
+	return evidence
+}
+
+func fullyTimedEventSteps(steps []workoutdoc.Step) bool {
+	if len(steps) == 0 {
+		return false
+	}
+	for _, step := range steps {
+		if len(step.Steps) > 0 {
+			if !fullyTimedEventSteps(step.Steps) {
+				return false
+			}
+		} else if step.Duration <= 0 || step.Distance != nil || step.PressLap {
+			return false
+		}
+	}
+	return true
 }
 
 func decodeAddOrUpdateEventRequest(raw json.RawMessage) (addOrUpdateEventRequest, error) {

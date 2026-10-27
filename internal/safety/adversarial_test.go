@@ -21,6 +21,11 @@ type catalogToolSpec struct {
 }
 
 var v03ToolCatalog = []catalogToolSpec{
+	{name: "update_activity_message", requirement: tools.RequirementWrite},
+	{name: "delete_activity_message", requirement: tools.RequirementDelete},
+	{name: "compare_power_curves", requirement: tools.RequirementRead},
+	{name: "search_workout_library", requirement: tools.RequirementRead},
+	{name: "add_shared_workout_folder", requirement: tools.RequirementWrite},
 	{name: "add_activity_message", requirement: tools.RequirementWrite},
 	{name: "add_or_update_event", requirement: tools.RequirementWrite},
 	{name: "add_unavailable_date_range", requirement: tools.RequirementWrite},
@@ -208,11 +213,11 @@ func wantToolRegistered(mode safety.Mode, requirement tools.Requirement) bool {
 func expectedRegisteredCount(mode safety.Mode) int {
 	switch mode {
 	case safety.ModeSafe:
-		return 63
+		return 67
 	case safety.ModeFull:
-		return 71
+		return 76
 	default:
-		return 49
+		return 51
 	}
 }
 

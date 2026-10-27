@@ -45,6 +45,7 @@ type activityMessageRow struct {
 	Created   string         `json:"created,omitempty"`
 	Type      string         `json:"type,omitempty"`
 	Content   string         `json:"content,omitempty"`
+	DeletedAt string         `json:"deleted_at,omitempty"`
 	Deleted   *bool          `json:"deleted,omitempty"`
 	Seen      *bool          `json:"seen,omitempty"`
 	Full      map[string]any `json:"full,omitempty"`
@@ -106,7 +107,7 @@ func getActivityMessagesHandler(client ActivityMessagesClient, profileClient Pro
 func shapeActivityMessages(activityID string, messages []intervals.ActivityMessage, timezone string, includeFull bool, version string, limit int, sinceID int64) getActivityMessagesResponse {
 	out := getActivityMessagesResponse{ActivityID: activityID, Messages: make([]activityMessageRow, 0, len(messages)), Meta: activityReadMeta{ServerVersion: normalizeVersion(version), IncludeFull: includeFull, Limit: limit, SinceID: sinceID}}
 	for _, message := range messages {
-		row := activityMessageRow{ID: message.ID, AthleteID: message.AthleteID, Name: message.Name, Created: renderActivityMessageTime(message.Created, timezone), Type: message.Type, Content: message.Content, Deleted: message.Deleted, Seen: message.Seen}
+		row := activityMessageRow{ID: message.ID, AthleteID: message.AthleteID, Name: message.Name, Created: renderActivityMessageTime(message.Created, timezone), Type: message.Type, Content: message.Content, Deleted: message.Deleted, DeletedAt: renderActivityMessageTime(message.DeletedAt, timezone), Seen: message.Seen}
 		if includeFull {
 			row.Full = message.Raw
 		}

@@ -16,6 +16,14 @@
     "anchor": "delete_activity"
   },
   {
+    "name": "delete_activity_message",
+    "group": "activities",
+    "tier": "full",
+    "safety": "delete",
+    "summary": "Remove your own existing comment from one activity and return its previous text for recovery.",
+    "anchor": "delete_activity_message"
+  },
+  {
     "name": "get_activities",
     "group": "activities",
     "tier": "core",
@@ -100,8 +108,16 @@
     "group": "activities",
     "tier": "core",
     "safety": "write",
-    "summary": "Update one completed non-Strava activity by activity_id: rename it, replace its free-text description, and/or set athlete-logged carbohydrate intake in whole grams.",
+    "summary": "Update one completed non-Strava activity by activity_id: rename it, replace its description/tags, set commute, feel (1-5), RPE (1-10), subtype, manual-only distance in metres, or athlete-logged carbohydrate intake in whole grams.",
     "anchor": "update_activity"
+  },
+  {
+    "name": "update_activity_message",
+    "group": "activities",
+    "tier": "core",
+    "safety": "write",
+    "summary": "Replace the text of your own comment on one activity using activity_id and message_id.",
+    "anchor": "update_activity_message"
   },
   {
     "name": "analyze_correlation",
@@ -336,6 +352,14 @@
     "anchor": "resolve_calendar_dates"
   },
   {
+    "name": "compare_power_curves",
+    "group": "fitness",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Compare current and previous upstream training-season power bests with separate watts and W/kg effort attribution.",
+    "anchor": "compare_power_curves"
+  },
+  {
     "name": "get_best_efforts",
     "group": "fitness",
     "tier": "core",
@@ -488,6 +512,14 @@
     "anchor": "update_wellness"
   },
   {
+    "name": "add_shared_workout_folder",
+    "group": "workout-library",
+    "tier": "full",
+    "safety": "write",
+    "summary": "Add one publicly shared folder or training plan to the selected athlete's workout library by folder_id from search_workout_library.",
+    "anchor": "add_shared_workout_folder"
+  },
+  {
     "name": "apply_annual_training_plan",
     "group": "workout-library",
     "tier": "full",
@@ -566,6 +598,14 @@
     "safety": "read",
     "summary": "Use when the prompt asks to propose a season plan, annual training plan, race build, taper, recovery weeks, weekly load targets, or projection-ready ATP bridge; do not roll ATP/projection math in chat and do not write calendar data.",
     "anchor": "propose_annual_training_plan"
+  },
+  {
+    "name": "search_workout_library",
+    "group": "workout-library",
+    "tier": "full",
+    "safety": "read",
+    "summary": "Discover publicly shared workout-library folders and training plans by text, sport, weeks and hours per week.",
+    "anchor": "search_workout_library"
   },
   {
     "name": "update_workout",

@@ -10,6 +10,7 @@ icuvisor is an open-source MCP server that connects [intervals.icu](https://inte
 
 - **What & why:** [`docs/prd/PRD-icuvisor.md`](docs/prd/PRD-icuvisor.md), including wellness scale semantics in §6.2.C.
 - **When / phasing:** [`ROADMAP.md`](ROADMAP.md)
+- **Current MCP surface:** generated [`web/data/tools.json`](web/data/tools.json); community-driven scope and implementation boundaries are recorded in [`docs/superpowers/plans/2026-10-27-community-review.md`](docs/superpowers/plans/2026-10-27-community-review.md).
 - **Contributor rules:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - **Security policy:** [`SECURITY.md`](SECURITY.md)
 - **Release process:** [`docs/release/publishing.md`](docs/release/publishing.md)

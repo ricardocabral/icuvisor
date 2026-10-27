@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -48,18 +50,75 @@ type UpdateActivityParams struct {
 	DescriptionSet   bool
 	CarbsIngested    int
 	CarbsIngestedSet bool
+	Tags             *[]string
+	Commute          *bool
+	Feel             *int
+	RPE              *int
+	SubType          *string
+	DistanceM        *float64
+}
+
+// Validate checks sparse fields without making any upstream calls.
+func (p UpdateActivityParams) Validate() error {
+	if strings.TrimSpace(p.ActivityID) == "" {
+		return fmt.Errorf("activity ID is required")
+	}
+	if !p.NameSet && !p.DescriptionSet && !p.CarbsIngestedSet && p.Tags == nil && p.Commute == nil && p.Feel == nil && p.RPE == nil && p.SubType == nil && p.DistanceM == nil {
+		return fmt.Errorf("at least one writable field is required")
+	}
+	if p.CarbsIngestedSet && (p.CarbsIngested < 0 || p.CarbsIngested > maxActivityCarbsIngested) {
+		return fmt.Errorf("carbs_ingested must be from 0 through %d", maxActivityCarbsIngested)
+	}
+	if p.Feel != nil && (*p.Feel < 1 || *p.Feel > 5) {
+		return fmt.Errorf("feel must be from 1 through 5")
+	}
+	if p.RPE != nil && (*p.RPE < 1 || *p.RPE > 10) {
+		return fmt.Errorf("rpe must be from 1 through 10")
+	}
+	if p.SubType != nil {
+		switch *p.SubType {
+		case "NONE", "COMMUTE", "WARMUP", "COOLDOWN", "RACE":
+		default:
+			return fmt.Errorf("sub_type must be NONE, COMMUTE, WARMUP, COOLDOWN, or RACE")
+		}
+	}
+	if p.DistanceM != nil && (math.IsNaN(*p.DistanceM) || math.IsInf(*p.DistanceM, 0) || *p.DistanceM < 0 || *p.DistanceM > math.MaxFloat32) {
+		return fmt.Errorf("distance_m must be non-negative finite metres representable upstream")
+	}
+	if p.Tags != nil {
+		if *p.Tags == nil {
+			return fmt.Errorf("tags cannot be null; use an empty slice to clear tags")
+		}
+		if len(*p.Tags) > 100 {
+			return fmt.Errorf("tags must contain at most 100 entries")
+		}
+		for _, tag := range *p.Tags {
+			if strings.TrimSpace(tag) == "" || len(tag) > 128 {
+				return fmt.Errorf("tags must be non-empty and at most 128 bytes each")
+			}
+		}
+	}
+	return nil
 }
 
 type updateActivityPayload struct {
-	Name          *string `json:"name,omitempty"`
-	Description   *string `json:"description,omitempty"`
-	CarbsIngested *int    `json:"carbs_ingested,omitempty"`
+	Tags          *[]string `json:"tags,omitempty"`
+	Commute       *bool     `json:"commute,omitempty"`
+	Feel          *int      `json:"feel,omitempty"`
+	RPE           *int      `json:"icu_rpe,omitempty"`
+	SubType       *string   `json:"sub_type,omitempty"`
+	DistanceM     *float64  `json:"distance,omitempty"`
+	Name          *string   `json:"name,omitempty"`
+	Description   *string   `json:"description,omitempty"`
+	CarbsIngested *int      `json:"carbs_ingested,omitempty"`
 }
 
 // Activity contains stable activity fields used by read tools and preserves raw upstream fields.
 type Activity struct {
-	Raw map[string]any `json:"-"`
+	Raw                  map[string]any                `json:"-"`
+	MetadataVerification *ActivityMetadataVerification `json:"-"`
 
+	ChatID             *int     `json:"icu_chat_id"`
 	ID                 string   `json:"id"`
 	Name               *string  `json:"name"`
 	Type               *string  `json:"type"`
@@ -243,16 +302,19 @@ func (c *Client) LinkActivityToEvent(ctx context.Context, params LinkActivityToE
 // left untouched upstream. Returns the upstream activity after the update.
 func (c *Client) UpdateActivity(ctx context.Context, params UpdateActivityParams) (Activity, error) {
 	activityID := strings.TrimSpace(params.ActivityID)
-	if activityID == "" {
-		return Activity{}, fmt.Errorf("updating activity: activity ID is required")
+	if err := params.Validate(); err != nil {
+		return Activity{}, fmt.Errorf("updating activity: %w", err)
 	}
-	if !params.NameSet && !params.DescriptionSet && !params.CarbsIngestedSet {
-		return Activity{}, fmt.Errorf("updating activity %s: at least one of name, description, or carbs_ingested is required", activityID)
+	payload := updateActivityPayload{Tags: params.Tags, Commute: params.Commute, Feel: params.Feel, RPE: params.RPE, SubType: params.SubType, DistanceM: params.DistanceM}
+	if params.DistanceM != nil {
+		activity, err := c.GetActivity(ctx, activityID)
+		if err != nil {
+			return Activity{}, fmt.Errorf("checking manual distance update: %w", err)
+		}
+		if activity.Source == nil || *activity.Source != "MANUAL" || strings.TrimSpace(rawIDString(activity.Raw["file_type"])) != "" {
+			return Activity{}, fmt.Errorf("distance_m corrections require a manual activity without a recorded file")
+		}
 	}
-	if params.CarbsIngestedSet && (params.CarbsIngested < 0 || params.CarbsIngested > maxActivityCarbsIngested) {
-		return Activity{}, fmt.Errorf("updating activity %s: carbs_ingested must be an integer from 0 through %d", activityID, maxActivityCarbsIngested)
-	}
-	payload := updateActivityPayload{}
 	if params.NameSet {
 		name := params.Name
 		payload.Name = &name
@@ -275,7 +337,138 @@ func (c *Client) UpdateActivity(ctx context.Context, params UpdateActivityParams
 	if err := c.ensureActivityTarget(ctx, activity); err != nil {
 		return Activity{}, fmt.Errorf("updating activity %s: %w", activityID, err)
 	}
+	if verification := VerifyActivityMetadataUpdate(activity, params); verification != nil {
+		if verification.Status != "verified" {
+			readback, readErr := c.GetActivity(ctx, activityID)
+			if readErr == nil {
+				activity = readback
+				verification = VerifyActivityMetadataUpdate(activity, params)
+				verification.Source = "readback"
+			} else {
+				if ctx.Err() != nil {
+					return Activity{}, ctx.Err()
+				}
+				verification.Status = "verification_unavailable"
+				verification.Caveat = "write may have succeeded; read the activity before retrying because readback failed"
+			}
+		}
+		activity.MetadataVerification = verification
+	}
 	return activity, nil
+}
+
+// ActivityMetadataVerification reports evidence for the explicitly requested new metadata fields.
+type ActivityMetadataVerification struct {
+	Status     string   `json:"status"`
+	Source     string   `json:"source"`
+	Confirmed  []string `json:"confirmed_fields,omitempty"`
+	Missing    []string `json:"missing_fields,omitempty"`
+	Mismatched []string `json:"mismatched_fields,omitempty"`
+	Caveat     string   `json:"caveat,omitempty"`
+}
+
+// VerifyActivityMetadataUpdate requires the requested activity identity before checking native fields.
+// False, zero, and empty-list values remain explicit.
+func VerifyActivityMetadataUpdate(activity Activity, p UpdateActivityParams) *ActivityMetadataVerification {
+	v := &ActivityMetadataVerification{Status: "verified", Source: "write_response"}
+	requestedID := strings.TrimSpace(p.ActivityID)
+	identityMissing := requestedID == "" || activity.ID == ""
+	identityMismatch := activity.ID != requestedID
+	check := func(name, key string, want any) {
+		if identityMissing {
+			v.Missing = append(v.Missing, name)
+			return
+		}
+		if identityMismatch {
+			v.Mismatched = append(v.Mismatched, name)
+			return
+		}
+		actual, present := activity.Raw[key]
+		if !present || actual == nil {
+			v.Missing = append(v.Missing, name)
+			return
+		}
+		if activityMetadataValueMatches(actual, want) {
+			v.Confirmed = append(v.Confirmed, name)
+		} else {
+			v.Mismatched = append(v.Mismatched, name)
+		}
+	}
+	if p.Tags != nil {
+		check("tags", "tags", *p.Tags)
+	}
+	if p.Commute != nil {
+		check("commute", "commute", *p.Commute)
+	}
+	if p.Feel != nil {
+		check("feel", "feel", *p.Feel)
+	}
+	if p.RPE != nil {
+		check("rpe", "icu_rpe", *p.RPE)
+	}
+	if p.SubType != nil {
+		check("sub_type", "sub_type", *p.SubType)
+	}
+	if p.DistanceM != nil {
+		check("distance_m", "distance", *p.DistanceM)
+	}
+	if len(v.Confirmed)+len(v.Missing)+len(v.Mismatched) == 0 {
+		return nil
+	}
+	slices.Sort(v.Confirmed)
+	slices.Sort(v.Missing)
+	slices.Sort(v.Mismatched)
+	if len(v.Missing) > 0 {
+		v.Status = "verification_unavailable"
+	}
+	if len(v.Mismatched) > 0 {
+		v.Status = "verification_mismatch"
+	}
+	if v.Status != "verified" {
+		v.Caveat = "write may have succeeded; inspect the activity before retrying; requested values are not confirmed"
+		if identityMissing {
+			v.Caveat = "write may have succeeded; response activity ID is missing; no requested metadata values are confirmed"
+		} else if identityMismatch {
+			v.Caveat = "write may have succeeded; response activity ID does not match the requested activity; no requested metadata values are confirmed"
+		}
+	}
+	return v
+}
+
+func activityMetadataValueMatches(actual, want any) bool {
+	switch desired := want.(type) {
+	case bool:
+		got, ok := actual.(bool)
+		return ok && got == desired
+	case int:
+		got, ok := actual.(float64)
+		return ok && got == float64(desired)
+	case string:
+		got, ok := actual.(string)
+		return ok && got == desired
+	case float64:
+		got, ok := actual.(float64)
+		return ok && float32(got) == float32(desired)
+	case []string:
+		values, ok := actual.([]any)
+		if !ok || len(values) != len(desired) {
+			return false
+		}
+		got := make([]string, len(values))
+		for i, value := range values {
+			tag, ok := value.(string)
+			if !ok {
+				return false
+			}
+			got[i] = tag
+		}
+		expected := slices.Clone(desired)
+		slices.Sort(got)
+		slices.Sort(expected)
+		return slices.Equal(got, expected)
+	default:
+		return false
+	}
 }
 
 // ParseEventID parses an upstream numeric event ID used by activity paired_event_id.

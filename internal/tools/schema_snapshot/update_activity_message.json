@@ -1,0 +1,59 @@
+{
+  "additionalProperties": false,
+  "examples": [
+    {
+      "activity_id": "example-activity-1",
+      "message": "Completed the last interval at RPE 8, not 6.",
+      "message_id": 11
+    },
+    {
+      "activity_id": "example-activity-1",
+      "include_full": true,
+      "message": "Correction: three completed sets at 80 kg; preserve the original exercise notes.",
+      "message_id": 11
+    }
+  ],
+  "input_examples": [
+    {
+      "activity_id": "example-activity-1",
+      "message": "Completed the last interval at RPE 8, not 6.",
+      "message_id": 11
+    },
+    {
+      "activity_id": "example-activity-1",
+      "include_full": true,
+      "message": "Correction: three completed sets at 80 kg; preserve the original exercise notes.",
+      "message_id": 11
+    }
+  ],
+  "properties": {
+    "activity_id": {
+      "description": "Required activity ID; membership and selected athlete ownership are checked before changing a comment.",
+      "type": "string"
+    },
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "include_full": {
+      "default": false,
+      "description": "Include the original upstream comment under before.full for recovery; default returns prior text and identifiers only.",
+      "type": "boolean"
+    },
+    "message": {
+      "description": "Replacement comment text, non-empty after trimming. Read and preserve current user edits before replacement. The previous content is returned under before.",
+      "type": "string"
+    },
+    "message_id": {
+      "description": "Existing comment ID from get_activity_messages. The credential owner must be the comment author; chat IDs are resolved by the server.",
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "activity_id",
+    "message_id",
+    "message"
+  ],
+  "type": "object"
+}

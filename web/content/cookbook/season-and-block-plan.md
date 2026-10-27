@@ -24,6 +24,12 @@ Send the stages as **separate messages**. Wait for each before sending the next.
 Stage 1 of planning my season. Use icuvisor with my intervals.icu data.
 Read my athlete profile, my fitness trend (CTL / ATL / TSB) for the last
 8 weeks, my training-load summary for that period, and my upcoming events.
+Read get_planning_context and calendar availability constraints as well.
+Preserve training_availability, can_train_sports, and max_training_time; do not
+convert the time cap or schedule against it until its upstream units are known.
+Keep missing history distinct from zero training, and distinguish completed
+sessions from future or missed plans. List my stated restrictions, protected
+commitments, allowed sports and available slots; ask about anything missing.
 If I train multiple endurance sports, call get_fitness with
 include_per_sport_load_trends:true, report its explicit unavailable reason, and
 use get_training_summary sport rows only for factual weekly run, bike, swim, and
@@ -42,6 +48,12 @@ race, hilly]. Design a periodized plan from now to race day:
 - Give a weekly training-load target and ramp rate per block.
 - Place recovery weeks (every 3rd or 4th week).
 - State a target CTL for race day.
+Treat session counts as separate from available slots: two allowed sports in
+one slot are alternatives, not two sessions. Keep explicit no-consecutive-day,
+sport-priority, unavailable-day, illness and injury restrictions visible; do
+not substitute a model recommendation for a restriction or infer medical
+clearance from wellness data. Report conflicts rather than silently filling
+every slot, reserving flexible slots for strength, or redistributing deficits.
 Use get_fitness_projection to check the CTL path is realistic given my
 current fitness and the ramp you chose. Present the plan as a week-by-week
 table. Do not write anything to my calendar yet. If wellness/readiness data is
@@ -52,7 +64,9 @@ missing, do not use it as evidence for or against the plan.
 
 ```text
 Stage 3. The plan looks good. Add it to my calendar one week at a time:
-create the block markers and the key sessions as events, show me each week
+first show the exact proposed dates, sports, durations, load, preserved events
+and constraint conflicts. Do not replace completed sessions or user-authored
+commitments. Create only the approved events, show me each week
 before moving to the next, and stop if I say so. If I ask for gym or strength
 work, schedule only a simple gym time block or free-text note unless my
 intervals.icu account exposes a supported workout type; do not invent detailed

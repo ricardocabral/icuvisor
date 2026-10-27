@@ -1,0 +1,48 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "as_of_date": {
+      "description": "Current athlete-local date YYYY-MM-DD passed to upstream now to resolve season boundaries; never a UTC timestamp.",
+      "type": "string"
+    },
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "duration_seconds": {
+      "description": "Up to 16 duration buckets in seconds, including long efforts. Defaults to 5,15,30,60,300,1200,3600; only upstream values are returned.",
+      "items": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "maxItems": 16,
+      "type": "array"
+    },
+    "include_full": {
+      "default": false,
+      "description": "Include raw upstream arrays and activity maps keyed by season selector when true.",
+      "type": "boolean"
+    },
+    "season_offsets": {
+      "description": "Season offsets: 0=current upstream season, 1=previous, up to 10. Defaults to [0,1]; at most four unique offsets. Missing seasons remain explicitly unavailable.",
+      "items": {
+        "maximum": 10,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "sport": {
+      "default": "Ride",
+      "description": "intervals.icu sport/type; defaults to Ride. Every compared curve uses this sport.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "as_of_date"
+  ],
+  "type": "object"
+}

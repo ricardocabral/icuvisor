@@ -137,7 +137,7 @@ func TestDiffSpecsIgnoresMetadataOnlyChanges(t *testing.T) {
 	for _, want := range []string{
 		"No structural OpenAPI key drift detected",
 		"Metadata, descriptions, examples, or formatting may have changed",
-		"method/request/response/field-level semantic edits are outside this key-level check",
+		"method/request/response semantics, enums, requiredness, and composed schemas are outside this check",
 	} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("markdown output missing %q:\n%s", want, out)
@@ -174,7 +174,7 @@ func TestRenderMarkdownNoChangeOutput(t *testing.T) {
 		"No structural OpenAPI key drift detected",
 		"the `paths` key inventory and `components.schemas` names are unchanged",
 		"Metadata, descriptions, examples, or formatting may have changed",
-		"method/request/response/field-level semantic edits are outside this key-level check",
+		"method/request/response semantics, enums, requiredness, and composed schemas are outside this check",
 		"Added paths: 0",
 		"Removed paths: 0",
 		"Added schemas: 0",
@@ -229,4 +229,34 @@ func fixtureSpec(paths, schemas []string) []byte {
 	}
 	b.WriteString(`}}}`)
 	return []byte(b.String())
+}
+
+func TestDiffSpecsReportsPropertyDrift(t *testing.T) {
+	baseline := []byte(`{"paths":{"/a":{}},"components":{"schemas":{"Activity":{"type":"object","properties":{"gone":{"type":"string"},"nested":{"type":"object","properties":{"value":{"type":"integer"}}},"rows":{"type":"array","items":{"type":"object","properties":{"score":{"type":"integer"}}}},"changed":{"type":"string"},"reference":{"$ref":"#/components/schemas/A"}}}}}}`)
+	latest := []byte(`{"paths":{"/a":{}},"components":{"schemas":{"Activity":{"type":"object","properties":{"added":{"type":"number"},"nested":{"type":"object","properties":{"value":{"type":"number"}}},"rows":{"type":"array","items":{"type":"object","properties":{"score":{"type":"number"}}}},"changed":{"type":"integer"},"reference":{"$ref":"#/components/schemas/B"}}}}}}`)
+	diff, err := diffSpecs(baseline, latest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := renderMarkdown(diff, "baseline", "latest")
+	for _, want := range []string{"Property drift detected", "Activity.added", "Activity.gone", "Activity.changed: string -> integer", "Activity.nested.value: integer -> number", "Activity.rows[].score: integer -> number", "Activity.reference: ref(#/components/schemas/A) -> ref(#/components/schemas/B)"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("report missing %q: %s", want, out)
+		}
+	}
+	if again := renderMarkdown(diff, "baseline", "latest"); again != out {
+		t.Fatal("report not deterministic")
+	}
+}
+
+func TestDiffSpecsIgnoresPropertyDocumentationAndOrdering(t *testing.T) {
+	baseline := []byte(`{"paths":{"/a":{}},"components":{"schemas":{"Activity":{"properties":{"value":{"type":"number","description":"before","example":1},"other":{"type":"string"}}}}}}`)
+	latest := []byte(`{"paths":{"/a":{}},"components":{"schemas":{"Activity":{"properties":{"other":{"type":"string"},"value":{"description":"after","type":"number","example":2}}}}}}`)
+	diff, err := diffSpecs(baseline, latest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(renderMarkdown(diff, "baseline", "latest"), "Property drift detected") {
+		t.Fatal("documentation-only edits reported as property drift")
+	}
 }

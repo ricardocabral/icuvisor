@@ -52,7 +52,7 @@ icuvisor also ships as an MSI built by CI on every release. The MSI is currently
 
    Replace `<version>` and `<arch>` with the file you downloaded. The two hashes must match.
 
-3. Double-click the MSI. When SmartScreen shows **"Windows protected your PC"**, click **More info → Run anyway**. This is expected for unsigned pre-v1 builds.
+3. Double-click the MSI. When SmartScreen shows **"Windows protected your PC"**, click **More info → Run anyway**. This is expected for unsigned builds.
 4. The installer is per-user — no UAC prompt. Files land in `%LOCALAPPDATA%\Programs\icuvisor`, which expands to `C:\Users\<you>\AppData\Local\Programs\icuvisor`, and that directory is added to your user `PATH`. `AppData` is hidden in File Explorer by default, so a normal C: drive search will not find it — paste the path into the address bar, or enable **View → Show → Hidden items**.
 5. Open a **new** PowerShell or Command Prompt window (existing ones will not have the updated `PATH`) and confirm:
 
