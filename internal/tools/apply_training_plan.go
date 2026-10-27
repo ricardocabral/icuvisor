@@ -20,7 +20,7 @@ import (
 
 const (
 	applyTrainingPlanName                    = "apply_training_plan"
-	applyTrainingPlanDescription             = "Apply an existing workout-library schedule to the athlete calendar from an anchor start date. Workouts must carry relative-day scheduling metadata; unscheduled template folders are rejected, and an active athlete training-plan assignment is not required. Reuses each workout's original description DSL when available. Defaults to dry_run:true, fetches plan workouts server-side by plan_id, marks conflicts with category/type/name/date details, and only replaces existing workout events when ICUVISOR_DELETE_MODE=full while protecting races, notes, and unavailable-like calendar items."
+	applyTrainingPlanDescription             = "Apply an existing workout-library schedule to the athlete calendar from an anchor start date. Workouts must carry relative-day scheduling metadata; unscheduled template folders are rejected, and an active athlete training-plan assignment is not required. Reuses each workout's original description DSL when available. Defaults to dry_run:true, fetches plan workouts server-side by plan_id, marks conflicts with category/type/name/date details, and only replaces existing workout events when ICUVISOR_DELETE_MODE=full while protecting races, notes, unavailable-like calendar items, and explicit calendar availability/sport/time restrictions. Created events with planned seconds include per-event duration readback evidence under _meta.duration_verifications; inspect mismatch/unavailable warnings before further writes."
 	invalidApplyTrainingPlanArgumentsMessage = "invalid apply_training_plan arguments; provide plan_id, start_date YYYY-MM-DD, optional dry_run, and conflict_policy skip_existing or replace_existing"
 	applyTrainingPlanMessage                 = "could not apply training plan; check intervals.icu credentials, athlete ID, plan ID, date range, and delete-mode configuration"
 	applyTrainingPlanConflictSkip            = "skip_existing"
@@ -59,13 +59,16 @@ type applyTrainingPlanProposedEvent struct {
 }
 
 type applyTrainingPlanConflict struct {
-	EventID   string `json:"event_id,omitempty"`
-	Date      string `json:"date,omitempty"`
-	Category  string `json:"category,omitempty"`
-	Type      string `json:"type,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Reason    string `json:"reason"`
-	Protected bool   `json:"protected"`
+	EventID              string    `json:"event_id,omitempty"`
+	Date                 string    `json:"date,omitempty"`
+	Category             string    `json:"category,omitempty"`
+	Type                 string    `json:"type,omitempty"`
+	Name                 string    `json:"name,omitempty"`
+	Reason               string    `json:"reason"`
+	Protected            bool      `json:"protected"`
+	TrainingAvailability *string   `json:"training_availability,omitempty"`
+	CanTrainSports       *[]string `json:"can_train_sports,omitempty"`
+	MaxTrainingTime      *int      `json:"max_training_time,omitempty"`
 }
 
 type applyTrainingPlanSkipped struct {
@@ -81,15 +84,21 @@ type applyTrainingPlanReplaced struct {
 }
 
 type applyTrainingPlanMeta struct {
-	PlanID         string                      `json:"plan_id"`
-	StartDate      string                      `json:"start_date"`
-	DryRun         bool                        `json:"dry_run"`
-	ConflictPolicy string                      `json:"conflict_policy"`
-	CreatedCount   int                         `json:"created_count"`
-	Skipped        []applyTrainingPlanSkipped  `json:"skipped"`
-	Replaced       []applyTrainingPlanReplaced `json:"replaced,omitempty"`
-	DeleteMode     string                      `json:"delete_mode"`
-	Timezone       string                      `json:"timezone"`
+	PlanID                string                             `json:"plan_id"`
+	StartDate             string                             `json:"start_date"`
+	DryRun                bool                               `json:"dry_run"`
+	ConflictPolicy        string                             `json:"conflict_policy"`
+	DurationVerifications []appliedEventDurationVerification `json:"duration_verifications,omitempty"`
+	CreatedCount          int                                `json:"created_count"`
+	Skipped               []applyTrainingPlanSkipped         `json:"skipped"`
+	Replaced              []applyTrainingPlanReplaced        `json:"replaced,omitempty"`
+	DeleteMode            string                             `json:"delete_mode"`
+	Timezone              string                             `json:"timezone"`
+}
+
+type appliedEventDurationVerification struct {
+	EventID      string                     `json:"event_id"`
+	Verification *eventDurationVerification `json:"verification"`
 }
 
 type applyTrainingPlanWorkout struct {
@@ -232,6 +241,9 @@ func applyTrainingPlan(ctx context.Context, client ApplyTrainingPlanClient, args
 		createdRow, err := eventRow(created, false, timezoneName, workoutPreviewContextForEvent(created, profile, unitSystem))
 		if err != nil {
 			return applyTrainingPlanResponse{}, err
+		}
+		if verification := verifyEventDuration(ctx, client, created, addOrUpdateEventRequest{MovingTimeSeconds: params.MovingTimeSeconds, ElapsedTimeSeconds: params.ElapsedTimeSeconds}, true); verification != nil {
+			payload.Meta.DurationVerifications = append(payload.Meta.DurationVerifications, appliedEventDurationVerification{EventID: created.ID, Verification: verification})
 		}
 		payload.CreatedEvents = append(payload.CreatedEvents, createdRow)
 		payload.Meta.CreatedCount++
@@ -393,12 +405,18 @@ func applyTrainingPlanConflictsForParams(params intervals.WriteEventParams, even
 func applyTrainingPlanConflictFromEvent(event intervals.Event, reason string) applyTrainingPlanConflict {
 	category := firstNonEmpty(stringValue(event.Category), anyString(event.Raw["category"]))
 	conflict := applyTrainingPlanConflict{EventID: event.ID, Date: eventDateOnly(event), Category: category, Type: firstNonEmpty(stringValue(event.Type), anyString(event.Raw["type"])), Name: firstNonEmpty(stringValue(event.Name), anyString(event.Raw["name"])), Reason: reason}
+	conflict.TrainingAvailability = event.TrainingAvailability
+	conflict.CanTrainSports = event.CanTrainSports
+	conflict.MaxTrainingTime = event.MaxTrainingTime
+	if event.CanTrainSports != nil || event.MaxTrainingTime != nil || (event.TrainingAvailability != nil && !sameText(*event.TrainingAvailability, "NORMAL")) {
+		conflict.Reason = "calendar_constraints"
+	}
 	conflict.Protected = applyTrainingPlanConflictProtected(conflict)
 	return conflict
 }
 
 func applyTrainingPlanConflictProtected(conflict applyTrainingPlanConflict) bool {
-	if conflict.Reason == "duplicate_existing_event" || conflict.Reason == "duplicate_plan_date" || conflict.Reason == "matching_external_id" {
+	if conflict.Reason == "calendar_constraints" || conflict.Reason == "duplicate_existing_event" || conflict.Reason == "duplicate_plan_date" || conflict.Reason == "matching_external_id" {
 		return true
 	}
 	return !strings.EqualFold(strings.TrimSpace(conflict.Category), "WORKOUT")

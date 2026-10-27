@@ -59,32 +59,35 @@ type WriteEventParams struct {
 type Event struct {
 	Raw map[string]any `json:"-"`
 
-	ID                string   `json:"-"`
-	ExternalID        *string  `json:"external_id"`
-	Name              *string  `json:"name"`
-	Type              *string  `json:"type"`
-	Category          *string  `json:"category"`
-	StartDateLocal    *string  `json:"start_date_local"`
-	EndDateLocal      *string  `json:"end_date_local"`
-	Updated           *string  `json:"updated"`
-	PlanApplied       *string  `json:"plan_applied"`
-	Description       *string  `json:"description"`
-	Indoor            *bool    `json:"indoor"`
-	HideFromAthlete   *bool    `json:"hide_from_athlete"`
-	AthleteCannotEdit *bool    `json:"athlete_cannot_edit"`
-	Color             *string  `json:"color"`
-	NotOnFitnessChart *bool    `json:"not_on_fitness_chart"`
-	TrainingLoad      *float64 `json:"icu_training_load"`
-	LoadTarget        *float64 `json:"load_target"`
-	Distance          *float64 `json:"distance"`
-	DistanceTarget    *float64 `json:"distance_target"`
-	MovingTime        *int     `json:"moving_time"`
-	TimeTarget        *int     `json:"time_target"`
-	ElapsedTime       *int     `json:"elapsed_time"`
-	ElapsedTimeTarget *int     `json:"elapsed_time_target"`
-	WorkoutDoc        any      `json:"workout_doc"`
-	TrainingPlanID    any      `json:"training_plan_id"`
-	CalendarID        any      `json:"calendar_id"`
+	ID                   string    `json:"-"`
+	ExternalID           *string   `json:"external_id"`
+	Name                 *string   `json:"name"`
+	Type                 *string   `json:"type"`
+	Category             *string   `json:"category"`
+	StartDateLocal       *string   `json:"start_date_local"`
+	EndDateLocal         *string   `json:"end_date_local"`
+	Updated              *string   `json:"updated"`
+	PlanApplied          *string   `json:"plan_applied"`
+	Description          *string   `json:"description"`
+	Indoor               *bool     `json:"indoor"`
+	HideFromAthlete      *bool     `json:"hide_from_athlete"`
+	AthleteCannotEdit    *bool     `json:"athlete_cannot_edit"`
+	Color                *string   `json:"color"`
+	NotOnFitnessChart    *bool     `json:"not_on_fitness_chart"`
+	TrainingLoad         *float64  `json:"icu_training_load"`
+	LoadTarget           *float64  `json:"load_target"`
+	Distance             *float64  `json:"distance"`
+	DistanceTarget       *float64  `json:"distance_target"`
+	MovingTime           *int      `json:"moving_time"`
+	TimeTarget           *int      `json:"time_target"`
+	ElapsedTime          *int      `json:"elapsed_time"`
+	ElapsedTimeTarget    *int      `json:"elapsed_time_target"`
+	TrainingAvailability *string   `json:"training_availability"`
+	CanTrainSports       *[]string `json:"can_train_sports"`
+	MaxTrainingTime      *int      `json:"max_training_time"`
+	WorkoutDoc           any       `json:"workout_doc"`
+	TrainingPlanID       any       `json:"training_plan_id"`
+	CalendarID           any       `json:"calendar_id"`
 }
 
 // UnmarshalJSON decodes Event while retaining the original object for full responses.
