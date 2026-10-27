@@ -188,11 +188,22 @@
         "required": true,
         "type": "string",
         "description": "Public folder or plan ID from search_workout_library, supplied as a positive 32-bit integer string. The selected athlete receives the shared folder; the public owner's athlete ID is not a target selector."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "Include the verified folder description and blurb. Owner details, share tokens and child workout payloads are always omitted; this affects output detail only.",
+        "default": false
       }
     ],
     "examples": [
       {
         "folder_id": "12345"
+      },
+      {
+        "folder_id": "12345",
+        "include_full": true
       }
     ]
   },
@@ -3196,8 +3207,8 @@
         "name": "limit",
         "required": false,
         "type": "integer",
-        "description": "Maximum number of public folders returned (1-100, default 30). The API has no cursor; narrow filters when this limit is reached.",
-        "default": 30
+        "description": "Maximum number of public folders returned (1-100, default 3). The API has no cursor; narrow filters when this limit is reached.",
+        "default": 3
       },
       {
         "name": "q",

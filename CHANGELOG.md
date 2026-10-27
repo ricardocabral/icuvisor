@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added activity-comment editing and full-delete-mode removal with selected-athlete/message membership checks, separate authenticated-author verification, and previous-text recovery.
 - Added typed activity corrections for tags, commute, feel/RPE, subtype, and manual-only distance, with native response/readback verification and explicit unconfirmed-field results.
 - Added full-toolset season power-curve comparisons, independent W/kg winning-activity/date provenance, and optional upstream fitted-model summaries.
-- Added full-toolset public workout-library search and explicit shared-folder import, with bounded responses and verified selected-athlete library readback.
+- Added full-toolset public workout-library search and explicit shared-folder import, with a compact three-result search default, optional curated folder details, and verified selected-athlete library readback.
 - Calendar reads now retain availability, allowed-sport, and time-cap constraints; calendar and library-plan writes report stored-duration verification evidence.
 - Upstream API drift reports now include property additions/removals/type changes within existing schemas.
 

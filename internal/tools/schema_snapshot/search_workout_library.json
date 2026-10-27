@@ -104,8 +104,8 @@
       "type": "boolean"
     },
     "limit": {
-      "default": 30,
-      "description": "Maximum number of public folders returned (1-100, default 30). The API has no cursor; narrow filters when this limit is reached.",
+      "default": 3,
+      "description": "Maximum number of public folders returned (1-100, default 3). The API has no cursor; narrow filters when this limit is reached.",
       "maximum": 100,
       "minimum": 1,
       "type": "integer"
