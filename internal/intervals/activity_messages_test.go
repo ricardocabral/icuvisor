@@ -150,7 +150,7 @@ func TestChangeActivityMessageSafetyAndRouting(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				switch r.URL.Path {
 				case "/athlete/i12345", "/athlete/0":
-					_, _ = w.Write([]byte(`{"id":"i12345"}`))
+					_, _ = w.Write([]byte(`{"id":"i12345","timezone":"America/Sao_Paulo"}`))
 				case "/activity/a1":
 					body := tc.activity
 					if body == "" {
@@ -208,6 +208,9 @@ func TestChangeActivityMessageSafetyAndRouting(t *testing.T) {
 			}
 			if writes != tc.wantWrites {
 				t.Fatalf("writes=%d want %d", writes, tc.wantWrites)
+			}
+			if err == nil && got.Timezone != "America/Sao_Paulo" {
+				t.Errorf("selected athlete timezone=%q", got.Timezone)
 			}
 			if err == nil && got.Status != tc.wantStatus {
 				t.Errorf("status=%s", got.Status)

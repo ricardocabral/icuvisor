@@ -153,8 +153,9 @@ type ChangeActivityMessageParams struct {
 
 // ActivityMessageChange carries a recovery copy only after a successful scoped change.
 type ActivityMessageChange struct {
-	Before ActivityMessage
-	Status string
+	Timezone string
+	Before   ActivityMessage
+	Status   string
 }
 
 // GetAuthenticatedAthleteProfile retrieves the credential owner's identity, never the coach target.
@@ -232,7 +233,7 @@ func (c *Client) changeActivityMessage(ctx context.Context, params ChangeActivit
 	}
 	if message.Deleted != nil && *message.Deleted {
 		if remove {
-			return ActivityMessageChange{Before: *message, Status: "already_deleted"}, nil
+			return ActivityMessageChange{Before: *message, Status: "already_deleted", Timezone: profile.Timezone}, nil
 		}
 		return ActivityMessageChange{}, fmt.Errorf("deleted comments cannot be edited")
 	}
@@ -251,5 +252,5 @@ func (c *Client) changeActivityMessage(ctx context.Context, params ChangeActivit
 	if err != nil {
 		return ActivityMessageChange{}, fmt.Errorf("changing activity comment: %w", err)
 	}
-	return ActivityMessageChange{Before: *message, Status: status}, nil
+	return ActivityMessageChange{Before: *message, Status: status, Timezone: profile.Timezone}, nil
 }

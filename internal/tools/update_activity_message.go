@@ -33,11 +33,11 @@ type changeActivityMessageResponse struct {
 	Before     activityMessageRow `json:"before"`
 }
 
-func newUpdateActivityMessageTool(client ActivityMessageEditorClient, version string, debugMetadata bool, shaping ...responseShaping) Tool {
-	return coreTool(Tool{Name: updateActivityMessageName, Description: "Replace the text of your own comment on one activity using activity_id and message_id. Returns the prior text for recovery; upstream permissions still apply. Read the existing comment first and preserve user edits. Omitted fields are never passed through to the chat API.", InputSchema: changeActivityMessageInputSchema(false), OutputSchema: changeActivityMessageOutputSchema(), Requirement: RequirementWrite, Handler: changeActivityMessageHandler(client, false, version, debugMetadata, responseShapingOrDefault(shaping))})
+func newUpdateActivityMessageTool(client ActivityMessageEditorClient, version string, timezoneFallback string, debugMetadata bool, shaping ...responseShaping) Tool {
+	return coreTool(Tool{Name: updateActivityMessageName, Description: "Replace the text of your own comment on one activity using activity_id and message_id. Returns the prior text for recovery; upstream permissions still apply. Read the existing comment first and preserve user edits. Omitted fields are never passed through to the chat API.", InputSchema: changeActivityMessageInputSchema(false), OutputSchema: changeActivityMessageOutputSchema(), Requirement: RequirementWrite, Handler: changeActivityMessageHandler(client, false, version, timezoneFallback, debugMetadata, responseShapingOrDefault(shaping))})
 }
 
-func changeActivityMessageHandler(client ActivityMessageEditorClient, remove bool, version string, debugMetadata bool, shapeCfg responseShaping) Handler {
+func changeActivityMessageHandler(client ActivityMessageEditorClient, remove bool, version string, timezoneFallback string, debugMetadata bool, shapeCfg responseShaping) Handler {
 	return func(ctx context.Context, req Request) (Result, error) {
 		args, err := DecodeStrict[changeActivityMessageRequest](req.Arguments)
 		if err != nil {
@@ -73,7 +73,8 @@ func changeActivityMessageHandler(client ActivityMessageEditorClient, remove boo
 			}
 			return Result{}, NewUserError(changeActivityMessageError, err)
 		}
-		before := activityMessageRow{ID: changed.Before.ID, Content: changed.Before.Content, Created: changed.Before.Created, Deleted: changed.Before.Deleted, DeletedAt: changed.Before.DeletedAt}
+		timezone := profileTimezone(changed.Timezone, timezoneFallback)
+		before := activityMessageRow{ID: changed.Before.ID, Content: changed.Before.Content, Created: renderActivityMessageTime(changed.Before.Created, timezone), Deleted: changed.Before.Deleted, DeletedAt: renderActivityMessageTime(changed.Before.DeletedAt, timezone)}
 		if args.IncludeFull {
 			before.Full = changed.Before.Raw
 		}
@@ -96,7 +97,12 @@ func changeActivityMessageInputSchema(remove bool) map[string]any {
 		props["message"] = map[string]any{"type": "string", "description": "Replacement comment text, non-empty after trimming. Read and preserve current user edits before replacement. The previous content is returned under before."}
 		required = append(required, "message")
 	}
-	return map[string]any{"type": "object", "additionalProperties": false, "required": required, "properties": props}
+	examples := []map[string]any{{"activity_id": "example-activity-1", "message_id": 11}, {"activity_id": "example-activity-1", "message_id": 11, "include_full": true}}
+	if !remove {
+		examples[0]["message"] = "Completed the last interval at RPE 8, not 6."
+		examples[1]["message"] = "Correction: three completed sets at 80 kg; preserve the original exercise notes."
+	}
+	return map[string]any{"type": "object", "additionalProperties": false, "required": required, "properties": props, "examples": examples, "input_examples": examples}
 }
 func changeActivityMessageOutputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": true, "description": "Scoped own-comment change result: activity_id, message_id, status (updated/deleted/already_deleted), and before with prior text for manual recovery. No other athlete's comment content is returned on failure."}
