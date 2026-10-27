@@ -27,9 +27,25 @@
       "minimum": 0,
       "type": "integer"
     },
+    "commute": {
+      "description": "Explicit commute flag; false clears the flag. Omit to leave unchanged; null is rejected. No inference from title or tags.",
+      "type": "boolean"
+    },
     "description": {
       "description": "Optional replacement free-text activity description; this is not append-only. Omit to leave unchanged; pass an explicit empty string to clear the description. For completed WeightTraining, read and preserve existing notes when editing, and record performed exercises as one Markdown '- ' line each after a blank line (not '•'); give actual sets/reps or time/distance and explicit load units/basis when known, and do not invent missing values. Prose metadata only — to write structured endurance intervals, use set_activity_intervals with a workout_doc.",
       "type": "string"
+    },
+    "distance_m": {
+      "description": "Manual-activity distance in metres; zero is explicit. Only accepted for upstream source MANUAL with no recorded file. File-backed and unknown-source corrections are withheld because recomputation semantics are unverified. Omit to preserve; null is rejected. Time correction is unsupported.",
+      "maximum": 3.4028234663852886e+38,
+      "minimum": 0,
+      "type": "number"
+    },
+    "feel": {
+      "description": "Athlete-reported feel, scale 1-5. Omit to leave unchanged; null and zero are rejected and clearing is unsupported.",
+      "maximum": 5,
+      "minimum": 1,
+      "type": "integer"
     },
     "include_full": {
       "default": false,
@@ -39,6 +55,33 @@
     "name": {
       "description": "Optional replacement activity title. Omit to leave unchanged. Empty strings are rejected to avoid accidentally blanking the title; intervals.icu's UI also rejects blank titles.",
       "type": "string"
+    },
+    "rpe": {
+      "description": "Athlete-reported rating of perceived exertion, scale 1-10, written to upstream icu_rpe. Omit to leave unchanged; null and zero are rejected and clearing is unsupported. Distinct from device perceived_exertion.",
+      "maximum": 10,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "sub_type": {
+      "description": "Activity subtype; NONE clears the subtype. Omit to preserve; null is rejected. Independent of the explicitly supplied commute flag.",
+      "enum": [
+        "NONE",
+        "COMMUTE",
+        "WARMUP",
+        "COOLDOWN",
+        "RACE"
+      ],
+      "type": "string"
+    },
+    "tags": {
+      "description": "Replace all activity tags; [] clears tags. Omit to preserve existing tags; null is rejected. At most 100 non-empty tags of at most 128 bytes each.",
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 100,
+      "type": "array"
     }
   },
   "required": [

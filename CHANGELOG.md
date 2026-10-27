@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added activity-comment editing and full-delete-mode removal with selected-athlete/message membership checks, separate authenticated-author verification, and previous-text recovery.
+- Added typed activity corrections for tags, commute, feel/RPE, subtype, and manual-only distance, with native response/readback verification and explicit unconfirmed-field results.
+- Added full-toolset season power-curve comparisons, independent W/kg winning-activity/date provenance, and optional upstream fitted-model summaries.
+- Added full-toolset public workout-library search and explicit shared-folder import, with bounded responses and verified selected-athlete library readback.
+- Calendar reads now retain availability, allowed-sport, and time-cap constraints; calendar and library-plan writes report stored-duration verification evidence.
+- Upstream API drift reports now include property additions/removals/type changes within existing schemas.
+
+### Fixed
+
+- Deleted activity-comment timestamps no longer break message-list decoding; terse results preserve the deletion boolean and expose the timestamp.
+- Replacing a library plan protects workout rows with explicit calendar availability/sport/time restrictions.
+- HRV baselines refuse known provider/device transitions instead of returning pooled comparisons, keep missing provenance explicit, and never substitute SDNN for RMSSD.
+
+### Changed
+
+- Clarified model choice, local control, race-split and dated-session workflows, client connection differences, and platform-specific signing claims on the website.
+- Updated ChatGPT setup to the current custom MCP plugin flow and added missing-option, authorization, and catalog-refresh troubleshooting.
+- Strengthened planning prompts and recipes to preserve explicit restrictions, distinguish requested sessions from available slots, and inspect actual write evidence.
+
 ## [1.8.2] - 2026-10-23
 
 ### Security

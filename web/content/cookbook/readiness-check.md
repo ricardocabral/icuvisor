@@ -65,6 +65,8 @@ create a second active workout for the same session.
 | 3 | [`get_fitness`]({{< relref "/reference/tools#get_fitness" >}}) | CTL / ATL / TSB — the fatigue side of the picture. |
 | 4 | [`get_today`]({{< relref "/reference/tools#get_today" >}}) | Optional context for today's planned workout status, `indoor` flag, weather availability/provenance, and completed activity tags. |
 
+`compute_baseline` keeps RMSSD (`hrv`) and SDNN (`hrv_sdnn`) separate. A known provider or device transition makes the pooled comparison unavailable; select windows from one measurement source to rebuild the baseline. Missing provenance is unknown, not proof that sources match.
+
 `analyze_correlation` can be added if you want to know whether a wellness metric tracks load over a longer window.
 
 ## A good answer looks like

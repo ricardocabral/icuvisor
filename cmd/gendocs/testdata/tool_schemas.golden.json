@@ -179,6 +179,23 @@
       }
     ]
   },
+  "add_shared_workout_folder": {
+    "name": "add_shared_workout_folder",
+    "description": "Add one publicly shared folder or training plan to the selected athlete's workout library by folder_id from search_workout_library.",
+    "arguments": [
+      {
+        "name": "folder_id",
+        "required": true,
+        "type": "string",
+        "description": "Public folder or plan ID from search_workout_library, supplied as a positive 32-bit integer string. The selected athlete receives the shared folder; the public owner's athlete ID is not a target selector."
+      }
+    ],
+    "examples": [
+      {
+        "folder_id": "12345"
+      }
+    ]
+  },
   "add_unavailable_date_range": {
     "name": "add_unavailable_date_range",
     "description": "Create unavailable calendar markers across an inclusive athlete-local date range for Sick, Injured, or Holiday/time-off blocks.",
@@ -920,6 +937,52 @@
       }
     ]
   },
+  "compare_power_curves": {
+    "name": "compare_power_curves",
+    "description": "Compare current and previous upstream training-season power bests with separate watts and W/kg effort attribution.",
+    "arguments": [
+      {
+        "name": "as_of_date",
+        "required": true,
+        "type": "string",
+        "description": "Current athlete-local date YYYY-MM-DD passed to upstream now to resolve season boundaries; never a UTC timestamp."
+      },
+      {
+        "name": "duration_seconds",
+        "required": false,
+        "type": "array",
+        "description": "Up to 16 duration buckets in seconds, including long efforts. Defaults to 5,15,30,60,300,1200,3600; only upstream values are returned.",
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "Include raw upstream arrays and activity maps keyed by season selector when true.",
+        "default": false
+      },
+      {
+        "name": "season_offsets",
+        "required": false,
+        "type": "array",
+        "description": "Season offsets: 0=current upstream season, 1=previous, up to 10. Defaults to [0,1]; at most four unique offsets. Missing seasons remain explicitly unavailable.",
+        "items": {
+          "required": false,
+          "type": "integer"
+        }
+      },
+      {
+        "name": "sport",
+        "required": false,
+        "type": "string",
+        "description": "intervals.icu sport/type; defaults to Ride. Every compared curve uses this sport.",
+        "default": "Ride"
+      }
+    ]
+  },
   "compute_activity_segment_stats": {
     "name": "compute_activity_segment_stats",
     "description": "Use when the prompt asks for mean, median, p90, normalized power, intensity factor, drift, or decoupling over an explicit activity segment, including first-vs-last distance comparisons, as the analyzer-family raw-stream exception, or when get_activity_intervals reports a single averaged/collapsed lap caveat and the user needs stream-based evidence before judging interval execution; do not fetch get_activity_streams samples and reduce them in chat.",
@@ -1649,6 +1712,31 @@
         "required": true,
         "type": "string",
         "description": "Required opaque upstream activity ID to delete. This destructive operation has no confirm argument; the tool is registered only when ICUVISOR_DELETE_MODE=full."
+      }
+    ]
+  },
+  "delete_activity_message": {
+    "name": "delete_activity_message",
+    "description": "Remove your own existing comment from one activity and return its previous text for recovery.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Required activity ID; membership and selected athlete ownership are checked before changing a comment."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "Include the original upstream comment under before.full for recovery; default returns prior text and identifiers only.",
+        "default": false
+      },
+      {
+        "name": "message_id",
+        "required": true,
+        "type": "integer",
+        "description": "Existing comment ID from get_activity_messages. The credential owner must be the comment author; chat IDs are resolved by the server."
       }
     ]
   },
@@ -2998,6 +3086,168 @@
       }
     ]
   },
+  "search_workout_library": {
+    "name": "search_workout_library",
+    "description": "Discover publicly shared workout-library folders and training plans by text, sport, weeks and hours per week.",
+    "arguments": [
+      {
+        "name": "activity_types",
+        "required": false,
+        "type": "array",
+        "description": "Optional sport filters using intervals.icu activity types, for example Run or Ride; at most 10.",
+        "items": {
+          "required": false,
+          "type": "string",
+          "enum": [
+            "Ride",
+            "Run",
+            "Swim",
+            "WeightTraining",
+            "Hike",
+            "Walk",
+            "AlpineSki",
+            "BackcountrySki",
+            "Badminton",
+            "Canoeing",
+            "Crossfit",
+            "EBikeRide",
+            "EMountainBikeRide",
+            "Elliptical",
+            "Golf",
+            "GravelRide",
+            "TrackRide",
+            "Handcycle",
+            "HighIntensityIntervalTraining",
+            "Hockey",
+            "IceSkate",
+            "InlineSkate",
+            "Kayaking",
+            "Kitesurf",
+            "MountainBikeRide",
+            "Cyclocross",
+            "NordicSki",
+            "OpenWaterSwim",
+            "Padel",
+            "Pilates",
+            "Pickleball",
+            "Racquetball",
+            "Rugby",
+            "RockClimbing",
+            "RollerSki",
+            "Rowing",
+            "Sail",
+            "Skateboard",
+            "Snowboard",
+            "Snowshoe",
+            "Soccer",
+            "Squash",
+            "StairStepper",
+            "StandUpPaddling",
+            "Surfing",
+            "TableTennis",
+            "Tennis",
+            "TrailRun",
+            "Transition",
+            "Velomobile",
+            "VirtualRide",
+            "VirtualRow",
+            "VirtualRun",
+            "VirtualSki",
+            "WaterSport",
+            "Wheelchair",
+            "Windsurf",
+            "Workout",
+            "Yoga",
+            "Other"
+          ]
+        }
+      },
+      {
+        "name": "hours_per_week_max",
+        "required": true,
+        "type": "integer",
+        "description": "Required inclusive maximum workload filter, in whole hours per week; must be at least hours_per_week_min and at most 168."
+      },
+      {
+        "name": "hours_per_week_min",
+        "required": true,
+        "type": "integer",
+        "description": "Required inclusive minimum workload filter, in whole hours per week (0-168)."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "Include folder description and blurb. Child workouts, owner details and share tokens are always omitted; use existing library reads after explicitly adding a folder.",
+        "default": false
+      },
+      {
+        "name": "limit",
+        "required": false,
+        "type": "integer",
+        "description": "Maximum number of public folders returned (1-100, default 30). The API has no cursor; narrow filters when this limit is reached.",
+        "default": 30
+      },
+      {
+        "name": "q",
+        "required": true,
+        "type": "string",
+        "description": "Required public folder/plan search text, 1-200 nonblank characters."
+      },
+      {
+        "name": "type",
+        "required": false,
+        "type": "string",
+        "description": "Optional public library item kind: FOLDER for reusable workouts or PLAN for a dated plan template.",
+        "enum": [
+          "FOLDER",
+          "PLAN"
+        ]
+      },
+      {
+        "name": "weeks_max",
+        "required": true,
+        "type": "integer",
+        "description": "Required inclusive upper plan-duration filter, in whole weeks; must be at least weeks_min and at most 520."
+      },
+      {
+        "name": "weeks_min",
+        "required": true,
+        "type": "integer",
+        "description": "Required inclusive lower plan-duration filter, in whole weeks (0-520)."
+      },
+      {
+        "name": "workout_targets",
+        "required": false,
+        "type": "array",
+        "description": "Optional workout target filters: AUTO, POWER, HR (heart rate) or PACE.",
+        "items": {
+          "required": false,
+          "type": "string",
+          "enum": [
+            "AUTO",
+            "POWER",
+            "HR",
+            "PACE"
+          ]
+        }
+      }
+    ],
+    "examples": [
+      {
+        "activity_types": [
+          "Run"
+        ],
+        "hours_per_week_max": 8,
+        "hours_per_week_min": 3,
+        "limit": 5,
+        "q": "base",
+        "type": "PLAN",
+        "weeks_max": 12,
+        "weeks_min": 4
+      }
+    ]
+  },
   "select_athlete": {
     "name": "select_athlete",
     "description": "Select the default target athlete for subsequent coach-mode tool calls in this MCP session.",
@@ -3044,7 +3294,7 @@
   },
   "update_activity": {
     "name": "update_activity",
-    "description": "Update one completed non-Strava activity by activity_id: rename it, replace its free-text description, and/or set athlete-logged carbohydrate intake in whole grams.",
+    "description": "Update one completed non-Strava activity by activity_id: rename it, replace its description/tags, set commute, feel (1-5), RPE (1-10), subtype, manual-only distance in metres, or athlete-logged carbohydrate intake in whole grams.",
     "arguments": [
       {
         "name": "activity_id",
@@ -3059,10 +3309,28 @@
         "description": "Optional athlete-logged carbohydrate consumed during this activity, in whole grams (0-2147483647). Zero is a logged zero; omit to leave unchanged. Clearing is not supported. Distinct from read-only carbs_used_g. Intervals.icu does not update Strava activities through this endpoint."
       },
       {
+        "name": "commute",
+        "required": false,
+        "type": "boolean",
+        "description": "Explicit commute flag; false clears the flag. Omit to leave unchanged; null is rejected. No inference from title or tags."
+      },
+      {
         "name": "description",
         "required": false,
         "type": "string",
         "description": "Optional replacement free-text activity description; this is not append-only. Omit to leave unchanged; pass an explicit empty string to clear the description. For completed WeightTraining, read and preserve existing notes when editing, and record performed exercises as one Markdown '- ' line each after a blank line (not '•'); give actual sets/reps or time/distance and explicit load units/basis when known, and do not invent missing values. Prose metadata only — to write structured endurance intervals, use set_activity_intervals with a workout_doc."
+      },
+      {
+        "name": "distance_m",
+        "required": false,
+        "type": "number",
+        "description": "Manual-activity distance in metres; zero is explicit. Only accepted for upstream source MANUAL with no recorded file. File-backed and unknown-source corrections are withheld because recomputation semantics are unverified. Omit to preserve; null is rejected. Time correction is unsupported."
+      },
+      {
+        "name": "feel",
+        "required": false,
+        "type": "integer",
+        "description": "Athlete-reported feel, scale 1-5. Omit to leave unchanged; null and zero are rejected and clearing is unsupported."
       },
       {
         "name": "include_full",
@@ -3076,12 +3344,72 @@
         "required": false,
         "type": "string",
         "description": "Optional replacement activity title. Omit to leave unchanged. Empty strings are rejected to avoid accidentally blanking the title; intervals.icu's UI also rejects blank titles."
+      },
+      {
+        "name": "rpe",
+        "required": false,
+        "type": "integer",
+        "description": "Athlete-reported rating of perceived exertion, scale 1-10, written to upstream icu_rpe. Omit to leave unchanged; null and zero are rejected and clearing is unsupported. Distinct from device perceived_exertion."
+      },
+      {
+        "name": "sub_type",
+        "required": false,
+        "type": "string",
+        "description": "Activity subtype; NONE clears the subtype. Omit to preserve; null is rejected. Independent of the explicitly supplied commute flag.",
+        "enum": [
+          "NONE",
+          "COMMUTE",
+          "WARMUP",
+          "COOLDOWN",
+          "RACE"
+        ]
+      },
+      {
+        "name": "tags",
+        "required": false,
+        "type": "array",
+        "description": "Replace all activity tags; [] clears tags. Omit to preserve existing tags; null is rejected. At most 100 non-empty tags of at most 128 bytes each.",
+        "items": {
+          "required": false,
+          "type": "string"
+        }
       }
     ],
     "examples": [
       {
         "activity_id": "gym-example-1",
         "description": "## Completed strength\n\n- Back squat: 3 × 5 @ 80 kg total; last set RPE 8.\n- Split squat: 3 × 8/side @ 16 kg per hand; left leg felt harder."
+      }
+    ]
+  },
+  "update_activity_message": {
+    "name": "update_activity_message",
+    "description": "Replace the text of your own comment on one activity using activity_id and message_id.",
+    "arguments": [
+      {
+        "name": "activity_id",
+        "required": true,
+        "type": "string",
+        "description": "Required activity ID; membership and selected athlete ownership are checked before changing a comment."
+      },
+      {
+        "name": "include_full",
+        "required": false,
+        "type": "boolean",
+        "description": "Include the original upstream comment under before.full for recovery; default returns prior text and identifiers only.",
+        "default": false
+      },
+      {
+        "name": "message",
+        "required": true,
+        "type": "string",
+        "description": "Replacement comment text, non-empty after trimming. Read and preserve current user edits before replacement. The previous content is returned under before."
+      },
+      {
+        "name": "message_id",
+        "required": true,
+        "type": "integer",
+        "description": "Existing comment ID from get_activity_messages. The credential owner must be the comment author; chat IDs are resolved by the server."
       }
     ]
   },

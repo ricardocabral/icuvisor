@@ -52,10 +52,10 @@ Living document. Phases are scoped and gated, not calendared. Each phase is ship
 
 ### v1.8 - Remaining first-party intervals.icu coverage
 
-- Training-plan endpoint validation and any missing read/write tools justified by the PRD catalog.
+- Training-plan endpoint validation and any missing read/write tools justified by the PRD catalog. Shared workout-library search/import is available through the full toolset; adding a shared folder remains an explicit write separate from calendar scheduling.
 - Strength-training endpoint validation against `docs/upstream-gaps/strength-training.md`; keep current support at best-effort gym notes/simple calendar events until the upstream schema can round-trip.
 - Planning-parameter probe for ramp rate, recovery-week cadence, taper target, and intensity-distribution preference. Ship only fields exposed by the upstream API.
-- Extended-metrics field audit for fields that are still unproven upstream; drop unsupported fields explicitly rather than synthesizing them silently.
+- Extended-metrics field audit for fields that are still unproven upstream; drop unsupported fields explicitly rather than synthesizing them silently. Power curves now preserve optional upstream fitted-model/effort provenance and support bounded season comparisons; undocumented scalar MAP and local physiology estimates remain unsupported.
 
 ### v1.9 - Analytics evidence and roadmap slice
 

@@ -1,0 +1,163 @@
+{
+  "additionalProperties": false,
+  "examples": [
+    {
+      "activity_types": [
+        "Run"
+      ],
+      "hours_per_week_max": 8,
+      "hours_per_week_min": 3,
+      "limit": 5,
+      "q": "base",
+      "type": "PLAN",
+      "weeks_max": 12,
+      "weeks_min": 4
+    }
+  ],
+  "properties": {
+    "activity_types": {
+      "description": "Optional sport filters using intervals.icu activity types, for example Run or Ride; at most 10.",
+      "items": {
+        "enum": [
+          "Ride",
+          "Run",
+          "Swim",
+          "WeightTraining",
+          "Hike",
+          "Walk",
+          "AlpineSki",
+          "BackcountrySki",
+          "Badminton",
+          "Canoeing",
+          "Crossfit",
+          "EBikeRide",
+          "EMountainBikeRide",
+          "Elliptical",
+          "Golf",
+          "GravelRide",
+          "TrackRide",
+          "Handcycle",
+          "HighIntensityIntervalTraining",
+          "Hockey",
+          "IceSkate",
+          "InlineSkate",
+          "Kayaking",
+          "Kitesurf",
+          "MountainBikeRide",
+          "Cyclocross",
+          "NordicSki",
+          "OpenWaterSwim",
+          "Padel",
+          "Pilates",
+          "Pickleball",
+          "Racquetball",
+          "Rugby",
+          "RockClimbing",
+          "RollerSki",
+          "Rowing",
+          "Sail",
+          "Skateboard",
+          "Snowboard",
+          "Snowshoe",
+          "Soccer",
+          "Squash",
+          "StairStepper",
+          "StandUpPaddling",
+          "Surfing",
+          "TableTennis",
+          "Tennis",
+          "TrailRun",
+          "Transition",
+          "Velomobile",
+          "VirtualRide",
+          "VirtualRow",
+          "VirtualRun",
+          "VirtualSki",
+          "WaterSport",
+          "Wheelchair",
+          "Windsurf",
+          "Workout",
+          "Yoga",
+          "Other"
+        ],
+        "type": "string"
+      },
+      "maxItems": 10,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "hours_per_week_max": {
+      "description": "Required inclusive maximum workload filter, in whole hours per week; must be at least hours_per_week_min and at most 168.",
+      "maximum": 168,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "hours_per_week_min": {
+      "description": "Required inclusive minimum workload filter, in whole hours per week (0-168).",
+      "maximum": 168,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "include_full": {
+      "default": false,
+      "description": "Include folder description and blurb. Child workouts, owner details and share tokens are always omitted; use existing library reads after explicitly adding a folder.",
+      "type": "boolean"
+    },
+    "limit": {
+      "default": 30,
+      "description": "Maximum number of public folders returned (1-100, default 30). The API has no cursor; narrow filters when this limit is reached.",
+      "maximum": 100,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "q": {
+      "description": "Required public folder/plan search text, 1-200 nonblank characters.",
+      "maxLength": 200,
+      "minLength": 1,
+      "type": "string"
+    },
+    "type": {
+      "description": "Optional public library item kind: FOLDER for reusable workouts or PLAN for a dated plan template.",
+      "enum": [
+        "FOLDER",
+        "PLAN"
+      ],
+      "type": "string"
+    },
+    "weeks_max": {
+      "description": "Required inclusive upper plan-duration filter, in whole weeks; must be at least weeks_min and at most 520.",
+      "maximum": 520,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "weeks_min": {
+      "description": "Required inclusive lower plan-duration filter, in whole weeks (0-520).",
+      "maximum": 520,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "workout_targets": {
+      "description": "Optional workout target filters: AUTO, POWER, HR (heart rate) or PACE.",
+      "items": {
+        "enum": [
+          "AUTO",
+          "POWER",
+          "HR",
+          "PACE"
+        ],
+        "type": "string"
+      },
+      "maxItems": 4,
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "q",
+    "weeks_min",
+    "weeks_max",
+    "hours_per_week_min",
+    "hours_per_week_max"
+  ],
+  "type": "object"
+}

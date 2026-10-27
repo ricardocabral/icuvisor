@@ -25,6 +25,8 @@ Stage 1 of planning my season. Use icuvisor with my intervals.icu data.
 Read my athlete profile, my fitness trend (CTL / ATL / TSB) for the last
 8 weeks, my training-load summary for that period, and my upcoming events.
 Read get_planning_context and calendar availability constraints as well.
+Preserve training_availability, can_train_sports, and max_training_time; do not
+convert the time cap or schedule against it until its upstream units are known.
 Keep missing history distinct from zero training, and distinguish completed
 sessions from future or missed plans. List my stated restrictions, protected
 commitments, allowed sports and available slots; ask about anything missing.

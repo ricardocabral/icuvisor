@@ -1,0 +1,23 @@
+{
+  "additionalProperties": false,
+  "examples": [
+    {
+      "folder_id": "12345"
+    }
+  ],
+  "properties": {
+    "athlete_id": {
+      "description": "Target athlete; defaults to selected athlete in coach mode, or the only athlete otherwise. Format: i12345 or 12345.",
+      "type": "string"
+    },
+    "folder_id": {
+      "description": "Public folder or plan ID from search_workout_library, supplied as a positive 32-bit integer string. The selected athlete receives the shared folder; the public owner's athlete ID is not a target selector.",
+      "pattern": "^[0-9]+$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "folder_id"
+  ],
+  "type": "object"
+}

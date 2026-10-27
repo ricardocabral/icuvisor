@@ -129,6 +129,10 @@ Resource cannot be read:
 }
 ```
 
+For an explicit planned duration or a fully timed structured workout, inspect `_meta.duration_verification` as well. `mismatch` means the stored duration or target differs; `unavailable` means parsed duration could not be established. A target alone does not verify the workout length. Keep the returned event ID and inspect before an intentional edit; do not create another copy to chase the warning. Library plan application reports the same evidence per event under `_meta.duration_verifications`.
+
+To discover a public template or plan, enable the `full` toolset and use `search_workout_library` with your query and explicit week/hour ranges. Review the folder ID and summary before asking `add_shared_workout_folder` to add it to your own library. Search never imports a folder, and adding one never schedules workouts. Read the imported library before choosing or applying a plan; only saved relative-day schedules can be applied automatically.
+
 For manual calendar writes that may be retried, ask the assistant to pass a stable `external_id` to `add_or_update_event`, such as a namespace you own plus the workout/date. Intervals stores that value upstream and icuvisor exposes it in event reads for auditability, so do not put secrets or credential-like values in it. Blank `external_id` values are ignored rather than used to clear an existing upstream value, and IDs are best-effort idempotency aids alongside icuvisor's same-day preflight rather than a global dedupe guarantee. Use your own namespace and avoid provider-owned prefixes such as `strava-` or `hevy-`.
 
 For an indoor/outdoor adaptation of today's planned workout, ask for a preview first: what changes (route/trainer mode, target basis, duration/load, tags, and the `indoor` flag), what is preserved, and whether weather was sourced or unavailable. Do not ask the assistant to create an indoor clone next to the outdoor plan unless you explicitly want two active workouts and understand the planned-load/CTL double-counting risk.

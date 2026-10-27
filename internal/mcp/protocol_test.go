@@ -237,8 +237,14 @@ func TestToolAnnotationsMatchEffects(t *testing.T) {
 		requirement tools.Requirement
 		readOnly    bool
 		destructive bool
+		openWorld   bool
 	}{
 		{name: "get_activities", requirement: tools.RequirementRead, readOnly: true},
+		{name: "search_workout_library", requirement: tools.RequirementRead, readOnly: true, openWorld: true},
+		{name: "add_shared_workout_folder", requirement: tools.RequirementWrite, openWorld: true},
+		{name: "update_activity_message", requirement: tools.RequirementWrite, destructive: true},
+		{name: "delete_activity_message", requirement: tools.RequirementDelete, destructive: true},
+		{name: "compare_power_curves", requirement: tools.RequirementRead, readOnly: true},
 		{name: "compute_baseline", requirement: tools.RequirementRead, readOnly: true},
 		{name: "icuvisor_check_server_version", readOnly: true},
 		{name: "select_athlete"},
@@ -263,7 +269,7 @@ func TestToolAnnotationsMatchEffects(t *testing.T) {
 			if err := json.Unmarshal(encoded, &annotations); err != nil {
 				t.Fatal(err)
 			}
-			for key, want := range map[string]bool{"readOnlyHint": tc.readOnly, "destructiveHint": tc.destructive, "openWorldHint": false} {
+			for key, want := range map[string]bool{"readOnlyHint": tc.readOnly, "destructiveHint": tc.destructive, "openWorldHint": tc.openWorld} {
 				if got, ok := annotations[key].(bool); !ok || got != want {
 					t.Errorf("annotation %s = %#v, want explicit %t", key, annotations[key], want)
 				}
@@ -1061,8 +1067,8 @@ func TestProtocolComputeZoneEnergyIsFullOnlyReadAnalyzer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("core ListTools() error = %v", err)
 	}
-	if len(core.Tools) != 28 {
-		t.Fatalf("core tools/list count = %d, want 28", len(core.Tools))
+	if len(core.Tools) != 29 {
+		t.Fatalf("core tools/list count = %d, want 29", len(core.Tools))
 	}
 	for _, fullOnly := range []string{toolcatalog.ComputeZoneEnergy, toolcatalog.CreateSportSettings} {
 		if hasTool(core.Tools, fullOnly) {
@@ -1077,8 +1083,8 @@ func TestProtocolComputeZoneEnergyIsFullOnlyReadAnalyzer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("full ListTools() error = %v", err)
 	}
-	if len(full.Tools) != 71 {
-		t.Fatalf("full tools/list count = %d, want 71", len(full.Tools))
+	if len(full.Tools) != 76 {
+		t.Fatalf("full tools/list count = %d, want 76", len(full.Tools))
 	}
 	var zoneEnergy *sdkmcp.Tool
 	var createSportSettings *sdkmcp.Tool

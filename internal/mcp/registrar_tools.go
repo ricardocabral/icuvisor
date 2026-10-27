@@ -85,11 +85,11 @@ func sdkToolAnnotations(tool tools.Tool) *sdkmcp.ToolAnnotations {
 	case toolcatalog.SelectAthlete:
 		// Session selection remains available when upstream writes are disabled.
 		readOnly = false
-	case toolcatalog.CreateWorkout, toolcatalog.CreateCustomItem, toolcatalog.CreateSportSettings, toolcatalog.AddUnavailableDateRange:
+	case toolcatalog.CreateWorkout, toolcatalog.CreateCustomItem, toolcatalog.CreateSportSettings, toolcatalog.AddUnavailableDateRange, toolcatalog.AddSharedWorkoutFolder:
 		destructive = false
 	}
-	// Hosted services are still closed-world when limited to configured accounts.
-	openWorld := false
+	// Public library discovery and sharing can reach beyond configured accounts.
+	openWorld := tool.Name == toolcatalog.SearchWorkoutLibrary || tool.Name == toolcatalog.AddSharedWorkoutFolder
 	return &sdkmcp.ToolAnnotations{
 		ReadOnlyHint:    readOnly,
 		DestructiveHint: &destructive,

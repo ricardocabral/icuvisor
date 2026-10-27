@@ -95,6 +95,7 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 		newCreateSportSettingsTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetBestEffortsTool(client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetPowerCurvesTool(client, opts.version, opts.debugMetadata, opts.shaping),
+		newComparePowerCurvesTool(client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetHRCurvesTool(client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetPaceCurvesTool(client, client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetActivitiesToolWithGear(client, client, client, opts.gearCache, client, opts.customFieldCache, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -109,6 +110,8 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 		newLinkActivityToEventTool(client, client, client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetTrainingPlanTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetWorkoutLibraryTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
+		newSearchWorkoutLibraryTool(client, opts.version, opts.debugMetadata, opts.shaping),
+		newAddSharedWorkoutFolderTool(client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetWorkoutsInFolderTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newCreateWorkoutTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newUpdateWorkoutTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -138,6 +141,8 @@ func registryBaseTools(client *intervals.Client, opts registryToolOptions) []Too
 		newGetActivityHistogramTool(client, client, client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetActivityMessagesTool(client, client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newAddActivityMessageTool(client, client, opts.version, opts.debugMetadata, opts.shaping),
+		newUpdateActivityMessageTool(client, opts.version, opts.debugMetadata, opts.shaping),
+		newDeleteActivityMessageTool(client, opts.version, opts.debugMetadata, opts.shaping),
 		newGetExtendedMetricsTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
 		newGetGearListTool(client, opts.gearCache, opts.version, opts.debugMetadata, opts.shaping),
 		newDeleteGearTool(client, client, opts.version, opts.timezoneFallback, opts.debugMetadata, opts.shaping),
@@ -162,17 +167,17 @@ func toolCatalogGroup(name string) string {
 	switch name {
 	case getAthleteProfileName, updateSportSettingsName, createSportSettingsName, deleteSportSettingsName, getGearListName, deleteGearName:
 		return "settings"
-	case getFitnessName, getTodayName, getFitnessProjectionName, getPerformancePotentialName, getTrainingSummaryName, getBestEffortsName, getPowerCurvesName, getHRCurvesName, getPaceCurvesName:
+	case getFitnessName, getTodayName, getFitnessProjectionName, getPerformancePotentialName, getTrainingSummaryName, getBestEffortsName, getPowerCurvesName, comparePowerCurvesName, getHRCurvesName, getPaceCurvesName:
 		return "fitness"
 	case getWellnessDataName, updateWellnessName:
 		return "wellness"
-	case getActivitiesName, getActivitiesAroundName, getActivityDetailsName, getActivityIntervalsName, getActivityStreamsName, getActivitySplitsName, getActivityHistogramName, getActivityMessagesName, addActivityMessageName, getExtendedMetricsName, deleteActivityName, updateActivityName, setActivityIntervalsName:
+	case getActivitiesName, getActivitiesAroundName, getActivityDetailsName, getActivityIntervalsName, getActivityStreamsName, getActivitySplitsName, getActivityHistogramName, getActivityMessagesName, addActivityMessageName, updateActivityMessageName, deleteActivityMessageName, getExtendedMetricsName, deleteActivityName, updateActivityName, setActivityIntervalsName:
 		return "activities"
 	case computeActivitySegmentStatsName, getClimbSegmentsName, analyzeTrendName, analyzeDistributionName, analyzeCorrelationName, analyzeEffortsDeltaName, computeZoneEnergyName, computeZoneTimeName, computeLoadBalanceName, computeBaselineName, computeComplianceRateName, computeWorkoutProgressionName, computeTrainingMonotonyName, getDataQualityReportName:
 		return "analyzers"
 	case resolveCalendarDatesName, getEventsName, getEventByIDName, addOrUpdateEventName, addUnavailableDateRangeName, deleteEventName, deleteEventsByDateRangeName, linkActivityToEventName:
 		return "events"
-	case getPlanningContextName, getAnnualTrainingPlanName, proposeAnnualTrainingPlanName, applyAnnualTrainingPlanName, getTrainingPlanName, applyTrainingPlanName, getWorkoutLibraryName, getWorkoutsInFolderName, createWorkoutName, updateWorkoutName, deleteWorkoutName, validateWorkoutName:
+	case getPlanningContextName, getAnnualTrainingPlanName, proposeAnnualTrainingPlanName, applyAnnualTrainingPlanName, getTrainingPlanName, applyTrainingPlanName, getWorkoutLibraryName, searchWorkoutLibraryName, addSharedWorkoutFolderName, getWorkoutsInFolderName, createWorkoutName, updateWorkoutName, deleteWorkoutName, validateWorkoutName:
 		return "workout-library"
 	case getCustomItemsName, getCustomItemByIDName, createCustomItemName, updateCustomItemName, deleteCustomItemName:
 		return "custom-items"
