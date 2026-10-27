@@ -362,3 +362,125 @@ func TestLinkActivityToEventRequiresIDs(t *testing.T) {
 		}
 	}
 }
+
+func TestUpdateActivityWritableMetadataPayload(t *testing.T) {
+	for _, tc := range []struct {
+		name, source, fileType string
+		distance               bool
+		wantError              bool
+	}{
+		{name: "metadata only", source: "UPLOAD", fileType: "fit"},
+		{name: "manual distance", source: "MANUAL", distance: true},
+		{name: "file distance rejected", source: "UPLOAD", fileType: "fit", distance: true, wantError: true},
+		{name: "unknown distance rejected", distance: true, wantError: true},
+		{name: "manual with file rejected", source: "MANUAL", fileType: "fit", distance: true, wantError: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			writes := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == http.MethodGet {
+					_, _ = w.Write([]byte(`{"id":"a1","source":"` + tc.source + `","file_type":"` + tc.fileType + `"}`))
+					return
+				}
+				writes++
+				var payload map[string]any
+				if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+					t.Fatal(err)
+				}
+				wantLen := 5
+				if tc.distance {
+					wantLen++
+				}
+				if len(payload) != wantLen || payload["commute"] != false || payload["feel"] != float64(1) || payload["icu_rpe"] != float64(10) || payload["sub_type"] != "NONE" {
+					t.Fatalf("payload=%v", payload)
+				}
+				if tags, ok := payload["tags"].([]any); !ok || len(tags) != 0 {
+					t.Fatalf("tags=%v", payload["tags"])
+				}
+				if tc.distance && payload["distance"] != float64(0) {
+					t.Fatalf("distance=%v", payload)
+				}
+				_, _ = w.Write([]byte(`{"id":"a1"}`))
+			}))
+			defer server.Close()
+			client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+			tags := []string{}
+			commute := false
+			feel, rpe := 1, 10
+			subtype := "NONE"
+			distance := 0.0
+			params := UpdateActivityParams{ActivityID: "a1", Tags: &tags, Commute: &commute, Feel: &feel, RPE: &rpe, SubType: &subtype}
+			if tc.distance {
+				params.DistanceM = &distance
+			}
+			_, err := client.UpdateActivity(context.Background(), params)
+			if (err != nil) != tc.wantError {
+				t.Fatalf("err=%v wantError=%v", err, tc.wantError)
+			}
+			if tc.wantError && writes != 0 {
+				t.Fatalf("writes=%d", writes)
+			}
+		})
+	}
+}
+
+func TestUpdateActivityReadbackVerification(t *testing.T) {
+	for _, tc := range []struct {
+		name, receipt, readback, wantStatus, wantSource string
+		readbackStatus, wantReads                       int
+	}{
+		{name: "response confirms", receipt: `{"id":"a1","commute":false}`, wantStatus: "verified", wantSource: "write_response"},
+		{name: "readback confirms", receipt: `{"id":"a1"}`, readback: `{"id":"a1","commute":false}`, wantStatus: "verified", wantSource: "readback", wantReads: 1},
+		{name: "readback differs", receipt: `{"id":"a1","commute":true}`, readback: `{"id":"a1","commute":true}`, wantStatus: "verification_mismatch", wantSource: "readback", wantReads: 1},
+		{name: "readback omits", receipt: `{"id":"a1"}`, readback: `{"id":"a1"}`, wantStatus: "verification_unavailable", wantSource: "readback", wantReads: 1},
+		{name: "readback fails", receipt: `{"id":"a1"}`, readbackStatus: 404, wantStatus: "verification_unavailable", wantSource: "write_response", wantReads: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			writes, reads := 0, 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/activity/a1" {
+					t.Errorf("path=%s", r.URL.Path)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == http.MethodPut {
+					writes++
+					_, _ = w.Write([]byte(tc.receipt))
+					return
+				}
+				reads++
+				if tc.readbackStatus != 0 {
+					w.WriteHeader(tc.readbackStatus)
+				}
+				body := tc.readback
+				if body == "" {
+					body = `{}`
+				}
+				_, _ = w.Write([]byte(body))
+			}))
+			defer server.Close()
+			client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+			commute := false
+			activity, err := client.UpdateActivity(context.Background(), UpdateActivityParams{ActivityID: "a1", Commute: &commute})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if writes != 1 || reads != tc.wantReads {
+				t.Fatalf("writes=%d reads=%d", writes, reads)
+			}
+			v := activity.MetadataVerification
+			if v == nil || v.Status != tc.wantStatus || v.Source != tc.wantSource {
+				t.Fatalf("verification=%+v", v)
+			}
+			if tc.wantStatus == "verified" {
+				if len(v.Confirmed) != 1 || v.Confirmed[0] != "commute" {
+					t.Fatalf("verification=%+v", v)
+				}
+			} else {
+				if len(v.Confirmed) > 0 {
+					t.Fatalf("unverified field claimed=%+v", v)
+				}
+			}
+		})
+	}
+}
