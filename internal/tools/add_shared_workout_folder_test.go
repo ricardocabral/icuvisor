@@ -4,8 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"sync/atomic"
 	"testing"
 
+	"github.com/ricardocabral/icuvisor/internal/config"
 	"github.com/ricardocabral/icuvisor/internal/intervals"
 )
 
@@ -59,5 +65,68 @@ func TestAddSharedWorkoutFolderRejectsInvalidAndUnverified(t *testing.T) {
 		if _, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"folder_id":"10"}`)}); !errors.Is(err, cause) {
 			t.Fatalf("error = %v, want %v", err, cause)
 		}
+	}
+}
+
+type sharedLibraryInterruptedTransport struct {
+	cause     error
+	transport http.RoundTripper
+	cancel    context.CancelFunc
+}
+
+func (r sharedLibraryInterruptedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if req.Method == http.MethodGet {
+		if errors.Is(r.cause, context.Canceled) {
+			r.cancel()
+		}
+		return nil, r.cause
+	}
+	return r.transport.RoundTrip(req)
+}
+
+func TestAddSharedWorkoutFolderInterruptedReadbackRetainsRecoveryGuidance(t *testing.T) {
+	t.Parallel()
+	for _, cause := range []error{context.Canceled, context.DeadlineExceeded} {
+		t.Run(cause.Error(), func(t *testing.T) {
+			var posts atomic.Int32
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodPost || r.URL.Path != "/athlete/i12345/folders/10/share-with-me" {
+					t.Errorf("request = %s %s", r.Method, r.URL.Path)
+				}
+				posts.Add(1)
+				_, _ = io.WriteString(w, `[{"id":10}]`)
+			}))
+			defer server.Close()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			client, err := intervals.NewClient(intervals.Options{
+				Config:     config.Config{AthleteID: "i12345", APIKey: "test-key", APIBaseURL: server.URL},
+				HTTPClient: &http.Client{Transport: sharedLibraryInterruptedTransport{cause: cause, transport: http.DefaultTransport, cancel: cancel}},
+				Retry:      intervals.RetryConfig{MaxAttempts: 1},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			tool := newAddSharedWorkoutFolderTool(client, "test", false)
+			_, err = tool.Handler(ctx, Request{Arguments: json.RawMessage(`{"folder_id":"10"}`)})
+			if !errors.Is(err, cause) {
+				t.Fatalf("error = %v, want cause %v", err, cause)
+			}
+			message, ok := PublicErrorMessage(err)
+			if !ok || !strings.Contains(message, "inspect get_workout_library before retrying") {
+				t.Fatalf("public error = %q, available %t; wanted uncertain-write recovery guidance", message, ok)
+			}
+			if posts.Load() != 1 {
+				t.Fatalf("posts = %d, want applied write without retry", posts.Load())
+			}
+		})
+	}
+}
+
+func TestAddSharedWorkoutFolderInputExamples(t *testing.T) {
+	t.Parallel()
+	examples := schemaInputExamples(t, addSharedWorkoutFolderInputSchema())
+	if len(examples) == 0 {
+		t.Fatal("missing shared-folder write input example")
 	}
 }

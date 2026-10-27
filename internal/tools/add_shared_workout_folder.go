@@ -49,9 +49,6 @@ func newAddSharedWorkoutFolderTool(client SharedWorkoutFolderAdderClient, versio
 		}
 		folder, err := client.AddSharedWorkoutFolder(ctx, id)
 		if err != nil {
-			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-				return Result{}, err
-			}
 			return Result{}, NewUserError(addSharedWorkoutFolderMessage, err)
 		}
 		if folder.ID != id {
@@ -63,7 +60,8 @@ func newAddSharedWorkoutFolderTool(client SharedWorkoutFolderAdderClient, versio
 }
 
 func addSharedWorkoutFolderInputSchema() map[string]any {
+	examples := []map[string]any{{"folder_id": "12345"}}
 	return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"folder_id"}, "properties": map[string]any{
 		"folder_id": map[string]any{"type": "string", "pattern": "^[0-9]+$", "description": "Public folder or plan ID from search_workout_library, supplied as a positive 32-bit integer string. The selected athlete receives the shared folder; the public owner's athlete ID is not a target selector."},
-	}, "examples": []map[string]any{{"folder_id": "12345"}}}
+	}, "examples": examples, "input_examples": examples}
 }
