@@ -559,3 +559,40 @@ func TestListAthleteSummaryRawIsolatesTargetAthlete(t *testing.T) {
 		})
 	}
 }
+
+func TestPowerCurveSeasonQueryUsesAthleteLocalAnchor(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/athlete/i12345/power-curves.json" {
+			t.Errorf("path=%s", r.URL.Path)
+		}
+		for key, want := range map[string]string{"curves": "s0,s0-kj0,s0-kj1", "now": "2026-10-26", "type": "Ride", "secs": "7200,18000"} {
+			if got := r.URL.Query().Get(key); got != want {
+				t.Errorf("query %s=%q, want %q", key, got, want)
+			}
+		}
+		_, _ = w.Write([]byte(`{"list":[{"id":"s0","start_date_local":"2026-03-01","secs":[7200],"values":[250],"watts_per_kg":[4.25],"wkg_activity_id":["light"],"powerModels":[{"type":"MS_2P","criticalPower":271.25,"wPrime":18234.5}]}],"activities":{}}`))
+	}))
+	defer server.Close()
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	set, err := client.ListAthletePowerCurves(context.Background(), CurveParams{Sport: "Ride", Now: "2026-10-26", CurveSpec: "s0,s0-kj0,s0-kj1", DurationSeconds: []int{7200, 18000}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	curve := set.List[0]
+	if curve.WattsPerKG[0] == nil || *curve.WattsPerKG[0] != 4.25 || curve.WKGActivityID[0] != "light" {
+		t.Fatalf("W/kg=%#v", curve)
+	}
+	if len(curve.PowerModels) != 1 || curve.PowerModels[0].CriticalPower == nil || *curve.PowerModels[0].CriticalPower != 271.25 {
+		t.Fatalf("models=%#v", curve.PowerModels)
+	}
+}
+
+func TestCurveRejectsTimestampSeasonAnchorBeforeHTTP(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { t.Error("invalid local date made HTTP request") }))
+	defer server.Close()
+	client := newTestClient(t, server.URL, server.Client(), RetryConfig{})
+	_, err := client.ListAthletePowerCurves(context.Background(), CurveParams{Sport: "Ride", Now: "2026-10-27T01:00:00Z", CurveSpec: "s0"})
+	if err == nil {
+		t.Fatal("timestamp accepted as local date")
+	}
+}

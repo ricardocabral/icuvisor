@@ -258,6 +258,7 @@ func athleteSummaryQuery(params AthleteSummaryParams) url.Values {
 // CurveParams contains query parameters for athlete curve endpoints.
 type CurveParams struct {
 	Sport           string
+	Now             string
 	CurveSpec       string
 	DurationSeconds []int
 	DistanceMeters  []int
@@ -291,21 +292,33 @@ func (s *DataCurveSet) UnmarshalJSON(data []byte) error {
 type DataCurve struct {
 	Raw map[string]any `json:"-"`
 
-	ID             string    `json:"id"`
-	Label          string    `json:"label"`
-	FilterLabel    string    `json:"filter_label"`
-	StartDateLocal string    `json:"start_date_local"`
-	EndDateLocal   string    `json:"end_date_local"`
-	Days           int       `json:"days"`
-	MovingTime     int       `json:"moving_time"`
-	TrainingLoad   int       `json:"training_load"`
-	Weight         float64   `json:"weight"`
-	AfterKJ        *int      `json:"after_kj"`
-	Secs           []float64 `json:"secs"`
-	Distance       []float64 `json:"distance"`
-	Values         []float64 `json:"values"`
-	ActivityID     []string  `json:"activity_id"`
-	Watts          []float64 `json:"watts"`
+	ID             string       `json:"id"`
+	Label          string       `json:"label"`
+	FilterLabel    string       `json:"filter_label"`
+	StartDateLocal string       `json:"start_date_local"`
+	EndDateLocal   string       `json:"end_date_local"`
+	Days           int          `json:"days"`
+	MovingTime     int          `json:"moving_time"`
+	TrainingLoad   int          `json:"training_load"`
+	Weight         float64      `json:"weight"`
+	AfterKJ        *int         `json:"after_kj"`
+	Secs           []float64    `json:"secs"`
+	Distance       []float64    `json:"distance"`
+	Values         []float64    `json:"values"`
+	ActivityID     []string     `json:"activity_id"`
+	Watts          []float64    `json:"watts"`
+	WattsPerKG     []*float64   `json:"watts_per_kg"`
+	WKGActivityID  []string     `json:"wkg_activity_id"`
+	PowerModels    []PowerModel `json:"-"`
+}
+
+// PowerModel contains optional model values fitted by intervals.icu, never local estimates.
+type PowerModel struct {
+	Type          string   `json:"type"`
+	CriticalPower *float64 `json:"criticalPower"`
+	WPrime        *float64 `json:"wPrime"`
+	PMax          *float64 `json:"pMax"`
+	FTP           *float64 `json:"ftp"`
 }
 
 // UnmarshalJSON decodes DataCurve while retaining the original object for full responses.
@@ -320,6 +333,18 @@ func (c *DataCurve) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*c = DataCurve(decoded)
+	// Model data is optional: malformed model values must not discard valid effort arrays.
+	var modelPayload struct {
+		Models []json.RawMessage `json:"powerModels"`
+	}
+	if json.Unmarshal(data, &modelPayload) == nil {
+		for _, modelJSON := range modelPayload.Models {
+			var model PowerModel
+			if json.Unmarshal(modelJSON, &model) == nil {
+				c.PowerModels = append(c.PowerModels, model)
+			}
+		}
+	}
 	c.Raw = raw
 	return nil
 }
@@ -357,6 +382,12 @@ func (c *Client) listAthleteCurveSet(ctx context.Context, params CurveParams, en
 		query.Set("type", sport)
 	} else if requireType {
 		return DataCurveSet{}, fmt.Errorf("sport type is required")
+	}
+	if now := strings.TrimSpace(params.Now); now != "" {
+		if _, err := time.Parse(time.DateOnly, now); err != nil {
+			return DataCurveSet{}, fmt.Errorf("now must be athlete-local YYYY-MM-DD")
+		}
+		query.Set("now", now)
 	}
 	if curve := strings.TrimSpace(params.CurveSpec); curve != "" {
 		query.Set("curves", curve)

@@ -206,3 +206,65 @@ func TestGetPowerCurvesMissingBucketsAndDefaults(t *testing.T) {
 		t.Fatalf("missing_buckets = %#v", missing)
 	}
 }
+
+func TestGetPowerCurvesKeepsIndependentWKGProvenance(t *testing.T) {
+	client := newFakeFitnessMetricsClient(t)
+	client.curves["Ride:power"] = decodeCurveSet(t, []byte(`{
+ "list":[{"secs":[7200,10800,14400],"values":[250,200],"activity_id":["heavy","long"],"watts_per_kg":[4.25,null,3.1],"wkg_activity_id":["light","","ultra"],"powerModels":[{"type":"MORTON_3P","criticalPower":271.25,"wPrime":18234.5,"pMax":983.75,"ftp":258.5},{"type":"MS_2P","criticalPower":null}]}],
+ "activities":{"heavy":{"start_date_local":"2026-05-01T23:59:00"},"light":{"start_date_local":"2026-05-02T00:01:00"},"long":{"start_date_local":"2026-05-03T12:00:00"},"ultra":{"start_date_local":"2026-05-04T12:00:00"}}}`))
+	tool := newGetPowerCurvesTool(client, "test", false)
+	result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"oldest":"2026-05-01","newest":"2026-05-07","duration_seconds":[7200,10800,14400,18000]}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := resultMap(t, result)
+	points := got["points"].([]any)
+	if len(points) != 3 {
+		t.Fatalf("points = %#v, want watts and W/kg-only long efforts", points)
+	}
+	first := points[0].(map[string]any)
+	for key, want := range map[string]any{"watts": float64(250), "activity_id": "heavy", "effort_date": "2026-05-01", "watts_per_kg": 4.25, "wkg_activity_id": "light", "wkg_effort_date": "2026-05-02"} {
+		if first[key] != want {
+			t.Errorf("%s = %#v, want %#v", key, first[key], want)
+		}
+	}
+	second := points[1].(map[string]any)
+	if _, present := second["watts_per_kg"]; present {
+		t.Fatalf("null W/kg became a value: %#v", second)
+	}
+	third := points[2].(map[string]any)
+	if third["watts_per_kg"] != 3.1 || third["wkg_activity_id"] != "ultra" {
+		t.Errorf("W/kg-only point = %#v", third)
+	}
+	if _, present := third["watts"]; present {
+		t.Errorf("missing watts invented: %#v", third)
+	}
+	models, ok := got["power_models"].([]any)
+	if !ok || len(models) != 1 {
+		t.Fatalf("power_models = %#v", got["power_models"])
+	}
+	model := models[0].(map[string]any)
+	for key, want := range map[string]any{"type": "MORTON_3P", "source": "upstream_fitted", "critical_power_watts": 271.25, "w_prime_joules": 18234.5, "p_max_watts": 983.75, "ftp_watts": 258.5} {
+		if model[key] != want {
+			t.Errorf("model %s = %#v, want %#v", key, model[key], want)
+		}
+	}
+}
+
+func TestGetPowerCurvesOptionalMalformedModelDoesNotDiscardPeaks(t *testing.T) {
+	client := newFakeFitnessMetricsClient(t)
+	client.curves["Ride:power"] = decodeCurveSet(t, []byte(`{"list":[{"secs":[300],"values":[321],"activity_id":["best"],"powerModels":[{"type":"MS_2P","criticalPower":"unavailable"}]}],"activities":{}}`))
+	tool := newGetPowerCurvesTool(client, "test", false)
+	result, err := tool.Handler(context.Background(), Request{Arguments: json.RawMessage(`{"oldest":"2026-05-01","newest":"2026-05-07","duration_seconds":[300]}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := resultMap(t, result)
+	point := got["points"].([]any)[0].(map[string]any)
+	if point["watts"] != float64(321) {
+		t.Fatalf("peak = %#v", point)
+	}
+	if _, present := got["power_models"]; present {
+		t.Fatalf("malformed model exposed: %#v", got)
+	}
+}
