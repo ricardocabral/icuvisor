@@ -71,6 +71,10 @@ type Config struct {
 	Toolset         Toolset
 	DebugMetadata   bool
 	HTTPBindAddress string
+	// HTTPStateless disables sessions in RunStreamableHTTP and ServeStreamableHTTP.
+	HTTPStateless bool
+	// HTTPJSONResponse uses JSON instead of SSE for HTTP POST responses.
+	HTTPJSONResponse bool
 }
 
 // RetryConfig controls retry behavior for idempotent Intervals API requests.
@@ -686,7 +690,7 @@ func (cfg Config) toInternal() config.Config {
 	if timezone == "" {
 		timezone = config.DefaultTimezone
 	}
-	return config.Config{APIKey: cfg.APIKey, AthleteID: cfg.AthleteID, Timezone: timezone, APIBaseURL: cfg.APIBaseURL, HTTPTimeout: httpTimeout, HTTPBindAddress: cfg.HTTPBindAddress, DeleteMode: cfg.DeleteMode.toInternal(), Toolset: cfg.Toolset.toInternal(), DebugMetadata: cfg.DebugMetadata}
+	return config.Config{APIKey: cfg.APIKey, AthleteID: cfg.AthleteID, Timezone: timezone, APIBaseURL: cfg.APIBaseURL, HTTPTimeout: httpTimeout, HTTPBindAddress: cfg.HTTPBindAddress, HTTPStateless: cfg.HTTPStateless, HTTPJSONResponse: cfg.HTTPJSONResponse, DeleteMode: cfg.DeleteMode.toInternal(), Toolset: cfg.Toolset.toInternal(), DebugMetadata: cfg.DebugMetadata}
 }
 
 func (r RetryConfig) toInternal() intervals.RetryConfig {

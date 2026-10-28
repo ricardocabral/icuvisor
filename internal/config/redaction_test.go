@@ -14,12 +14,14 @@ import (
 func TestConfigLogValueStructuredAndRedacted(t *testing.T) {
 	secret := "secret-xxxxx"
 	cfg := Config{
-		APIKey:          secret,
-		AthleteID:       "i12345",
-		APIBaseURL:      "https://example.invalid/api",
-		HTTPBindAddress: "127.0.0.1:9876",
-		DeleteMode:      safety.ModeFull,
-		Toolset:         safety.ToolsetFull,
+		APIKey:           secret,
+		AthleteID:        "i12345",
+		APIBaseURL:       "https://example.invalid/api",
+		HTTPBindAddress:  "127.0.0.1:9876",
+		HTTPStateless:    true,
+		HTTPJSONResponse: true,
+		DeleteMode:       safety.ModeFull,
+		Toolset:          safety.ToolsetFull,
 		Coach: coach.Config{Athletes: []coach.Athlete{
 			{ID: "i222", Label: "Jane"},
 			{ID: "i333", Label: "John"},
@@ -55,6 +57,8 @@ func TestConfigLogValueStructuredAndRedacted(t *testing.T) {
 		"api_base_url":         "https://example.invalid/api",
 		"default_athlete_id":   "<set>",
 		"http_bind":            "127.0.0.1:9876",
+		"http_stateless":       true,
+		"http_json_response":   true,
 		"coach_athletes_count": float64(2),
 		"delete_mode":          "full",
 		"toolset":              "full",
@@ -89,7 +93,7 @@ func TestConfigStringRedactsSecret(t *testing.T) {
 	if strings.Contains(got, testCredential) || strings.Contains(got, "i12345") || strings.Contains(got, "i222") || strings.Contains(got, "Jane") {
 		t.Fatalf("Config.String() leaked sensitive data: %q", got)
 	}
-	for _, want := range []string{"api_key=<redacted>", "api_key_source=keychain", "athlete_id=<set>", "UTC", "toolset=core", "coach_mode=auto", "coach_enabled=true", "coach_athletes=1"} {
+	for _, want := range []string{"api_key=<redacted>", "api_key_source=keychain", "athlete_id=<set>", "UTC", "toolset=core", "coach_mode=auto", "coach_enabled=true", "coach_athletes=1", "http_stateless=false", "http_json_response=false"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("Config.String() = %q, want %q", got, want)
 		}

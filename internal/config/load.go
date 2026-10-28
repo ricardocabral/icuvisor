@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/ricardocabral/icuvisor/internal/coach"
@@ -15,33 +16,37 @@ import (
 )
 
 type fileConfig struct {
-	APIKey          string              `json:"api_key"`
-	CredentialRef   CredentialReference `json:"credential_ref"`
-	AthleteID       string              `json:"athlete_id"`
-	Timezone        string              `json:"timezone"`
-	APIBaseURL      string              `json:"api_base_url"`
-	HTTPTimeout     string              `json:"http_timeout"`
-	Transport       string              `json:"transport"`
-	HTTPBindAddress string              `json:"http_bind"`
-	Coach           *coach.Config       `json:"coach"`
+	APIKey           string              `json:"api_key"`
+	CredentialRef    CredentialReference `json:"credential_ref"`
+	AthleteID        string              `json:"athlete_id"`
+	Timezone         string              `json:"timezone"`
+	APIBaseURL       string              `json:"api_base_url"`
+	HTTPTimeout      string              `json:"http_timeout"`
+	Transport        string              `json:"transport"`
+	HTTPBindAddress  string              `json:"http_bind"`
+	HTTPStateless    *bool               `json:"http_stateless"`
+	HTTPJSONResponse *bool               `json:"http_json_response"`
+	Coach            *coach.Config       `json:"coach"`
 }
 
 type rawConfig struct {
-	apiKey          string
-	apiKeySource    APIKeySource
-	apiKeyLocation  string
-	credentialRef   CredentialReference
-	athleteID       string
-	timezone        string
-	apiBaseURL      string
-	httpTimeout     string
-	transport       string
-	httpBindAddress string
-	deleteMode      string
-	toolset         string
-	debugMetadata   string
-	coachMode       string
-	coach           *coach.Config
+	apiKey           string
+	apiKeySource     APIKeySource
+	apiKeyLocation   string
+	credentialRef    CredentialReference
+	athleteID        string
+	timezone         string
+	apiBaseURL       string
+	httpTimeout      string
+	transport        string
+	httpBindAddress  string
+	httpStateless    string
+	httpJSONResponse string
+	deleteMode       string
+	toolset          string
+	debugMetadata    string
+	coachMode        string
+	coach            *coach.Config
 }
 
 func load(ctx context.Context, opts Options) (Config, error) {
@@ -112,7 +117,7 @@ func load(ctx context.Context, opts Options) (Config, error) {
 		}
 		raw.merge(processRaw, false)
 	}
-	raw.merge(rawConfig{transport: strings.TrimSpace(opts.Transport), httpBindAddress: strings.TrimSpace(opts.HTTPBindAddress)}, false)
+	raw.merge(rawConfig{transport: strings.TrimSpace(opts.Transport), httpBindAddress: strings.TrimSpace(opts.HTTPBindAddress), httpStateless: strings.TrimSpace(opts.HTTPStateless), httpJSONResponse: strings.TrimSpace(opts.HTTPJSONResponse)}, false)
 	cfg, err := validate(raw)
 	if err != nil {
 		return Config{}, err
@@ -140,7 +145,7 @@ func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
 	decoder := json.NewDecoder(strings.NewReader(string(data)))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&file); err != nil {
-		return rawConfig{}, fmt.Errorf("invalid config JSON in %q; expected fields api_key, credential_ref, athlete_id, timezone, api_base_url, http_timeout, transport, http_bind, coach: %w", path, err)
+		return rawConfig{}, fmt.Errorf("invalid config JSON in %q; expected fields api_key, credential_ref, athlete_id, timezone, api_base_url, http_timeout, transport, http_bind, http_stateless, http_json_response, coach: %w", path, err)
 	}
 
 	apiKey := strings.TrimSpace(file.APIKey)
@@ -151,7 +156,7 @@ func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
 		sourceLocation = ""
 	}
 
-	return rawConfig{
+	raw := rawConfig{
 		apiKey:          apiKey,
 		apiKeySource:    apiKeySource,
 		apiKeyLocation:  sourceLocation,
@@ -163,7 +168,14 @@ func readJSONConfig(ctx context.Context, path string) (rawConfig, error) {
 		transport:       strings.TrimSpace(file.Transport),
 		httpBindAddress: strings.TrimSpace(file.HTTPBindAddress),
 		coach:           file.Coach,
-	}, nil
+	}
+	if file.HTTPStateless != nil {
+		raw.httpStateless = strconv.FormatBool(*file.HTTPStateless)
+	}
+	if file.HTTPJSONResponse != nil {
+		raw.httpJSONResponse = strconv.FormatBool(*file.HTTPJSONResponse)
+	}
+	return raw, nil
 }
 func processEnv() map[string]string {
 	values := make(map[string]string)
@@ -182,19 +194,21 @@ func rawFromEnv(env map[string]string, apiKeySource APIKeySource, apiKeyLocation
 		apiKeyLocation = ""
 	}
 	return rawConfig{
-		apiKey:          apiKey,
-		apiKeySource:    apiKeySource,
-		apiKeyLocation:  apiKeyLocation,
-		athleteID:       strings.TrimSpace(env[EnvAthleteID]),
-		timezone:        strings.TrimSpace(env[EnvTimezone]),
-		apiBaseURL:      strings.TrimSpace(env[EnvAPIBaseURL]),
-		httpTimeout:     strings.TrimSpace(env[EnvHTTPTimeout]),
-		transport:       strings.TrimSpace(env[EnvTransport]),
-		httpBindAddress: strings.TrimSpace(env[EnvHTTPBind]),
-		deleteMode:      strings.TrimSpace(env[safety.EnvDeleteMode]),
-		toolset:         strings.TrimSpace(env[safety.EnvToolset]),
-		debugMetadata:   strings.TrimSpace(env[EnvDebugMetadata]),
-		coachMode:       strings.TrimSpace(env[EnvCoachMode]),
+		apiKey:           apiKey,
+		apiKeySource:     apiKeySource,
+		apiKeyLocation:   apiKeyLocation,
+		athleteID:        strings.TrimSpace(env[EnvAthleteID]),
+		timezone:         strings.TrimSpace(env[EnvTimezone]),
+		apiBaseURL:       strings.TrimSpace(env[EnvAPIBaseURL]),
+		httpTimeout:      strings.TrimSpace(env[EnvHTTPTimeout]),
+		transport:        strings.TrimSpace(env[EnvTransport]),
+		httpBindAddress:  strings.TrimSpace(env[EnvHTTPBind]),
+		httpStateless:    strings.TrimSpace(env[EnvHTTPStateless]),
+		httpJSONResponse: strings.TrimSpace(env[EnvHTTPJSONResponse]),
+		deleteMode:       strings.TrimSpace(env[safety.EnvDeleteMode]),
+		toolset:          strings.TrimSpace(env[safety.EnvToolset]),
+		debugMetadata:    strings.TrimSpace(env[EnvDebugMetadata]),
+		coachMode:        strings.TrimSpace(env[EnvCoachMode]),
 	}
 }
 
@@ -224,6 +238,12 @@ func (r *rawConfig) merge(next rawConfig, absentOnly bool) {
 	}
 	if shouldSet(r.httpBindAddress, next.httpBindAddress, absentOnly) {
 		r.httpBindAddress = next.httpBindAddress
+	}
+	if shouldSet(r.httpStateless, next.httpStateless, absentOnly) {
+		r.httpStateless = next.httpStateless
+	}
+	if shouldSet(r.httpJSONResponse, next.httpJSONResponse, absentOnly) {
+		r.httpJSONResponse = next.httpJSONResponse
 	}
 	if shouldSet(r.deleteMode, next.deleteMode, absentOnly) {
 		r.deleteMode = next.deleteMode

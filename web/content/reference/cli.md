@@ -25,6 +25,8 @@ Use this page when you need the exact command-line surface. The full output belo
 | `--env-file <path>`  | Env-file path loaded before process environment. Equivalent environment variable: `ICUVISOR_ENV_FILE`. If omitted, `.env` is loaded when present. |
 | `--transport <name>` | MCP transport: `stdio` or `http`. Default: `stdio`.                                                                                               |
 | `--http-bind <addr>` | HTTP bind address for `--transport http`. Default: `127.0.0.1:8765`.                                                                              |
+| `--http-stateless <bool>` | Disable HTTP sessions. Accepts `true` or `false`; default `false`. Incompatible with coach mode over HTTP. |
+| `--http-json-response <bool>` | Return JSON instead of SSE for HTTP POST responses. Accepts `true` or `false`; default `false`. |
 | `-h`, `--help`       | Print help and exit.                                                                                                                              |
 
 `icuvisor setup` has a separate flag set: `--config <path>`, `--offline`, `--force`, and `--help`. There is intentionally no `--api-key` flag; setup asks for the key interactively with masked terminal input.
@@ -42,6 +44,8 @@ Use this page when you need the exact command-line surface. The full output belo
 | `ICUVISOR_HTTP_TIMEOUT`    | `30s`                          | HTTP client timeout as a Go duration string.                                                                                 |
 | `ICUVISOR_TRANSPORT`       | `stdio`                        | MCP transport: `stdio` or `http`.                                                                                            |
 | `ICUVISOR_HTTP_BIND`       | `127.0.0.1:8765`               | HTTP bind address for Streamable HTTP. Use loopback unless you deliberately want LAN access.                                 |
+| `ICUVISOR_HTTP_STATELESS` | `false` | Disable HTTP sessions. Accepts `true` or `false`. |
+| `ICUVISOR_HTTP_JSON_RESPONSE` | `false` | Return JSON instead of SSE for HTTP POST responses. Accepts `true` or `false`. |
 | `ICUVISOR_DELETE_MODE`     | `safe`                         | Write/delete registration mode. See [safety modes]({{< relref "safety-modes" >}}).                                           |
 | `ICUVISOR_TOOLSET`         | `core`                         | Tool catalog tier. See [safety modes]({{< relref "safety-modes" >}}).                                                        |
 | `ICUVISOR_DEBUG_METADATA`  | `false`                        | Include debug metadata in MCP responses only when set to `true`.                                                             |
@@ -76,6 +80,8 @@ Flags:
   --env-file <path>      Env-file path to load before process env. Can also be set with ICUVISOR_ENV_FILE. Default: .env when present.
   --transport <name>     MCP transport: stdio or http. Default: stdio.
   --http-bind <addr>     HTTP bind address for --transport http. Default: 127.0.0.1:8765.
+  --http-stateless <bool>     Disable HTTP sessions; incompatible with coach mode. Default: false.
+  --http-json-response <bool> Return JSON instead of SSE for HTTP POST responses. Default: false.
   -h, --help             Print this help and exit.
 
 Environment variables:
@@ -88,6 +94,8 @@ Environment variables:
   ICUVISOR_HTTP_TIMEOUT      HTTP client timeout. Default: 30s.
   ICUVISOR_TRANSPORT         MCP transport: stdio or http. Default: stdio.
   ICUVISOR_HTTP_BIND         HTTP bind address for Streamable HTTP. Default: 127.0.0.1:8765.
+  ICUVISOR_HTTP_STATELESS    Disable HTTP sessions (true|false). Default: false.
+  ICUVISOR_HTTP_JSON_RESPONSE Return JSON for HTTP POST responses (true|false). Default: false.
   ICUVISOR_DELETE_MODE       Write/delete registration mode: safe, full, or none. Default: safe.
   ICUVISOR_TOOLSET           Tool catalog tier: compact, core, or full. Default: core.
   ICUVISOR_DEBUG_METADATA    Include debug metadata in MCP responses when set to true. Default: false.

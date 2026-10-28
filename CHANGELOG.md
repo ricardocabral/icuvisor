@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Exposed independent opt-in stateless HTTP and JSON POST responses through CLI flags, environment variables, and JSON config. Defaults retain sessions and SSE responses; stateless HTTP is rejected when coach mode is enabled because athlete selection requires sessions.
+
 ## [1.9.0] - 2026-10-27
 
 ### Added

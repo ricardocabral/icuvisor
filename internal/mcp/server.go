@@ -38,11 +38,13 @@ type Options struct {
 
 // Server wraps the SDK server and selected transport.
 type Server struct {
-	server      *sdkmcp.Server
-	transport   sdkmcp.Transport
-	logger      *slog.Logger
-	version     string
-	catalogHash string
+	server           *sdkmcp.Server
+	transport        sdkmcp.Transport
+	logger           *slog.Logger
+	version          string
+	catalogHash      string
+	httpStateless    bool
+	httpJSONResponse bool
 }
 
 // NewServer constructs an icuvisor MCP server.
@@ -109,5 +111,5 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 		response.SetRuntimeCatalogMetadata(version, catalogHash)
 	}
 
-	return &Server{server: sdkServer, transport: transport, logger: logger, version: version, catalogHash: catalogHash}, nil
+	return &Server{server: sdkServer, transport: transport, logger: logger, version: version, catalogHash: catalogHash, httpStateless: opts.Config.HTTPStateless, httpJSONResponse: opts.Config.HTTPJSONResponse}, nil
 }

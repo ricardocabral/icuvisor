@@ -466,6 +466,8 @@ func TestRunFlagErrorsAreActionable(t *testing.T) {
 		{name: "missing config", args: []string{"--config"}, want: []string{"missing value", "--config"}},
 		{name: "empty transport", args: []string{"--transport="}, want: []string{"missing value", "--transport"}},
 		{name: "missing bind", args: []string{"--http-bind", "--transport"}, want: []string{"missing value", "--http-bind"}},
+		{name: "missing stateless", args: []string{"--http-stateless"}, want: []string{"missing value", "--http-stateless"}},
+		{name: "empty JSON response", args: []string{"--http-json-response="}, want: []string{"missing value", "--http-json-response"}},
 		{name: "missing env file", args: []string{"--env-file"}, want: []string{"missing value", "--env-file"}},
 	}
 	for _, tc := range tests {

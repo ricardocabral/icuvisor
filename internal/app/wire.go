@@ -139,15 +139,17 @@ func wireCoreServer(ctx context.Context, info ServerInfo) (*core.Server, error) 
 
 func coreConfigFromInternal(cfg config.Config) core.Config {
 	return core.Config{
-		APIKey:          cfg.APIKey,
-		AthleteID:       cfg.AthleteID,
-		Timezone:        cfg.Timezone,
-		APIBaseURL:      cfg.APIBaseURL,
-		HTTPTimeout:     cfg.HTTPTimeout,
-		DeleteMode:      core.DeleteMode(cfg.DeleteMode.String()),
-		Toolset:         core.Toolset(cfg.Toolset.String()),
-		DebugMetadata:   cfg.DebugMetadata,
-		HTTPBindAddress: cfg.HTTPBindAddress,
+		APIKey:           cfg.APIKey,
+		AthleteID:        cfg.AthleteID,
+		Timezone:         cfg.Timezone,
+		APIBaseURL:       cfg.APIBaseURL,
+		HTTPTimeout:      cfg.HTTPTimeout,
+		DeleteMode:       core.DeleteMode(cfg.DeleteMode.String()),
+		Toolset:          core.Toolset(cfg.Toolset.String()),
+		DebugMetadata:    cfg.DebugMetadata,
+		HTTPBindAddress:  cfg.HTTPBindAddress,
+		HTTPStateless:    cfg.HTTPStateless,
+		HTTPJSONResponse: cfg.HTTPJSONResponse,
 	}
 }
 
