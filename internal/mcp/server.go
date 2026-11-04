@@ -34,6 +34,9 @@ type Options struct {
 	SelectionStore             *coach.SelectionStore
 	RecentToolCallRecorder     diagnostics.RecentToolCallRecorder
 	SkipRuntimeCatalogMetadata bool
+	// StaticCatalog disables change notifications for configured catalogs that
+	// remain fixed throughout the server's lifetime.
+	StaticCatalog bool
 }
 
 // Server wraps the SDK server and selected transport.
@@ -64,7 +67,20 @@ func NewServer(ctx context.Context, opts Options) (*Server, error) {
 		transport = &sdkmcp.StdioTransport{}
 	}
 
-	sdkServer, err := newSDKServer(version, logger)
+	var capabilities *sdkmcp.ServerCapabilities
+	if opts.StaticCatalog {
+		capabilities = &sdkmcp.ServerCapabilities{Logging: &sdkmcp.LoggingCapabilities{}} //nolint:staticcheck // Preserve the SDK default for legacy clients during the logging deprecation window.
+		if opts.Registry != nil {
+			capabilities.Tools = &sdkmcp.ToolCapabilities{}
+		}
+		if opts.PromptRegistry != nil {
+			capabilities.Prompts = &sdkmcp.PromptCapabilities{}
+		}
+		if opts.ResourceRegistry != nil {
+			capabilities.Resources = &sdkmcp.ResourceCapabilities{}
+		}
+	}
+	sdkServer, err := newSDKServer(version, logger, capabilities)
 	if err != nil {
 		return nil, err
 	}

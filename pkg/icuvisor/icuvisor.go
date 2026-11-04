@@ -215,6 +215,10 @@ type ServerOptions struct {
 	Transport                  sdkmcp.Transport
 	RecentToolCallRecorder     RecentToolCallRecorder
 	SkipRuntimeCatalogMetadata bool
+	// StaticCatalog disables catalog-change notifications for the configured
+	// tools, prompts, and resources. Use it when catalogs stay fixed for the
+	// lifetime of each server, including request-scoped HTTP servers.
+	StaticCatalog bool
 }
 
 // RecentToolCallRecorder records tool-call names for diagnostics without exposing arguments or payloads.
@@ -246,7 +250,7 @@ func NewServer(ctx context.Context, opts ServerOptions) (*Server, error) {
 		registry = registryForConfigWithPolicy(opts.Registry, opts.Config, catalogMode, catalogToolset, catalogHash)
 		resourceRegistry = resourceRegistryForConfigWithCatalogHash(opts.ResourceRegistry, opts.Config, catalogHash)
 	}
-	server, err := internalmcp.NewServer(ctx, internalmcp.Options{Config: cfg, Version: opts.Version, Logger: opts.Logger, Registry: registry, ResourceRegistry: resourceRegistry, PromptRegistry: opts.PromptRegistry.inner, Capability: safety.NewCapability(deleteMode.toInternal()), Toolset: toolset.toInternal(), CatalogCapability: safety.NewCapability(catalogMode.toInternal()), CatalogToolset: catalogToolset.toInternal(), Transport: opts.Transport, RecentToolCallRecorder: opts.RecentToolCallRecorder, SkipRuntimeCatalogMetadata: opts.SkipRuntimeCatalogMetadata})
+	server, err := internalmcp.NewServer(ctx, internalmcp.Options{Config: cfg, Version: opts.Version, Logger: opts.Logger, Registry: registry, ResourceRegistry: resourceRegistry, PromptRegistry: opts.PromptRegistry.inner, Capability: safety.NewCapability(deleteMode.toInternal()), Toolset: toolset.toInternal(), CatalogCapability: safety.NewCapability(catalogMode.toInternal()), CatalogToolset: catalogToolset.toInternal(), Transport: opts.Transport, RecentToolCallRecorder: opts.RecentToolCallRecorder, SkipRuntimeCatalogMetadata: opts.SkipRuntimeCatalogMetadata, StaticCatalog: opts.StaticCatalog})
 	if err != nil {
 		return nil, err
 	}

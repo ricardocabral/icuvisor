@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The public core server supports opt-in `ServerOptions.StaticCatalog` for catalogs that remain fixed during each server's lifetime. It disables tool, prompt, and resource list-change notifications so unsupported subscription requests acknowledge no active notifications and finish promptly; existing server defaults remain unchanged.
+
 ## [1.9.0] - 2026-10-27
 
 ### Added
