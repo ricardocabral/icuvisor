@@ -50,6 +50,32 @@ func parseDefaultArgs(args []string) (config.Options, error) {
 				return config.Options{}, err
 			}
 			opts.HTTPBindAddress = value
+		case arg == "--http-stateless":
+			value, next, err := requireFlagValue(args, i, "--http-stateless", "true|false")
+			if err != nil {
+				return config.Options{}, err
+			}
+			opts.HTTPStateless = value
+			i = next
+		case strings.HasPrefix(arg, "--http-stateless="):
+			value, err := requireInlineFlagValue(arg, "--http-stateless", "true|false")
+			if err != nil {
+				return config.Options{}, err
+			}
+			opts.HTTPStateless = value
+		case arg == "--http-json-response":
+			value, next, err := requireFlagValue(args, i, "--http-json-response", "true|false")
+			if err != nil {
+				return config.Options{}, err
+			}
+			opts.HTTPJSONResponse = value
+			i = next
+		case strings.HasPrefix(arg, "--http-json-response="):
+			value, err := requireInlineFlagValue(arg, "--http-json-response", "true|false")
+			if err != nil {
+				return config.Options{}, err
+			}
+			opts.HTTPJSONResponse = value
 		case arg == "--env-file":
 			value, next, err := requireFlagValue(args, i, "--env-file", "/path/to/icuvisor.env")
 			if err != nil {

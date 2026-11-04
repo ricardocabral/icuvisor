@@ -38,6 +38,37 @@ Config files can also set:
 
 See the [CLI reference]({{< relref "../reference/cli" >}}) and [config file reference]({{< relref "../reference/config-file" >}}) for exact field names and defaults. To keep this loopback service running without an open terminal, follow [Keep local HTTP running]({{< relref "persistent-http-service" >}}).
 
+## Stateless HTTP and JSON responses
+
+The default HTTP server retains sessions and returns SSE responses. For a gateway or container deployment that needs independent requests and ordinary JSON responses, enable both options:
+
+```bash
+icuvisor --transport http --http-stateless=true --http-json-response=true
+```
+
+The equivalent environment configuration is:
+
+```bash
+ICUVISOR_TRANSPORT=http ICUVISOR_HTTP_STATELESS=true ICUVISOR_HTTP_JSON_RESPONSE=true icuvisor
+```
+
+Or add these fields to your existing JSON config:
+
+```json
+{
+  "transport": "http",
+  "http_stateless": true,
+  "http_json_response": true
+}
+```
+
+Both options default to `false` and can be enabled independently. CLI flags accept an explicit `true` or `false`, either with `=` or a separate value. Precedence is CLI flags, process environment, JSON config, `.env`, then defaults. An explicit `false` overrides a lower-priority `true`. These options affect HTTP only; stdio is unchanged.
+
+- `http_stateless` disables MCP session IDs and per-session state. Each request is independent; standalone GET streams and session DELETE requests return `405 Method Not Allowed`. Server-to-client requests are unavailable. Coach mode over HTTP requires sessions for athlete selection, so startup rejects stateless HTTP when coach mode is enabled, including `auto` with a roster.
+- `http_json_response` returns `application/json` instead of `text/event-stream` for POST request responses. It does not disable sessions on its own. Keep it `false` if your client needs streamed progress notifications.
+
+These settings do not add authentication, HTTPS, or a read-only policy. For a public gateway deployment, authenticate clients and terminate HTTPS at the gateway, and keep the icuvisor backend inaccessible directly. The loopback bind and existing tool/write policy remain unchanged.
+
 ## Configure the client URL
 
 Use this endpoint in MCP clients that require HTTP:

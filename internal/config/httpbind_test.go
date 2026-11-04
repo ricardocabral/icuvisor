@@ -119,3 +119,41 @@ func TestValidateHTTPBindAddress(t *testing.T) {
 		})
 	}
 }
+
+func TestHTTPOptionsValidation(t *testing.T) {
+	tests := []struct {
+		name   string
+		fields string
+		env    map[string]string
+		want   string
+	}{
+		{name: "invalid stateless", env: map[string]string{"ICUVISOR_HTTP_STATELESS": "yes"}, want: "http_stateless"},
+		{name: "invalid JSON response", env: map[string]string{"ICUVISOR_HTTP_JSON_RESPONSE": "yes"}, want: "http_json_response"},
+		{name: "JSON requires boolean", fields: `,"http_stateless":"true"`, want: "invalid config JSON"},
+		{name: "coach on rejects stateless", fields: `,"http_stateless":true,"coach":{"athletes":[{"id":"i123","allowed_tools":["*"]}]}`, env: map[string]string{EnvCoachMode: "on"}, want: "coach mode requires stateful HTTP"},
+		{name: "coach auto rejects stateless", fields: `,"http_stateless":true,"coach":{"athletes":[{"id":"i123","allowed_tools":["*"]}]}`, env: map[string]string{EnvCoachMode: "auto"}, want: "coach mode requires stateful HTTP"},
+		{name: "stdio coach ignores stateless HTTP", fields: `,"http_stateless":true,"coach":{"athletes":[{"id":"i123","allowed_tools":["*"]}]}`, env: map[string]string{EnvCoachMode: "on", EnvTransport: "stdio"}},
+		{name: "coach auto without roster allows stateless", fields: `,"http_stateless":true`, env: map[string]string{EnvCoachMode: "auto"}},
+		{name: "coach off allows stateless", fields: `,"http_stateless":true,"coach":{"athletes":[{"id":"i123","allowed_tools":["*"]}]}`, env: map[string]string{EnvCoachMode: "off"}},
+		{name: "coach allows JSON responses", fields: `,"http_json_response":true,"coach":{"athletes":[{"id":"i123","allowed_tools":["*"]}]}`, env: map[string]string{EnvCoachMode: "on"}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			path := dir + "/config.json"
+			writeFile(t, path, `{"athlete_id":"i123","transport":"http"`+tc.fields+`}`)
+			env := map[string]string{EnvAPIKey: "test-key"}
+			for k, v := range tc.env {
+				env[k] = v
+			}
+			_, err := Load(context.Background(), Options{Path: path, DotEnvPath: dir + "/absent.env", Env: env})
+			if tc.want == "" {
+				if err != nil {
+					t.Fatal(err)
+				}
+			} else if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("Load error = %v, want %q", err, tc.want)
+			}
+		})
+	}
+}

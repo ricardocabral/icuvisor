@@ -27,6 +27,8 @@ Flags:
   --env-file <path>      Env-file path to load before process env. Can also be set with %[2]s. Default: .env when present.
   --transport <name>     MCP transport: stdio or http. Default: %[3]s.
   --http-bind <addr>     HTTP bind address for --transport http. Default: %[4]s.
+  --http-stateless <bool>     Disable HTTP sessions; incompatible with coach mode. Default: false.
+  --http-json-response <bool> Return JSON instead of SSE for HTTP POST responses. Default: false.
   -h, --help             Print this help and exit.
 
 Environment variables:
@@ -39,6 +41,8 @@ Environment variables:
   %[11]s      HTTP client timeout. Default: %[12]s.
   %[13]s         MCP transport: stdio or http. Default: %[3]s.
   %[14]s         HTTP bind address for Streamable HTTP. Default: %[4]s.
+  %[21]s    Disable HTTP sessions (true|false). Default: false.
+  %[22]s Return JSON for HTTP POST responses (true|false). Default: false.
   %[15]s       Write/delete registration mode: safe, full, or none. Default: %[16]s.
   %[17]s           Tool catalog tier: compact, core, or full. Default: %[18]s.
   %[19]s    Include debug metadata in MCP responses when set to true. Default: false.
@@ -63,7 +67,7 @@ For deeper documentation, see README.md and docs/prd/PRD-icuvisor.md.
 		config.EnvAPIKey, config.EnvAthleteID, config.EnvTimezone, config.DefaultTimezone,
 		config.EnvAPIBaseURL, config.DefaultAPIBaseURL, config.EnvHTTPTimeout, config.DefaultHTTPTimeout,
 		config.EnvTransport, config.EnvHTTPBind, safety.EnvDeleteMode, safety.ModeSafe,
-		safety.EnvToolset, safety.ToolsetCore, config.EnvDebugMetadata, config.EnvCoachMode)
+		safety.EnvToolset, safety.ToolsetCore, config.EnvDebugMetadata, config.EnvCoachMode, config.EnvHTTPStateless, config.EnvHTTPJSONResponse)
 	if err != nil {
 		return fmt.Errorf("writing help: %w", err)
 	}
@@ -108,6 +112,8 @@ Flags:
   --env-file <path>      Env-file path to load before process env. Can also be set with %[2]s.
   --transport <name>     MCP transport: stdio or http. Default: %[3]s.
   --http-bind <addr>     HTTP bind address for --transport http. Default: %[4]s.
+  --http-stateless <bool>     Disable HTTP sessions; incompatible with coach mode. Default: false.
+  --http-json-response <bool> Return JSON instead of SSE for HTTP POST responses. Default: false.
   -h, --help             Print this help and exit.
 
 Notes:

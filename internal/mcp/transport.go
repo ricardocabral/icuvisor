@@ -164,7 +164,7 @@ func (s *Server) ServeStreamableHTTP(ctx context.Context, listener net.Listener)
 
 	streamableHandler := NewStreamableHTTPHandler(func(*http.Request) (*Server, error) {
 		return s, nil
-	}, StreamableHTTPHandlerOptions{Logger: logger})
+	}, StreamableHTTPHandlerOptions{Logger: logger, Stateless: s.httpStateless, JSONResponse: s.httpJSONResponse})
 	mux := http.NewServeMux()
 	mux.Handle(StreamableHTTPPath, streamableHandler)
 	httpServer := &http.Server{
@@ -179,7 +179,7 @@ func (s *Server) ServeStreamableHTTP(ctx context.Context, listener net.Listener)
 	go func() {
 		serveDone <- httpServer.Serve(listener)
 	}()
-	logger.Info("server started listening", "version", version, "transport", "streamable_http", "address", listener.Addr().String(), "path", StreamableHTTPPath)
+	logger.Info("server started listening", "version", version, "transport", "streamable_http", "address", listener.Addr().String(), "path", StreamableHTTPPath, "http_stateless", s.httpStateless, "http_json_response", s.httpJSONResponse)
 
 	select {
 	case err := <-serveDone:

@@ -60,7 +60,7 @@ func cleanEnvValue(value string) string {
 
 func recognizedEnvKey(key string) bool {
 	switch key {
-	case EnvAPIKey, EnvAthleteID, EnvConfigPath, EnvTimezone, EnvAPIBaseURL, EnvHTTPTimeout, EnvTransport, EnvHTTPBind, EnvCoachMode, safety.EnvDeleteMode, safety.EnvToolset:
+	case EnvAPIKey, EnvAthleteID, EnvConfigPath, EnvTimezone, EnvAPIBaseURL, EnvHTTPTimeout, EnvTransport, EnvHTTPBind, EnvHTTPStateless, EnvHTTPJSONResponse, EnvCoachMode, safety.EnvDeleteMode, safety.EnvToolset:
 		return true
 	default:
 		return false

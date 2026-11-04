@@ -10,7 +10,7 @@ icuvisor is an open-source MCP server that connects [intervals.icu](https://inte
 
 - **What & why:** [`docs/prd/PRD-icuvisor.md`](docs/prd/PRD-icuvisor.md), including wellness scale semantics in §6.2.C.
 - **When / phasing:** [`ROADMAP.md`](ROADMAP.md)
-- **Current MCP surface:** generated [`web/data/tools.json`](web/data/tools.json); community-driven scope and implementation boundaries are recorded in [`docs/superpowers/plans/2026-10-27-community-review.md`](docs/superpowers/plans/2026-10-27-community-review.md).
+- **Current MCP surface:** generated [`web/data/tools.json`](web/data/tools.json).
 - **Contributor rules:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - **Security policy:** [`SECURITY.md`](SECURITY.md)
 - **Release process:** [`docs/release/publishing.md`](docs/release/publishing.md)
@@ -18,6 +18,8 @@ icuvisor is an open-source MCP server that connects [intervals.icu](https://inte
 If these conflict, the PRD wins for product behaviour, the roadmap wins for phasing, and CONTRIBUTING wins for process.
 
 ## Hard rules
+
+Superpowers plans, specifications, and execution artifacts are private local files. Keep all `superpowers/` and `.superpowers/` directories ignored; never force-add them to Git.
 
 1. **Clean-room.** This project is MIT-licensed and is built from intervals.icu's public API docs + black-box testing. **Never paste, paraphrase, or transliterate code from any GPL/copyleft source.** Inspiration from public API behaviour is fine; copying source is not.
 2. **No GPL dependencies.** Check the license of every new module before adding it. Prefer stdlib first; permissive licenses (MIT, BSD, Apache-2.0, MPL-2.0) second.

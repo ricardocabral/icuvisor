@@ -53,7 +53,19 @@ func validate(raw rawConfig) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	return buildConfig(raw, apiKey, credentialRef, athleteID, loc, baseURL, timeout, transport, httpBindAddress, coachMode, coachConfig), nil
+	cfg := buildConfig(raw, apiKey, credentialRef, athleteID, loc, baseURL, timeout, transport, httpBindAddress, coachMode, coachConfig)
+	cfg.HTTPStateless, err = parseHTTPBool(raw.httpStateless, "http_stateless")
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.HTTPJSONResponse, err = parseHTTPBool(raw.httpJSONResponse, "http_json_response")
+	if err != nil {
+		return Config{}, err
+	}
+	if cfg.Transport == TransportHTTP && cfg.HTTPStateless && cfg.CoachModeEnabled() {
+		return Config{}, errors.New("coach mode requires stateful HTTP for per-session athlete selection; set http_stateless=false")
+	}
+	return cfg, nil
 }
 
 func validateAPIKey(raw rawConfig) (string, error) {
@@ -174,4 +186,15 @@ func buildConfig(raw rawConfig, apiKey string, credentialRef CredentialReference
 // ParseDebugMetadata reports whether a raw debug metadata value enables debug output.
 func ParseDebugMetadata(value string) bool {
 	return strings.EqualFold(strings.TrimSpace(value), "true")
+}
+
+func parseHTTPBool(value, name string) (bool, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "", "false":
+		return false, nil
+	case "true":
+		return true, nil
+	default:
+		return false, fmt.Errorf("invalid %s; use true or false", name)
+	}
 }

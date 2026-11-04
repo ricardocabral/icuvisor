@@ -79,3 +79,7 @@ __pycache__/
 # Pi project-local packages (if using pi install -l)
 .pi/npm/
 .env-dev
+
+# Private agent planning and execution artifacts (any depth)
+superpowers/
+.superpowers/
