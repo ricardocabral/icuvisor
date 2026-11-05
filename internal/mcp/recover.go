@@ -23,9 +23,9 @@ func withPanicRecovery(name string, fn func() error) (err error) {
 	return fn()
 }
 
-func newSDKServer(version string, logger *slog.Logger) (server *sdkmcp.Server, err error) {
+func newSDKServer(version string, logger *slog.Logger, capabilities *sdkmcp.ServerCapabilities) (server *sdkmcp.Server, err error) {
 	err = withPanicRecovery("constructing MCP server", func() error {
-		server = sdkmcp.NewServer(&sdkmcp.Implementation{Name: "icuvisor", Version: version}, &sdkmcp.ServerOptions{Logger: logger})
+		server = sdkmcp.NewServer(&sdkmcp.Implementation{Name: "icuvisor", Version: version}, &sdkmcp.ServerOptions{Logger: logger, Capabilities: capabilities})
 		return nil
 	})
 	return server, err
