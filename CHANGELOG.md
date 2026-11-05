@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-11-05
+
 ### Added
 
 - The public core server supports opt-in `ServerOptions.StaticCatalog` for catalogs that remain fixed during each server's lifetime. It disables tool, prompt, and resource list-change notifications so unsupported subscription requests acknowledge no active notifications and finish promptly; existing server defaults remain unchanged.
@@ -563,7 +565,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release.
 
-[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/ricardocabral/icuvisor/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/ricardocabral/icuvisor/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/ricardocabral/icuvisor/compare/v1.8.2...v1.9.0
 [1.8.2]: https://github.com/ricardocabral/icuvisor/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/ricardocabral/icuvisor/compare/v1.8.0...v1.8.1
